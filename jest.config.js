@@ -7,6 +7,16 @@ const config = {
     '^@durion-sdk/(.+)$': '<rootDir>/packages/sdk-$1/src/index.ts',
   },
   passWithNoTests: true,
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    'packages/sdk-transport/src/**/*.ts',
+    'packages/sdk-*/src/index.ts',
+    '!**/__tests__/**',
+    '!**/*.d.ts',
+    '!packages/sdk-*/src/apis/**',
+    '!packages/sdk-*/src/models/**',
+    '!packages/sdk-*/src/runtime.ts',
+  ],
   coverageThreshold: {
     global: {
       branches: 80,
