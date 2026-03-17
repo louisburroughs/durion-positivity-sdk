@@ -5,7 +5,7 @@
   "author": "OpenAPI-Generator",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GIT_USER_ID/GIT_REPO_ID.git"
+    "url": "https://github.com/louisburroughs/durion-positivity-sdk.git"
   },
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
@@ -19,6 +19,6 @@
     "@durion-sdk/transport": "*"
   },
   "devDependencies": {
-    "typescript": "^4.0"
+    "typescript": "^5.4.0"
   }
 }

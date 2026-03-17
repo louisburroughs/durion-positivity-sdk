@@ -578,3 +578,48 @@ describe('AC-9: factory behavioral tests (header injection, no body double-seria
     expect(headers.get('X-Correlation-Id')).toMatch(/^[0-9a-f-]{36}$/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// AC-inv-path — Static regression guard: inventory API files must use
+//               /v1/inventory/ paths, not the old /api/inventory/ prefix.
+//
+//               Commit 8848e94 fixed the 3 generated inventory API files.
+//               These tests read each file as text and assert the broken path
+//               string is absent and the correct path string is present,
+//               ensuring a silent revert of the fix cannot pass the suite.
+//
+//               Issue: FIX-2
+// ---------------------------------------------------------------------------
+
+describe('AC-inv-path: inventory API path versioning (no /api/ regression guard)', () => {
+  const INVENTORY_APIS_DIR = path.resolve(
+    __dirname,
+    '../../packages/sdk-inventory/src/apis',
+  );
+
+  const inventoryApiFiles: Array<[string, string]> = [
+    ['CycleCountOperationsApi.ts', path.join(INVENTORY_APIS_DIR, 'CycleCountOperationsApi.ts')],
+    ['CycleCountQueryApi.ts', path.join(INVENTORY_APIS_DIR, 'CycleCountQueryApi.ts')],
+    ['InventoryManagementApi.ts', path.join(INVENTORY_APIS_DIR, 'InventoryManagementApi.ts')],
+  ];
+
+  // Issue FIX-2: guard against /api/inventory/ path regression
+  it.each(inventoryApiFiles)(
+    '%s must NOT contain /api/inventory/ paths',
+    (filename, filePath) => {
+      expect(fs.existsSync(filePath)).toBe(true);
+      const content = fs.readFileSync(filePath, 'utf-8');
+      expect(content.includes('/api/inventory/')).toBe(false);
+    },
+  );
+
+  // Issue FIX-2: confirm /v1/inventory/ paths are present in each file
+  it.each(inventoryApiFiles)(
+    '%s must contain /v1/inventory/ paths',
+    (filename, filePath) => {
+      expect(fs.existsSync(filePath)).toBe(true);
+      const content = fs.readFileSync(filePath, 'utf-8');
+      expect(content.includes('/v1/inventory/')).toBe(true);
+    },
+  );
+});
