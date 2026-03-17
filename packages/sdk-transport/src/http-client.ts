@@ -20,7 +20,7 @@ export class SdkHttpClient {
     }
 
     headers['X-API-Version'] = this.config.apiVersion ?? '1';
-    headers['X-Correlation-Id'] = crypto.randomUUID();
+    headers['X-Correlation-Id'] = this.config.correlationIdProvider?.() ?? crypto.randomUUID();
 
     const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     if (options?.idempotencyKey && mutatingMethods.includes(method.toUpperCase())) {
@@ -54,7 +54,7 @@ export class SdkHttpClient {
     }
 
     headers['X-API-Version'] = this.config.apiVersion ?? '1';
-    headers['X-Correlation-Id'] = crypto.randomUUID();
+    headers['X-Correlation-Id'] = this.config.correlationIdProvider?.() ?? crypto.randomUUID();
 
     const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     if (options?.idempotencyKey && mutatingMethods.includes(method.toUpperCase())) {
