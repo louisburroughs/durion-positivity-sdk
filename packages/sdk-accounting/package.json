@@ -15,6 +15,9 @@
     "build": "tsc && tsc -p tsconfig.esm.json",
     "prepare": "npm run build"
   },
+  "dependencies": {
+    "@durion-sdk/transport": "*"
+  },
   "devDependencies": {
     "typescript": "^4.0"
   }

@@ -41,4 +41,26 @@ export class SdkHttpClient {
       body,
     });
   }
+
+  async buildRequestHeaders(
+    method: string,
+    options?: { idempotencyKey?: string }
+  ): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {};
+
+    if (this.config.token) {
+      const token = await this.config.token();
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    headers['X-API-Version'] = this.config.apiVersion ?? '1';
+    headers['X-Correlation-Id'] = crypto.randomUUID();
+
+    const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+    if (options?.idempotencyKey && mutatingMethods.includes(method.toUpperCase())) {
+      headers['Idempotency-Key'] = options.idempotencyKey;
+    }
+
+    return headers;
+  }
 }
