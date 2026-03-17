@@ -176,7 +176,7 @@ type SdkHttpClientCtor = new (config: TransportConfig) => {
   request(
     method: string,
     urlPath: string,
-    options?: { idempotencyKey?: string; body?: unknown },
+    options?: { headers?: Record<string, string>; idempotencyKey?: string; body?: unknown },
   ): Promise<Response>;
 };
 
@@ -351,5 +351,48 @@ describe('SDK-003 AC-6–9: SdkHttpClient header injection', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(getHeader(init.headers, 'Idempotency-Key')).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // Body / Content-Type / absolute URL branch coverage
+  // -------------------------------------------------------------------------
+
+  it('sets Content-Type to application/json and serializes the body when body is provided', async () => {
+    requireLoaded(SdkHttpClient, 'SdkHttpClient');
+
+    const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
+    const payload = { orderId: 'abc-123', quantity: 2 };
+    await client.request('POST', '/v1/orders', { body: payload });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(getHeader(init.headers, 'Content-Type')).toBe('application/json');
+    expect(init.body).toBe(JSON.stringify(payload));
+  });
+
+  it('does NOT override Content-Type when caller already provides it alongside a body', async () => {
+    requireLoaded(SdkHttpClient, 'SdkHttpClient');
+
+    const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
+    await client.request('POST', '/v1/orders', {
+      headers: { 'Content-Type': 'application/merge-patch+json' },
+      body: { status: 'cancelled' },
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(getHeader(init.headers, 'Content-Type')).toBe('application/merge-patch+json');
+  });
+
+  it('uses an absolute URL directly without prepending baseUrl', async () => {
+    requireLoaded(SdkHttpClient, 'SdkHttpClient');
+
+    const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
+    const absoluteUrl = 'https://other-service.internal/health';
+    await client.request('GET', absoluteUrl);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [calledUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(calledUrl).toBe(absoluteUrl);
   });
 });
