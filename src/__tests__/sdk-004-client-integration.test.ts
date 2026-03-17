@@ -301,6 +301,196 @@ describe('SDK-004 AC-8: dynamic import — all 5 clients export their factory fu
   );
 });
 
+// ---------------------------------------------------------------------------
+// AC-10 — Factory function invocation: calling createXxxClient(config) must
+//          return a non-null object whose properties are valid API instances.
+//          These tests cover the factory function body (lines 8-24 in each
+//          index.ts) that was completely un-executed before this suite.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-10: factory function invocation — all 5 clients return API instances', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('createSecurityClient returns expected API namespaces', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createSecurityClient } = await import('@durion-sdk/security');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createSecurityClient({ baseUrl: 'http://localhost:8080', token: () => 'tok' }) as Record<string, unknown>;
+    expect(client['authAPIApi']).toBeDefined();
+    expect(client['userAPIApi']).toBeDefined();
+    expect(client['permissionRegistryApi']).toBeDefined();
+    expect(client['roleManagementApi']).toBeDefined();
+    expect(client['jwtAPIApi']).toBeDefined();
+  });
+
+  it('createOrderClient returns expected API namespaces', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createOrderClient } = await import('@durion-sdk/order');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createOrderClient({ baseUrl: 'http://localhost:8081', token: () => 'tok' }) as Record<string, unknown>;
+    expect(client['salesOrdersApi']).toBeDefined();
+    expect(client['priceOverridesApi']).toBeDefined();
+    expect(client['orderCancellationApi']).toBeDefined();
+  });
+
+  it('createInventoryClient returns expected API namespaces', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createInventoryClient } = await import('@durion-sdk/inventory');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createInventoryClient({ baseUrl: 'http://localhost:8082', token: () => 'tok' }) as Record<string, unknown>;
+    expect(client['inventoryManagementApi']).toBeDefined();
+    expect(client['purchaseOrdersApi']).toBeDefined();
+    expect(client['receivingApi']).toBeDefined();
+  });
+
+  it('createWorkorderClient returns expected API namespaces', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createWorkorderClient } = await import('@durion-sdk/workorder');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createWorkorderClient({ baseUrl: 'http://localhost:8083', token: () => 'tok' }) as Record<string, unknown>;
+    expect(client['workOrderAPIApi']).toBeDefined();
+    expect(client['estimateAPIApi']).toBeDefined();
+    expect(client['technicianAssignmentAPIApi']).toBeDefined();
+  });
+
+  it('createAccountingClient returns expected API namespaces', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createAccountingClient } = await import('@durion-sdk/accounting');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createAccountingClient({ baseUrl: 'http://localhost:8084', token: () => 'tok' }) as Record<string, unknown>;
+    expect(client['journalEntriesApi']).toBeDefined();
+    expect(client['glAccountsApi']).toBeDefined();
+    expect(client['financialReportingApi']).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC-11 — Factory fetchApi callback branch coverage.
+//
+//          Each factory defines an inline async fetchApi passed to
+//          Configuration.  The callback has two branches:
+//
+//            (init?.method ?? 'GET')
+//            ├─ Branch A: init.method is provided (truthy) — no fallback
+//            └─ Branch B: init.method is absent/undefined — fallback to 'GET'
+//
+//          These tests invoke the fetchApi directly via the protected
+//          `configuration` stored on a returned API instance, exercising both
+//          sides of the nullish-coalescing operator and covering the function
+//          body for all 5 factories.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-11: factory fetchApi callback — branch coverage for ?? fallback', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('security fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createSecurityClient } = await import('@durion-sdk/security');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createSecurityClient({ baseUrl: 'http://localhost:8080', token: () => 'bearer-tok', apiVersion: '1' }) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const fetchApi = client.authAPIApi?.configuration?.fetchApi as
+      ((url: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | undefined;
+    expect(fetchApi).toBeDefined();
+    // init.method provided → no fallback
+    await fetchApi!('http://localhost:8080/api/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, calledInit] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+    expect(new Headers(calledInit.headers).get('Authorization')).toBe('Bearer bearer-tok');
+  });
+
+  it('security fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createSecurityClient } = await import('@durion-sdk/security');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createSecurityClient({ baseUrl: 'http://localhost:8080', token: () => 'bearer-tok', apiVersion: '1' }) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const fetchApi = client.authAPIApi?.configuration?.fetchApi as
+      ((url: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | undefined;
+    expect(fetchApi).toBeDefined();
+    // init has no method property → fallback to 'GET'
+    await fetchApi!('http://localhost:8080/api/list', {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, calledInit] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+    expect(new Headers(calledInit.headers).get('Authorization')).toBe('Bearer bearer-tok');
+  });
+
+  it('order, inventory, workorder, accounting fetchApi bodies all covered', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const orderMod = await import('@durion-sdk/order');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const inventoryMod = await import('@durion-sdk/inventory');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const workorderMod = await import('@durion-sdk/workorder');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const accountingMod = await import('@durion-sdk/accounting');
+
+    const cases = [
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      { client: orderMod.createOrderClient({ baseUrl: 'http://localhost:8081', token: () => 'tok', apiVersion: '1' }) as any, apiKey: 'salesOrdersApi' },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      { client: inventoryMod.createInventoryClient({ baseUrl: 'http://localhost:8082', token: () => 'tok', apiVersion: '1' }) as any, apiKey: 'inventoryManagementApi' },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      { client: workorderMod.createWorkorderClient({ baseUrl: 'http://localhost:8083', token: () => 'tok', apiVersion: '1' }) as any, apiKey: 'workOrderAPIApi' },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      { client: accountingMod.createAccountingClient({ baseUrl: 'http://localhost:8084', token: () => 'tok', apiVersion: '1' }) as any, apiKey: 'journalEntriesApi' },
+    ];
+
+    for (const { client, apiKey } of cases) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const fetchApi = client[apiKey]?.configuration?.fetchApi as
+        ((url: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | undefined;
+      expect(fetchApi).toBeDefined();
+      // Branch A: explicit method
+      await fetchApi!('http://localhost/api', { method: 'GET', headers: { Accept: 'application/json' } });
+      // Branch B: method absent → ?? fallback
+      await fetchApi!('http://localhost/api', {});
+    }
+    // 2 calls × 4 factories
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(8);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC-9 (original) — factory behavioral tests
+// ---------------------------------------------------------------------------
+
 describe('AC-9: factory behavioral tests (header injection, no body double-serialization)', () => {
   let fetchMock: jest.Mock;
 
