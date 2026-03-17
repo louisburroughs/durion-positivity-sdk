@@ -1,7 +1,7 @@
 import { DurionSdkConfig } from './config';
 
 export class SdkHttpClient {
-  constructor(private readonly config: DurionSdkConfig) {}
+  constructor(private readonly config: DurionSdkConfig) { }
 
   async request(
     method: string,

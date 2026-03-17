@@ -3,7 +3,9 @@
   "version": "0.1.0-alpha",
   "private": true,
   "description": "Durion Positivity Backend SDK — TypeScript client library",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "test": "jest",
