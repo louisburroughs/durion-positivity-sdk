@@ -15,8 +15,8 @@
 
 import * as runtime from '../runtime';
 import type {
-  CountEntryResponse,
-  CycleCountTaskResponse,
+    CountEntryResponse,
+    CycleCountTaskResponse,
 } from '../models/index';
 import {
     CountEntryResponseFromJSON,
@@ -38,7 +38,7 @@ export interface GetTaskRequest {
 }
 
 /**
- * 
+ *
  */
 export class CycleCountQueryApi extends runtime.BaseAPI {
 
@@ -59,7 +59,7 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/inventory/cycleCount/auditor/{auditorId}/tasks`.replace(`{${"auditorId"}}`, encodeURIComponent(String(requestParameters['auditorId']))),
+            path: `/v1/inventory/cycleCount/auditor/{auditorId}/tasks`.replace(`{${"auditorId"}}`, encodeURIComponent(String(requestParameters['auditorId']))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -94,7 +94,7 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/inventory/cycleCount/task/{taskId}/history`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+            path: `/v1/inventory/cycleCount/task/{taskId}/history`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -129,7 +129,7 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         const response = await this.request({
-            path: `/api/inventory/cycleCount/task/{taskId}`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+            path: `/v1/inventory/cycleCount/task/{taskId}`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,

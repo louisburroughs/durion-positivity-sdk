@@ -15,8 +15,8 @@
 
 import * as runtime from '../runtime';
 import type {
-  DeactivateLocationRequest,
-  DeactivateLocationResponse,
+    DeactivateLocationRequest,
+    DeactivateLocationResponse,
 } from '../models/index';
 import {
     DeactivateLocationRequestFromJSON,
@@ -31,7 +31,7 @@ export interface DeactivateRequest {
 }
 
 /**
- * 
+ *
  */
 export class InventoryManagementApi extends runtime.BaseAPI {
 
@@ -54,7 +54,7 @@ export class InventoryManagementApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/inventory/locations/{locationId}/deactivate`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            path: `/v1/inventory/locations/{locationId}/deactivate`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,

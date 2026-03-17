@@ -15,9 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
-  CountResponse,
-  SubmitCountRequest,
-  SubmitRecountRequest,
+    CountResponse,
+    SubmitCountRequest,
+    SubmitRecountRequest,
 } from '../models/index';
 import {
     CountResponseFromJSON,
@@ -37,7 +37,7 @@ export interface SubmitRecountOperationRequest {
 }
 
 /**
- * 
+ *
  */
 export class CycleCountOperationsApi extends runtime.BaseAPI {
 
@@ -60,7 +60,7 @@ export class CycleCountOperationsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/inventory/cycleCount/submit`,
+            path: `/v1/inventory/cycleCount/submit`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
@@ -98,7 +98,7 @@ export class CycleCountOperationsApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/inventory/cycleCount/recount`,
+            path: `/v1/inventory/cycleCount/recount`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
