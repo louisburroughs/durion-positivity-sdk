@@ -10,7 +10,7 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@durion-sdk/*": ["packages/*/src"]
+      "@durion-sdk/*": ["packages/sdk-*/src"]
     }
   },
   "include": ["src/**/*", "packages/**/*", "scripts/**/*"],
