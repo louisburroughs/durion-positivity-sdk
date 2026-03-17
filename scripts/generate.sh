@@ -5,10 +5,10 @@ set -euo pipefail
 # Generates TypeScript-fetch clients from backend OpenAPI specs.
 #
 # Usage:
-#   ./scripts/generate.sh                    # Generate all Phase 1 modules
+#   ./scripts/generate.sh                    # Generate all SDK modules
 #   ./scripts/generate.sh --module security  # Generate only the specified module
 #
-# Valid module names: security, order, inventory, workorder, accounting
+# Valid module names: security, order, inventory, workorder, accounting, catalog, customer, invoice, location, people, price, shop-manager, image, event-receiver, vehicle-fitment, vehicle-inventory
 
 module=""
 
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-MODULES=(security order inventory workorder accounting)
+MODULES=(security order inventory workorder accounting catalog customer invoice location people price shop-manager image event-receiver vehicle-fitment vehicle-inventory)
 
 cleanup_inventory_duplicate_exports() {
 	# Post-generation cleanup: fix sdk-inventory duplicate exports caused by multi-tag ops
@@ -66,7 +66,7 @@ if [[ -n "$module" ]]; then
 		cleanup_inventory_duplicate_exports
 	fi
 else
-	# Generate all Phase 1 modules in deterministic order
+	# Generate all SDK modules in deterministic order
 	for m in "${MODULES[@]}"; do
 		echo "Generating sdk-${m}..."
 		npx openapi-generator-cli generate --generator-key "sdk-${m}"

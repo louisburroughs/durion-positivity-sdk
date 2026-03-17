@@ -1,0 +1,24 @@
+{
+  "name": "@durion-sdk/customer",
+  "version": "0.1.0-alpha",
+  "description": "OpenAPI client for @durion-sdk/customer",
+  "author": "OpenAPI-Generator",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/louisburroughs/durion-positivity-sdk.git"
+  },
+  "main": "./dist/index.js",
+  "typings": "./dist/index.d.ts",
+  "module": "./dist/esm/index.js",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.esm.json",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@durion-sdk/transport": "*"
+  }
+}
