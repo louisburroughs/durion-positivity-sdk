@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# TypeScript incremental compile info
+*.tsbuildinfo
+
+# IDE / editor artifacts
+.idea/
+.vscode/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# npm/yarn/pnpm lock files for sub-packages (root lock file is tracked)
+packages/*/node_modules/
+packages/*/dist/
+
+# OpenAPI generator temporary artifacts
+.openapi-generator/
+.openapi-generator-ignore
+
+# Environment
+.env
+.env.local
+.env.*
