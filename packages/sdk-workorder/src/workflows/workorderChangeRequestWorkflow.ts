@@ -1,7 +1,7 @@
 import { ChangeRequestAPIApi } from '../apis/ChangeRequestAPIApi';
 
 export class WorkorderChangeRequestWorkflow {
-  constructor(private readonly changeRequestApi: ChangeRequestAPIApi) {}
+  constructor(private readonly changeRequestApi: ChangeRequestAPIApi) { }
 
   /** @operationId createChangeRequest */
   submit(params: Parameters<ChangeRequestAPIApi['createChangeRequest']>[0]) {

@@ -5,7 +5,7 @@ export class SecurityAuthWorkflow {
   constructor(
     private readonly authApi: AuthAPIApi,
     private readonly jwtApi: JWTAPIApi,
-  ) {}
+  ) { }
 
   /** @operationId login */
   login(params: Parameters<AuthAPIApi['login']>[0]) {

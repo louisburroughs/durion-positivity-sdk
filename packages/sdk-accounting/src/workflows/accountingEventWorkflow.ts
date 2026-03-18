@@ -1,7 +1,7 @@
 import { AccountingEventsApi } from '../apis/AccountingEventsApi';
 
 export class AccountingEventWorkflow {
-  constructor(private readonly accountingEventsApi: AccountingEventsApi) {}
+  constructor(private readonly accountingEventsApi: AccountingEventsApi) { }
 
   /** @operationId retryEventProcessing */
   retry(params: Parameters<AccountingEventsApi['retryEventProcessing']>[0]) {

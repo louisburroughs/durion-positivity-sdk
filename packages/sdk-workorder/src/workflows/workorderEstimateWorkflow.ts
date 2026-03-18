@@ -1,7 +1,7 @@
 import { EstimateAPIApi } from '../apis/EstimateAPIApi';
 
 export class WorkorderEstimateWorkflow {
-  constructor(private readonly estimateApi: EstimateAPIApi) {}
+  constructor(private readonly estimateApi: EstimateAPIApi) { }
 
   /** @operationId createEstimate */
   create(params: Parameters<EstimateAPIApi['createEstimate']>[0]) {

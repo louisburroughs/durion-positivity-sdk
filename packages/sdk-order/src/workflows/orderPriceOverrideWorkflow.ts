@@ -1,7 +1,7 @@
 import { PriceOverridesApi } from '../apis/PriceOverridesApi';
 
 export class OrderPriceOverrideWorkflow {
-  constructor(private readonly priceOverridesApi: PriceOverridesApi) {}
+  constructor(private readonly priceOverridesApi: PriceOverridesApi) { }
 
   /** @operationId applyPriceOverride */
   submit(params: Parameters<PriceOverridesApi['applyPriceOverride']>[0]) {
