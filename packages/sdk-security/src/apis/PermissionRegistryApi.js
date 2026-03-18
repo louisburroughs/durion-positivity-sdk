@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PermissionRegistryApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,501 +66,573 @@ class PermissionRegistryApi extends runtime.BaseAPI {
      * Decodes a perm_bits Base64URL BitSet back to permission code strings. For debugging only.
      * Decode perm_bits for diagnostics
      */
-    async decodePermissionsRaw(requestParameters, initOverrides) {
-        if (requestParameters['permissionDecodeRequest'] == null) {
-            throw new runtime.RequiredError('permissionDecodeRequest', 'Required parameter "permissionDecodeRequest" was null or undefined when calling decodePermissions().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/users/permissions/decode`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PermissionDecodeRequestToJSON)(requestParameters['permissionDecodeRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDecodeResponseFromJSON)(jsonValue));
+    decodePermissionsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionDecodeRequest'] == null) {
+                throw new runtime.RequiredError('permissionDecodeRequest', 'Required parameter "permissionDecodeRequest" was null or undefined when calling decodePermissions().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/users/permissions/decode`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PermissionDecodeRequestToJSON)(requestParameters['permissionDecodeRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDecodeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Decodes a perm_bits Base64URL BitSet back to permission code strings. For debugging only.
      * Decode perm_bits for diagnostics
      */
-    async decodePermissions(requestParameters, initOverrides) {
-        const response = await this.decodePermissionsRaw(requestParameters, initOverrides);
-        return await response.value();
+    decodePermissions(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.decodePermissionsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Decodes a perm_bits Base64URL BitSet back to permission code strings. For debugging only.
      * Decode perm_bits for diagnostics
      */
-    async decodePermissions1Raw(requestParameters, initOverrides) {
-        if (requestParameters['permissionDecodeRequest'] == null) {
-            throw new runtime.RequiredError('permissionDecodeRequest', 'Required parameter "permissionDecodeRequest" was null or undefined when calling decodePermissions1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/permissions/decode`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PermissionDecodeRequestToJSON)(requestParameters['permissionDecodeRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDecodeResponseFromJSON)(jsonValue));
+    decodePermissions1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionDecodeRequest'] == null) {
+                throw new runtime.RequiredError('permissionDecodeRequest', 'Required parameter "permissionDecodeRequest" was null or undefined when calling decodePermissions1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/permissions/decode`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PermissionDecodeRequestToJSON)(requestParameters['permissionDecodeRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDecodeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Decodes a perm_bits Base64URL BitSet back to permission code strings. For debugging only.
      * Decode perm_bits for diagnostics
      */
-    async decodePermissions1(requestParameters, initOverrides) {
-        const response = await this.decodePermissions1Raw(requestParameters, initOverrides);
-        return await response.value();
+    decodePermissions1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.decodePermissions1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all registered permissions for the requested domain using the domain query parameter.
      * Query permissions by domain
      */
-    async getAllPermissionsRaw(requestParameters, initOverrides) {
-        if (requestParameters['domain'] == null) {
-            throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getAllPermissions().');
-        }
-        const queryParameters = {};
-        if (requestParameters['domain'] != null) {
-            queryParameters['domain'] = requestParameters['domain'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/users/permissions`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+    getAllPermissionsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['domain'] == null) {
+                throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getAllPermissions().');
+            }
+            const queryParameters = {};
+            if (requestParameters['domain'] != null) {
+                queryParameters['domain'] = requestParameters['domain'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/users/permissions`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+        });
     }
     /**
      * Returns all registered permissions for the requested domain using the domain query parameter.
      * Query permissions by domain
      */
-    async getAllPermissions(requestParameters, initOverrides) {
-        const response = await this.getAllPermissionsRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAllPermissions(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllPermissionsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all registered permissions for the requested domain using the domain query parameter.
      * Query permissions by domain
      */
-    async getAllPermissions1Raw(requestParameters, initOverrides) {
-        if (requestParameters['domain'] == null) {
-            throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getAllPermissions1().');
-        }
-        const queryParameters = {};
-        if (requestParameters['domain'] != null) {
-            queryParameters['domain'] = requestParameters['domain'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/permissions`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+    getAllPermissions1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['domain'] == null) {
+                throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getAllPermissions1().');
+            }
+            const queryParameters = {};
+            if (requestParameters['domain'] != null) {
+                queryParameters['domain'] = requestParameters['domain'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/permissions`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+        });
     }
     /**
      * Returns all registered permissions for the requested domain using the domain query parameter.
      * Query permissions by domain
      */
-    async getAllPermissions1(requestParameters, initOverrides) {
-        const response = await this.getAllPermissions1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getAllPermissions1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllPermissions1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns the active catalog version and total permission count. No authentication required.
      * Get current permission catalog version
      */
-    async getCatalogVersionRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/permissions/catalog-version`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CatalogVersionResponseFromJSON)(jsonValue));
+    getCatalogVersionRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/permissions/catalog-version`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CatalogVersionResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns the active catalog version and total permission count. No authentication required.
      * Get current permission catalog version
      */
-    async getCatalogVersion(initOverrides) {
-        const response = await this.getCatalogVersionRaw(initOverrides);
-        return await response.value();
+    getCatalogVersion(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCatalogVersionRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns the active catalog version and total permission count. No authentication required.
      * Get current permission catalog version
      */
-    async getCatalogVersion1Raw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/users/permissions/catalog-version`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CatalogVersionResponseFromJSON)(jsonValue));
+    getCatalogVersion1Raw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/users/permissions/catalog-version`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CatalogVersionResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns the active catalog version and total permission count. No authentication required.
      * Get current permission catalog version
      */
-    async getCatalogVersion1(initOverrides) {
-        const response = await this.getCatalogVersion1Raw(initOverrides);
-        return await response.value();
+    getCatalogVersion1(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCatalogVersion1Raw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns a single registered permission by its UUID identifier.
      * Get permission by identifier
      */
-    async getPermissionByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getPermissionById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/users/permissions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDtoFromJSON)(jsonValue));
+    getPermissionByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getPermissionById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/users/permissions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDtoFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns a single registered permission by its UUID identifier.
      * Get permission by identifier
      */
-    async getPermissionById(requestParameters, initOverrides) {
-        const response = await this.getPermissionByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPermissionById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPermissionByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns a single registered permission by its UUID identifier.
      * Get permission by identifier
      */
-    async getPermissionById1Raw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getPermissionById1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/permissions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDtoFromJSON)(jsonValue));
+    getPermissionById1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getPermissionById1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/permissions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionDtoFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns a single registered permission by its UUID identifier.
      * Get permission by identifier
      */
-    async getPermissionById1(requestParameters, initOverrides) {
-        const response = await this.getPermissionById1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getPermissionById1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPermissionById1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all permissions for a specific domain/service
      * Get permissions by domain
      */
-    async getPermissionsByDomainRaw(requestParameters, initOverrides) {
-        if (requestParameters['domain'] == null) {
-            throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getPermissionsByDomain().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/users/permissions/domain/{domain}`.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+    getPermissionsByDomainRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['domain'] == null) {
+                throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getPermissionsByDomain().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/users/permissions/domain/{domain}`.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+        });
     }
     /**
      * Returns all permissions for a specific domain/service
      * Get permissions by domain
      */
-    async getPermissionsByDomain(requestParameters, initOverrides) {
-        const response = await this.getPermissionsByDomainRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPermissionsByDomain(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPermissionsByDomainRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all permissions for a specific domain/service
      * Get permissions by domain
      */
-    async getPermissionsByDomain1Raw(requestParameters, initOverrides) {
-        if (requestParameters['domain'] == null) {
-            throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getPermissionsByDomain1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/permissions/domain/{domain}`.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+    getPermissionsByDomain1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['domain'] == null) {
+                throw new runtime.RequiredError('domain', 'Required parameter "domain" was null or undefined when calling getPermissionsByDomain1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/permissions/domain/{domain}`.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+        });
     }
     /**
      * Returns all permissions for a specific domain/service
      * Get permissions by domain
      */
-    async getPermissionsByDomain1(requestParameters, initOverrides) {
-        const response = await this.getPermissionsByDomain1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getPermissionsByDomain1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPermissionsByDomain1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns true if the permission is registered
      * Check if permission exists
      */
-    async permissionExistsRaw(requestParameters, initOverrides) {
-        if (requestParameters['permissionName'] == null) {
-            throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling permissionExists().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/users/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    permissionExistsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionName'] == null) {
+                throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling permissionExists().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/users/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Returns true if the permission is registered
      * Check if permission exists
      */
-    async permissionExists(requestParameters, initOverrides) {
-        const response = await this.permissionExistsRaw(requestParameters, initOverrides);
-        return await response.value();
+    permissionExists(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.permissionExistsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns true if the permission is registered
      * Check if permission exists
      */
-    async permissionExists1Raw(requestParameters, initOverrides) {
-        if (requestParameters['permissionName'] == null) {
-            throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling permissionExists1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    permissionExists1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionName'] == null) {
+                throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling permissionExists1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Returns true if the permission is registered
      * Check if permission exists
      */
-    async permissionExists1(requestParameters, initOverrides) {
-        const response = await this.permissionExists1Raw(requestParameters, initOverrides);
-        return await response.value();
+    permissionExists1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.permissionExists1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Services call this endpoint to register their available permissions
      * Register permissions from a service
      */
-    async registerPermissionsRaw(requestParameters, initOverrides) {
-        if (requestParameters['permissionRegistrationRequest'] == null) {
-            throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissions().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/users/permissions/register`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionRegistrationResponseFromJSON)(jsonValue));
+    registerPermissionsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionRegistrationRequest'] == null) {
+                throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissions().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/users/permissions/register`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionRegistrationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Services call this endpoint to register their available permissions
      * Register permissions from a service
      */
-    async registerPermissions(requestParameters, initOverrides) {
-        const response = await this.registerPermissionsRaw(requestParameters, initOverrides);
-        return await response.value();
+    registerPermissions(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.registerPermissionsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Services call this endpoint to register their available permissions
      * Register permissions from a service
      */
-    async registerPermissions1Raw(requestParameters, initOverrides) {
-        if (requestParameters['permissionRegistrationRequest'] == null) {
-            throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissions1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/permissions/register`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionRegistrationResponseFromJSON)(jsonValue));
+    registerPermissions1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionRegistrationRequest'] == null) {
+                throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissions1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/permissions/register`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PermissionRegistrationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Services call this endpoint to register their available permissions
      * Register permissions from a service
      */
-    async registerPermissions1(requestParameters, initOverrides) {
-        const response = await this.registerPermissions1Raw(requestParameters, initOverrides);
-        return await response.value();
+    registerPermissions1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.registerPermissions1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Registers or updates permissions using the RBAC contract payload and returns the resulting permission set.
      * Register permissions (RBAC contract endpoint)
      */
-    async registerPermissionsContractRaw(requestParameters, initOverrides) {
-        if (requestParameters['permissionRegistrationRequest'] == null) {
-            throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissionsContract().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/permissions/registerPermissions`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+    registerPermissionsContractRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionRegistrationRequest'] == null) {
+                throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissionsContract().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/permissions/registerPermissions`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+        });
     }
     /**
      * Registers or updates permissions using the RBAC contract payload and returns the resulting permission set.
      * Register permissions (RBAC contract endpoint)
      */
-    async registerPermissionsContract(requestParameters, initOverrides) {
-        const response = await this.registerPermissionsContractRaw(requestParameters, initOverrides);
-        return await response.value();
+    registerPermissionsContract(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.registerPermissionsContractRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Registers or updates permissions using the RBAC contract payload and returns the resulting permission set.
      * Register permissions (RBAC contract endpoint)
      */
-    async registerPermissionsContract1Raw(requestParameters, initOverrides) {
-        if (requestParameters['permissionRegistrationRequest'] == null) {
-            throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissionsContract1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/users/permissions/registerPermissions`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+    registerPermissionsContract1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionRegistrationRequest'] == null) {
+                throw new runtime.RequiredError('permissionRegistrationRequest', 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissionsContract1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/users/permissions/registerPermissions`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PermissionRegistrationRequestToJSON)(requestParameters['permissionRegistrationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PermissionDtoFromJSON));
+        });
     }
     /**
      * Registers or updates permissions using the RBAC contract payload and returns the resulting permission set.
      * Register permissions (RBAC contract endpoint)
      */
-    async registerPermissionsContract1(requestParameters, initOverrides) {
-        const response = await this.registerPermissionsContract1Raw(requestParameters, initOverrides);
-        return await response.value();
+    registerPermissionsContract1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.registerPermissionsContract1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Checks if a permission name follows the domain:resource:action format
      * Validate permission name format
      */
-    async validatePermissionNameRaw(requestParameters, initOverrides) {
-        if (requestParameters['permissionName'] == null) {
-            throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling validatePermissionName().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/users/permissions/validate/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    validatePermissionNameRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionName'] == null) {
+                throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling validatePermissionName().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/users/permissions/validate/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Checks if a permission name follows the domain:resource:action format
      * Validate permission name format
      */
-    async validatePermissionName(requestParameters, initOverrides) {
-        const response = await this.validatePermissionNameRaw(requestParameters, initOverrides);
-        return await response.value();
+    validatePermissionName(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.validatePermissionNameRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Checks if a permission name follows the domain:resource:action format
      * Validate permission name format
      */
-    async validatePermissionName1Raw(requestParameters, initOverrides) {
-        if (requestParameters['permissionName'] == null) {
-            throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling validatePermissionName1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/permissions/validate/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    validatePermissionName1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['permissionName'] == null) {
+                throw new runtime.RequiredError('permissionName', 'Required parameter "permissionName" was null or undefined when calling validatePermissionName1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/permissions/validate/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Checks if a permission name follows the domain:resource:action format
      * Validate permission name format
      */
-    async validatePermissionName1(requestParameters, initOverrides) {
-        const response = await this.validatePermissionName1Raw(requestParameters, initOverrides);
-        return await response.value();
+    validatePermissionName1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.validatePermissionName1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PermissionRegistryApi = PermissionRegistryApi;

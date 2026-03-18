@@ -1,0 +1,23 @@
+import { DurionSdkConfig } from '@durion-sdk/transport';
+import * as GeneratedApis from './apis';
+export declare function createAccountingClient(config: DurionSdkConfig): {
+    apPaymentsApi: GeneratedApis.APPaymentsApi;
+    accountingEventsApi: GeneratedApis.AccountingEventsApi;
+    auditTrailApi: GeneratedApis.AuditTrailApi;
+    creditMemosApi: GeneratedApis.CreditMemosApi;
+    defaultGLMappingsApi: GeneratedApis.DefaultGLMappingsApi;
+    financialReportingApi: GeneratedApis.FinancialReportingApi;
+    glAccountsApi: GeneratedApis.GLAccountsApi;
+    glMappingAPIApi: GeneratedApis.GLMappingAPIApi;
+    invoicePaymentsApi: GeneratedApis.InvoicePaymentsApi;
+    journalEntriesApi: GeneratedApis.JournalEntriesApi;
+    mappingKeysApi: GeneratedApis.MappingKeysApi;
+    paymentApplicationsApi: GeneratedApis.PaymentApplicationsApi;
+    postingCategoriesApi: GeneratedApis.PostingCategoriesApi;
+    postingRulesApi: GeneratedApis.PostingRulesApi;
+    vendorBillAPIApi: GeneratedApis.VendorBillAPIApi;
+};
+export { AccountingEventWorkflow } from './workflows/accountingEventWorkflow';
+export * from './runtime';
+export * from './apis/index';
+export * from './models/index';

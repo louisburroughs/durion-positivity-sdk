@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppointmentsAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,126 +66,142 @@ class AppointmentsAPIApi extends runtime.BaseAPI {
      * Cancel a scheduled appointment
      * Cancel appointment
      */
-    async cancelAppointmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['appointmentId'] == null) {
-            throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling cancelAppointment().');
-        }
-        if (requestParameters['cancelAppointmentRequest'] == null) {
-            throw new runtime.RequiredError('cancelAppointmentRequest', 'Required parameter "cancelAppointmentRequest" was null or undefined when calling cancelAppointment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/appointments/{appointmentId}/cancel`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CancelAppointmentRequestToJSON)(requestParameters['cancelAppointmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+    cancelAppointmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['appointmentId'] == null) {
+                throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling cancelAppointment().');
+            }
+            if (requestParameters['cancelAppointmentRequest'] == null) {
+                throw new runtime.RequiredError('cancelAppointmentRequest', 'Required parameter "cancelAppointmentRequest" was null or undefined when calling cancelAppointment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/appointments/{appointmentId}/cancel`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CancelAppointmentRequestToJSON)(requestParameters['cancelAppointmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Cancel a scheduled appointment
      * Cancel appointment
      */
-    async cancelAppointment(requestParameters, initOverrides) {
-        const response = await this.cancelAppointmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    cancelAppointment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.cancelAppointmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Create a new appointment
      * Create appointment
      */
-    async createAppointmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['appointmentCreateRequest'] == null) {
-            throw new runtime.RequiredError('appointmentCreateRequest', 'Required parameter "appointmentCreateRequest" was null or undefined when calling createAppointment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/appointments`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.AppointmentCreateRequestToJSON)(requestParameters['appointmentCreateRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+    createAppointmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['appointmentCreateRequest'] == null) {
+                throw new runtime.RequiredError('appointmentCreateRequest', 'Required parameter "appointmentCreateRequest" was null or undefined when calling createAppointment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/appointments`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.AppointmentCreateRequestToJSON)(requestParameters['appointmentCreateRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new appointment
      * Create appointment
      */
-    async createAppointment(requestParameters, initOverrides) {
-        const response = await this.createAppointmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    createAppointment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAppointmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve an appointment by ID
      * Load appointment
      */
-    async getAppointmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['appointmentId'] == null) {
-            throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling getAppointment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/appointments/{appointmentId}`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+    getAppointmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['appointmentId'] == null) {
+                throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling getAppointment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/appointments/{appointmentId}`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve an appointment by ID
      * Load appointment
      */
-    async getAppointment(requestParameters, initOverrides) {
-        const response = await this.getAppointmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAppointment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAppointmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Reschedule an existing appointment
      * Reschedule appointment
      */
-    async rescheduleAppointmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['appointmentId'] == null) {
-            throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling rescheduleAppointment().');
-        }
-        if (requestParameters['rescheduleAppointmentRequest'] == null) {
-            throw new runtime.RequiredError('rescheduleAppointmentRequest', 'Required parameter "rescheduleAppointmentRequest" was null or undefined when calling rescheduleAppointment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/appointments/{appointmentId}/reschedule`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RescheduleAppointmentRequestToJSON)(requestParameters['rescheduleAppointmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+    rescheduleAppointmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['appointmentId'] == null) {
+                throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling rescheduleAppointment().');
+            }
+            if (requestParameters['rescheduleAppointmentRequest'] == null) {
+                throw new runtime.RequiredError('rescheduleAppointmentRequest', 'Required parameter "rescheduleAppointmentRequest" was null or undefined when calling rescheduleAppointment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/appointments/{appointmentId}/reschedule`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RescheduleAppointmentRequestToJSON)(requestParameters['rescheduleAppointmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AppointmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Reschedule an existing appointment
      * Reschedule appointment
      */
-    async rescheduleAppointment(requestParameters, initOverrides) {
-        const response = await this.rescheduleAppointmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    rescheduleAppointment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.rescheduleAppointmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.AppointmentsAPIApi = AppointmentsAPIApi;

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderCancellationApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,61 +65,69 @@ class OrderCancellationApi extends runtime.BaseAPI {
     /**
      * Cancel order
      */
-    async cancelOrderRaw(requestParameters, initOverrides) {
-        if (requestParameters['orderId'] == null) {
-            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling cancelOrder().');
-        }
-        if (requestParameters['cancelOrderRequest'] == null) {
-            throw new runtime.RequiredError('cancelOrderRequest', 'Required parameter "cancelOrderRequest" was null or undefined when calling cancelOrder().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/orders/carts/{orderId}/cancel`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CancelOrderRequestToJSON)(requestParameters['cancelOrderRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CancellationResponseFromJSON)(jsonValue));
+    cancelOrderRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['orderId'] == null) {
+                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling cancelOrder().');
+            }
+            if (requestParameters['cancelOrderRequest'] == null) {
+                throw new runtime.RequiredError('cancelOrderRequest', 'Required parameter "cancelOrderRequest" was null or undefined when calling cancelOrder().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/orders/carts/{orderId}/cancel`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CancelOrderRequestToJSON)(requestParameters['cancelOrderRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CancellationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Cancel order
      */
-    async cancelOrder(requestParameters, initOverrides) {
-        const response = await this.cancelOrderRaw(requestParameters, initOverrides);
-        return await response.value();
+    cancelOrder(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.cancelOrderRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retry failed cancellation
      */
-    async retryCancellationRaw(requestParameters, initOverrides) {
-        if (requestParameters['orderId'] == null) {
-            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling retryCancellation().');
-        }
-        if (requestParameters['idempotencyKey'] == null) {
-            throw new runtime.RequiredError('idempotencyKey', 'Required parameter "idempotencyKey" was null or undefined when calling retryCancellation().');
-        }
-        const queryParameters = {};
-        if (requestParameters['idempotencyKey'] != null) {
-            queryParameters['idempotencyKey'] = requestParameters['idempotencyKey'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/orders/carts/{orderId}/cancel/retry`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CancellationResponseFromJSON)(jsonValue));
+    retryCancellationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['orderId'] == null) {
+                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling retryCancellation().');
+            }
+            if (requestParameters['idempotencyKey'] == null) {
+                throw new runtime.RequiredError('idempotencyKey', 'Required parameter "idempotencyKey" was null or undefined when calling retryCancellation().');
+            }
+            const queryParameters = {};
+            if (requestParameters['idempotencyKey'] != null) {
+                queryParameters['idempotencyKey'] = requestParameters['idempotencyKey'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/orders/carts/{orderId}/cancel/retry`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CancellationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retry failed cancellation
      */
-    async retryCancellation(requestParameters, initOverrides) {
-        const response = await this.retryCancellationRaw(requestParameters, initOverrides);
-        return await response.value();
+    retryCancellation(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.retryCancellationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.OrderCancellationApi = OrderCancellationApi;

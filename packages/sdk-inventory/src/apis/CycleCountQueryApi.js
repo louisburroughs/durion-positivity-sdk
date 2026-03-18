@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CycleCountQueryApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,79 +66,91 @@ class CycleCountQueryApi extends runtime.BaseAPI {
      * Retrieves all cycle count tasks assigned to a specific auditor.
      * Get tasks assigned to an auditor
      */
-    async getAuditorTasksRaw(requestParameters, initOverrides) {
-        if (requestParameters['auditorId'] == null) {
-            throw new runtime.RequiredError('auditorId', 'Required parameter "auditorId" was null or undefined when calling getAuditorTasks().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCount/auditor/{auditorId}/tasks`.replace(`{${"auditorId"}}`, encodeURIComponent(String(requestParameters['auditorId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountTaskResponseFromJSON)(jsonValue));
+    getAuditorTasksRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['auditorId'] == null) {
+                throw new runtime.RequiredError('auditorId', 'Required parameter "auditorId" was null or undefined when calling getAuditorTasks().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCount/auditor/{auditorId}/tasks`.replace(`{${"auditorId"}}`, encodeURIComponent(String(requestParameters['auditorId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountTaskResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves all cycle count tasks assigned to a specific auditor.
      * Get tasks assigned to an auditor
      */
-    async getAuditorTasks(requestParameters, initOverrides) {
-        const response = await this.getAuditorTasksRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAuditorTasks(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAuditorTasksRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves all count entries (original + recounts) for a task, ordered by sequence.
      * Get count history for a task
      */
-    async getCountHistoryRaw(requestParameters, initOverrides) {
-        if (requestParameters['taskId'] == null) {
-            throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling getCountHistory().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCount/task/{taskId}/history`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CountEntryResponseFromJSON)(jsonValue));
+    getCountHistoryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['taskId'] == null) {
+                throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling getCountHistory().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCount/task/{taskId}/history`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CountEntryResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves all count entries (original + recounts) for a task, ordered by sequence.
      * Get count history for a task
      */
-    async getCountHistory(requestParameters, initOverrides) {
-        const response = await this.getCountHistoryRaw(requestParameters, initOverrides);
-        return await response.value();
+    getCountHistory(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCountHistoryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves details of a specific cycle count task.
      * Get cycle count task details
      */
-    async getTaskRaw(requestParameters, initOverrides) {
-        if (requestParameters['taskId'] == null) {
-            throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling getTask().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCount/task/{taskId}`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountTaskResponseFromJSON)(jsonValue));
+    getTaskRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['taskId'] == null) {
+                throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling getTask().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCount/task/{taskId}`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountTaskResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves details of a specific cycle count task.
      * Get cycle count task details
      */
-    async getTask(requestParameters, initOverrides) {
-        const response = await this.getTaskRaw(requestParameters, initOverrides);
-        return await response.value();
+    getTask(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getTaskRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CycleCountQueryApi = CycleCountQueryApi;

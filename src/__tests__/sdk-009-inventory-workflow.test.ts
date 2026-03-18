@@ -1,25 +1,19 @@
 /**
- * SDK-009 Inventory Procure-To-Receive Workflow Tests — intentionally RED phase.
+ * SDK-009 Inventory Procure-To-Receive Workflow Tests — GREEN phase.
  *
- * ALL tests in this file are expected to FAIL until the GREEN implementation
- * creates the InventoryProcureToReceiveWorkflow class at:
+ * Tests verify the InventoryProcureToReceiveWorkflow class at:
  *   packages/sdk-inventory/src/workflows/inventoryProcureToReceiveWorkflow.ts
- * and exports it from packages/sdk-inventory/src/index.ts.
+ * exported from packages/sdk-inventory/src/index.ts.
  *
  * Test categories
  * ---------------
  * 1. Structural tests  — verify the workflow source file exists on disk.
- *    Fail RED: file is absent.
  *
  * 2. Export tests      — verify InventoryProcureToReceiveWorkflow is
  *    re-exported from packages/sdk-inventory/src/index.ts.
- *    Fail RED: class name absent from the index.
  *
  * 3. Behavioral tests  — verify each workflow method delegates correctly to
  *    the underlying generated API instance (constructor injection).
- *    Fail RED: the imported class resolves to `undefined`, so
- *    `new InventoryProcureToReceiveWorkflow(...)` throws:
- *      TypeError: InventoryProcureToReceiveWorkflow is not a constructor
  *
  * Issue: SDK-009
  */
@@ -28,13 +22,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 // ---------------------------------------------------------------------------
-// Workflow class import — resolves to `undefined` until GREEN implementation
-// exports it from the package index.  The @ts-ignore directive suppresses
-// TypeScript's TS2305 ("has no exported member") so that the file compiles
-// and individual tests can report focused RED failures at runtime.
+// Workflow class import — exported from packages/sdk-inventory/src/index.ts.
 // ---------------------------------------------------------------------------
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — intentional RED import; InventoryProcureToReceiveWorkflow not yet exported
 import { InventoryProcureToReceiveWorkflow } from '@durion-sdk/inventory';
 
 // ---------------------------------------------------------------------------

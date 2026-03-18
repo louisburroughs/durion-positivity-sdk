@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductMSRPAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,141 +66,157 @@ class ProductMSRPAPIApi extends runtime.BaseAPI {
      * Creates a product MSRP record with effective date constraints.
      * Create MSRP
      */
-    async createMsrpRaw(requestParameters, initOverrides) {
-        if (requestParameters['productId'] == null) {
-            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling createMsrp().');
-        }
-        if (requestParameters['createMsrpRequestDto'] == null) {
-            throw new runtime.RequiredError('createMsrpRequestDto', 'Required parameter "createMsrpRequestDto" was null or undefined when calling createMsrp().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/{productId}/msrp`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateMsrpRequestDtoToJSON)(requestParameters['createMsrpRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    createMsrpRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['productId'] == null) {
+                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling createMsrp().');
+            }
+            if (requestParameters['createMsrpRequestDto'] == null) {
+                throw new runtime.RequiredError('createMsrpRequestDto', 'Required parameter "createMsrpRequestDto" was null or undefined when calling createMsrp().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/{productId}/msrp`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateMsrpRequestDtoToJSON)(requestParameters['createMsrpRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Creates a product MSRP record with effective date constraints.
      * Create MSRP
      */
-    async createMsrp(requestParameters, initOverrides) {
-        const response = await this.createMsrpRaw(requestParameters, initOverrides);
-        return await response.value();
+    createMsrp(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createMsrpRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns MSRP active for the provided asOf date (or today).
      * Get active MSRP
      */
-    async getActiveMsrpRaw(requestParameters, initOverrides) {
-        if (requestParameters['productId'] == null) {
-            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getActiveMsrp().');
-        }
-        const queryParameters = {};
-        if (requestParameters['asOf'] != null) {
-            queryParameters['asOf'] = requestParameters['asOf'].toISOString().substring(0, 10);
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/products/{productId}/msrp/active`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getActiveMsrpRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['productId'] == null) {
+                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getActiveMsrp().');
+            }
+            const queryParameters = {};
+            if (requestParameters['asOf'] != null) {
+                queryParameters['asOf'] = requestParameters['asOf'].toISOString().substring(0, 10);
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/products/{productId}/msrp/active`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Returns MSRP active for the provided asOf date (or today).
      * Get active MSRP
      */
-    async getActiveMsrp(requestParameters, initOverrides) {
-        const response = await this.getActiveMsrpRaw(requestParameters, initOverrides);
-        return await response.value();
+    getActiveMsrp(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getActiveMsrpRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all MSRP records for a product.
      * List MSRP history
      */
-    async listMsrpRaw(requestParameters, initOverrides) {
-        if (requestParameters['productId'] == null) {
-            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling listMsrp().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/products/{productId}/msrp`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    listMsrpRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['productId'] == null) {
+                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling listMsrp().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/products/{productId}/msrp`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Returns all MSRP records for a product.
      * List MSRP history
      */
-    async listMsrp(requestParameters, initOverrides) {
-        const response = await this.listMsrpRaw(requestParameters, initOverrides);
-        return await response.value();
+    listMsrp(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listMsrpRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Updates a non-historical MSRP record.
      * Update MSRP
      */
-    async updateMsrpRaw(requestParameters, initOverrides) {
-        if (requestParameters['productId'] == null) {
-            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling updateMsrp().');
-        }
-        if (requestParameters['msrpId'] == null) {
-            throw new runtime.RequiredError('msrpId', 'Required parameter "msrpId" was null or undefined when calling updateMsrp().');
-        }
-        if (requestParameters['updateMsrpRequestDto'] == null) {
-            throw new runtime.RequiredError('updateMsrpRequestDto', 'Required parameter "updateMsrpRequestDto" was null or undefined when calling updateMsrp().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/{productId}/msrp/{msrpId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))).replace(`{${"msrpId"}}`, encodeURIComponent(String(requestParameters['msrpId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.UpdateMsrpRequestDtoToJSON)(requestParameters['updateMsrpRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    updateMsrpRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['productId'] == null) {
+                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling updateMsrp().');
+            }
+            if (requestParameters['msrpId'] == null) {
+                throw new runtime.RequiredError('msrpId', 'Required parameter "msrpId" was null or undefined when calling updateMsrp().');
+            }
+            if (requestParameters['updateMsrpRequestDto'] == null) {
+                throw new runtime.RequiredError('updateMsrpRequestDto', 'Required parameter "updateMsrpRequestDto" was null or undefined when calling updateMsrp().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/{productId}/msrp/{msrpId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))).replace(`{${"msrpId"}}`, encodeURIComponent(String(requestParameters['msrpId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.UpdateMsrpRequestDtoToJSON)(requestParameters['updateMsrpRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Updates a non-historical MSRP record.
      * Update MSRP
      */
-    async updateMsrp(requestParameters, initOverrides) {
-        const response = await this.updateMsrpRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateMsrp(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateMsrpRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.ProductMSRPAPIApi = ProductMSRPAPIApi;

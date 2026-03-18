@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TravelSegmentAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,115 +65,131 @@ class TravelSegmentAPIApi extends runtime.BaseAPI {
     /**
      * Create a post-approval adjustment for a travel segment
      */
-    async createAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['travelSegmentId'] == null) {
-            throw new runtime.RequiredError('travelSegmentId', 'Required parameter "travelSegmentId" was null or undefined when calling createAdjustment().');
-        }
-        if (requestParameters['createTravelSegmentAdjustmentRequest'] == null) {
-            throw new runtime.RequiredError('createTravelSegmentAdjustmentRequest', 'Required parameter "createTravelSegmentAdjustmentRequest" was null or undefined when calling createAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/travelSegments/{travelSegmentId}/adjustments`.replace(`{${"travelSegmentId"}}`, encodeURIComponent(String(requestParameters['travelSegmentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateTravelSegmentAdjustmentRequestToJSON)(requestParameters['createTravelSegmentAdjustmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TravelSegmentAdjustmentResponseFromJSON)(jsonValue));
+    createAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['travelSegmentId'] == null) {
+                throw new runtime.RequiredError('travelSegmentId', 'Required parameter "travelSegmentId" was null or undefined when calling createAdjustment().');
+            }
+            if (requestParameters['createTravelSegmentAdjustmentRequest'] == null) {
+                throw new runtime.RequiredError('createTravelSegmentAdjustmentRequest', 'Required parameter "createTravelSegmentAdjustmentRequest" was null or undefined when calling createAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/travelSegments/{travelSegmentId}/adjustments`.replace(`{${"travelSegmentId"}}`, encodeURIComponent(String(requestParameters['travelSegmentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateTravelSegmentAdjustmentRequestToJSON)(requestParameters['createTravelSegmentAdjustmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TravelSegmentAdjustmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a post-approval adjustment for a travel segment
      */
-    async createAdjustment(requestParameters, initOverrides) {
-        const response = await this.createAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    createAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Start a travel segment
      */
-    async startTravelSegmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['startTravelSegmentRequest'] == null) {
-            throw new runtime.RequiredError('startTravelSegmentRequest', 'Required parameter "startTravelSegmentRequest" was null or undefined when calling startTravelSegment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/travelSegments/start`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.StartTravelSegmentRequestToJSON)(requestParameters['startTravelSegmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TravelSegmentResponseFromJSON)(jsonValue));
+    startTravelSegmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['startTravelSegmentRequest'] == null) {
+                throw new runtime.RequiredError('startTravelSegmentRequest', 'Required parameter "startTravelSegmentRequest" was null or undefined when calling startTravelSegment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/travelSegments/start`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.StartTravelSegmentRequestToJSON)(requestParameters['startTravelSegmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TravelSegmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Start a travel segment
      */
-    async startTravelSegment(requestParameters, initOverrides) {
-        const response = await this.startTravelSegmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    startTravelSegment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.startTravelSegmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Stop a travel segment
      */
-    async stopTravelSegmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['travelSegmentId'] == null) {
-            throw new runtime.RequiredError('travelSegmentId', 'Required parameter "travelSegmentId" was null or undefined when calling stopTravelSegment().');
-        }
-        if (requestParameters['stopTravelSegmentRequest'] == null) {
-            throw new runtime.RequiredError('stopTravelSegmentRequest', 'Required parameter "stopTravelSegmentRequest" was null or undefined when calling stopTravelSegment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/travelSegments/{travelSegmentId}/stop`.replace(`{${"travelSegmentId"}}`, encodeURIComponent(String(requestParameters['travelSegmentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.StopTravelSegmentRequestToJSON)(requestParameters['stopTravelSegmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TravelSegmentResponseFromJSON)(jsonValue));
+    stopTravelSegmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['travelSegmentId'] == null) {
+                throw new runtime.RequiredError('travelSegmentId', 'Required parameter "travelSegmentId" was null or undefined when calling stopTravelSegment().');
+            }
+            if (requestParameters['stopTravelSegmentRequest'] == null) {
+                throw new runtime.RequiredError('stopTravelSegmentRequest', 'Required parameter "stopTravelSegmentRequest" was null or undefined when calling stopTravelSegment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/travelSegments/{travelSegmentId}/stop`.replace(`{${"travelSegmentId"}}`, encodeURIComponent(String(requestParameters['travelSegmentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.StopTravelSegmentRequestToJSON)(requestParameters['stopTravelSegmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TravelSegmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Stop a travel segment
      */
-    async stopTravelSegment(requestParameters, initOverrides) {
-        const response = await this.stopTravelSegmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    stopTravelSegment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.stopTravelSegmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Submit travel segments for a mobile work assignment
      */
-    async submitTravelSegmentsRaw(requestParameters, initOverrides) {
-        if (requestParameters['mobileWorkAssignmentId'] == null) {
-            throw new runtime.RequiredError('mobileWorkAssignmentId', 'Required parameter "mobileWorkAssignmentId" was null or undefined when calling submitTravelSegments().');
-        }
-        if (requestParameters['submitTravelSegmentsRequest'] == null) {
-            throw new runtime.RequiredError('submitTravelSegmentsRequest', 'Required parameter "submitTravelSegmentsRequest" was null or undefined when calling submitTravelSegments().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/travelSegments/submit/{mobileWorkAssignmentId}`.replace(`{${"mobileWorkAssignmentId"}}`, encodeURIComponent(String(requestParameters['mobileWorkAssignmentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.SubmitTravelSegmentsRequestToJSON)(requestParameters['submitTravelSegmentsRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.TravelSegmentResponseFromJSON));
+    submitTravelSegmentsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['mobileWorkAssignmentId'] == null) {
+                throw new runtime.RequiredError('mobileWorkAssignmentId', 'Required parameter "mobileWorkAssignmentId" was null or undefined when calling submitTravelSegments().');
+            }
+            if (requestParameters['submitTravelSegmentsRequest'] == null) {
+                throw new runtime.RequiredError('submitTravelSegmentsRequest', 'Required parameter "submitTravelSegmentsRequest" was null or undefined when calling submitTravelSegments().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/travelSegments/submit/{mobileWorkAssignmentId}`.replace(`{${"mobileWorkAssignmentId"}}`, encodeURIComponent(String(requestParameters['mobileWorkAssignmentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.SubmitTravelSegmentsRequestToJSON)(requestParameters['submitTravelSegmentsRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.TravelSegmentResponseFromJSON));
+        });
     }
     /**
      * Submit travel segments for a mobile work assignment
      */
-    async submitTravelSegments(requestParameters, initOverrides) {
-        const response = await this.submitTravelSegmentsRaw(requestParameters, initOverrides);
-        return await response.value();
+    submitTravelSegments(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.submitTravelSegmentsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.TravelSegmentAPIApi = TravelSegmentAPIApi;

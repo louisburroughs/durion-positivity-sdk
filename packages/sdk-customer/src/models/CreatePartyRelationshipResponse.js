@@ -56,6 +56,7 @@ function CreatePartyRelationshipResponseFromJSONTyped(json, ignoreDiscriminator)
     };
 }
 function CreatePartyRelationshipResponseToJSON(value) {
+    var _a;
     if (value == null) {
         return value;
     }
@@ -63,7 +64,7 @@ function CreatePartyRelationshipResponseToJSON(value) {
         'relationshipId': value['relationshipId'],
         'partyId': value['partyId'],
         'personId': value['personId'],
-        'roles': value['roles'] == null ? undefined : Array.from(value['roles'] ?? []),
+        'roles': value['roles'] == null ? undefined : Array.from((_a = value['roles']) !== null && _a !== void 0 ? _a : []),
         'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString().substring(0, 10)),
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0, 10)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),

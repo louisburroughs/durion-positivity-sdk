@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CRMCommunicationPreferencesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,58 +66,66 @@ class CRMCommunicationPreferencesApi extends runtime.BaseAPI {
      * Retrieve communication preferences and consent flags for a party
      * Get communication preferences
      */
-    async getCommunicationPreferencesRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getCommunicationPreferences().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetCommunicationPreferencesResponseFromJSON)(jsonValue));
+    getCommunicationPreferencesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getCommunicationPreferences().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetCommunicationPreferencesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve communication preferences and consent flags for a party
      * Get communication preferences
      */
-    async getCommunicationPreferences(requestParameters, initOverrides) {
-        const response = await this.getCommunicationPreferencesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getCommunicationPreferences(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCommunicationPreferencesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Set or update communication preferences and consent flags for a party
      * Create or update communication preferences
      */
-    async upsertCommunicationPreferencesRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling upsertCommunicationPreferences().');
-        }
-        if (requestParameters['upsertCommunicationPreferencesRequest'] == null) {
-            throw new runtime.RequiredError('upsertCommunicationPreferencesRequest', 'Required parameter "upsertCommunicationPreferencesRequest" was null or undefined when calling upsertCommunicationPreferences().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.UpsertCommunicationPreferencesRequestToJSON)(requestParameters['upsertCommunicationPreferencesRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpsertCommunicationPreferencesResponseFromJSON)(jsonValue));
+    upsertCommunicationPreferencesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling upsertCommunicationPreferences().');
+            }
+            if (requestParameters['upsertCommunicationPreferencesRequest'] == null) {
+                throw new runtime.RequiredError('upsertCommunicationPreferencesRequest', 'Required parameter "upsertCommunicationPreferencesRequest" was null or undefined when calling upsertCommunicationPreferences().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.UpsertCommunicationPreferencesRequestToJSON)(requestParameters['upsertCommunicationPreferencesRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpsertCommunicationPreferencesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Set or update communication preferences and consent flags for a party
      * Create or update communication preferences
      */
-    async upsertCommunicationPreferences(requestParameters, initOverrides) {
-        const response = await this.upsertCommunicationPreferencesRaw(requestParameters, initOverrides);
-        return await response.value();
+    upsertCommunicationPreferences(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.upsertCommunicationPreferencesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CRMCommunicationPreferencesApi = CRMCommunicationPreferencesApi;

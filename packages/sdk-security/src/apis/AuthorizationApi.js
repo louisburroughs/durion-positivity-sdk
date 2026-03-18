@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthorizationApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,36 +66,40 @@ class AuthorizationApi extends runtime.BaseAPI {
      * Returns allow or deny for a principal and permission key
      * Get authorization decision
      */
-    async getDecisionRaw(requestParameters, initOverrides) {
-        if (requestParameters['principalId'] == null) {
-            throw new runtime.RequiredError('principalId', 'Required parameter "principalId" was null or undefined when calling getDecision().');
-        }
-        if (requestParameters['permission'] == null) {
-            throw new runtime.RequiredError('permission', 'Required parameter "permission" was null or undefined when calling getDecision().');
-        }
-        const queryParameters = {};
-        if (requestParameters['principalId'] != null) {
-            queryParameters['principalId'] = requestParameters['principalId'];
-        }
-        if (requestParameters['permission'] != null) {
-            queryParameters['permission'] = requestParameters['permission'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/users/authorization/decision`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuthorizationDecisionResponseFromJSON)(jsonValue));
+    getDecisionRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['principalId'] == null) {
+                throw new runtime.RequiredError('principalId', 'Required parameter "principalId" was null or undefined when calling getDecision().');
+            }
+            if (requestParameters['permission'] == null) {
+                throw new runtime.RequiredError('permission', 'Required parameter "permission" was null or undefined when calling getDecision().');
+            }
+            const queryParameters = {};
+            if (requestParameters['principalId'] != null) {
+                queryParameters['principalId'] = requestParameters['principalId'];
+            }
+            if (requestParameters['permission'] != null) {
+                queryParameters['permission'] = requestParameters['permission'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/users/authorization/decision`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuthorizationDecisionResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns allow or deny for a principal and permission key
      * Get authorization decision
      */
-    async getDecision(requestParameters, initOverrides) {
-        const response = await this.getDecisionRaw(requestParameters, initOverrides);
-        return await response.value();
+    getDecision(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getDecisionRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.AuthorizationApi = AuthorizationApi;

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JWTAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,268 +66,304 @@ class JWTAPIApi extends runtime.BaseAPI {
      * Authenticate and receive both access token (1-hour) and refresh token (7-day). See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
      * Issue JWT token pair (access + refresh)
      */
-    async generateTokenPairRaw(requestParameters, initOverrides) {
-        if (requestParameters['tokenPairRequest'] == null) {
-            throw new runtime.RequiredError('tokenPairRequest', 'Required parameter "tokenPairRequest" was null or undefined when calling generateTokenPair().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/auth/token-pair`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.TokenPairRequestToJSON)(requestParameters['tokenPairRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenPairResponseFromJSON)(jsonValue));
+    generateTokenPairRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['tokenPairRequest'] == null) {
+                throw new runtime.RequiredError('tokenPairRequest', 'Required parameter "tokenPairRequest" was null or undefined when calling generateTokenPair().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/auth/token-pair`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.TokenPairRequestToJSON)(requestParameters['tokenPairRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenPairResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Authenticate and receive both access token (1-hour) and refresh token (7-day). See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
      * Issue JWT token pair (access + refresh)
      */
-    async generateTokenPair(requestParameters, initOverrides) {
-        const response = await this.generateTokenPairRaw(requestParameters, initOverrides);
-        return await response.value();
+    generateTokenPair(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.generateTokenPairRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get the authorities claim from a JWT token (expanded by gateway)
      * Extract authorities from JWT token
      */
-    async getAuthoritiesRaw(requestParameters, initOverrides) {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getAuthorities().');
-        }
-        const queryParameters = {};
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/auth/authorities`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response);
+    getAuthoritiesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['token'] == null) {
+                throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getAuthorities().');
+            }
+            const queryParameters = {};
+            if (requestParameters['token'] != null) {
+                queryParameters['token'] = requestParameters['token'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/auth/authorities`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response);
+        });
     }
     /**
      * Get the authorities claim from a JWT token (expanded by gateway)
      * Extract authorities from JWT token
      */
-    async getAuthorities(requestParameters, initOverrides) {
-        const response = await this.getAuthoritiesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAuthorities(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAuthoritiesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get the roles claim from a JWT token
      * Extract roles from JWT token
      */
-    async getRolesRaw(requestParameters, initOverrides) {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getRoles().');
-        }
-        const queryParameters = {};
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/auth/roles`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response);
+    getRolesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['token'] == null) {
+                throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getRoles().');
+            }
+            const queryParameters = {};
+            if (requestParameters['token'] != null) {
+                queryParameters['token'] = requestParameters['token'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/auth/roles`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response);
+        });
     }
     /**
      * Get the roles claim from a JWT token
      * Extract roles from JWT token
      */
-    async getRoles(requestParameters, initOverrides) {
-        const response = await this.getRolesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getRoles(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getRolesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get the subject (username) from a JWT token
      * Extract subject from JWT token
      */
-    async getSubjectRaw(requestParameters, initOverrides) {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getSubject().');
-        }
-        const queryParameters = {};
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/auth/subject`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getSubjectRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['token'] == null) {
+                throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getSubject().');
+            }
+            const queryParameters = {};
+            if (requestParameters['token'] != null) {
+                queryParameters['token'] = requestParameters['token'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/auth/subject`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Get the subject (username) from a JWT token
      * Extract subject from JWT token
      */
-    async getSubject(requestParameters, initOverrides) {
-        const response = await this.getSubjectRaw(requestParameters, initOverrides);
-        return await response.value();
+    getSubject(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getSubjectRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get the stable user identifier from a JWT token
      * Extract userId from JWT token
      */
-    async getUserIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getUserId().');
-        }
-        const queryParameters = {};
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/auth/user-id`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getUserIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['token'] == null) {
+                throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling getUserId().');
+            }
+            const queryParameters = {};
+            if (requestParameters['token'] != null) {
+                queryParameters['token'] = requestParameters['token'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/auth/user-id`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Get the stable user identifier from a JWT token
      * Extract userId from JWT token
      */
-    async getUserId(requestParameters, initOverrides) {
-        const response = await this.getUserIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getUserId(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getUserIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Internal endpoint to issue a JWT access token (1-hour expiration). See BACKEND_CONTRACT_GUIDE.md §Login Endpoint for full specification.
      * Issue internal JWT access token
      */
-    async issueInternalTokenRaw(requestParameters, initOverrides) {
-        if (requestParameters['internalTokenRequest'] == null) {
-            throw new runtime.RequiredError('internalTokenRequest', 'Required parameter "internalTokenRequest" was null or undefined when calling issueInternalToken().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/auth/internal/token`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.InternalTokenRequestToJSON)(requestParameters['internalTokenRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenResponseFromJSON)(jsonValue));
+    issueInternalTokenRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['internalTokenRequest'] == null) {
+                throw new runtime.RequiredError('internalTokenRequest', 'Required parameter "internalTokenRequest" was null or undefined when calling issueInternalToken().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/auth/internal/token`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.InternalTokenRequestToJSON)(requestParameters['internalTokenRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Internal endpoint to issue a JWT access token (1-hour expiration). See BACKEND_CONTRACT_GUIDE.md §Login Endpoint for full specification.
      * Issue internal JWT access token
      */
-    async issueInternalToken(requestParameters, initOverrides) {
-        const response = await this.issueInternalTokenRaw(requestParameters, initOverrides);
-        return await response.value();
+    issueInternalToken(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.issueInternalTokenRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Exchange a valid refresh token for a new access token and refresh token. Old tokens are immediately revoked. See BACKEND_CONTRACT_GUIDE.md §Refresh Endpoint for full specification.
      * Refresh access token using refresh token
      */
-    async refreshAccessTokenRaw(requestParameters, initOverrides) {
-        if (requestParameters['refreshTokenRequest'] == null) {
-            throw new runtime.RequiredError('refreshTokenRequest', 'Required parameter "refreshTokenRequest" was null or undefined when calling refreshAccessToken().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/auth/refresh`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RefreshTokenRequestToJSON)(requestParameters['refreshTokenRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenPairResponseFromJSON)(jsonValue));
+    refreshAccessTokenRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['refreshTokenRequest'] == null) {
+                throw new runtime.RequiredError('refreshTokenRequest', 'Required parameter "refreshTokenRequest" was null or undefined when calling refreshAccessToken().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/auth/refresh`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RefreshTokenRequestToJSON)(requestParameters['refreshTokenRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenPairResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Exchange a valid refresh token for a new access token and refresh token. Old tokens are immediately revoked. See BACKEND_CONTRACT_GUIDE.md §Refresh Endpoint for full specification.
      * Refresh access token using refresh token
      */
-    async refreshAccessToken(requestParameters, initOverrides) {
-        const response = await this.refreshAccessTokenRaw(requestParameters, initOverrides);
-        return await response.value();
+    refreshAccessToken(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.refreshAccessTokenRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Revoke a JWT token immediately (Redis cache + database)
      * Revoke JWT token
      */
-    async revokeTokenRaw(requestParameters, initOverrides) {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling revokeToken().');
-        }
-        const queryParameters = {};
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/auth/revoke`,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    revokeTokenRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['token'] == null) {
+                throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling revokeToken().');
+            }
+            const queryParameters = {};
+            if (requestParameters['token'] != null) {
+                queryParameters['token'] = requestParameters['token'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/auth/revoke`,
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Revoke a JWT token immediately (Redis cache + database)
      * Revoke JWT token
      */
-    async revokeToken(requestParameters, initOverrides) {
-        await this.revokeTokenRaw(requestParameters, initOverrides);
+    revokeToken(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.revokeTokenRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Check if a JWT token is valid (signature, expiration, revocation)
      * Validate JWT token
      */
-    async validateTokenRaw(requestParameters, initOverrides) {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling validateToken().');
-        }
-        const queryParameters = {};
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/auth/validate`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ValidateResponseFromJSON)(jsonValue));
+    validateTokenRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['token'] == null) {
+                throw new runtime.RequiredError('token', 'Required parameter "token" was null or undefined when calling validateToken().');
+            }
+            const queryParameters = {};
+            if (requestParameters['token'] != null) {
+                queryParameters['token'] = requestParameters['token'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/auth/validate`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ValidateResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Check if a JWT token is valid (signature, expiration, revocation)
      * Validate JWT token
      */
-    async validateToken(requestParameters, initOverrides) {
-        const response = await this.validateTokenRaw(requestParameters, initOverrides);
-        return await response.value();
+    validateToken(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.validateTokenRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.JWTAPIApi = JWTAPIApi;

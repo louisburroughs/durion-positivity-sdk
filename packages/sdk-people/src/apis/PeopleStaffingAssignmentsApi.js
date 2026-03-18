@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeopleStaffingAssignmentsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,140 +66,160 @@ class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
      * Link a person to a location with role, effective dates, and primary flag.
      * Create staffing assignment
      */
-    async createAssignment1Raw(requestParameters, initOverrides) {
-        if (requestParameters['createStaffingAssignmentRequest'] == null) {
-            throw new runtime.RequiredError('createStaffingAssignmentRequest', 'Required parameter "createStaffingAssignmentRequest" was null or undefined when calling createAssignment1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/people/staffing/assignments`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateStaffingAssignmentRequestToJSON)(requestParameters['createStaffingAssignmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StaffingAssignmentResponseFromJSON)(jsonValue));
+    createAssignment1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createStaffingAssignmentRequest'] == null) {
+                throw new runtime.RequiredError('createStaffingAssignmentRequest', 'Required parameter "createStaffingAssignmentRequest" was null or undefined when calling createAssignment1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/people/staffing/assignments`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateStaffingAssignmentRequestToJSON)(requestParameters['createStaffingAssignmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StaffingAssignmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Link a person to a location with role, effective dates, and primary flag.
      * Create staffing assignment
      */
-    async createAssignment1(requestParameters, initOverrides) {
-        const response = await this.createAssignment1Raw(requestParameters, initOverrides);
-        return await response.value();
+    createAssignment1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAssignment1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Ends an active staffing assignment without physically deleting the record.
      * End (soft-delete) an assignment
      */
-    async endAssignmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['assignmentId'] == null) {
-            throw new runtime.RequiredError('assignmentId', 'Required parameter "assignmentId" was null or undefined when calling endAssignment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    endAssignmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['assignmentId'] == null) {
+                throw new runtime.RequiredError('assignmentId', 'Required parameter "assignmentId" was null or undefined when calling endAssignment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Ends an active staffing assignment without physically deleting the record.
      * End (soft-delete) an assignment
      */
-    async endAssignment(requestParameters, initOverrides) {
-        await this.endAssignmentRaw(requestParameters, initOverrides);
+    endAssignment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.endAssignmentRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieves a single staffing assignment by its unique ID.
      * Get assignment by ID
      */
-    async getAssignmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['assignmentId'] == null) {
-            throw new runtime.RequiredError('assignmentId', 'Required parameter "assignmentId" was null or undefined when calling getAssignment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StaffingAssignmentResponseFromJSON)(jsonValue));
+    getAssignmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['assignmentId'] == null) {
+                throw new runtime.RequiredError('assignmentId', 'Required parameter "assignmentId" was null or undefined when calling getAssignment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StaffingAssignmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves a single staffing assignment by its unique ID.
      * Get assignment by ID
      */
-    async getAssignment(requestParameters, initOverrides) {
-        const response = await this.getAssignmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAssignment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAssignmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all staffing assignments for the specified person.
      * List assignments for person
      */
-    async getAssignments1Raw(requestParameters, initOverrides) {
-        if (requestParameters['personId'] == null) {
-            throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getAssignments1().');
-        }
-        const queryParameters = {};
-        if (requestParameters['personId'] != null) {
-            queryParameters['personId'] = requestParameters['personId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/staffing/assignments`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.StaffingAssignmentResponseFromJSON));
+    getAssignments1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['personId'] == null) {
+                throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getAssignments1().');
+            }
+            const queryParameters = {};
+            if (requestParameters['personId'] != null) {
+                queryParameters['personId'] = requestParameters['personId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/staffing/assignments`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.StaffingAssignmentResponseFromJSON));
+        });
     }
     /**
      * Returns all staffing assignments for the specified person.
      * List assignments for person
      */
-    async getAssignments1(requestParameters, initOverrides) {
-        const response = await this.getAssignments1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getAssignments1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAssignments1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Updates an existing staffing assignment, including role, dates, and primary flag.
      * Update staffing assignment
      */
-    async updateAssignmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['assignmentId'] == null) {
-            throw new runtime.RequiredError('assignmentId', 'Required parameter "assignmentId" was null or undefined when calling updateAssignment().');
-        }
-        if (requestParameters['updateStaffingAssignmentRequest'] == null) {
-            throw new runtime.RequiredError('updateStaffingAssignmentRequest', 'Required parameter "updateStaffingAssignmentRequest" was null or undefined when calling updateAssignment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.UpdateStaffingAssignmentRequestToJSON)(requestParameters['updateStaffingAssignmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StaffingAssignmentResponseFromJSON)(jsonValue));
+    updateAssignmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['assignmentId'] == null) {
+                throw new runtime.RequiredError('assignmentId', 'Required parameter "assignmentId" was null or undefined when calling updateAssignment().');
+            }
+            if (requestParameters['updateStaffingAssignmentRequest'] == null) {
+                throw new runtime.RequiredError('updateStaffingAssignmentRequest', 'Required parameter "updateStaffingAssignmentRequest" was null or undefined when calling updateAssignment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.UpdateStaffingAssignmentRequestToJSON)(requestParameters['updateStaffingAssignmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StaffingAssignmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Updates an existing staffing assignment, including role, dates, and primary flag.
      * Update staffing assignment
      */
-    async updateAssignment(requestParameters, initOverrides) {
-        const response = await this.updateAssignmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateAssignment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateAssignmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PeopleStaffingAssignmentsApi = PeopleStaffingAssignmentsApi;

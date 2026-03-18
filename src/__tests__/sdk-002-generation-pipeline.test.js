@@ -76,9 +76,9 @@ describe('SDK-002 AC-2: openapitools.json has typescript-fetch generator configu
         // "generator-cli" > "generators" map.  Flatten all values and check that
         // at least one entry specifies typescript-fetch.
         const generatorsCli = config['generator-cli'];
-        const generators = generatorsCli?.['generators'];
+        const generators = generatorsCli === null || generatorsCli === void 0 ? void 0 : generatorsCli['generators'];
         expect(generators).toBeDefined();
-        const entries = Object.values(generators ?? {});
+        const entries = Object.values(generators !== null && generators !== void 0 ? generators : {});
         const hasFetchGenerator = entries.some((entry) => entry['generatorName'] === 'typescript-fetch');
         expect(hasFetchGenerator).toBe(true);
     });

@@ -1,33 +1,25 @@
 /**
- * SDK-010 Internal Profile Tests — intentionally RED phase.
+ * SDK-010 Internal Profile Tests — GREEN phase.
  *
- * ALL tests in this file are expected to FAIL until the GREEN implementation
- * creates the sdk-internal package at packages/sdk-internal/.
+ * Tests verify the sdk-internal package at packages/sdk-internal/.
  *
  * Test categories
  * ---------------
  * 1. Structural tests  — verify the sdk-internal package directories and
  *    files exist on disk.
- *    Fail RED: the entire packages/sdk-internal/ tree is absent.
  *
  * 2. Manifest tests    — verify packages/sdk-internal/package.json has the
  *    correct name and is marked private.
- *    Fail RED: package.json is absent.
  *
  * 3. README tests      — verify packages/sdk-internal/README.md contains
  *    required documentation strings (internal-only, ADR-0021).
- *    Fail RED: README.md is absent.
  *
  * 4. Isolation tests   — verify createTaxClient is NOT re-exported from any
  *    public sdk-* package index.ts.
- *    These PASS in RED phase (public packages already don't expose
- *    createTaxClient) and serve as safety guards that must never regress.
- *    The structural test for packages/sdk-internal/src/index.ts also
- *    fails RED because the file is absent.
+ *    These serve as safety guards that must never regress.
  *
  * 5. Behavioral test   — verify createTaxClient can be imported as a function
  *    from the direct file path packages/sdk-internal/src/index.ts.
- *    Fail RED: Cannot find module — the file does not exist.
  *
  * Issue: SDK-010
  */
@@ -38,10 +30,7 @@ import * as path from 'node:path';
 // ---------------------------------------------------------------------------
 // Behavioral import — direct path (not @durion-sdk/internal) because sdk-internal
 // is private and intentionally absent from jest moduleNameMapper.
-// Resolves to `undefined` until GREEN implementation creates the file.
 // ---------------------------------------------------------------------------
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — intentional RED import; packages/sdk-internal/src/index.ts does not exist yet
 import { createTaxClient } from '../../packages/sdk-internal/src/index';
 
 // ---------------------------------------------------------------------------

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChangeRequestAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,236 +66,268 @@ class ChangeRequestAPIApi extends runtime.BaseAPI {
      * Manager applies emergency override to approve a change request with exception. Requires Manager role and a valid exception reason. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status.
      * Apply emergency override
      */
-    async applyEmergencyOverrideRaw(requestParameters, initOverrides) {
-        if (requestParameters['changeId'] == null) {
-            throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling applyEmergencyOverride().');
-        }
-        if (requestParameters['emergencyOverrideDTO'] == null) {
-            throw new runtime.RequiredError('emergencyOverrideDTO', 'Required parameter "emergencyOverrideDTO" was null or undefined when calling applyEmergencyOverride().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/changeRequests/{changeId}/emergency-override`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.EmergencyOverrideDTOToJSON)(requestParameters['emergencyOverrideDTO']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+    applyEmergencyOverrideRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['changeId'] == null) {
+                throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling applyEmergencyOverride().');
+            }
+            if (requestParameters['emergencyOverrideDTO'] == null) {
+                throw new runtime.RequiredError('emergencyOverrideDTO', 'Required parameter "emergencyOverrideDTO" was null or undefined when calling applyEmergencyOverride().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/changeRequests/{changeId}/emergency-override`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.EmergencyOverrideDTOToJSON)(requestParameters['emergencyOverrideDTO']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Manager applies emergency override to approve a change request with exception. Requires Manager role and a valid exception reason. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status.
      * Apply emergency override
      */
-    async applyEmergencyOverride(requestParameters, initOverrides) {
-        const response = await this.applyEmergencyOverrideRaw(requestParameters, initOverrides);
-        return await response.value();
+    applyEmergencyOverride(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.applyEmergencyOverrideRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Service Advisor approves the change request. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status. Approval note is required as the approval artifact.
      * Approve a change request
      */
-    async approveChangeRequestRaw(requestParameters, initOverrides) {
-        if (requestParameters['changeId'] == null) {
-            throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling approveChangeRequest().');
-        }
-        if (requestParameters['approveChangeRequestDTO'] == null) {
-            throw new runtime.RequiredError('approveChangeRequestDTO', 'Required parameter "approveChangeRequestDTO" was null or undefined when calling approveChangeRequest().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/changeRequests/{changeId}/approve`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ApproveChangeRequestDTOToJSON)(requestParameters['approveChangeRequestDTO']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+    approveChangeRequestRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['changeId'] == null) {
+                throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling approveChangeRequest().');
+            }
+            if (requestParameters['approveChangeRequestDTO'] == null) {
+                throw new runtime.RequiredError('approveChangeRequestDTO', 'Required parameter "approveChangeRequestDTO" was null or undefined when calling approveChangeRequest().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/changeRequests/{changeId}/approve`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ApproveChangeRequestDTOToJSON)(requestParameters['approveChangeRequestDTO']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Service Advisor approves the change request. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status. Approval note is required as the approval artifact.
      * Approve a change request
      */
-    async approveChangeRequest(requestParameters, initOverrides) {
-        const response = await this.approveChangeRequestRaw(requestParameters, initOverrides);
-        return await response.value();
+    approveChangeRequest(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.approveChangeRequestRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Verify all declined emergency/safety items have customer denial acknowledgment
      * Check if work order can be closed
      */
-    async canCloseWorkorderRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling canCloseWorkorder().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/canClose`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    canCloseWorkorderRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling canCloseWorkorder().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/canClose`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Verify all declined emergency/safety items have customer denial acknowledgment
      * Check if work order can be closed
      */
-    async canCloseWorkorder(requestParameters, initOverrides) {
-        const response = await this.canCloseWorkorderRaw(requestParameters, initOverrides);
-        return await response.value();
+    canCloseWorkorder(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.canCloseWorkorderRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Technician creates a request for additional work beyond authorized scope. Items are marked as PENDING_APPROVAL until advisor approves. Requires description and at least one service or part item. Supports idempotent creation via Idempotency-Key header to prevent duplicate change requests.
      * Create a change request
      */
-    async createChangeRequestRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling createChangeRequest().');
-        }
-        if (requestParameters['createChangeRequestDTO'] == null) {
-            throw new runtime.RequiredError('createChangeRequestDTO', 'Required parameter "createChangeRequestDTO" was null or undefined when calling createChangeRequest().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/changeRequests`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateChangeRequestDTOToJSON)(requestParameters['createChangeRequestDTO']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+    createChangeRequestRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling createChangeRequest().');
+            }
+            if (requestParameters['createChangeRequestDTO'] == null) {
+                throw new runtime.RequiredError('createChangeRequestDTO', 'Required parameter "createChangeRequestDTO" was null or undefined when calling createChangeRequest().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/changeRequests`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateChangeRequestDTOToJSON)(requestParameters['createChangeRequestDTO']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Technician creates a request for additional work beyond authorized scope. Items are marked as PENDING_APPROVAL until advisor approves. Requires description and at least one service or part item. Supports idempotent creation via Idempotency-Key header to prevent duplicate change requests.
      * Create a change request
      */
-    async createChangeRequest(requestParameters, initOverrides) {
-        const response = await this.createChangeRequestRaw(requestParameters, initOverrides);
-        return await response.value();
+    createChangeRequest(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createChangeRequestRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Service Advisor declines the change request. Items move from PENDING_APPROVAL to CANCELLED status (not billable). Approval note is required to record the decline decision.
      * Decline a change request
      */
-    async declineChangeRequestRaw(requestParameters, initOverrides) {
-        if (requestParameters['changeId'] == null) {
-            throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling declineChangeRequest().');
-        }
-        if (requestParameters['declineChangeRequestDTO'] == null) {
-            throw new runtime.RequiredError('declineChangeRequestDTO', 'Required parameter "declineChangeRequestDTO" was null or undefined when calling declineChangeRequest().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/changeRequests/{changeId}/decline`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.DeclineChangeRequestDTOToJSON)(requestParameters['declineChangeRequestDTO']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+    declineChangeRequestRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['changeId'] == null) {
+                throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling declineChangeRequest().');
+            }
+            if (requestParameters['declineChangeRequestDTO'] == null) {
+                throw new runtime.RequiredError('declineChangeRequestDTO', 'Required parameter "declineChangeRequestDTO" was null or undefined when calling declineChangeRequest().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/changeRequests/{changeId}/decline`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.DeclineChangeRequestDTOToJSON)(requestParameters['declineChangeRequestDTO']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Service Advisor declines the change request. Items move from PENDING_APPROVAL to CANCELLED status (not billable). Approval note is required to record the decline decision.
      * Decline a change request
      */
-    async declineChangeRequest(requestParameters, initOverrides) {
-        const response = await this.declineChangeRequestRaw(requestParameters, initOverrides);
-        return await response.value();
+    declineChangeRequest(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.declineChangeRequestRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve details of a specific change request
      * Get change request by ID
      */
-    async getChangeRequestByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['changeId'] == null) {
-            throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling getChangeRequestById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/changeRequests/{changeId}`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+    getChangeRequestByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['changeId'] == null) {
+                throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling getChangeRequestById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/changeRequests/{changeId}`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ChangeRequestResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve details of a specific change request
      * Get change request by ID
      */
-    async getChangeRequestById(requestParameters, initOverrides) {
-        const response = await this.getChangeRequestByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getChangeRequestById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getChangeRequestByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all change requests associated with a specific work order
      * Get all change requests for a work order
      */
-    async getChangeRequestsByWorkorderRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getChangeRequestsByWorkorder().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/changeRequests`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ChangeRequestResponseFromJSON));
+    getChangeRequestsByWorkorderRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getChangeRequestsByWorkorder().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/changeRequests`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ChangeRequestResponseFromJSON));
+        });
     }
     /**
      * Retrieve all change requests associated with a specific work order
      * Get all change requests for a work order
      */
-    async getChangeRequestsByWorkorder(requestParameters, initOverrides) {
-        const response = await this.getChangeRequestsByWorkorderRaw(requestParameters, initOverrides);
-        return await response.value();
+    getChangeRequestsByWorkorder(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getChangeRequestsByWorkorderRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * For declined emergency/safety items, record that customer acknowledged the denial. Required before closing the work order and returning the vehicle.
      * Record customer denial acknowledgment
      */
-    async recordCustomerDenialAcknowledgmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['changeId'] == null) {
-            throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling recordCustomerDenialAcknowledgment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/changeRequests/{changeId}/acknowledgeDenial`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    recordCustomerDenialAcknowledgmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['changeId'] == null) {
+                throw new runtime.RequiredError('changeId', 'Required parameter "changeId" was null or undefined when calling recordCustomerDenialAcknowledgment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/changeRequests/{changeId}/acknowledgeDenial`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * For declined emergency/safety items, record that customer acknowledged the denial. Required before closing the work order and returning the vehicle.
      * Record customer denial acknowledgment
      */
-    async recordCustomerDenialAcknowledgment(requestParameters, initOverrides) {
-        await this.recordCustomerDenialAcknowledgmentRaw(requestParameters, initOverrides);
+    recordCustomerDenialAcknowledgment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.recordCustomerDenialAcknowledgmentRaw(requestParameters, initOverrides);
+        });
     }
 }
 exports.ChangeRequestAPIApi = ChangeRequestAPIApi;

@@ -6,17 +6,28 @@
   "author": "OpenAPI-Generator",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GIT_USER_ID/GIT_REPO_ID.git"
+    "url": "https://github.com/louisburroughs/durion-positivity-sdk.git"
   },
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "module": "./dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "sideEffects": false,
   "scripts": {
     "build": "tsc && tsc -p tsconfig.esm.json",
     "prepare": "npm run build"
   },
+  "dependencies": {
+    "@durion-sdk/transport": "^0.1.0-alpha"
+  },
   "devDependencies": {
-    "typescript": "^4.0"
+    "typescript": "^5.4.0"
   }
 }

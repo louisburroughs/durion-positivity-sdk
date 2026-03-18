@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkorderPartsUsageApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,152 +66,168 @@ class WorkorderPartsUsageApi extends runtime.BaseAPI {
      * Record actual consumption of parts. Quantity consumed cannot exceed quantity issued.
      * Consume parts on workorder
      */
-    async consumePartsRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling consumeParts().');
-        }
-        if (requestParameters['consumePartRequest'] == null) {
-            throw new runtime.RequiredError('consumePartRequest', 'Required parameter "consumePartRequest" was null or undefined when calling consumeParts().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/consume`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ConsumePartRequestToJSON)(requestParameters['consumePartRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    consumePartsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling consumeParts().');
+            }
+            if (requestParameters['consumePartRequest'] == null) {
+                throw new runtime.RequiredError('consumePartRequest', 'Required parameter "consumePartRequest" was null or undefined when calling consumeParts().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/consume`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ConsumePartRequestToJSON)(requestParameters['consumePartRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Record actual consumption of parts. Quantity consumed cannot exceed quantity issued.
      * Consume parts on workorder
      */
-    async consumeParts(requestParameters, initOverrides) {
-        const response = await this.consumePartsRaw(requestParameters, initOverrides);
-        return await response.value();
+    consumeParts(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.consumePartsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve usage history (issue, consume, return events) for parts on the workorder
      * Get parts usage history
      */
-    async getUsageHistoryRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getUsageHistory().');
-        }
-        const queryParameters = {};
-        if (requestParameters['partLineId'] != null) {
-            queryParameters['partLineId'] = requestParameters['partLineId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/usageHistory`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getUsageHistoryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getUsageHistory().');
+            }
+            const queryParameters = {};
+            if (requestParameters['partLineId'] != null) {
+                queryParameters['partLineId'] = requestParameters['partLineId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/usageHistory`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Retrieve usage history (issue, consume, return events) for parts on the workorder
      * Get parts usage history
      */
-    async getUsageHistory(requestParameters, initOverrides) {
-        const response = await this.getUsageHistoryRaw(requestParameters, initOverrides);
-        return await response.value();
+    getUsageHistory(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getUsageHistoryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Issue parts from inventory, reserving them for consumption on the workorder
      * Issue parts to workorder
      */
-    async issuePartsRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling issueParts().');
-        }
-        if (requestParameters['issuePartRequest'] == null) {
-            throw new runtime.RequiredError('issuePartRequest', 'Required parameter "issuePartRequest" was null or undefined when calling issueParts().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/issue`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.IssuePartRequestToJSON)(requestParameters['issuePartRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    issuePartsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling issueParts().');
+            }
+            if (requestParameters['issuePartRequest'] == null) {
+                throw new runtime.RequiredError('issuePartRequest', 'Required parameter "issuePartRequest" was null or undefined when calling issueParts().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/issue`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.IssuePartRequestToJSON)(requestParameters['issuePartRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Issue parts from inventory, reserving them for consumption on the workorder
      * Issue parts to workorder
      */
-    async issueParts(requestParameters, initOverrides) {
-        const response = await this.issuePartsRaw(requestParameters, initOverrides);
-        return await response.value();
+    issueParts(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.issuePartsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Return unused parts after partial consumption or service completion
      * Return unused parts to inventory
      */
-    async returnPartsRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling returnParts().');
-        }
-        if (requestParameters['returnPartRequest'] == null) {
-            throw new runtime.RequiredError('returnPartRequest', 'Required parameter "returnPartRequest" was null or undefined when calling returnParts().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/return`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ReturnPartRequestToJSON)(requestParameters['returnPartRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    returnPartsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling returnParts().');
+            }
+            if (requestParameters['returnPartRequest'] == null) {
+                throw new runtime.RequiredError('returnPartRequest', 'Required parameter "returnPartRequest" was null or undefined when calling returnParts().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/return`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ReturnPartRequestToJSON)(requestParameters['returnPartRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Return unused parts after partial consumption or service completion
      * Return unused parts to inventory
      */
-    async returnParts(requestParameters, initOverrides) {
-        const response = await this.returnPartsRaw(requestParameters, initOverrides);
-        return await response.value();
+    returnParts(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.returnPartsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.WorkorderPartsUsageApi = WorkorderPartsUsageApi;
