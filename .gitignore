@@ -12,6 +12,9 @@ coverage/
 # TypeScript incremental compile info
 *.tsbuildinfo
 
+# TypeScript declaration output files (generated alongside .js by tsc)
+**/*.d.ts
+
 # IDE / editor artifacts
 .idea/
 .vscode/

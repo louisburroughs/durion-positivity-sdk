@@ -1,23 +1,20 @@
 /**
- * SDK-008 Workflow Helper Tests — intentionally RED phase.
+ * SDK-008 Workflow Helper Tests — GREEN phase.
  *
- * ALL tests in this file are expected to FAIL until the GREEN implementation
- * creates the workflow helper classes. Do not adjust assertions to make them
- * pass without the actual implementation in place.
+ * Tests verify the implemented workflow helper classes. The workflow classes
+ * are exported from their respective package index files and delegate to the
+ * underlying generated API classes.
  *
  * Test categories
  * ---------------
  * 1. Structural tests  — verify workflow source files exist on disk.
- *    Fail RED: files are absent.
  *
  * 2. Export tests      — verify each workflow class is re-exported from its
  *    package index.ts.
- *    Fail RED: class name absent from the index.
  *
  * 3. Behavioral tests  — verify each workflow method delegates correctly to
  *    the underlying generated API class (constructor injection).
- *    Fail RED: workflow classes do not exist, so imports resolve to `undefined`.
- *    When GREEN: each test exercises delegation with jest.fn() mocks.
+ *    Each test exercises delegation with jest.fn() mocks.
  *
  * Issue: SDK-008
  */
@@ -26,24 +23,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 // ---------------------------------------------------------------------------
-// Workflow class imports — resolve to `undefined` until GREEN implementation
-// exports them from the package index files.  The @ts-ignore directives
-// suppress TypeScript's TS2305 ("has no exported member") so that the file
-// compiles and individual tests can report focused RED failures at runtime.
+// Workflow class imports — exported from each package index file.
 // ---------------------------------------------------------------------------
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — intentional RED import; OrderPriceOverrideWorkflow not yet exported
 import { OrderPriceOverrideWorkflow } from '@durion-sdk/order';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — intentional RED import; WorkorderEstimateWorkflow not yet exported
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — intentional RED import; WorkorderChangeRequestWorkflow not yet exported
 import { WorkorderEstimateWorkflow, WorkorderChangeRequestWorkflow } from '@durion-sdk/workorder';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — intentional RED import; AccountingEventWorkflow not yet exported
 import { AccountingEventWorkflow } from '@durion-sdk/accounting';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — intentional RED import; SecurityAuthWorkflow not yet exported
 import { SecurityAuthWorkflow } from '@durion-sdk/security';
 
 // ---------------------------------------------------------------------------

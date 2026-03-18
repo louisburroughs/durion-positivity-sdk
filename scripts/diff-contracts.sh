@@ -20,14 +20,26 @@ OUTPUT_FILE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --previous)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --previous requires a value" >&2
+        exit 1
+      fi
       PREVIOUS_DIR="$2"
       shift 2
       ;;
     --current)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --current requires a value" >&2
+        exit 1
+      fi
       CURRENT_DIR="$2"
       shift 2
       ;;
     --output)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --output requires a value" >&2
+        exit 1
+      fi
       OUTPUT_FILE="$2"
       shift 2
       ;;
@@ -55,7 +67,7 @@ extract_operation_ids() {
   grep -rh "// operationId:" "$dir" 2>/dev/null \
     | sed 's/.*\/\/ operationId: *//' \
     | tr -d '\r' \
-    | sort -u
+    | sort -u || true
 }
 
 # Handle absent --previous directory (first run; all current ops are ADDED)

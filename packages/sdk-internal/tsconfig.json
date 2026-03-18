@@ -6,6 +6,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "dist",
+    "rootDir": "src",
     "typeRoots": [
       "node_modules/@types"
     ]

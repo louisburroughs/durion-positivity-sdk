@@ -1,8 +1,7 @@
 /**
- * SDK-010 Diff-Contracts Script Tests — intentionally RED phase.
+ * SDK-010 Diff-Contracts Script Tests — GREEN phase.
  *
- * ALL tests in this file are expected to FAIL until the GREEN implementation
- * creates the scripts/diff-contracts.sh script.
+ * Tests verify the scripts/diff-contracts.sh script.
  *
  * The script compares operationId references between a "previous" snapshot
  * directory and a "current" packages directory, printing ADDED/REMOVED lines.
@@ -10,30 +9,23 @@
  * Test categories
  * ---------------
  * 1. Existence test    — verify scripts/diff-contracts.sh exists on disk.
- *    Fail RED: the script file is absent.
  *
  * 2. Argument errors   — verify the script exits 1 when required CLI
  *    arguments are missing.
- *    Fail RED: script is absent.
  *
  * 3. ADDED detection   — verify operations in current but not in previous
  *    are printed as "ADDED: <operationId>".
- *    Fail RED: script is absent.
  *
  * 4. REMOVED detection — verify operations in previous but not in current
  *    are printed as "REMOVED: <operationId>".
- *    Fail RED: script is absent.
  *
  * 5. Stable operations — verify operations present in both dirs are NOT
  *    printed as ADDED or REMOVED.
- *    Fail RED: script is absent.
  *
  * 6. No-op on inputs   — verify the script does not mutate fixture files.
- *    Fail RED: script is absent.
  *
  * 7. Graceful absent   — verify that when --previous directory does not exist
  *    the script exits 0 and treats all current operations as ADDED.
- *    Fail RED: script is absent.
  *
  * Issue: SDK-010
  */
