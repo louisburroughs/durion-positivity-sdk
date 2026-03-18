@@ -60,6 +60,8 @@ export function createWorkorderClient(config: DurionSdkConfig) {
   };
 }
 
+export { WorkorderEstimateWorkflow } from './workflows/workorderEstimateWorkflow';
+export { WorkorderChangeRequestWorkflow } from './workflows/workorderChangeRequestWorkflow';
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';

@@ -12,6 +12,7 @@ const config = {
     'src/**/*.ts',
     'packages/sdk-transport/src/**/*.ts',
     'packages/sdk-*/src/index.ts',
+    'packages/sdk-*/src/workflows/**/*.ts',
     '!**/__tests__/**',
     '!**/*.d.ts',
     '!packages/sdk-*/src/apis/**',
