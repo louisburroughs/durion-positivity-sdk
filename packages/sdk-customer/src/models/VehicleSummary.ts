@@ -61,7 +61,19 @@ export interface VehicleSummary {
  * Check if a given object implements the VehicleSummary interface.
  */
 export function instanceOfVehicleSummary(value: object): boolean {
-    return true;
+    if (value === null || Array.isArray(value) || typeof value !== 'object') {
+        return false;
+    }
+
+    const candidate = value as Record<string, unknown>;
+    return (
+        (candidate['vehicleId'] === undefined || typeof candidate['vehicleId'] === 'string') &&
+        (candidate['vin'] === undefined || typeof candidate['vin'] === 'string') &&
+        (candidate['licensePlate'] === undefined || typeof candidate['licensePlate'] === 'string') &&
+        (candidate['make'] === undefined || typeof candidate['make'] === 'string') &&
+        (candidate['model'] === undefined || typeof candidate['model'] === 'string') &&
+        (candidate['year'] === undefined || typeof candidate['year'] === 'number')
+    );
 }
 
 export function VehicleSummaryFromJSON(json: any): VehicleSummary {
@@ -97,4 +109,3 @@ export function VehicleSummaryToJSON(value?: VehicleSummary | null): any {
         'year': value['year'],
     };
 }
-

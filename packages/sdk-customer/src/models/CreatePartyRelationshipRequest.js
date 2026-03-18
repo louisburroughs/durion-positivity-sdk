@@ -51,7 +51,7 @@ function CreatePartyRelationshipRequestFromJSONTyped(json, ignoreDiscriminator) 
     }
     return {
         'personId': json['personId'],
-        'roles': json['roles'],
+        'roles': new Set(json['roles'] ?? []),
         'effectiveStartDate': (new Date(json['effectiveStartDate'])),
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
         'primaryBillingContact': json['primaryBillingContact'] == null ? undefined : json['primaryBillingContact'],
@@ -63,7 +63,7 @@ function CreatePartyRelationshipRequestToJSON(value) {
     }
     return {
         'personId': value['personId'],
-        'roles': Array.from(value['roles']),
+        'roles': Array.from(value['roles'] ?? []),
         'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0, 10)),
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0, 10)),
         'primaryBillingContact': value['primaryBillingContact'],

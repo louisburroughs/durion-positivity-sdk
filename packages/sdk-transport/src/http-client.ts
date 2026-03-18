@@ -3,6 +3,24 @@ import { DurionSdkConfig } from './config';
 export class SdkHttpClient {
   constructor(private readonly config: DurionSdkConfig) { }
 
+  private resolveIdempotencyKey(
+    method: string,
+    url: string,
+    explicitIdempotencyKey?: string
+  ): string | undefined {
+    const normalizedMethod = method.toUpperCase();
+    const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+    if (!mutatingMethods.includes(normalizedMethod)) {
+      return undefined;
+    }
+
+    if (explicitIdempotencyKey) {
+      return explicitIdempotencyKey;
+    }
+
+    return this.config.idempotencyKeyGenerator?.(normalizedMethod, url);
+  }
+
   async request(
     method: string,
     url: string,
@@ -22,9 +40,10 @@ export class SdkHttpClient {
     headers['X-API-Version'] = this.config.apiVersion ?? '1';
     headers['X-Correlation-Id'] = this.config.correlationIdProvider?.() ?? crypto.randomUUID();
 
-    const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
-    if (options?.idempotencyKey && mutatingMethods.includes(method.toUpperCase())) {
-      headers['Idempotency-Key'] = options.idempotencyKey;
+    const absoluteUrl = url.startsWith('http') ? url : `${this.config.baseUrl}${url}`;
+    const idempotencyKey = this.resolveIdempotencyKey(method, absoluteUrl, options?.idempotencyKey);
+    if (idempotencyKey) {
+      headers['Idempotency-Key'] = idempotencyKey;
     }
 
     // Set Content-Type for JSON body if caller didn't already provide one
@@ -32,7 +51,6 @@ export class SdkHttpClient {
       headers['Content-Type'] = 'application/json';
     }
 
-    const absoluteUrl = url.startsWith('http') ? url : `${this.config.baseUrl}${url}`;
     const body = options?.body === undefined ? undefined : JSON.stringify(options.body);
 
     return fetch(absoluteUrl, {
@@ -44,7 +62,7 @@ export class SdkHttpClient {
 
   async buildRequestHeaders(
     method: string,
-    options?: { idempotencyKey?: string }
+    options?: { idempotencyKey?: string; url?: string }
   ): Promise<Record<string, string>> {
     const headers: Record<string, string> = {};
 
@@ -56,9 +74,14 @@ export class SdkHttpClient {
     headers['X-API-Version'] = this.config.apiVersion ?? '1';
     headers['X-Correlation-Id'] = this.config.correlationIdProvider?.() ?? crypto.randomUUID();
 
-    const mutatingMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
-    if (options?.idempotencyKey && mutatingMethods.includes(method.toUpperCase())) {
-      headers['Idempotency-Key'] = options.idempotencyKey;
+    const normalizedUrl = options?.url
+      ? (options.url.startsWith('http') ? options.url : `${this.config.baseUrl}${options.url}`)
+      : undefined;
+    const idempotencyKey = normalizedUrl
+      ? this.resolveIdempotencyKey(method, normalizedUrl, options?.idempotencyKey)
+      : options?.idempotencyKey;
+    if (idempotencyKey) {
+      headers['Idempotency-Key'] = idempotencyKey;
     }
 
     return headers;

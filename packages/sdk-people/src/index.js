@@ -42,14 +42,29 @@ exports.createPeopleClient = createPeopleClient;
 const transport_1 = require("@durion-sdk/transport");
 const runtime_1 = require("./runtime");
 const GeneratedApis = __importStar(require("./apis"));
+function normalizeRequestUrl(url) {
+    if (typeof url === 'string') {
+        return url;
+    }
+    if (url instanceof URL) {
+        return url.toString();
+    }
+    if (typeof Request !== 'undefined' && url instanceof Request) {
+        return url.url;
+    }
+    return String(url);
+}
 function createPeopleClient(config) {
     const httpClient = new transport_1.SdkHttpClient(config);
     const configuration = new runtime_1.Configuration({
         basePath: config.baseUrl,
         fetchApi: async (url, init) => {
             const method = (init?.method ?? 'GET').toUpperCase();
-            const sdkHeaders = await httpClient.buildRequestHeaders(method);
             const mergedHeaders = new Headers(init?.headers);
+            const sdkHeaders = await httpClient.buildRequestHeaders(method, {
+                url: normalizeRequestUrl(url),
+                idempotencyKey: mergedHeaders.get('Idempotency-Key') ?? undefined,
+            });
             Object.entries(sdkHeaders).forEach(([key, value]) => {
                 mergedHeaders.set(key, value);
             });

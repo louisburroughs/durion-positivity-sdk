@@ -216,3 +216,61 @@ describe('SDK-007 AC-7: buildRequestHeaders falls back to crypto.randomUUID() wh
         expect(headers['X-Correlation-Id']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
     });
 });
+describe('SDK-007 AC-8: buildRequestHeaders uses idempotencyKeyGenerator with normalized method and url', () => {
+    it('generates Idempotency-Key for mutating requests using an absolute URL', async () => {
+        const mockGenerator = jest.fn().mockReturnValue('generated-key-123');
+        const client = new http_client_1.SdkHttpClient({
+            baseUrl: 'http://localhost:8080',
+            idempotencyKeyGenerator: mockGenerator,
+        });
+        const headers = await client.buildRequestHeaders('post', { url: '/v1/orders/123?expand=true' });
+        expect(mockGenerator).toHaveBeenCalledTimes(1);
+        expect(mockGenerator).toHaveBeenCalledWith('POST', 'http://localhost:8080/v1/orders/123?expand=true');
+        expect(headers['Idempotency-Key']).toBe('generated-key-123');
+    });
+});
+describe('SDK-007 AC-9: explicit idempotency keys win over generated keys', () => {
+    it('does not call idempotencyKeyGenerator when an explicit key is supplied', async () => {
+        const mockGenerator = jest.fn().mockReturnValue('generated-key-123');
+        const client = new http_client_1.SdkHttpClient({
+            baseUrl: 'http://localhost:8080',
+            idempotencyKeyGenerator: mockGenerator,
+        });
+        const headers = await client.buildRequestHeaders('POST', {
+            url: '/v1/orders/123',
+            idempotencyKey: 'explicit-key-456',
+        });
+        expect(mockGenerator).not.toHaveBeenCalled();
+        expect(headers['Idempotency-Key']).toBe('explicit-key-456');
+    });
+});
+describe('SDK-007 AC-10: request() uses idempotencyKeyGenerator with normalized method and absolute url', () => {
+    let mockFetch;
+    let savedFetch;
+    beforeAll(() => {
+        savedFetch = globalThis['fetch'];
+    });
+    afterAll(() => {
+        globalThis['fetch'] = savedFetch;
+    });
+    beforeEach(() => {
+        mockFetch = jest.fn().mockResolvedValue(new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        globalThis['fetch'] = mockFetch;
+    });
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+    it('forwards a generated Idempotency-Key header for mutating requests', async () => {
+        const mockGenerator = jest.fn().mockReturnValue('generated-key-789');
+        const client = new http_client_1.SdkHttpClient({
+            baseUrl: 'http://localhost:8080',
+            idempotencyKeyGenerator: mockGenerator,
+        });
+        await client.request('patch', '/v1/orders/123');
+        expect(mockGenerator).toHaveBeenCalledTimes(1);
+        expect(mockGenerator).toHaveBeenCalledWith('PATCH', 'http://localhost:8080/v1/orders/123');
+        const fetchInit = mockFetch.mock.calls[0]?.[1];
+        const fetchHeaders = fetchInit?.headers;
+        expect(fetchHeaders?.['Idempotency-Key']).toBe('generated-key-789');
+    });
+});

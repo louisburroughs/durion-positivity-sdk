@@ -21,7 +21,16 @@ exports.VehicleSummaryToJSON = VehicleSummaryToJSON;
  * Check if a given object implements the VehicleSummary interface.
  */
 function instanceOfVehicleSummary(value) {
-    return true;
+    if (value === null || Array.isArray(value) || typeof value !== 'object') {
+        return false;
+    }
+    const candidate = value;
+    return ((candidate['vehicleId'] === undefined || typeof candidate['vehicleId'] === 'string') &&
+        (candidate['vin'] === undefined || typeof candidate['vin'] === 'string') &&
+        (candidate['licensePlate'] === undefined || typeof candidate['licensePlate'] === 'string') &&
+        (candidate['make'] === undefined || typeof candidate['make'] === 'string') &&
+        (candidate['model'] === undefined || typeof candidate['model'] === 'string') &&
+        (candidate['year'] === undefined || typeof candidate['year'] === 'number'));
 }
 function VehicleSummaryFromJSON(json) {
     return VehicleSummaryFromJSONTyped(json, false);

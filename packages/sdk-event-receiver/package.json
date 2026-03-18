@@ -10,6 +10,14 @@
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "module": "./dist/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "sideEffects": false,
   "scripts": {
     "build": "tsc --noCheck && tsc --noCheck -p tsconfig.esm.json",
@@ -19,6 +27,6 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
-    "@durion-sdk/transport": "*"
+    "@durion-sdk/transport": "^0.1.0-alpha"
   }
 }
