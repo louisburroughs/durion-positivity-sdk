@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FinancialReportingApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,157 +57,141 @@ class FinancialReportingApi extends runtime.BaseAPI {
      * Show which GL accounts contribute to a specific statement line
      * Drilldown to Accounts
      */
-    drilldownToAccountsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['statementLineCode'] == null) {
-                throw new runtime.RequiredError('statementLineCode', 'Required parameter "statementLineCode" was null or undefined when calling drilldownToAccounts().');
-            }
-            if (requestParameters['startDate'] == null) {
-                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling drilldownToAccounts().');
-            }
-            if (requestParameters['endDate'] == null) {
-                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling drilldownToAccounts().');
-            }
-            const queryParameters = {};
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/reports/financial/drilldown/accounts/{statementLineCode}`.replace(`{${"statementLineCode"}}`, encodeURIComponent(String(requestParameters['statementLineCode']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AccountDrilldownResponseFromJSON));
-        });
+    async drilldownToAccountsRaw(requestParameters, initOverrides) {
+        if (requestParameters['statementLineCode'] == null) {
+            throw new runtime.RequiredError('statementLineCode', 'Required parameter "statementLineCode" was null or undefined when calling drilldownToAccounts().');
+        }
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling drilldownToAccounts().');
+        }
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling drilldownToAccounts().');
+        }
+        const queryParameters = {};
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/drilldown/accounts/{statementLineCode}`.replace(`{${"statementLineCode"}}`, encodeURIComponent(String(requestParameters['statementLineCode']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AccountDrilldownResponseFromJSON));
     }
     /**
      * Show which GL accounts contribute to a specific statement line
      * Drilldown to Accounts
      */
-    drilldownToAccounts(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.drilldownToAccountsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async drilldownToAccounts(requestParameters, initOverrides) {
+        const response = await this.drilldownToAccountsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Show source journal entries contributing to a GL account balance
      * Drilldown to Journal Lines
      */
-    drilldownToJournalLinesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['accountId'] == null) {
-                throw new runtime.RequiredError('accountId', 'Required parameter "accountId" was null or undefined when calling drilldownToJournalLines().');
-            }
-            if (requestParameters['startDate'] == null) {
-                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling drilldownToJournalLines().');
-            }
-            if (requestParameters['endDate'] == null) {
-                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling drilldownToJournalLines().');
-            }
-            const queryParameters = {};
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/reports/financial/drilldown/journal-lines/{accountId}`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.JournalLineDrilldownResponseFromJSON));
-        });
+    async drilldownToJournalLinesRaw(requestParameters, initOverrides) {
+        if (requestParameters['accountId'] == null) {
+            throw new runtime.RequiredError('accountId', 'Required parameter "accountId" was null or undefined when calling drilldownToJournalLines().');
+        }
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling drilldownToJournalLines().');
+        }
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling drilldownToJournalLines().');
+        }
+        const queryParameters = {};
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/drilldown/journal-lines/{accountId}`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.JournalLineDrilldownResponseFromJSON));
     }
     /**
      * Show source journal entries contributing to a GL account balance
      * Drilldown to Journal Lines
      */
-    drilldownToJournalLines(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.drilldownToJournalLinesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async drilldownToJournalLines(requestParameters, initOverrides) {
+        const response = await this.drilldownToJournalLinesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Generate Balance Sheet as of a specific date with assets, liabilities, and equity
      * Generate Balance Sheet
      */
-    generateBalanceSheetRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['asOfDate'] == null) {
-                throw new runtime.RequiredError('asOfDate', 'Required parameter "asOfDate" was null or undefined when calling generateBalanceSheet().');
-            }
-            const queryParameters = {};
-            if (requestParameters['asOfDate'] != null) {
-                queryParameters['asOfDate'] = requestParameters['asOfDate'].toISOString().substring(0, 10);
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/reports/financial/balance-sheet`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BalanceSheetReportFromJSON)(jsonValue));
-        });
+    async generateBalanceSheetRaw(requestParameters, initOverrides) {
+        if (requestParameters['asOfDate'] == null) {
+            throw new runtime.RequiredError('asOfDate', 'Required parameter "asOfDate" was null or undefined when calling generateBalanceSheet().');
+        }
+        const queryParameters = {};
+        if (requestParameters['asOfDate'] != null) {
+            queryParameters['asOfDate'] = requestParameters['asOfDate'].toISOString().substring(0, 10);
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/balance-sheet`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BalanceSheetReportFromJSON)(jsonValue));
     }
     /**
      * Generate Balance Sheet as of a specific date with assets, liabilities, and equity
      * Generate Balance Sheet
      */
-    generateBalanceSheet(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.generateBalanceSheetRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async generateBalanceSheet(requestParameters, initOverrides) {
+        const response = await this.generateBalanceSheetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Generate Profit & Loss report for a date range with revenue, expenses, and net income
      * Generate Income Statement
      */
-    generateIncomeStatementRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['startDate'] == null) {
-                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling generateIncomeStatement().');
-            }
-            if (requestParameters['endDate'] == null) {
-                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling generateIncomeStatement().');
-            }
-            const queryParameters = {};
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/reports/financial/income-statement`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.IncomeStatementReportFromJSON)(jsonValue));
-        });
+    async generateIncomeStatementRaw(requestParameters, initOverrides) {
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling generateIncomeStatement().');
+        }
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling generateIncomeStatement().');
+        }
+        const queryParameters = {};
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/income-statement`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.IncomeStatementReportFromJSON)(jsonValue));
     }
     /**
      * Generate Profit & Loss report for a date range with revenue, expenses, and net income
      * Generate Income Statement
      */
-    generateIncomeStatement(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.generateIncomeStatementRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async generateIncomeStatement(requestParameters, initOverrides) {
+        const response = await this.generateIncomeStatementRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.FinancialReportingApi = FinancialReportingApi;

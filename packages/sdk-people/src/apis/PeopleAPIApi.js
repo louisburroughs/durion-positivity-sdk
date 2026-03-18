@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeopleAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,186 +57,162 @@ class PeopleAPIApi extends runtime.BaseAPI {
      * Add a new person to the system.
      * Create a new person
      */
-    createPersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['person'] == null) {
-                throw new runtime.RequiredError('person', 'Required parameter "person" was null or undefined when calling createPerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PersonToJSON)(requestParameters['person']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonFromJSON)(jsonValue));
-        });
+    async createPersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['person'] == null) {
+            throw new runtime.RequiredError('person', 'Required parameter "person" was null or undefined when calling createPerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PersonToJSON)(requestParameters['person']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonFromJSON)(jsonValue));
     }
     /**
      * Add a new person to the system.
      * Create a new person
      */
-    createPerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createPersonRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createPerson(requestParameters, initOverrides) {
+        const response = await this.createPersonRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Delete a person by their unique ID.
      * Delete a person
      */
-    deletePersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['personId'] == null) {
-                throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling deletePerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deletePersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling deletePerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Delete a person by their unique ID.
      * Delete a person
      */
-    deletePerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deletePersonRaw(requestParameters, initOverrides);
-        });
+    async deletePerson(requestParameters, initOverrides) {
+        await this.deletePersonRaw(requestParameters, initOverrides);
     }
     /**
      * Retrieve a list of all people.
      * Get all people
      */
-    getAllPeopleRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PersonFromJSON));
-        });
+    async getAllPeopleRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PersonFromJSON));
     }
     /**
      * Retrieve a list of all people.
      * Get all people
      */
-    getAllPeople(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAllPeopleRaw(initOverrides);
-            return yield response.value();
-        });
+    async getAllPeople(initOverrides) {
+        const response = await this.getAllPeopleRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a person by their unique ID.
      * Get person by ID
      */
-    getPersonByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['personId'] == null) {
-                throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getPersonById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonFromJSON)(jsonValue));
-        });
+    async getPersonByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getPersonById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonFromJSON)(jsonValue));
     }
     /**
      * Retrieve a person by their unique ID.
      * Get person by ID
      */
-    getPersonById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPersonByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPersonById(requestParameters, initOverrides) {
+        const response = await this.getPersonByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Find best matching person by score or create a new person
      * Resolve person
      */
-    resolvePersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['resolvePersonRequest'] == null) {
-                throw new runtime.RequiredError('resolvePersonRequest', 'Required parameter "resolvePersonRequest" was null or undefined when calling resolvePerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people/resolve`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ResolvePersonRequestToJSON)(requestParameters['resolvePersonRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ResolvePersonResponseFromJSON)(jsonValue));
-        });
+    async resolvePersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['resolvePersonRequest'] == null) {
+            throw new runtime.RequiredError('resolvePersonRequest', 'Required parameter "resolvePersonRequest" was null or undefined when calling resolvePerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people/resolve`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ResolvePersonRequestToJSON)(requestParameters['resolvePersonRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ResolvePersonResponseFromJSON)(jsonValue));
     }
     /**
      * Find best matching person by score or create a new person
      * Resolve person
      */
-    resolvePerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.resolvePersonRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async resolvePerson(requestParameters, initOverrides) {
+        const response = await this.resolvePersonRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update the details of an existing person.
      * Update an existing person
      */
-    updatePersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['personId'] == null) {
-                throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling updatePerson().');
-            }
-            if (requestParameters['person'] == null) {
-                throw new runtime.RequiredError('person', 'Required parameter "person" was null or undefined when calling updatePerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PersonToJSON)(requestParameters['person']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonFromJSON)(jsonValue));
-        });
+    async updatePersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling updatePerson().');
+        }
+        if (requestParameters['person'] == null) {
+            throw new runtime.RequiredError('person', 'Required parameter "person" was null or undefined when calling updatePerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PersonToJSON)(requestParameters['person']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonFromJSON)(jsonValue));
     }
     /**
      * Update the details of an existing person.
      * Update an existing person
      */
-    updatePerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updatePersonRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updatePerson(requestParameters, initOverrides) {
+        const response = await this.updatePersonRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.PeopleAPIApi = PeopleAPIApi;

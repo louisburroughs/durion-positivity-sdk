@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EstimateAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,642 +57,562 @@ class EstimateAPIApi extends runtime.BaseAPI {
      * Add a part or labor line item to a draft estimate. Estimate must be in DRAFT status. For PART items, provide productId or description. For LABOR items, provide serviceId or description.
      * Add line item to estimate
      */
-    addEstimateItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling addEstimateItem().');
-            }
-            if (requestParameters['addEstimateItemRequest'] == null) {
-                throw new runtime.RequiredError('addEstimateItemRequest', 'Required parameter "addEstimateItemRequest" was null or undefined when calling addEstimateItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/items`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.AddEstimateItemRequestToJSON)(requestParameters['addEstimateItemRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateItemResponseFromJSON)(jsonValue));
-        });
+    async addEstimateItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling addEstimateItem().');
+        }
+        if (requestParameters['addEstimateItemRequest'] == null) {
+            throw new runtime.RequiredError('addEstimateItemRequest', 'Required parameter "addEstimateItemRequest" was null or undefined when calling addEstimateItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/items`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.AddEstimateItemRequestToJSON)(requestParameters['addEstimateItemRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateItemResponseFromJSON)(jsonValue));
     }
     /**
      * Add a part or labor line item to a draft estimate. Estimate must be in DRAFT status. For PART items, provide productId or description. For LABOR items, provide serviceId or description.
      * Add line item to estimate
      */
-    addEstimateItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.addEstimateItemRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async addEstimateItem(requestParameters, initOverrides) {
+        const response = await this.addEstimateItemRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Transition estimate to approved state with customer signature capture. Estimate can be approved from DRAFT status. Requires customer ID validation and signature data (base64-encoded image). For commercial accounts with PO enforcement enabled, a purchase order number must be provided (CAP:092 Story #98).
      * Approve an estimate with customer signature
      */
-    approveEstimateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling approveEstimate().');
-            }
-            if (requestParameters['approveEstimateRequest'] == null) {
-                throw new runtime.RequiredError('approveEstimateRequest', 'Required parameter "approveEstimateRequest" was null or undefined when calling approveEstimate().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/approval`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ApproveEstimateRequestToJSON)(requestParameters['approveEstimateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
-        });
+    async approveEstimateRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling approveEstimate().');
+        }
+        if (requestParameters['approveEstimateRequest'] == null) {
+            throw new runtime.RequiredError('approveEstimateRequest', 'Required parameter "approveEstimateRequest" was null or undefined when calling approveEstimate().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/approval`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ApproveEstimateRequestToJSON)(requestParameters['approveEstimateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
     }
     /**
      * Transition estimate to approved state with customer signature capture. Estimate can be approved from DRAFT status. Requires customer ID validation and signature data (base64-encoded image). For commercial accounts with PO enforcement enabled, a purchase order number must be provided (CAP:092 Story #98).
      * Approve an estimate with customer signature
      */
-    approveEstimate(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.approveEstimateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async approveEstimate(requestParameters, initOverrides) {
+        const response = await this.approveEstimateRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Calculate subtotal, tax amount, and total for an estimate based on its line items. Estimate must be in DRAFT status. Uses stub tax calculation (8.25% flat rate) pending pos-accounting integration.
      * Calculate taxes and totals
      */
-    calculateEstimateTotalsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling calculateEstimateTotals().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/calculate`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response);
-        });
+    async calculateEstimateTotalsRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling calculateEstimateTotals().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/calculate`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response);
     }
     /**
      * Calculate subtotal, tax amount, and total for an estimate based on its line items. Estimate must be in DRAFT status. Uses stub tax calculation (8.25% flat rate) pending pos-accounting integration.
      * Calculate taxes and totals
      */
-    calculateEstimateTotals(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.calculateEstimateTotalsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async calculateEstimateTotals(requestParameters, initOverrides) {
+        const response = await this.calculateEstimateTotalsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Create a new estimate in DRAFT status for a customer and vehicle. Requires ESTIMATE_CREATE permission. System will generate a unique estimate number and apply default values for location, currency, and tax region if not provided.
      * Create a new draft estimate
      */
-    createEstimateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createEstimateRequest'] == null) {
-                throw new runtime.RequiredError('createEstimateRequest', 'Required parameter "createEstimateRequest" was null or undefined when calling createEstimate().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/estimates`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateEstimateRequestToJSON)(requestParameters['createEstimateRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
-    }
-    /**
-     * Create a new estimate in DRAFT status for a customer and vehicle. Requires ESTIMATE_CREATE permission. System will generate a unique estimate number and apply default values for location, currency, and tax region if not provided.
-     * Create a new draft estimate
-     */
-    createEstimate(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createEstimateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
-    }
-    /**
-     * Capture an immutable snapshot of the estimate\'s complete state (estimate + all line items) for audit trail and version history purposes.
-     * Create historical snapshot
-     */
-    createEstimateSnapshotRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling createEstimateSnapshot().');
-            }
-            const queryParameters = {};
-            if (requestParameters['notes'] != null) {
-                queryParameters['notes'] = requestParameters['notes'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/snapshots`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateSnapshotResponseFromJSON)(jsonValue));
-        });
-    }
-    /**
-     * Capture an immutable snapshot of the estimate\'s complete state (estimate + all line items) for audit trail and version history purposes.
-     * Create historical snapshot
-     */
-    createEstimateSnapshot(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createEstimateSnapshotRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
-    }
-    /**
-     * Transition estimate to declined state. Estimate can be declined from DRAFT or APPROVED status.
-     * Decline an estimate
-     */
-    declineEstimateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling declineEstimate().');
-            }
-            const queryParameters = {};
-            if (requestParameters['reason'] != null) {
-                queryParameters['reason'] = requestParameters['reason'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/decline`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
-        });
-    }
-    /**
-     * Transition estimate to declined state. Estimate can be declined from DRAFT or APPROVED status.
-     * Decline an estimate
-     */
-    declineEstimate(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.declineEstimateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
-    }
-    /**
-     * Delete an estimate by its unique ID.
-     * Delete an estimate
-     */
-    deleteEstimateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling deleteEstimate().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
-    }
-    /**
-     * Delete an estimate by its unique ID.
-     * Delete an estimate
-     */
-    deleteEstimate(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteEstimateRaw(requestParameters, initOverrides);
-        });
-    }
-    /**
-     * Remove a line item from a draft estimate (soft delete). Estimate must be in DRAFT status.
-     * Remove line item
-     */
-    deleteEstimateItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling deleteEstimateItem().');
-            }
-            if (requestParameters['itemId'] == null) {
-                throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling deleteEstimateItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/items/{itemId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
-    }
-    /**
-     * Remove a line item from a draft estimate (soft delete). Estimate must be in DRAFT status.
-     * Remove line item
-     */
-    deleteEstimateItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteEstimateItemRaw(requestParameters, initOverrides);
-        });
-    }
-    /**
-     * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
-     * Generate estimate PDF
-     */
-    generateEstimatePdfRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling generateEstimatePdf().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/pdf`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
+    async createEstimateRaw(requestParameters, initOverrides) {
+        if (requestParameters['createEstimateRequest'] == null) {
+            throw new runtime.RequiredError('createEstimateRequest', 'Required parameter "createEstimateRequest" was null or undefined when calling createEstimate().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/estimates`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateEstimateRequestToJSON)(requestParameters['createEstimateRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
             return new runtime.JSONApiResponse(response);
-        });
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
+    }
+    /**
+     * Create a new estimate in DRAFT status for a customer and vehicle. Requires ESTIMATE_CREATE permission. System will generate a unique estimate number and apply default values for location, currency, and tax region if not provided.
+     * Create a new draft estimate
+     */
+    async createEstimate(requestParameters, initOverrides) {
+        const response = await this.createEstimateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+    /**
+     * Capture an immutable snapshot of the estimate\'s complete state (estimate + all line items) for audit trail and version history purposes.
+     * Create historical snapshot
+     */
+    async createEstimateSnapshotRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling createEstimateSnapshot().');
+        }
+        const queryParameters = {};
+        if (requestParameters['notes'] != null) {
+            queryParameters['notes'] = requestParameters['notes'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/snapshots`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateSnapshotResponseFromJSON)(jsonValue));
+    }
+    /**
+     * Capture an immutable snapshot of the estimate\'s complete state (estimate + all line items) for audit trail and version history purposes.
+     * Create historical snapshot
+     */
+    async createEstimateSnapshot(requestParameters, initOverrides) {
+        const response = await this.createEstimateSnapshotRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+    /**
+     * Transition estimate to declined state. Estimate can be declined from DRAFT or APPROVED status.
+     * Decline an estimate
+     */
+    async declineEstimateRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling declineEstimate().');
+        }
+        const queryParameters = {};
+        if (requestParameters['reason'] != null) {
+            queryParameters['reason'] = requestParameters['reason'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/decline`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
+    }
+    /**
+     * Transition estimate to declined state. Estimate can be declined from DRAFT or APPROVED status.
+     * Decline an estimate
+     */
+    async declineEstimate(requestParameters, initOverrides) {
+        const response = await this.declineEstimateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+    /**
+     * Delete an estimate by its unique ID.
+     * Delete an estimate
+     */
+    async deleteEstimateRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling deleteEstimate().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
+    }
+    /**
+     * Delete an estimate by its unique ID.
+     * Delete an estimate
+     */
+    async deleteEstimate(requestParameters, initOverrides) {
+        await this.deleteEstimateRaw(requestParameters, initOverrides);
+    }
+    /**
+     * Remove a line item from a draft estimate (soft delete). Estimate must be in DRAFT status.
+     * Remove line item
+     */
+    async deleteEstimateItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling deleteEstimateItem().');
+        }
+        if (requestParameters['itemId'] == null) {
+            throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling deleteEstimateItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/items/{itemId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
+    }
+    /**
+     * Remove a line item from a draft estimate (soft delete). Estimate must be in DRAFT status.
+     * Remove line item
+     */
+    async deleteEstimateItem(requestParameters, initOverrides) {
+        await this.deleteEstimateItemRaw(requestParameters, initOverrides);
     }
     /**
      * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
      * Generate estimate PDF
      */
-    generateEstimatePdf(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.generateEstimatePdfRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async generateEstimatePdfRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling generateEstimatePdf().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/pdf`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response);
+    }
+    /**
+     * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
+     * Generate estimate PDF
+     */
+    async generateEstimatePdf(requestParameters, initOverrides) {
+        const response = await this.generateEstimatePdfRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a list of all estimates.
      * Get all estimates
      */
-    getAllEstimatesRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
-        });
+    async getAllEstimatesRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
     }
     /**
      * Retrieve a list of all estimates.
      * Get all estimates
      */
-    getAllEstimates(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAllEstimatesRaw(initOverrides);
-            return yield response.value();
-        });
+    async getAllEstimates(initOverrides) {
+        const response = await this.getAllEstimatesRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve an estimate by its unique ID.
      * Get estimate by ID
      */
-    getEstimateByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling getEstimateById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
-        });
+    async getEstimateByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling getEstimateById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve an estimate by its unique ID.
      * Get estimate by ID
      */
-    getEstimateById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEstimateByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEstimateById(requestParameters, initOverrides) {
+        const response = await this.getEstimateByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a customer-facing summary of an estimate with grouped line items (parts and labor) and financial breakdown. Use the /{estimateId}/pdf endpoint to generate a PDF document.
      * Get estimate summary (customer-facing)
      */
-    getEstimateSummaryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling getEstimateSummary().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/summary`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateSummaryResponseFromJSON)(jsonValue));
-        });
+    async getEstimateSummaryRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling getEstimateSummary().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/summary`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateSummaryResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve a customer-facing summary of an estimate with grouped line items (parts and labor) and financial breakdown. Use the /{estimateId}/pdf endpoint to generate a PDF document.
      * Get estimate summary (customer-facing)
      */
-    getEstimateSummary(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEstimateSummaryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEstimateSummary(requestParameters, initOverrides) {
+        const response = await this.getEstimateSummaryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all estimates for a specific customer.
      * Get estimates by customer
      */
-    getEstimatesByCustomerRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['customerId'] == null) {
-                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getEstimatesByCustomer().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/customer/{customerId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
-        });
+    async getEstimatesByCustomerRaw(requestParameters, initOverrides) {
+        if (requestParameters['customerId'] == null) {
+            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getEstimatesByCustomer().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/customer/{customerId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
     }
     /**
      * Retrieve all estimates for a specific customer.
      * Get estimates by customer
      */
-    getEstimatesByCustomer(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEstimatesByCustomerRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEstimatesByCustomer(requestParameters, initOverrides) {
+        const response = await this.getEstimatesByCustomerRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all estimates for a specific location.
      * Get estimates by location
      */
-    getEstimatesByLocationRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getEstimatesByLocation().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/location/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
-        });
+    async getEstimatesByLocationRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getEstimatesByLocation().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/location/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
     }
     /**
      * Retrieve all estimates for a specific location.
      * Get estimates by location
      */
-    getEstimatesByLocation(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEstimatesByLocationRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEstimatesByLocation(requestParameters, initOverrides) {
+        const response = await this.getEstimatesByLocationRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all estimates for a specific shop.
      * Get estimates by shop
      */
-    getEstimatesByShopRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getEstimatesByShop().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/shop/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
-        });
+    async getEstimatesByShopRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getEstimatesByShop().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/shop/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EstimateResponseFromJSON));
     }
     /**
      * Retrieve all estimates for a specific shop.
      * Get estimates by shop
      */
-    getEstimatesByShop(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEstimatesByShopRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEstimatesByShop(requestParameters, initOverrides) {
+        const response = await this.getEstimatesByShopRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      */
-    patchEstimateStatusRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling patchEstimateStatus().');
-            }
-            if (requestParameters['requestBody'] == null) {
-                throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling patchEstimateStatus().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'PATCH',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['requestBody'],
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async patchEstimateStatusRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling patchEstimateStatus().');
+        }
+        if (requestParameters['requestBody'] == null) {
+            throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling patchEstimateStatus().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['requestBody'],
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      */
-    patchEstimateStatus(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.patchEstimateStatusRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async patchEstimateStatus(requestParameters, initOverrides) {
+        const response = await this.patchEstimateStatusRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Promote an approved estimate to a workorder. Validates preconditions: estimate must be APPROVED, not expired, have approved items, and not already promoted. Returns 409 ALREADY_PROMOTED with existingWorkorderId if estimate was previously promoted (idempotency). CAP:004 Story #26 - Create a workorder from approved estimate.
      * Promote approved estimate to workorder
      */
-    promoteEstimateToWorkorderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling promoteEstimateToWorkorder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/promote`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
-        });
+    async promoteEstimateToWorkorderRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling promoteEstimateToWorkorder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/promote`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
     }
     /**
      * Promote an approved estimate to a workorder. Validates preconditions: estimate must be APPROVED, not expired, have approved items, and not already promoted. Returns 409 ALREADY_PROMOTED with existingWorkorderId if estimate was previously promoted (idempotency). CAP:004 Story #26 - Create a workorder from approved estimate.
      * Promote approved estimate to workorder
      */
-    promoteEstimateToWorkorder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.promoteEstimateToWorkorderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async promoteEstimateToWorkorder(requestParameters, initOverrides) {
+        const response = await this.promoteEstimateToWorkorderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Transition a declined estimate back to DRAFT state. Can only be done within the configured expiry period.
      * Reopen a declined estimate
      */
-    reopenEstimateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling reopenEstimate().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/reopen`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
-        });
+    async reopenEstimateRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling reopenEstimate().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/reopen`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
     }
     /**
      * Transition a declined estimate back to DRAFT state. Can only be done within the configured expiry period.
      * Reopen a declined estimate
      */
-    reopenEstimate(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.reopenEstimateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async reopenEstimate(requestParameters, initOverrides) {
+        const response = await this.reopenEstimateRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Submit a DRAFT estimate for customer approval. Creates immutable snapshot and transitions to PENDING_APPROVAL state. Validates completeness (has customer, vehicle, line items, calculated totals). CAP:003 Issue #168 - Submit Estimate for Customer Approval
      * Submit estimate for customer approval
      */
-    submitForApprovalRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling submitForApproval().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/submit-for-approval`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
-        });
+    async submitForApprovalRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling submitForApproval().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/submit-for-approval`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateResponseFromJSON)(jsonValue));
     }
     /**
      * Submit a DRAFT estimate for customer approval. Creates immutable snapshot and transitions to PENDING_APPROVAL state. Validates completeness (has customer, vehicle, line items, calculated totals). CAP:003 Issue #168 - Submit Estimate for Customer Approval
      * Submit estimate for customer approval
      */
-    submitForApproval(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.submitForApprovalRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async submitForApproval(requestParameters, initOverrides) {
+        const response = await this.submitForApprovalRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update an existing line item on a draft estimate. Estimate must be in DRAFT status. Only provided fields will be updated.
      * Update line item
      */
-    updateEstimateItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['estimateId'] == null) {
-                throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling updateEstimateItem().');
-            }
-            if (requestParameters['itemId'] == null) {
-                throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling updateEstimateItem().');
-            }
-            if (requestParameters['updateEstimateItemRequest'] == null) {
-                throw new runtime.RequiredError('updateEstimateItemRequest', 'Required parameter "updateEstimateItemRequest" was null or undefined when calling updateEstimateItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/estimates/{estimateId}/items/{itemId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
-                method: 'PATCH',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UpdateEstimateItemRequestToJSON)(requestParameters['updateEstimateItemRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateItemResponseFromJSON)(jsonValue));
-        });
+    async updateEstimateItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['estimateId'] == null) {
+            throw new runtime.RequiredError('estimateId', 'Required parameter "estimateId" was null or undefined when calling updateEstimateItem().');
+        }
+        if (requestParameters['itemId'] == null) {
+            throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling updateEstimateItem().');
+        }
+        if (requestParameters['updateEstimateItemRequest'] == null) {
+            throw new runtime.RequiredError('updateEstimateItemRequest', 'Required parameter "updateEstimateItemRequest" was null or undefined when calling updateEstimateItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/estimates/{estimateId}/items/{itemId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UpdateEstimateItemRequestToJSON)(requestParameters['updateEstimateItemRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EstimateItemResponseFromJSON)(jsonValue));
     }
     /**
      * Update an existing line item on a draft estimate. Estimate must be in DRAFT status. Only provided fields will be updated.
      * Update line item
      */
-    updateEstimateItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateEstimateItemRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateEstimateItem(requestParameters, initOverrides) {
+        const response = await this.updateEstimateItemRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.EstimateAPIApi = EstimateAPIApi;

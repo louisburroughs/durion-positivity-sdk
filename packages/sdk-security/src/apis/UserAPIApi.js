@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,189 +57,165 @@ class UserAPIApi extends runtime.BaseAPI {
      * Replaces or applies the requested role set for the specified user by username.
      * Assign roles to a user
      */
-    assignRolesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['username'] == null) {
-                throw new runtime.RequiredError('username', 'Required parameter "username" was null or undefined when calling assignRoles().');
-            }
-            if (requestParameters['requestBody'] == null) {
-                throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling assignRoles().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/users/{username}/roles`.replace(`{${"username"}}`, encodeURIComponent(String(requestParameters['username']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['requestBody'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
-        });
+    async assignRolesRaw(requestParameters, initOverrides) {
+        if (requestParameters['username'] == null) {
+            throw new runtime.RequiredError('username', 'Required parameter "username" was null or undefined when calling assignRoles().');
+        }
+        if (requestParameters['requestBody'] == null) {
+            throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling assignRoles().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/users/{username}/roles`.replace(`{${"username"}}`, encodeURIComponent(String(requestParameters['username']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['requestBody'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
     }
     /**
      * Replaces or applies the requested role set for the specified user by username.
      * Assign roles to a user
      */
-    assignRoles(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.assignRolesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async assignRoles(requestParameters, initOverrides) {
+        const response = await this.assignRolesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates a new user with username, password, and roles.
      * Create a new user
      */
-    createUserRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['requestBody'] == null) {
-                throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling createUser().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/users`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['requestBody'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
-        });
+    async createUserRaw(requestParameters, initOverrides) {
+        if (requestParameters['requestBody'] == null) {
+            throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling createUser().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/users`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['requestBody'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
     }
     /**
      * Creates a new user with username, password, and roles.
      * Create a new user
      */
-    createUser(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createUserRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createUser(requestParameters, initOverrides) {
+        const response = await this.createUserRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Delete a user by their unique ID.
      * Delete a user
      */
-    deleteUserRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteUser().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deleteUserRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteUser().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Delete a user by their unique ID.
      * Delete a user
      */
-    deleteUser(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteUserRaw(requestParameters, initOverrides);
-        });
+    async deleteUser(requestParameters, initOverrides) {
+        await this.deleteUserRaw(requestParameters, initOverrides);
     }
     /**
      * Retrieve a list of all users.
      * Get all users
      */
-    getAllUsersRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.UserDtoFromJSON));
-        });
+    async getAllUsersRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.UserDtoFromJSON));
     }
     /**
      * Retrieve a list of all users.
      * Get all users
      */
-    getAllUsers(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAllUsersRaw(initOverrides);
-            return yield response.value();
-        });
+    async getAllUsers(initOverrides) {
+        const response = await this.getAllUsersRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a user by their unique ID.
      * Get user by ID
      */
-    getUserByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getUserById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
-        });
+    async getUserByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getUserById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
     }
     /**
      * Retrieve a user by their unique ID.
      * Get user by ID
      */
-    getUserById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getUserByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getUserById(requestParameters, initOverrides) {
+        const response = await this.getUserByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update the details of an existing user.
      * Update an existing user
      */
-    updateUserRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateUser().');
-            }
-            if (requestParameters['userUpdateRequest'] == null) {
-                throw new runtime.RequiredError('userUpdateRequest', 'Required parameter "userUpdateRequest" was null or undefined when calling updateUser().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UserUpdateRequestToJSON)(requestParameters['userUpdateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
-        });
+    async updateUserRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateUser().');
+        }
+        if (requestParameters['userUpdateRequest'] == null) {
+            throw new runtime.RequiredError('userUpdateRequest', 'Required parameter "userUpdateRequest" was null or undefined when calling updateUser().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UserUpdateRequestToJSON)(requestParameters['userUpdateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserDtoFromJSON)(jsonValue));
     }
     /**
      * Update the details of an existing user.
      * Update an existing user
      */
-    updateUser(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateUserRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateUser(requestParameters, initOverrides) {
+        const response = await this.updateUserRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.UserAPIApi = UserAPIApi;

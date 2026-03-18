@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReplenishmentApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,87 +57,75 @@ class ReplenishmentApi extends runtime.BaseAPI {
      * Creates a replenishment policy used to generate replenishment tasks.
      * Create replenishment policy
      */
-    createReplenishmentPolicyRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createReplenishmentPolicyRequest'] == null) {
-                throw new runtime.RequiredError('createReplenishmentPolicyRequest', 'Required parameter "createReplenishmentPolicyRequest" was null or undefined when calling createReplenishmentPolicy().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/replenishment/policies`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateReplenishmentPolicyRequestToJSON)(requestParameters['createReplenishmentPolicyRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReplenishmentPolicyResponseFromJSON)(jsonValue));
-        });
+    async createReplenishmentPolicyRaw(requestParameters, initOverrides) {
+        if (requestParameters['createReplenishmentPolicyRequest'] == null) {
+            throw new runtime.RequiredError('createReplenishmentPolicyRequest', 'Required parameter "createReplenishmentPolicyRequest" was null or undefined when calling createReplenishmentPolicy().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/replenishment/policies`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateReplenishmentPolicyRequestToJSON)(requestParameters['createReplenishmentPolicyRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReplenishmentPolicyResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a replenishment policy used to generate replenishment tasks.
      * Create replenishment policy
      */
-    createReplenishmentPolicy(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createReplenishmentPolicyRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createReplenishmentPolicy(requestParameters, initOverrides) {
+        const response = await this.createReplenishmentPolicyRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns configured replenishment policies.
      * List replenishment policies
      */
-    getReplenishmentPoliciesRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/replenishment/policies`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReplenishmentPolicyResponseFromJSON));
-        });
+    async getReplenishmentPoliciesRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/replenishment/policies`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReplenishmentPolicyResponseFromJSON));
     }
     /**
      * Returns configured replenishment policies.
      * List replenishment policies
      */
-    getReplenishmentPolicies(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getReplenishmentPoliciesRaw(initOverrides);
-            return yield response.value();
-        });
+    async getReplenishmentPolicies(initOverrides) {
+        const response = await this.getReplenishmentPoliciesRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Returns replenishment tasks that should be fulfilled.
      * List replenishment tasks
      */
-    getReplenishmentTasksRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/replenishment/tasks`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReplenishmentTaskResponseFromJSON));
-        });
+    async getReplenishmentTasksRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/replenishment/tasks`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReplenishmentTaskResponseFromJSON));
     }
     /**
      * Returns replenishment tasks that should be fulfilled.
      * List replenishment tasks
      */
-    getReplenishmentTasks(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getReplenishmentTasksRaw(initOverrides);
-            return yield response.value();
-        });
+    async getReplenishmentTasks(initOverrides) {
+        const response = await this.getReplenishmentTasksRaw(initOverrides);
+        return await response.value();
     }
 }
 exports.ReplenishmentApi = ReplenishmentApi;

@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DailyDispatchBoardDashboardApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,37 +57,33 @@ class DailyDispatchBoardDashboardApi extends runtime.BaseAPI {
      * Returns workorder, mechanic, bay, and conflict data for the given location and date
      * Get daily dispatch dashboard
      */
-    getDashboardRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getDashboard().');
-            }
-            const queryParameters = {};
-            if (requestParameters['locationId'] != null) {
-                queryParameters['locationId'] = requestParameters['locationId'];
-            }
-            if (requestParameters['date'] != null) {
-                queryParameters['date'] = requestParameters['date'].toISOString().substring(0, 10);
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workexec/dashboard/today`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DashboardResponseFromJSON)(jsonValue));
-        });
+    async getDashboardRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getDashboard().');
+        }
+        const queryParameters = {};
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+        if (requestParameters['date'] != null) {
+            queryParameters['date'] = requestParameters['date'].toISOString().substring(0, 10);
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workexec/dashboard/today`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DashboardResponseFromJSON)(jsonValue));
     }
     /**
      * Returns workorder, mechanic, bay, and conflict data for the given location and date
      * Get daily dispatch dashboard
      */
-    getDashboard(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getDashboardRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getDashboard(requestParameters, initOverrides) {
+        const response = await this.getDashboardRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.DailyDispatchBoardDashboardApi = DailyDispatchBoardDashboardApi;

@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserPersonLinkingAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,184 +57,160 @@ class UserPersonLinkingAPIApi extends runtime.BaseAPI {
      * Create a link between an authentication user and a person record
      * Create user-person link (admin)
      */
-    createUserPersonLinkRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createUserLinkRequest'] == null) {
-                throw new runtime.RequiredError('createUserLinkRequest', 'Required parameter "createUserLinkRequest" was null or undefined when calling createUserPersonLink().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people/user-links`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateUserLinkRequestToJSON)(requestParameters['createUserLinkRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserPersonLinkResponseFromJSON)(jsonValue));
-        });
+    async createUserPersonLinkRaw(requestParameters, initOverrides) {
+        if (requestParameters['createUserLinkRequest'] == null) {
+            throw new runtime.RequiredError('createUserLinkRequest', 'Required parameter "createUserLinkRequest" was null or undefined when calling createUserPersonLink().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people/user-links`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateUserLinkRequestToJSON)(requestParameters['createUserLinkRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserPersonLinkResponseFromJSON)(jsonValue));
     }
     /**
      * Create a link between an authentication user and a person record
      * Create user-person link (admin)
      */
-    createUserPersonLink(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createUserPersonLinkRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createUserPersonLink(requestParameters, initOverrides) {
+        const response = await this.createUserPersonLinkRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve user-person links for person
      * Get links by person ID
      */
-    getLinkByPersonIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['personId'] == null) {
-                throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getLinkByPersonId().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people/user-links/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserPersonLinkResponseFromJSON)(jsonValue));
-        });
+    async getLinkByPersonIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getLinkByPersonId().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people/user-links/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserPersonLinkResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve user-person links for person
      * Get links by person ID
      */
-    getLinkByPersonId(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getLinkByPersonIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getLinkByPersonId(requestParameters, initOverrides) {
+        const response = await this.getLinkByPersonIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve the person record linked to a user
      * Get person by user ID
      */
-    getPersonByUserIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['userId'] == null) {
-                throw new runtime.RequiredError('userId', 'Required parameter "userId" was null or undefined when calling getPersonByUserId().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people/users/{userId}/person`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonResponseFromJSON)(jsonValue));
-        });
+    async getPersonByUserIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError('userId', 'Required parameter "userId" was null or undefined when calling getPersonByUserId().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people/users/{userId}/person`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve the person record linked to a user
      * Get person by user ID
      */
-    getPersonByUserId(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPersonByUserIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPersonByUserId(requestParameters, initOverrides) {
+        const response = await this.getPersonByUserIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all user IDs linked to a person record
      * Get users linked to person
      */
-    getUserIdsByPersonIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['personId'] == null) {
-                throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getUserIdsByPersonId().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people/{personId}/users`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response);
-        });
+    async getUserIdsByPersonIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getUserIdsByPersonId().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people/{personId}/users`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response);
     }
     /**
      * Retrieve all user IDs linked to a person record
      * Get users linked to person
      */
-    getUserIdsByPersonId(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getUserIdsByPersonIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getUserIdsByPersonId(requestParameters, initOverrides) {
+        const response = await this.getUserIdsByPersonIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Create a link between an authentication user and a person record
      * Link user to person
      */
-    linkUserToPersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['linkUserToPersonRequest'] == null) {
-                throw new runtime.RequiredError('linkUserToPersonRequest', 'Required parameter "linkUserToPersonRequest" was null or undefined when calling linkUserToPerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people/users/link`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.LinkUserToPersonRequestToJSON)(requestParameters['linkUserToPersonRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserPersonLinkResponseFromJSON)(jsonValue));
-        });
+    async linkUserToPersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['linkUserToPersonRequest'] == null) {
+            throw new runtime.RequiredError('linkUserToPersonRequest', 'Required parameter "linkUserToPersonRequest" was null or undefined when calling linkUserToPerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people/users/link`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.LinkUserToPersonRequestToJSON)(requestParameters['linkUserToPersonRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserPersonLinkResponseFromJSON)(jsonValue));
     }
     /**
      * Create a link between an authentication user and a person record
      * Link user to person
      */
-    linkUserToPerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.linkUserToPersonRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async linkUserToPerson(requestParameters, initOverrides) {
+        const response = await this.linkUserToPersonRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Remove the link between a user and person
      * Unlink user from person
      */
-    unlinkUserFromPersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['userId'] == null) {
-                throw new runtime.RequiredError('userId', 'Required parameter "userId" was null or undefined when calling unlinkUserFromPerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people/users/{userId}/link`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async unlinkUserFromPersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['userId'] == null) {
+            throw new runtime.RequiredError('userId', 'Required parameter "userId" was null or undefined when calling unlinkUserFromPerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people/users/{userId}/link`.replace(`{${"userId"}}`, encodeURIComponent(String(requestParameters['userId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Remove the link between a user and person
      * Unlink user from person
      */
-    unlinkUserFromPerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.unlinkUserFromPersonRaw(requestParameters, initOverrides);
-        });
+    async unlinkUserFromPerson(requestParameters, initOverrides) {
+        await this.unlinkUserFromPersonRaw(requestParameters, initOverrides);
     }
 }
 exports.UserPersonLinkingAPIApi = UserPersonLinkingAPIApi;

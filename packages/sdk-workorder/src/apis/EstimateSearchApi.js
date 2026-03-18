@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EstimateSearchApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,40 +57,36 @@ class EstimateSearchApi extends runtime.BaseAPI {
      * Paginated search for estimates filtered by optional customerId and/or vehicleId.
      * Search estimates
      */
-    searchEstimatesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['pageable'] == null) {
-                throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling searchEstimates().');
-            }
-            const queryParameters = {};
-            if (requestParameters['customerId'] != null) {
-                queryParameters['customerId'] = requestParameters['customerId'];
-            }
-            if (requestParameters['vehicleId'] != null) {
-                queryParameters['vehicleId'] = requestParameters['vehicleId'];
-            }
-            if (requestParameters['pageable'] != null) {
-                queryParameters['pageable'] = requestParameters['pageable'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workexec/estimates/search`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageEstimateSummaryResponseFromJSON)(jsonValue));
-        });
+    async searchEstimatesRaw(requestParameters, initOverrides) {
+        if (requestParameters['pageable'] == null) {
+            throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling searchEstimates().');
+        }
+        const queryParameters = {};
+        if (requestParameters['customerId'] != null) {
+            queryParameters['customerId'] = requestParameters['customerId'];
+        }
+        if (requestParameters['vehicleId'] != null) {
+            queryParameters['vehicleId'] = requestParameters['vehicleId'];
+        }
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workexec/estimates/search`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageEstimateSummaryResponseFromJSON)(jsonValue));
     }
     /**
      * Paginated search for estimates filtered by optional customerId and/or vehicleId.
      * Search estimates
      */
-    searchEstimates(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.searchEstimatesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async searchEstimates(requestParameters, initOverrides) {
+        const response = await this.searchEstimatesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.EstimateSearchApi = EstimateSearchApi;

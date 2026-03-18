@@ -15,15 +15,6 @@
  *
  * Issue: SDK-005
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 // ---------------------------------------------------------------------------
 // Global fetch mock — prevents real network calls from any constructor or
@@ -32,8 +23,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     status: 200,
-    json: () => __awaiter(void 0, void 0, void 0, function* () { return ({}); }),
-    text: () => __awaiter(void 0, void 0, void 0, function* () { return ''; }),
+    json: async () => ({}),
+    text: async () => '',
     headers: new Headers(),
 });
 // ---------------------------------------------------------------------------
@@ -83,9 +74,8 @@ function fullConfig(baseUrl) {
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getFetchApi(client, apiKey) {
-    var _a, _b;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return (_b = (_a = client[apiKey]) === null || _a === void 0 ? void 0 : _a.configuration) === null || _b === void 0 ? void 0 : _b.fetchApi;
+    return client[apiKey]?.configuration?.fetchApi;
 }
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-catalog
@@ -128,22 +118,22 @@ describe('SDK-005 sdk-catalog: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A: no ?? fallback)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, catalog_1.createCatalogClient)(fullConfig('http://localhost:8080'));
         const fetchApi = getFetchApi(client, 'catalogApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8080/api/catalog', { method: 'GET' });
+        await fetchApi('http://localhost:8080/api/catalog', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B: ?? fallback to GET)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, catalog_1.createCatalogClient)(fullConfig('http://localhost:8080'));
         const fetchApi = getFetchApi(client, 'catalogApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8080/api/catalog', {});
+        await fetchApi('http://localhost:8080/api/catalog', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-customer
@@ -183,22 +173,22 @@ describe('SDK-005 sdk-customer: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, customer_1.createCustomerClient)(fullConfig('http://localhost:8081'));
         const fetchApi = getFetchApi(client, 'crmAccountsApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8081/api/customers', { method: 'POST' });
+        await fetchApi('http://localhost:8081/api/customers', { method: 'POST' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, customer_1.createCustomerClient)(fullConfig('http://localhost:8081'));
         const fetchApi = getFetchApi(client, 'crmAccountsApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8081/api/customers', {});
+        await fetchApi('http://localhost:8081/api/customers', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-invoice
@@ -236,22 +226,22 @@ describe('SDK-005 sdk-invoice: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, invoice_1.createInvoiceClient)(fullConfig('http://localhost:8082'));
         const fetchApi = getFetchApi(client, 'invoiceApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8082/api/invoice', { method: 'GET' });
+        await fetchApi('http://localhost:8082/api/invoice', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, invoice_1.createInvoiceClient)(fullConfig('http://localhost:8082'));
         const fetchApi = getFetchApi(client, 'invoiceApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8082/api/invoice', {});
+        await fetchApi('http://localhost:8082/api/invoice', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-location
@@ -293,22 +283,22 @@ describe('SDK-005 sdk-location: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, location_1.createLocationClient)(fullConfig('http://localhost:8083'));
         const fetchApi = getFetchApi(client, 'locationApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8083/api/locations', { method: 'GET' });
+        await fetchApi('http://localhost:8083/api/locations', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, location_1.createLocationClient)(fullConfig('http://localhost:8083'));
         const fetchApi = getFetchApi(client, 'locationApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8083/api/locations', {});
+        await fetchApi('http://localhost:8083/api/locations', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-people
@@ -346,22 +336,22 @@ describe('SDK-005 sdk-people: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, people_1.createPeopleClient)(fullConfig('http://localhost:8084'));
         const fetchApi = getFetchApi(client, 'employeeApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8084/api/employees', { method: 'GET' });
+        await fetchApi('http://localhost:8084/api/employees', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, people_1.createPeopleClient)(fullConfig('http://localhost:8084'));
         const fetchApi = getFetchApi(client, 'employeeApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8084/api/employees', {});
+        await fetchApi('http://localhost:8084/api/employees', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-price
@@ -399,22 +389,22 @@ describe('SDK-005 sdk-price: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, price_1.createPriceClient)(fullConfig('http://localhost:8085'));
         const fetchApi = getFetchApi(client, 'priceQuotesApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8085/api/prices', { method: 'GET' });
+        await fetchApi('http://localhost:8085/api/prices', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, price_1.createPriceClient)(fullConfig('http://localhost:8085'));
         const fetchApi = getFetchApi(client, 'priceQuotesApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8085/api/prices', {});
+        await fetchApi('http://localhost:8085/api/prices', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-shop-manager
@@ -452,22 +442,22 @@ describe('SDK-005 sdk-shop-manager: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, shop_manager_1.createShopManagerClient)(fullConfig('http://localhost:8086'));
         const fetchApi = getFetchApi(client, 'appointmentsApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8086/api/appointments', { method: 'GET' });
+        await fetchApi('http://localhost:8086/api/appointments', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, shop_manager_1.createShopManagerClient)(fullConfig('http://localhost:8086'));
         const fetchApi = getFetchApi(client, 'appointmentsApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8086/api/appointments', {});
+        await fetchApi('http://localhost:8086/api/appointments', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-image
@@ -503,22 +493,22 @@ describe('SDK-005 sdk-image: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, image_1.createImageClient)(fullConfig('http://localhost:8087'));
         const fetchApi = getFetchApi(client, 'imageApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8087/api/images', { method: 'POST' });
+        await fetchApi('http://localhost:8087/api/images', { method: 'POST' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, image_1.createImageClient)(fullConfig('http://localhost:8087'));
         const fetchApi = getFetchApi(client, 'imageApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8087/api/images', {});
+        await fetchApi('http://localhost:8087/api/images', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-event-receiver
@@ -556,22 +546,22 @@ describe('SDK-005 sdk-event-receiver: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, event_receiver_1.createEventReceiverClient)(fullConfig('http://localhost:8088'));
         const fetchApi = getFetchApi(client, 'eventEmissionApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8088/api/events', { method: 'POST' });
+        await fetchApi('http://localhost:8088/api/events', { method: 'POST' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, event_receiver_1.createEventReceiverClient)(fullConfig('http://localhost:8088'));
         const fetchApi = getFetchApi(client, 'eventEmissionApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8088/api/events', {});
+        await fetchApi('http://localhost:8088/api/events', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-vehicle-fitment
@@ -607,22 +597,22 @@ describe('SDK-005 sdk-vehicle-fitment: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, vehicle_fitment_1.createVehicleFitmentClient)(fullConfig('http://localhost:8089'));
         const fetchApi = getFetchApi(client, 'vehicleFitmentApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8089/api/fitment', { method: 'GET' });
+        await fetchApi('http://localhost:8089/api/fitment', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, vehicle_fitment_1.createVehicleFitmentClient)(fullConfig('http://localhost:8089'));
         const fetchApi = getFetchApi(client, 'vehicleFitmentApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8089/api/fitment', {});
+        await fetchApi('http://localhost:8089/api/fitment', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-1..AC-3: sdk-vehicle-inventory
@@ -660,22 +650,22 @@ describe('SDK-005 sdk-vehicle-inventory: fetchApi callback branches', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('AC-4: fetchApi — explicit method (Branch A)', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-4: fetchApi — explicit method (Branch A)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, vehicle_inventory_1.createVehicleInventoryClient)(fullConfig('http://localhost:8090'));
         const fetchApi = getFetchApi(client, 'vehicleApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8090/api/vehicles', { method: 'GET' });
+        await fetchApi('http://localhost:8090/api/vehicles', { method: 'GET' });
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
-    it('AC-4: fetchApi — absent method (Branch B)', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-4: fetchApi — absent method (Branch B)', async () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = (0, vehicle_inventory_1.createVehicleInventoryClient)(fullConfig('http://localhost:8090'));
         const fetchApi = getFetchApi(client, 'vehicleApi');
         expect(fetchApi).toBeDefined();
-        yield fetchApi('http://localhost:8090/api/vehicles', {});
+        await fetchApi('http://localhost:8090/api/vehicles', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
-    }));
+    });
 });
 // ---------------------------------------------------------------------------
 // AC-5: All 11 Phase 2 factories — consolidated invocations (no-server smoke)

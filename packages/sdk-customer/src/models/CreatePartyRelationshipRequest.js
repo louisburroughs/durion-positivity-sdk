@@ -46,26 +46,24 @@ function CreatePartyRelationshipRequestFromJSON(json) {
     return CreatePartyRelationshipRequestFromJSONTyped(json, false);
 }
 function CreatePartyRelationshipRequestFromJSONTyped(json, ignoreDiscriminator) {
-    var _a;
     if (json == null) {
         return json;
     }
     return {
         'personId': json['personId'],
-        'roles': new Set((_a = json['roles']) !== null && _a !== void 0 ? _a : []),
+        'roles': new Set(json['roles'] ?? []),
         'effectiveStartDate': (new Date(json['effectiveStartDate'])),
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
         'primaryBillingContact': json['primaryBillingContact'] == null ? undefined : json['primaryBillingContact'],
     };
 }
 function CreatePartyRelationshipRequestToJSON(value) {
-    var _a;
     if (value == null) {
         return value;
     }
     return {
         'personId': value['personId'],
-        'roles': Array.from((_a = value['roles']) !== null && _a !== void 0 ? _a : []),
+        'roles': Array.from(value['roles'] ?? []),
         'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0, 10)),
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0, 10)),
         'primaryBillingContact': value['primaryBillingContact'],

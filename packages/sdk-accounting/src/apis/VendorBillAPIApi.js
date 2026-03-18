@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VendorBillAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,225 +57,197 @@ class VendorBillAPIApi extends runtime.BaseAPI {
      * Creates a vendor bill from an inbound goods-received event payload
      * Create vendor bill from goods received event
      */
-    createBillFromGoodsReceivedEventRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['goodsReceivedEvent'] == null) {
-                throw new runtime.RequiredError('goodsReceivedEvent', 'Required parameter "goodsReceivedEvent" was null or undefined when calling createBillFromGoodsReceivedEvent().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/vendor-bills`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.GoodsReceivedEventToJSON)(requestParameters['goodsReceivedEvent']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
-        });
+    async createBillFromGoodsReceivedEventRaw(requestParameters, initOverrides) {
+        if (requestParameters['goodsReceivedEvent'] == null) {
+            throw new runtime.RequiredError('goodsReceivedEvent', 'Required parameter "goodsReceivedEvent" was null or undefined when calling createBillFromGoodsReceivedEvent().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.GoodsReceivedEventToJSON)(requestParameters['goodsReceivedEvent']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a vendor bill from an inbound goods-received event payload
      * Create vendor bill from goods received event
      */
-    createBillFromGoodsReceivedEvent(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createBillFromGoodsReceivedEventRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createBillFromGoodsReceivedEvent(requestParameters, initOverrides) {
+        const response = await this.createBillFromGoodsReceivedEventRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a vendor bill by its unique identifier
      * Get vendor bill by id
      */
-    getBillByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['billId'] == null) {
-                throw new runtime.RequiredError('billId', 'Required parameter "billId" was null or undefined when calling getBillById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/vendor-bills/{billId}`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
-        });
+    async getBillByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['billId'] == null) {
+            throw new runtime.RequiredError('billId', 'Required parameter "billId" was null or undefined when calling getBillById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/{billId}`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves a vendor bill by its unique identifier
      * Get vendor bill by id
      */
-    getBillById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getBillByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getBillById(requestParameters, initOverrides) {
+        const response = await this.getBillByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a vendor bill by origin goods-received event identifier
      * Get vendor bill by origin event id
      */
-    getBillByOriginEventIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['eventId'] == null) {
-                throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getBillByOriginEventId().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/vendor-bills/event/{eventId}`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
-        });
+    async getBillByOriginEventIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getBillByOriginEventId().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/event/{eventId}`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves a vendor bill by origin goods-received event identifier
      * Get vendor bill by origin event id
      */
-    getBillByOriginEventId(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getBillByOriginEventIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getBillByOriginEventId(requestParameters, initOverrides) {
+        const response = await this.getBillByOriginEventIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Lists unresolved match candidates for an ambiguous invoice event
      * List match candidates
      */
-    listMatchCandidatesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['invoiceEventId'] == null) {
-                throw new runtime.RequiredError('invoiceEventId', 'Required parameter "invoiceEventId" was null or undefined when calling listMatchCandidates().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/vendor-bills/match-candidates/{invoiceEventId}`.replace(`{${"invoiceEventId"}}`, encodeURIComponent(String(requestParameters['invoiceEventId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillMatchCandidateResponseFromJSON)(jsonValue));
-        });
+    async listMatchCandidatesRaw(requestParameters, initOverrides) {
+        if (requestParameters['invoiceEventId'] == null) {
+            throw new runtime.RequiredError('invoiceEventId', 'Required parameter "invoiceEventId" was null or undefined when calling listMatchCandidates().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/match-candidates/{invoiceEventId}`.replace(`{${"invoiceEventId"}}`, encodeURIComponent(String(requestParameters['invoiceEventId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillMatchCandidateResponseFromJSON)(jsonValue));
     }
     /**
      * Lists unresolved match candidates for an ambiguous invoice event
      * List match candidates
      */
-    listMatchCandidates(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listMatchCandidatesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listMatchCandidates(requestParameters, initOverrides) {
+        const response = await this.listMatchCandidatesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Performs matching for a received vendor invoice and creates/updates bill state
      * Match vendor invoice
      */
-    matchVendorInvoiceRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['vendorInvoiceReceivedEvent'] == null) {
-                throw new runtime.RequiredError('vendorInvoiceReceivedEvent', 'Required parameter "vendorInvoiceReceivedEvent" was null or undefined when calling matchVendorInvoice().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/vendor-bills/match`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.VendorInvoiceReceivedEventToJSON)(requestParameters['vendorInvoiceReceivedEvent']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
-        });
+    async matchVendorInvoiceRaw(requestParameters, initOverrides) {
+        if (requestParameters['vendorInvoiceReceivedEvent'] == null) {
+            throw new runtime.RequiredError('vendorInvoiceReceivedEvent', 'Required parameter "vendorInvoiceReceivedEvent" was null or undefined when calling matchVendorInvoice().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/match`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.VendorInvoiceReceivedEventToJSON)(requestParameters['vendorInvoiceReceivedEvent']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
     }
     /**
      * Performs matching for a received vendor invoice and creates/updates bill state
      * Match vendor invoice
      */
-    matchVendorInvoice(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.matchVendorInvoiceRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async matchVendorInvoice(requestParameters, initOverrides) {
+        const response = await this.matchVendorInvoiceRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Resolves a matching exception with action ACCEPT, VOID, or CORRECT
      * Resolve bill match exception
      */
-    resolveMatchExceptionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['billId'] == null) {
-                throw new runtime.RequiredError('billId', 'Required parameter "billId" was null or undefined when calling resolveMatchException().');
-            }
-            if (requestParameters['exceptionResolutionRequest'] == null) {
-                throw new runtime.RequiredError('exceptionResolutionRequest', 'Required parameter "exceptionResolutionRequest" was null or undefined when calling resolveMatchException().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/vendor-bills/{billId}/resolve-exception`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ExceptionResolutionRequestToJSON)(requestParameters['exceptionResolutionRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
-        });
+    async resolveMatchExceptionRaw(requestParameters, initOverrides) {
+        if (requestParameters['billId'] == null) {
+            throw new runtime.RequiredError('billId', 'Required parameter "billId" was null or undefined when calling resolveMatchException().');
+        }
+        if (requestParameters['exceptionResolutionRequest'] == null) {
+            throw new runtime.RequiredError('exceptionResolutionRequest', 'Required parameter "exceptionResolutionRequest" was null or undefined when calling resolveMatchException().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/{billId}/resolve-exception`.replace(`{${"billId"}}`, encodeURIComponent(String(requestParameters['billId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ExceptionResolutionRequestToJSON)(requestParameters['exceptionResolutionRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
     }
     /**
      * Resolves a matching exception with action ACCEPT, VOID, or CORRECT
      * Resolve bill match exception
      */
-    resolveMatchException(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.resolveMatchExceptionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async resolveMatchException(requestParameters, initOverrides) {
+        const response = await this.resolveMatchExceptionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Selects a candidate and approves corresponding vendor bill flow
      * Select match candidate
      */
-    selectMatchCandidateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['candidateId'] == null) {
-                throw new runtime.RequiredError('candidateId', 'Required parameter "candidateId" was null or undefined when calling selectMatchCandidate().');
-            }
-            if (requestParameters['candidateSelectionRequest'] == null) {
-                throw new runtime.RequiredError('candidateSelectionRequest', 'Required parameter "candidateSelectionRequest" was null or undefined when calling selectMatchCandidate().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/vendor-bills/match-candidates/{candidateId}/select`.replace(`{${"candidateId"}}`, encodeURIComponent(String(requestParameters['candidateId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CandidateSelectionRequestToJSON)(requestParameters['candidateSelectionRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
-        });
+    async selectMatchCandidateRaw(requestParameters, initOverrides) {
+        if (requestParameters['candidateId'] == null) {
+            throw new runtime.RequiredError('candidateId', 'Required parameter "candidateId" was null or undefined when calling selectMatchCandidate().');
+        }
+        if (requestParameters['candidateSelectionRequest'] == null) {
+            throw new runtime.RequiredError('candidateSelectionRequest', 'Required parameter "candidateSelectionRequest" was null or undefined when calling selectMatchCandidate().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills/match-candidates/{candidateId}/select`.replace(`{${"candidateId"}}`, encodeURIComponent(String(requestParameters['candidateId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CandidateSelectionRequestToJSON)(requestParameters['candidateSelectionRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VendorBillResponseFromJSON)(jsonValue));
     }
     /**
      * Selects a candidate and approves corresponding vendor bill flow
      * Select match candidate
      */
-    selectMatchCandidate(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.selectMatchCandidateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async selectMatchCandidate(requestParameters, initOverrides) {
+        const response = await this.selectMatchCandidateRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.VendorBillAPIApi = VendorBillAPIApi;

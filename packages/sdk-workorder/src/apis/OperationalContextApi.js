@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OperationalContextApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,98 +57,86 @@ class OperationalContextApi extends runtime.BaseAPI {
      * Returns the current operational context for a workorder, including flags and source data used to drive execution decisions.
      * Get operational context for workorder
      */
-    getOperationalContextRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getOperationalContext().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/operationalContext`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.OperationalContextResponseFromJSON)(jsonValue));
-        });
+    async getOperationalContextRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getOperationalContext().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/operationalContext`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.OperationalContextResponseFromJSON)(jsonValue));
     }
     /**
      * Returns the current operational context for a workorder, including flags and source data used to drive execution decisions.
      * Get operational context for workorder
      */
-    getOperationalContext(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getOperationalContextRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getOperationalContext(requestParameters, initOverrides) {
+        const response = await this.getOperationalContextRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Applies a manager-authorized override to operational context values before work starts; request is rejected once context is locked.
      * Manager override of operational context
      */
-    overrideOperationalContextRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling overrideOperationalContext().');
-            }
-            if (requestParameters['operationalContextOverrideRequest'] == null) {
-                throw new runtime.RequiredError('operationalContextOverrideRequest', 'Required parameter "operationalContextOverrideRequest" was null or undefined when calling overrideOperationalContext().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/operationalContext/override`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.OperationalContextOverrideRequestToJSON)(requestParameters['operationalContextOverrideRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.OperationalContextResponseFromJSON)(jsonValue));
-        });
+    async overrideOperationalContextRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling overrideOperationalContext().');
+        }
+        if (requestParameters['operationalContextOverrideRequest'] == null) {
+            throw new runtime.RequiredError('operationalContextOverrideRequest', 'Required parameter "operationalContextOverrideRequest" was null or undefined when calling overrideOperationalContext().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/operationalContext/override`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.OperationalContextOverrideRequestToJSON)(requestParameters['operationalContextOverrideRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.OperationalContextResponseFromJSON)(jsonValue));
     }
     /**
      * Applies a manager-authorized override to operational context values before work starts; request is rejected once context is locked.
      * Manager override of operational context
      */
-    overrideOperationalContext(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.overrideOperationalContextRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async overrideOperationalContext(requestParameters, initOverrides) {
+        const response = await this.overrideOperationalContextRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Transitions the workorder into active execution and locks operational context to prevent further overrides.
      * Start work on workorder, locking operational context
      */
-    startWorkRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling startWork().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/start`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.StartWorkorderRequestToJSON)(requestParameters['startWorkorderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderStartResponseFromJSON)(jsonValue));
-        });
+    async startWorkRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling startWork().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/start`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.StartWorkorderRequestToJSON)(requestParameters['startWorkorderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderStartResponseFromJSON)(jsonValue));
     }
     /**
      * Transitions the workorder into active execution and locks operational context to prevent further overrides.
      * Start work on workorder, locking operational context
      */
-    startWork(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.startWorkRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async startWork(requestParameters, initOverrides) {
+        const response = await this.startWorkRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.OperationalContextApi = OperationalContextApi;

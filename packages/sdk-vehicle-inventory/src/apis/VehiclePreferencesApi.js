@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehiclePreferencesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,130 +57,114 @@ class VehiclePreferencesApi extends runtime.BaseAPI {
      * Removes all preferences for a vehicle
      * Delete vehicle care preferences
      */
-    deletePreferencesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['vehicleId'] == null) {
-                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling deletePreferences().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deletePreferencesRaw(requestParameters, initOverrides) {
+        if (requestParameters['vehicleId'] == null) {
+            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling deletePreferences().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Removes all preferences for a vehicle
      * Delete vehicle care preferences
      */
-    deletePreferences(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deletePreferencesRaw(requestParameters, initOverrides);
-        });
+    async deletePreferences(requestParameters, initOverrides) {
+        await this.deletePreferencesRaw(requestParameters, initOverrides);
     }
     /**
      * Retrieves the care preferences for a vehicle. Returns 404 if no preferences exist.
      * Get vehicle care preferences
      */
-    getPreferencesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['vehicleId'] == null) {
-                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling getPreferences().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleCarePreferenceResponseFromJSON)(jsonValue));
-        });
+    async getPreferencesRaw(requestParameters, initOverrides) {
+        if (requestParameters['vehicleId'] == null) {
+            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling getPreferences().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleCarePreferenceResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves the care preferences for a vehicle. Returns 404 if no preferences exist.
      * Get vehicle care preferences
      */
-    getPreferences(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPreferencesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPreferences(requestParameters, initOverrides) {
+        const response = await this.getPreferencesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Merges provided preference fields into existing preferences without replacing the entire map
      * Partially update vehicle care preferences
      */
-    mergePreferencesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['vehicleId'] == null) {
-                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling mergePreferences().');
-            }
-            if (requestParameters['preferencesMergeDto'] == null) {
-                throw new runtime.RequiredError('preferencesMergeDto', 'Required parameter "preferencesMergeDto" was null or undefined when calling mergePreferences().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-                method: 'PATCH',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PreferencesMergeDtoToJSON)(requestParameters['preferencesMergeDto']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleCarePreferenceResponseFromJSON)(jsonValue));
-        });
+    async mergePreferencesRaw(requestParameters, initOverrides) {
+        if (requestParameters['vehicleId'] == null) {
+            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling mergePreferences().');
+        }
+        if (requestParameters['preferencesMergeDto'] == null) {
+            throw new runtime.RequiredError('preferencesMergeDto', 'Required parameter "preferencesMergeDto" was null or undefined when calling mergePreferences().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PreferencesMergeDtoToJSON)(requestParameters['preferencesMergeDto']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleCarePreferenceResponseFromJSON)(jsonValue));
     }
     /**
      * Merges provided preference fields into existing preferences without replacing the entire map
      * Partially update vehicle care preferences
      */
-    mergePreferences(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.mergePreferencesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async mergePreferences(requestParameters, initOverrides) {
+        const response = await this.mergePreferencesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Upserts preferences for a vehicle. If preferences exist, replaces them entirely. Use PATCH for partial updates.
      * Create or update vehicle care preferences
      */
-    upsertPreferencesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['vehicleId'] == null) {
-                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling upsertPreferences().');
-            }
-            if (requestParameters['preferencesUpsertDto'] == null) {
-                throw new runtime.RequiredError('preferencesUpsertDto', 'Required parameter "preferencesUpsertDto" was null or undefined when calling upsertPreferences().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PreferencesUpsertDtoToJSON)(requestParameters['preferencesUpsertDto']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleCarePreferenceResponseFromJSON)(jsonValue));
-        });
+    async upsertPreferencesRaw(requestParameters, initOverrides) {
+        if (requestParameters['vehicleId'] == null) {
+            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling upsertPreferences().');
+        }
+        if (requestParameters['preferencesUpsertDto'] == null) {
+            throw new runtime.RequiredError('preferencesUpsertDto', 'Required parameter "preferencesUpsertDto" was null or undefined when calling upsertPreferences().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PreferencesUpsertDtoToJSON)(requestParameters['preferencesUpsertDto']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleCarePreferenceResponseFromJSON)(jsonValue));
     }
     /**
      * Upserts preferences for a vehicle. If preferences exist, replaces them entirely. Use PATCH for partial updates.
      * Create or update vehicle care preferences
      */
-    upsertPreferences(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.upsertPreferencesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async upsertPreferences(requestParameters, initOverrides) {
+        const response = await this.upsertPreferencesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.VehiclePreferencesApi = VehiclePreferencesApi;

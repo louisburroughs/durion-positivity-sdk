@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountingEventsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,237 +57,209 @@ class AccountingEventsApi extends runtime.BaseAPI {
      * Retrieve details for an accounting event.
      * Get event
      */
-    getEventRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['eventId'] == null) {
-                throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getEvent().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/events/{eventId}`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
-        });
+    async getEventRaw(requestParameters, initOverrides) {
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getEvent().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/events/{eventId}`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve details for an accounting event.
      * Get event
      */
-    getEvent(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEventRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEvent(requestParameters, initOverrides) {
+        const response = await this.getEventRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve the processing log for an accounting event.
      * Get event processing log
      */
-    getEventProcessingLogRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['eventId'] == null) {
-                throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getEventProcessingLog().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/events/{eventId}/processing-log`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getEventProcessingLogRaw(requestParameters, initOverrides) {
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getEventProcessingLog().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/events/{eventId}/processing-log`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieve the processing log for an accounting event.
      * Get event processing log
      */
-    getEventProcessingLog(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEventProcessingLogRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEventProcessingLog(requestParameters, initOverrides) {
+        const response = await this.getEventProcessingLogRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all reprocessing attempts for a suspended accounting event. Returns an empty list if the event does not exist or has no reprocessing history.
      * Get reprocessing history
      */
-    getReprocessingHistoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['eventId'] == null) {
-                throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getReprocessingHistory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/events/{eventId}/reprocessing-history`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReprocessingAttemptHistoryResponseFromJSON));
-        });
+    async getReprocessingHistoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getReprocessingHistory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/events/{eventId}/reprocessing-history`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReprocessingAttemptHistoryResponseFromJSON));
     }
     /**
      * Retrieve all reprocessing attempts for a suspended accounting event. Returns an empty list if the event does not exist or has no reprocessing history.
      * Get reprocessing history
      */
-    getReprocessingHistory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getReprocessingHistoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getReprocessingHistory(requestParameters, initOverrides) {
+        const response = await this.getReprocessingHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve paginated accounting events with optional filters.
      * List events
      */
-    listEventsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['organizationId'] == null) {
-                throw new runtime.RequiredError('organizationId', 'Required parameter "organizationId" was null or undefined when calling listEvents().');
-            }
-            const queryParameters = {};
-            if (requestParameters['organizationId'] != null) {
-                queryParameters['organizationId'] = requestParameters['organizationId'];
-            }
-            if (requestParameters['page'] != null) {
-                queryParameters['page'] = requestParameters['page'];
-            }
-            if (requestParameters['size'] != null) {
-                queryParameters['size'] = requestParameters['size'];
-            }
-            if (requestParameters['status'] != null) {
-                queryParameters['status'] = requestParameters['status'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/events`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PagedResponseAccountingEventResponseFromJSON)(jsonValue));
-        });
+    async listEventsRaw(requestParameters, initOverrides) {
+        if (requestParameters['organizationId'] == null) {
+            throw new runtime.RequiredError('organizationId', 'Required parameter "organizationId" was null or undefined when calling listEvents().');
+        }
+        const queryParameters = {};
+        if (requestParameters['organizationId'] != null) {
+            queryParameters['organizationId'] = requestParameters['organizationId'];
+        }
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/events`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PagedResponseAccountingEventResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve paginated accounting events with optional filters.
      * List events
      */
-    listEvents(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listEventsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listEvents(requestParameters, initOverrides) {
+        const response = await this.listEventsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Reprocess a SUSPENDED accounting event after mapping/rule correction. Idempotent - returns 409 Conflict if already PROCESSED.
      * Reprocess suspended event
      */
-    reprocessSuspendedEventRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['eventId'] == null) {
-                throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling reprocessSuspendedEvent().');
-            }
-            if (requestParameters['reprocessEventRequest'] == null) {
-                throw new runtime.RequiredError('reprocessEventRequest', 'Required parameter "reprocessEventRequest" was null or undefined when calling reprocessSuspendedEvent().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/events/{eventId}/reprocess`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ReprocessEventRequestToJSON)(requestParameters['reprocessEventRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
-        });
+    async reprocessSuspendedEventRaw(requestParameters, initOverrides) {
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling reprocessSuspendedEvent().');
+        }
+        if (requestParameters['reprocessEventRequest'] == null) {
+            throw new runtime.RequiredError('reprocessEventRequest', 'Required parameter "reprocessEventRequest" was null or undefined when calling reprocessSuspendedEvent().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/events/{eventId}/reprocess`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ReprocessEventRequestToJSON)(requestParameters['reprocessEventRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
     }
     /**
      * Reprocess a SUSPENDED accounting event after mapping/rule correction. Idempotent - returns 409 Conflict if already PROCESSED.
      * Reprocess suspended event
      */
-    reprocessSuspendedEvent(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.reprocessSuspendedEventRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async reprocessSuspendedEvent(requestParameters, initOverrides) {
+        const response = await this.reprocessSuspendedEventRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retry processing for a failed accounting event.
      * Retry event processing
      */
-    retryEventProcessingRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['eventId'] == null) {
-                throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling retryEventProcessing().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/events/{eventId}/retry`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
-        });
+    async retryEventProcessingRaw(requestParameters, initOverrides) {
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling retryEventProcessing().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/events/{eventId}/retry`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
     }
     /**
      * Retry processing for a failed accounting event.
      * Retry event processing
      */
-    retryEventProcessing(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.retryEventProcessingRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async retryEventProcessing(requestParameters, initOverrides) {
+        const response = await this.retryEventProcessingRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Submit a new accounting event for processing.
      * Submit event
      */
-    submitEventRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['accountingEventSubmitRequest'] == null) {
-                throw new runtime.RequiredError('accountingEventSubmitRequest', 'Required parameter "accountingEventSubmitRequest" was null or undefined when calling submitEvent().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/events`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.AccountingEventSubmitRequestToJSON)(requestParameters['accountingEventSubmitRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
-        });
+    async submitEventRaw(requestParameters, initOverrides) {
+        if (requestParameters['accountingEventSubmitRequest'] == null) {
+            throw new runtime.RequiredError('accountingEventSubmitRequest', 'Required parameter "accountingEventSubmitRequest" was null or undefined when calling submitEvent().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/events`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.AccountingEventSubmitRequestToJSON)(requestParameters['accountingEventSubmitRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountingEventResponseFromJSON)(jsonValue));
     }
     /**
      * Submit a new accounting event for processing.
      * Submit event
      */
-    submitEvent(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.submitEventRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async submitEvent(requestParameters, initOverrides) {
+        const response = await this.submitEventRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.AccountingEventsApi = AccountingEventsApi;

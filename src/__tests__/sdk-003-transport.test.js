@@ -44,15 +44,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
@@ -163,18 +154,17 @@ describe('SDK-003 AC-11: packages/sdk-transport/src/http-client.ts', () => {
  * plain record, or entries array).  Header name lookup is case-insensitive.
  */
 function getHeader(headers, name) {
-    var _a, _b;
     if (!headers)
         return null;
     if (headers instanceof Headers)
         return headers.get(name);
     if (Array.isArray(headers)) {
         const entry = headers.find(([k]) => k.toLowerCase() === name.toLowerCase());
-        return entry ? ((_a = entry[1]) !== null && _a !== void 0 ? _a : null) : null;
+        return entry ? (entry[1] ?? null) : null;
     }
     const obj = headers;
     const key = Object.keys(obj).find((k) => k.toLowerCase() === name.toLowerCase());
-    return key === undefined ? null : ((_b = obj[key]) !== null && _b !== void 0 ? _b : null);
+    return key === undefined ? null : (obj[key] ?? null);
 }
 /**
  * TypeScript assertion function used as a RED guard in behavioral tests.
@@ -194,7 +184,7 @@ describe('SDK-003 AC-6–9: SdkHttpClient header injection', () => {
     let SdkHttpClient;
     let mockFetch;
     let savedFetch;
-    beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
+    beforeAll(async () => {
         // Snapshot real fetch so afterAll can restore it cleanly.
         savedFetch = globalThis['fetch'];
         try {
@@ -202,14 +192,14 @@ describe('SDK-003 AC-6–9: SdkHttpClient header injection', () => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore — module does not exist yet; resolves to null in RED phase
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const mod = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/transport')));
+            const mod = await Promise.resolve().then(() => __importStar(require('@durion-sdk/transport')));
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             SdkHttpClient = mod.SdkHttpClient;
         }
-        catch (_a) {
+        catch {
             SdkHttpClient = null;
         }
-    }));
+    });
     afterAll(() => {
         globalThis['fetch'] = savedFetch;
     });
@@ -224,63 +214,63 @@ describe('SDK-003 AC-6–9: SdkHttpClient header injection', () => {
     // -------------------------------------------------------------------------
     // AC-6: Authorization header injection
     // -------------------------------------------------------------------------
-    it('AC-6: injects Authorization: Bearer <token> when a token function is configured', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-6: injects Authorization: Bearer <token> when a token function is configured', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({
             baseUrl: 'https://gateway.example.com',
             token: () => 'test-token',
         });
-        yield client.request('GET', '/v1/test');
+        await client.request('GET', '/v1/test');
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'Authorization')).toBe('Bearer test-token');
-    }));
-    it('AC-6: omits Authorization header when no token is configured', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-6: omits Authorization header when no token is configured', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
-        yield client.request('GET', '/v1/test');
+        await client.request('GET', '/v1/test');
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'Authorization')).toBeNull();
-    }));
+    });
     // -------------------------------------------------------------------------
     // AC-7: X-API-Version header injection
     // -------------------------------------------------------------------------
-    it('AC-7: injects X-API-Version defaulting to "1" when apiVersion is not in config', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-7: injects X-API-Version defaulting to "1" when apiVersion is not in config', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
-        yield client.request('GET', '/v1/test');
+        await client.request('GET', '/v1/test');
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'X-API-Version')).toBe('1');
-    }));
-    it('AC-7: injects X-API-Version with the configured apiVersion value', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-7: injects X-API-Version with the configured apiVersion value', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({
             baseUrl: 'https://gateway.example.com',
             apiVersion: '2',
         });
-        yield client.request('GET', '/v1/test');
+        await client.request('GET', '/v1/test');
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'X-API-Version')).toBe('2');
-    }));
+    });
     // -------------------------------------------------------------------------
     // AC-8: X-Correlation-Id header injection
     // -------------------------------------------------------------------------
-    it('AC-8: injects X-Correlation-Id as a UUID-format value on every request', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-8: injects X-Correlation-Id as a UUID-format value on every request', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
-        yield client.request('GET', '/v1/test');
+        await client.request('GET', '/v1/test');
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'X-Correlation-Id')).toMatch(UUID_PATTERN);
-    }));
-    it('AC-8: generates a unique X-Correlation-Id per request', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-8: generates a unique X-Correlation-Id per request', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
-        yield client.request('GET', '/v1/first');
-        yield client.request('GET', '/v1/second');
+        await client.request('GET', '/v1/first');
+        await client.request('GET', '/v1/second');
         expect(mockFetch).toHaveBeenCalledTimes(2);
         const [, init1] = mockFetch.mock.calls[0];
         const [, init2] = mockFetch.mock.calls[1];
@@ -289,57 +279,57 @@ describe('SDK-003 AC-6–9: SdkHttpClient header injection', () => {
         expect(id1).toMatch(UUID_PATTERN);
         expect(id2).toMatch(UUID_PATTERN);
         expect(id1).not.toBe(id2);
-    }));
+    });
     // -------------------------------------------------------------------------
     // AC-9: Idempotency-Key header injection (mutating requests only)
     // -------------------------------------------------------------------------
-    it('AC-9: injects Idempotency-Key on POST requests when caller provides one', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('AC-9: injects Idempotency-Key on POST requests when caller provides one', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
-        yield client.request('POST', '/v1/test', { idempotencyKey: 'key-abc-123' });
+        await client.request('POST', '/v1/test', { idempotencyKey: 'key-abc-123' });
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'Idempotency-Key')).toBe('key-abc-123');
-    }));
-    it('AC-9: does NOT inject Idempotency-Key on GET requests even when caller provides one', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('AC-9: does NOT inject Idempotency-Key on GET requests even when caller provides one', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient'); // RED: @durion-sdk/transport not found
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
-        yield client.request('GET', '/v1/test', { idempotencyKey: 'key-abc-123' });
+        await client.request('GET', '/v1/test', { idempotencyKey: 'key-abc-123' });
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'Idempotency-Key')).toBeNull();
-    }));
+    });
     // -------------------------------------------------------------------------
     // Body / Content-Type / absolute URL branch coverage
     // -------------------------------------------------------------------------
-    it('sets Content-Type to application/json and serializes the body when body is provided', () => __awaiter(void 0, void 0, void 0, function* () {
+    it('sets Content-Type to application/json and serializes the body when body is provided', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient');
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
         const payload = { orderId: 'abc-123', quantity: 2 };
-        yield client.request('POST', '/v1/orders', { body: payload });
+        await client.request('POST', '/v1/orders', { body: payload });
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'Content-Type')).toBe('application/json');
         expect(init.body).toBe(JSON.stringify(payload));
-    }));
-    it('does NOT override Content-Type when caller already provides it alongside a body', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('does NOT override Content-Type when caller already provides it alongside a body', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient');
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
-        yield client.request('POST', '/v1/orders', {
+        await client.request('POST', '/v1/orders', {
             headers: { 'Content-Type': 'application/merge-patch+json' },
             body: { status: 'cancelled' },
         });
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [, init] = mockFetch.mock.calls[0];
         expect(getHeader(init.headers, 'Content-Type')).toBe('application/merge-patch+json');
-    }));
-    it('uses an absolute URL directly without prepending baseUrl', () => __awaiter(void 0, void 0, void 0, function* () {
+    });
+    it('uses an absolute URL directly without prepending baseUrl', async () => {
         requireLoaded(SdkHttpClient, 'SdkHttpClient');
         const client = new SdkHttpClient({ baseUrl: 'https://gateway.example.com' });
         const absoluteUrl = 'https://other-service.internal/health';
-        yield client.request('GET', absoluteUrl);
+        await client.request('GET', absoluteUrl);
         expect(mockFetch).toHaveBeenCalledTimes(1);
         const [calledUrl] = mockFetch.mock.calls[0];
         expect(calledUrl).toBe(absoluteUrl);
-    }));
+    });
 });

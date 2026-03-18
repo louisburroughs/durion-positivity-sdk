@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JournalEntriesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,234 +57,206 @@ class JournalEntriesApi extends runtime.BaseAPI {
      * Create a new journal entry.
      * Create journal entry
      */
-    createJournalEntryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['journalEntryCreateRequest'] == null) {
-                throw new runtime.RequiredError('journalEntryCreateRequest', 'Required parameter "journalEntryCreateRequest" was null or undefined when calling createJournalEntry().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/journal-entries`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.JournalEntryCreateRequestToJSON)(requestParameters['journalEntryCreateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
-        });
+    async createJournalEntryRaw(requestParameters, initOverrides) {
+        if (requestParameters['journalEntryCreateRequest'] == null) {
+            throw new runtime.RequiredError('journalEntryCreateRequest', 'Required parameter "journalEntryCreateRequest" was null or undefined when calling createJournalEntry().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/journal-entries`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.JournalEntryCreateRequestToJSON)(requestParameters['journalEntryCreateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
     }
     /**
      * Create a new journal entry.
      * Create journal entry
      */
-    createJournalEntry(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createJournalEntryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createJournalEntry(requestParameters, initOverrides) {
+        const response = await this.createJournalEntryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a journal entry by identifier.
      * Get journal entry
      */
-    getJournalEntryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['journalEntryId'] == null) {
-                throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling getJournalEntry().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/journal-entries/{journalEntryId}`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
-        });
+    async getJournalEntryRaw(requestParameters, initOverrides) {
+        if (requestParameters['journalEntryId'] == null) {
+            throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling getJournalEntry().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/journal-entries/{journalEntryId}`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve a journal entry by identifier.
      * Get journal entry
      */
-    getJournalEntry(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getJournalEntryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getJournalEntry(requestParameters, initOverrides) {
+        const response = await this.getJournalEntryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Trace a journal entry across related records.
      * Get journal traceability
      */
-    getJournalTraceabilityRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['journalEntryId'] == null) {
-                throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling getJournalTraceability().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/journal-entries/{journalEntryId}/traceability`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryTraceabilityResponseFromJSON)(jsonValue));
-        });
+    async getJournalTraceabilityRaw(requestParameters, initOverrides) {
+        if (requestParameters['journalEntryId'] == null) {
+            throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling getJournalTraceability().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/journal-entries/{journalEntryId}/traceability`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryTraceabilityResponseFromJSON)(jsonValue));
     }
     /**
      * Trace a journal entry across related records.
      * Get journal traceability
      */
-    getJournalTraceability(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getJournalTraceabilityRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getJournalTraceability(requestParameters, initOverrides) {
+        const response = await this.getJournalTraceabilityRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve paginated journal entries.
      * List journal entries
      */
-    listJournalEntriesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['sort'] == null) {
-                throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listJournalEntries().');
-            }
-            const queryParameters = {};
-            if (requestParameters['page'] != null) {
-                queryParameters['page'] = requestParameters['page'];
-            }
-            if (requestParameters['size'] != null) {
-                queryParameters['size'] = requestParameters['size'];
-            }
-            if (requestParameters['sort'] != null) {
-                queryParameters['sort'] = requestParameters['sort'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/journal-entries`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PagedResponseJournalEntryResponseFromJSON)(jsonValue));
-        });
+    async listJournalEntriesRaw(requestParameters, initOverrides) {
+        if (requestParameters['sort'] == null) {
+            throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listJournalEntries().');
+        }
+        const queryParameters = {};
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/journal-entries`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PagedResponseJournalEntryResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve paginated journal entries.
      * List journal entries
      */
-    listJournalEntries(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listJournalEntriesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listJournalEntries(requestParameters, initOverrides) {
+        const response = await this.listJournalEntriesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Post a draft journal entry to the ledger.
      * Post journal entry
      */
-    postJournalEntryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['journalEntryId'] == null) {
-                throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling postJournalEntry().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/journal-entries/{journalEntryId}/post`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
-        });
+    async postJournalEntryRaw(requestParameters, initOverrides) {
+        if (requestParameters['journalEntryId'] == null) {
+            throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling postJournalEntry().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/journal-entries/{journalEntryId}/post`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
     }
     /**
      * Post a draft journal entry to the ledger.
      * Post journal entry
      */
-    postJournalEntry(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.postJournalEntryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async postJournalEntry(requestParameters, initOverrides) {
+        const response = await this.postJournalEntryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Reverse a posted journal entry.
      * Reverse journal entry
      */
-    reverseJournalEntryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['journalEntryId'] == null) {
-                throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling reverseJournalEntry().');
-            }
-            if (requestParameters['journalEntryReversalRequest'] == null) {
-                throw new runtime.RequiredError('journalEntryReversalRequest', 'Required parameter "journalEntryReversalRequest" was null or undefined when calling reverseJournalEntry().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/journal-entries/{journalEntryId}/reverse`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.JournalEntryReversalRequestToJSON)(requestParameters['journalEntryReversalRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
-        });
+    async reverseJournalEntryRaw(requestParameters, initOverrides) {
+        if (requestParameters['journalEntryId'] == null) {
+            throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling reverseJournalEntry().');
+        }
+        if (requestParameters['journalEntryReversalRequest'] == null) {
+            throw new runtime.RequiredError('journalEntryReversalRequest', 'Required parameter "journalEntryReversalRequest" was null or undefined when calling reverseJournalEntry().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/journal-entries/{journalEntryId}/reverse`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.JournalEntryReversalRequestToJSON)(requestParameters['journalEntryReversalRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
     }
     /**
      * Reverse a posted journal entry.
      * Reverse journal entry
      */
-    reverseJournalEntry(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.reverseJournalEntryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async reverseJournalEntry(requestParameters, initOverrides) {
+        const response = await this.reverseJournalEntryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update an existing journal entry.
      * Update journal entry
      */
-    updateJournalEntryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['journalEntryId'] == null) {
-                throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling updateJournalEntry().');
-            }
-            if (requestParameters['journalEntryCreateRequest'] == null) {
-                throw new runtime.RequiredError('journalEntryCreateRequest', 'Required parameter "journalEntryCreateRequest" was null or undefined when calling updateJournalEntry().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/journal-entries/{journalEntryId}`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.JournalEntryCreateRequestToJSON)(requestParameters['journalEntryCreateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
-        });
+    async updateJournalEntryRaw(requestParameters, initOverrides) {
+        if (requestParameters['journalEntryId'] == null) {
+            throw new runtime.RequiredError('journalEntryId', 'Required parameter "journalEntryId" was null or undefined when calling updateJournalEntry().');
+        }
+        if (requestParameters['journalEntryCreateRequest'] == null) {
+            throw new runtime.RequiredError('journalEntryCreateRequest', 'Required parameter "journalEntryCreateRequest" was null or undefined when calling updateJournalEntry().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/journal-entries/{journalEntryId}`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.JournalEntryCreateRequestToJSON)(requestParameters['journalEntryCreateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.JournalEntryResponseFromJSON)(jsonValue));
     }
     /**
      * Update an existing journal entry.
      * Update journal entry
      */
-    updateJournalEntry(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateJournalEntryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateJournalEntry(requestParameters, initOverrides) {
+        const response = await this.updateJournalEntryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.JournalEntriesApi = JournalEntriesApi;

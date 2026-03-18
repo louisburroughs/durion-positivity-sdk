@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventEmissionApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,38 +57,34 @@ class EventEmissionApi extends runtime.BaseAPI {
      * Stores a preregistered emitted event payload
      * Receive emitted event
      */
-    receiveEventRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['emitEventRequest'] == null) {
-                throw new runtime.RequiredError('emitEventRequest', 'Required parameter "emitEventRequest" was null or undefined when calling receiveEvent().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/events`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.EmitEventRequestToJSON)(requestParameters['emitEventRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async receiveEventRaw(requestParameters, initOverrides) {
+        if (requestParameters['emitEventRequest'] == null) {
+            throw new runtime.RequiredError('emitEventRequest', 'Required parameter "emitEventRequest" was null or undefined when calling receiveEvent().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/events`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.EmitEventRequestToJSON)(requestParameters['emitEventRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Stores a preregistered emitted event payload
      * Receive emitted event
      */
-    receiveEvent(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.receiveEventRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async receiveEvent(requestParameters, initOverrides) {
+        const response = await this.receiveEventRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.EventEmissionApi = EventEmissionApi;

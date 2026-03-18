@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CatalogItemsAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,116 +57,104 @@ class CatalogItemsAPIApi extends runtime.BaseAPI {
      * Adds a new product, service, or non-inventory product to the catalog.
      * Add a new catalog item
      */
-    addCatalogItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['type'] == null) {
-                throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling addCatalogItem().');
-            }
-            if (requestParameters['catalogItemRequestDto'] == null) {
-                throw new runtime.RequiredError('catalogItemRequestDto', 'Required parameter "catalogItemRequestDto" was null or undefined when calling addCatalogItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/catalog-items/{type}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CatalogItemRequestDtoToJSON)(requestParameters['catalogItemRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async addCatalogItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['type'] == null) {
+            throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling addCatalogItem().');
+        }
+        if (requestParameters['catalogItemRequestDto'] == null) {
+            throw new runtime.RequiredError('catalogItemRequestDto', 'Required parameter "catalogItemRequestDto" was null or undefined when calling addCatalogItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/catalog-items/{type}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CatalogItemRequestDtoToJSON)(requestParameters['catalogItemRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Adds a new product, service, or non-inventory product to the catalog.
      * Add a new catalog item
      */
-    addCatalogItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.addCatalogItemRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async addCatalogItem(requestParameters, initOverrides) {
+        const response = await this.addCatalogItemRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Deletes a product, service, or non-inventory product from the catalog by its ID.
      * Delete a catalog item
      */
-    deleteCatalogItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['type'] == null) {
-                throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling deleteCatalogItem().');
-            }
-            if (requestParameters['catalogId'] == null) {
-                throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling deleteCatalogItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/catalog-items/{type}/{catalogId}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))).replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deleteCatalogItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['type'] == null) {
+            throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling deleteCatalogItem().');
+        }
+        if (requestParameters['catalogId'] == null) {
+            throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling deleteCatalogItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/catalog-items/{type}/{catalogId}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))).replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Deletes a product, service, or non-inventory product from the catalog by its ID.
      * Delete a catalog item
      */
-    deleteCatalogItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteCatalogItemRaw(requestParameters, initOverrides);
-        });
+    async deleteCatalogItem(requestParameters, initOverrides) {
+        await this.deleteCatalogItemRaw(requestParameters, initOverrides);
     }
     /**
      * Updates an existing product, service, or non-inventory product in the catalog.
      * Update an existing catalog item
      */
-    updateCatalogItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['type'] == null) {
-                throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling updateCatalogItem().');
-            }
-            if (requestParameters['catalogId'] == null) {
-                throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling updateCatalogItem().');
-            }
-            if (requestParameters['catalogItemRequestDto'] == null) {
-                throw new runtime.RequiredError('catalogItemRequestDto', 'Required parameter "catalogItemRequestDto" was null or undefined when calling updateCatalogItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/catalog-items/{type}/{catalogId}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))).replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CatalogItemRequestDtoToJSON)(requestParameters['catalogItemRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async updateCatalogItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['type'] == null) {
+            throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling updateCatalogItem().');
+        }
+        if (requestParameters['catalogId'] == null) {
+            throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling updateCatalogItem().');
+        }
+        if (requestParameters['catalogItemRequestDto'] == null) {
+            throw new runtime.RequiredError('catalogItemRequestDto', 'Required parameter "catalogItemRequestDto" was null or undefined when calling updateCatalogItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/catalog-items/{type}/{catalogId}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))).replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CatalogItemRequestDtoToJSON)(requestParameters['catalogItemRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Updates an existing product, service, or non-inventory product in the catalog.
      * Update an existing catalog item
      */
-    updateCatalogItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateCatalogItemRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateCatalogItem(requestParameters, initOverrides) {
+        const response = await this.updateCatalogItemRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.CatalogItemsAPIApi = CatalogItemsAPIApi;

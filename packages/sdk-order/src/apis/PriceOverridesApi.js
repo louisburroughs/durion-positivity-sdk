@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PriceOverridesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,219 +57,195 @@ class PriceOverridesApi extends runtime.BaseAPI {
      * Apply a price override to an order line. May require approval based on override amount.
      * Apply price override
      */
-    applyPriceOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['applyPriceOverrideRequest'] == null) {
-                throw new runtime.RequiredError('applyPriceOverrideRequest', 'Required parameter "applyPriceOverrideRequest" was null or undefined when calling applyPriceOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/orders/price-overrides`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ApplyPriceOverrideRequestToJSON)(requestParameters['applyPriceOverrideRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async applyPriceOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['applyPriceOverrideRequest'] == null) {
+            throw new runtime.RequiredError('applyPriceOverrideRequest', 'Required parameter "applyPriceOverrideRequest" was null or undefined when calling applyPriceOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/orders/price-overrides`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ApplyPriceOverrideRequestToJSON)(requestParameters['applyPriceOverrideRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Apply a price override to an order line. May require approval based on override amount.
      * Apply price override
      */
-    applyPriceOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.applyPriceOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async applyPriceOverride(requestParameters, initOverrides) {
+        const response = await this.applyPriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Approve a pending price override. Validates approver permission level.
      * Approve price override
      */
-    approvePriceOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['overrideId'] == null) {
-                throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling approvePriceOverride().');
-            }
-            if (requestParameters['approvePriceOverrideRequest'] == null) {
-                throw new runtime.RequiredError('approvePriceOverrideRequest', 'Required parameter "approvePriceOverrideRequest" was null or undefined when calling approvePriceOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/orders/price-overrides/{overrideId}/approve`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ApprovePriceOverrideRequestToJSON)(requestParameters['approvePriceOverrideRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async approvePriceOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['overrideId'] == null) {
+            throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling approvePriceOverride().');
+        }
+        if (requestParameters['approvePriceOverrideRequest'] == null) {
+            throw new runtime.RequiredError('approvePriceOverrideRequest', 'Required parameter "approvePriceOverrideRequest" was null or undefined when calling approvePriceOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/orders/price-overrides/{overrideId}/approve`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ApprovePriceOverrideRequestToJSON)(requestParameters['approvePriceOverrideRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Approve a pending price override. Validates approver permission level.
      * Approve price override
      */
-    approvePriceOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.approvePriceOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async approvePriceOverride(requestParameters, initOverrides) {
+        const response = await this.approvePriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a specific price override by ID.
      * Get price override
      */
-    getOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['overrideId'] == null) {
-                throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling getOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/orders/price-overrides/{overrideId}`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['overrideId'] == null) {
+            throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling getOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/orders/price-overrides/{overrideId}`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieve a specific price override by ID.
      * Get price override
      */
-    getOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getOverride(requestParameters, initOverrides) {
+        const response = await this.getOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve price overrides by order ID, status, or date range. At least one filter parameter is required.
      * Get price overrides
      */
-    getOverridesByOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            if (requestParameters['orderId'] != null) {
-                queryParameters['orderId'] = requestParameters['orderId'];
-            }
-            if (requestParameters['status'] != null) {
-                queryParameters['status'] = requestParameters['status'];
-            }
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'];
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/orders/price-overrides`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PriceOverrideDetailFromJSON));
-        });
+    async getOverridesByOrderRaw(requestParameters, initOverrides) {
+        const queryParameters = {};
+        if (requestParameters['orderId'] != null) {
+            queryParameters['orderId'] = requestParameters['orderId'];
+        }
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'];
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/orders/price-overrides`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PriceOverrideDetailFromJSON));
     }
     /**
      * Retrieve price overrides by order ID, status, or date range. At least one filter parameter is required.
      * Get price overrides
      */
-    getOverridesByOrder() {
-        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
-            const response = yield this.getOverridesByOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getOverridesByOrder(requestParameters = {}, initOverrides) {
+        const response = await this.getOverridesByOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all price overrides awaiting approval.
      * Get pending approvals
      */
-    getPendingApprovalsRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/orders/price-overrides/pending`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PriceOverrideDetailFromJSON));
-        });
+    async getPendingApprovalsRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/orders/price-overrides/pending`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PriceOverrideDetailFromJSON));
     }
     /**
      * Retrieve all price overrides awaiting approval.
      * Get pending approvals
      */
-    getPendingApprovals(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPendingApprovalsRaw(initOverrides);
-            return yield response.value();
-        });
+    async getPendingApprovals(initOverrides) {
+        const response = await this.getPendingApprovalsRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Reject a pending price override with a reason.
      * Reject price override
      */
-    rejectPriceOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['overrideId'] == null) {
-                throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling rejectPriceOverride().');
-            }
-            if (requestParameters['rejectPriceOverrideRequest'] == null) {
-                throw new runtime.RequiredError('rejectPriceOverrideRequest', 'Required parameter "rejectPriceOverrideRequest" was null or undefined when calling rejectPriceOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/orders/price-overrides/{overrideId}/reject`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.RejectPriceOverrideRequestToJSON)(requestParameters['rejectPriceOverrideRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async rejectPriceOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['overrideId'] == null) {
+            throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling rejectPriceOverride().');
+        }
+        if (requestParameters['rejectPriceOverrideRequest'] == null) {
+            throw new runtime.RequiredError('rejectPriceOverrideRequest', 'Required parameter "rejectPriceOverrideRequest" was null or undefined when calling rejectPriceOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/orders/price-overrides/{overrideId}/reject`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.RejectPriceOverrideRequestToJSON)(requestParameters['rejectPriceOverrideRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Reject a pending price override with a reason.
      * Reject price override
      */
-    rejectPriceOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.rejectPriceOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async rejectPriceOverride(requestParameters, initOverrides) {
+        const response = await this.rejectPriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.PriceOverridesApi = PriceOverridesApi;

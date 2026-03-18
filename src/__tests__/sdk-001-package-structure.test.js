@@ -69,9 +69,8 @@ describe('SDK-001 AC-1: package.json workspaces', () => {
 describe('SDK-001 AC-2: package.json scripts', () => {
     let scripts;
     beforeAll(() => {
-        var _a;
         const pkg = readJson(path.resolve(REPO_ROOT, 'package.json'));
-        scripts = ((_a = pkg['scripts']) !== null && _a !== void 0 ? _a : {});
+        scripts = (pkg['scripts'] ?? {});
     });
     it.each(['build', 'test', 'lint', 'generate'])('has a "%s" script defined', (scriptName) => {
         expect(scripts).toHaveProperty(scriptName);
@@ -93,9 +92,8 @@ describe('SDK-001 AC-3: package.json devDependencies', () => {
     ];
     let devDeps;
     beforeAll(() => {
-        var _a;
         const pkg = readJson(path.resolve(REPO_ROOT, 'package.json'));
-        devDeps = ((_a = pkg['devDependencies']) !== null && _a !== void 0 ? _a : {});
+        devDeps = (pkg['devDependencies'] ?? {});
     });
     it.each(REQUIRED_DEV_DEPS)('devDependencies has "%s"', (dep) => {
         expect(devDeps).toHaveProperty(dep);
@@ -121,7 +119,7 @@ describe('SDK-001 AC-5: .eslintrc.js TypeScript parser config', () => {
             // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
             config = require(eslintrcPath);
         }
-        catch (_a) {
+        catch {
             throw new Error(`.eslintrc.js does not exist or cannot be loaded from ${eslintrcPath}`);
         }
         expect(config.parser).toBe('@typescript-eslint/parser');
@@ -132,16 +130,15 @@ describe('SDK-001 AC-5: .eslintrc.js TypeScript parser config', () => {
 // ---------------------------------------------------------------------------
 describe('SDK-001 AC-6: jest.config.js coverage thresholds', () => {
     it('defines global coverageThreshold with all four metrics set to 80', () => {
-        var _a;
         const jestConfigPath = path.resolve(REPO_ROOT, 'jest.config.js');
         // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         const jestConfig = require(jestConfigPath);
-        const globalThreshold = (_a = jestConfig.coverageThreshold) === null || _a === void 0 ? void 0 : _a['global'];
+        const globalThreshold = jestConfig.coverageThreshold?.['global'];
         expect(globalThreshold).toBeDefined();
-        expect(globalThreshold === null || globalThreshold === void 0 ? void 0 : globalThreshold['branches']).toBe(80);
-        expect(globalThreshold === null || globalThreshold === void 0 ? void 0 : globalThreshold['functions']).toBe(80);
-        expect(globalThreshold === null || globalThreshold === void 0 ? void 0 : globalThreshold['lines']).toBe(80);
-        expect(globalThreshold === null || globalThreshold === void 0 ? void 0 : globalThreshold['statements']).toBe(80);
+        expect(globalThreshold?.['branches']).toBe(80);
+        expect(globalThreshold?.['functions']).toBe(80);
+        expect(globalThreshold?.['lines']).toBe(80);
+        expect(globalThreshold?.['statements']).toBe(80);
     });
 });
 // ---------------------------------------------------------------------------
@@ -150,9 +147,8 @@ describe('SDK-001 AC-6: jest.config.js coverage thresholds', () => {
 describe('SDK-001 AC-7: tsconfig.json @durion-sdk/* path alias', () => {
     let compilerOptions;
     beforeAll(() => {
-        var _a;
         const tsconfig = readJson(path.resolve(REPO_ROOT, 'tsconfig.json'));
-        compilerOptions = ((_a = tsconfig['compilerOptions']) !== null && _a !== void 0 ? _a : {});
+        compilerOptions = (tsconfig['compilerOptions'] ?? {});
     });
     it('compilerOptions has a paths field', () => {
         expect(compilerOptions).toHaveProperty('paths');

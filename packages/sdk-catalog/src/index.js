@@ -35,15 +35,6 @@ var __importStar = (this && this.__importStar) || (function () {
 var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCatalogClient = createCatalogClient;
 /* tslint:disable */
@@ -67,19 +58,18 @@ function createCatalogClient(config) {
     const httpClient = new transport_1.SdkHttpClient(config);
     const configuration = new runtime_1.Configuration({
         basePath: config.baseUrl,
-        fetchApi: (url, init) => __awaiter(this, void 0, void 0, function* () {
-            var _a, _b;
-            const method = ((_a = init === null || init === void 0 ? void 0 : init.method) !== null && _a !== void 0 ? _a : 'GET').toUpperCase();
-            const mergedHeaders = new Headers(init === null || init === void 0 ? void 0 : init.headers);
-            const sdkHeaders = yield httpClient.buildRequestHeaders(method, {
+        fetchApi: async (url, init) => {
+            const method = (init?.method ?? 'GET').toUpperCase();
+            const mergedHeaders = new Headers(init?.headers);
+            const sdkHeaders = await httpClient.buildRequestHeaders(method, {
                 url: normalizeRequestUrl(url),
-                idempotencyKey: (_b = mergedHeaders.get('Idempotency-Key')) !== null && _b !== void 0 ? _b : undefined,
+                idempotencyKey: mergedHeaders.get('Idempotency-Key') ?? undefined,
             });
             Object.entries(sdkHeaders).forEach(([key, value]) => {
                 mergedHeaders.set(key, value);
             });
-            return fetch(url, Object.assign(Object.assign({}, init), { headers: mergedHeaders }));
-        }),
+            return fetch(url, { ...init, headers: mergedHeaders });
+        },
     });
     return {
         catalogApi: new GeneratedApis.CatalogAPIApi(configuration),
@@ -89,7 +79,7 @@ function createCatalogClient(config) {
         productMSRPApi: new GeneratedApis.ProductMSRPAPIApi(configuration),
         productsApi: new GeneratedApis.ProductsAPIApi(configuration),
         supplierItemCostApi: new GeneratedApis.SupplierItemCostAPIApi(configuration),
-        uomConversionApi: new GeneratedApis.UOMConversionAPIApi(configuration),
+        uOMConversionApi: new GeneratedApis.UOMConversionAPIApi(configuration),
     };
 }
 __exportStar(require("./runtime"), exports);

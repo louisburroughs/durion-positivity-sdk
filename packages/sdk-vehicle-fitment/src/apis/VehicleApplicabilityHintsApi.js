@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehicleApplicabilityHintsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,189 +57,165 @@ class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
      * Create a new hint with fitment tags for a product
      * Create a vehicle applicability hint
      */
-    createHintRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createHintRequest'] == null) {
-                throw new runtime.RequiredError('createHintRequest', 'Required parameter "createHintRequest" was null or undefined when calling createHint().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/vehicle-fitment/hints`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateHintRequestToJSON)(requestParameters['createHintRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.HintResponseFromJSON)(jsonValue));
-        });
+    async createHintRaw(requestParameters, initOverrides) {
+        if (requestParameters['createHintRequest'] == null) {
+            throw new runtime.RequiredError('createHintRequest', 'Required parameter "createHintRequest" was null or undefined when calling createHint().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/hints`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateHintRequestToJSON)(requestParameters['createHintRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.HintResponseFromJSON)(jsonValue));
     }
     /**
      * Create a new hint with fitment tags for a product
      * Create a vehicle applicability hint
      */
-    createHint(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createHintRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createHint(requestParameters, initOverrides) {
+        const response = await this.createHintRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Remove a hint and all its associated tags
      * Delete a vehicle applicability hint
      */
-    deleteHintRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['hintId'] == null) {
-                throw new runtime.RequiredError('hintId', 'Required parameter "hintId" was null or undefined when calling deleteHint().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deleteHintRaw(requestParameters, initOverrides) {
+        if (requestParameters['hintId'] == null) {
+            throw new runtime.RequiredError('hintId', 'Required parameter "hintId" was null or undefined when calling deleteHint().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Remove a hint and all its associated tags
      * Delete a vehicle applicability hint
      */
-    deleteHint(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteHintRaw(requestParameters, initOverrides);
-        });
+    async deleteHint(requestParameters, initOverrides) {
+        await this.deleteHintRaw(requestParameters, initOverrides);
     }
     /**
      * Find products that match the provided vehicle attributes
      * Filter products by vehicle attributes
      */
-    filterProductsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['filterProductsRequest'] == null) {
-                throw new runtime.RequiredError('filterProductsRequest', 'Required parameter "filterProductsRequest" was null or undefined when calling filterProducts().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/vehicle-fitment/hints/filter-products`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.FilterProductsRequestToJSON)(requestParameters['filterProductsRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.FilterProductsResponseFromJSON)(jsonValue));
-        });
+    async filterProductsRaw(requestParameters, initOverrides) {
+        if (requestParameters['filterProductsRequest'] == null) {
+            throw new runtime.RequiredError('filterProductsRequest', 'Required parameter "filterProductsRequest" was null or undefined when calling filterProducts().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/hints/filter-products`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.FilterProductsRequestToJSON)(requestParameters['filterProductsRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.FilterProductsResponseFromJSON)(jsonValue));
     }
     /**
      * Find products that match the provided vehicle attributes
      * Filter products by vehicle attributes
      */
-    filterProducts(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.filterProductsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async filterProducts(requestParameters, initOverrides) {
+        const response = await this.filterProductsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a hint by its ID
      * Get a vehicle applicability hint
      */
-    getHintRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['hintId'] == null) {
-                throw new runtime.RequiredError('hintId', 'Required parameter "hintId" was null or undefined when calling getHint().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.HintResponseFromJSON)(jsonValue));
-        });
+    async getHintRaw(requestParameters, initOverrides) {
+        if (requestParameters['hintId'] == null) {
+            throw new runtime.RequiredError('hintId', 'Required parameter "hintId" was null or undefined when calling getHint().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.HintResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve a hint by its ID
      * Get a vehicle applicability hint
      */
-    getHint(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getHintRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getHint(requestParameters, initOverrides) {
+        const response = await this.getHintRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all hints associated with a specific product
      * Get hints by product ID
      */
-    getHintsByProductIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getHintsByProductId().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/vehicle-fitment/hints/product/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.HintResponseFromJSON));
-        });
+    async getHintsByProductIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getHintsByProductId().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/hints/product/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.HintResponseFromJSON));
     }
     /**
      * Retrieve all hints associated with a specific product
      * Get hints by product ID
      */
-    getHintsByProductId(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getHintsByProductIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getHintsByProductId(requestParameters, initOverrides) {
+        const response = await this.getHintsByProductIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update the fitment tags for an existing hint
      * Update a vehicle applicability hint
      */
-    updateHintRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['hintId'] == null) {
-                throw new runtime.RequiredError('hintId', 'Required parameter "hintId" was null or undefined when calling updateHint().');
-            }
-            if (requestParameters['updateHintRequest'] == null) {
-                throw new runtime.RequiredError('updateHintRequest', 'Required parameter "updateHintRequest" was null or undefined when calling updateHint().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UpdateHintRequestToJSON)(requestParameters['updateHintRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.HintResponseFromJSON)(jsonValue));
-        });
+    async updateHintRaw(requestParameters, initOverrides) {
+        if (requestParameters['hintId'] == null) {
+            throw new runtime.RequiredError('hintId', 'Required parameter "hintId" was null or undefined when calling updateHint().');
+        }
+        if (requestParameters['updateHintRequest'] == null) {
+            throw new runtime.RequiredError('updateHintRequest', 'Required parameter "updateHintRequest" was null or undefined when calling updateHint().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UpdateHintRequestToJSON)(requestParameters['updateHintRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.HintResponseFromJSON)(jsonValue));
     }
     /**
      * Update the fitment tags for an existing hint
      * Update a vehicle applicability hint
      */
-    updateHint(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateHintRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateHint(requestParameters, initOverrides) {
+        const response = await this.updateHintRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.VehicleApplicabilityHintsApi = VehicleApplicabilityHintsApi;

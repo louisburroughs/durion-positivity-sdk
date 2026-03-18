@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CRMPersonsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,105 +57,93 @@ class CRMPersonsApi extends runtime.BaseAPI {
      * Creates an individual person record in the CRM system
      * Create a new person
      */
-    createPersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createPersonRequest'] == null) {
-                throw new runtime.RequiredError('createPersonRequest', 'Required parameter "createPersonRequest" was null or undefined when calling createPerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/crm/persons`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreatePersonRequestToJSON)(requestParameters['createPersonRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreatePersonResponseFromJSON)(jsonValue));
-        });
+    async createPersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['createPersonRequest'] == null) {
+            throw new runtime.RequiredError('createPersonRequest', 'Required parameter "createPersonRequest" was null or undefined when calling createPerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/crm/persons`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreatePersonRequestToJSON)(requestParameters['createPersonRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreatePersonResponseFromJSON)(jsonValue));
     }
     /**
      * Creates an individual person record in the CRM system
      * Create a new person
      */
-    createPerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createPersonRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createPerson(requestParameters, initOverrides) {
+        const response = await this.createPersonRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves an individual person record by their unique identifier
      * Get a person by ID
      */
-    getPersonRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['personId'] == null) {
-                throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getPerson().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/persons/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetPersonResponseFromJSON)(jsonValue));
-        });
+    async getPersonRaw(requestParameters, initOverrides) {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError('personId', 'Required parameter "personId" was null or undefined when calling getPerson().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/persons/{personId}`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetPersonResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves an individual person record by their unique identifier
      * Get a person by ID
      */
-    getPerson(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPersonRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPerson(requestParameters, initOverrides) {
+        const response = await this.getPersonRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Searches for persons matching the specified criteria
      * Search persons
      */
-    searchPersonsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            if (requestParameters['name'] != null) {
-                queryParameters['name'] = requestParameters['name'];
-            }
-            if (requestParameters['email'] != null) {
-                queryParameters['email'] = requestParameters['email'];
-            }
-            if (requestParameters['phone'] != null) {
-                queryParameters['phone'] = requestParameters['phone'];
-            }
-            if (requestParameters['limit'] != null) {
-                queryParameters['limit'] = requestParameters['limit'];
-            }
-            if (requestParameters['offset'] != null) {
-                queryParameters['offset'] = requestParameters['offset'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/persons`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.GetPersonResponseFromJSON));
-        });
+    async searchPersonsRaw(requestParameters, initOverrides) {
+        const queryParameters = {};
+        if (requestParameters['name'] != null) {
+            queryParameters['name'] = requestParameters['name'];
+        }
+        if (requestParameters['email'] != null) {
+            queryParameters['email'] = requestParameters['email'];
+        }
+        if (requestParameters['phone'] != null) {
+            queryParameters['phone'] = requestParameters['phone'];
+        }
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+        if (requestParameters['offset'] != null) {
+            queryParameters['offset'] = requestParameters['offset'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/persons`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.GetPersonResponseFromJSON));
     }
     /**
      * Searches for persons matching the specified criteria
      * Search persons
      */
-    searchPersons() {
-        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
-            const response = yield this.searchPersonsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async searchPersons(requestParameters = {}, initOverrides) {
+        const response = await this.searchPersonsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.CRMPersonsApi = CRMPersonsApi;

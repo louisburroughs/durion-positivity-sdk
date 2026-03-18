@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListCasesCaseTypeEnum = exports.ListCasesStatusEnum = exports.SelfRegistrationReviewAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,99 +57,87 @@ class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
      * Returns the details of a blocked self-registration case.
      * Get a self-registration review case
      */
-    getCaseRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['caseId'] == null) {
-                throw new runtime.RequiredError('caseId', 'Required parameter "caseId" was null or undefined when calling getCase().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/self-registration/review-cases/{caseId}`.replace(`{${"caseId"}}`, encodeURIComponent(String(requestParameters['caseId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SelfRegistrationReviewCaseResponseFromJSON)(jsonValue));
-        });
+    async getCaseRaw(requestParameters, initOverrides) {
+        if (requestParameters['caseId'] == null) {
+            throw new runtime.RequiredError('caseId', 'Required parameter "caseId" was null or undefined when calling getCase().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/self-registration/review-cases/{caseId}`.replace(`{${"caseId"}}`, encodeURIComponent(String(requestParameters['caseId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SelfRegistrationReviewCaseResponseFromJSON)(jsonValue));
     }
     /**
      * Returns the details of a blocked self-registration case.
      * Get a self-registration review case
      */
-    getCase(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getCaseRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getCase(requestParameters, initOverrides) {
+        const response = await this.getCaseRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns blocked self-registration cases for recovery or identity review.
      * List self-registration review cases
      */
-    listCasesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            if (requestParameters['status'] != null) {
-                queryParameters['status'] = requestParameters['status'];
-            }
-            if (requestParameters['caseType'] != null) {
-                queryParameters['caseType'] = requestParameters['caseType'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/self-registration/review-cases`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.SelfRegistrationReviewCaseResponseFromJSON));
-        });
+    async listCasesRaw(requestParameters, initOverrides) {
+        const queryParameters = {};
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+        if (requestParameters['caseType'] != null) {
+            queryParameters['caseType'] = requestParameters['caseType'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/self-registration/review-cases`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.SelfRegistrationReviewCaseResponseFromJSON));
     }
     /**
      * Returns blocked self-registration cases for recovery or identity review.
      * List self-registration review cases
      */
-    listCases() {
-        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
-            const response = yield this.listCasesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listCases(requestParameters = {}, initOverrides) {
+        const response = await this.listCasesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Marks a blocked self-registration case as resolved after recovery or manual review.
      * Resolve a self-registration review case
      */
-    resolveCaseRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['caseId'] == null) {
-                throw new runtime.RequiredError('caseId', 'Required parameter "caseId" was null or undefined when calling resolveCase().');
-            }
-            if (requestParameters['resolveSelfRegistrationReviewCaseRequest'] == null) {
-                throw new runtime.RequiredError('resolveSelfRegistrationReviewCaseRequest', 'Required parameter "resolveSelfRegistrationReviewCaseRequest" was null or undefined when calling resolveCase().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/self-registration/review-cases/{caseId}/resolve`.replace(`{${"caseId"}}`, encodeURIComponent(String(requestParameters['caseId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ResolveSelfRegistrationReviewCaseRequestToJSON)(requestParameters['resolveSelfRegistrationReviewCaseRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SelfRegistrationReviewCaseResponseFromJSON)(jsonValue));
-        });
+    async resolveCaseRaw(requestParameters, initOverrides) {
+        if (requestParameters['caseId'] == null) {
+            throw new runtime.RequiredError('caseId', 'Required parameter "caseId" was null or undefined when calling resolveCase().');
+        }
+        if (requestParameters['resolveSelfRegistrationReviewCaseRequest'] == null) {
+            throw new runtime.RequiredError('resolveSelfRegistrationReviewCaseRequest', 'Required parameter "resolveSelfRegistrationReviewCaseRequest" was null or undefined when calling resolveCase().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/self-registration/review-cases/{caseId}/resolve`.replace(`{${"caseId"}}`, encodeURIComponent(String(requestParameters['caseId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ResolveSelfRegistrationReviewCaseRequestToJSON)(requestParameters['resolveSelfRegistrationReviewCaseRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SelfRegistrationReviewCaseResponseFromJSON)(jsonValue));
     }
     /**
      * Marks a blocked self-registration case as resolved after recovery or manual review.
      * Resolve a self-registration review case
      */
-    resolveCase(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.resolveCaseRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async resolveCase(requestParameters, initOverrides) {
+        const response = await this.resolveCaseRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.SelfRegistrationReviewAPIApi = SelfRegistrationReviewAPIApi;

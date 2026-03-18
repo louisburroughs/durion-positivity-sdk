@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuditApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,167 +57,147 @@ class AuditApi extends runtime.BaseAPI {
      * Creates an immutable audit event record and returns the generated event identifier.
      * Create audit event
      */
-    createEventRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['auditLogEventRequest'] == null) {
-                throw new runtime.RequiredError('auditLogEventRequest', 'Required parameter "auditLogEventRequest" was null or undefined when calling createEvent().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/audit/events`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.AuditLogEventRequestToJSON)(requestParameters['auditLogEventRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditEventCreatedResponseFromJSON)(jsonValue));
-        });
+    async createEventRaw(requestParameters, initOverrides) {
+        if (requestParameters['auditLogEventRequest'] == null) {
+            throw new runtime.RequiredError('auditLogEventRequest', 'Required parameter "auditLogEventRequest" was null or undefined when calling createEvent().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/audit/events`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.AuditLogEventRequestToJSON)(requestParameters['auditLogEventRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditEventCreatedResponseFromJSON)(jsonValue));
     }
     /**
      * Creates an immutable audit event record and returns the generated event identifier.
      * Create audit event
      */
-    createEvent(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createEventRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createEvent(requestParameters, initOverrides) {
+        const response = await this.createEventRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates an immutable pricing snapshot record for later audit and traceability.
      * Create pricing snapshot
      */
-    createPricingSnapshotRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['pricingSnapshotRequest'] == null) {
-                throw new runtime.RequiredError('pricingSnapshotRequest', 'Required parameter "pricingSnapshotRequest" was null or undefined when calling createPricingSnapshot().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/audit/pricing-snapshots`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PricingSnapshotRequestToJSON)(requestParameters['pricingSnapshotRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PricingSnapshotCreatedResponseFromJSON)(jsonValue));
-        });
+    async createPricingSnapshotRaw(requestParameters, initOverrides) {
+        if (requestParameters['pricingSnapshotRequest'] == null) {
+            throw new runtime.RequiredError('pricingSnapshotRequest', 'Required parameter "pricingSnapshotRequest" was null or undefined when calling createPricingSnapshot().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/audit/pricing-snapshots`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PricingSnapshotRequestToJSON)(requestParameters['pricingSnapshotRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PricingSnapshotCreatedResponseFromJSON)(jsonValue));
     }
     /**
      * Creates an immutable pricing snapshot record for later audit and traceability.
      * Create pricing snapshot
      */
-    createPricingSnapshot(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createPricingSnapshotRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createPricingSnapshot(requestParameters, initOverrides) {
+        const response = await this.createPricingSnapshotRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns a previously recorded audit event by its event identifier.
      * Get audit event
      */
-    getEventRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['eventId'] == null) {
-                throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getEvent().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/audit/events/{eventId}`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditLogEventDtoFromJSON)(jsonValue));
-        });
+    async getEventRaw(requestParameters, initOverrides) {
+        if (requestParameters['eventId'] == null) {
+            throw new runtime.RequiredError('eventId', 'Required parameter "eventId" was null or undefined when calling getEvent().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/audit/events/{eventId}`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditLogEventDtoFromJSON)(jsonValue));
     }
     /**
      * Returns a previously recorded audit event by its event identifier.
      * Get audit event
      */
-    getEvent(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEventRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEvent(requestParameters, initOverrides) {
+        const response = await this.getEventRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns an immutable pricing snapshot by its snapshot identifier.
      * Get pricing snapshot
      */
-    getPricingSnapshotRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['snapshotId'] == null) {
-                throw new runtime.RequiredError('snapshotId', 'Required parameter "snapshotId" was null or undefined when calling getPricingSnapshot().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/audit/pricing-snapshots/{snapshotId}`.replace(`{${"snapshotId"}}`, encodeURIComponent(String(requestParameters['snapshotId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PricingSnapshotDtoFromJSON)(jsonValue));
-        });
+    async getPricingSnapshotRaw(requestParameters, initOverrides) {
+        if (requestParameters['snapshotId'] == null) {
+            throw new runtime.RequiredError('snapshotId', 'Required parameter "snapshotId" was null or undefined when calling getPricingSnapshot().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/audit/pricing-snapshots/{snapshotId}`.replace(`{${"snapshotId"}}`, encodeURIComponent(String(requestParameters['snapshotId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PricingSnapshotDtoFromJSON)(jsonValue));
     }
     /**
      * Returns an immutable pricing snapshot by its snapshot identifier.
      * Get pricing snapshot
      */
-    getPricingSnapshot(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPricingSnapshotRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPricingSnapshot(requestParameters, initOverrides) {
+        const response = await this.getPricingSnapshotRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Searches audit events by event type alone or by entity identity with an optional time range.
      * Search audit events
      */
-    searchEventsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            if (requestParameters['entityId'] != null) {
-                queryParameters['entityId'] = requestParameters['entityId'];
-            }
-            if (requestParameters['entityType'] != null) {
-                queryParameters['entityType'] = requestParameters['entityType'];
-            }
-            if (requestParameters['eventType'] != null) {
-                queryParameters['eventType'] = requestParameters['eventType'];
-            }
-            if (requestParameters['from'] != null) {
-                queryParameters['from'] = requestParameters['from'].toISOString();
-            }
-            if (requestParameters['to'] != null) {
-                queryParameters['to'] = requestParameters['to'].toISOString();
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/audit/events`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AuditLogEventDtoFromJSON));
-        });
+    async searchEventsRaw(requestParameters, initOverrides) {
+        const queryParameters = {};
+        if (requestParameters['entityId'] != null) {
+            queryParameters['entityId'] = requestParameters['entityId'];
+        }
+        if (requestParameters['entityType'] != null) {
+            queryParameters['entityType'] = requestParameters['entityType'];
+        }
+        if (requestParameters['eventType'] != null) {
+            queryParameters['eventType'] = requestParameters['eventType'];
+        }
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = requestParameters['from'].toISOString();
+        }
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = requestParameters['to'].toISOString();
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/audit/events`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AuditLogEventDtoFromJSON));
     }
     /**
      * Searches audit events by event type alone or by entity identity with an optional time range.
      * Search audit events
      */
-    searchEvents() {
-        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
-            const response = yield this.searchEventsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async searchEvents(requestParameters = {}, initOverrides) {
+        const response = await this.searchEventsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.AuditApi = AuditApi;

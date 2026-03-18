@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TechnicianAssignmentAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,122 +57,110 @@ class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
      * Assign a technician to a work order. Transitions workorder to ASSIGNED status if currently APPROVED.
      * Assign technician to workorder
      */
-    assignTechnicianRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling assignTechnician().');
-            }
-            if (requestParameters['assignTechnicianRequest'] == null) {
-                throw new runtime.RequiredError('assignTechnicianRequest', 'Required parameter "assignTechnicianRequest" was null or undefined when calling assignTechnician().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.AssignTechnicianRequestToJSON)(requestParameters['assignTechnicianRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async assignTechnicianRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling assignTechnician().');
+        }
+        if (requestParameters['assignTechnicianRequest'] == null) {
+            throw new runtime.RequiredError('assignTechnicianRequest', 'Required parameter "assignTechnicianRequest" was null or undefined when calling assignTechnician().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.AssignTechnicianRequestToJSON)(requestParameters['assignTechnicianRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Assign a technician to a work order. Transitions workorder to ASSIGNED status if currently APPROVED.
      * Assign technician to workorder
      */
-    assignTechnician(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.assignTechnicianRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async assignTechnician(requestParameters, initOverrides) {
+        const response = await this.assignTechnicianRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve the current technician assignment and full assignment history for a workorder.
      * Get technician assignment
      */
-    getTechnicianAssignmentRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getTechnicianAssignment().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getTechnicianAssignmentRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getTechnicianAssignment().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieve the current technician assignment and full assignment history for a workorder.
      * Get technician assignment
      */
-    getTechnicianAssignment(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getTechnicianAssignmentRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getTechnicianAssignment(requestParameters, initOverrides) {
+        const response = await this.getTechnicianAssignmentRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Reassign a workorder to a different technician. Records reassignment reason and maintains history.
      * Reassign workorder to different technician
      */
-    reassignTechnicianRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling reassignTechnician().');
-            }
-            if (requestParameters['reassignTechnicianRequest'] == null) {
-                throw new runtime.RequiredError('reassignTechnicianRequest', 'Required parameter "reassignTechnicianRequest" was null or undefined when calling reassignTechnician().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ReassignTechnicianRequestToJSON)(requestParameters['reassignTechnicianRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async reassignTechnicianRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling reassignTechnician().');
+        }
+        if (requestParameters['reassignTechnicianRequest'] == null) {
+            throw new runtime.RequiredError('reassignTechnicianRequest', 'Required parameter "reassignTechnicianRequest" was null or undefined when calling reassignTechnician().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ReassignTechnicianRequestToJSON)(requestParameters['reassignTechnicianRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Reassign a workorder to a different technician. Records reassignment reason and maintains history.
      * Reassign workorder to different technician
      */
-    reassignTechnician(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.reassignTechnicianRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async reassignTechnician(requestParameters, initOverrides) {
+        const response = await this.reassignTechnicianRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.TechnicianAssignmentAPIApi = TechnicianAssignmentAPIApi;

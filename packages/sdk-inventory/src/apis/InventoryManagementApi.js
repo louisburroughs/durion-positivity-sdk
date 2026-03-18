@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryManagementApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,33 +57,29 @@ class InventoryManagementApi extends runtime.BaseAPI {
      * Deactivate a storage location with atomic stock transfer to a destination location (Option B). If the location contains active inventory, a destination location must be specified.
      * Deactivate a storage location
      */
-    deactivateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deactivate().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/locations/{locationId}/deactivate`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.DeactivateLocationRequestToJSON)(requestParameters['deactivateLocationRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DeactivateLocationResponseFromJSON)(jsonValue));
-        });
+    async deactivateRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deactivate().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/locations/{locationId}/deactivate`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.DeactivateLocationRequestToJSON)(requestParameters['deactivateLocationRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DeactivateLocationResponseFromJSON)(jsonValue));
     }
     /**
      * Deactivate a storage location with atomic stock transfer to a destination location (Option B). If the location contains active inventory, a destination location must be specified.
      * Deactivate a storage location
      */
-    deactivate(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.deactivateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async deactivate(requestParameters, initOverrides) {
+        const response = await this.deactivateRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.InventoryManagementApi = InventoryManagementApi;

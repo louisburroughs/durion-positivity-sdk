@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ImageAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -65,61 +56,53 @@ class ImageAPIApi extends runtime.BaseAPI {
      * Retrieve an image file by its filename.
      * Get image by filename
      */
-    getImageByFilenameRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['filename'] == null) {
-                throw new runtime.RequiredError('filename', 'Required parameter "filename" was null or undefined when calling getImageByFilename().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/images/filename/{filename}`.replace(`{${"filename"}}`, encodeURIComponent(String(requestParameters['filename']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.BlobApiResponse(response);
-        });
+    async getImageByFilenameRaw(requestParameters, initOverrides) {
+        if (requestParameters['filename'] == null) {
+            throw new runtime.RequiredError('filename', 'Required parameter "filename" was null or undefined when calling getImageByFilename().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/images/filename/{filename}`.replace(`{${"filename"}}`, encodeURIComponent(String(requestParameters['filename']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.BlobApiResponse(response);
     }
     /**
      * Retrieve an image file by its filename.
      * Get image by filename
      */
-    getImageByFilename(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getImageByFilenameRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getImageByFilename(requestParameters, initOverrides) {
+        const response = await this.getImageByFilenameRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve an image file by its unique database ID.
      * Get image by ID
      */
-    getImageByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getImageById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/images/id/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.BlobApiResponse(response);
-        });
+    async getImageByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getImageById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/images/id/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.BlobApiResponse(response);
     }
     /**
      * Retrieve an image file by its unique database ID.
      * Get image by ID
      */
-    getImageById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getImageByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getImageById(requestParameters, initOverrides) {
+        const response = await this.getImageByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.ImageAPIApi = ImageAPIApi;

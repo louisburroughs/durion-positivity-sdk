@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShopBayAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -65,174 +56,154 @@ class ShopBayAPIApi extends runtime.BaseAPI {
      * Create a new bay for a specific shop location.
      * Create bay
      */
-    createBayRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling createBay().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/shop-manager/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async createBayRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling createBay().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/shop-manager/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Create a new bay for a specific shop location.
      * Create bay
      */
-    createBay(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createBayRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createBay(requestParameters, initOverrides) {
+        const response = await this.createBayRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Delete a specific bay by locationId and bayId.
      * Delete bay
      */
-    deleteBayRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deleteBay().');
-            }
-            if (requestParameters['bayId'] == null) {
-                throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling deleteBay().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/shop-manager/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deleteBayRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deleteBay().');
+        }
+        if (requestParameters['bayId'] == null) {
+            throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling deleteBay().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/shop-manager/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Delete a specific bay by locationId and bayId.
      * Delete bay
      */
-    deleteBay(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteBayRaw(requestParameters, initOverrides);
-        });
+    async deleteBay(requestParameters, initOverrides) {
+        await this.deleteBayRaw(requestParameters, initOverrides);
     }
     /**
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    getBaysRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/shop-manager/bays`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getBaysRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/shop-manager/bays`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    getBays(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getBaysRaw(initOverrides);
-            return yield response.value();
-        });
+    async getBays(initOverrides) {
+        const response = await this.getBaysRaw(initOverrides);
+        return await response.value();
     }
     /**
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    getBays1Raw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getBays1().');
-            }
-            if (requestParameters['bayId'] == null) {
-                throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling getBays1().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/shop-manager/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getBays1Raw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getBays1().');
+        }
+        if (requestParameters['bayId'] == null) {
+            throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling getBays1().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/shop-manager/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    getBays1(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getBays1Raw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getBays1(requestParameters, initOverrides) {
+        const response = await this.getBays1Raw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Create or update bays in bulk.
      * Manage bays
      */
-    manageBaysRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/shop-manager/bays`,
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async manageBaysRaw(requestParameters, initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/shop-manager/bays`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Create or update bays in bulk.
      * Manage bays
      */
-    manageBays() {
-        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
-            const response = yield this.manageBaysRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async manageBays(requestParameters = {}, initOverrides) {
+        const response = await this.manageBaysRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.ShopBayAPIApi = ShopBayAPIApi;

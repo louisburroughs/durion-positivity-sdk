@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryAvailabilityApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,144 +57,128 @@ class InventoryAvailabilityApi extends runtime.BaseAPI {
      * Returns on-hand, allocated, and available-to-promise quantities for a product at a specific location. storageLocationId is optional to narrow the scope to a sub-location.
      * Query inventory availability by SKU and location
      */
-    queryAvailabilityBySkuRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productSku'] == null) {
-                throw new runtime.RequiredError('productSku', 'Required parameter "productSku" was null or undefined when calling queryAvailabilityBySku().');
-            }
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling queryAvailabilityBySku().');
-            }
-            const queryParameters = {};
-            if (requestParameters['productSku'] != null) {
-                queryParameters['productSku'] = requestParameters['productSku'];
-            }
-            if (requestParameters['locationId'] != null) {
-                queryParameters['locationId'] = requestParameters['locationId'];
-            }
-            if (requestParameters['storageLocationId'] != null) {
-                queryParameters['storageLocationId'] = requestParameters['storageLocationId'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/availability/query`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AvailabilityViewFromJSON)(jsonValue));
-        });
+    async queryAvailabilityBySkuRaw(requestParameters, initOverrides) {
+        if (requestParameters['productSku'] == null) {
+            throw new runtime.RequiredError('productSku', 'Required parameter "productSku" was null or undefined when calling queryAvailabilityBySku().');
+        }
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling queryAvailabilityBySku().');
+        }
+        const queryParameters = {};
+        if (requestParameters['productSku'] != null) {
+            queryParameters['productSku'] = requestParameters['productSku'];
+        }
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+        if (requestParameters['storageLocationId'] != null) {
+            queryParameters['storageLocationId'] = requestParameters['storageLocationId'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/availability/query`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AvailabilityViewFromJSON)(jsonValue));
     }
     /**
      * Returns on-hand, allocated, and available-to-promise quantities for a product at a specific location. storageLocationId is optional to narrow the scope to a sub-location.
      * Query inventory availability by SKU and location
      */
-    queryAvailabilityBySku(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.queryAvailabilityBySkuRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async queryAvailabilityBySku(requestParameters, initOverrides) {
+        const response = await this.queryAvailabilityBySkuRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns per-location availability for a product.
      * Query inventory availability
      */
-    queryInventoryAvailabilityRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling queryInventoryAvailability().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/availability/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationAvailabilityDtoFromJSON));
-        });
+    async queryInventoryAvailabilityRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling queryInventoryAvailability().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/availability/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationAvailabilityDtoFromJSON));
     }
     /**
      * Returns per-location availability for a product.
      * Query inventory availability
      */
-    queryInventoryAvailability(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.queryInventoryAvailabilityRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async queryInventoryAvailability(requestParameters, initOverrides) {
+        const response = await this.queryInventoryAvailabilityRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns dynamic lead-time estimate for a product at a location.
      * Query product lead time
      */
-    queryLeadTimeRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling queryLeadTime().');
-            }
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling queryLeadTime().');
-            }
-            const queryParameters = {};
-            if (requestParameters['productId'] != null) {
-                queryParameters['productId'] = requestParameters['productId'];
-            }
-            if (requestParameters['locationId'] != null) {
-                queryParameters['locationId'] = requestParameters['locationId'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/availability/lead-time`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LeadTimeViewFromJSON)(jsonValue));
-        });
+    async queryLeadTimeRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling queryLeadTime().');
+        }
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling queryLeadTime().');
+        }
+        const queryParameters = {};
+        if (requestParameters['productId'] != null) {
+            queryParameters['productId'] = requestParameters['productId'];
+        }
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/availability/lead-time`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LeadTimeViewFromJSON)(jsonValue));
     }
     /**
      * Returns dynamic lead-time estimate for a product at a location.
      * Query product lead time
      */
-    queryLeadTime(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.queryLeadTimeRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async queryLeadTime(requestParameters, initOverrides) {
+        const response = await this.queryLeadTimeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Not implemented by design. Availability is derived from ledger events and is read-only via this endpoint. Use POST /v1/inventory/stock-movements or POST /v1/inventory/adjustments for inventory changes.
      * Update inventory availability
      */
-    updateInventoryAvailabilityRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling updateInventoryAvailability().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/availability/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InventoryAvailabilityResponseFromJSON)(jsonValue));
-        });
+    async updateInventoryAvailabilityRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling updateInventoryAvailability().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/availability/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InventoryAvailabilityResponseFromJSON)(jsonValue));
     }
     /**
      * Not implemented by design. Availability is derived from ledger events and is read-only via this endpoint. Use POST /v1/inventory/stock-movements or POST /v1/inventory/adjustments for inventory changes.
      * Update inventory availability
      */
-    updateInventoryAvailability(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateInventoryAvailabilityRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateInventoryAvailability(requestParameters, initOverrides) {
+        const response = await this.updateInventoryAvailabilityRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.InventoryAvailabilityApi = InventoryAvailabilityApi;

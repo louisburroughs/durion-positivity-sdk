@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WIPDashboardApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,73 +57,65 @@ class WIPDashboardApi extends runtime.BaseAPI {
      * Returns full WIP detail for a single workorder including status history.
      * Get WIP detail for a workorder
      */
-    getWipDetailRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getWipDetail().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workexec/wip/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderStatusDetailFromJSON)(jsonValue));
-        });
+    async getWipDetailRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getWipDetail().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workexec/wip/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderStatusDetailFromJSON)(jsonValue));
     }
     /**
      * Returns full WIP detail for a single workorder including status history.
      * Get WIP detail for a workorder
      */
-    getWipDetail(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getWipDetailRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getWipDetail(requestParameters, initOverrides) {
+        const response = await this.getWipDetailRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns a paginated list of workorders in active WIP statuses. When the caller holds workorder:wip:view_all_locations, results span all locations.
      * List active WIP workorders
      */
-    listWipRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling listWip().');
-            }
-            if (requestParameters['pageable'] == null) {
-                throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling listWip().');
-            }
-            const queryParameters = {};
-            if (requestParameters['locationId'] != null) {
-                queryParameters['locationId'] = requestParameters['locationId'];
-            }
-            if (requestParameters['multiLocation'] != null) {
-                queryParameters['multiLocation'] = requestParameters['multiLocation'];
-            }
-            if (requestParameters['pageable'] != null) {
-                queryParameters['pageable'] = requestParameters['pageable'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workexec/wip`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageWorkorderStatusViewFromJSON)(jsonValue));
-        });
+    async listWipRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling listWip().');
+        }
+        if (requestParameters['pageable'] == null) {
+            throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling listWip().');
+        }
+        const queryParameters = {};
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+        if (requestParameters['multiLocation'] != null) {
+            queryParameters['multiLocation'] = requestParameters['multiLocation'];
+        }
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workexec/wip`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageWorkorderStatusViewFromJSON)(jsonValue));
     }
     /**
      * Returns a paginated list of workorders in active WIP statuses. When the caller holds workorder:wip:view_all_locations, results span all locations.
      * List active WIP workorders
      */
-    listWip(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listWipRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listWip(requestParameters, initOverrides) {
+        const response = await this.listWipRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.WIPDashboardApi = WIPDashboardApi;

@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MobileUnitAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,196 +57,172 @@ class MobileUnitAPIApi extends runtime.BaseAPI {
      * Create a new mobile unit.
      * Create mobile unit
      */
-    createMobileUnitRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['mobileUnitRequest'] == null) {
-                throw new runtime.RequiredError('mobileUnitRequest', 'Required parameter "mobileUnitRequest" was null or undefined when calling createMobileUnit().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/mobile-units`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.MobileUnitRequestToJSON)(requestParameters['mobileUnitRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MobileUnitResponseFromJSON)(jsonValue));
-        });
+    async createMobileUnitRaw(requestParameters, initOverrides) {
+        if (requestParameters['mobileUnitRequest'] == null) {
+            throw new runtime.RequiredError('mobileUnitRequest', 'Required parameter "mobileUnitRequest" was null or undefined when calling createMobileUnit().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/mobile-units`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.MobileUnitRequestToJSON)(requestParameters['mobileUnitRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MobileUnitResponseFromJSON)(jsonValue));
     }
     /**
      * Create a new mobile unit.
      * Create mobile unit
      */
-    createMobileUnit(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createMobileUnitRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createMobileUnit(requestParameters, initOverrides) {
+        const response = await this.createMobileUnitRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Get coverage rules for a mobile unit.
      * Get coverage rules
      */
-    getCoverageRulesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getCoverageRules().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/mobile-units/{id}/coverage-rules`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.CoverageRuleResponseFromJSON));
-        });
+    async getCoverageRulesRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getCoverageRules().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/mobile-units/{id}/coverage-rules`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.CoverageRuleResponseFromJSON));
     }
     /**
      * Get coverage rules for a mobile unit.
      * Get coverage rules
      */
-    getCoverageRules(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getCoverageRulesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getCoverageRules(requestParameters, initOverrides) {
+        const response = await this.getCoverageRulesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Get a mobile unit by ID.
      * Get mobile unit
      */
-    getMobileUnitByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getMobileUnitById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/mobile-units/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MobileUnitResponseFromJSON)(jsonValue));
-        });
+    async getMobileUnitByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getMobileUnitById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/mobile-units/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MobileUnitResponseFromJSON)(jsonValue));
     }
     /**
      * Get a mobile unit by ID.
      * Get mobile unit
      */
-    getMobileUnitById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getMobileUnitByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getMobileUnitById(requestParameters, initOverrides) {
+        const response = await this.getMobileUnitByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * List mobile units with pagination.
      * List mobile units
      */
-    listMobileUnitsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            if (requestParameters['page'] != null) {
-                queryParameters['page'] = requestParameters['page'];
-            }
-            if (requestParameters['size'] != null) {
-                queryParameters['size'] = requestParameters['size'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/mobile-units`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageMobileUnitResponseFromJSON)(jsonValue));
-        });
+    async listMobileUnitsRaw(requestParameters, initOverrides) {
+        const queryParameters = {};
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/mobile-units`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageMobileUnitResponseFromJSON)(jsonValue));
     }
     /**
      * List mobile units with pagination.
      * List mobile units
      */
-    listMobileUnits() {
-        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
-            const response = yield this.listMobileUnitsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listMobileUnits(requestParameters = {}, initOverrides) {
+        const response = await this.listMobileUnitsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Partially update a mobile unit.
      * Patch mobile unit
      */
-    patchMobileUnitRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling patchMobileUnit().');
-            }
-            if (requestParameters['requestBody'] == null) {
-                throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling patchMobileUnit().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/mobile-units/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'PATCH',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['requestBody'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MobileUnitResponseFromJSON)(jsonValue));
-        });
+    async patchMobileUnitRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling patchMobileUnit().');
+        }
+        if (requestParameters['requestBody'] == null) {
+            throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling patchMobileUnit().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/mobile-units/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['requestBody'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MobileUnitResponseFromJSON)(jsonValue));
     }
     /**
      * Partially update a mobile unit.
      * Patch mobile unit
      */
-    patchMobileUnit(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.patchMobileUnitRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async patchMobileUnit(requestParameters, initOverrides) {
+        const response = await this.patchMobileUnitRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Atomically replace coverage rules for a mobile unit.
      * Replace coverage rules
      */
-    replaceCoverageRulesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling replaceCoverageRules().');
-            }
-            if (requestParameters['requestBody'] == null) {
-                throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling replaceCoverageRules().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/mobile-units/{id}/coverage-rules`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['requestBody'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.CoverageRuleResponseFromJSON));
-        });
+    async replaceCoverageRulesRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling replaceCoverageRules().');
+        }
+        if (requestParameters['requestBody'] == null) {
+            throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling replaceCoverageRules().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/mobile-units/{id}/coverage-rules`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['requestBody'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.CoverageRuleResponseFromJSON));
     }
     /**
      * Atomically replace coverage rules for a mobile unit.
      * Replace coverage rules
      */
-    replaceCoverageRules(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.replaceCoverageRulesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async replaceCoverageRules(requestParameters, initOverrides) {
+        const response = await this.replaceCoverageRulesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.MobileUnitAPIApi = MobileUnitAPIApi;

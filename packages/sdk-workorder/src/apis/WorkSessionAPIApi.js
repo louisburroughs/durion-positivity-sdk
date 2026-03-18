@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkSessionAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,136 +57,120 @@ class WorkSessionAPIApi extends runtime.BaseAPI {
      * Technician records the start of a break within an active work session.
      * Start a break segment
      */
-    addBreakSegmentRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workSessionId'] == null) {
-                throw new runtime.RequiredError('workSessionId', 'Required parameter "workSessionId" was null or undefined when calling addBreakSegment().');
-            }
-            if (requestParameters['addBreakSegmentRequest'] == null) {
-                throw new runtime.RequiredError('addBreakSegmentRequest', 'Required parameter "addBreakSegmentRequest" was null or undefined when calling addBreakSegment().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/workSessions/{workSessionId}/breaks`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.AddBreakSegmentRequestToJSON)(requestParameters['addBreakSegmentRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BreakSegmentResponseFromJSON)(jsonValue));
-        });
+    async addBreakSegmentRaw(requestParameters, initOverrides) {
+        if (requestParameters['workSessionId'] == null) {
+            throw new runtime.RequiredError('workSessionId', 'Required parameter "workSessionId" was null or undefined when calling addBreakSegment().');
+        }
+        if (requestParameters['addBreakSegmentRequest'] == null) {
+            throw new runtime.RequiredError('addBreakSegmentRequest', 'Required parameter "addBreakSegmentRequest" was null or undefined when calling addBreakSegment().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/workSessions/{workSessionId}/breaks`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.AddBreakSegmentRequestToJSON)(requestParameters['addBreakSegmentRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BreakSegmentResponseFromJSON)(jsonValue));
     }
     /**
      * Technician records the start of a break within an active work session.
      * Start a break segment
      */
-    addBreakSegment(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.addBreakSegmentRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async addBreakSegment(requestParameters, initOverrides) {
+        const response = await this.addBreakSegmentRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Technician starts a work session on a work order. Creates an IN_PROGRESS work session and records the start time.
      * Start a work session
      */
-    startWorkSessionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['startWorkSessionRequest'] == null) {
-                throw new runtime.RequiredError('startWorkSessionRequest', 'Required parameter "startWorkSessionRequest" was null or undefined when calling startWorkSession().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/workSessions/start`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.StartWorkSessionRequestToJSON)(requestParameters['startWorkSessionRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkSessionResponseFromJSON)(jsonValue));
-        });
+    async startWorkSessionRaw(requestParameters, initOverrides) {
+        if (requestParameters['startWorkSessionRequest'] == null) {
+            throw new runtime.RequiredError('startWorkSessionRequest', 'Required parameter "startWorkSessionRequest" was null or undefined when calling startWorkSession().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/workSessions/start`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.StartWorkSessionRequestToJSON)(requestParameters['startWorkSessionRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkSessionResponseFromJSON)(jsonValue));
     }
     /**
      * Technician starts a work session on a work order. Creates an IN_PROGRESS work session and records the start time.
      * Start a work session
      */
-    startWorkSession(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.startWorkSessionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async startWorkSession(requestParameters, initOverrides) {
+        const response = await this.startWorkSessionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Technician records the end of a break segment within an active work session.
      * Stop a break segment
      */
-    stopBreakSegmentRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workSessionId'] == null) {
-                throw new runtime.RequiredError('workSessionId', 'Required parameter "workSessionId" was null or undefined when calling stopBreakSegment().');
-            }
-            if (requestParameters['breakSegmentId'] == null) {
-                throw new runtime.RequiredError('breakSegmentId', 'Required parameter "breakSegmentId" was null or undefined when calling stopBreakSegment().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/workSessions/{workSessionId}/breaks/{breakSegmentId}/stop`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))).replace(`{${"breakSegmentId"}}`, encodeURIComponent(String(requestParameters['breakSegmentId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BreakSegmentResponseFromJSON)(jsonValue));
-        });
+    async stopBreakSegmentRaw(requestParameters, initOverrides) {
+        if (requestParameters['workSessionId'] == null) {
+            throw new runtime.RequiredError('workSessionId', 'Required parameter "workSessionId" was null or undefined when calling stopBreakSegment().');
+        }
+        if (requestParameters['breakSegmentId'] == null) {
+            throw new runtime.RequiredError('breakSegmentId', 'Required parameter "breakSegmentId" was null or undefined when calling stopBreakSegment().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/workSessions/{workSessionId}/breaks/{breakSegmentId}/stop`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))).replace(`{${"breakSegmentId"}}`, encodeURIComponent(String(requestParameters['breakSegmentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BreakSegmentResponseFromJSON)(jsonValue));
     }
     /**
      * Technician records the end of a break segment within an active work session.
      * Stop a break segment
      */
-    stopBreakSegment(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.stopBreakSegmentRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async stopBreakSegment(requestParameters, initOverrides) {
+        const response = await this.stopBreakSegmentRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Technician stops an active work session. Records end time and transitions the session to COMPLETED status.
      * Stop a work session
      */
-    stopWorkSessionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workSessionId'] == null) {
-                throw new runtime.RequiredError('workSessionId', 'Required parameter "workSessionId" was null or undefined when calling stopWorkSession().');
-            }
-            if (requestParameters['stopWorkSessionRequest'] == null) {
-                throw new runtime.RequiredError('stopWorkSessionRequest', 'Required parameter "stopWorkSessionRequest" was null or undefined when calling stopWorkSession().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/workSessions/{workSessionId}/stop`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.StopWorkSessionRequestToJSON)(requestParameters['stopWorkSessionRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkSessionResponseFromJSON)(jsonValue));
-        });
+    async stopWorkSessionRaw(requestParameters, initOverrides) {
+        if (requestParameters['workSessionId'] == null) {
+            throw new runtime.RequiredError('workSessionId', 'Required parameter "workSessionId" was null or undefined when calling stopWorkSession().');
+        }
+        if (requestParameters['stopWorkSessionRequest'] == null) {
+            throw new runtime.RequiredError('stopWorkSessionRequest', 'Required parameter "stopWorkSessionRequest" was null or undefined when calling stopWorkSession().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/workSessions/{workSessionId}/stop`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.StopWorkSessionRequestToJSON)(requestParameters['stopWorkSessionRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkSessionResponseFromJSON)(jsonValue));
     }
     /**
      * Technician stops an active work session. Records end time and transitions the session to COMPLETED status.
      * Stop a work session
      */
-    stopWorkSession(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.stopWorkSessionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async stopWorkSession(requestParameters, initOverrides) {
+        const response = await this.stopWorkSessionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.WorkSessionAPIApi = WorkSessionAPIApi;

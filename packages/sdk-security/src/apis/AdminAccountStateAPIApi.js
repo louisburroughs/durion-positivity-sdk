@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminAccountStateAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,176 +57,152 @@ class AdminAccountStateAPIApi extends runtime.BaseAPI {
      * Marks the specified user account as disabled to prevent further use until it is re-enabled.
      * Disable a user account
      */
-    disableRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling disable().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}/disable`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async disableRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling disable().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}/disable`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Marks the specified user account as disabled to prevent further use until it is re-enabled.
      * Disable a user account
      */
-    disable(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.disableRaw(requestParameters, initOverrides);
-        });
+    async disable(requestParameters, initOverrides) {
+        await this.disableRaw(requestParameters, initOverrides);
     }
     /**
      * Marks the specified user account as enabled so it can be used for sign-in and access checks.
      * Enable a user account
      */
-    enableRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling enable().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}/enable`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async enableRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling enable().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}/enable`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Marks the specified user account as enabled so it can be used for sign-in and access checks.
      * Enable a user account
      */
-    enable(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.enableRaw(requestParameters, initOverrides);
-        });
+    async enable(requestParameters, initOverrides) {
+        await this.enableRaw(requestParameters, initOverrides);
     }
     /**
      * Expires the specified user account so it is no longer considered valid for authentication.
      * Expire a user account
      */
-    expireAccountRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling expireAccount().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}/expire-account`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async expireAccountRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling expireAccount().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}/expire-account`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Expires the specified user account so it is no longer considered valid for authentication.
      * Expire a user account
      */
-    expireAccount(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.expireAccountRaw(requestParameters, initOverrides);
-        });
+    async expireAccount(requestParameters, initOverrides) {
+        await this.expireAccountRaw(requestParameters, initOverrides);
     }
     /**
      * Expires the specified user\'s credentials so a credential reset or update is required before reuse.
      * Expire user credentials
      */
-    expireCredentialsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling expireCredentials().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}/expire-credentials`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async expireCredentialsRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling expireCredentials().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}/expire-credentials`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Expires the specified user\'s credentials so a credential reset or update is required before reuse.
      * Expire user credentials
      */
-    expireCredentials(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.expireCredentialsRaw(requestParameters, initOverrides);
-        });
+    async expireCredentials(requestParameters, initOverrides) {
+        await this.expireCredentialsRaw(requestParameters, initOverrides);
     }
     /**
      * Returns the current administrative account-state flags for the specified user.
      * Get user account state
      */
-    getAccountStateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getAccountState().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}/account-state`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountStateResponseFromJSON)(jsonValue));
-        });
+    async getAccountStateRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getAccountState().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}/account-state`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AccountStateResponseFromJSON)(jsonValue));
     }
     /**
      * Returns the current administrative account-state flags for the specified user.
      * Get user account state
      */
-    getAccountState(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAccountStateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getAccountState(requestParameters, initOverrides) {
+        const response = await this.getAccountStateRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Removes the locked state from the specified user account so the user can authenticate again.
      * Unlock a user account
      */
-    unlockRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling unlock().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/users/{id}/unlock`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async unlockRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling unlock().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/users/{id}/unlock`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Removes the locked state from the specified user account so the user can authenticate again.
      * Unlock a user account
      */
-    unlock(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.unlockRaw(requestParameters, initOverrides);
-        });
+    async unlock(requestParameters, initOverrides) {
+        await this.unlockRaw(requestParameters, initOverrides);
     }
 }
 exports.AdminAccountStateAPIApi = AdminAccountStateAPIApi;

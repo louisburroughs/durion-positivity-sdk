@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkOrderAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,350 +57,306 @@ class WorkOrderAPIApi extends runtime.BaseAPI {
      * Transition work order to APPROVED status with customer signature capture. Work order can be approved from DRAFT status. Requires customer ID validation and signature data (base64-encoded image).
      * Approve a work order with customer signature
      */
-    approveWorkorderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling approveWorkorder().');
-            }
-            if (requestParameters['approveWorkorderRequest'] == null) {
-                throw new runtime.RequiredError('approveWorkorderRequest', 'Required parameter "approveWorkorderRequest" was null or undefined when calling approveWorkorder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/approval`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ApproveWorkorderRequestToJSON)(requestParameters['approveWorkorderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
-        });
+    async approveWorkorderRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling approveWorkorder().');
+        }
+        if (requestParameters['approveWorkorderRequest'] == null) {
+            throw new runtime.RequiredError('approveWorkorderRequest', 'Required parameter "approveWorkorderRequest" was null or undefined when calling approveWorkorder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/approval`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ApproveWorkorderRequestToJSON)(requestParameters['approveWorkorderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
     }
     /**
      * Transition work order to APPROVED status with customer signature capture. Work order can be approved from DRAFT status. Requires customer ID validation and signature data (base64-encoded image).
      * Approve a work order with customer signature
      */
-    approveWorkorder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.approveWorkorderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async approveWorkorder(requestParameters, initOverrides) {
+        const response = await this.approveWorkorderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Complete a work order, transitioning it to COMPLETED status and emitting a WorkCompleted event.
      * Complete a work order
      */
-    completeWorkorderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling completeWorkorder().');
-            }
-            if (requestParameters['completeWorkorderRequest'] == null) {
-                throw new runtime.RequiredError('completeWorkorderRequest', 'Required parameter "completeWorkorderRequest" was null or undefined when calling completeWorkorder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/complete`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CompleteWorkorderRequestToJSON)(requestParameters['completeWorkorderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CompleteWorkorderResponseFromJSON)(jsonValue));
-        });
+    async completeWorkorderRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling completeWorkorder().');
+        }
+        if (requestParameters['completeWorkorderRequest'] == null) {
+            throw new runtime.RequiredError('completeWorkorderRequest', 'Required parameter "completeWorkorderRequest" was null or undefined when calling completeWorkorder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/complete`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CompleteWorkorderRequestToJSON)(requestParameters['completeWorkorderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CompleteWorkorderResponseFromJSON)(jsonValue));
     }
     /**
      * Complete a work order, transitioning it to COMPLETED status and emitting a WorkCompleted event.
      * Complete a work order
      */
-    completeWorkorder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.completeWorkorderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async completeWorkorder(requestParameters, initOverrides) {
+        const response = await this.completeWorkorderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Add a new work order to the system. Supports idempotent creation via Idempotency-Key header to prevent duplicate workorders.
      * Create a new work order
      */
-    createWorkorderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createWorkorderRequest'] == null) {
-                throw new runtime.RequiredError('createWorkorderRequest', 'Required parameter "createWorkorderRequest" was null or undefined when calling createWorkorder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateWorkorderRequestToJSON)(requestParameters['createWorkorderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
-        });
+    async createWorkorderRaw(requestParameters, initOverrides) {
+        if (requestParameters['createWorkorderRequest'] == null) {
+            throw new runtime.RequiredError('createWorkorderRequest', 'Required parameter "createWorkorderRequest" was null or undefined when calling createWorkorder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateWorkorderRequestToJSON)(requestParameters['createWorkorderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
     }
     /**
      * Add a new work order to the system. Supports idempotent creation via Idempotency-Key header to prevent duplicate workorders.
      * Create a new work order
      */
-    createWorkorder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createWorkorderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createWorkorder(requestParameters, initOverrides) {
+        const response = await this.createWorkorderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Delete a work order by its unique ID.
      * Delete a work order
      */
-    deleteWorkorderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling deleteWorkorder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deleteWorkorderRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling deleteWorkorder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Delete a work order by its unique ID.
      * Delete a work order
      */
-    deleteWorkorder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteWorkorderRaw(requestParameters, initOverrides);
-        });
+    async deleteWorkorder(requestParameters, initOverrides) {
+        await this.deleteWorkorderRaw(requestParameters, initOverrides);
     }
     /**
      * Generate an invoice draft from a completed workorder with optional idempotency key.
      * Generate invoice draft from completed workorder
      */
-    generateInvoiceRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling generateInvoice().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/generate-invoice`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceGenerationResponseFromJSON)(jsonValue));
-        });
+    async generateInvoiceRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling generateInvoice().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/generate-invoice`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceGenerationResponseFromJSON)(jsonValue));
     }
     /**
      * Generate an invoice draft from a completed workorder with optional idempotency key.
      * Generate invoice draft from completed workorder
      */
-    generateInvoice(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.generateInvoiceRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async generateInvoice(requestParameters, initOverrides) {
+        const response = await this.generateInvoiceRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a list of all work orders.
      * Get all work orders
      */
-    getAllWorkordersRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderResponseFromJSON));
-        });
+    async getAllWorkordersRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderResponseFromJSON));
     }
     /**
      * Retrieve a list of all work orders.
      * Get all work orders
      */
-    getAllWorkorders(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAllWorkordersRaw(initOverrides);
-            return yield response.value();
-        });
+    async getAllWorkorders(initOverrides) {
+        const response = await this.getAllWorkordersRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Evaluate completion preconditions for a workorder and return checklist + blocking reasons.
      * Validate completion preconditions
      */
-    getCompletionPreconditionsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getCompletionPreconditions().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/completion-preconditions`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CompletionPreconditionsResponseFromJSON)(jsonValue));
-        });
+    async getCompletionPreconditionsRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getCompletionPreconditions().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/completion-preconditions`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CompletionPreconditionsResponseFromJSON)(jsonValue));
     }
     /**
      * Evaluate completion preconditions for a workorder and return checklist + blocking reasons.
      * Validate completion preconditions
      */
-    getCompletionPreconditions(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getCompletionPreconditionsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getCompletionPreconditions(requestParameters, initOverrides) {
+        const response = await this.getCompletionPreconditionsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve the snapshot history for a work order.
      * Get snapshot history
      */
-    getSnapshotHistoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getSnapshotHistory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/snapshots`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderSnapshotResponseFromJSON));
-        });
+    async getSnapshotHistoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getSnapshotHistory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/snapshots`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderSnapshotResponseFromJSON));
     }
     /**
      * Retrieve the snapshot history for a work order.
      * Get snapshot history
      */
-    getSnapshotHistory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getSnapshotHistoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getSnapshotHistory(requestParameters, initOverrides) {
+        const response = await this.getSnapshotHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve the state transition history for a work order.
      * Get transition history
      */
-    getTransitionHistoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getTransitionHistory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/transitions`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderStateTransitionResponseFromJSON));
-        });
+    async getTransitionHistoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getTransitionHistory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/transitions`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderStateTransitionResponseFromJSON));
     }
     /**
      * Retrieve the state transition history for a work order.
      * Get transition history
      */
-    getTransitionHistory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getTransitionHistoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getTransitionHistory(requestParameters, initOverrides) {
+        const response = await this.getTransitionHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a work order by its unique ID.
      * Get work order by ID
      */
-    getWorkorderByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getWorkorderById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
-        });
+    async getWorkorderByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getWorkorderById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.WorkorderResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve a work order by its unique ID.
      * Get work order by ID
      */
-    getWorkorderById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getWorkorderByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getWorkorderById(requestParameters, initOverrides) {
+        const response = await this.getWorkorderByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Controlled reopen for completed workorders. Requires elevated permission and mandatory reason.
      * Reopen completed workorder
      */
-    reopenWorkorderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling reopenWorkorder().');
-            }
-            if (requestParameters['reopenWorkorderRequest'] == null) {
-                throw new runtime.RequiredError('reopenWorkorderRequest', 'Required parameter "reopenWorkorderRequest" was null or undefined when calling reopenWorkorder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/reopen`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ReopenWorkorderRequestToJSON)(requestParameters['reopenWorkorderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReopenWorkorderResponseFromJSON)(jsonValue));
-        });
+    async reopenWorkorderRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling reopenWorkorder().');
+        }
+        if (requestParameters['reopenWorkorderRequest'] == null) {
+            throw new runtime.RequiredError('reopenWorkorderRequest', 'Required parameter "reopenWorkorderRequest" was null or undefined when calling reopenWorkorder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/reopen`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ReopenWorkorderRequestToJSON)(requestParameters['reopenWorkorderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReopenWorkorderResponseFromJSON)(jsonValue));
     }
     /**
      * Controlled reopen for completed workorders. Requires elevated permission and mandatory reason.
      * Reopen completed workorder
      */
-    reopenWorkorder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.reopenWorkorderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async reopenWorkorder(requestParameters, initOverrides) {
+        const response = await this.reopenWorkorderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.WorkOrderAPIApi = WorkOrderAPIApi;

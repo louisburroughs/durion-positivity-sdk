@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AssignmentControllerApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -64,60 +55,52 @@ const index_1 = require("../models/index");
 class AssignmentControllerApi extends runtime.BaseAPI {
     /**
      */
-    createAssignmentRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['appointmentId'] == null) {
-                throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling createAssignment().');
-            }
-            if (requestParameters['createAssignmentRequest'] == null) {
-                throw new runtime.RequiredError('createAssignmentRequest', 'Required parameter "createAssignmentRequest" was null or undefined when calling createAssignment().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/appointments/{appointmentId}/assignments`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateAssignmentRequestToJSON)(requestParameters['createAssignmentRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AssignmentResponseFromJSON)(jsonValue));
-        });
+    async createAssignmentRaw(requestParameters, initOverrides) {
+        if (requestParameters['appointmentId'] == null) {
+            throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling createAssignment().');
+        }
+        if (requestParameters['createAssignmentRequest'] == null) {
+            throw new runtime.RequiredError('createAssignmentRequest', 'Required parameter "createAssignmentRequest" was null or undefined when calling createAssignment().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/appointments/{appointmentId}/assignments`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateAssignmentRequestToJSON)(requestParameters['createAssignmentRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AssignmentResponseFromJSON)(jsonValue));
     }
     /**
      */
-    createAssignment(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createAssignmentRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createAssignment(requestParameters, initOverrides) {
+        const response = await this.createAssignmentRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      */
-    listAssignmentsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['appointmentId'] == null) {
-                throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling listAssignments().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/appointments/{appointmentId}/assignments`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AssignmentResponseFromJSON));
-        });
+    async listAssignmentsRaw(requestParameters, initOverrides) {
+        if (requestParameters['appointmentId'] == null) {
+            throw new runtime.RequiredError('appointmentId', 'Required parameter "appointmentId" was null or undefined when calling listAssignments().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/appointments/{appointmentId}/assignments`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AssignmentResponseFromJSON));
     }
     /**
      */
-    listAssignments(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listAssignmentsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listAssignments(requestParameters, initOverrides) {
+        const response = await this.listAssignmentsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.AssignmentControllerApi = AssignmentControllerApi;

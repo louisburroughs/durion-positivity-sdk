@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GLAccountsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,269 +57,237 @@ class GLAccountsApi extends runtime.BaseAPI {
      * Mark a GL account as active.
      * Activate GL account
      */
-    activateGLAccountRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['glAccountId'] == null) {
-                throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling activateGLAccount().');
-            }
-            if (requestParameters['gLAccountActivateRequest'] == null) {
-                throw new runtime.RequiredError('gLAccountActivateRequest', 'Required parameter "gLAccountActivateRequest" was null or undefined when calling activateGLAccount().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts/{glAccountId}/activate`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.GLAccountActivateRequestToJSON)(requestParameters['gLAccountActivateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
-        });
+    async activateGLAccountRaw(requestParameters, initOverrides) {
+        if (requestParameters['glAccountId'] == null) {
+            throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling activateGLAccount().');
+        }
+        if (requestParameters['gLAccountActivateRequest'] == null) {
+            throw new runtime.RequiredError('gLAccountActivateRequest', 'Required parameter "gLAccountActivateRequest" was null or undefined when calling activateGLAccount().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts/{glAccountId}/activate`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.GLAccountActivateRequestToJSON)(requestParameters['gLAccountActivateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
     }
     /**
      * Mark a GL account as active.
      * Activate GL account
      */
-    activateGLAccount(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.activateGLAccountRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async activateGLAccount(requestParameters, initOverrides) {
+        const response = await this.activateGLAccountRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Archive a GL account and remove it from active use.
      * Archive GL account
      */
-    archiveGLAccountRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['glAccountId'] == null) {
-                throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling archiveGLAccount().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts/{glAccountId}/archive`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
-        });
+    async archiveGLAccountRaw(requestParameters, initOverrides) {
+        if (requestParameters['glAccountId'] == null) {
+            throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling archiveGLAccount().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts/{glAccountId}/archive`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
     }
     /**
      * Archive a GL account and remove it from active use.
      * Archive GL account
      */
-    archiveGLAccount(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.archiveGLAccountRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async archiveGLAccount(requestParameters, initOverrides) {
+        const response = await this.archiveGLAccountRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Create a new GL account.
      * Create GL account
      */
-    createGLAccountRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['gLAccountCreateRequest'] == null) {
-                throw new runtime.RequiredError('gLAccountCreateRequest', 'Required parameter "gLAccountCreateRequest" was null or undefined when calling createGLAccount().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.GLAccountCreateRequestToJSON)(requestParameters['gLAccountCreateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
-        });
+    async createGLAccountRaw(requestParameters, initOverrides) {
+        if (requestParameters['gLAccountCreateRequest'] == null) {
+            throw new runtime.RequiredError('gLAccountCreateRequest', 'Required parameter "gLAccountCreateRequest" was null or undefined when calling createGLAccount().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.GLAccountCreateRequestToJSON)(requestParameters['gLAccountCreateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
     }
     /**
      * Create a new GL account.
      * Create GL account
      */
-    createGLAccount(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createGLAccountRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createGLAccount(requestParameters, initOverrides) {
+        const response = await this.createGLAccountRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Mark a GL account as inactive.
      * Deactivate GL account
      */
-    deactivateGLAccountRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['glAccountId'] == null) {
-                throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling deactivateGLAccount().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts/{glAccountId}/deactivate`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
-        });
+    async deactivateGLAccountRaw(requestParameters, initOverrides) {
+        if (requestParameters['glAccountId'] == null) {
+            throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling deactivateGLAccount().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts/{glAccountId}/deactivate`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
     }
     /**
      * Mark a GL account as inactive.
      * Deactivate GL account
      */
-    deactivateGLAccount(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.deactivateGLAccountRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async deactivateGLAccount(requestParameters, initOverrides) {
+        const response = await this.deactivateGLAccountRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve the current balance for a GL account.
      * Get GL account balance
      */
-    getAccountBalanceRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['glAccountId'] == null) {
-                throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling getAccountBalance().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts/{glAccountId}/balance`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountBalanceResponseFromJSON)(jsonValue));
-        });
+    async getAccountBalanceRaw(requestParameters, initOverrides) {
+        if (requestParameters['glAccountId'] == null) {
+            throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling getAccountBalance().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts/{glAccountId}/balance`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountBalanceResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve the current balance for a GL account.
      * Get GL account balance
      */
-    getAccountBalance(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAccountBalanceRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getAccountBalance(requestParameters, initOverrides) {
+        const response = await this.getAccountBalanceRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a GL account by identifier.
      * Get GL account
      */
-    getGLAccountRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['glAccountId'] == null) {
-                throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling getGLAccount().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts/{glAccountId}`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
-        });
+    async getGLAccountRaw(requestParameters, initOverrides) {
+        if (requestParameters['glAccountId'] == null) {
+            throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling getGLAccount().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts/{glAccountId}`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve a GL account by identifier.
      * Get GL account
      */
-    getGLAccount(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getGLAccountRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getGLAccount(requestParameters, initOverrides) {
+        const response = await this.getGLAccountRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve paginated GL accounts filtered by status and sorted by a field.
      * List GL accounts
      */
-    listGLAccountsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['sort'] == null) {
-                throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listGLAccounts().');
-            }
-            const queryParameters = {};
-            if (requestParameters['page'] != null) {
-                queryParameters['page'] = requestParameters['page'];
-            }
-            if (requestParameters['size'] != null) {
-                queryParameters['size'] = requestParameters['size'];
-            }
-            if (requestParameters['sort'] != null) {
-                queryParameters['sort'] = requestParameters['sort'];
-            }
-            if (requestParameters['status'] != null) {
-                queryParameters['status'] = requestParameters['status'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountListResponseFromJSON)(jsonValue));
-        });
+    async listGLAccountsRaw(requestParameters, initOverrides) {
+        if (requestParameters['sort'] == null) {
+            throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listGLAccounts().');
+        }
+        const queryParameters = {};
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountListResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve paginated GL accounts filtered by status and sorted by a field.
      * List GL accounts
      */
-    listGLAccounts(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listGLAccountsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listGLAccounts(requestParameters, initOverrides) {
+        const response = await this.listGLAccountsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update details for an existing GL account.
      * Update GL account
      */
-    updateGLAccountRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['glAccountId'] == null) {
-                throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling updateGLAccount().');
-            }
-            if (requestParameters['gLAccountUpdateRequest'] == null) {
-                throw new runtime.RequiredError('gLAccountUpdateRequest', 'Required parameter "gLAccountUpdateRequest" was null or undefined when calling updateGLAccount().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/gl-accounts/{glAccountId}`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.GLAccountUpdateRequestToJSON)(requestParameters['gLAccountUpdateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
-        });
+    async updateGLAccountRaw(requestParameters, initOverrides) {
+        if (requestParameters['glAccountId'] == null) {
+            throw new runtime.RequiredError('glAccountId', 'Required parameter "glAccountId" was null or undefined when calling updateGLAccount().');
+        }
+        if (requestParameters['gLAccountUpdateRequest'] == null) {
+            throw new runtime.RequiredError('gLAccountUpdateRequest', 'Required parameter "gLAccountUpdateRequest" was null or undefined when calling updateGLAccount().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts/{glAccountId}`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.GLAccountUpdateRequestToJSON)(requestParameters['gLAccountUpdateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GLAccountResponseFromJSON)(jsonValue));
     }
     /**
      * Update details for an existing GL account.
      * Update GL account
      */
-    updateGLAccount(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateGLAccountRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateGLAccount(requestParameters, initOverrides) {
+        const response = await this.updateGLAccountRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.GLAccountsApi = GLAccountsApi;

@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StorageLocationValidationControllerApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,31 +57,27 @@ class StorageLocationValidationControllerApi extends runtime.BaseAPI {
      * Returns existence, active status, and site ownership for a storage location ID.
      * Validate storage location reference
      */
-    validateStorageLocationRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['storageLocationId'] == null) {
-                throw new runtime.RequiredError('storageLocationId', 'Required parameter "storageLocationId" was null or undefined when calling validateStorageLocation().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/storage-locations/{storageLocationId}/validation`.replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationValidationResponseDTOFromJSON)(jsonValue));
-        });
+    async validateStorageLocationRaw(requestParameters, initOverrides) {
+        if (requestParameters['storageLocationId'] == null) {
+            throw new runtime.RequiredError('storageLocationId', 'Required parameter "storageLocationId" was null or undefined when calling validateStorageLocation().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/storage-locations/{storageLocationId}/validation`.replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationValidationResponseDTOFromJSON)(jsonValue));
     }
     /**
      * Returns existence, active status, and site ownership for a storage location ID.
      * Validate storage location reference
      */
-    validateStorageLocation(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.validateStorageLocationRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async validateStorageLocation(requestParameters, initOverrides) {
+        const response = await this.validateStorageLocationRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.StorageLocationValidationControllerApi = StorageLocationValidationControllerApi;

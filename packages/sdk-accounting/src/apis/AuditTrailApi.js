@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetByTypeTypeEnum = exports.AuditTrailApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,310 +57,274 @@ class AuditTrailApi extends runtime.BaseAPI {
      * Retrieves audit trail entries for a specific actor (user) within a date range
      * Get audit trail by actor
      */
-    getByActorRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['actorId'] == null) {
-                throw new runtime.RequiredError('actorId', 'Required parameter "actorId" was null or undefined when calling getByActor().');
-            }
-            if (requestParameters['startDate'] == null) {
-                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getByActor().');
-            }
-            if (requestParameters['endDate'] == null) {
-                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getByActor().');
-            }
-            const queryParameters = {};
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'].toISOString();
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'].toISOString();
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/audit/actor/{actorId}`.replace(`{${"actorId"}}`, encodeURIComponent(String(requestParameters['actorId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async getByActorRaw(requestParameters, initOverrides) {
+        if (requestParameters['actorId'] == null) {
+            throw new runtime.RequiredError('actorId', 'Required parameter "actorId" was null or undefined when calling getByActor().');
+        }
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getByActor().');
+        }
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getByActor().');
+        }
+        const queryParameters = {};
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'].toISOString();
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'].toISOString();
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/audit/actor/{actorId}`.replace(`{${"actorId"}}`, encodeURIComponent(String(requestParameters['actorId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves audit trail entries for a specific actor (user) within a date range
      * Get audit trail by actor
      */
-    getByActor(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getByActorRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getByActor(requestParameters, initOverrides) {
+        const response = await this.getByActorRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves all audit trail entries within a specified date range
      * Get audit trail by date range
      */
-    getByDateRangeRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['startDate'] == null) {
-                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getByDateRange().');
-            }
-            if (requestParameters['endDate'] == null) {
-                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getByDateRange().');
-            }
-            const queryParameters = {};
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'].toISOString();
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'].toISOString();
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/audit/range`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async getByDateRangeRaw(requestParameters, initOverrides) {
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getByDateRange().');
+        }
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getByDateRange().');
+        }
+        const queryParameters = {};
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'].toISOString();
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'].toISOString();
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/audit/range`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves all audit trail entries within a specified date range
      * Get audit trail by date range
      */
-    getByDateRange(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getByDateRangeRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getByDateRange(requestParameters, initOverrides) {
+        const response = await this.getByDateRangeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves all audit trail entries associated with a specific invoice
      * Get audit trail for invoice
      */
-    getByInvoiceIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['invoiceId'] == null) {
-                throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling getByInvoiceId().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/audit/invoice/{invoiceId}`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async getByInvoiceIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling getByInvoiceId().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/audit/invoice/{invoiceId}`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves all audit trail entries associated with a specific invoice
      * Get audit trail for invoice
      */
-    getByInvoiceId(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getByInvoiceIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getByInvoiceId(requestParameters, initOverrides) {
+        const response = await this.getByInvoiceIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves all audit trail entries associated with a specific order
      * Get audit trail for order
      */
-    getByOrderIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['orderId'] == null) {
-                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling getByOrderId().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/audit/order/{orderId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async getByOrderIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling getByOrderId().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/audit/order/{orderId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves all audit trail entries associated with a specific order
      * Get audit trail for order
      */
-    getByOrderId(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getByOrderIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getByOrderId(requestParameters, initOverrides) {
+        const response = await this.getByOrderIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves all audit trail entries associated with a specific order
      * Get audit trail for order
      */
-    getByOrderId1Raw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['orderId'] == null) {
-                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling getByOrderId1().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/audit/by-order/{orderId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async getByOrderId1Raw(requestParameters, initOverrides) {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling getByOrderId1().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/audit/by-order/{orderId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves all audit trail entries associated with a specific order
      * Get audit trail for order
      */
-    getByOrderId1(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getByOrderId1Raw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getByOrderId1(requestParameters, initOverrides) {
+        const response = await this.getByOrderId1Raw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves audit trail entries filtered by exception type and date range
      * Get audit trail by exception type
      */
-    getByTypeRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['type'] == null) {
-                throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling getByType().');
-            }
-            if (requestParameters['startDate'] == null) {
-                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getByType().');
-            }
-            if (requestParameters['endDate'] == null) {
-                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getByType().');
-            }
-            const queryParameters = {};
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'].toISOString();
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'].toISOString();
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/audit/type/{type}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async getByTypeRaw(requestParameters, initOverrides) {
+        if (requestParameters['type'] == null) {
+            throw new runtime.RequiredError('type', 'Required parameter "type" was null or undefined when calling getByType().');
+        }
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getByType().');
+        }
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getByType().');
+        }
+        const queryParameters = {};
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'].toISOString();
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'].toISOString();
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/audit/type/{type}`.replace(`{${"type"}}`, encodeURIComponent(String(requestParameters['type']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves audit trail entries filtered by exception type and date range
      * Get audit trail by exception type
      */
-    getByType(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getByTypeRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getByType(requestParameters, initOverrides) {
+        const response = await this.getByTypeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates an audit trail entry for an order or invoice cancellation
      * Record a cancellation
      */
-    recordCancellationRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['cancellationRequest'] == null) {
-                throw new runtime.RequiredError('cancellationRequest', 'Required parameter "cancellationRequest" was null or undefined when calling recordCancellation().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/audit/cancellation`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CancellationRequestToJSON)(requestParameters['cancellationRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async recordCancellationRaw(requestParameters, initOverrides) {
+        if (requestParameters['cancellationRequest'] == null) {
+            throw new runtime.RequiredError('cancellationRequest', 'Required parameter "cancellationRequest" was null or undefined when calling recordCancellation().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/audit/cancellation`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CancellationRequestToJSON)(requestParameters['cancellationRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Creates an audit trail entry for an order or invoice cancellation
      * Record a cancellation
      */
-    recordCancellation(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.recordCancellationRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async recordCancellation(requestParameters, initOverrides) {
+        const response = await this.recordCancellationRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates an audit trail entry for a price override exception with policy validation
      * Record a price override
      */
-    recordPriceOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['priceOverrideRequest'] == null) {
-                throw new runtime.RequiredError('priceOverrideRequest', 'Required parameter "priceOverrideRequest" was null or undefined when calling recordPriceOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/audit/price-override`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PriceOverrideRequestToJSON)(requestParameters['priceOverrideRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async recordPriceOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['priceOverrideRequest'] == null) {
+            throw new runtime.RequiredError('priceOverrideRequest', 'Required parameter "priceOverrideRequest" was null or undefined when calling recordPriceOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/audit/price-override`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PriceOverrideRequestToJSON)(requestParameters['priceOverrideRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Creates an audit trail entry for a price override exception with policy validation
      * Record a price override
      */
-    recordPriceOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.recordPriceOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async recordPriceOverride(requestParameters, initOverrides) {
+        const response = await this.recordPriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates an audit trail entry for a refund exception with policy validation and settlement handling
      * Record a refund
      */
-    recordRefundRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['refundRequest'] == null) {
-                throw new runtime.RequiredError('refundRequest', 'Required parameter "refundRequest" was null or undefined when calling recordRefund().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/audit/refund`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.RefundRequestToJSON)(requestParameters['refundRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
-        });
+    async recordRefundRaw(requestParameters, initOverrides) {
+        if (requestParameters['refundRequest'] == null) {
+            throw new runtime.RequiredError('refundRequest', 'Required parameter "refundRequest" was null or undefined when calling recordRefund().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/audit/refund`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.RefundRequestToJSON)(requestParameters['refundRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AuditTrailResponseFromJSON)(jsonValue));
     }
     /**
      * Creates an audit trail entry for a refund exception with policy validation and settlement handling
      * Record a refund
      */
-    recordRefund(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.recordRefundRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async recordRefund(requestParameters, initOverrides) {
+        const response = await this.recordRefundRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.AuditTrailApi = AuditTrailApi;

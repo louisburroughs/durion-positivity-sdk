@@ -4,6 +4,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DurionSdkError = void 0;
 class DurionSdkError extends Error {
+    response;
+    error;
     constructor(response, error) {
         super(`DurionSdkError [${error.status}] ${error.code}: ${error.message}`);
         this.response = response;

@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PutawayExecutionApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,36 +57,32 @@ class PutawayExecutionApi extends runtime.BaseAPI {
      * Executes a putaway task by moving SKU quantity from source location to destination location.
      * Execute putaway task
      */
-    executePutawayRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['taskId'] == null) {
-                throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling executePutaway().');
-            }
-            if (requestParameters['putawayExecutionRequest'] == null) {
-                throw new runtime.RequiredError('putawayExecutionRequest', 'Required parameter "putawayExecutionRequest" was null or undefined when calling executePutaway().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/putaway/tasks/{taskId}/execute`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PutawayExecutionRequestToJSON)(requestParameters['putawayExecutionRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PutawayExecutionResponseFromJSON)(jsonValue));
-        });
+    async executePutawayRaw(requestParameters, initOverrides) {
+        if (requestParameters['taskId'] == null) {
+            throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling executePutaway().');
+        }
+        if (requestParameters['putawayExecutionRequest'] == null) {
+            throw new runtime.RequiredError('putawayExecutionRequest', 'Required parameter "putawayExecutionRequest" was null or undefined when calling executePutaway().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/putaway/tasks/{taskId}/execute`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PutawayExecutionRequestToJSON)(requestParameters['putawayExecutionRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PutawayExecutionResponseFromJSON)(jsonValue));
     }
     /**
      * Executes a putaway task by moving SKU quantity from source location to destination location.
      * Execute putaway task
      */
-    executePutaway(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.executePutawayRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async executePutaway(requestParameters, initOverrides) {
+        const response = await this.executePutawayRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.PutawayExecutionApi = PutawayExecutionApi;

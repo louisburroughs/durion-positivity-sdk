@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryReservationsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,97 +57,85 @@ class InventoryReservationsApi extends runtime.BaseAPI {
      * Cancels reservation and releases associated allocations for a workorder line
      * Cancel reservation by workorder line
      */
-    cancelReservationRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderLineId'] == null) {
-                throw new runtime.RequiredError('workorderLineId', 'Required parameter "workorderLineId" was null or undefined when calling cancelReservation().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/reservations/{workorderLineId}`.replace(`{${"workorderLineId"}}`, encodeURIComponent(String(requestParameters['workorderLineId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async cancelReservationRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderLineId'] == null) {
+            throw new runtime.RequiredError('workorderLineId', 'Required parameter "workorderLineId" was null or undefined when calling cancelReservation().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/reservations/{workorderLineId}`.replace(`{${"workorderLineId"}}`, encodeURIComponent(String(requestParameters['workorderLineId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Cancels reservation and releases associated allocations for a workorder line
      * Cancel reservation by workorder line
      */
-    cancelReservation(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.cancelReservationRaw(requestParameters, initOverrides);
-        });
+    async cancelReservation(requestParameters, initOverrides) {
+        await this.cancelReservationRaw(requestParameters, initOverrides);
     }
     /**
      * Creates a reservation for a workorder line or updates an existing reservation with the requested quantity
      * Create or update a reservation
      */
-    createOrUpdateReservationRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createReservationRequest'] == null) {
-                throw new runtime.RequiredError('createReservationRequest', 'Required parameter "createReservationRequest" was null or undefined when calling createOrUpdateReservation().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/reservations`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateReservationRequestToJSON)(requestParameters['createReservationRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReservationResponseFromJSON)(jsonValue));
-        });
+    async createOrUpdateReservationRaw(requestParameters, initOverrides) {
+        if (requestParameters['createReservationRequest'] == null) {
+            throw new runtime.RequiredError('createReservationRequest', 'Required parameter "createReservationRequest" was null or undefined when calling createOrUpdateReservation().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/reservations`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateReservationRequestToJSON)(requestParameters['createReservationRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReservationResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a reservation for a workorder line or updates an existing reservation with the requested quantity
      * Create or update a reservation
      */
-    createOrUpdateReservation(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createOrUpdateReservationRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createOrUpdateReservation(requestParameters, initOverrides) {
+        const response = await this.createOrUpdateReservationRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Promotes an existing allocation to HARD state when ATP is sufficient
      * Promote allocation to hard
      */
-    promoteToHardRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['allocationId'] == null) {
-                throw new runtime.RequiredError('allocationId', 'Required parameter "allocationId" was null or undefined when calling promoteToHard().');
-            }
-            if (requestParameters['promoteAllocationRequest'] == null) {
-                throw new runtime.RequiredError('promoteAllocationRequest', 'Required parameter "promoteAllocationRequest" was null or undefined when calling promoteToHard().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/reservations/{allocationId}/promote`.replace(`{${"allocationId"}}`, encodeURIComponent(String(requestParameters['allocationId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PromoteAllocationRequestToJSON)(requestParameters['promoteAllocationRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReservationResponseFromJSON)(jsonValue));
-        });
+    async promoteToHardRaw(requestParameters, initOverrides) {
+        if (requestParameters['allocationId'] == null) {
+            throw new runtime.RequiredError('allocationId', 'Required parameter "allocationId" was null or undefined when calling promoteToHard().');
+        }
+        if (requestParameters['promoteAllocationRequest'] == null) {
+            throw new runtime.RequiredError('promoteAllocationRequest', 'Required parameter "promoteAllocationRequest" was null or undefined when calling promoteToHard().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/reservations/{allocationId}/promote`.replace(`{${"allocationId"}}`, encodeURIComponent(String(requestParameters['allocationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PromoteAllocationRequestToJSON)(requestParameters['promoteAllocationRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReservationResponseFromJSON)(jsonValue));
     }
     /**
      * Promotes an existing allocation to HARD state when ATP is sufficient
      * Promote allocation to hard
      */
-    promoteToHard(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.promoteToHardRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async promoteToHard(requestParameters, initOverrides) {
+        const response = await this.promoteToHardRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.InventoryReservationsApi = InventoryReservationsApi;

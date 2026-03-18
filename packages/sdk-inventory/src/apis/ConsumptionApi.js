@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ConsumptionApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,33 +57,29 @@ class ConsumptionApi extends runtime.BaseAPI {
      * Consumes picked inventory for a workorder and records resulting stock movement
      * Consume picked items
      */
-    consumePickedItemsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['consumeItemsRequest'] == null) {
-                throw new runtime.RequiredError('consumeItemsRequest', 'Required parameter "consumeItemsRequest" was null or undefined when calling consumePickedItems().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/consumption`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ConsumeItemsRequestToJSON)(requestParameters['consumeItemsRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ConsumptionResponseFromJSON)(jsonValue));
-        });
+    async consumePickedItemsRaw(requestParameters, initOverrides) {
+        if (requestParameters['consumeItemsRequest'] == null) {
+            throw new runtime.RequiredError('consumeItemsRequest', 'Required parameter "consumeItemsRequest" was null or undefined when calling consumePickedItems().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/consumption`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ConsumeItemsRequestToJSON)(requestParameters['consumeItemsRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ConsumptionResponseFromJSON)(jsonValue));
     }
     /**
      * Consumes picked inventory for a workorder and records resulting stock movement
      * Consume picked items
      */
-    consumePickedItems(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.consumePickedItemsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async consumePickedItems(requestParameters, initOverrides) {
+        const response = await this.consumePickedItemsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.ConsumptionApi = ConsumptionApi;

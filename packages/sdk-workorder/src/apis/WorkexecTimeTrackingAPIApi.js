@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkexecTimeTrackingAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,207 +57,187 @@ class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
      * Create a labor-performed record with idempotency support
      * Create labor performed entry
      */
-    createLaborPerformedRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['idempotencyKey'] == null) {
-                throw new runtime.RequiredError('idempotencyKey', 'Required parameter "idempotencyKey" was null or undefined when calling createLaborPerformed().');
-            }
-            if (requestParameters['workexecLaborPerformedRequest'] == null) {
-                throw new runtime.RequiredError('workexecLaborPerformedRequest', 'Required parameter "workexecLaborPerformedRequest" was null or undefined when calling createLaborPerformed().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            if (requestParameters['xCorrelationId'] != null) {
-                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-            }
-            const response = yield this.request({
-                path: `/v1/workexec/labor-performed`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.WorkexecLaborPerformedRequestToJSON)(requestParameters['workexecLaborPerformedRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async createLaborPerformedRaw(requestParameters, initOverrides) {
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError('idempotencyKey', 'Required parameter "idempotencyKey" was null or undefined when calling createLaborPerformed().');
+        }
+        if (requestParameters['workexecLaborPerformedRequest'] == null) {
+            throw new runtime.RequiredError('workexecLaborPerformedRequest', 'Required parameter "workexecLaborPerformedRequest" was null or undefined when calling createLaborPerformed().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        if (requestParameters['xCorrelationId'] != null) {
+            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+        const response = await this.request({
+            path: `/v1/workexec/labor-performed`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.WorkexecLaborPerformedRequestToJSON)(requestParameters['workexecLaborPerformedRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Create a labor-performed record with idempotency support
      * Create labor performed entry
      */
-    createLaborPerformed(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createLaborPerformedRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createLaborPerformed(requestParameters, initOverrides) {
+        const response = await this.createLaborPerformedRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve active timer entries for the authenticated mechanic
      * Get active timers
      */
-    getActiveTimerEntriesRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workexec/time-entries/timer/active`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getActiveTimerEntriesRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workexec/time-entries/timer/active`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieve active timer entries for the authenticated mechanic
      * Get active timers
      */
-    getActiveTimerEntries(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getActiveTimerEntriesRaw(initOverrides);
-            return yield response.value();
-        });
+    async getActiveTimerEntries(initOverrides) {
+        const response = await this.getActiveTimerEntriesRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve aggregated tracked hours for a date range, timezone, and optional location/technicians
      * Get job time totals
      */
-    getJobTimeTotalsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['startDate'] == null) {
-                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getJobTimeTotals().');
-            }
-            if (requestParameters['endDate'] == null) {
-                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getJobTimeTotals().');
-            }
-            if (requestParameters['timezone'] == null) {
-                throw new runtime.RequiredError('timezone', 'Required parameter "timezone" was null or undefined when calling getJobTimeTotals().');
-            }
-            const queryParameters = {};
-            if (requestParameters['startDate'] != null) {
-                queryParameters['startDate'] = requestParameters['startDate'];
-            }
-            if (requestParameters['endDate'] != null) {
-                queryParameters['endDate'] = requestParameters['endDate'];
-            }
-            if (requestParameters['timezone'] != null) {
-                queryParameters['timezone'] = requestParameters['timezone'];
-            }
-            if (requestParameters['locationId'] != null) {
-                queryParameters['locationId'] = requestParameters['locationId'];
-            }
-            if (requestParameters['technicianIds'] != null) {
-                queryParameters['technicianIds'] = requestParameters['technicianIds'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workexec/job-time-totals`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getJobTimeTotalsRaw(requestParameters, initOverrides) {
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getJobTimeTotals().');
+        }
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getJobTimeTotals().');
+        }
+        if (requestParameters['timezone'] == null) {
+            throw new runtime.RequiredError('timezone', 'Required parameter "timezone" was null or undefined when calling getJobTimeTotals().');
+        }
+        const queryParameters = {};
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = requestParameters['startDate'];
+        }
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = requestParameters['endDate'];
+        }
+        if (requestParameters['timezone'] != null) {
+            queryParameters['timezone'] = requestParameters['timezone'];
+        }
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+        if (requestParameters['technicianIds'] != null) {
+            queryParameters['technicianIds'] = requestParameters['technicianIds'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workexec/job-time-totals`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieve aggregated tracked hours for a date range, timezone, and optional location/technicians
      * Get job time totals
      */
-    getJobTimeTotals(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getJobTimeTotalsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getJobTimeTotals(requestParameters, initOverrides) {
+        const response = await this.getJobTimeTotalsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Start a workexec timer entry for the authenticated mechanic
      * Start timer
      */
-    startTimerRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workexecTimerStartRequest'] == null) {
-                throw new runtime.RequiredError('workexecTimerStartRequest', 'Required parameter "workexecTimerStartRequest" was null or undefined when calling startTimer().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workexec/time-entries/timer/start`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.WorkexecTimerStartRequestToJSON)(requestParameters['workexecTimerStartRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async startTimerRaw(requestParameters, initOverrides) {
+        if (requestParameters['workexecTimerStartRequest'] == null) {
+            throw new runtime.RequiredError('workexecTimerStartRequest', 'Required parameter "workexecTimerStartRequest" was null or undefined when calling startTimer().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workexec/time-entries/timer/start`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.WorkexecTimerStartRequestToJSON)(requestParameters['workexecTimerStartRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Start a workexec timer entry for the authenticated mechanic
      * Start timer
      */
-    startTimer(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.startTimerRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async startTimer(requestParameters, initOverrides) {
+        const response = await this.startTimerRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Stop active timer entries for the authenticated mechanic
      * Stop timers
      */
-    stopTimersRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workexec/time-entries/timer/stop`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async stopTimersRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workexec/time-entries/timer/stop`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Stop active timer entries for the authenticated mechanic
      * Stop timers
      */
-    stopTimers(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.stopTimersRaw(initOverrides);
-            return yield response.value();
-        });
+    async stopTimers(initOverrides) {
+        const response = await this.stopTimersRaw(initOverrides);
+        return await response.value();
     }
 }
 exports.WorkexecTimeTrackingAPIApi = WorkexecTimeTrackingAPIApi;

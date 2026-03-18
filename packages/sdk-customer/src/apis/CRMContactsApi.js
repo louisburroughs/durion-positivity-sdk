@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CRMContactsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,69 +57,61 @@ class CRMContactsApi extends runtime.BaseAPI {
      * Retrieve all contacts for a party including their role assignments
      * Get contacts with roles
      */
-    getContactsWithRolesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['partyId'] == null) {
-                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getContactsWithRoles().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/parties/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetContactsWithRolesResponseFromJSON)(jsonValue));
-        });
+    async getContactsWithRolesRaw(requestParameters, initOverrides) {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getContactsWithRoles().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/parties/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetContactsWithRolesResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve all contacts for a party including their role assignments
      * Get contacts with roles
      */
-    getContactsWithRoles(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getContactsWithRolesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getContactsWithRoles(requestParameters, initOverrides) {
+        const response = await this.getContactsWithRolesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Assign or update role assignments for a specific contact within a party
      * Update contact roles
      */
-    updateContactRolesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['partyId'] == null) {
-                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling updateContactRoles().');
-            }
-            if (requestParameters['contactId'] == null) {
-                throw new runtime.RequiredError('contactId', 'Required parameter "contactId" was null or undefined when calling updateContactRoles().');
-            }
-            if (requestParameters['updateContactRolesRequest'] == null) {
-                throw new runtime.RequiredError('updateContactRolesRequest', 'Required parameter "updateContactRolesRequest" was null or undefined when calling updateContactRoles().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/crm/parties/{partyId}/contacts/{contactId}/roles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"contactId"}}`, encodeURIComponent(String(requestParameters['contactId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UpdateContactRolesRequestToJSON)(requestParameters['updateContactRolesRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpdateContactRolesResponseFromJSON)(jsonValue));
-        });
+    async updateContactRolesRaw(requestParameters, initOverrides) {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling updateContactRoles().');
+        }
+        if (requestParameters['contactId'] == null) {
+            throw new runtime.RequiredError('contactId', 'Required parameter "contactId" was null or undefined when calling updateContactRoles().');
+        }
+        if (requestParameters['updateContactRolesRequest'] == null) {
+            throw new runtime.RequiredError('updateContactRolesRequest', 'Required parameter "updateContactRolesRequest" was null or undefined when calling updateContactRoles().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/crm/parties/{partyId}/contacts/{contactId}/roles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"contactId"}}`, encodeURIComponent(String(requestParameters['contactId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UpdateContactRolesRequestToJSON)(requestParameters['updateContactRolesRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpdateContactRolesResponseFromJSON)(jsonValue));
     }
     /**
      * Assign or update role assignments for a specific contact within a party
      * Update contact roles
      */
-    updateContactRoles(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateContactRolesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateContactRoles(requestParameters, initOverrides) {
+        const response = await this.updateContactRolesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.CRMContactsApi = CRMContactsApi;

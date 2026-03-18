@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkorderLaborAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,164 +57,148 @@ class WorkorderLaborAPIApi extends runtime.BaseAPI {
      * Manually adjust hours worked on a labor entry with a reason for audit trail.
      * Adjust labor hours
      */
-    adjustLaborHoursRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling adjustLaborHours().');
-            }
-            if (requestParameters['entryId'] == null) {
-                throw new runtime.RequiredError('entryId', 'Required parameter "entryId" was null or undefined when calling adjustLaborHours().');
-            }
-            if (requestParameters['adjustLaborRequest'] == null) {
-                throw new runtime.RequiredError('adjustLaborRequest', 'Required parameter "adjustLaborRequest" was null or undefined when calling adjustLaborHours().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/labor/{entryId}/adjust`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.AdjustLaborRequestToJSON)(requestParameters['adjustLaborRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async adjustLaborHoursRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling adjustLaborHours().');
+        }
+        if (requestParameters['entryId'] == null) {
+            throw new runtime.RequiredError('entryId', 'Required parameter "entryId" was null or undefined when calling adjustLaborHours().');
+        }
+        if (requestParameters['adjustLaborRequest'] == null) {
+            throw new runtime.RequiredError('adjustLaborRequest', 'Required parameter "adjustLaborRequest" was null or undefined when calling adjustLaborHours().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/labor/{entryId}/adjust`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.AdjustLaborRequestToJSON)(requestParameters['adjustLaborRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Manually adjust hours worked on a labor entry with a reason for audit trail.
      * Adjust labor hours
      */
-    adjustLaborHours(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.adjustLaborHoursRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async adjustLaborHours(requestParameters, initOverrides) {
+        const response = await this.adjustLaborHoursRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve all labor entries for a workorder, ordered newest first.
      * Get labor history
      */
-    getLaborHistoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getLaborHistory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/labor`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderLaborEntryResponseFromJSON));
-        });
+    async getLaborHistoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getLaborHistory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/labor`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderLaborEntryResponseFromJSON));
     }
     /**
      * Retrieve all labor entries for a workorder, ordered newest first.
      * Get labor history
      */
-    getLaborHistory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getLaborHistoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getLaborHistory(requestParameters, initOverrides) {
+        const response = await this.getLaborHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Start tracking labor on a specific service item. Only one active session allowed per service.
      * Start labor session
      */
-    startLaborSessionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling startLaborSession().');
-            }
-            if (requestParameters['serviceId'] == null) {
-                throw new runtime.RequiredError('serviceId', 'Required parameter "serviceId" was null or undefined when calling startLaborSession().');
-            }
-            if (requestParameters['startLaborRequest'] == null) {
-                throw new runtime.RequiredError('startLaborRequest', 'Required parameter "startLaborRequest" was null or undefined when calling startLaborSession().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/services/{serviceId}/labor/start`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"serviceId"}}`, encodeURIComponent(String(requestParameters['serviceId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.StartLaborRequestToJSON)(requestParameters['startLaborRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async startLaborSessionRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling startLaborSession().');
+        }
+        if (requestParameters['serviceId'] == null) {
+            throw new runtime.RequiredError('serviceId', 'Required parameter "serviceId" was null or undefined when calling startLaborSession().');
+        }
+        if (requestParameters['startLaborRequest'] == null) {
+            throw new runtime.RequiredError('startLaborRequest', 'Required parameter "startLaborRequest" was null or undefined when calling startLaborSession().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/services/{serviceId}/labor/start`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"serviceId"}}`, encodeURIComponent(String(requestParameters['serviceId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.StartLaborRequestToJSON)(requestParameters['startLaborRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Start tracking labor on a specific service item. Only one active session allowed per service.
      * Start labor session
      */
-    startLaborSession(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.startLaborSessionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async startLaborSession(requestParameters, initOverrides) {
+        const response = await this.startLaborSessionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Stop an active labor session and calculate hours worked.
      * Stop labor session
      */
-    stopLaborSessionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['workorderId'] == null) {
-                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling stopLaborSession().');
-            }
-            if (requestParameters['entryId'] == null) {
-                throw new runtime.RequiredError('entryId', 'Required parameter "entryId" was null or undefined when calling stopLaborSession().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            if (requestParameters['idempotencyKey'] != null) {
-                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-            }
-            const response = yield this.request({
-                path: `/v1/workorders/{workorderId}/labor/{entryId}/stop`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async stopLaborSessionRaw(requestParameters, initOverrides) {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling stopLaborSession().');
+        }
+        if (requestParameters['entryId'] == null) {
+            throw new runtime.RequiredError('entryId', 'Required parameter "entryId" was null or undefined when calling stopLaborSession().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/labor/{entryId}/stop`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Stop an active labor session and calculate hours worked.
      * Stop labor session
      */
-    stopLaborSession(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.stopLaborSessionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async stopLaborSession(requestParameters, initOverrides) {
+        const response = await this.stopLaborSessionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.WorkorderLaborAPIApi = WorkorderLaborAPIApi;

@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EmployeeAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,130 +57,114 @@ class EmployeeAPIApi extends runtime.BaseAPI {
      * Creates a new employee profile with identity, employment, and role-related attributes.
      * Create employee profile
      */
-    createEmployeeRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createEmployeeRequest'] == null) {
-                throw new runtime.RequiredError('createEmployeeRequest', 'Required parameter "createEmployeeRequest" was null or undefined when calling createEmployee().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people/employees`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateEmployeeRequestToJSON)(requestParameters['createEmployeeRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
-        });
+    async createEmployeeRaw(requestParameters, initOverrides) {
+        if (requestParameters['createEmployeeRequest'] == null) {
+            throw new runtime.RequiredError('createEmployeeRequest', 'Required parameter "createEmployeeRequest" was null or undefined when calling createEmployee().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people/employees`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateEmployeeRequestToJSON)(requestParameters['createEmployeeRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
     }
     /**
      * Creates a new employee profile with identity, employment, and role-related attributes.
      * Create employee profile
      */
-    createEmployee(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createEmployeeRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createEmployee(requestParameters, initOverrides) {
+        const response = await this.createEmployeeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Disables an employee profile and records optional disable metadata.
      * Disable employee profile
      */
-    disableEmployeeRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['employeeId'] == null) {
-                throw new runtime.RequiredError('employeeId', 'Required parameter "employeeId" was null or undefined when calling disableEmployee().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people/employees/{employeeId}/disable`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.DisableEmployeeRequestDtoToJSON)(requestParameters['disableEmployeeRequestDto']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
-        });
+    async disableEmployeeRaw(requestParameters, initOverrides) {
+        if (requestParameters['employeeId'] == null) {
+            throw new runtime.RequiredError('employeeId', 'Required parameter "employeeId" was null or undefined when calling disableEmployee().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people/employees/{employeeId}/disable`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.DisableEmployeeRequestDtoToJSON)(requestParameters['disableEmployeeRequestDto']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
     }
     /**
      * Disables an employee profile and records optional disable metadata.
      * Disable employee profile
      */
-    disableEmployee(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.disableEmployeeRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async disableEmployee(requestParameters, initOverrides) {
+        const response = await this.disableEmployeeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves an employee profile by employee ID.
      * Get employee profile
      */
-    getEmployeeRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['employeeId'] == null) {
-                throw new runtime.RequiredError('employeeId', 'Required parameter "employeeId" was null or undefined when calling getEmployee().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/people/employees/{employeeId}`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
-        });
+    async getEmployeeRaw(requestParameters, initOverrides) {
+        if (requestParameters['employeeId'] == null) {
+            throw new runtime.RequiredError('employeeId', 'Required parameter "employeeId" was null or undefined when calling getEmployee().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/people/employees/{employeeId}`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
     }
     /**
      * Retrieves an employee profile by employee ID.
      * Get employee profile
      */
-    getEmployee(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEmployeeRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEmployee(requestParameters, initOverrides) {
+        const response = await this.getEmployeeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Updates an existing employee profile using the provided employee ID.
      * Update employee profile
      */
-    updateEmployeeRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['employeeId'] == null) {
-                throw new runtime.RequiredError('employeeId', 'Required parameter "employeeId" was null or undefined when calling updateEmployee().');
-            }
-            if (requestParameters['updateEmployeeRequest'] == null) {
-                throw new runtime.RequiredError('updateEmployeeRequest', 'Required parameter "updateEmployeeRequest" was null or undefined when calling updateEmployee().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/people/employees/{employeeId}`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UpdateEmployeeRequestToJSON)(requestParameters['updateEmployeeRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
-        });
+    async updateEmployeeRaw(requestParameters, initOverrides) {
+        if (requestParameters['employeeId'] == null) {
+            throw new runtime.RequiredError('employeeId', 'Required parameter "employeeId" was null or undefined when calling updateEmployee().');
+        }
+        if (requestParameters['updateEmployeeRequest'] == null) {
+            throw new runtime.RequiredError('updateEmployeeRequest', 'Required parameter "updateEmployeeRequest" was null or undefined when calling updateEmployee().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/people/employees/{employeeId}`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UpdateEmployeeRequestToJSON)(requestParameters['updateEmployeeRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EmployeeProfileDtoFromJSON)(jsonValue));
     }
     /**
      * Updates an existing employee profile using the provided employee ID.
      * Update employee profile
      */
-    updateEmployee(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateEmployeeRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateEmployee(requestParameters, initOverrides) {
+        const response = await this.updateEmployeeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.EmployeeAPIApi = EmployeeAPIApi;

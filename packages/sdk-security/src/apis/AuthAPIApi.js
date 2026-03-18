@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,65 +57,57 @@ class AuthAPIApi extends runtime.BaseAPI {
      * Authenticates a user with username and password and returns a JWT token pair.
      * User login
      */
-    loginRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['loginRequest'] == null) {
-                throw new runtime.RequiredError('loginRequest', 'Required parameter "loginRequest" was null or undefined when calling login().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/auth/login`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.LoginRequestToJSON)(requestParameters['loginRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenPairResponseFromJSON)(jsonValue));
-        });
+    async loginRaw(requestParameters, initOverrides) {
+        if (requestParameters['loginRequest'] == null) {
+            throw new runtime.RequiredError('loginRequest', 'Required parameter "loginRequest" was null or undefined when calling login().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/auth/login`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.LoginRequestToJSON)(requestParameters['loginRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TokenPairResponseFromJSON)(jsonValue));
     }
     /**
      * Authenticates a user with username and password and returns a JWT token pair.
      * User login
      */
-    login(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.loginRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async login(requestParameters, initOverrides) {
+        const response = await this.loginRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates a low-privilege customer account after resolving or creating a linked person record. Successful registration requires a follow-up login and does not issue tokens immediately. Conflict responses include operator guidance for recovery, linked-account, and CRM identity-review cases.
      * Self-register a new user
      */
-    selfRegisterRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['selfRegistrationRequest'] == null) {
-                throw new runtime.RequiredError('selfRegistrationRequest', 'Required parameter "selfRegistrationRequest" was null or undefined when calling selfRegister().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/auth/self-register`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.SelfRegistrationRequestToJSON)(requestParameters['selfRegistrationRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SelfRegistrationResponseFromJSON)(jsonValue));
-        });
+    async selfRegisterRaw(requestParameters, initOverrides) {
+        if (requestParameters['selfRegistrationRequest'] == null) {
+            throw new runtime.RequiredError('selfRegistrationRequest', 'Required parameter "selfRegistrationRequest" was null or undefined when calling selfRegister().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/auth/self-register`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.SelfRegistrationRequestToJSON)(requestParameters['selfRegistrationRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SelfRegistrationResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a low-privilege customer account after resolving or creating a linked person record. Successful registration requires a follow-up login and does not issue tokens immediately. Conflict responses include operator guidance for recovery, linked-account, and CRM identity-review cases.
      * Self-register a new user
      */
-    selfRegister(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.selfRegisterRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async selfRegister(requestParameters, initOverrides) {
+        const response = await this.selfRegisterRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.AuthAPIApi = AuthAPIApi;

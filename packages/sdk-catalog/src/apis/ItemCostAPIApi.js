@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ItemCostAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -65,106 +56,94 @@ class ItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Get item cost audit history
      */
-    getAuditHistoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['itemId'] == null) {
-                throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling getAuditHistory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/items/{itemId}/costs/audit`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getAuditHistoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['itemId'] == null) {
+            throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling getAuditHistory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/items/{itemId}/costs/audit`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Get item cost audit history
      */
-    getAuditHistory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAuditHistoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getAuditHistory(requestParameters, initOverrides) {
+        const response = await this.getAuditHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Get current item costs
      */
-    getItemCostsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['itemId'] == null) {
-                throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling getItemCosts().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/items/{itemId}/costs`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getItemCostsRaw(requestParameters, initOverrides) {
+        if (requestParameters['itemId'] == null) {
+            throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling getItemCosts().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/items/{itemId}/costs`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Get current item costs
      */
-    getItemCosts(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getItemCostsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getItemCosts(requestParameters, initOverrides) {
+        const response = await this.getItemCostsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update standard item cost
      */
-    updateStandardCostRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['itemId'] == null) {
-                throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling updateStandardCost().');
-            }
-            if (requestParameters['updateStandardCostRequestDto'] == null) {
-                throw new runtime.RequiredError('updateStandardCostRequestDto', 'Required parameter "updateStandardCostRequestDto" was null or undefined when calling updateStandardCost().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/items/{itemId}/standard-cost`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UpdateStandardCostRequestDtoToJSON)(requestParameters['updateStandardCostRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async updateStandardCostRaw(requestParameters, initOverrides) {
+        if (requestParameters['itemId'] == null) {
+            throw new runtime.RequiredError('itemId', 'Required parameter "itemId" was null or undefined when calling updateStandardCost().');
+        }
+        if (requestParameters['updateStandardCostRequestDto'] == null) {
+            throw new runtime.RequiredError('updateStandardCostRequestDto', 'Required parameter "updateStandardCostRequestDto" was null or undefined when calling updateStandardCost().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/items/{itemId}/standard-cost`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UpdateStandardCostRequestDtoToJSON)(requestParameters['updateStandardCostRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Update standard item cost
      */
-    updateStandardCost(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateStandardCostRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateStandardCost(requestParameters, initOverrides) {
+        const response = await this.updateStandardCostRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.ItemCostAPIApi = ItemCostAPIApi;

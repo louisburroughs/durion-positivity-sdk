@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetContactsRolesEnum = exports.CRMPartyRelationshipsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,136 +57,120 @@ class CRMPartyRelationshipsApi extends runtime.BaseAPI {
      * Creates a relationship between a commercial account and an individual person
      * Create a party relationship
      */
-    createRelationshipRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['partyId'] == null) {
-                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling createRelationship().');
-            }
-            if (requestParameters['createPartyRelationshipRequest'] == null) {
-                throw new runtime.RequiredError('createPartyRelationshipRequest', 'Required parameter "createPartyRelationshipRequest" was null or undefined when calling createRelationship().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/crm/commercial-accounts/{partyId}/relationships`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreatePartyRelationshipRequestToJSON)(requestParameters['createPartyRelationshipRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreatePartyRelationshipResponseFromJSON)(jsonValue));
-        });
+    async createRelationshipRaw(requestParameters, initOverrides) {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling createRelationship().');
+        }
+        if (requestParameters['createPartyRelationshipRequest'] == null) {
+            throw new runtime.RequiredError('createPartyRelationshipRequest', 'Required parameter "createPartyRelationshipRequest" was null or undefined when calling createRelationship().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/crm/commercial-accounts/{partyId}/relationships`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreatePartyRelationshipRequestToJSON)(requestParameters['createPartyRelationshipRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreatePartyRelationshipResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a relationship between a commercial account and an individual person
      * Create a party relationship
      */
-    createRelationship(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createRelationshipRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createRelationship(requestParameters, initOverrides) {
+        const response = await this.createRelationshipRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Soft-deletes a relationship by setting its effective end date
      * Deactivate a party relationship
      */
-    deactivateRelationshipRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['partyId'] == null) {
-                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling deactivateRelationship().');
-            }
-            if (requestParameters['relationshipId'] == null) {
-                throw new runtime.RequiredError('relationshipId', 'Required parameter "relationshipId" was null or undefined when calling deactivateRelationship().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/commercial-accounts/{partyId}/relationships/{relationshipId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"relationshipId"}}`, encodeURIComponent(String(requestParameters['relationshipId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deactivateRelationshipRaw(requestParameters, initOverrides) {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling deactivateRelationship().');
+        }
+        if (requestParameters['relationshipId'] == null) {
+            throw new runtime.RequiredError('relationshipId', 'Required parameter "relationshipId" was null or undefined when calling deactivateRelationship().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/commercial-accounts/{partyId}/relationships/{relationshipId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"relationshipId"}}`, encodeURIComponent(String(requestParameters['relationshipId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Soft-deletes a relationship by setting its effective end date
      * Deactivate a party relationship
      */
-    deactivateRelationship(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deactivateRelationshipRaw(requestParameters, initOverrides);
-        });
+    async deactivateRelationship(requestParameters, initOverrides) {
+        await this.deactivateRelationshipRaw(requestParameters, initOverrides);
     }
     /**
      * Sets a relationship as the primary billing contact, demoting any existing primary
      * Designate primary billing contact
      */
-    designatePrimaryBillingContactRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['partyId'] == null) {
-                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling designatePrimaryBillingContact().');
-            }
-            if (requestParameters['relationshipId'] == null) {
-                throw new runtime.RequiredError('relationshipId', 'Required parameter "relationshipId" was null or undefined when calling designatePrimaryBillingContact().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/commercial-accounts/{partyId}/relationships/{relationshipId}/primary-billing`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"relationshipId"}}`, encodeURIComponent(String(requestParameters['relationshipId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async designatePrimaryBillingContactRaw(requestParameters, initOverrides) {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling designatePrimaryBillingContact().');
+        }
+        if (requestParameters['relationshipId'] == null) {
+            throw new runtime.RequiredError('relationshipId', 'Required parameter "relationshipId" was null or undefined when calling designatePrimaryBillingContact().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/commercial-accounts/{partyId}/relationships/{relationshipId}/primary-billing`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"relationshipId"}}`, encodeURIComponent(String(requestParameters['relationshipId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Sets a relationship as the primary billing contact, demoting any existing primary
      * Designate primary billing contact
      */
-    designatePrimaryBillingContact(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.designatePrimaryBillingContactRaw(requestParameters, initOverrides);
-        });
+    async designatePrimaryBillingContact(requestParameters, initOverrides) {
+        await this.designatePrimaryBillingContactRaw(requestParameters, initOverrides);
     }
     /**
      * Retrieves all individuals associated with a commercial account with their roles
      * Get contacts for a commercial account
      */
-    getContactsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['partyId'] == null) {
-                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getContacts().');
-            }
-            const queryParameters = {};
-            if (requestParameters['roles'] != null) {
-                queryParameters['roles'] = requestParameters['roles'];
-            }
-            if (requestParameters['status'] != null) {
-                queryParameters['status'] = requestParameters['status'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/commercial-accounts/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetCommercialAccountContactsResponseFromJSON)(jsonValue));
-        });
+    async getContactsRaw(requestParameters, initOverrides) {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getContacts().');
+        }
+        const queryParameters = {};
+        if (requestParameters['roles'] != null) {
+            queryParameters['roles'] = requestParameters['roles'];
+        }
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/commercial-accounts/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetCommercialAccountContactsResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves all individuals associated with a commercial account with their roles
      * Get contacts for a commercial account
      */
-    getContacts(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getContactsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getContacts(requestParameters, initOverrides) {
+        const response = await this.getContactsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.CRMPartyRelationshipsApi = CRMPartyRelationshipsApi;

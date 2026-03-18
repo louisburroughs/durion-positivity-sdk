@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceAreaAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -65,90 +56,78 @@ class ServiceAreaAPIApi extends runtime.BaseAPI {
     /**
      * Create service area
      */
-    create1Raw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['serviceAreaRequest'] == null) {
-                throw new runtime.RequiredError('serviceAreaRequest', 'Required parameter "serviceAreaRequest" was null or undefined when calling create1().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/service-areas`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ServiceAreaRequestToJSON)(requestParameters['serviceAreaRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ServiceAreaResponseFromJSON)(jsonValue));
-        });
+    async create1Raw(requestParameters, initOverrides) {
+        if (requestParameters['serviceAreaRequest'] == null) {
+            throw new runtime.RequiredError('serviceAreaRequest', 'Required parameter "serviceAreaRequest" was null or undefined when calling create1().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/service-areas`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ServiceAreaRequestToJSON)(requestParameters['serviceAreaRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ServiceAreaResponseFromJSON)(jsonValue));
     }
     /**
      * Create service area
      */
-    create1(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.create1Raw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async create1(requestParameters, initOverrides) {
+        const response = await this.create1Raw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * List service areas
      */
-    list1Raw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/service-areas`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ServiceAreaResponseFromJSON));
-        });
+    async list1Raw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/service-areas`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ServiceAreaResponseFromJSON));
     }
     /**
      * List service areas
      */
-    list1(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.list1Raw(initOverrides);
-            return yield response.value();
-        });
+    async list1(initOverrides) {
+        const response = await this.list1Raw(initOverrides);
+        return await response.value();
     }
     /**
      * Patch service area
      */
-    patch1Raw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling patch1().');
-            }
-            if (requestParameters['requestBody'] == null) {
-                throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling patch1().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/service-areas/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'PATCH',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['requestBody'],
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ServiceAreaResponseFromJSON)(jsonValue));
-        });
+    async patch1Raw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling patch1().');
+        }
+        if (requestParameters['requestBody'] == null) {
+            throw new runtime.RequiredError('requestBody', 'Required parameter "requestBody" was null or undefined when calling patch1().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/service-areas/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['requestBody'],
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ServiceAreaResponseFromJSON)(jsonValue));
     }
     /**
      * Patch service area
      */
-    patch1(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.patch1Raw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async patch1(requestParameters, initOverrides) {
+        const response = await this.patch1Raw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.ServiceAreaAPIApi = ServiceAreaAPIApi;

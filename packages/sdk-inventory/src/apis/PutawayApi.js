@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PutawayApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,90 +57,78 @@ class PutawayApi extends runtime.BaseAPI {
      * Claims an available putaway task for the current actor.
      * Claim a putaway task
      */
-    claimTaskRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['taskId'] == null) {
-                throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling claimTask().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/putaway/tasks/{taskId}/claim`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PutawayTaskResponseFromJSON)(jsonValue));
-        });
+    async claimTaskRaw(requestParameters, initOverrides) {
+        if (requestParameters['taskId'] == null) {
+            throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling claimTask().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/putaway/tasks/{taskId}/claim`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PutawayTaskResponseFromJSON)(jsonValue));
     }
     /**
      * Claims an available putaway task for the current actor.
      * Claim a putaway task
      */
-    claimTask(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.claimTaskRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async claimTask(requestParameters, initOverrides) {
+        const response = await this.claimTaskRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Generates putaway tasks for received inventory lines.
      * Generate putaway tasks
      */
-    generateTasksRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['generatePutawayTasksRequest'] == null) {
-                throw new runtime.RequiredError('generatePutawayTasksRequest', 'Required parameter "generatePutawayTasksRequest" was null or undefined when calling generateTasks().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/putaway/tasks/generate`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.GeneratePutawayTasksRequestToJSON)(requestParameters['generatePutawayTasksRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PutawayTaskResponseFromJSON));
-        });
+    async generateTasksRaw(requestParameters, initOverrides) {
+        if (requestParameters['generatePutawayTasksRequest'] == null) {
+            throw new runtime.RequiredError('generatePutawayTasksRequest', 'Required parameter "generatePutawayTasksRequest" was null or undefined when calling generateTasks().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/putaway/tasks/generate`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.GeneratePutawayTasksRequestToJSON)(requestParameters['generatePutawayTasksRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PutawayTaskResponseFromJSON));
     }
     /**
      * Generates putaway tasks for received inventory lines.
      * Generate putaway tasks
      */
-    generateTasks(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.generateTasksRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async generateTasks(requestParameters, initOverrides) {
+        const response = await this.generateTasksRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns all currently available putaway tasks.
      * List available putaway tasks
      */
-    getAvailableTasksRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/putaway/tasks`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PutawayTaskResponseFromJSON));
-        });
+    async getAvailableTasksRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/putaway/tasks`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PutawayTaskResponseFromJSON));
     }
     /**
      * Returns all currently available putaway tasks.
      * List available putaway tasks
      */
-    getAvailableTasks(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAvailableTasksRaw(initOverrides);
-            return yield response.value();
-        });
+    async getAvailableTasks(initOverrides) {
+        const response = await this.getAvailableTasksRaw(initOverrides);
+        return await response.value();
     }
 }
 exports.PutawayApi = PutawayApi;

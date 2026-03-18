@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostingRulesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,233 +57,205 @@ class PostingRulesApi extends runtime.BaseAPI {
      * Archive the PUBLISHED version.
      * Archive posting rule set
      */
-    archivePostingRuleSetRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingRuleSetId'] == null) {
-                throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling archivePostingRuleSet().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-rules/{postingRuleSetId}/archive`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleVersionResponseFromJSON)(jsonValue));
-        });
+    async archivePostingRuleSetRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingRuleSetId'] == null) {
+            throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling archivePostingRuleSet().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-rules/{postingRuleSetId}/archive`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleVersionResponseFromJSON)(jsonValue));
     }
     /**
      * Archive the PUBLISHED version.
      * Archive posting rule set
      */
-    archivePostingRuleSet(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.archivePostingRuleSetRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async archivePostingRuleSet(requestParameters, initOverrides) {
+        const response = await this.archivePostingRuleSetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Create a new posting rule set with initial DRAFT version.
      * Create posting rule set
      */
-    createPostingRuleSetRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingRuleSetCreateRequest'] == null) {
-                throw new runtime.RequiredError('postingRuleSetCreateRequest', 'Required parameter "postingRuleSetCreateRequest" was null or undefined when calling createPostingRuleSet().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/posting-rules`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PostingRuleSetCreateRequestToJSON)(requestParameters['postingRuleSetCreateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetResponseFromJSON)(jsonValue));
-        });
+    async createPostingRuleSetRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingRuleSetCreateRequest'] == null) {
+            throw new runtime.RequiredError('postingRuleSetCreateRequest', 'Required parameter "postingRuleSetCreateRequest" was null or undefined when calling createPostingRuleSet().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/posting-rules`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PostingRuleSetCreateRequestToJSON)(requestParameters['postingRuleSetCreateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetResponseFromJSON)(jsonValue));
     }
     /**
      * Create a new posting rule set with initial DRAFT version.
      * Create posting rule set
      */
-    createPostingRuleSet(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createPostingRuleSetRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createPostingRuleSet(requestParameters, initOverrides) {
+        const response = await this.createPostingRuleSetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a posting rule set by identifier.
      * Get posting rule set
      */
-    getPostingRuleSetRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingRuleSetId'] == null) {
-                throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling getPostingRuleSet().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-rules/{postingRuleSetId}`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetResponseFromJSON)(jsonValue));
-        });
+    async getPostingRuleSetRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingRuleSetId'] == null) {
+            throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling getPostingRuleSet().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-rules/{postingRuleSetId}`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve a posting rule set by identifier.
      * Get posting rule set
      */
-    getPostingRuleSet(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPostingRuleSetRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPostingRuleSet(requestParameters, initOverrides) {
+        const response = await this.getPostingRuleSetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve paginated posting rule sets.
      * List posting rule sets
      */
-    listPostingRuleSetsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['sort'] == null) {
-                throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listPostingRuleSets().');
-            }
-            const queryParameters = {};
-            if (requestParameters['page'] != null) {
-                queryParameters['page'] = requestParameters['page'];
-            }
-            if (requestParameters['size'] != null) {
-                queryParameters['size'] = requestParameters['size'];
-            }
-            if (requestParameters['sort'] != null) {
-                queryParameters['sort'] = requestParameters['sort'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-rules`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetListResponseFromJSON)(jsonValue));
-        });
+    async listPostingRuleSetsRaw(requestParameters, initOverrides) {
+        if (requestParameters['sort'] == null) {
+            throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listPostingRuleSets().');
+        }
+        const queryParameters = {};
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-rules`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetListResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve paginated posting rule sets.
      * List posting rule sets
      */
-    listPostingRuleSets(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listPostingRuleSetsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listPostingRuleSets(requestParameters, initOverrides) {
+        const response = await this.listPostingRuleSetsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * List versions for a posting rule set.
      * List posting rule versions
      */
-    listPostingRuleVersionsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingRuleSetId'] == null) {
-                throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling listPostingRuleVersions().');
-            }
-            const queryParameters = {};
-            if (requestParameters['page'] != null) {
-                queryParameters['page'] = requestParameters['page'];
-            }
-            if (requestParameters['size'] != null) {
-                queryParameters['size'] = requestParameters['size'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-rules/{postingRuleSetId}/versions`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PostingRuleVersionResponseFromJSON));
-        });
+    async listPostingRuleVersionsRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingRuleSetId'] == null) {
+            throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling listPostingRuleVersions().');
+        }
+        const queryParameters = {};
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-rules/{postingRuleSetId}/versions`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PostingRuleVersionResponseFromJSON));
     }
     /**
      * List versions for a posting rule set.
      * List posting rule versions
      */
-    listPostingRuleVersions(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listPostingRuleVersionsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listPostingRuleVersions(requestParameters, initOverrides) {
+        const response = await this.listPostingRuleVersionsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Publish the latest DRAFT version.
      * Publish posting rule set
      */
-    publishPostingRuleSetRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingRuleSetId'] == null) {
-                throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling publishPostingRuleSet().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-rules/{postingRuleSetId}/publish`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleVersionResponseFromJSON)(jsonValue));
-        });
+    async publishPostingRuleSetRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingRuleSetId'] == null) {
+            throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling publishPostingRuleSet().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-rules/{postingRuleSetId}/publish`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleVersionResponseFromJSON)(jsonValue));
     }
     /**
      * Publish the latest DRAFT version.
      * Publish posting rule set
      */
-    publishPostingRuleSet(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.publishPostingRuleSetRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async publishPostingRuleSet(requestParameters, initOverrides) {
+        const response = await this.publishPostingRuleSetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update a posting rule set (only possible if no PUBLISHED version exists).
      * Update posting rule set metadata
      */
-    updatePostingRuleSetRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingRuleSetId'] == null) {
-                throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling updatePostingRuleSet().');
-            }
-            if (requestParameters['postingRuleSetCreateRequest'] == null) {
-                throw new runtime.RequiredError('postingRuleSetCreateRequest', 'Required parameter "postingRuleSetCreateRequest" was null or undefined when calling updatePostingRuleSet().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/posting-rules/{postingRuleSetId}`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PostingRuleSetCreateRequestToJSON)(requestParameters['postingRuleSetCreateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetResponseFromJSON)(jsonValue));
-        });
+    async updatePostingRuleSetRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingRuleSetId'] == null) {
+            throw new runtime.RequiredError('postingRuleSetId', 'Required parameter "postingRuleSetId" was null or undefined when calling updatePostingRuleSet().');
+        }
+        if (requestParameters['postingRuleSetCreateRequest'] == null) {
+            throw new runtime.RequiredError('postingRuleSetCreateRequest', 'Required parameter "postingRuleSetCreateRequest" was null or undefined when calling updatePostingRuleSet().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/posting-rules/{postingRuleSetId}`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PostingRuleSetCreateRequestToJSON)(requestParameters['postingRuleSetCreateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingRuleSetResponseFromJSON)(jsonValue));
     }
     /**
      * Update a posting rule set (only possible if no PUBLISHED version exists).
      * Update posting rule set metadata
      */
-    updatePostingRuleSet(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updatePostingRuleSetRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updatePostingRuleSet(requestParameters, initOverrides) {
+        const response = await this.updatePostingRuleSetRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.PostingRulesApi = PostingRulesApi;

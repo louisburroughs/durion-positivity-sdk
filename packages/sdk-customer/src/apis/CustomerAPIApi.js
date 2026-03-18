@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CustomerAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,163 +57,143 @@ class CustomerAPIApi extends runtime.BaseAPI {
      * Add a new customer to the system.
      * Create a new customer
      */
-    createCustomerRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['customerDTO'] == null) {
-                throw new runtime.RequiredError('customerDTO', 'Required parameter "customerDTO" was null or undefined when calling createCustomer().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/crm`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CustomerDTOToJSON)(requestParameters['customerDTO']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CustomerDTOFromJSON)(jsonValue));
-        });
+    async createCustomerRaw(requestParameters, initOverrides) {
+        if (requestParameters['customerDTO'] == null) {
+            throw new runtime.RequiredError('customerDTO', 'Required parameter "customerDTO" was null or undefined when calling createCustomer().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/crm`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CustomerDTOToJSON)(requestParameters['customerDTO']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CustomerDTOFromJSON)(jsonValue));
     }
     /**
      * Add a new customer to the system.
      * Create a new customer
      */
-    createCustomer(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createCustomerRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createCustomer(requestParameters, initOverrides) {
+        const response = await this.createCustomerRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Delete a customer by their unique ID.
      * Delete a customer
      */
-    deleteCustomerRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteCustomer().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deleteCustomerRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteCustomer().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Delete a customer by their unique ID.
      * Delete a customer
      */
-    deleteCustomer(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deleteCustomerRaw(requestParameters, initOverrides);
-        });
+    async deleteCustomer(requestParameters, initOverrides) {
+        await this.deleteCustomerRaw(requestParameters, initOverrides);
     }
     /**
      * Retrieve a paginated list of customers by type (PERSON or COMMERCIAL). Defaults to PERSON customers if no type specified.
      * Get all customers
      */
-    getAllCustomersRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['pageable'] == null) {
-                throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling getAllCustomers().');
-            }
-            const queryParameters = {};
-            if (requestParameters['customerType'] != null) {
-                queryParameters['customerType'] = requestParameters['customerType'];
-            }
-            if (requestParameters['pageable'] != null) {
-                queryParameters['pageable'] = requestParameters['pageable'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageCustomerDTOFromJSON)(jsonValue));
-        });
+    async getAllCustomersRaw(requestParameters, initOverrides) {
+        if (requestParameters['pageable'] == null) {
+            throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling getAllCustomers().');
+        }
+        const queryParameters = {};
+        if (requestParameters['customerType'] != null) {
+            queryParameters['customerType'] = requestParameters['customerType'];
+        }
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageCustomerDTOFromJSON)(jsonValue));
     }
     /**
      * Retrieve a paginated list of customers by type (PERSON or COMMERCIAL). Defaults to PERSON customers if no type specified.
      * Get all customers
      */
-    getAllCustomers(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getAllCustomersRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getAllCustomers(requestParameters, initOverrides) {
+        const response = await this.getAllCustomersRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve a customer by their unique ID.
      * Get customer by ID
      */
-    getCustomerByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getCustomerById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/crm/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CustomerDTOFromJSON)(jsonValue));
-        });
+    async getCustomerByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getCustomerById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/crm/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CustomerDTOFromJSON)(jsonValue));
     }
     /**
      * Retrieve a customer by their unique ID.
      * Get customer by ID
      */
-    getCustomerById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getCustomerByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getCustomerById(requestParameters, initOverrides) {
+        const response = await this.getCustomerByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update the details of an existing customer.
      * Update an existing customer
      */
-    updateCustomerRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateCustomer().');
-            }
-            if (requestParameters['customerDTO'] == null) {
-                throw new runtime.RequiredError('customerDTO', 'Required parameter "customerDTO" was null or undefined when calling updateCustomer().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/crm/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CustomerDTOToJSON)(requestParameters['customerDTO']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CustomerDTOFromJSON)(jsonValue));
-        });
+    async updateCustomerRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateCustomer().');
+        }
+        if (requestParameters['customerDTO'] == null) {
+            throw new runtime.RequiredError('customerDTO', 'Required parameter "customerDTO" was null or undefined when calling updateCustomer().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/crm/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CustomerDTOToJSON)(requestParameters['customerDTO']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CustomerDTOFromJSON)(jsonValue));
     }
     /**
      * Update the details of an existing customer.
      * Update an existing customer
      */
-    updateCustomer(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateCustomerRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateCustomer(requestParameters, initOverrides) {
+        const response = await this.updateCustomerRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.CustomerAPIApi = CustomerAPIApi;

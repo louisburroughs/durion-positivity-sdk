@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PickingListsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -65,32 +56,28 @@ class PickingListsApi extends runtime.BaseAPI {
      * Confirms a picking list and commits consumption. Stub implementation.
      * Confirm picking list
      */
-    confirmPickingListRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling confirmPickingList().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/pickingLists/{id}/confirm`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: requestParameters['body'],
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async confirmPickingListRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling confirmPickingList().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/pickingLists/{id}/confirm`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['body'],
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Confirms a picking list and commits consumption. Stub implementation.
      * Confirm picking list
      */
-    confirmPickingList(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.confirmPickingListRaw(requestParameters, initOverrides);
-        });
+    async confirmPickingList(requestParameters, initOverrides) {
+        await this.confirmPickingListRaw(requestParameters, initOverrides);
     }
 }
 exports.PickingListsApi = PickingListsApi;

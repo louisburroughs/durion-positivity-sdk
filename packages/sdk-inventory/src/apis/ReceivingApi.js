@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReceivingApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,136 +57,120 @@ class ReceivingApi extends runtime.BaseAPI {
      * Creates a receiving session from a source document (PO/ASN) using MANUAL or SCAN entry mode
      * Create receiving session
      */
-    createReceivingSessionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createReceivingSessionRequest'] == null) {
-                throw new runtime.RequiredError('createReceivingSessionRequest', 'Required parameter "createReceivingSessionRequest" was null or undefined when calling createReceivingSession().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/receiving/sessions`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateReceivingSessionRequestToJSON)(requestParameters['createReceivingSessionRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceivingSessionResponseFromJSON)(jsonValue));
-        });
+    async createReceivingSessionRaw(requestParameters, initOverrides) {
+        if (requestParameters['createReceivingSessionRequest'] == null) {
+            throw new runtime.RequiredError('createReceivingSessionRequest', 'Required parameter "createReceivingSessionRequest" was null or undefined when calling createReceivingSession().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/receiving/sessions`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateReceivingSessionRequestToJSON)(requestParameters['createReceivingSessionRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceivingSessionResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a receiving session from a source document (PO/ASN) using MANUAL or SCAN entry mode
      * Create receiving session
      */
-    createReceivingSession(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createReceivingSessionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createReceivingSession(requestParameters, initOverrides) {
+        const response = await this.createReceivingSessionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Cross-docks received quantity from a session line directly to a workorder line with atomic receipt and issue ledger events
      * Cross-dock receiving line to workorder
      */
-    crossDockLineToWorkorderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['sessionId'] == null) {
-                throw new runtime.RequiredError('sessionId', 'Required parameter "sessionId" was null or undefined when calling crossDockLineToWorkorder().');
-            }
-            if (requestParameters['lineId'] == null) {
-                throw new runtime.RequiredError('lineId', 'Required parameter "lineId" was null or undefined when calling crossDockLineToWorkorder().');
-            }
-            if (requestParameters['crossDockRequest'] == null) {
-                throw new runtime.RequiredError('crossDockRequest', 'Required parameter "crossDockRequest" was null or undefined when calling crossDockLineToWorkorder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/receiving/sessions/{sessionId}/lines/{lineId}/cross-dock`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CrossDockRequestToJSON)(requestParameters['crossDockRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CrossDockResponseFromJSON)(jsonValue));
-        });
+    async crossDockLineToWorkorderRaw(requestParameters, initOverrides) {
+        if (requestParameters['sessionId'] == null) {
+            throw new runtime.RequiredError('sessionId', 'Required parameter "sessionId" was null or undefined when calling crossDockLineToWorkorder().');
+        }
+        if (requestParameters['lineId'] == null) {
+            throw new runtime.RequiredError('lineId', 'Required parameter "lineId" was null or undefined when calling crossDockLineToWorkorder().');
+        }
+        if (requestParameters['crossDockRequest'] == null) {
+            throw new runtime.RequiredError('crossDockRequest', 'Required parameter "crossDockRequest" was null or undefined when calling crossDockLineToWorkorder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/receiving/sessions/{sessionId}/lines/{lineId}/cross-dock`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CrossDockRequestToJSON)(requestParameters['crossDockRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CrossDockResponseFromJSON)(jsonValue));
     }
     /**
      * Cross-docks received quantity from a session line directly to a workorder line with atomic receipt and issue ledger events
      * Cross-dock receiving line to workorder
      */
-    crossDockLineToWorkorder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.crossDockLineToWorkorderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async crossDockLineToWorkorder(requestParameters, initOverrides) {
+        const response = await this.crossDockLineToWorkorderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves receiving session details by session identifier
      * Get receiving session
      */
-    getReceivingSessionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['sessionId'] == null) {
-                throw new runtime.RequiredError('sessionId', 'Required parameter "sessionId" was null or undefined when calling getReceivingSession().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/receiving/sessions/{sessionId}`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceivingSessionResponseFromJSON)(jsonValue));
-        });
+    async getReceivingSessionRaw(requestParameters, initOverrides) {
+        if (requestParameters['sessionId'] == null) {
+            throw new runtime.RequiredError('sessionId', 'Required parameter "sessionId" was null or undefined when calling getReceivingSession().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/receiving/sessions/{sessionId}`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceivingSessionResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves receiving session details by session identifier
      * Get receiving session
      */
-    getReceivingSession(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getReceivingSessionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getReceivingSession(requestParameters, initOverrides) {
+        const response = await this.getReceivingSessionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Records received quantities for receiving session lines and generates receipt ledger/variance records
      * Receive items into staging
      */
-    receiveItemsIntoStagingRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['sessionId'] == null) {
-                throw new runtime.RequiredError('sessionId', 'Required parameter "sessionId" was null or undefined when calling receiveItemsIntoStaging().');
-            }
-            if (requestParameters['receiveItemsRequest'] == null) {
-                throw new runtime.RequiredError('receiveItemsRequest', 'Required parameter "receiveItemsRequest" was null or undefined when calling receiveItemsIntoStaging().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/receiving/sessions/{sessionId}/receive`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ReceiveItemsRequestToJSON)(requestParameters['receiveItemsRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceiveItemsResponseFromJSON)(jsonValue));
-        });
+    async receiveItemsIntoStagingRaw(requestParameters, initOverrides) {
+        if (requestParameters['sessionId'] == null) {
+            throw new runtime.RequiredError('sessionId', 'Required parameter "sessionId" was null or undefined when calling receiveItemsIntoStaging().');
+        }
+        if (requestParameters['receiveItemsRequest'] == null) {
+            throw new runtime.RequiredError('receiveItemsRequest', 'Required parameter "receiveItemsRequest" was null or undefined when calling receiveItemsIntoStaging().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/receiving/sessions/{sessionId}/receive`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ReceiveItemsRequestToJSON)(requestParameters['receiveItemsRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceiveItemsResponseFromJSON)(jsonValue));
     }
     /**
      * Records received quantities for receiving session lines and generates receipt ledger/variance records
      * Receive items into staging
      */
-    receiveItemsIntoStaging(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.receiveItemsIntoStagingRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async receiveItemsIntoStaging(requestParameters, initOverrides) {
+        const response = await this.receiveItemsIntoStagingRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.ReceivingApi = ReceivingApi;

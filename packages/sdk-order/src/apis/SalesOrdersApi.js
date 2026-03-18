@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SalesOrdersApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -65,192 +56,168 @@ class SalesOrdersApi extends runtime.BaseAPI {
     /**
      * Add an item to a sales order cart
      */
-    addItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['orderId'] == null) {
-                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling addItem().');
-            }
-            if (requestParameters['addItemRequest'] == null) {
-                throw new runtime.RequiredError('addItemRequest', 'Required parameter "addItemRequest" was null or undefined when calling addItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/orders/carts/{orderId}/items`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.AddItemRequestToJSON)(requestParameters['addItemRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderLineResponseFromJSON)(jsonValue));
-        });
+    async addItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling addItem().');
+        }
+        if (requestParameters['addItemRequest'] == null) {
+            throw new runtime.RequiredError('addItemRequest', 'Required parameter "addItemRequest" was null or undefined when calling addItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/items`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.AddItemRequestToJSON)(requestParameters['addItemRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderLineResponseFromJSON)(jsonValue));
     }
     /**
      * Add an item to a sales order cart
      */
-    addItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.addItemRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async addItem(requestParameters, initOverrides) {
+        const response = await this.addItemRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Create a sales order cart
      */
-    createCartRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createCartRequest'] == null) {
-                throw new runtime.RequiredError('createCartRequest', 'Required parameter "createCartRequest" was null or undefined when calling createCart().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/orders/carts`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreateCartRequestToJSON)(requestParameters['createCartRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderResponseFromJSON)(jsonValue));
-        });
+    async createCartRaw(requestParameters, initOverrides) {
+        if (requestParameters['createCartRequest'] == null) {
+            throw new runtime.RequiredError('createCartRequest', 'Required parameter "createCartRequest" was null or undefined when calling createCart().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/orders/carts`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreateCartRequestToJSON)(requestParameters['createCartRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Create a sales order cart
      */
-    createCart(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createCartRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createCart(requestParameters, initOverrides) {
+        const response = await this.createCartRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Get a sales order by ID
      */
-    getOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['orderId'] == null) {
-                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling getOrder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/orders/carts/{orderId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderResponseFromJSON)(jsonValue));
-        });
+    async getOrderRaw(requestParameters, initOverrides) {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling getOrder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Get a sales order by ID
      */
-    getOrder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getOrder(requestParameters, initOverrides) {
+        const response = await this.getOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Link a source to a sales order
      */
-    linkSourceRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['orderId'] == null) {
-                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling linkSource().');
-            }
-            if (requestParameters['linkSourceRequest'] == null) {
-                throw new runtime.RequiredError('linkSourceRequest', 'Required parameter "linkSourceRequest" was null or undefined when calling linkSource().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/orders/carts/{orderId}/source`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
-                method: 'PATCH',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.LinkSourceRequestToJSON)(requestParameters['linkSourceRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderResponseFromJSON)(jsonValue));
-        });
+    async linkSourceRaw(requestParameters, initOverrides) {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling linkSource().');
+        }
+        if (requestParameters['linkSourceRequest'] == null) {
+            throw new runtime.RequiredError('linkSourceRequest', 'Required parameter "linkSourceRequest" was null or undefined when calling linkSource().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/source`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.LinkSourceRequestToJSON)(requestParameters['linkSourceRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Link a source to a sales order
      */
-    linkSource(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.linkSourceRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async linkSource(requestParameters, initOverrides) {
+        const response = await this.linkSourceRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Remove an item from a sales order cart
      */
-    removeItemRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['orderId'] == null) {
-                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling removeItem().');
-            }
-            if (requestParameters['lineId'] == null) {
-                throw new runtime.RequiredError('lineId', 'Required parameter "lineId" was null or undefined when calling removeItem().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/orders/carts/{orderId}/items/{lineId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async removeItemRaw(requestParameters, initOverrides) {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling removeItem().');
+        }
+        if (requestParameters['lineId'] == null) {
+            throw new runtime.RequiredError('lineId', 'Required parameter "lineId" was null or undefined when calling removeItem().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/items/{lineId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Remove an item from a sales order cart
      */
-    removeItem(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.removeItemRaw(requestParameters, initOverrides);
-        });
+    async removeItem(requestParameters, initOverrides) {
+        await this.removeItemRaw(requestParameters, initOverrides);
     }
     /**
      * Update a sales order cart item quantity
      */
-    updateItemQuantityRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['orderId'] == null) {
-                throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling updateItemQuantity().');
-            }
-            if (requestParameters['lineId'] == null) {
-                throw new runtime.RequiredError('lineId', 'Required parameter "lineId" was null or undefined when calling updateItemQuantity().');
-            }
-            if (requestParameters['updateItemRequest'] == null) {
-                throw new runtime.RequiredError('updateItemRequest', 'Required parameter "updateItemRequest" was null or undefined when calling updateItemQuantity().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/orders/carts/{orderId}/items/{lineId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UpdateItemRequestToJSON)(requestParameters['updateItemRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderLineResponseFromJSON)(jsonValue));
-        });
+    async updateItemQuantityRaw(requestParameters, initOverrides) {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError('orderId', 'Required parameter "orderId" was null or undefined when calling updateItemQuantity().');
+        }
+        if (requestParameters['lineId'] == null) {
+            throw new runtime.RequiredError('lineId', 'Required parameter "lineId" was null or undefined when calling updateItemQuantity().');
+        }
+        if (requestParameters['updateItemRequest'] == null) {
+            throw new runtime.RequiredError('updateItemRequest', 'Required parameter "updateItemRequest" was null or undefined when calling updateItemQuantity().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/items/{lineId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UpdateItemRequestToJSON)(requestParameters['updateItemRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SalesOrderLineResponseFromJSON)(jsonValue));
     }
     /**
      * Update a sales order cart item quantity
      */
-    updateItemQuantity(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateItemQuantityRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateItemQuantity(requestParameters, initOverrides) {
+        const response = await this.updateItemQuantityRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.SalesOrdersApi = SalesOrdersApi;

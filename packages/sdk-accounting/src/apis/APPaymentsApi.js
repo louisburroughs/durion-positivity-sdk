@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.APPaymentsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,126 +57,110 @@ class APPaymentsApi extends runtime.BaseAPI {
      * Execute a vendor payment with optional explicit allocations to bills. Idempotent using paymentRef: same ref + same payload returns existing payment; same ref + different payload yields 409 conflict.
      * Execute vendor payment
      */
-    executePaymentRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['executeAPPaymentRequest'] == null) {
-                throw new runtime.RequiredError('executeAPPaymentRequest', 'Required parameter "executeAPPaymentRequest" was null or undefined when calling executePayment().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/ap/payments`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ExecuteAPPaymentRequestToJSON)(requestParameters['executeAPPaymentRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.APPaymentResponseFromJSON)(jsonValue));
-        });
+    async executePaymentRaw(requestParameters, initOverrides) {
+        if (requestParameters['executeAPPaymentRequest'] == null) {
+            throw new runtime.RequiredError('executeAPPaymentRequest', 'Required parameter "executeAPPaymentRequest" was null or undefined when calling executePayment().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/ap/payments`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ExecuteAPPaymentRequestToJSON)(requestParameters['executeAPPaymentRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.APPaymentResponseFromJSON)(jsonValue));
     }
     /**
      * Execute a vendor payment with optional explicit allocations to bills. Idempotent using paymentRef: same ref + same payload returns existing payment; same ref + different payload yields 409 conflict.
      * Execute vendor payment
      */
-    executePayment(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.executePaymentRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async executePayment(requestParameters, initOverrides) {
+        const response = await this.executePaymentRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve AP payment details including allocations and GL posting status.
      * Get payment details
      */
-    getPaymentRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['paymentId'] == null) {
-                throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling getPayment().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/ap/payments/{paymentId}`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.APPaymentResponseFromJSON)(jsonValue));
-        });
+    async getPaymentRaw(requestParameters, initOverrides) {
+        if (requestParameters['paymentId'] == null) {
+            throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling getPayment().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/ap/payments/{paymentId}`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.APPaymentResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve AP payment details including allocations and GL posting status.
      * Get payment details
      */
-    getPayment(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPaymentRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPayment(requestParameters, initOverrides) {
+        const response = await this.getPaymentRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve AP payment details by paymentRef (idempotency key).
      * Get payment by reference
      */
-    getPaymentByRefRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['paymentRef'] == null) {
-                throw new runtime.RequiredError('paymentRef', 'Required parameter "paymentRef" was null or undefined when calling getPaymentByRef().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/ap/payments/by-ref/{paymentRef}`.replace(`{${"paymentRef"}}`, encodeURIComponent(String(requestParameters['paymentRef']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.APPaymentResponseFromJSON)(jsonValue));
-        });
+    async getPaymentByRefRaw(requestParameters, initOverrides) {
+        if (requestParameters['paymentRef'] == null) {
+            throw new runtime.RequiredError('paymentRef', 'Required parameter "paymentRef" was null or undefined when calling getPaymentByRef().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/ap/payments/by-ref/{paymentRef}`.replace(`{${"paymentRef"}}`, encodeURIComponent(String(requestParameters['paymentRef']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.APPaymentResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve AP payment details by paymentRef (idempotency key).
      * Get payment by reference
      */
-    getPaymentByRef(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPaymentByRefRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPaymentByRef(requestParameters, initOverrides) {
+        const response = await this.getPaymentByRefRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID.
      * List eligible vendor bills
      */
-    listBillsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['vendorId'] == null) {
-                throw new runtime.RequiredError('vendorId', 'Required parameter "vendorId" was null or undefined when calling listBills().');
-            }
-            const queryParameters = {};
-            if (requestParameters['vendorId'] != null) {
-                queryParameters['vendorId'] = requestParameters['vendorId'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/ap/bills`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.VendorBillSummaryResponseFromJSON));
-        });
+    async listBillsRaw(requestParameters, initOverrides) {
+        if (requestParameters['vendorId'] == null) {
+            throw new runtime.RequiredError('vendorId', 'Required parameter "vendorId" was null or undefined when calling listBills().');
+        }
+        const queryParameters = {};
+        if (requestParameters['vendorId'] != null) {
+            queryParameters['vendorId'] = requestParameters['vendorId'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/ap/bills`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.VendorBillSummaryResponseFromJSON));
     }
     /**
      * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID.
      * List eligible vendor bills
      */
-    listBills(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listBillsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listBills(requestParameters, initOverrides) {
+        const response = await this.listBillsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.APPaymentsApi = APPaymentsApi;

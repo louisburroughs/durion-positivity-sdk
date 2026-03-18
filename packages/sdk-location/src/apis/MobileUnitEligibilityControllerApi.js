@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MobileUnitEligibilityControllerApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,46 +57,42 @@ class MobileUnitEligibilityControllerApi extends runtime.BaseAPI {
      * Return eligible active units for a service request.
      * Find eligible mobile units
      */
-    findEligibleMobileUnitsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postalCode'] == null) {
-                throw new runtime.RequiredError('postalCode', 'Required parameter "postalCode" was null or undefined when calling findEligibleMobileUnits().');
-            }
-            if (requestParameters['countryCode'] == null) {
-                throw new runtime.RequiredError('countryCode', 'Required parameter "countryCode" was null or undefined when calling findEligibleMobileUnits().');
-            }
-            if (requestParameters['at'] == null) {
-                throw new runtime.RequiredError('at', 'Required parameter "at" was null or undefined when calling findEligibleMobileUnits().');
-            }
-            const queryParameters = {};
-            if (requestParameters['postalCode'] != null) {
-                queryParameters['postalCode'] = requestParameters['postalCode'];
-            }
-            if (requestParameters['countryCode'] != null) {
-                queryParameters['countryCode'] = requestParameters['countryCode'];
-            }
-            if (requestParameters['at'] != null) {
-                queryParameters['at'] = requestParameters['at'].toISOString();
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/mobile-units:eligible`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EligibleMobileUnitResponseFromJSON));
-        });
+    async findEligibleMobileUnitsRaw(requestParameters, initOverrides) {
+        if (requestParameters['postalCode'] == null) {
+            throw new runtime.RequiredError('postalCode', 'Required parameter "postalCode" was null or undefined when calling findEligibleMobileUnits().');
+        }
+        if (requestParameters['countryCode'] == null) {
+            throw new runtime.RequiredError('countryCode', 'Required parameter "countryCode" was null or undefined when calling findEligibleMobileUnits().');
+        }
+        if (requestParameters['at'] == null) {
+            throw new runtime.RequiredError('at', 'Required parameter "at" was null or undefined when calling findEligibleMobileUnits().');
+        }
+        const queryParameters = {};
+        if (requestParameters['postalCode'] != null) {
+            queryParameters['postalCode'] = requestParameters['postalCode'];
+        }
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+        if (requestParameters['at'] != null) {
+            queryParameters['at'] = requestParameters['at'].toISOString();
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/mobile-units:eligible`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EligibleMobileUnitResponseFromJSON));
     }
     /**
      * Return eligible active units for a service request.
      * Find eligible mobile units
      */
-    findEligibleMobileUnits(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.findEligibleMobileUnitsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async findEligibleMobileUnits(requestParameters, initOverrides) {
+        const response = await this.findEligibleMobileUnitsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.MobileUnitEligibilityControllerApi = MobileUnitEligibilityControllerApi;

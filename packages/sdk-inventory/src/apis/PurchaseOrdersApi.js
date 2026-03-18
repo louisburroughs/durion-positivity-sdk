@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PurchaseOrdersApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,237 +57,209 @@ class PurchaseOrdersApi extends runtime.BaseAPI {
      * Approves a purchase order and transitions it to an approvable state
      * Approve purchase order
      */
-    approvePurchaseOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['poId'] == null) {
-                throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling approvePurchaseOrder().');
-            }
-            if (requestParameters['approvePurchaseOrderRequest'] == null) {
-                throw new runtime.RequiredError('approvePurchaseOrderRequest', 'Required parameter "approvePurchaseOrderRequest" was null or undefined when calling approvePurchaseOrder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/purchase-orders/{poId}/approve`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ApprovePurchaseOrderRequestToJSON)(requestParameters['approvePurchaseOrderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
-        });
+    async approvePurchaseOrderRaw(requestParameters, initOverrides) {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling approvePurchaseOrder().');
+        }
+        if (requestParameters['approvePurchaseOrderRequest'] == null) {
+            throw new runtime.RequiredError('approvePurchaseOrderRequest', 'Required parameter "approvePurchaseOrderRequest" was null or undefined when calling approvePurchaseOrder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/purchase-orders/{poId}/approve`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ApprovePurchaseOrderRequestToJSON)(requestParameters['approvePurchaseOrderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Approves a purchase order and transitions it to an approvable state
      * Approve purchase order
      */
-    approvePurchaseOrder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.approvePurchaseOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async approvePurchaseOrder(requestParameters, initOverrides) {
+        const response = await this.approvePurchaseOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Cancels a purchase order that is no longer needed
      * Cancel purchase order
      */
-    cancelPurchaseOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['poId'] == null) {
-                throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling cancelPurchaseOrder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/purchase-orders/{poId}/cancel`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
-        });
+    async cancelPurchaseOrderRaw(requestParameters, initOverrides) {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling cancelPurchaseOrder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/purchase-orders/{poId}/cancel`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Cancels a purchase order that is no longer needed
      * Cancel purchase order
      */
-    cancelPurchaseOrder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.cancelPurchaseOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async cancelPurchaseOrder(requestParameters, initOverrides) {
+        const response = await this.cancelPurchaseOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates a purchase order with requested line items
      * Create purchase order
      */
-    createPurchaseOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['createPurchaseOrderRequest'] == null) {
-                throw new runtime.RequiredError('createPurchaseOrderRequest', 'Required parameter "createPurchaseOrderRequest" was null or undefined when calling createPurchaseOrder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/purchase-orders`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.CreatePurchaseOrderRequestToJSON)(requestParameters['createPurchaseOrderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
-        });
+    async createPurchaseOrderRaw(requestParameters, initOverrides) {
+        if (requestParameters['createPurchaseOrderRequest'] == null) {
+            throw new runtime.RequiredError('createPurchaseOrderRequest', 'Required parameter "createPurchaseOrderRequest" was null or undefined when calling createPurchaseOrder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/purchase-orders`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.CreatePurchaseOrderRequestToJSON)(requestParameters['createPurchaseOrderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a purchase order with requested line items
      * Create purchase order
      */
-    createPurchaseOrder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createPurchaseOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createPurchaseOrder(requestParameters, initOverrides) {
+        const response = await this.createPurchaseOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a purchase order by identifier
      * Get purchase order
      */
-    getPurchaseOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['poId'] == null) {
-                throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling getPurchaseOrder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/purchase-orders/{poId}`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
-        });
+    async getPurchaseOrderRaw(requestParameters, initOverrides) {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling getPurchaseOrder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/purchase-orders/{poId}`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieves a purchase order by identifier
      * Get purchase order
      */
-    getPurchaseOrder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPurchaseOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPurchaseOrder(requestParameters, initOverrides) {
+        const response = await this.getPurchaseOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Lists purchase orders using filter and pagination parameters
      * List purchase orders
      */
-    listPurchaseOrdersRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['filter'] == null) {
-                throw new runtime.RequiredError('filter', 'Required parameter "filter" was null or undefined when calling listPurchaseOrders().');
-            }
-            if (requestParameters['pageable'] == null) {
-                throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling listPurchaseOrders().');
-            }
-            const queryParameters = {};
-            if (requestParameters['filter'] != null) {
-                queryParameters['filter'] = requestParameters['filter'];
-            }
-            if (requestParameters['pageable'] != null) {
-                queryParameters['pageable'] = requestParameters['pageable'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/inventory/purchase-orders`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PagePurchaseOrderResponseFromJSON)(jsonValue));
-        });
+    async listPurchaseOrdersRaw(requestParameters, initOverrides) {
+        if (requestParameters['filter'] == null) {
+            throw new runtime.RequiredError('filter', 'Required parameter "filter" was null or undefined when calling listPurchaseOrders().');
+        }
+        if (requestParameters['pageable'] == null) {
+            throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling listPurchaseOrders().');
+        }
+        const queryParameters = {};
+        if (requestParameters['filter'] != null) {
+            queryParameters['filter'] = requestParameters['filter'];
+        }
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/inventory/purchase-orders`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PagePurchaseOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Lists purchase orders using filter and pagination parameters
      * List purchase orders
      */
-    listPurchaseOrders(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listPurchaseOrdersRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listPurchaseOrders(requestParameters, initOverrides) {
+        const response = await this.listPurchaseOrdersRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Receives approved purchase order quantities and posts resulting ledger movements
      * Receive purchase order
      */
-    receivePurchaseOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['poId'] == null) {
-                throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling receivePurchaseOrder().');
-            }
-            if (requestParameters['receivePurchaseOrderRequest'] == null) {
-                throw new runtime.RequiredError('receivePurchaseOrderRequest', 'Required parameter "receivePurchaseOrderRequest" was null or undefined when calling receivePurchaseOrder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/purchase-orders/{poId}/receive`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ReceivePurchaseOrderRequestToJSON)(requestParameters['receivePurchaseOrderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceivePurchaseOrderResponseFromJSON)(jsonValue));
-        });
+    async receivePurchaseOrderRaw(requestParameters, initOverrides) {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling receivePurchaseOrder().');
+        }
+        if (requestParameters['receivePurchaseOrderRequest'] == null) {
+            throw new runtime.RequiredError('receivePurchaseOrderRequest', 'Required parameter "receivePurchaseOrderRequest" was null or undefined when calling receivePurchaseOrder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/purchase-orders/{poId}/receive`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ReceivePurchaseOrderRequestToJSON)(requestParameters['receivePurchaseOrderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReceivePurchaseOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Receives approved purchase order quantities and posts resulting ledger movements
      * Receive purchase order
      */
-    receivePurchaseOrder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.receivePurchaseOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async receivePurchaseOrder(requestParameters, initOverrides) {
+        const response = await this.receivePurchaseOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates a revision for an existing purchase order
      * Revise purchase order
      */
-    revisePurchaseOrderRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['poId'] == null) {
-                throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling revisePurchaseOrder().');
-            }
-            if (requestParameters['revisePurchaseOrderRequest'] == null) {
-                throw new runtime.RequiredError('revisePurchaseOrderRequest', 'Required parameter "revisePurchaseOrderRequest" was null or undefined when calling revisePurchaseOrder().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/inventory/purchase-orders/{poId}/revisions`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.RevisePurchaseOrderRequestToJSON)(requestParameters['revisePurchaseOrderRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
-        });
+    async revisePurchaseOrderRaw(requestParameters, initOverrides) {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError('poId', 'Required parameter "poId" was null or undefined when calling revisePurchaseOrder().');
+        }
+        if (requestParameters['revisePurchaseOrderRequest'] == null) {
+            throw new runtime.RequiredError('revisePurchaseOrderRequest', 'Required parameter "revisePurchaseOrderRequest" was null or undefined when calling revisePurchaseOrder().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/inventory/purchase-orders/{poId}/revisions`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.RevisePurchaseOrderRequestToJSON)(requestParameters['revisePurchaseOrderRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PurchaseOrderResponseFromJSON)(jsonValue));
     }
     /**
      * Creates a revision for an existing purchase order
      * Revise purchase order
      */
-    revisePurchaseOrder(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.revisePurchaseOrderRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async revisePurchaseOrder(requestParameters, initOverrides) {
+        const response = await this.revisePurchaseOrderRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.PurchaseOrdersApi = PurchaseOrdersApi;

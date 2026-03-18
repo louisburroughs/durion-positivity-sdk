@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProductsAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,746 +57,666 @@ class ProductsAPIApi extends runtime.BaseAPI {
      * Adds a replacement suggestion to a discontinued product.
      * Add replacement product
      */
-    addReplacementProductRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling addReplacementProduct().');
-            }
-            if (requestParameters['productReplacementRequest'] == null) {
-                throw new runtime.RequiredError('productReplacementRequest', 'Required parameter "productReplacementRequest" was null or undefined when calling addReplacementProduct().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ProductReplacementRequestToJSON)(requestParameters['productReplacementRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReplacementOptionFromJSON)(jsonValue));
-        });
+    async addReplacementProductRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling addReplacementProduct().');
+        }
+        if (requestParameters['productReplacementRequest'] == null) {
+            throw new runtime.RequiredError('productReplacementRequest', 'Required parameter "productReplacementRequest" was null or undefined when calling addReplacementProduct().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ProductReplacementRequestToJSON)(requestParameters['productReplacementRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ReplacementOptionFromJSON)(jsonValue));
     }
     /**
      * Adds a replacement suggestion to a discontinued product.
      * Add replacement product
      */
-    addReplacementProduct(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.addReplacementProductRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async addReplacementProduct(requestParameters, initOverrides) {
+        const response = await this.addReplacementProductRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Approves a pending override and activates it as the effective location price.
      * Approve pending location price override
      */
-    approveLocationPriceOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['overrideId'] == null) {
-                throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling approveLocationPriceOverride().');
-            }
-            if (requestParameters['locationPriceOverrideDecisionRequestDto'] == null) {
-                throw new runtime.RequiredError('locationPriceOverrideDecisionRequestDto', 'Required parameter "locationPriceOverrideDecisionRequestDto" was null or undefined when calling approveLocationPriceOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/pricing/location-overrides/{overrideId}/approve`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.LocationPriceOverrideDecisionRequestDtoToJSON)(requestParameters['locationPriceOverrideDecisionRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async approveLocationPriceOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['overrideId'] == null) {
+            throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling approveLocationPriceOverride().');
+        }
+        if (requestParameters['locationPriceOverrideDecisionRequestDto'] == null) {
+            throw new runtime.RequiredError('locationPriceOverrideDecisionRequestDto', 'Required parameter "locationPriceOverrideDecisionRequestDto" was null or undefined when calling approveLocationPriceOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/pricing/location-overrides/{overrideId}/approve`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.LocationPriceOverrideDecisionRequestDtoToJSON)(requestParameters['locationPriceOverrideDecisionRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Approves a pending override and activates it as the effective location price.
      * Approve pending location price override
      */
-    approveLocationPriceOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.approveLocationPriceOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async approveLocationPriceOverride(requestParameters, initOverrides) {
+        const response = await this.approveLocationPriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates a location-specific price override and enforces guardrails for margin and discount limits.
      * Create location price override
      */
-    createLocationPriceOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationPriceOverrideCreateRequestDto'] == null) {
-                throw new runtime.RequiredError('locationPriceOverrideCreateRequestDto', 'Required parameter "locationPriceOverrideCreateRequestDto" was null or undefined when calling createLocationPriceOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/pricing/location-overrides`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.LocationPriceOverrideCreateRequestDtoToJSON)(requestParameters['locationPriceOverrideCreateRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async createLocationPriceOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationPriceOverrideCreateRequestDto'] == null) {
+            throw new runtime.RequiredError('locationPriceOverrideCreateRequestDto', 'Required parameter "locationPriceOverrideCreateRequestDto" was null or undefined when calling createLocationPriceOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/pricing/location-overrides`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.LocationPriceOverrideCreateRequestDtoToJSON)(requestParameters['locationPriceOverrideCreateRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Creates a location-specific price override and enforces guardrails for margin and discount limits.
      * Create location price override
      */
-    createLocationPriceOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createLocationPriceOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createLocationPriceOverride(requestParameters, initOverrides) {
+        const response = await this.createLocationPriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates a product master record with immutable SKU and uniqueness checks.
      * Create product master record
      */
-    createProductRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productCreateRequestDto'] == null) {
-                throw new runtime.RequiredError('productCreateRequestDto', 'Required parameter "productCreateRequestDto" was null or undefined when calling createProduct().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ProductCreateRequestDtoToJSON)(requestParameters['productCreateRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async createProductRaw(requestParameters, initOverrides) {
+        if (requestParameters['productCreateRequestDto'] == null) {
+            throw new runtime.RequiredError('productCreateRequestDto', 'Required parameter "productCreateRequestDto" was null or undefined when calling createProduct().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ProductCreateRequestDtoToJSON)(requestParameters['productCreateRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Creates a product master record with immutable SKU and uniqueness checks.
      * Create product master record
      */
-    createProduct(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createProductRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createProduct(requestParameters, initOverrides) {
+        const response = await this.createProductRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Resolves effective price using precedence: ACTIVE override first, otherwise base price.
      * Get effective location price
      */
-    getEffectiveLocationPriceRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getEffectiveLocationPrice().');
-            }
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getEffectiveLocationPrice().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/pricing/effective-price/{locationId}/{productId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getEffectiveLocationPriceRaw(requestParameters, initOverrides) {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getEffectiveLocationPrice().');
+        }
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getEffectiveLocationPrice().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/pricing/effective-price/{locationId}/{productId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Resolves effective price using precedence: ACTIVE override first, otherwise base price.
      * Get effective location price
      */
-    getEffectiveLocationPrice(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getEffectiveLocationPriceRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getEffectiveLocationPrice(requestParameters, initOverrides) {
+        const response = await this.getEffectiveLocationPriceRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a specific non-inventory product by its unique ID.
      * Get a non-inventory product by ID
      */
-    getNonInventoryProductByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getNonInventoryProductById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/noninventory/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getNonInventoryProductByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getNonInventoryProductById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/noninventory/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a specific non-inventory product by its unique ID.
      * Get a non-inventory product by ID
      */
-    getNonInventoryProductById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getNonInventoryProductByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getNonInventoryProductById(requestParameters, initOverrides) {
+        const response = await this.getNonInventoryProductByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a list of non-inventory products matching the given name.
      * Get non-inventory products by name
      */
-    getNonInventoryProductByNameRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['name'] == null) {
-                throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getNonInventoryProductByName().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/noninventory/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getNonInventoryProductByNameRaw(requestParameters, initOverrides) {
+        if (requestParameters['name'] == null) {
+            throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getNonInventoryProductByName().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/noninventory/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a list of non-inventory products matching the given name.
      * Get non-inventory products by name
      */
-    getNonInventoryProductByName(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getNonInventoryProductByNameRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getNonInventoryProductByName(requestParameters, initOverrides) {
+        const response = await this.getNonInventoryProductByNameRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns list of substitute parts for a given productId.
      * Get substitute parts
      */
-    getPartSubstitutesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getPartSubstitutes().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/{productId}/substitutes`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getPartSubstitutesRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getPartSubstitutes().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/{productId}/substitutes`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Returns list of substitute parts for a given productId.
      * Get substitute parts
      */
-    getPartSubstitutes(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPartSubstitutesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPartSubstitutes(requestParameters, initOverrides) {
+        const response = await this.getPartSubstitutesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a specific product by its unique ID.
      * Get a product by ID
      */
-    getProductByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getProductById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getProductByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getProductById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a specific product by its unique ID.
      * Get a product by ID
      */
-    getProductById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getProductByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getProductById(requestParameters, initOverrides) {
+        const response = await this.getProductByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a list of products matching the given name.
      * Get products by name
      */
-    getProductByNameRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['name'] == null) {
-                throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getProductByName().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getProductByNameRaw(requestParameters, initOverrides) {
+        if (requestParameters['name'] == null) {
+            throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getProductByName().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a list of products matching the given name.
      * Get products by name
      */
-    getProductByName(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getProductByNameRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getProductByName(requestParameters, initOverrides) {
+        const response = await this.getProductByNameRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a consolidated view of product information including catalog data, location-specific pricing, and availability. Implements graceful degradation and returns partial data when non-critical services are unavailable.
      * Get product details with pricing and availability
      */
-    getProductDetailViewRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getProductDetailView().');
-            }
-            if (requestParameters['locationId'] == null) {
-                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getProductDetailView().');
-            }
-            const queryParameters = {};
-            if (requestParameters['locationId'] != null) {
-                queryParameters['location_id'] = requestParameters['locationId'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/{productId}/detail`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getProductDetailViewRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getProductDetailView().');
+        }
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getProductDetailView().');
+        }
+        const queryParameters = {};
+        if (requestParameters['locationId'] != null) {
+            queryParameters['location_id'] = requestParameters['locationId'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/{productId}/detail`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a consolidated view of product information including catalog data, location-specific pricing, and availability. Implements graceful degradation and returns partial data when non-critical services are unavailable.
      * Get product details with pricing and availability
      */
-    getProductDetailView(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getProductDetailViewRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getProductDetailView(requestParameters, initOverrides) {
+        const response = await this.getProductDetailViewRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves lifecycle state and replacement suggestions for a product.
      * Get product lifecycle state
      */
-    getProductLifecycleRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getProductLifecycle().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getProductLifecycleRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getProductLifecycle().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves lifecycle state and replacement suggestions for a product.
      * Get product lifecycle state
      */
-    getProductLifecycle(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getProductLifecycleRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getProductLifecycle(requestParameters, initOverrides) {
+        const response = await this.getProductLifecycleRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns replacement options for a product.
      * List replacement products
      */
-    getReplacementsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getReplacements().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReplacementOptionFromJSON));
-        });
+    async getReplacementsRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling getReplacements().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ReplacementOptionFromJSON));
     }
     /**
      * Returns replacement options for a product.
      * List replacement products
      */
-    getReplacements(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getReplacementsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getReplacements(requestParameters, initOverrides) {
+        const response = await this.getReplacementsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a specific service by its unique ID.
      * Get a service by ID
      */
-    getServiceByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['serviceId'] == null) {
-                throw new runtime.RequiredError('serviceId', 'Required parameter "serviceId" was null or undefined when calling getServiceById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/services/{serviceId}`.replace(`{${"serviceId"}}`, encodeURIComponent(String(requestParameters['serviceId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getServiceByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['serviceId'] == null) {
+            throw new runtime.RequiredError('serviceId', 'Required parameter "serviceId" was null or undefined when calling getServiceById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/services/{serviceId}`.replace(`{${"serviceId"}}`, encodeURIComponent(String(requestParameters['serviceId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a specific service by its unique ID.
      * Get a service by ID
      */
-    getServiceById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getServiceByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getServiceById(requestParameters, initOverrides) {
+        const response = await this.getServiceByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieves a list of services matching the given name.
      * Get services by name
      */
-    getServiceByNameRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['name'] == null) {
-                throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getServiceByName().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/services/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getServiceByNameRaw(requestParameters, initOverrides) {
+        if (requestParameters['name'] == null) {
+            throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getServiceByName().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/services/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a list of services matching the given name.
      * Get services by name
      */
-    getServiceByName(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getServiceByNameRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getServiceByName(requestParameters, initOverrides) {
+        const response = await this.getServiceByNameRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Rejects a pending override, persists rejection metadata, and marks the request as terminal.
      * Reject pending location price override
      */
-    rejectLocationPriceOverrideRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['overrideId'] == null) {
-                throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling rejectLocationPriceOverride().');
-            }
-            if (requestParameters['locationPriceOverrideDecisionRequestDto'] == null) {
-                throw new runtime.RequiredError('locationPriceOverrideDecisionRequestDto', 'Required parameter "locationPriceOverrideDecisionRequestDto" was null or undefined when calling rejectLocationPriceOverride().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/pricing/location-overrides/{overrideId}/reject`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.LocationPriceOverrideDecisionRequestDtoToJSON)(requestParameters['locationPriceOverrideDecisionRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async rejectLocationPriceOverrideRaw(requestParameters, initOverrides) {
+        if (requestParameters['overrideId'] == null) {
+            throw new runtime.RequiredError('overrideId', 'Required parameter "overrideId" was null or undefined when calling rejectLocationPriceOverride().');
+        }
+        if (requestParameters['locationPriceOverrideDecisionRequestDto'] == null) {
+            throw new runtime.RequiredError('locationPriceOverrideDecisionRequestDto', 'Required parameter "locationPriceOverrideDecisionRequestDto" was null or undefined when calling rejectLocationPriceOverride().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/pricing/location-overrides/{overrideId}/reject`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.LocationPriceOverrideDecisionRequestDtoToJSON)(requestParameters['locationPriceOverrideDecisionRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Rejects a pending override, persists rejection metadata, and marks the request as terminal.
      * Reject pending location price override
      */
-    rejectLocationPriceOverride(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.rejectLocationPriceOverrideRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async rejectLocationPriceOverride(requestParameters, initOverrides) {
+        const response = await this.rejectLocationPriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Cursor-based product search with optional free-text query and exact filters for brand, category, and SKU.
      * Search catalog products
      */
-    searchProductsRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            if (requestParameters['q'] != null) {
-                queryParameters['q'] = requestParameters['q'];
-            }
-            if (requestParameters['brand'] != null) {
-                queryParameters['brand'] = requestParameters['brand'];
-            }
-            if (requestParameters['category'] != null) {
-                queryParameters['category'] = requestParameters['category'];
-            }
-            if (requestParameters['sku'] != null) {
-                queryParameters['sku'] = requestParameters['sku'];
-            }
-            if (requestParameters['cursor'] != null) {
-                queryParameters['cursor'] = requestParameters['cursor'];
-            }
-            if (requestParameters['limit'] != null) {
-                queryParameters['limit'] = requestParameters['limit'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/search`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async searchProductsRaw(requestParameters, initOverrides) {
+        const queryParameters = {};
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+        if (requestParameters['brand'] != null) {
+            queryParameters['brand'] = requestParameters['brand'];
+        }
+        if (requestParameters['category'] != null) {
+            queryParameters['category'] = requestParameters['category'];
+        }
+        if (requestParameters['sku'] != null) {
+            queryParameters['sku'] = requestParameters['sku'];
+        }
+        if (requestParameters['cursor'] != null) {
+            queryParameters['cursor'] = requestParameters['cursor'];
+        }
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/search`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Cursor-based product search with optional free-text query and exact filters for brand, category, and SKU.
      * Search catalog products
      */
-    searchProducts() {
-        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
-            const response = yield this.searchProductsRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async searchProducts(requestParameters = {}, initOverrides) {
+        const response = await this.searchProductsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Sets lifecycle state to ACTIVE, INACTIVE, or DISCONTINUED with effective date semantics.
      * Set product lifecycle state
      */
-    setLifecycleStateRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling setLifecycleState().');
-            }
-            if (requestParameters['productLifecycleUpdateRequest'] == null) {
-                throw new runtime.RequiredError('productLifecycleUpdateRequest', 'Required parameter "productLifecycleUpdateRequest" was null or undefined when calling setLifecycleState().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ProductLifecycleUpdateRequestToJSON)(requestParameters['productLifecycleUpdateRequest']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async setLifecycleStateRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling setLifecycleState().');
+        }
+        if (requestParameters['productLifecycleUpdateRequest'] == null) {
+            throw new runtime.RequiredError('productLifecycleUpdateRequest', 'Required parameter "productLifecycleUpdateRequest" was null or undefined when calling setLifecycleState().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ProductLifecycleUpdateRequestToJSON)(requestParameters['productLifecycleUpdateRequest']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Sets lifecycle state to ACTIVE, INACTIVE, or DISCONTINUED with effective date semantics.
      * Set product lifecycle state
      */
-    setLifecycleState(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.setLifecycleStateRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async setLifecycleState(requestParameters, initOverrides) {
+        const response = await this.setLifecycleStateRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Updates mutable product master fields. SKU is immutable.
      * Update product master record
      */
-    updateProductRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['productId'] == null) {
-                throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling updateProduct().');
-            }
-            if (requestParameters['productUpdateRequestDto'] == null) {
-                throw new runtime.RequiredError('productUpdateRequestDto', 'Required parameter "productUpdateRequestDto" was null or undefined when calling updateProduct().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.ProductUpdateRequestDtoToJSON)(requestParameters['productUpdateRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async updateProductRaw(requestParameters, initOverrides) {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError('productId', 'Required parameter "productId" was null or undefined when calling updateProduct().');
+        }
+        if (requestParameters['productUpdateRequestDto'] == null) {
+            throw new runtime.RequiredError('productUpdateRequestDto', 'Required parameter "productUpdateRequestDto" was null or undefined when calling updateProduct().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.ProductUpdateRequestDtoToJSON)(requestParameters['productUpdateRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Updates mutable product master fields. SKU is immutable.
      * Update product master record
      */
-    updateProduct(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateProductRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateProduct(requestParameters, initOverrides) {
+        const response = await this.updateProductRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Creates or updates the active LOCATION guardrail policy used by price overrides.
      * Upsert location guardrail policy
      */
-    upsertLocationGuardrailPolicyRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['guardrailPolicyUpsertRequestDto'] == null) {
-                throw new runtime.RequiredError('guardrailPolicyUpsertRequestDto', 'Required parameter "guardrailPolicyUpsertRequestDto" was null or undefined when calling upsertLocationGuardrailPolicy().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/pricing/guardrail-policies`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.GuardrailPolicyUpsertRequestDtoToJSON)(requestParameters['guardrailPolicyUpsertRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async upsertLocationGuardrailPolicyRaw(requestParameters, initOverrides) {
+        if (requestParameters['guardrailPolicyUpsertRequestDto'] == null) {
+            throw new runtime.RequiredError('guardrailPolicyUpsertRequestDto', 'Required parameter "guardrailPolicyUpsertRequestDto" was null or undefined when calling upsertLocationGuardrailPolicy().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/pricing/guardrail-policies`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.GuardrailPolicyUpsertRequestDtoToJSON)(requestParameters['guardrailPolicyUpsertRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Creates or updates the active LOCATION guardrail policy used by price overrides.
      * Upsert location guardrail policy
      */
-    upsertLocationGuardrailPolicy(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.upsertLocationGuardrailPolicyRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async upsertLocationGuardrailPolicy(requestParameters, initOverrides) {
+        const response = await this.upsertLocationGuardrailPolicyRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.ProductsAPIApi = ProductsAPIApi;

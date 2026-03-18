@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostingCategoriesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,169 +57,149 @@ class PostingCategoriesApi extends runtime.BaseAPI {
      * Create a new posting category.
      * Create posting category
      */
-    createPostingCategoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingCategoryCreateRequest'] == null) {
-                throw new runtime.RequiredError('postingCategoryCreateRequest', 'Required parameter "postingCategoryCreateRequest" was null or undefined when calling createPostingCategory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/posting-categories`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PostingCategoryCreateRequestToJSON)(requestParameters['postingCategoryCreateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryResponseFromJSON)(jsonValue));
-        });
+    async createPostingCategoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingCategoryCreateRequest'] == null) {
+            throw new runtime.RequiredError('postingCategoryCreateRequest', 'Required parameter "postingCategoryCreateRequest" was null or undefined when calling createPostingCategory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/posting-categories`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PostingCategoryCreateRequestToJSON)(requestParameters['postingCategoryCreateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryResponseFromJSON)(jsonValue));
     }
     /**
      * Create a new posting category.
      * Create posting category
      */
-    createPostingCategory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createPostingCategoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createPostingCategory(requestParameters, initOverrides) {
+        const response = await this.createPostingCategoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Deactivate a posting category.
      * Deactivate posting category
      */
-    deactivatePostingCategoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingCategoryId'] == null) {
-                throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling deactivatePostingCategory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-categories/{postingCategoryId}/deactivate`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deactivatePostingCategoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingCategoryId'] == null) {
+            throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling deactivatePostingCategory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-categories/{postingCategoryId}/deactivate`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Deactivate a posting category.
      * Deactivate posting category
      */
-    deactivatePostingCategory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deactivatePostingCategoryRaw(requestParameters, initOverrides);
-        });
+    async deactivatePostingCategory(requestParameters, initOverrides) {
+        await this.deactivatePostingCategoryRaw(requestParameters, initOverrides);
     }
     /**
      * Retrieve a posting category by identifier.
      * Get posting category
      */
-    getPostingCategoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingCategoryId'] == null) {
-                throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling getPostingCategory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-categories/{postingCategoryId}`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryResponseFromJSON)(jsonValue));
-        });
+    async getPostingCategoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingCategoryId'] == null) {
+            throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling getPostingCategory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-categories/{postingCategoryId}`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve a posting category by identifier.
      * Get posting category
      */
-    getPostingCategory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getPostingCategoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getPostingCategory(requestParameters, initOverrides) {
+        const response = await this.getPostingCategoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Retrieve paginated posting categories.
      * List posting categories
      */
-    listPostingCategoriesRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['sort'] == null) {
-                throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listPostingCategories().');
-            }
-            const queryParameters = {};
-            if (requestParameters['page'] != null) {
-                queryParameters['page'] = requestParameters['page'];
-            }
-            if (requestParameters['size'] != null) {
-                queryParameters['size'] = requestParameters['size'];
-            }
-            if (requestParameters['sort'] != null) {
-                queryParameters['sort'] = requestParameters['sort'];
-            }
-            if (requestParameters['isActive'] != null) {
-                queryParameters['isActive'] = requestParameters['isActive'];
-            }
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/accounting/posting-categories`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryListResponseFromJSON)(jsonValue));
-        });
+    async listPostingCategoriesRaw(requestParameters, initOverrides) {
+        if (requestParameters['sort'] == null) {
+            throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listPostingCategories().');
+        }
+        const queryParameters = {};
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+        if (requestParameters['isActive'] != null) {
+            queryParameters['isActive'] = requestParameters['isActive'];
+        }
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/accounting/posting-categories`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryListResponseFromJSON)(jsonValue));
     }
     /**
      * Retrieve paginated posting categories.
      * List posting categories
      */
-    listPostingCategories(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listPostingCategoriesRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async listPostingCategories(requestParameters, initOverrides) {
+        const response = await this.listPostingCategoriesRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Update an existing posting category.
      * Update posting category
      */
-    updatePostingCategoryRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['postingCategoryId'] == null) {
-                throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling updatePostingCategory().');
-            }
-            if (requestParameters['postingCategoryUpdateRequest'] == null) {
-                throw new runtime.RequiredError('postingCategoryUpdateRequest', 'Required parameter "postingCategoryUpdateRequest" was null or undefined when calling updatePostingCategory().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/accounting/posting-categories/{postingCategoryId}`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.PostingCategoryUpdateRequestToJSON)(requestParameters['postingCategoryUpdateRequest']),
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryResponseFromJSON)(jsonValue));
-        });
+    async updatePostingCategoryRaw(requestParameters, initOverrides) {
+        if (requestParameters['postingCategoryId'] == null) {
+            throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling updatePostingCategory().');
+        }
+        if (requestParameters['postingCategoryUpdateRequest'] == null) {
+            throw new runtime.RequiredError('postingCategoryUpdateRequest', 'Required parameter "postingCategoryUpdateRequest" was null or undefined when calling updatePostingCategory().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/accounting/posting-categories/{postingCategoryId}`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.PostingCategoryUpdateRequestToJSON)(requestParameters['postingCategoryUpdateRequest']),
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PostingCategoryResponseFromJSON)(jsonValue));
     }
     /**
      * Update an existing posting category.
      * Update posting category
      */
-    updatePostingCategory(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updatePostingCategoryRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updatePostingCategory(requestParameters, initOverrides) {
+        const response = await this.updatePostingCategoryRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.PostingCategoriesApi = PostingCategoriesApi;

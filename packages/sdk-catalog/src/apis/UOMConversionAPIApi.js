@@ -45,15 +45,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UOMConversionAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -66,169 +57,149 @@ class UOMConversionAPIApi extends runtime.BaseAPI {
      * Creates a new unit-of-measure conversion record.
      * Create UOM conversion
      */
-    createUomConversionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['uomConversionCreateRequestDto'] == null) {
-                throw new runtime.RequiredError('uomConversionCreateRequestDto', 'Required parameter "uomConversionCreateRequestDto" was null or undefined when calling createUomConversion().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/uom-conversions`,
-                method: 'POST',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UomConversionCreateRequestDtoToJSON)(requestParameters['uomConversionCreateRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async createUomConversionRaw(requestParameters, initOverrides) {
+        if (requestParameters['uomConversionCreateRequestDto'] == null) {
+            throw new runtime.RequiredError('uomConversionCreateRequestDto', 'Required parameter "uomConversionCreateRequestDto" was null or undefined when calling createUomConversion().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/uom-conversions`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UomConversionCreateRequestDtoToJSON)(requestParameters['uomConversionCreateRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Creates a new unit-of-measure conversion record.
      * Create UOM conversion
      */
-    createUomConversion(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.createUomConversionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async createUomConversion(requestParameters, initOverrides) {
+        const response = await this.createUomConversionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Deactivates a conversion so it is excluded from active conversion results.
      * Deactivate conversion
      */
-    deactivateUomConversionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deactivateUomConversion().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'DELETE',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.VoidApiResponse(response);
-        });
+    async deactivateUomConversionRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deactivateUomConversion().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.VoidApiResponse(response);
     }
     /**
      * Deactivates a conversion so it is excluded from active conversion results.
      * Deactivate conversion
      */
-    deactivateUomConversion(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.deactivateUomConversionRaw(requestParameters, initOverrides);
-        });
+    async deactivateUomConversion(requestParameters, initOverrides) {
+        await this.deactivateUomConversionRaw(requestParameters, initOverrides);
     }
     /**
      * Retrieves a unit-of-measure conversion by its ID.
      * Get conversion
      */
-    getUomConversionByIdRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getUomConversionById().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async getUomConversionByIdRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getUomConversionById().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Retrieves a unit-of-measure conversion by its ID.
      * Get conversion
      */
-    getUomConversionById(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.getUomConversionByIdRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async getUomConversionById(requestParameters, initOverrides) {
+        const response = await this.getUomConversionByIdRaw(requestParameters, initOverrides);
+        return await response.value();
     }
     /**
      * Returns all active unit-of-measure conversion records.
      * List active conversions
      */
-    listUomConversionsRaw(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const queryParameters = {};
-            const headerParameters = {};
-            const response = yield this.request({
-                path: `/v1/products/uom-conversions`,
-                method: 'GET',
-                headers: headerParameters,
-                query: queryParameters,
-            }, initOverrides);
-            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.UomConversionDtoFromJSON));
-        });
+    async listUomConversionsRaw(initOverrides) {
+        const queryParameters = {};
+        const headerParameters = {};
+        const response = await this.request({
+            path: `/v1/products/uom-conversions`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.UomConversionDtoFromJSON));
     }
     /**
      * Returns all active unit-of-measure conversion records.
      * List active conversions
      */
-    listUomConversions(initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.listUomConversionsRaw(initOverrides);
-            return yield response.value();
-        });
+    async listUomConversions(initOverrides) {
+        const response = await this.listUomConversionsRaw(initOverrides);
+        return await response.value();
     }
     /**
      * Updates the conversion factor and mutable fields for an existing conversion.
      * Update conversion factor
      */
-    updateUomConversionRaw(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (requestParameters['id'] == null) {
-                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateUomConversion().');
-            }
-            if (requestParameters['uomConversionUpdateRequestDto'] == null) {
-                throw new runtime.RequiredError('uomConversionUpdateRequestDto', 'Required parameter "uomConversionUpdateRequestDto" was null or undefined when calling updateUomConversion().');
-            }
-            const queryParameters = {};
-            const headerParameters = {};
-            headerParameters['Content-Type'] = 'application/json';
-            const response = yield this.request({
-                path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-                method: 'PUT',
-                headers: headerParameters,
-                query: queryParameters,
-                body: (0, index_1.UomConversionUpdateRequestDtoToJSON)(requestParameters['uomConversionUpdateRequestDto']),
-            }, initOverrides);
-            if (this.isJsonMime(response.headers.get('content-type'))) {
-                return new runtime.JSONApiResponse(response);
-            }
-            else {
-                return new runtime.TextApiResponse(response);
-            }
-        });
+    async updateUomConversionRaw(requestParameters, initOverrides) {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateUomConversion().');
+        }
+        if (requestParameters['uomConversionUpdateRequestDto'] == null) {
+            throw new runtime.RequiredError('uomConversionUpdateRequestDto', 'Required parameter "uomConversionUpdateRequestDto" was null or undefined when calling updateUomConversion().');
+        }
+        const queryParameters = {};
+        const headerParameters = {};
+        headerParameters['Content-Type'] = 'application/json';
+        const response = await this.request({
+            path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: (0, index_1.UomConversionUpdateRequestDtoToJSON)(requestParameters['uomConversionUpdateRequestDto']),
+        }, initOverrides);
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse(response);
+        }
+        else {
+            return new runtime.TextApiResponse(response);
+        }
     }
     /**
      * Updates the conversion factor and mutable fields for an existing conversion.
      * Update conversion factor
      */
-    updateUomConversion(requestParameters, initOverrides) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.updateUomConversionRaw(requestParameters, initOverrides);
-            return yield response.value();
-        });
+    async updateUomConversion(requestParameters, initOverrides) {
+        const response = await this.updateUomConversionRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 }
 exports.UOMConversionAPIApi = UOMConversionAPIApi;
