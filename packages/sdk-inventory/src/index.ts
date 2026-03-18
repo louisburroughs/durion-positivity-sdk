@@ -63,6 +63,7 @@ export function createInventoryClient(config: DurionSdkConfig) {
   };
 }
 
+export { InventoryProcureToReceiveWorkflow } from './workflows/inventoryProcureToReceiveWorkflow';
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';
