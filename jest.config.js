@@ -3,6 +3,7 @@ const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts'],
+  coverageProvider: 'v8',
   moduleNameMapper: {
     '^@durion-sdk/(.+)$': '<rootDir>/packages/sdk-$1/src/index.ts',
   },
