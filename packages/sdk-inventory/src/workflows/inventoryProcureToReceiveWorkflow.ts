@@ -9,7 +9,7 @@ export class InventoryProcureToReceiveWorkflow {
     private readonly asnApi: ASNApi,
     private readonly receivingApi: ReceivingApi,
     private readonly availabilityApi: InventoryAvailabilityApi,
-  ) {}
+  ) { }
 
   /** @operationId createPurchaseOrder */
   createPurchaseOrder(params: Parameters<PurchaseOrdersApi['createPurchaseOrder']>[0]) {
