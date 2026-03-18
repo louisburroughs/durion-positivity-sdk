@@ -32,34 +32,34 @@ global.fetch = jest.fn().mockResolvedValue({
 // ---------------------------------------------------------------------------
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createCatalogClient }          from '@durion-sdk/catalog';
+import { createCatalogClient } from '@durion-sdk/catalog';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createCustomerClient }         from '@durion-sdk/customer';
+import { createCustomerClient } from '@durion-sdk/customer';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createInvoiceClient }          from '@durion-sdk/invoice';
+import { createInvoiceClient } from '@durion-sdk/invoice';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createLocationClient }         from '@durion-sdk/location';
+import { createLocationClient } from '@durion-sdk/location';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createPeopleClient }           from '@durion-sdk/people';
+import { createPeopleClient } from '@durion-sdk/people';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createPriceClient }            from '@durion-sdk/price';
+import { createPriceClient } from '@durion-sdk/price';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createShopManagerClient }      from '@durion-sdk/shop-manager';
+import { createShopManagerClient } from '@durion-sdk/shop-manager';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createImageClient }            from '@durion-sdk/image';
+import { createImageClient } from '@durion-sdk/image';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createEventReceiverClient }    from '@durion-sdk/event-receiver';
+import { createEventReceiverClient } from '@durion-sdk/event-receiver';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { createVehicleFitmentClient }   from '@durion-sdk/vehicle-fitment';
+import { createVehicleFitmentClient } from '@durion-sdk/vehicle-fitment';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { createVehicleInventoryClient } from '@durion-sdk/vehicle-inventory';
