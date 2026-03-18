@@ -44,6 +44,7 @@ export function createOrderClient(config: DurionSdkConfig) {
   };
 }
 
+export { OrderPriceOverrideWorkflow } from './workflows/orderPriceOverrideWorkflow';
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';

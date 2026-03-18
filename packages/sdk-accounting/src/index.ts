@@ -56,6 +56,7 @@ export function createAccountingClient(config: DurionSdkConfig) {
   };
 }
 
+export { AccountingEventWorkflow } from './workflows/accountingEventWorkflow';
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';

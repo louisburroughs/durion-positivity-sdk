@@ -52,6 +52,7 @@ export function createSecurityClient(config: DurionSdkConfig) {
   };
 }
 
+export { SecurityAuthWorkflow } from './workflows/securityAuthWorkflow';
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';
