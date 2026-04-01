@@ -57,6 +57,8 @@ export function createWorkorderClient(config: DurionSdkConfig) {
     workorderLaborAPIApi: new GeneratedApis.WorkorderLaborAPIApi(configuration),
     workorderPartAdjustmentsApi: new GeneratedApis.WorkorderPartAdjustmentsApi(configuration),
     workorderPartsUsageApi: new GeneratedApis.WorkorderPartsUsageApi(configuration),
+    workorderPickFacadeApi: new GeneratedApis.WorkorderPickFacadeApi(configuration),
+    workorderPickedItemsApi: new GeneratedApis.WorkorderPickedItemsApi(configuration),
   };
 }
 

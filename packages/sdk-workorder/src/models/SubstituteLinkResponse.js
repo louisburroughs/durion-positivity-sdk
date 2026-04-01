@@ -51,8 +51,6 @@ function SubstituteLinkResponseFromJSONTyped(json, ignoreDiscriminator) {
         'version': json['version'] == null ? undefined : json['version'],
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
-        'active': json['active'] == null ? undefined : json['active'],
-        'autoSuggest': json['autoSuggest'] == null ? undefined : json['autoSuggest'],
         'isAutoSuggest': json['isAutoSuggest'] == null ? undefined : json['isAutoSuggest'],
         'isActive': json['isActive'] == null ? undefined : json['isActive'],
     };
@@ -70,8 +68,6 @@ function SubstituteLinkResponseToJSON(value) {
         'version': value['version'],
         'createdBy': value['createdBy'],
         'updatedBy': value['updatedBy'],
-        'active': value['active'],
-        'autoSuggest': value['autoSuggest'],
         'isAutoSuggest': value['isAutoSuggest'],
         'isActive': value['isActive'],
     };

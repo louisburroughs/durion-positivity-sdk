@@ -19,3 +19,5 @@ export * from './WorkorderDetailApi';
 export * from './WorkorderLaborAPIApi';
 export * from './WorkorderPartAdjustmentsApi';
 export * from './WorkorderPartsUsageApi';
+export * from './WorkorderPickFacadeApi';
+export * from './WorkorderPickedItemsApi';

@@ -366,6 +366,8 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     expect(client['workOrderAPIApi']).toBeDefined();
     expect(client['estimateAPIApi']).toBeDefined();
     expect(client['technicianAssignmentAPIApi']).toBeDefined();
+    expect(client['workorderPickFacadeApi']).toBeDefined();
+    expect(client['workorderPickedItemsApi']).toBeDefined();
   });
 
   it('createAccountingClient returns expected API namespaces', async () => {

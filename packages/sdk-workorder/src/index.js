@@ -36,6 +36,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.WorkorderChangeRequestWorkflow = exports.WorkorderEstimateWorkflow = void 0;
 exports.createWorkorderClient = createWorkorderClient;
 /* tslint:disable */
 /* eslint-disable */
@@ -91,8 +92,14 @@ function createWorkorderClient(config) {
         workorderLaborAPIApi: new GeneratedApis.WorkorderLaborAPIApi(configuration),
         workorderPartAdjustmentsApi: new GeneratedApis.WorkorderPartAdjustmentsApi(configuration),
         workorderPartsUsageApi: new GeneratedApis.WorkorderPartsUsageApi(configuration),
+        workorderPickFacadeApi: new GeneratedApis.WorkorderPickFacadeApi(configuration),
+        workorderPickedItemsApi: new GeneratedApis.WorkorderPickedItemsApi(configuration),
     };
 }
+var workorderEstimateWorkflow_1 = require("./workflows/workorderEstimateWorkflow");
+Object.defineProperty(exports, "WorkorderEstimateWorkflow", { enumerable: true, get: function () { return workorderEstimateWorkflow_1.WorkorderEstimateWorkflow; } });
+var workorderChangeRequestWorkflow_1 = require("./workflows/workorderChangeRequestWorkflow");
+Object.defineProperty(exports, "WorkorderChangeRequestWorkflow", { enumerable: true, get: function () { return workorderChangeRequestWorkflow_1.WorkorderChangeRequestWorkflow; } });
 __exportStar(require("./runtime"), exports);
 __exportStar(require("./apis/index"), exports);
 __exportStar(require("./models/index"), exports);

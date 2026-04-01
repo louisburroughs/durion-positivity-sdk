@@ -35,3 +35,5 @@ __exportStar(require("./WorkorderDetailApi"), exports);
 __exportStar(require("./WorkorderLaborAPIApi"), exports);
 __exportStar(require("./WorkorderPartAdjustmentsApi"), exports);
 __exportStar(require("./WorkorderPartsUsageApi"), exports);
+__exportStar(require("./WorkorderPickFacadeApi"), exports);
+__exportStar(require("./WorkorderPickedItemsApi"), exports);
