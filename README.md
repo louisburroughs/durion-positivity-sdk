@@ -8,20 +8,37 @@ Angular-first but fully framework-agnostic — works in any Node.js or browser e
 
 ## Table of Contents
 
-- [Package Catalogue](#package-catalogue)
-- [Architecture](#architecture)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Configuration Reference](#configuration-reference)
-- [Domain Clients](#domain-clients)
-- [Workflow Helpers](#workflow-helpers)
-- [Error Handling](#error-handling)
-- [Generated Code](#generated-code)
-- [Build & Outputs](#build--outputs)
-- [Testing](#testing)
-- [Scripts Reference](#scripts-reference)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
+- [durion-positivity-sdk](#durion-positivity-sdk)
+  - [Table of Contents](#table-of-contents)
+  - [Package Catalogue](#package-catalogue)
+  - [Architecture](#architecture)
+  - [Installation](#installation)
+    - [In a monorepo (workspaces)](#in-a-monorepo-workspaces)
+    - [In a consumer application (local path)](#in-a-consumer-application-local-path)
+    - [From npm (when published)](#from-npm-when-published)
+    - [Requirements](#requirements)
+  - [Quick Start](#quick-start)
+  - [Configuration Reference](#configuration-reference)
+    - [Headers injected on every request](#headers-injected-on-every-request)
+    - [Token management](#token-management)
+  - [Domain Clients](#domain-clients)
+    - [Security (`@durion-sdk/security`)](#security-durion-sdksecurity)
+    - [Order (`@durion-sdk/order`)](#order-durion-sdkorder)
+    - [Accounting (`@durion-sdk/accounting`)](#accounting-durion-sdkaccounting)
+  - [Workflow Helpers](#workflow-helpers)
+    - [`SecurityAuthWorkflow`](#securityauthworkflow)
+    - [`OrderPriceOverrideWorkflow`](#orderpriceoverrideworkflow)
+    - [`WorkorderEstimateWorkflow`](#workorderestimateworkflow)
+  - [Error Handling](#error-handling)
+    - [`DurionApiError` shape](#durionapierror-shape)
+  - [Generated Code](#generated-code)
+    - [Regenerating clients](#regenerating-clients)
+    - [What is generated vs. hand-written](#what-is-generated-vs-hand-written)
+  - [Build \& Outputs](#build--outputs)
+  - [Testing](#testing)
+  - [Scripts Reference](#scripts-reference)
+  - [Project Structure](#project-structure)
+  - [Contributing](#contributing)
 
 ---
 
@@ -29,25 +46,25 @@ Angular-first but fully framework-agnostic — works in any Node.js or browser e
 
 All packages are versioned together at `0.1.0-alpha` and scoped under `@durion-sdk`.
 
-| Package | Description |
-|---|---|
-| `@durion-sdk/transport` | Shared `SdkHttpClient`, `DurionSdkConfig`, and error types |
-| `@durion-sdk/security` | Auth, JWT, roles, users, permissions |
-| `@durion-sdk/order` | Sales orders, price overrides, cancellations |
-| `@durion-sdk/inventory` | Stock movements, returns, reservations |
-| `@durion-sdk/workorder` | Work orders, estimates, change requests |
-| `@durion-sdk/accounting` | GL, journal entries, payments, Stripe, financial reporting |
-| `@durion-sdk/catalog` | Product catalog management |
-| `@durion-sdk/customer` | CRM: accounts, contacts, vehicles, promotions |
-| `@durion-sdk/invoice` | Invoice generation and delivery |
-| `@durion-sdk/location` | Multi-store location management |
-| `@durion-sdk/people` | Employee profiles and assignments |
-| `@durion-sdk/price` | Dynamic pricing engine |
-| `@durion-sdk/shop-manager` | Shop operations and dispatch |
-| `@durion-sdk/image` | Product and asset image management |
-| `@durion-sdk/event-receiver` | Internal event ingestion |
-| `@durion-sdk/vehicle-fitment` | Part-to-vehicle compatibility data |
-| `@durion-sdk/vehicle-inventory` | Vehicle stock tracking |
+| Package                         | Description                                                |
+| ------------------------------- | ---------------------------------------------------------- |
+| `@durion-sdk/transport`         | Shared `SdkHttpClient`, `DurionSdkConfig`, and error types |
+| `@durion-sdk/security`          | Auth, JWT, roles, users, permissions                       |
+| `@durion-sdk/order`             | Sales orders, price overrides, cancellations               |
+| `@durion-sdk/inventory`         | Stock movements, returns, reservations                     |
+| `@durion-sdk/workorder`         | Work orders, estimates, change requests                    |
+| `@durion-sdk/accounting`        | GL, journal entries, payments, Stripe, financial reporting |
+| `@durion-sdk/catalog`           | Product catalog management                                 |
+| `@durion-sdk/customer`          | CRM: accounts, contacts, vehicles, promotions              |
+| `@durion-sdk/invoice`           | Invoice generation and delivery                            |
+| `@durion-sdk/location`          | Multi-store location management                            |
+| `@durion-sdk/people`            | Employee profiles and assignments                          |
+| `@durion-sdk/price`             | Dynamic pricing engine                                     |
+| `@durion-sdk/shop-manager`      | Shop operations and dispatch                               |
+| `@durion-sdk/image`             | Product and asset image management                         |
+| `@durion-sdk/event-receiver`    | Internal event ingestion                                   |
+| `@durion-sdk/vehicle-fitment`   | Part-to-vehicle compatibility data                         |
+| `@durion-sdk/vehicle-inventory` | Vehicle stock tracking                                     |
 
 `@durion-sdk/sdk-internal` (private) covers the internal tax service and is not published.
 
@@ -115,23 +132,23 @@ npm install @durion-sdk/security @durion-sdk/transport
 ## Quick Start
 
 ```typescript
-import { createSecurityClient } from '@durion-sdk/security';
+import { createSecurityClient } from "@durion-sdk/security";
 
 const security = createSecurityClient({
-  baseUrl: 'https://api.example.com',
-  token: async () => localStorage.getItem('access_token') ?? '',
+  baseUrl: "https://api.example.com",
+  token: async () => localStorage.getItem("access_token") ?? "",
 });
 
 // Login
 const response = await security.authAPIApi.login({
-  loginRequest: { username: 'user@example.com', password: 'secret' },
+  loginRequest: { username: "user@example.com", password: "secret" },
 });
 
 // Every other domain follows the same pattern
-import { createOrderClient } from '@durion-sdk/order';
+import { createOrderClient } from "@durion-sdk/order";
 
 const orders = createOrderClient({
-  baseUrl: 'https://api.example.com',
+  baseUrl: "https://api.example.com",
   token: async () => getAccessToken(),
 });
 
@@ -145,17 +162,17 @@ const salesOrders = await orders.salesOrdersApi.listOrders();
 All clients accept a single `DurionSdkConfig` object from `@durion-sdk/transport`.
 
 ```typescript
-import { DurionSdkConfig } from '@durion-sdk/transport';
+import { DurionSdkConfig } from "@durion-sdk/transport";
 
 const config: DurionSdkConfig = {
   // Required — root URL of the API gateway
-  baseUrl: 'https://api.example.com',
+  baseUrl: "https://api.example.com",
 
   // Optional — called before every request; can be async
   token: async () => await myTokenStore.getAccessToken(),
 
   // Optional — sent as X-API-Version header (default: '1')
-  apiVersion: '1',
+  apiVersion: "1",
 
   // Optional — override the default crypto.randomUUID() correlation ID
   correlationIdProvider: () => myTracer.currentSpanId(),
@@ -168,13 +185,13 @@ const config: DurionSdkConfig = {
 
 ### Headers injected on every request
 
-| Header | Value | Notes |
-|---|---|---|
-| `Authorization` | `Bearer <token>` | Only when `config.token` is set |
-| `X-API-Version` | `config.apiVersion` | Default `'1'` |
-| `X-Correlation-Id` | UUID v4 | Per-request, from `correlationIdProvider` |
-| `Idempotency-Key` | Generated key | Mutating methods only |
-| `Content-Type` | `application/json` | When a request body is present |
+| Header             | Value               | Notes                                     |
+| ------------------ | ------------------- | ----------------------------------------- |
+| `Authorization`    | `Bearer <token>`    | Only when `config.token` is set           |
+| `X-API-Version`    | `config.apiVersion` | Default `'1'`                             |
+| `X-Correlation-Id` | UUID v4             | Per-request, from `correlationIdProvider` |
+| `Idempotency-Key`  | Generated key       | Mutating methods only                     |
+| `Content-Type`     | `application/json`  | When a request body is present            |
 
 ### Token management
 
@@ -197,7 +214,7 @@ Each `createXxxClient(config)` factory returns an object whose keys are the API 
 ### Security (`@durion-sdk/security`)
 
 ```typescript
-import { createSecurityClient } from '@durion-sdk/security';
+import { createSecurityClient } from "@durion-sdk/security";
 
 const {
   adminAccountStateAPIApi,
@@ -217,7 +234,7 @@ const {
 ### Order (`@durion-sdk/order`)
 
 ```typescript
-import { createOrderClient } from '@durion-sdk/order';
+import { createOrderClient } from "@durion-sdk/order";
 
 const { orderCancellationApi, priceOverridesApi, salesOrdersApi } =
   createOrderClient(config);
@@ -226,14 +243,24 @@ const { orderCancellationApi, priceOverridesApi, salesOrdersApi } =
 ### Accounting (`@durion-sdk/accounting`)
 
 ```typescript
-import { createAccountingClient } from '@durion-sdk/accounting';
+import { createAccountingClient } from "@durion-sdk/accounting";
 
 const {
-  apPaymentsApi, accountingEventsApi, auditTrailApi,
-  creditMemosApi, defaultGLMappingsApi, financialReportingApi,
-  glAccountsApi, glMappingAPIApi, invoicePaymentsApi,
-  journalEntriesApi, mappingKeysApi, paymentApplicationsApi,
-  postingCategoriesApi, postingRulesApi, vendorBillAPIApi,
+  apPaymentsApi,
+  accountingEventsApi,
+  auditTrailApi,
+  creditMemosApi,
+  defaultGLMappingsApi,
+  financialReportingApi,
+  glAccountsApi,
+  glMappingAPIApi,
+  invoicePaymentsApi,
+  journalEntriesApi,
+  mappingKeysApi,
+  paymentApplicationsApi,
+  postingCategoriesApi,
+  postingRulesApi,
+  vendorBillAPIApi,
 } = createAccountingClient(config);
 ```
 
@@ -248,13 +275,15 @@ Workflow classes compose multiple raw API calls into named, intent-driven operat
 ### `SecurityAuthWorkflow`
 
 ```typescript
-import { SecurityAuthWorkflow } from '@durion-sdk/security';
+import { SecurityAuthWorkflow } from "@durion-sdk/security";
 
 const client = createSecurityClient(config);
 const auth = new SecurityAuthWorkflow(client.authAPIApi, client.jwtAPIApi);
 
 const tokens = await auth.login({ loginRequest: { username, password } });
-const refreshed = await auth.refresh({ refreshTokenRequest: { refresh_token } });
+const refreshed = await auth.refresh({
+  refreshTokenRequest: { refresh_token },
+});
 await auth.validate({ token });
 await auth.revoke({ token });
 ```
@@ -297,7 +326,7 @@ Other available workflows: `WorkorderChangeRequestWorkflow`, `AccountingEventWor
 Non-2xx responses from the backend return a JSON body matching the `DurionApiError` interface. The SDK surfaces these as `DurionSdkError` instances.
 
 ```typescript
-import { DurionSdkError } from '@durion-sdk/transport';
+import { DurionSdkError } from "@durion-sdk/transport";
 
 try {
   await client.authAPIApi.login({ loginRequest: { username, password } });
@@ -320,14 +349,14 @@ try {
 
 ```typescript
 interface DurionApiError {
-  code: string;          // Machine-readable error code, e.g. "INVALID_REQUEST"
-  message: string;       // Human-readable description
-  status: number;        // HTTP status code
-  timestamp: string;     // ISO 8601
+  code: string; // Machine-readable error code, e.g. "INVALID_REQUEST"
+  message: string; // Human-readable description
+  status: number; // HTTP status code
+  timestamp: string; // ISO 8601
   correlationId: string; // Matches the X-Correlation-Id sent with the request
   fieldErrors?: Array<{ field: string; message: string }>;
-  referenceId?: string;  // Support ticket reference
-  nextAction?: string;   // Suggested remediation for the caller
+  referenceId?: string; // Support ticket reference
+  nextAction?: string; // Suggested remediation for the caller
   supportAction?: string;
 }
 ```
@@ -359,14 +388,14 @@ After generation, a post-processing step patches `sdk-inventory` to remove a dup
 
 ### What is generated vs. hand-written
 
-| Path | Origin |
-|---|---|
-| `packages/sdk-*/src/apis/` | Generated — do not edit |
-| `packages/sdk-*/src/models/` | Generated — do not edit |
-| `packages/sdk-*/src/runtime.ts` | Generated — do not edit |
-| `packages/sdk-*/src/index.ts` | Hand-written factory function |
+| Path                            | Origin                        |
+| ------------------------------- | ----------------------------- |
+| `packages/sdk-*/src/apis/`      | Generated — do not edit       |
+| `packages/sdk-*/src/models/`    | Generated — do not edit       |
+| `packages/sdk-*/src/runtime.ts` | Generated — do not edit       |
+| `packages/sdk-*/src/index.ts`   | Hand-written factory function |
 | `packages/sdk-*/src/workflows/` | Hand-written workflow helpers |
-| `packages/sdk-transport/src/` | Hand-written transport layer |
+| `packages/sdk-transport/src/`   | Hand-written transport layer  |
 
 ---
 
@@ -374,11 +403,11 @@ After generation, a post-processing step patches `sdk-inventory` to remove a dup
 
 Each package is compiled with `tsc` (no bundler) into two module formats:
 
-| Format | Output path | `package.json` field |
-|---|---|---|
-| CommonJS | `dist/index.js` | `"main"` |
-| ES Module | `dist/esm/index.js` | `"module"` |
-| Type declarations | `dist/index.d.ts` | `"typings"` |
+| Format            | Output path         | `package.json` field |
+| ----------------- | ------------------- | -------------------- |
+| CommonJS          | `dist/index.js`     | `"main"`             |
+| ES Module         | `dist/esm/index.js` | `"module"`           |
+| Type declarations | `dist/index.d.ts`   | `"typings"`          |
 
 The `"exports"` map in each `package.json` wires up the correct entry per resolver:
 
@@ -434,11 +463,11 @@ npx jest src/sdk-003-transport.test.ts
 
 ## Scripts Reference
 
-| Script | Command | Description |
-|---|---|---|
-| `build` | `npm run build` | Compile all packages (CJS + ESM + types) |
-| `test` | `npm test` | Run Jest suite (392 tests) |
-| `lint` | `npm run lint` | ESLint + TypeScript linting |
+| Script     | Command            | Description                                       |
+| ---------- | ------------------ | ------------------------------------------------- |
+| `build`    | `npm run build`    | Compile all packages (CJS + ESM + types)          |
+| `test`     | `npm test`         | Run Jest suite (392 tests)                        |
+| `lint`     | `npm run lint`     | ESLint + TypeScript linting                       |
 | `generate` | `npm run generate` | Regenerate all clients from backend OpenAPI specs |
 
 ---
