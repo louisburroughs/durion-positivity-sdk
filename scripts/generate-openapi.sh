@@ -29,6 +29,17 @@ done
 
 MODULES=(security order inventory workorder accounting catalog customer invoice location people price shop-manager image event-receiver vehicle-fitment vehicle-inventory internal documents inquiry bulk-loader)
 
+patch_package_tsconfig() {
+	local pkg="$1"
+	local tsconfig="packages/sdk-${pkg}/tsconfig.json"
+	if [[ -f "$tsconfig" ]]; then
+		sed -i 's/"moduleResolution": "node"/"moduleResolution": "node16"/' "$tsconfig"
+		if ! grep -q '"rootDir"' "$tsconfig"; then
+			sed -i 's/"outDir": "dist"/"outDir": "dist",\n    "rootDir": "src"/' "$tsconfig"
+		fi
+	fi
+}
+
 cleanup_vehicle_inventory_duplicate_exports() {
 	# Post-generation cleanup: VehicleAPIApi defines request-parameter interfaces named
 	# CreateVehicleRequest and UpdateVehicleRequest that clash with same-named model DTOs
@@ -76,6 +87,7 @@ if [[ -n "$module" ]]; then
 	echo "Generating sdk-${module}..."
 	npx @openapitools/openapi-generator-cli generate --generator-key "sdk-${module}"
 
+	patch_package_tsconfig "$module"
 	if [[ "$module" == "inventory" ]]; then
 		cleanup_inventory_duplicate_exports
 	fi
@@ -88,6 +100,7 @@ else
 		echo "Generating sdk-${m}..."
 		npx @openapitools/openapi-generator-cli generate --generator-key "sdk-${m}"
 
+		patch_package_tsconfig "$m"
 		if [[ "$m" == "inventory" ]]; then
 			cleanup_inventory_duplicate_exports
 		fi
