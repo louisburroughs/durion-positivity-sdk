@@ -15,13 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
-  InventoryErrorResponse,
+  ApiError,
   ShortageResolutionRequest,
   ShortageResolutionResponse,
 } from '../models/index';
 import {
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ShortageResolutionRequestFromJSON,
     ShortageResolutionRequestToJSON,
     ShortageResolutionResponseFromJSON,
@@ -55,6 +55,14 @@ export class ShortageResolutionApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:shortages:resolve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/allocations/shortages/resolve`,
             method: 'POST',

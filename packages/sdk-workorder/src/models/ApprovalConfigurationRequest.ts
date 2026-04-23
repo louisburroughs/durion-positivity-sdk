@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request DTO for approval configuration creation and updates
+ * Configuration object to be created
  * @export
  * @interface ApprovalConfigurationRequest
  */
@@ -45,10 +45,10 @@ export interface ApprovalConfigurationRequest {
     declineExpiryDays?: number;
     /**
      * Whether signature is required
-     * @type {boolean}
+     * @type {string}
      * @memberof ApprovalConfigurationRequest
      */
-    requireSignature?: boolean;
+    requireSignature?: string;
     /**
      * Priority for configuration matching (0=default, 1=location-specific, 2=customer-specific)
      * @type {number}

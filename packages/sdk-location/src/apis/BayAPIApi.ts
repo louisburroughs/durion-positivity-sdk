@@ -85,6 +85,14 @@ export class BayAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:bay:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'POST',
@@ -128,6 +136,14 @@ export class BayAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:bay:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
             method: 'GET',
@@ -179,6 +195,14 @@ export class BayAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:bay:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'GET',
@@ -230,6 +254,14 @@ export class BayAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:bay:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
             method: 'PATCH',

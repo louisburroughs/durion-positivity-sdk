@@ -15,19 +15,19 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AvailabilityView,
   InventoryAvailabilityResponse,
-  InventoryErrorResponse,
   LeadTimeView,
   LocationAvailabilityDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AvailabilityViewFromJSON,
     AvailabilityViewToJSON,
     InventoryAvailabilityResponseFromJSON,
     InventoryAvailabilityResponseToJSON,
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
     LeadTimeViewFromJSON,
     LeadTimeViewToJSON,
     LocationAvailabilityDtoFromJSON,
@@ -51,7 +51,7 @@ export interface QueryLeadTimeRequest {
 
 export interface UpdateInventoryAvailabilityRequest {
     productId: string;
-    body?: any;
+    body?: object;
 }
 
 /**
@@ -94,6 +94,14 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view", "inventory:on_hand:search"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/availability/query`,
             method: 'GET',
@@ -129,6 +137,14 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/availability/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -179,6 +195,14 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view", "inventory:on_hand:search"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/availability/lead-time`,
             method: 'GET',
@@ -216,6 +240,14 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create", "inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/availability/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'POST',

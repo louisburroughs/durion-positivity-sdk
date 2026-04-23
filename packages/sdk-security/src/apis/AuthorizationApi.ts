@@ -15,14 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AuthorizationDecisionResponse,
-  ErrorResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AuthorizationDecisionResponseFromJSON,
     AuthorizationDecisionResponseToJSON,
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
 } from '../models/index';
 
 export interface GetDecisionRequest {
@@ -66,6 +66,14 @@ export class AuthorizationApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:authorization:decide"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/authorization/decision`,
             method: 'GET',

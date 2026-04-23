@@ -53,47 +53,47 @@ import {
 } from '../models/index';
 
 export interface ApproveWorkorderOperationRequest {
-    workorderId: any;
+    workorderId: string;
     approveWorkorderRequest: ApproveWorkorderRequest;
 }
 
 export interface CompleteWorkorderOperationRequest {
-    workorderId: any;
+    workorderId: string;
     completeWorkorderRequest: CompleteWorkorderRequest;
 }
 
 export interface CreateWorkorderOperationRequest {
     createWorkorderRequest: CreateWorkorderRequest;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 export interface DeleteWorkorderRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface GenerateInvoiceRequest {
-    workorderId: any;
-    idempotencyKey?: any;
+    workorderId: string;
+    idempotencyKey?: string;
 }
 
 export interface GetCompletionPreconditionsRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface GetSnapshotHistoryRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface GetTransitionHistoryRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface GetWorkorderByIdRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface ReopenWorkorderOperationRequest {
-    workorderId: any;
+    workorderId: string;
     reopenWorkorderRequest: ReopenWorkorderRequest;
 }
 
@@ -127,6 +127,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/approval`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -172,6 +180,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:complete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/complete`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -214,6 +230,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders`,
             method: 'POST',
@@ -250,6 +274,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'DELETE',
@@ -288,6 +320,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:generate_invoice"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/generate-invoice`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -316,6 +356,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders`,
             method: 'GET',
@@ -351,6 +399,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:complete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/completion-preconditions`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -386,6 +442,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/snapshots`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -421,6 +485,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/transitions`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -456,6 +528,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -500,6 +580,14 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:reopen_completed"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/reopen`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',

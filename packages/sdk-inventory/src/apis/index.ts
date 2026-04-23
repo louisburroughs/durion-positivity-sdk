@@ -7,6 +7,7 @@ export * from './CycleCountOperationsApi';
 export * from './CycleCountPlansApi';
 export * from './CycleCountQueryApi';
 export * from './InventoryAvailabilityApi';
+export * from './InventoryBulkIngestAPIApi';
 export * from './InventoryLocationsApi';
 export * from './InventoryManagementApi';
 export * from './InventoryReservationsApi';

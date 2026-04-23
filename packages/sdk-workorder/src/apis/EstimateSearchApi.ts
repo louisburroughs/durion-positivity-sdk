@@ -27,8 +27,8 @@ import {
 
 export interface SearchEstimatesRequest {
     pageable: Pageable;
-    customerId?: any;
-    vehicleId?: any;
+    customerId?: string;
+    vehicleId?: string;
 }
 
 /**
@@ -64,6 +64,14 @@ export class EstimateSearchApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/estimates/search`,
             method: 'GET',

@@ -88,6 +88,14 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}/approve`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
             method: 'POST',
@@ -117,6 +125,14 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:view", "inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCountAdjustments/pending/count`,
             method: 'GET',
@@ -158,6 +174,14 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCountAdjustments`,
             method: 'POST',
@@ -194,6 +218,14 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:view", "inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
             method: 'GET',
@@ -226,6 +258,14 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:view", "inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCountAdjustments`,
             method: 'GET',
@@ -254,6 +294,14 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:view", "inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCountAdjustments/pending`,
             method: 'GET',
@@ -298,6 +346,14 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}/reject`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
             method: 'POST',

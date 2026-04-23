@@ -78,6 +78,14 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting-category:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-categories`,
             method: 'POST',
@@ -114,6 +122,14 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting-category:deactivate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-categories/{postingCategoryId}/deactivate`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
             method: 'POST',
@@ -148,6 +164,14 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting-category:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-categories/{postingCategoryId}`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
             method: 'GET',
@@ -199,6 +223,14 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting-category:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-categories`,
             method: 'GET',
@@ -243,6 +275,14 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting-category:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-categories/{postingCategoryId}`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
             method: 'PUT',

@@ -90,7 +90,7 @@ export function PriceQuoteRequestToJSON(value?: PriceQuoteRequest | null): any {
         'quantity': value['quantity'],
         'locationId': value['locationId'],
         'customerTierId': value['customerTierId'],
-        'effectiveTimestamp': value['effectiveTimestamp'] == null ? undefined : ((value['effectiveTimestamp']).toISOString()),
+        'effectiveTimestamp': value['effectiveTimestamp'] == null ? undefined : ((value['effectiveTimestamp'] as any).toISOString()),
     };
 }
 

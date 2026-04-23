@@ -15,13 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
-  InventoryErrorResponse,
+  ApiError,
   ReturnItemsRequest,
   ReturnResponse,
 } from '../models/index';
 import {
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ReturnItemsRequestFromJSON,
     ReturnItemsRequestToJSON,
     ReturnResponseFromJSON,
@@ -55,6 +55,14 @@ export class ReturnsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/returns`,
             method: 'POST',

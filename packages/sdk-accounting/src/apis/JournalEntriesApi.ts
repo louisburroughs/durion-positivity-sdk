@@ -54,7 +54,7 @@ export interface ListJournalEntriesRequest {
 
 export interface PostJournalEntryRequest {
     journalEntryId: string;
-    body?: any;
+    body?: object;
 }
 
 export interface ReverseJournalEntryRequest {
@@ -90,6 +90,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:je:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/journal-entries`,
             method: 'POST',
@@ -126,6 +134,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:je:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/journal-entries/{journalEntryId}`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
             method: 'GET',
@@ -161,6 +177,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:je:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/journal-entries/{journalEntryId}/traceability`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
             method: 'GET',
@@ -208,6 +232,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:je:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/journal-entries`,
             method: 'GET',
@@ -245,6 +277,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:je:post"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/journal-entries/{journalEntryId}/post`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
             method: 'POST',
@@ -290,6 +330,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:je:reverse"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/journal-entries/{journalEntryId}/reverse`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
             method: 'POST',
@@ -335,6 +383,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:je:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/journal-entries/{journalEntryId}`.replace(`{${"journalEntryId"}}`, encodeURIComponent(String(requestParameters['journalEntryId']))),
             method: 'PUT',

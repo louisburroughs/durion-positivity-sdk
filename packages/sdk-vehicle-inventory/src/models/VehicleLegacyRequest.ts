@@ -20,37 +20,37 @@ import { mapValues } from '../runtime';
  */
 export interface VehicleLegacyRequest {
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
     id?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
     make?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
     model?: string;
     /**
-     *
+     * 
      * @type {number}
      * @memberof VehicleLegacyRequest
      */
     year?: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
     vin?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
@@ -73,7 +73,7 @@ export function VehicleLegacyRequestFromJSONTyped(json: any, ignoreDiscriminator
         return json;
     }
     return {
-
+        
         'id': json['id'] == null ? undefined : json['id'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
@@ -88,7 +88,7 @@ export function VehicleLegacyRequestToJSON(value?: VehicleLegacyRequest | null):
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'make': value['make'],
         'model': value['model'],

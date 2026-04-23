@@ -93,6 +93,14 @@ export class PeopleReportsAPIApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:time:export:read", "accounting:time:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/reports/approvedTime`,
             method: 'GET',
@@ -170,6 +178,14 @@ export class PeopleReportsAPIApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:time:export:read", "accounting:time:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/reports/attendanceJobtimeDiscrepancy`,
             method: 'GET',

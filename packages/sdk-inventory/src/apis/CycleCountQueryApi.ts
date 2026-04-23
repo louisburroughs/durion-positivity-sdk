@@ -15,8 +15,8 @@
 
 import * as runtime from '../runtime';
 import type {
-    CountEntryResponse,
-    CycleCountTaskResponse,
+  CountEntryResponse,
+  CycleCountTaskResponse,
 } from '../models/index';
 import {
     CountEntryResponseFromJSON,
@@ -38,7 +38,7 @@ export interface GetTaskRequest {
 }
 
 /**
- *
+ * 
  */
 export class CycleCountQueryApi extends runtime.BaseAPI {
 
@@ -58,6 +58,14 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCount/auditor/{auditorId}/tasks`.replace(`{${"auditorId"}}`, encodeURIComponent(String(requestParameters['auditorId']))),
             method: 'GET',
@@ -93,6 +101,14 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCount/task/{taskId}/history`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
             method: 'GET',
@@ -128,6 +144,14 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCount/task/{taskId}`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
             method: 'GET',

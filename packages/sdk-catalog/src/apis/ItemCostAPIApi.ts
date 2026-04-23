@@ -29,15 +29,15 @@ import {
 } from '../models/index';
 
 export interface GetAuditHistoryRequest {
-    itemId: any;
+    itemId: string;
 }
 
 export interface GetItemCostsRequest {
-    itemId: any;
+    itemId: string;
 }
 
 export interface UpdateStandardCostRequest {
-    itemId: any;
+    itemId: string;
     updateStandardCostRequestDto: UpdateStandardCostRequestDto;
 }
 
@@ -49,7 +49,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Get item cost audit history
      */
-    async getAuditHistoryRaw(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getAuditHistoryRaw(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostAuditDto>> {
         if (requestParameters['itemId'] == null) {
             throw new runtime.RequiredError(
                 'itemId',
@@ -61,6 +61,14 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/items/{itemId}/costs/audit`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
             method: 'GET',
@@ -68,17 +76,13 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ItemCostAuditDtoFromJSON(jsonValue));
     }
 
     /**
      * Get item cost audit history
      */
-    async getAuditHistory(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getAuditHistory(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostAuditDto> {
         const response = await this.getAuditHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -86,7 +90,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Get current item costs
      */
-    async getItemCostsRaw(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getItemCostsRaw(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostsDto>> {
         if (requestParameters['itemId'] == null) {
             throw new runtime.RequiredError(
                 'itemId',
@@ -98,6 +102,14 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/items/{itemId}/costs`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
             method: 'GET',
@@ -105,17 +117,13 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ItemCostsDtoFromJSON(jsonValue));
     }
 
     /**
      * Get current item costs
      */
-    async getItemCosts(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getItemCosts(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostsDto> {
         const response = await this.getItemCostsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -123,7 +131,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Update standard item cost
      */
-    async updateStandardCostRaw(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updateStandardCostRaw(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostsDto>> {
         if (requestParameters['itemId'] == null) {
             throw new runtime.RequiredError(
                 'itemId',
@@ -144,6 +152,14 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_MANAGER", "inventory.cost.standard.update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/items/{itemId}/standard-cost`.replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
             method: 'PUT',
@@ -152,17 +168,13 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
             body: UpdateStandardCostRequestDtoToJSON(requestParameters['updateStandardCostRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ItemCostsDtoFromJSON(jsonValue));
     }
 
     /**
      * Update standard item cost
      */
-    async updateStandardCost(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updateStandardCost(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostsDto> {
         const response = await this.updateStandardCostRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -68,7 +68,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
      * Mark an exception as acknowledged.
      * Acknowledge an exception
      */
-    async acknowledgeExceptionRaw(requestParameters: AcknowledgeExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async acknowledgeExceptionRaw(requestParameters: AcknowledgeExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
             throw new runtime.RequiredError(
                 'exceptionId',
@@ -84,6 +84,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeException:acknowledge"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/exceptions/{exceptionId}/acknowledge`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
             method: 'POST',
@@ -91,18 +99,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Mark an exception as acknowledged.
      * Acknowledge an exception
      */
-    async acknowledgeException(requestParameters: AcknowledgeExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async acknowledgeException(requestParameters: AcknowledgeExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.acknowledgeExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -125,6 +129,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeException:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/exceptions`,
             method: 'POST',
@@ -158,6 +170,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeException:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/exceptions`,
             method: 'GET',
@@ -181,7 +201,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
      * Mark an exception as resolved with optional resolution notes.
      * Resolve an exception
      */
-    async resolveExceptionRaw(requestParameters: ResolveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async resolveExceptionRaw(requestParameters: ResolveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
             throw new runtime.RequiredError(
                 'exceptionId',
@@ -199,6 +219,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeException:resolve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/exceptions/{exceptionId}/resolve`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
             method: 'POST',
@@ -207,18 +235,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             body: TimeEntryExceptionResolveRequestToJSON(requestParameters['timeEntryExceptionResolveRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Mark an exception as resolved with optional resolution notes.
      * Resolve an exception
      */
-    async resolveException(requestParameters: ResolveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async resolveException(requestParameters: ResolveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.resolveExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -227,7 +251,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
      * Waive an exception with a reason. waiveReason is required.
      * Waive an exception
      */
-    async waiveExceptionRaw(requestParameters: WaiveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async waiveExceptionRaw(requestParameters: WaiveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
             throw new runtime.RequiredError(
                 'exceptionId',
@@ -252,6 +276,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeException:resolve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/exceptions/{exceptionId}/waive`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
             method: 'POST',
@@ -260,18 +292,14 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
             body: TimeEntryExceptionWaiveRequestToJSON(requestParameters['timeEntryExceptionWaiveRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Waive an exception with a reason. waiveReason is required.
      * Waive an exception
      */
-    async waiveException(requestParameters: WaiveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async waiveException(requestParameters: WaiveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.waiveExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }

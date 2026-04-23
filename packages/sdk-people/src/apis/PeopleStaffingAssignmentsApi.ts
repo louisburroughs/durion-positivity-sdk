@@ -72,6 +72,14 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/staffing/assignments`,
             method: 'POST',
@@ -108,6 +116,14 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
             method: 'DELETE',
@@ -142,6 +158,14 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
             method: 'GET',
@@ -181,6 +205,14 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/staffing/assignments`,
             method: 'GET',
@@ -225,6 +257,14 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/staffing/assignments/{assignmentId}`.replace(`{${"assignmentId"}}`, encodeURIComponent(String(requestParameters['assignmentId']))),
             method: 'PUT',

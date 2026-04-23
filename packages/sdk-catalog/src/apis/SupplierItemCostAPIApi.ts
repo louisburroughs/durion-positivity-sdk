@@ -33,15 +33,15 @@ export interface CreateCostStructureRequest {
 }
 
 export interface DeleteCostStructureRequest {
-    id: any;
+    id: string;
 }
 
 export interface GetCostStructureRequest {
-    id: any;
+    id: string;
 }
 
 export interface UpdateCostStructureRequest {
-    id: any;
+    id: string;
     supplierItemCostUpdateRequestDto: SupplierItemCostUpdateRequestDto;
 }
 
@@ -53,7 +53,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Create supplier cost structure
      */
-    async createCostStructureRaw(requestParameters: CreateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createCostStructureRaw(requestParameters: CreateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SupplierItemCostDto>> {
         if (requestParameters['supplierItemCostCreateRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'supplierItemCostCreateRequestDto',
@@ -67,6 +67,14 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:supplier_cost:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/supplier-costs`,
             method: 'POST',
@@ -75,17 +83,13 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
             body: SupplierItemCostCreateRequestDtoToJSON(requestParameters['supplierItemCostCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => SupplierItemCostDtoFromJSON(jsonValue));
     }
 
     /**
      * Create supplier cost structure
      */
-    async createCostStructure(requestParameters: CreateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createCostStructure(requestParameters: CreateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SupplierItemCostDto> {
         const response = await this.createCostStructureRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -105,6 +109,14 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:supplier_cost:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'DELETE',
@@ -125,7 +137,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Get supplier cost structure
      */
-    async getCostStructureRaw(requestParameters: GetCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getCostStructureRaw(requestParameters: GetCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SupplierItemCostDto>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -137,6 +149,14 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:supplier_cost:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',
@@ -144,17 +164,13 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => SupplierItemCostDtoFromJSON(jsonValue));
     }
 
     /**
      * Get supplier cost structure
      */
-    async getCostStructure(requestParameters: GetCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getCostStructure(requestParameters: GetCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SupplierItemCostDto> {
         const response = await this.getCostStructureRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -162,7 +178,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Update supplier cost structure
      */
-    async updateCostStructureRaw(requestParameters: UpdateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updateCostStructureRaw(requestParameters: UpdateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SupplierItemCostDto>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -183,6 +199,14 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:supplier_cost:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'PUT',
@@ -191,17 +215,13 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
             body: SupplierItemCostUpdateRequestDtoToJSON(requestParameters['supplierItemCostUpdateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => SupplierItemCostDtoFromJSON(jsonValue));
     }
 
     /**
      * Update supplier cost structure
      */
-    async updateCostStructure(requestParameters: UpdateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updateCostStructure(requestParameters: UpdateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SupplierItemCostDto> {
         const response = await this.updateCostStructureRaw(requestParameters, initOverrides);
         return await response.value();
     }

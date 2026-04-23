@@ -65,7 +65,7 @@ export function InvoiceLineItemFromJSONTyped(json: any, ignoreDiscriminator: boo
         return json;
     }
     return {
-
+        
         'description': json['description'],
         'quantity': json['quantity'],
         'unitPrice': json['unitPrice'],
@@ -78,7 +78,7 @@ export function InvoiceLineItemToJSON(value?: InvoiceLineItem | null): any {
         return value;
     }
     return {
-
+        
         'description': value['description'],
         'quantity': value['quantity'],
         'unitPrice': value['unitPrice'],

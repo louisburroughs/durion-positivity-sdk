@@ -39,7 +39,7 @@ export interface CorrectPartQuantityOperationRequest {
 
 export interface GetAdjustmentHistoryRequest {
     workorderId: string;
-    partId?: any;
+    partId?: string;
 }
 
 export interface ReturnUnusedQuantityRequest {
@@ -63,7 +63,7 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
      * Administrative correction for data entry errors
      * Correct part quantity
      */
-    async correctPartQuantityRaw(requestParameters: CorrectPartQuantityOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async correctPartQuantityRaw(requestParameters: CorrectPartQuantityOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -88,6 +88,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/correct`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -96,18 +104,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             body: CorrectPartQuantityRequestToJSON(requestParameters['correctPartQuantityRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartAdjustmentEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Administrative correction for data entry errors
      * Correct part quantity
      */
-    async correctPartQuantity(requestParameters: CorrectPartQuantityOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async correctPartQuantity(requestParameters: CorrectPartQuantityOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
         const response = await this.correctPartQuantityRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -116,7 +120,7 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
      * Retrieve adjustment history (substitutions, returns, corrections) for parts on the workorder
      * Get part adjustment history
      */
-    async getAdjustmentHistoryRaw(requestParameters: GetAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getAdjustmentHistoryRaw(requestParameters: GetAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -132,6 +136,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/adjustments`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -139,18 +151,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartAdjustmentEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieve adjustment history (substitutions, returns, corrections) for parts on the workorder
      * Get part adjustment history
      */
-    async getAdjustmentHistory(requestParameters: GetAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getAdjustmentHistory(requestParameters: GetAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
         const response = await this.getAdjustmentHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -159,7 +167,7 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
      * Return unused part quantity beyond normal return flow
      * Return unused quantity
      */
-    async returnUnusedQuantityRaw(requestParameters: ReturnUnusedQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async returnUnusedQuantityRaw(requestParameters: ReturnUnusedQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -184,6 +192,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/returnUnused`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -192,18 +208,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             body: ReturnPartQuantityRequestToJSON(requestParameters['returnPartQuantityRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartAdjustmentEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Return unused part quantity beyond normal return flow
      * Return unused quantity
      */
-    async returnUnusedQuantity(requestParameters: ReturnUnusedQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async returnUnusedQuantity(requestParameters: ReturnUnusedQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
         const response = await this.returnUnusedQuantityRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -212,7 +224,7 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
      * Replace one part with another. Original part preserved for history.
      * Substitute part
      */
-    async substitutePartRaw(requestParameters: SubstitutePartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async substitutePartRaw(requestParameters: SubstitutePartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -237,6 +249,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/substitute`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -245,18 +265,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             body: SubstitutePartRequestToJSON(requestParameters['substitutePartRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartAdjustmentEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Replace one part with another. Original part preserved for history.
      * Substitute part
      */
-    async substitutePart(requestParameters: SubstitutePartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async substitutePart(requestParameters: SubstitutePartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
         const response = await this.substitutePartRaw(requestParameters, initOverrides);
         return await response.value();
     }

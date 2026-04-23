@@ -15,13 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AsnResponse,
   CreateAsnRequest,
   CreateGoodsReceiptRequest,
   GoodsReceiptResponse,
-  InventoryErrorResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AsnResponseFromJSON,
     AsnResponseToJSON,
     CreateAsnRequestFromJSON,
@@ -30,8 +32,6 @@ import {
     CreateGoodsReceiptRequestToJSON,
     GoodsReceiptResponseFromJSON,
     GoodsReceiptResponseToJSON,
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
 } from '../models/index';
 
 export interface CreateAsnOperationRequest {
@@ -73,6 +73,14 @@ export class ASNApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:asn:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/asns`,
             method: 'POST',
@@ -111,6 +119,14 @@ export class ASNApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:goods_receipt:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/goods-receipts`,
             method: 'POST',
@@ -147,6 +163,14 @@ export class ASNApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:asn:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/asns/{asnId}`.replace(`{${"asnId"}}`, encodeURIComponent(String(requestParameters['asnId']))),
             method: 'GET',
@@ -182,6 +206,14 @@ export class ASNApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:goods_receipt:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/goods-receipts/{receiptId}`.replace(`{${"receiptId"}}`, encodeURIComponent(String(requestParameters['receiptId']))),
             method: 'GET',

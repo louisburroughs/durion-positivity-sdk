@@ -64,6 +64,14 @@ export class SiteDefaultsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{locationId}/defaults`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'PUT',
@@ -100,6 +108,14 @@ export class SiteDefaultsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{locationId}/defaults`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'GET',

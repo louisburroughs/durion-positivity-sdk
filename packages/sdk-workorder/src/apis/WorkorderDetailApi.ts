@@ -23,8 +23,8 @@ import {
 } from '../models/index';
 
 export interface GetWorkorderDetailRequest {
-    workorderId: any;
-    xAuthorities?: any;
+    workorderId: string;
+    xAuthorities?: string;
 }
 
 /**
@@ -36,7 +36,7 @@ export class WorkorderDetailApi extends runtime.BaseAPI {
      * Returns comprehensive workorder detail. Financial fields are conditionally included based on user authorities. Capability flags indicate which actions the user can perform.
      * Get workorder detail with role-based visibility
      */
-    async getWorkorderDetailRaw(requestParameters: GetWorkorderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getWorkorderDetailRaw(requestParameters: GetWorkorderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderDetailResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -52,6 +52,14 @@ export class WorkorderDetailApi extends runtime.BaseAPI {
             headerParameters['X-Authorities'] = String(requestParameters['xAuthorities']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/detail`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -59,18 +67,14 @@ export class WorkorderDetailApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderDetailResponseFromJSON(jsonValue));
     }
 
     /**
      * Returns comprehensive workorder detail. Financial fields are conditionally included based on user authorities. Capability flags indicate which actions the user can perform.
      * Get workorder detail with role-based visibility
      */
-    async getWorkorderDetail(requestParameters: GetWorkorderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getWorkorderDetail(requestParameters: GetWorkorderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderDetailResponse> {
         const response = await this.getWorkorderDetailRaw(requestParameters, initOverrides);
         return await response.value();
     }

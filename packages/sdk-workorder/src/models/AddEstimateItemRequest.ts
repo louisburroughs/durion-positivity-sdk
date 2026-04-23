@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for adding a line item to an estimate
+ * Line item details
  * @export
  * @interface AddEstimateItemRequest
  */

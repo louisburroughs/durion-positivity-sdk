@@ -14,67 +14,67 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface BillingRulesDTO
  */
 export interface BillingRulesDTO {
     /**
-     *
+     * 
      * @type {string}
      * @memberof BillingRulesDTO
      */
     id?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof BillingRulesDTO
      */
     partyId?: string;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof BillingRulesDTO
      */
     purchaseOrderRequired?: boolean;
     /**
-     *
+     * 
      * @type {string}
      * @memberof BillingRulesDTO
      */
     paymentTermsCode?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof BillingRulesDTO
      */
     invoiceDeliveryMethod?: BillingRulesDTOInvoiceDeliveryMethodEnum;
     /**
-     *
+     * 
      * @type {string}
      * @memberof BillingRulesDTO
      */
     invoiceGroupingStrategy?: BillingRulesDTOInvoiceGroupingStrategyEnum;
     /**
-     *
+     * 
      * @type {number}
      * @memberof BillingRulesDTO
      */
     version?: number;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof BillingRulesDTO
      */
     createdAt?: Date;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof BillingRulesDTO
      */
     updatedAt?: Date;
     /**
-     *
+     * 
      * @type {string}
      * @memberof BillingRulesDTO
      */
@@ -117,7 +117,7 @@ export function BillingRulesDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
         return json;
     }
     return {
-
+        
         'id': json['id'] == null ? undefined : json['id'],
         'partyId': json['partyId'] == null ? undefined : json['partyId'],
         'purchaseOrderRequired': json['purchaseOrderRequired'] == null ? undefined : json['purchaseOrderRequired'],
@@ -136,7 +136,7 @@ export function BillingRulesDTOToJSON(value?: BillingRulesDTO | null): any {
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'partyId': value['partyId'],
         'purchaseOrderRequired': value['purchaseOrderRequired'],

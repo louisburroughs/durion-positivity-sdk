@@ -76,6 +76,14 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/{id}/activate`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'PATCH',
@@ -113,6 +121,14 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:Apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/apply`,
             method: 'POST',
@@ -151,6 +167,14 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers`,
             method: 'POST',
@@ -187,6 +211,14 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/{id}/deactivate`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'PATCH',
@@ -222,6 +254,14 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:View"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/by-code/{promoCode}`.replace(`{${"promoCode"}}`, encodeURIComponent(String(requestParameters['promoCode']))),
             method: 'GET',
@@ -257,6 +297,14 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:View"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',

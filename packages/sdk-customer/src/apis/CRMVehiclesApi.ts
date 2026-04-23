@@ -85,6 +85,14 @@ export class CRMVehiclesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/{customerId}/vehicles`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
             method: 'POST',
@@ -128,6 +136,14 @@ export class CRMVehiclesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle:deactivate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'DELETE',
@@ -169,6 +185,14 @@ export class CRMVehiclesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'GET',
@@ -220,6 +244,14 @@ export class CRMVehiclesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle_party_association:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/{customerId}/vehicles/{vehicleId}/transfer`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'PUT',
@@ -272,6 +304,14 @@ export class CRMVehiclesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'PUT',

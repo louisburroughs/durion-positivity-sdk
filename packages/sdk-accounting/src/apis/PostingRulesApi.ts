@@ -85,6 +85,14 @@ export class PostingRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:archive"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-rules/{postingRuleSetId}/archive`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
             method: 'POST',
@@ -122,6 +130,14 @@ export class PostingRulesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-rules`,
             method: 'POST',
@@ -158,6 +174,14 @@ export class PostingRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-rules/{postingRuleSetId}`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
             method: 'GET',
@@ -205,6 +229,14 @@ export class PostingRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-rules`,
             method: 'GET',
@@ -248,6 +280,14 @@ export class PostingRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-rules/{postingRuleSetId}/versions`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
             method: 'GET',
@@ -283,6 +323,14 @@ export class PostingRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:publish"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-rules/{postingRuleSetId}/publish`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
             method: 'POST',
@@ -327,6 +375,14 @@ export class PostingRulesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-rules/{postingRuleSetId}`.replace(`{${"postingRuleSetId"}}`, encodeURIComponent(String(requestParameters['postingRuleSetId']))),
             method: 'PUT',

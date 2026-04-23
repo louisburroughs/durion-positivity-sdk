@@ -63,6 +63,14 @@ export class ShopAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:location:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/services/{serviceId}/details`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"serviceId"}}`, encodeURIComponent(String(requestParameters['serviceId']))),
             method: 'GET',
@@ -105,6 +113,14 @@ export class ShopAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:location:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/technicians/{personId}/person`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
             method: 'GET',

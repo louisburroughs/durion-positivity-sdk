@@ -29,13 +29,13 @@ import {
 } from '../models/index';
 
 export interface GetWipDetailRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface ListWipRequest {
-    locationId: any;
+    locationId: string;
     pageable: Pageable;
-    multiLocation?: any;
+    multiLocation?: boolean;
 }
 
 /**
@@ -59,6 +59,14 @@ export class WIPDashboardApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:wip:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/wip/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -113,6 +121,14 @@ export class WIPDashboardApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:wip:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/wip`,
             method: 'GET',

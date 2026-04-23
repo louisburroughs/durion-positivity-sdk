@@ -44,7 +44,7 @@ export interface ActivateGLAccountRequest {
 
 export interface ArchiveGLAccountRequest {
     glAccountId: string;
-    body?: any;
+    body?: object;
 }
 
 export interface CreateGLAccountRequest {
@@ -53,7 +53,7 @@ export interface CreateGLAccountRequest {
 
 export interface DeactivateGLAccountRequest {
     glAccountId: string;
-    body?: any;
+    body?: object;
 }
 
 export interface GetAccountBalanceRequest {
@@ -106,6 +106,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts/{glAccountId}/activate`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
             method: 'POST',
@@ -144,6 +152,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:deactivate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts/{glAccountId}/archive`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
             method: 'POST',
@@ -182,6 +198,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts`,
             method: 'POST',
@@ -220,6 +244,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:deactivate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts/{glAccountId}/deactivate`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
             method: 'POST',
@@ -256,6 +288,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts/{glAccountId}/balance`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
             method: 'GET',
@@ -291,6 +331,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts/{glAccountId}`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
             method: 'GET',
@@ -342,6 +390,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts`,
             method: 'GET',
@@ -386,6 +442,14 @@ export class GLAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/gl-accounts/{glAccountId}`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
             method: 'PUT',

@@ -15,13 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
-  ErrorResponse,
+  ApiError,
   UserDto,
   UserUpdateRequest,
 } from '../models/index';
 import {
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     UserDtoFromJSON,
     UserDtoToJSON,
     UserUpdateRequestFromJSON,
@@ -80,6 +80,14 @@ export class UserAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:assign"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{username}/roles`.replace(`{${"username"}}`, encodeURIComponent(String(requestParameters['username']))),
             method: 'PUT',
@@ -118,6 +126,14 @@ export class UserAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users`,
             method: 'POST',
@@ -154,6 +170,14 @@ export class UserAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:delete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'DELETE',
@@ -181,6 +205,14 @@ export class UserAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users`,
             method: 'GET',
@@ -216,6 +248,14 @@ export class UserAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',
@@ -260,6 +300,14 @@ export class UserAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'PUT',

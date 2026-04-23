@@ -15,15 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
-  ErrorResponse,
+  ApiError,
   LoginRequest,
   SelfRegistrationRequest,
   SelfRegistrationResponse,
   TokenPairResponse,
 } from '../models/index';
 import {
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     LoginRequestFromJSON,
     LoginRequestToJSON,
     SelfRegistrationRequestFromJSON,

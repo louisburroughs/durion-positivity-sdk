@@ -15,8 +15,8 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CatalogVersionResponse,
-  ErrorResponse,
   PermissionDecodeRequest,
   PermissionDecodeResponse,
   PermissionDto,
@@ -24,10 +24,10 @@ import type {
   PermissionRegistrationResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CatalogVersionResponseFromJSON,
     CatalogVersionResponseToJSON,
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
     PermissionDecodeRequestFromJSON,
     PermissionDecodeRequestToJSON,
     PermissionDecodeResponseFromJSON,
@@ -127,6 +127,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions/decode`,
             method: 'POST',
@@ -165,6 +173,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions/decode`,
             method: 'POST',
@@ -205,6 +221,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions`,
             method: 'GET',
@@ -244,6 +268,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions`,
             method: 'GET',
@@ -335,6 +367,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',
@@ -370,6 +410,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',
@@ -405,6 +453,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions/domain/{domain}`.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain']))),
             method: 'GET',
@@ -440,6 +496,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions/domain/{domain}`.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain']))),
             method: 'GET',
@@ -475,6 +539,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
             method: 'GET',
@@ -514,6 +586,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
             method: 'GET',
@@ -555,6 +635,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:register"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions/register`,
             method: 'POST',
@@ -593,6 +681,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:register"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions/register`,
             method: 'POST',
@@ -631,6 +727,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:register"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions/registerPermissions`,
             method: 'POST',
@@ -669,6 +773,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:register"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions/registerPermissions`,
             method: 'POST',
@@ -705,6 +817,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/permissions/validate/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
             method: 'GET',
@@ -744,6 +864,14 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/permissions/validate/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
             method: 'GET',

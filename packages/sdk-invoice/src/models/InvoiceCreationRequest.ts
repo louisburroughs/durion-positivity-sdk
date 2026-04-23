@@ -74,7 +74,7 @@ export function InvoiceCreationRequestFromJSONTyped(json: any, ignoreDiscriminat
         return json;
     }
     return {
-
+        
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
         'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
         'approvalId': json['approvalId'] == null ? undefined : json['approvalId'],
@@ -88,7 +88,7 @@ export function InvoiceCreationRequestToJSON(value?: InvoiceCreationRequest | nu
         return value;
     }
     return {
-
+        
         'workorderId': value['workorderId'],
         'estimateId': value['estimateId'],
         'approvalId': value['approvalId'],

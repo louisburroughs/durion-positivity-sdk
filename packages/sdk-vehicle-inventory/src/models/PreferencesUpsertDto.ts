@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface PreferencesUpsertDto
  */
 export interface PreferencesUpsertDto {
     /**
-     *
+     * 
      * @type {{ [key: string]: any; }}
      * @memberof PreferencesUpsertDto
      */
     preferences?: { [key: string]: any; };
     /**
-     *
+     * 
      * @type {string}
      * @memberof PreferencesUpsertDto
      */
     serviceNotes?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof PreferencesUpsertDto
      */
     createdByUserId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof PreferencesUpsertDto
      */
@@ -61,7 +61,7 @@ export function PreferencesUpsertDtoFromJSONTyped(json: any, ignoreDiscriminator
         return json;
     }
     return {
-
+        
         'preferences': json['preferences'] == null ? undefined : json['preferences'],
         'serviceNotes': json['serviceNotes'] == null ? undefined : json['serviceNotes'],
         'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
@@ -74,7 +74,7 @@ export function PreferencesUpsertDtoToJSON(value?: PreferencesUpsertDto | null):
         return value;
     }
     return {
-
+        
         'preferences': value['preferences'],
         'serviceNotes': value['serviceNotes'],
         'createdByUserId': value['createdByUserId'],

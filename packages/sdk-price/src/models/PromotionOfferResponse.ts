@@ -185,8 +185,8 @@ export function PromotionOfferResponseToJSON(value?: PromotionOfferResponse | nu
         'usageCount': value['usageCount'],
         'status': value['status'],
         'storeCode': value['storeCode'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt'] as any).toISOString()),
+        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt'] as any).toISOString()),
         'createdBy': value['createdBy'],
     };
 }

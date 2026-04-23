@@ -4,6 +4,7 @@ export * from './EmployeeAPIApi';
 export * from './PeopleAPIApi';
 export * from './PeopleAccessControlApi';
 export * from './PeopleAvailabilityAPIApi';
+export * from './PeopleBulkIngestAPIApi';
 export * from './PeopleExceptionsApi';
 export * from './PeopleReportsAPIApi';
 export * from './PeopleStaffingAssignmentsApi';

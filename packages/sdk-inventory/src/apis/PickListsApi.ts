@@ -15,20 +15,20 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ConfirmPickTaskRequest,
   CreatePickListRequest,
-  InventoryErrorResponse,
   PickListResponse,
   PickTaskResponse,
   UpdatePickListStatusRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ConfirmPickTaskRequestFromJSON,
     ConfirmPickTaskRequestToJSON,
     CreatePickListRequestFromJSON,
     CreatePickListRequestToJSON,
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
     PickListResponseFromJSON,
     PickListResponseToJSON,
     PickTaskResponseFromJSON,
@@ -93,6 +93,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists/{pickListId}`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
             method: 'DELETE',
@@ -143,6 +151,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists/{pickListId}/tasks/{taskId}/confirm`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))).replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
             method: 'POST',
@@ -181,6 +197,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists`,
             method: 'POST',
@@ -217,6 +241,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists/{pickListId}`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
             method: 'GET',
@@ -256,6 +288,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists`,
             method: 'GET',
@@ -291,6 +331,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists/{pickListId}/tasks`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
             method: 'GET',
@@ -326,6 +374,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists/{pickListId}/release`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
             method: 'POST',
@@ -370,6 +426,14 @@ export class PickListsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/pick-lists/{pickListId}/status`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
             method: 'PATCH',

@@ -101,7 +101,7 @@ export function CreateVehicleRequestFromJSONTyped(json: any, ignoreDiscriminator
         return json;
     }
     return {
-
+        
         'accountId': json['accountId'],
         'vin': json['vin'],
         'unitNumber': json['unitNumber'],
@@ -120,7 +120,7 @@ export function CreateVehicleRequestToJSON(value?: CreateVehicleRequest | null):
         return value;
     }
     return {
-
+        
         'accountId': value['accountId'],
         'vin': value['vin'],
         'unitNumber': value['unitNumber'],

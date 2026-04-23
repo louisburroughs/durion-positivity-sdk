@@ -32,12 +32,12 @@ import {
 } from '../models/index';
 
 export interface ConsumePickedItemsOperationRequest {
-    workorderId: any;
+    workorderId: string;
     consumePickedItemsRequest: ConsumePickedItemsRequest;
 }
 
 export interface GetPickedItemsRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 /**
@@ -48,7 +48,7 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
     /**
      * Consume picked items into workorder
      */
-    async consumePickedItemsRaw(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async consumePickedItemsRaw(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConsumePickedItemsResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -69,6 +69,14 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:consume"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/picked-items:consume`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -77,17 +85,13 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
             body: ConsumePickedItemsRequestToJSON(requestParameters['consumePickedItemsRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ConsumePickedItemsResponseFromJSON(jsonValue));
     }
 
     /**
      * Consume picked items into workorder
      */
-    async consumePickedItems(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async consumePickedItems(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConsumePickedItemsResponse> {
         const response = await this.consumePickedItemsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -107,6 +111,14 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/picked-items`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',

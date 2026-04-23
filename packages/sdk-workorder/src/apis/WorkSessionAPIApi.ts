@@ -35,7 +35,7 @@ import {
 } from '../models/index';
 
 export interface AddBreakSegmentOperationRequest {
-    workSessionId: any;
+    workSessionId: string;
     addBreakSegmentRequest: AddBreakSegmentRequest;
 }
 
@@ -44,12 +44,12 @@ export interface StartWorkSessionOperationRequest {
 }
 
 export interface StopBreakSegmentRequest {
-    workSessionId: any;
-    breakSegmentId: any;
+    workSessionId: string;
+    breakSegmentId: string;
 }
 
 export interface StopWorkSessionOperationRequest {
-    workSessionId: any;
+    workSessionId: string;
     stopWorkSessionRequest: StopWorkSessionRequest;
 }
 
@@ -83,6 +83,14 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["timekeeping:work_session:break_start"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/workSessions/{workSessionId}/breaks`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))),
             method: 'POST',
@@ -121,6 +129,14 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["timekeeping:work_session:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/workSessions/start`,
             method: 'POST',
@@ -164,6 +180,14 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["timekeeping:work_session:break_stop"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/workSessions/{workSessionId}/breaks/{breakSegmentId}/stop`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))).replace(`{${"breakSegmentId"}}`, encodeURIComponent(String(requestParameters['breakSegmentId']))),
             method: 'POST',
@@ -208,6 +232,14 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["timekeeping:work_session:stop"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/workSessions/{workSessionId}/stop`.replace(`{${"workSessionId"}}`, encodeURIComponent(String(requestParameters['workSessionId']))),
             method: 'POST',

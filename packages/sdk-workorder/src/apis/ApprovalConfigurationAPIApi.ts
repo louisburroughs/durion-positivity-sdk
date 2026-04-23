@@ -30,20 +30,20 @@ export interface CreateConfigurationRequest {
 }
 
 export interface DeleteConfigurationRequest {
-    approvalId: any;
+    approvalId: string;
 }
 
 export interface GetApplicableConfigurationRequest {
-    locationId?: any;
-    customerId?: any;
+    locationId?: string;
+    customerId?: string;
 }
 
 export interface GetConfigurationByIdRequest {
-    approvalId: any;
+    approvalId: string;
 }
 
 export interface UpdateConfigurationRequest {
-    approvalId: any;
+    approvalId: string;
     approvalConfigurationRequest: ApprovalConfigurationRequest;
 }
 
@@ -70,6 +70,14 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:approval_config:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/approvalConfigurations`,
             method: 'POST',
@@ -106,6 +114,14 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:approval_config:delete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
             method: 'DELETE',
@@ -133,6 +149,14 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:approval_config:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec`,
             method: 'GET',
@@ -169,6 +193,14 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:approval_config:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/approvalConfigurations/applicable`,
             method: 'GET',
@@ -204,6 +236,14 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:approval_config:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
             method: 'GET',
@@ -248,6 +288,14 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:approval_config:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
             method: 'PUT',

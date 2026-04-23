@@ -15,11 +15,11 @@
 
 import * as runtime from '../runtime';
 import type {
-  ErrorResponse,
+  ApiError,
 } from '../models/index';
 import {
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
 } from '../models/index';
 
 export interface AssignRoleToPrincipalRequest {
@@ -55,6 +55,14 @@ export class PrincipalRoleManagementApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:assign"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/principals/{principalId}/roles/{roleId}`.replace(`{${"principalId"}}`, encodeURIComponent(String(requestParameters['principalId']))).replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))),
             method: 'POST',

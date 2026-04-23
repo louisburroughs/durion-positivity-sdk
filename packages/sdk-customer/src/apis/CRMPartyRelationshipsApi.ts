@@ -79,6 +79,14 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:relationship:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/commercial-accounts/{partyId}/relationships`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'POST',
@@ -122,6 +130,14 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:relationship:delete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/commercial-accounts/{partyId}/relationships/{relationshipId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"relationshipId"}}`, encodeURIComponent(String(requestParameters['relationshipId']))),
             method: 'DELETE',
@@ -163,6 +179,14 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:relationship:update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/commercial-accounts/{partyId}/relationships/{relationshipId}/primary-billing`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"relationshipId"}}`, encodeURIComponent(String(requestParameters['relationshipId']))),
             method: 'PUT',
@@ -205,6 +229,14 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:relationship:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/commercial-accounts/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',

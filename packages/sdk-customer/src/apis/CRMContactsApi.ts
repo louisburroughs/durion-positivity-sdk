@@ -59,6 +59,14 @@ export class CRMContactsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:contact:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/parties/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',
@@ -110,6 +118,14 @@ export class CRMContactsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:contact_role:assign"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/parties/{partyId}/contacts/{contactId}/roles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"contactId"}}`, encodeURIComponent(String(requestParameters['contactId']))),
             method: 'PUT',

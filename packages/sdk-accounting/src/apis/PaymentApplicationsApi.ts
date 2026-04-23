@@ -45,7 +45,7 @@ export interface ReversePaymentApplicationRequest {
 
 export interface VoidPaymentRequest {
     paymentId: string;
-    body?: any;
+    body?: object;
 }
 
 /**
@@ -78,6 +78,14 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:payment:apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/payments/{paymentId}/applications`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
             method: 'POST',
@@ -123,6 +131,14 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:pay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/payments/{paymentId}/reverse`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
             method: 'POST',
@@ -167,6 +183,14 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:payment:reverse", "ACCOUNTING_ADMIN", "AR_MANAGER"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/payment-applications/{applicationId}/reverse`.replace(`{${"applicationId"}}`, encodeURIComponent(String(requestParameters['applicationId']))),
             method: 'POST',
@@ -204,6 +228,14 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:ap:pay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/payments/{paymentId}/void`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
             method: 'POST',

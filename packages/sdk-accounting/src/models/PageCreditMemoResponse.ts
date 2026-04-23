@@ -19,18 +19,18 @@ import {
     CreditMemoResponseFromJSONTyped,
     CreditMemoResponseToJSON,
 } from './CreditMemoResponse';
-import type { Pageablenull } from './Pageablenull';
+import type { PageableObject } from './PageableObject';
 import {
-    PageablenullFromJSON,
-    PageablenullFromJSONTyped,
-    PageablenullToJSON,
-} from './Pageablenull';
-import type { Sortnull } from './Sortnull';
+    PageableObjectFromJSON,
+    PageableObjectFromJSONTyped,
+    PageableObjectToJSON,
+} from './PageableObject';
+import type { SortObject } from './SortObject';
 import {
-    SortnullFromJSON,
-    SortnullFromJSONTyped,
-    SortnullToJSON,
-} from './Sortnull';
+    SortObjectFromJSON,
+    SortObjectFromJSONTyped,
+    SortObjectToJSON,
+} from './SortObject';
 
 /**
  * 
@@ -52,24 +52,6 @@ export interface PageCreditMemoResponse {
     totalPages?: number;
     /**
      * 
-     * @type {Pageablenull}
-     * @memberof PageCreditMemoResponse
-     */
-    pageable?: Pageablenull;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageCreditMemoResponse
-     */
-    first?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageCreditMemoResponse
-     */
-    last?: boolean;
-    /**
-     * 
      * @type {number}
      * @memberof PageCreditMemoResponse
      */
@@ -88,10 +70,28 @@ export interface PageCreditMemoResponse {
     number?: number;
     /**
      * 
-     * @type {Sortnull}
+     * @type {boolean}
      * @memberof PageCreditMemoResponse
      */
-    sort?: Sortnull;
+    first?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageCreditMemoResponse
+     */
+    last?: boolean;
+    /**
+     * 
+     * @type {PageableObject}
+     * @memberof PageCreditMemoResponse
+     */
+    pageable?: PageableObject;
+    /**
+     * 
+     * @type {SortObject}
+     * @memberof PageCreditMemoResponse
+     */
+    sort?: SortObject;
     /**
      * 
      * @type {number}
@@ -125,13 +125,13 @@ export function PageCreditMemoResponseFromJSONTyped(json: any, ignoreDiscriminat
         
         'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
         'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'pageable': json['pageable'] == null ? undefined : PageablenullFromJSON(json['pageable']),
-        'first': json['first'] == null ? undefined : json['first'],
-        'last': json['last'] == null ? undefined : json['last'],
         'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(CreditMemoResponseFromJSON)),
         'number': json['number'] == null ? undefined : json['number'],
-        'sort': json['sort'] == null ? undefined : SortnullFromJSON(json['sort']),
+        'first': json['first'] == null ? undefined : json['first'],
+        'last': json['last'] == null ? undefined : json['last'],
+        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
+        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
         'empty': json['empty'] == null ? undefined : json['empty'],
     };
@@ -145,13 +145,13 @@ export function PageCreditMemoResponseToJSON(value?: PageCreditMemoResponse | nu
         
         'totalElements': value['totalElements'],
         'totalPages': value['totalPages'],
-        'pageable': PageablenullToJSON(value['pageable']),
-        'first': value['first'],
-        'last': value['last'],
         'size': value['size'],
         'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(CreditMemoResponseToJSON)),
         'number': value['number'],
-        'sort': SortnullToJSON(value['sort']),
+        'first': value['first'],
+        'last': value['last'],
+        'pageable': PageableObjectToJSON(value['pageable']),
+        'sort': SortObjectToJSON(value['sort']),
         'numberOfElements': value['numberOfElements'],
         'empty': value['empty'],
     };

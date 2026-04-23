@@ -35,22 +35,22 @@ import {
 } from '../models/index';
 
 export interface CreateLaborPerformedRequest {
-    idempotencyKey: any;
+    idempotencyKey: string;
     workexecLaborPerformedRequest: WorkexecLaborPerformedRequest;
-    xCorrelationId?: any;
+    xCorrelationId?: string;
 }
 
 export interface GetJobTimeTotalsRequest {
-    startDate: any;
-    endDate: any;
-    timezone: any;
-    locationId?: any;
-    technicianIds?: any;
+    startDate: Date;
+    endDate: Date;
+    timezone: string;
+    locationId?: string;
+    technicianIds?: Array<string>;
 }
 
 export interface StartTimerRequest {
     workexecTimerStartRequest: WorkexecTimerStartRequest;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 /**
@@ -62,7 +62,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
      * Create a labor-performed record with idempotency support
      * Create labor performed entry
      */
-    async createLaborPerformedRaw(requestParameters: CreateLaborPerformedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createLaborPerformedRaw(requestParameters: CreateLaborPerformedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecLaborPerformedResponse>> {
         if (requestParameters['idempotencyKey'] == null) {
             throw new runtime.RequiredError(
                 'idempotencyKey',
@@ -91,6 +91,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/labor-performed`,
             method: 'POST',
@@ -99,18 +107,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             body: WorkexecLaborPerformedRequestToJSON(requestParameters['workexecLaborPerformedRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkexecLaborPerformedResponseFromJSON(jsonValue));
     }
 
     /**
      * Create a labor-performed record with idempotency support
      * Create labor performed entry
      */
-    async createLaborPerformed(requestParameters: CreateLaborPerformedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createLaborPerformed(requestParameters: CreateLaborPerformedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecLaborPerformedResponse> {
         const response = await this.createLaborPerformedRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -119,11 +123,19 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
      * Retrieve active timer entries for the authenticated mechanic
      * Get active timers
      */
-    async getActiveTimerEntriesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getActiveTimerEntriesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerEntryResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/time-entries/timer/active`,
             method: 'GET',
@@ -131,18 +143,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkexecTimerEntryResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieve active timer entries for the authenticated mechanic
      * Get active timers
      */
-    async getActiveTimerEntries(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getActiveTimerEntries(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerEntryResponse> {
         const response = await this.getActiveTimerEntriesRaw(initOverrides);
         return await response.value();
     }
@@ -151,7 +159,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
      * Retrieve aggregated tracked hours for a date range, timezone, and optional location/technicians
      * Get job time totals
      */
-    async getJobTimeTotalsRaw(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getJobTimeTotalsRaw(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['startDate'] == null) {
             throw new runtime.RequiredError(
                 'startDate',
@@ -176,11 +184,11 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
         const queryParameters: any = {};
 
         if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = requestParameters['startDate'];
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
         }
 
         if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'];
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
         }
 
         if (requestParameters['timezone'] != null) {
@@ -197,6 +205,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/job-time-totals`,
             method: 'GET',
@@ -204,18 +220,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Retrieve aggregated tracked hours for a date range, timezone, and optional location/technicians
      * Get job time totals
      */
-    async getJobTimeTotals(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getJobTimeTotals(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.getJobTimeTotalsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -224,7 +236,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
      * Start a workexec timer entry for the authenticated mechanic
      * Start timer
      */
-    async startTimerRaw(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async startTimerRaw(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerEntryResponse>> {
         if (requestParameters['workexecTimerStartRequest'] == null) {
             throw new runtime.RequiredError(
                 'workexecTimerStartRequest',
@@ -242,6 +254,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/time-entries/timer/start`,
             method: 'POST',
@@ -250,18 +270,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             body: WorkexecTimerStartRequestToJSON(requestParameters['workexecTimerStartRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkexecTimerEntryResponseFromJSON(jsonValue));
     }
 
     /**
      * Start a workexec timer entry for the authenticated mechanic
      * Start timer
      */
-    async startTimer(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async startTimer(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerEntryResponse> {
         const response = await this.startTimerRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -270,11 +286,19 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
      * Stop active timer entries for the authenticated mechanic
      * Stop timers
      */
-    async stopTimersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async stopTimersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerStopResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workexec/time-entries/timer/stop`,
             method: 'POST',
@@ -282,18 +306,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkexecTimerStopResponseFromJSON(jsonValue));
     }
 
     /**
      * Stop active timer entries for the authenticated mechanic
      * Stop timers
      */
-    async stopTimers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async stopTimers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerStopResponse> {
         const response = await this.stopTimersRaw(initOverrides);
         return await response.value();
     }

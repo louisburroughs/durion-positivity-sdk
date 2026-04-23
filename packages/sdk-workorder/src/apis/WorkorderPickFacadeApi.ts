@@ -41,29 +41,29 @@ import {
 } from '../models/index';
 
 export interface CompletePickTaskOperationRequest {
-    workorderId: any;
-    pickTaskId: any;
+    workorderId: string;
+    pickTaskId: string;
     completePickTaskRequest?: CompletePickTaskRequest;
 }
 
 export interface ConfirmPickLineOperationRequest {
-    workorderId: any;
-    pickTaskId: any;
-    pickLineId: any;
+    workorderId: string;
+    pickTaskId: string;
+    pickLineId: string;
     confirmPickLineRequest: ConfirmPickLineRequest;
 }
 
 export interface GetPickListRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface GetPickTasksRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface ResolveScanOperationRequest {
-    workorderId: any;
-    pickTaskId: any;
+    workorderId: string;
+    pickTaskId: string;
     resolveScanRequest: ResolveScanRequest;
 }
 
@@ -75,7 +75,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     /**
      * Complete pick task
      */
-    async completePickTaskRaw(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async completePickTaskRaw(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickTaskResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -96,6 +96,14 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/pick-tasks/{pickTaskId}:complete`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"pickTaskId"}}`, encodeURIComponent(String(requestParameters['pickTaskId']))),
             method: 'POST',
@@ -104,17 +112,13 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
             body: CompletePickTaskRequestToJSON(requestParameters['completePickTaskRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPickTaskResponseFromJSON(jsonValue));
     }
 
     /**
      * Complete pick task
      */
-    async completePickTask(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async completePickTask(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickTaskResponse> {
         const response = await this.completePickTaskRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -122,7 +126,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     /**
      * Confirm pick line quantity
      */
-    async confirmPickLineRaw(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async confirmPickLineRaw(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickTaskResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -157,6 +161,14 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/pick-tasks/{pickTaskId}/lines/{pickLineId}:confirm`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"pickTaskId"}}`, encodeURIComponent(String(requestParameters['pickTaskId']))).replace(`{${"pickLineId"}}`, encodeURIComponent(String(requestParameters['pickLineId']))),
             method: 'POST',
@@ -165,17 +177,13 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
             body: ConfirmPickLineRequestToJSON(requestParameters['confirmPickLineRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPickTaskResponseFromJSON(jsonValue));
     }
 
     /**
      * Confirm pick line quantity
      */
-    async confirmPickLine(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async confirmPickLine(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickTaskResponse> {
         const response = await this.confirmPickLineRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -183,7 +191,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     /**
      * Get pick list for workorder
      */
-    async getPickListRaw(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getPickListRaw(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickListResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -195,6 +203,14 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/pick-list`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -202,17 +218,13 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPickListResponseFromJSON(jsonValue));
     }
 
     /**
      * Get pick list for workorder
      */
-    async getPickList(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getPickList(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickListResponse> {
         const response = await this.getPickListRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -232,6 +244,14 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/pick-list/tasks`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -253,7 +273,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     /**
      * Resolve scan for pick task
      */
-    async resolveScanRaw(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async resolveScanRaw(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResolveScanResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -281,6 +301,14 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/pick-tasks/{pickTaskId}:resolve-scan`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"pickTaskId"}}`, encodeURIComponent(String(requestParameters['pickTaskId']))),
             method: 'POST',
@@ -289,17 +317,13 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
             body: ResolveScanRequestToJSON(requestParameters['resolveScanRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ResolveScanResponseFromJSON(jsonValue));
     }
 
     /**
      * Resolve scan for pick task
      */
-    async resolveScan(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async resolveScan(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResolveScanResponse> {
         const response = await this.resolveScanRaw(requestParameters, initOverrides);
         return await response.value();
     }

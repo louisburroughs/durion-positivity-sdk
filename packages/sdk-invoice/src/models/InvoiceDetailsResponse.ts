@@ -27,127 +27,127 @@ import {
 } from './InvoiceItemResponse';
 
 /**
- *
+ * 
  * @export
  * @interface InvoiceDetailsResponse
  */
 export interface InvoiceDetailsResponse {
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     invoiceId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     invoiceNumber?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     workorderId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     estimateId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     approvalId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     partyId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     status?: InvoiceDetailsResponseStatusEnum;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceDetailsResponse
      */
     subtotal?: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceDetailsResponse
      */
     tax?: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceDetailsResponse
      */
     total?: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceDetailsResponse
      */
     adjustments?: number;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof InvoiceDetailsResponse
      */
     createdAt?: Date;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof InvoiceDetailsResponse
      */
     updatedAt?: Date;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof InvoiceDetailsResponse
      */
     finalizedAt?: Date;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     finalizedBy?: string;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof InvoiceDetailsResponse
      */
     revertedAt?: Date;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     reversionReason?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     revertedBy?: string;
     /**
-     *
+     * 
      * @type {Array<InvoiceItemResponse>}
      * @memberof InvoiceDetailsResponse
      */
     items?: Array<InvoiceItemResponse>;
     /**
-     *
+     * 
      * @type {Array<InvoiceAdjustmentResponse>}
      * @memberof InvoiceDetailsResponse
      */
@@ -182,7 +182,7 @@ export function InvoiceDetailsResponseFromJSONTyped(json: any, ignoreDiscriminat
         return json;
     }
     return {
-
+        
         'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'invoiceNumber': json['invoiceNumber'] == null ? undefined : json['invoiceNumber'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
@@ -211,7 +211,7 @@ export function InvoiceDetailsResponseToJSON(value?: InvoiceDetailsResponse | nu
         return value;
     }
     return {
-
+        
         'invoiceId': value['invoiceId'],
         'invoiceNumber': value['invoiceNumber'],
         'workorderId': value['workorderId'],

@@ -15,23 +15,23 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateReceivingSessionRequest,
   CrossDockRequest,
   CrossDockResponse,
-  InventoryErrorResponse,
   ReceiveItemsRequest,
   ReceiveItemsResponse,
   ReceivingSessionResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateReceivingSessionRequestFromJSON,
     CreateReceivingSessionRequestToJSON,
     CrossDockRequestFromJSON,
     CrossDockRequestToJSON,
     CrossDockResponseFromJSON,
     CrossDockResponseToJSON,
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
     ReceiveItemsRequestFromJSON,
     ReceiveItemsRequestToJSON,
     ReceiveItemsResponseFromJSON,
@@ -82,6 +82,14 @@ export class ReceivingApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:receiving:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/receiving/sessions`,
             method: 'POST',
@@ -134,6 +142,14 @@ export class ReceivingApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:receiving:complete", "inventory:issue:parts"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/receiving/sessions/{sessionId}/lines/{lineId}/cross-dock`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
             method: 'POST',
@@ -170,6 +186,14 @@ export class ReceivingApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:receiving:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/receiving/sessions/{sessionId}`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
             method: 'GET',
@@ -214,6 +238,14 @@ export class ReceivingApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:receiving:complete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/receiving/sessions/{sessionId}/receive`.replace(`{${"sessionId"}}`, encodeURIComponent(String(requestParameters['sessionId']))),
             method: 'POST',

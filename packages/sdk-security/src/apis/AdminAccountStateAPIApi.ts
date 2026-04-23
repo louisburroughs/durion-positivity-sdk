@@ -16,13 +16,13 @@
 import * as runtime from '../runtime';
 import type {
   AccountStateResponse,
-  ErrorResponse,
+  ApiError,
 } from '../models/index';
 import {
     AccountStateResponseFromJSON,
     AccountStateResponseToJSON,
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
 } from '../models/index';
 
 export interface DisableRequest {
@@ -70,6 +70,14 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}/disable`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'POST',
@@ -104,6 +112,14 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}/enable`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'POST',
@@ -138,6 +154,14 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}/expire-account`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'POST',
@@ -172,6 +196,14 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}/expire-credentials`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'POST',
@@ -206,6 +238,14 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}/account-state`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',
@@ -241,6 +281,14 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/users/{id}/unlock`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'POST',

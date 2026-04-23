@@ -82,6 +82,14 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["appointments:cancel"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/appointments/{appointmentId}/cancel`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
             method: 'DELETE',
@@ -128,6 +136,14 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["appointments:create", "shop:schedule:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/appointments`,
             method: 'POST',
@@ -168,6 +184,14 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["appointments:view", "shop:schedule:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/appointments/{appointmentId}`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
             method: 'GET',
@@ -212,6 +236,14 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["appointments:reschedule"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/appointments/{appointmentId}/reschedule`.replace(`{${"appointmentId"}}`, encodeURIComponent(String(requestParameters['appointmentId']))),
             method: 'PUT',

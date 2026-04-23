@@ -66,7 +66,7 @@ export function FitmentTagDtoFromJSONTyped(json: any, ignoreDiscriminator: boole
         return json;
     }
     return {
-
+        
         'tagType': json['tagType'],
         'tagValue': json['tagValue'],
     };
@@ -77,7 +77,7 @@ export function FitmentTagDtoToJSON(value?: FitmentTagDto | null): any {
         return value;
     }
     return {
-
+        
         'tagType': value['tagType'],
         'tagValue': value['tagValue'],
     };

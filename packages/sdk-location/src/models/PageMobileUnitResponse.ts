@@ -19,18 +19,18 @@ import {
     MobileUnitResponseFromJSONTyped,
     MobileUnitResponseToJSON,
 } from './MobileUnitResponse';
-import type { Pageablenull } from './Pageablenull';
+import type { PageableObject } from './PageableObject';
 import {
-    PageablenullFromJSON,
-    PageablenullFromJSONTyped,
-    PageablenullToJSON,
-} from './Pageablenull';
-import type { Sortnull } from './Sortnull';
+    PageableObjectFromJSON,
+    PageableObjectFromJSONTyped,
+    PageableObjectToJSON,
+} from './PageableObject';
+import type { SortObject } from './SortObject';
 import {
-    SortnullFromJSON,
-    SortnullFromJSONTyped,
-    SortnullToJSON,
-} from './Sortnull';
+    SortObjectFromJSON,
+    SortObjectFromJSONTyped,
+    SortObjectToJSON,
+} from './SortObject';
 
 /**
  * 
@@ -52,24 +52,6 @@ export interface PageMobileUnitResponse {
     totalPages?: number;
     /**
      * 
-     * @type {Pageablenull}
-     * @memberof PageMobileUnitResponse
-     */
-    pageable?: Pageablenull;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageMobileUnitResponse
-     */
-    first?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageMobileUnitResponse
-     */
-    last?: boolean;
-    /**
-     * 
      * @type {number}
      * @memberof PageMobileUnitResponse
      */
@@ -88,10 +70,28 @@ export interface PageMobileUnitResponse {
     number?: number;
     /**
      * 
-     * @type {Sortnull}
+     * @type {PageableObject}
      * @memberof PageMobileUnitResponse
      */
-    sort?: Sortnull;
+    pageable?: PageableObject;
+    /**
+     * 
+     * @type {SortObject}
+     * @memberof PageMobileUnitResponse
+     */
+    sort?: SortObject;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageMobileUnitResponse
+     */
+    first?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageMobileUnitResponse
+     */
+    last?: boolean;
     /**
      * 
      * @type {number}
@@ -125,13 +125,13 @@ export function PageMobileUnitResponseFromJSONTyped(json: any, ignoreDiscriminat
         
         'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
         'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'pageable': json['pageable'] == null ? undefined : PageablenullFromJSON(json['pageable']),
-        'first': json['first'] == null ? undefined : json['first'],
-        'last': json['last'] == null ? undefined : json['last'],
         'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(MobileUnitResponseFromJSON)),
         'number': json['number'] == null ? undefined : json['number'],
-        'sort': json['sort'] == null ? undefined : SortnullFromJSON(json['sort']),
+        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
+        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'first': json['first'] == null ? undefined : json['first'],
+        'last': json['last'] == null ? undefined : json['last'],
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
         'empty': json['empty'] == null ? undefined : json['empty'],
     };
@@ -145,13 +145,13 @@ export function PageMobileUnitResponseToJSON(value?: PageMobileUnitResponse | nu
         
         'totalElements': value['totalElements'],
         'totalPages': value['totalPages'],
-        'pageable': PageablenullToJSON(value['pageable']),
-        'first': value['first'],
-        'last': value['last'],
         'size': value['size'],
         'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(MobileUnitResponseToJSON)),
         'number': value['number'],
-        'sort': SortnullToJSON(value['sort']),
+        'pageable': PageableObjectToJSON(value['pageable']),
+        'sort': SortObjectToJSON(value['sort']),
+        'first': value['first'],
+        'last': value['last'],
         'numberOfElements': value['numberOfElements'],
         'empty': value['empty'],
     };

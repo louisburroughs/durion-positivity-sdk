@@ -91,7 +91,7 @@ export function HintResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
         return json;
     }
     return {
-
+        
         'hintId': json['hintId'],
         'productId': json['productId'],
         'fitmentTags': ((json['fitmentTags'] as Array<any>).map(FitmentTagDtoFromJSON)),
@@ -107,7 +107,7 @@ export function HintResponseToJSON(value?: HintResponse | null): any {
         return value;
     }
     return {
-
+        
         'hintId': value['hintId'],
         'productId': value['productId'],
         'fitmentTags': ((value['fitmentTags'] as Array<any>).map(FitmentTagDtoToJSON)),

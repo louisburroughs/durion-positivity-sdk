@@ -15,23 +15,23 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AuditEventCreatedResponse,
   AuditLogEventDto,
   AuditLogEventRequest,
-  ErrorResponse,
   PricingSnapshotCreatedResponse,
   PricingSnapshotDto,
   PricingSnapshotRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AuditEventCreatedResponseFromJSON,
     AuditEventCreatedResponseToJSON,
     AuditLogEventDtoFromJSON,
     AuditLogEventDtoToJSON,
     AuditLogEventRequestFromJSON,
     AuditLogEventRequestToJSON,
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
     PricingSnapshotCreatedResponseFromJSON,
     PricingSnapshotCreatedResponseToJSON,
     PricingSnapshotDtoFromJSON,
@@ -87,6 +87,14 @@ export class AuditApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/audit/events`,
             method: 'POST',
@@ -125,6 +133,14 @@ export class AuditApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/audit/pricing-snapshots`,
             method: 'POST',
@@ -146,6 +162,41 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
+     * Audit events are immutable and cannot be deleted once recorded.
+     * Delete audit events not allowed
+     */
+    async deleteNotAllowedRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/events/**`,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Audit events are immutable and cannot be deleted once recorded.
+     * Delete audit events not allowed
+     */
+    async deleteNotAllowed(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteNotAllowedRaw(initOverrides);
+    }
+
+    /**
      * Returns a previously recorded audit event by its event identifier.
      * Get audit event
      */
@@ -161,6 +212,14 @@ export class AuditApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:audit:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/audit/events/{eventId}`.replace(`{${"eventId"}}`, encodeURIComponent(String(requestParameters['eventId']))),
             method: 'GET',
@@ -196,6 +255,14 @@ export class AuditApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:audit:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/audit/pricing-snapshots/{snapshotId}`.replace(`{${"snapshotId"}}`, encodeURIComponent(String(requestParameters['snapshotId']))),
             method: 'GET',
@@ -244,6 +311,14 @@ export class AuditApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:audit:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/audit/events`,
             method: 'GET',
@@ -261,6 +336,41 @@ export class AuditApi extends runtime.BaseAPI {
     async searchEvents(requestParameters: SearchEventsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AuditLogEventDto>> {
         const response = await this.searchEventsRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Audit events are immutable and cannot be modified after creation.
+     * Update audit events not allowed
+     */
+    async updateNotAllowedRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/events/**`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Audit events are immutable and cannot be modified after creation.
+     * Update audit events not allowed
+     */
+    async updateNotAllowed(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateNotAllowedRaw(initOverrides);
     }
 
 }

@@ -68,12 +68,12 @@ import {
 } from '../models/index';
 
 export interface AddReplacementProductRequest {
-    productId: any;
+    productId: string;
     productReplacementRequest: ProductReplacementRequest;
 }
 
 export interface ApproveLocationPriceOverrideRequest {
-    overrideId: any;
+    overrideId: string;
     locationPriceOverrideDecisionRequestDto: LocationPriceOverrideDecisionRequestDto;
 }
 
@@ -86,72 +86,72 @@ export interface CreateProductRequest {
 }
 
 export interface GetEffectiveLocationPriceRequest {
-    locationId: any;
-    productId: any;
+    locationId: string;
+    productId: string;
 }
 
 export interface GetNonInventoryProductByIdRequest {
-    productId: any;
+    productId: string;
 }
 
 export interface GetNonInventoryProductByNameRequest {
-    name: any;
+    name: string;
 }
 
 export interface GetPartSubstitutesRequest {
-    productId: any;
+    productId: string;
 }
 
 export interface GetProductByIdRequest {
-    productId: any;
+    productId: string;
 }
 
 export interface GetProductByNameRequest {
-    name: any;
+    name: string;
 }
 
 export interface GetProductDetailViewRequest {
-    productId: any;
-    locationId: any;
+    productId: string;
+    locationId: string;
 }
 
 export interface GetProductLifecycleRequest {
-    productId: any;
+    productId: string;
 }
 
 export interface GetReplacementsRequest {
-    productId: any;
+    productId: string;
 }
 
 export interface GetServiceByIdRequest {
-    serviceId: any;
+    serviceId: string;
 }
 
 export interface GetServiceByNameRequest {
-    name: any;
+    name: string;
 }
 
 export interface RejectLocationPriceOverrideRequest {
-    overrideId: any;
+    overrideId: string;
     locationPriceOverrideDecisionRequestDto: LocationPriceOverrideDecisionRequestDto;
 }
 
 export interface SearchProductsRequest {
-    q?: any;
-    brand?: any;
-    category?: any;
-    sku?: any;
-    cursor?: any;
-    limit?: any;
+    q?: string;
+    brand?: string;
+    category?: string;
+    sku?: string;
+    cursor?: string;
+    limit?: number;
 }
 
 export interface SetLifecycleStateRequest {
-    productId: any;
+    productId: string;
     productLifecycleUpdateRequest: ProductLifecycleUpdateRequest;
 }
 
 export interface UpdateProductRequest {
-    productId: any;
+    productId: string;
     productUpdateRequestDto: ProductUpdateRequestDto;
 }
 
@@ -189,6 +189,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT", "product:lifecycle:update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'POST',
@@ -213,7 +221,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Approves a pending override and activates it as the effective location price.
      * Approve pending location price override
      */
-    async approveLocationPriceOverrideRaw(requestParameters: ApproveLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async approveLocationPriceOverrideRaw(requestParameters: ApproveLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['overrideId'] == null) {
             throw new runtime.RequiredError(
                 'overrideId',
@@ -234,6 +242,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "pricing:override:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/pricing/location-overrides/{overrideId}/approve`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
             method: 'POST',
@@ -242,18 +258,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             body: LocationPriceOverrideDecisionRequestDtoToJSON(requestParameters['locationPriceOverrideDecisionRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => LocationPriceOverrideResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Approves a pending override and activates it as the effective location price.
      * Approve pending location price override
      */
-    async approveLocationPriceOverride(requestParameters: ApproveLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async approveLocationPriceOverride(requestParameters: ApproveLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.approveLocationPriceOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -262,7 +274,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Creates a location-specific price override and enforces guardrails for margin and discount limits.
      * Create location price override
      */
-    async createLocationPriceOverrideRaw(requestParameters: CreateLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createLocationPriceOverrideRaw(requestParameters: CreateLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['locationPriceOverrideCreateRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'locationPriceOverrideCreateRequestDto',
@@ -276,6 +288,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/pricing/location-overrides`,
             method: 'POST',
@@ -284,18 +304,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             body: LocationPriceOverrideCreateRequestDtoToJSON(requestParameters['locationPriceOverrideCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => LocationPriceOverrideResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Creates a location-specific price override and enforces guardrails for margin and discount limits.
      * Create location price override
      */
-    async createLocationPriceOverride(requestParameters: CreateLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createLocationPriceOverride(requestParameters: CreateLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.createLocationPriceOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -304,7 +320,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Creates a product master record with immutable SKU and uniqueness checks.
      * Create product master record
      */
-    async createProductRaw(requestParameters: CreateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createProductRaw(requestParameters: CreateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productCreateRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'productCreateRequestDto',
@@ -318,6 +334,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products`,
             method: 'POST',
@@ -326,18 +350,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             body: ProductCreateRequestDtoToJSON(requestParameters['productCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
     }
 
     /**
      * Creates a product master record with immutable SKU and uniqueness checks.
      * Create product master record
      */
-    async createProduct(requestParameters: CreateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createProduct(requestParameters: CreateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.createProductRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -346,7 +366,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Resolves effective price using precedence: ACTIVE override first, otherwise base price.
      * Get effective location price
      */
-    async getEffectiveLocationPriceRaw(requestParameters: GetEffectiveLocationPriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getEffectiveLocationPriceRaw(requestParameters: GetEffectiveLocationPriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EffectiveLocationPriceResponseDto>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
@@ -365,6 +385,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/pricing/effective-price/{locationId}/{productId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -372,18 +400,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => EffectiveLocationPriceResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Resolves effective price using precedence: ACTIVE override first, otherwise base price.
      * Get effective location price
      */
-    async getEffectiveLocationPrice(requestParameters: GetEffectiveLocationPriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getEffectiveLocationPrice(requestParameters: GetEffectiveLocationPriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EffectiveLocationPriceResponseDto> {
         const response = await this.getEffectiveLocationPriceRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -392,7 +416,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves a specific non-inventory product by its unique ID.
      * Get a non-inventory product by ID
      */
-    async getNonInventoryProductByIdRaw(requestParameters: GetNonInventoryProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getNonInventoryProductByIdRaw(requestParameters: GetNonInventoryProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NonInventoryProductDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -404,6 +428,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/noninventory/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -411,18 +443,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => NonInventoryProductDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a specific non-inventory product by its unique ID.
      * Get a non-inventory product by ID
      */
-    async getNonInventoryProductById(requestParameters: GetNonInventoryProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getNonInventoryProductById(requestParameters: GetNonInventoryProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<NonInventoryProductDto> {
         const response = await this.getNonInventoryProductByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -431,7 +459,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves a list of non-inventory products matching the given name.
      * Get non-inventory products by name
      */
-    async getNonInventoryProductByNameRaw(requestParameters: GetNonInventoryProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getNonInventoryProductByNameRaw(requestParameters: GetNonInventoryProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NonInventoryProductDto>> {
         if (requestParameters['name'] == null) {
             throw new runtime.RequiredError(
                 'name',
@@ -443,6 +471,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/noninventory/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
             method: 'GET',
@@ -450,18 +486,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => NonInventoryProductDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a list of non-inventory products matching the given name.
      * Get non-inventory products by name
      */
-    async getNonInventoryProductByName(requestParameters: GetNonInventoryProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getNonInventoryProductByName(requestParameters: GetNonInventoryProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<NonInventoryProductDto> {
         const response = await this.getNonInventoryProductByNameRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -470,7 +502,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Returns list of substitute parts for a given productId.
      * Get substitute parts
      */
-    async getPartSubstitutesRaw(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getPartSubstitutesRaw(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -482,6 +514,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/substitutes`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -489,18 +529,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
     }
 
     /**
      * Returns list of substitute parts for a given productId.
      * Get substitute parts
      */
-    async getPartSubstitutes(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getPartSubstitutes(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.getPartSubstitutesRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -509,7 +545,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves a specific product by its unique ID.
      * Get a product by ID
      */
-    async getProductByIdRaw(requestParameters: GetProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getProductByIdRaw(requestParameters: GetProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -521,6 +557,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -528,18 +572,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a specific product by its unique ID.
      * Get a product by ID
      */
-    async getProductById(requestParameters: GetProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getProductById(requestParameters: GetProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.getProductByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -548,7 +588,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves a list of products matching the given name.
      * Get products by name
      */
-    async getProductByNameRaw(requestParameters: GetProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getProductByNameRaw(requestParameters: GetProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['name'] == null) {
             throw new runtime.RequiredError(
                 'name',
@@ -560,6 +600,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
             method: 'GET',
@@ -567,18 +615,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a list of products matching the given name.
      * Get products by name
      */
-    async getProductByName(requestParameters: GetProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getProductByName(requestParameters: GetProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.getProductByNameRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -587,7 +631,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves a consolidated view of product information including catalog data, location-specific pricing, and availability. Implements graceful degradation and returns partial data when non-critical services are unavailable.
      * Get product details with pricing and availability
      */
-    async getProductDetailViewRaw(requestParameters: GetProductDetailViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getProductDetailViewRaw(requestParameters: GetProductDetailViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDetailView>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -610,6 +654,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/detail`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -617,18 +669,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDetailViewFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a consolidated view of product information including catalog data, location-specific pricing, and availability. Implements graceful degradation and returns partial data when non-critical services are unavailable.
      * Get product details with pricing and availability
      */
-    async getProductDetailView(requestParameters: GetProductDetailViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getProductDetailView(requestParameters: GetProductDetailViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDetailView> {
         const response = await this.getProductDetailViewRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -637,7 +685,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves lifecycle state and replacement suggestions for a product.
      * Get product lifecycle state
      */
-    async getProductLifecycleRaw(requestParameters: GetProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getProductLifecycleRaw(requestParameters: GetProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductLifecycleResponse>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -649,6 +697,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW", "product:lifecycle:update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -656,18 +712,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductLifecycleResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieves lifecycle state and replacement suggestions for a product.
      * Get product lifecycle state
      */
-    async getProductLifecycle(requestParameters: GetProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getProductLifecycle(requestParameters: GetProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductLifecycleResponse> {
         const response = await this.getProductLifecycleRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -688,6 +740,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW", "product:lifecycle:update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -711,7 +771,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves a specific service by its unique ID.
      * Get a service by ID
      */
-    async getServiceByIdRaw(requestParameters: GetServiceByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getServiceByIdRaw(requestParameters: GetServiceByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceDto>> {
         if (requestParameters['serviceId'] == null) {
             throw new runtime.RequiredError(
                 'serviceId',
@@ -723,6 +783,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/services/{serviceId}`.replace(`{${"serviceId"}}`, encodeURIComponent(String(requestParameters['serviceId']))),
             method: 'GET',
@@ -730,18 +798,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a specific service by its unique ID.
      * Get a service by ID
      */
-    async getServiceById(requestParameters: GetServiceByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getServiceById(requestParameters: GetServiceByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceDto> {
         const response = await this.getServiceByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -750,7 +814,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Retrieves a list of services matching the given name.
      * Get services by name
      */
-    async getServiceByNameRaw(requestParameters: GetServiceByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getServiceByNameRaw(requestParameters: GetServiceByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceDto>> {
         if (requestParameters['name'] == null) {
             throw new runtime.RequiredError(
                 'name',
@@ -762,6 +826,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/services/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
             method: 'GET',
@@ -769,18 +841,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a list of services matching the given name.
      * Get services by name
      */
-    async getServiceByName(requestParameters: GetServiceByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getServiceByName(requestParameters: GetServiceByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceDto> {
         const response = await this.getServiceByNameRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -789,7 +857,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Rejects a pending override, persists rejection metadata, and marks the request as terminal.
      * Reject pending location price override
      */
-    async rejectLocationPriceOverrideRaw(requestParameters: RejectLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async rejectLocationPriceOverrideRaw(requestParameters: RejectLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['overrideId'] == null) {
             throw new runtime.RequiredError(
                 'overrideId',
@@ -810,6 +878,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "pricing:override:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/pricing/location-overrides/{overrideId}/reject`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
             method: 'POST',
@@ -818,18 +894,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             body: LocationPriceOverrideDecisionRequestDtoToJSON(requestParameters['locationPriceOverrideDecisionRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => LocationPriceOverrideResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Rejects a pending override, persists rejection metadata, and marks the request as terminal.
      * Reject pending location price override
      */
-    async rejectLocationPriceOverride(requestParameters: RejectLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async rejectLocationPriceOverride(requestParameters: RejectLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.rejectLocationPriceOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -838,7 +910,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Cursor-based product search with optional free-text query and exact filters for brand, category, and SKU.
      * Search catalog products
      */
-    async searchProductsRaw(requestParameters: SearchProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async searchProductsRaw(requestParameters: SearchProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogSearchResultDto>> {
         const queryParameters: any = {};
 
         if (requestParameters['q'] != null) {
@@ -867,6 +939,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/search`,
             method: 'GET',
@@ -874,18 +954,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => CatalogSearchResultDtoFromJSON(jsonValue));
     }
 
     /**
      * Cursor-based product search with optional free-text query and exact filters for brand, category, and SKU.
      * Search catalog products
      */
-    async searchProducts(requestParameters: SearchProductsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async searchProducts(requestParameters: SearchProductsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogSearchResultDto> {
         const response = await this.searchProductsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -894,7 +970,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Sets lifecycle state to ACTIVE, INACTIVE, or DISCONTINUED with effective date semantics.
      * Set product lifecycle state
      */
-    async setLifecycleStateRaw(requestParameters: SetLifecycleStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async setLifecycleStateRaw(requestParameters: SetLifecycleStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductLifecycleResponse>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -915,6 +991,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT", "product:lifecycle:update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'PUT',
@@ -923,18 +1007,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             body: ProductLifecycleUpdateRequestToJSON(requestParameters['productLifecycleUpdateRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductLifecycleResponseFromJSON(jsonValue));
     }
 
     /**
      * Sets lifecycle state to ACTIVE, INACTIVE, or DISCONTINUED with effective date semantics.
      * Set product lifecycle state
      */
-    async setLifecycleState(requestParameters: SetLifecycleStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async setLifecycleState(requestParameters: SetLifecycleStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductLifecycleResponse> {
         const response = await this.setLifecycleStateRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -943,7 +1023,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Updates mutable product master fields. SKU is immutable.
      * Update product master record
      */
-    async updateProductRaw(requestParameters: UpdateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updateProductRaw(requestParameters: UpdateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -964,6 +1044,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'PUT',
@@ -972,18 +1060,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             body: ProductUpdateRequestDtoToJSON(requestParameters['productUpdateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
     }
 
     /**
      * Updates mutable product master fields. SKU is immutable.
      * Update product master record
      */
-    async updateProduct(requestParameters: UpdateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updateProduct(requestParameters: UpdateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.updateProductRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -992,7 +1076,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Creates or updates the active LOCATION guardrail policy used by price overrides.
      * Upsert location guardrail policy
      */
-    async upsertLocationGuardrailPolicyRaw(requestParameters: UpsertLocationGuardrailPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async upsertLocationGuardrailPolicyRaw(requestParameters: UpsertLocationGuardrailPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['guardrailPolicyUpsertRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'guardrailPolicyUpsertRequestDto',
@@ -1006,6 +1090,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/pricing/guardrail-policies`,
             method: 'POST',
@@ -1014,18 +1106,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             body: GuardrailPolicyUpsertRequestDtoToJSON(requestParameters['guardrailPolicyUpsertRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => LocationPriceOverrideResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Creates or updates the active LOCATION guardrail policy used by price overrides.
      * Upsert location guardrail policy
      */
-    async upsertLocationGuardrailPolicy(requestParameters: UpsertLocationGuardrailPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async upsertLocationGuardrailPolicy(requestParameters: UpsertLocationGuardrailPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.upsertLocationGuardrailPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -33,15 +33,15 @@ export interface CreateUomConversionRequest {
 }
 
 export interface DeactivateUomConversionRequest {
-    id: any;
+    id: string;
 }
 
 export interface GetUomConversionByIdRequest {
-    id: any;
+    id: string;
 }
 
 export interface UpdateUomConversionRequest {
-    id: any;
+    id: string;
     uomConversionUpdateRequestDto: UomConversionUpdateRequestDto;
 }
 
@@ -54,7 +54,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
      * Creates a new unit-of-measure conversion record.
      * Create UOM conversion
      */
-    async createUomConversionRaw(requestParameters: CreateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createUomConversionRaw(requestParameters: CreateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UomConversionDto>> {
         if (requestParameters['uomConversionCreateRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'uomConversionCreateRequestDto',
@@ -68,6 +68,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/uom-conversions`,
             method: 'POST',
@@ -76,18 +84,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
             body: UomConversionCreateRequestDtoToJSON(requestParameters['uomConversionCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => UomConversionDtoFromJSON(jsonValue));
     }
 
     /**
      * Creates a new unit-of-measure conversion record.
      * Create UOM conversion
      */
-    async createUomConversion(requestParameters: CreateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createUomConversion(requestParameters: CreateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UomConversionDto> {
         const response = await this.createUomConversionRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -108,6 +112,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'DELETE',
@@ -130,7 +142,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
      * Retrieves a unit-of-measure conversion by its ID.
      * Get conversion
      */
-    async getUomConversionByIdRaw(requestParameters: GetUomConversionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getUomConversionByIdRaw(requestParameters: GetUomConversionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UomConversionDto>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -142,6 +154,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'GET',
@@ -149,18 +169,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => UomConversionDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a unit-of-measure conversion by its ID.
      * Get conversion
      */
-    async getUomConversionById(requestParameters: GetUomConversionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getUomConversionById(requestParameters: GetUomConversionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UomConversionDto> {
         const response = await this.getUomConversionByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -174,6 +190,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/uom-conversions`,
             method: 'GET',
@@ -197,7 +221,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
      * Updates the conversion factor and mutable fields for an existing conversion.
      * Update conversion factor
      */
-    async updateUomConversionRaw(requestParameters: UpdateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updateUomConversionRaw(requestParameters: UpdateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UomConversionDto>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
@@ -218,6 +242,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/uom-conversions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
             method: 'PUT',
@@ -226,18 +258,14 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
             body: UomConversionUpdateRequestDtoToJSON(requestParameters['uomConversionUpdateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => UomConversionDtoFromJSON(jsonValue));
     }
 
     /**
      * Updates the conversion factor and mutable fields for an existing conversion.
      * Update conversion factor
      */
-    async updateUomConversion(requestParameters: UpdateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updateUomConversion(requestParameters: UpdateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UomConversionDto> {
         const response = await this.updateUomConversionRaw(requestParameters, initOverrides);
         return await response.value();
     }

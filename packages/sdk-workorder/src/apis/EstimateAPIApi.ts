@@ -47,65 +47,65 @@ import {
 } from '../models/index';
 
 export interface AddEstimateItemOperationRequest {
-    estimateId: any;
+    estimateId: string;
     addEstimateItemRequest: AddEstimateItemRequest;
 }
 
 export interface ApproveEstimateOperationRequest {
-    estimateId: any;
+    estimateId: string;
     approveEstimateRequest: ApproveEstimateRequest;
 }
 
 export interface CalculateEstimateTotalsRequest {
-    estimateId: any;
+    estimateId: string;
 }
 
 export interface CreateEstimateOperationRequest {
     createEstimateRequest: CreateEstimateRequest;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 export interface CreateEstimateSnapshotRequest {
-    estimateId: any;
-    notes?: any;
+    estimateId: string;
+    notes?: string;
 }
 
 export interface DeclineEstimateRequest {
-    estimateId: any;
-    reason?: any;
+    estimateId: string;
+    reason?: string;
 }
 
 export interface DeleteEstimateRequest {
-    estimateId: any;
+    estimateId: string;
 }
 
 export interface DeleteEstimateItemRequest {
-    estimateId: any;
-    itemId: any;
+    estimateId: string;
+    itemId: string;
 }
 
 export interface GenerateEstimatePdfRequest {
-    estimateId: any;
+    estimateId: string;
 }
 
 export interface GetEstimateByIdRequest {
-    estimateId: any;
+    estimateId: string;
 }
 
 export interface GetEstimateSummaryRequest {
-    estimateId: any;
+    estimateId: string;
 }
 
 export interface GetEstimatesByCustomerRequest {
-    customerId: any;
+    customerId: string;
 }
 
 export interface GetEstimatesByLocationRequest {
-    locationId: any;
+    locationId: string;
 }
 
 export interface GetEstimatesByShopRequest {
-    locationId: any;
+    locationId: string;
 }
 
 export interface PatchEstimateStatusRequest {
@@ -114,21 +114,21 @@ export interface PatchEstimateStatusRequest {
 }
 
 export interface PromoteEstimateToWorkorderRequest {
-    estimateId: any;
-    idempotencyKey?: any;
+    estimateId: string;
+    idempotencyKey?: string;
 }
 
 export interface ReopenEstimateRequest {
-    estimateId: any;
+    estimateId: string;
 }
 
 export interface SubmitForApprovalRequest {
-    estimateId: any;
+    estimateId: string;
 }
 
 export interface UpdateEstimateItemOperationRequest {
-    estimateId: any;
-    itemId: any;
+    estimateId: string;
+    itemId: string;
     updateEstimateItemRequest: UpdateEstimateItemRequest;
 }
 
@@ -162,6 +162,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate_item:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/items`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -207,6 +215,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/approval`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -243,6 +259,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:calculate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/calculate`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -266,7 +290,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Create a new estimate in DRAFT status for a customer and vehicle. Requires ESTIMATE_CREATE permission. System will generate a unique estimate number and apply default values for location, currency, and tax region if not provided.
      * Create a new draft estimate
      */
-    async createEstimateRaw(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async createEstimateRaw(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['createEstimateRequest'] == null) {
             throw new runtime.RequiredError(
                 'createEstimateRequest',
@@ -284,6 +308,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates`,
             method: 'POST',
@@ -292,18 +324,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             body: CreateEstimateRequestToJSON(requestParameters['createEstimateRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Create a new estimate in DRAFT status for a customer and vehicle. Requires ESTIMATE_CREATE permission. System will generate a unique estimate number and apply default values for location, currency, and tax region if not provided.
      * Create a new draft estimate
      */
-    async createEstimate(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async createEstimate(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.createEstimateRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -328,6 +356,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate_snapshot:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/snapshots`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -367,6 +403,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:decline"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/decline`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -402,6 +446,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:delete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'DELETE',
@@ -443,6 +495,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate_item:delete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/items/{itemId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
             method: 'DELETE',
@@ -465,7 +525,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
      * Generate estimate PDF
      */
-    async generateEstimatePdfRaw(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async generateEstimatePdfRaw(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
@@ -477,6 +537,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/pdf`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'GET',
@@ -484,16 +552,15 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse<any>(response);
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
      * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
      * Generate estimate PDF
      */
-    async generateEstimatePdf(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
-        const response = await this.generateEstimatePdfRaw(requestParameters, initOverrides);
-        return await response.value();
+    async generateEstimatePdf(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.generateEstimatePdfRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -505,6 +572,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates`,
             method: 'GET',
@@ -540,6 +615,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'GET',
@@ -575,6 +658,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/summary`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'GET',
@@ -610,6 +701,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/customer/{customerId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
             method: 'GET',
@@ -645,6 +744,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/location/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'GET',
@@ -680,6 +787,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/shop/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'GET',
@@ -701,7 +816,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
     /**
      */
-    async patchEstimateStatusRaw(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async patchEstimateStatusRaw(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
@@ -722,6 +837,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'PATCH',
@@ -730,16 +853,12 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             body: requestParameters['requestBody'],
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      */
-    async patchEstimateStatus(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async patchEstimateStatus(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.patchEstimateStatusRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -764,6 +883,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:promote"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/promote`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -799,6 +926,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:reopen"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/reopen`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -834,6 +969,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:submit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/submit-for-approval`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))),
             method: 'POST',
@@ -885,6 +1028,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate_item:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/estimates/{estimateId}/items/{itemId}`.replace(`{${"estimateId"}}`, encodeURIComponent(String(requestParameters['estimateId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
             method: 'PATCH',

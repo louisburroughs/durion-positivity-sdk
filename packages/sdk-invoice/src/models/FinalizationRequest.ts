@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface FinalizationRequest
  */
 export interface FinalizationRequest {
     /**
-     *
+     * 
      * @type {string}
      * @memberof FinalizationRequest
      */
     managerApprovalCode?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof FinalizationRequest
      */
@@ -49,7 +49,7 @@ export function FinalizationRequestFromJSONTyped(json: any, ignoreDiscriminator:
         return json;
     }
     return {
-
+        
         'managerApprovalCode': json['managerApprovalCode'] == null ? undefined : json['managerApprovalCode'],
         'overrideReason': json['overrideReason'] == null ? undefined : json['overrideReason'],
     };
@@ -60,7 +60,7 @@ export function FinalizationRequestToJSON(value?: FinalizationRequest | null): a
         return value;
     }
     return {
-
+        
         'managerApprovalCode': value['managerApprovalCode'],
         'overrideReason': value['overrideReason'],
     };

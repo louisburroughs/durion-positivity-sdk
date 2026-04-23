@@ -15,8 +15,8 @@
 
 import * as runtime from '../runtime';
 import type {
-    DeactivateLocationRequest,
-    DeactivateLocationResponse,
+  DeactivateLocationRequest,
+  DeactivateLocationResponse,
 } from '../models/index';
 import {
     DeactivateLocationRequestFromJSON,
@@ -31,7 +31,7 @@ export interface DeactivateRequest {
 }
 
 /**
- *
+ * 
  */
 export class InventoryManagementApi extends runtime.BaseAPI {
 
@@ -53,6 +53,14 @@ export class InventoryManagementApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:admin"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/locations/{locationId}/deactivate`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'POST',

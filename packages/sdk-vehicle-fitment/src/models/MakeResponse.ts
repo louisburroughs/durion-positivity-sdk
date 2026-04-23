@@ -57,7 +57,7 @@ export function MakeResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
         return json;
     }
     return {
-
+        
         'id': json['id'],
         'name': json['name'],
         'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
@@ -69,7 +69,7 @@ export function MakeResponseToJSON(value?: MakeResponse | null): any {
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'name': value['name'],
         'manufacturerId': value['manufacturerId'],

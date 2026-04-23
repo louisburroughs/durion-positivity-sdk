@@ -14,61 +14,61 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface VehicleCarePreferenceResponse
  */
 export interface VehicleCarePreferenceResponse {
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
     id?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
     vehicleId?: string;
     /**
-     *
+     * 
      * @type {{ [key: string]: any; }}
      * @memberof VehicleCarePreferenceResponse
      */
     preferences?: { [key: string]: any; };
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
     serviceNotes?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
     createdByUserId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
     updatedByUserId?: string;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof VehicleCarePreferenceResponse
      */
     createdAt?: Date;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof VehicleCarePreferenceResponse
      */
     updatedAt?: Date;
     /**
-     *
+     * 
      * @type {number}
      * @memberof VehicleCarePreferenceResponse
      */
@@ -91,7 +91,7 @@ export function VehicleCarePreferenceResponseFromJSONTyped(json: any, ignoreDisc
         return json;
     }
     return {
-
+        
         'id': json['id'] == null ? undefined : json['id'],
         'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
         'preferences': json['preferences'] == null ? undefined : json['preferences'],
@@ -109,7 +109,7 @@ export function VehicleCarePreferenceResponseToJSON(value?: VehicleCarePreferenc
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'vehicleId': value['vehicleId'],
         'preferences': value['preferences'],

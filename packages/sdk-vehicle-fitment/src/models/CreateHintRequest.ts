@@ -58,7 +58,7 @@ export function CreateHintRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         return json;
     }
     return {
-
+        
         'productId': json['productId'],
         'fitmentTags': ((json['fitmentTags'] as Array<any>).map(FitmentTagDtoFromJSON)),
     };
@@ -69,7 +69,7 @@ export function CreateHintRequestToJSON(value?: CreateHintRequest | null): any {
         return value;
     }
     return {
-
+        
         'productId': value['productId'],
         'fitmentTags': ((value['fitmentTags'] as Array<any>).map(FitmentTagDtoToJSON)),
     };

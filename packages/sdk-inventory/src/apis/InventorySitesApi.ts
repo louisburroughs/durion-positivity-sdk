@@ -45,6 +45,14 @@ export class InventorySitesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/sites/{siteId}/defaultLocations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
             method: 'GET',
@@ -82,6 +90,14 @@ export class InventorySitesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:admin"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/sites/{siteId}/defaultLocations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
             method: 'PUT',

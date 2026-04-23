@@ -15,9 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
-    PreferencesMergeDto,
-    PreferencesUpsertDto,
-    VehicleCarePreferenceResponse,
+  PreferencesMergeDto,
+  PreferencesUpsertDto,
+  VehicleCarePreferenceResponse,
 } from '../models/index';
 import {
     PreferencesMergeDtoFromJSON,
@@ -47,7 +47,7 @@ export interface UpsertPreferencesRequest {
 }
 
 /**
- *
+ * 
  */
 export class VehiclePreferencesApi extends runtime.BaseAPI {
 
@@ -67,6 +67,14 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'DELETE',
@@ -101,6 +109,14 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'GET',
@@ -145,6 +161,14 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'PATCH',
@@ -190,6 +214,14 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicles/{vehicleId}/preferences`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'PUT',

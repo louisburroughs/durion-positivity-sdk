@@ -16,17 +16,17 @@
 import * as runtime from '../runtime';
 import type {
   AdjustmentRequestResponse,
+  ApiError,
   CreateAdjustmentRequestDto,
-  InventoryErrorResponse,
   RecordMovementRequest,
 } from '../models/index';
 import {
     AdjustmentRequestResponseFromJSON,
     AdjustmentRequestResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateAdjustmentRequestDtoFromJSON,
     CreateAdjustmentRequestDtoToJSON,
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
     RecordMovementRequestFromJSON,
     RecordMovementRequestToJSON,
 } from '../models/index';
@@ -64,6 +64,14 @@ export class StockMovementsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/adjustments/{adjustmentRequestId}/approve`.replace(`{${"adjustmentRequestId"}}`, encodeURIComponent(String(requestParameters['adjustmentRequestId']))),
             method: 'POST',
@@ -100,6 +108,14 @@ export class StockMovementsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/adjustments`,
             method: 'POST',
@@ -138,6 +154,14 @@ export class StockMovementsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:stock_movement:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/stock-movements`,
             method: 'POST',

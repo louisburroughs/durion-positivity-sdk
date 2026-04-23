@@ -30,7 +30,7 @@ export class WorkorderOperationalContextAPIApi extends runtime.BaseAPI {
      * Read-only operational context view for workorders used by UI with optional filters.
      * View workorder operational context
      */
-    async getOperationalContextRaw(requestParameters: GetOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getOperationalContextRaw(requestParameters: GetOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
@@ -53,6 +53,14 @@ export class WorkorderOperationalContextAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:schedule:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/workorders/{workorderId}/operationalContext`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -60,18 +68,14 @@ export class WorkorderOperationalContextAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Read-only operational context view for workorders used by UI with optional filters.
      * View workorder operational context
      */
-    async getOperationalContext(requestParameters: GetOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getOperationalContext(requestParameters: GetOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.getOperationalContextRaw(requestParameters, initOverrides);
         return await response.value();
     }
