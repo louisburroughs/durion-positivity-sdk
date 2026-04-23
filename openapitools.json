@@ -275,6 +275,54 @@
           "gitUserId": "positivity-durion",
           "gitRepoId": "durion-positivity-sdk"
         }
+      },
+      "sdk-documents": {
+        "generatorName": "typescript-fetch",
+        "output": "packages/sdk-documents",
+        "inputSpec": "../durion-positivity-backend/pos-documents/openapi.yaml",
+        "additionalProperties": {
+          "npmName": "@durion-sdk/documents",
+          "npmVersion": "0.1.0-alpha",
+          "supportsES6": true,
+          "stringEnums": true,
+          "withSeparateModelsAndApi": true,
+          "modelPackage": "src/models",
+          "apiPackage": "src/apis",
+          "gitUserId": "positivity-durion",
+          "gitRepoId": "durion-positivity-sdk"
+        }
+      },
+      "sdk-inquiry": {
+        "generatorName": "typescript-fetch",
+        "output": "packages/sdk-inquiry",
+        "inputSpec": "../durion-positivity-backend/pos-inquiry/openapi.yaml",
+        "additionalProperties": {
+          "npmName": "@durion-sdk/inquiry",
+          "npmVersion": "0.1.0-alpha",
+          "supportsES6": true,
+          "stringEnums": true,
+          "withSeparateModelsAndApi": true,
+          "modelPackage": "src/models",
+          "apiPackage": "src/apis",
+          "gitUserId": "positivity-durion",
+          "gitRepoId": "durion-positivity-sdk"
+        }
+      },
+      "sdk-bulk-loader": {
+        "generatorName": "typescript-fetch",
+        "output": "packages/sdk-bulk-loader",
+        "inputSpec": "../durion-positivity-backend/pos-bulk-loader/openapi.yaml",
+        "additionalProperties": {
+          "npmName": "@durion-sdk/bulk-loader",
+          "npmVersion": "0.1.0-alpha",
+          "supportsES6": true,
+          "stringEnums": true,
+          "withSeparateModelsAndApi": true,
+          "modelPackage": "src/models",
+          "apiPackage": "src/apis",
+          "gitUserId": "positivity-durion",
+          "gitRepoId": "durion-positivity-sdk"
+        }
       }
     }
   }
