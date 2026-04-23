@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShopAuditControllerApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -55,50 +64,58 @@ const index_1 = require("../models/index");
 class ShopAuditControllerApi extends runtime.BaseAPI {
     /**
      */
-    async getAuditByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getAuditById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/shop/audit/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ShopAuditEntryResponseFromJSON)(jsonValue));
+    getAuditByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getAuditById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/shop/audit/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ShopAuditEntryResponseFromJSON)(jsonValue));
+        });
     }
     /**
      */
-    async getAuditById(requestParameters, initOverrides) {
-        const response = await this.getAuditByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAuditById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAuditByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      */
-    async searchAuditRaw(requestParameters, initOverrides) {
-        if (requestParameters['filter'] == null) {
-            throw new runtime.RequiredError('filter', 'Required parameter "filter" was null or undefined when calling searchAudit().');
-        }
-        const queryParameters = {};
-        if (requestParameters['filter'] != null) {
-            queryParameters['filter'] = requestParameters['filter'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/shop/audit`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ShopAuditEntryResponseFromJSON));
+    searchAuditRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['filter'] == null) {
+                throw new runtime.RequiredError('filter', 'Required parameter "filter" was null or undefined when calling searchAudit().');
+            }
+            const queryParameters = {};
+            if (requestParameters['filter'] != null) {
+                queryParameters['filter'] = requestParameters['filter'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/shop/audit`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ShopAuditEntryResponseFromJSON));
+        });
     }
     /**
      */
-    async searchAudit(requestParameters, initOverrides) {
-        const response = await this.searchAuditRaw(requestParameters, initOverrides);
-        return await response.value();
+    searchAudit(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.searchAuditRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.ShopAuditControllerApi = ShopAuditControllerApi;

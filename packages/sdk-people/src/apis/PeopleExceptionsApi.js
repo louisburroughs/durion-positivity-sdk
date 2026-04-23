@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeopleExceptionsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,164 +66,184 @@ class PeopleExceptionsApi extends runtime.BaseAPI {
      * Mark an exception as acknowledged.
      * Acknowledge an exception
      */
-    async acknowledgeExceptionRaw(requestParameters, initOverrides) {
-        if (requestParameters['exceptionId'] == null) {
-            throw new runtime.RequiredError('exceptionId', 'Required parameter "exceptionId" was null or undefined when calling acknowledgeException().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/exceptions/{exceptionId}/acknowledge`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    acknowledgeExceptionRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['exceptionId'] == null) {
+                throw new runtime.RequiredError('exceptionId', 'Required parameter "exceptionId" was null or undefined when calling acknowledgeException().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/exceptions/{exceptionId}/acknowledge`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Mark an exception as acknowledged.
      * Acknowledge an exception
      */
-    async acknowledgeException(requestParameters, initOverrides) {
-        const response = await this.acknowledgeExceptionRaw(requestParameters, initOverrides);
-        return await response.value();
+    acknowledgeException(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.acknowledgeExceptionRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Create a new time entry exception record with validation of required fields.
      * Create a time entry exception
      */
-    async createExceptionRaw(requestParameters, initOverrides) {
-        if (requestParameters['timeEntryExceptionRequest'] == null) {
-            throw new runtime.RequiredError('timeEntryExceptionRequest', 'Required parameter "timeEntryExceptionRequest" was null or undefined when calling createException().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/people/exceptions`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.TimeEntryExceptionRequestToJSON)(requestParameters['timeEntryExceptionRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryExceptionResponseFromJSON)(jsonValue));
+    createExceptionRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['timeEntryExceptionRequest'] == null) {
+                throw new runtime.RequiredError('timeEntryExceptionRequest', 'Required parameter "timeEntryExceptionRequest" was null or undefined when calling createException().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/people/exceptions`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.TimeEntryExceptionRequestToJSON)(requestParameters['timeEntryExceptionRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryExceptionResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new time entry exception record with validation of required fields.
      * Create a time entry exception
      */
-    async createException(requestParameters, initOverrides) {
-        const response = await this.createExceptionRaw(requestParameters, initOverrides);
-        return await response.value();
+    createException(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createExceptionRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all exceptions or filter by a specific employee ID.
      * List exceptions, optional filter by employeeId
      */
-    async listByEmployeeRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        if (requestParameters['employeeId'] != null) {
-            queryParameters['employeeId'] = requestParameters['employeeId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/exceptions`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.TimeEntryExceptionFromJSON));
+    listByEmployeeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            if (requestParameters['employeeId'] != null) {
+                queryParameters['employeeId'] = requestParameters['employeeId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/exceptions`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.TimeEntryExceptionFromJSON));
+        });
     }
     /**
      * Retrieve all exceptions or filter by a specific employee ID.
      * List exceptions, optional filter by employeeId
      */
-    async listByEmployee(requestParameters = {}, initOverrides) {
-        const response = await this.listByEmployeeRaw(requestParameters, initOverrides);
-        return await response.value();
+    listByEmployee() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.listByEmployeeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Mark an exception as resolved with optional resolution notes.
      * Resolve an exception
      */
-    async resolveExceptionRaw(requestParameters, initOverrides) {
-        if (requestParameters['exceptionId'] == null) {
-            throw new runtime.RequiredError('exceptionId', 'Required parameter "exceptionId" was null or undefined when calling resolveException().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/exceptions/{exceptionId}/resolve`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.TimeEntryExceptionResolveRequestToJSON)(requestParameters['timeEntryExceptionResolveRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    resolveExceptionRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['exceptionId'] == null) {
+                throw new runtime.RequiredError('exceptionId', 'Required parameter "exceptionId" was null or undefined when calling resolveException().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/exceptions/{exceptionId}/resolve`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.TimeEntryExceptionResolveRequestToJSON)(requestParameters['timeEntryExceptionResolveRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Mark an exception as resolved with optional resolution notes.
      * Resolve an exception
      */
-    async resolveException(requestParameters, initOverrides) {
-        const response = await this.resolveExceptionRaw(requestParameters, initOverrides);
-        return await response.value();
+    resolveException(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.resolveExceptionRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Waive an exception with a reason. waiveReason is required.
      * Waive an exception
      */
-    async waiveExceptionRaw(requestParameters, initOverrides) {
-        if (requestParameters['exceptionId'] == null) {
-            throw new runtime.RequiredError('exceptionId', 'Required parameter "exceptionId" was null or undefined when calling waiveException().');
-        }
-        if (requestParameters['timeEntryExceptionWaiveRequest'] == null) {
-            throw new runtime.RequiredError('timeEntryExceptionWaiveRequest', 'Required parameter "timeEntryExceptionWaiveRequest" was null or undefined when calling waiveException().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/exceptions/{exceptionId}/waive`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.TimeEntryExceptionWaiveRequestToJSON)(requestParameters['timeEntryExceptionWaiveRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    waiveExceptionRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['exceptionId'] == null) {
+                throw new runtime.RequiredError('exceptionId', 'Required parameter "exceptionId" was null or undefined when calling waiveException().');
+            }
+            if (requestParameters['timeEntryExceptionWaiveRequest'] == null) {
+                throw new runtime.RequiredError('timeEntryExceptionWaiveRequest', 'Required parameter "timeEntryExceptionWaiveRequest" was null or undefined when calling waiveException().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/exceptions/{exceptionId}/waive`.replace(`{${"exceptionId"}}`, encodeURIComponent(String(requestParameters['exceptionId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.TimeEntryExceptionWaiveRequestToJSON)(requestParameters['timeEntryExceptionWaiveRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Waive an exception with a reason. waiveReason is required.
      * Waive an exception
      */
-    async waiveException(requestParameters, initOverrides) {
-        const response = await this.waiveExceptionRaw(requestParameters, initOverrides);
-        return await response.value();
+    waiveException(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.waiveExceptionRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PeopleExceptionsApi = PeopleExceptionsApi;

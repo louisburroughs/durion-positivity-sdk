@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkorderPickedItemsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,60 +65,68 @@ class WorkorderPickedItemsApi extends runtime.BaseAPI {
     /**
      * Consume picked items into workorder
      */
-    async consumePickedItemsRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling consumePickedItems().');
-        }
-        if (requestParameters['consumePickedItemsRequest'] == null) {
-            throw new runtime.RequiredError('consumePickedItemsRequest', 'Required parameter "consumePickedItemsRequest" was null or undefined when calling consumePickedItems().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/picked-items:consume`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ConsumePickedItemsRequestToJSON)(requestParameters['consumePickedItemsRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    consumePickedItemsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling consumePickedItems().');
+            }
+            if (requestParameters['consumePickedItemsRequest'] == null) {
+                throw new runtime.RequiredError('consumePickedItemsRequest', 'Required parameter "consumePickedItemsRequest" was null or undefined when calling consumePickedItems().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/picked-items:consume`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ConsumePickedItemsRequestToJSON)(requestParameters['consumePickedItemsRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Consume picked items into workorder
      */
-    async consumePickedItems(requestParameters, initOverrides) {
-        const response = await this.consumePickedItemsRaw(requestParameters, initOverrides);
-        return await response.value();
+    consumePickedItems(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.consumePickedItemsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get picked items for workorder
      */
-    async getPickedItemsRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getPickedItems().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/picked-items`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderPickedItemResponseFromJSON));
+    getPickedItemsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getPickedItems().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/picked-items`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.WorkorderPickedItemResponseFromJSON));
+        });
     }
     /**
      * Get picked items for workorder
      */
-    async getPickedItems(requestParameters, initOverrides) {
-        const response = await this.getPickedItemsRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPickedItems(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPickedItemsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.WorkorderPickedItemsApi = WorkorderPickedItemsApi;

@@ -12,24 +12,24 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function () { return m[k]; } };
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function (o, m, k, k2) {
+}) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function (o, v) {
+}) : function(o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function (o) {
+    var ownKeys = function(o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BillingRulesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,58 +66,66 @@ class BillingRulesApi extends runtime.BaseAPI {
      * Retrieve the current billing rules configuration for a commercial account
      * Get billing rules for a party/customer
      */
-    async getBillingRulesRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getBillingRules().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/billing/rules/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRulesDTOFromJSON)(jsonValue));
+    getBillingRulesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getBillingRules().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/billing/rules/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRulesDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve the current billing rules configuration for a commercial account
      * Get billing rules for a party/customer
      */
-    async getBillingRules(requestParameters, initOverrides) {
-        const response = await this.getBillingRulesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getBillingRules(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getBillingRulesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Idempotent upsert of billing rules for a commercial account
      * Create or update billing rules
      */
-    async upsertBillingRulesRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling upsertBillingRules().');
-        }
-        if (requestParameters['billingRulesDTO'] == null) {
-            throw new runtime.RequiredError('billingRulesDTO', 'Required parameter "billingRulesDTO" was null or undefined when calling upsertBillingRules().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/billing/rules/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.BillingRulesDTOToJSON)(requestParameters['billingRulesDTO']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRulesDTOFromJSON)(jsonValue));
+    upsertBillingRulesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling upsertBillingRules().');
+            }
+            if (requestParameters['billingRulesDTO'] == null) {
+                throw new runtime.RequiredError('billingRulesDTO', 'Required parameter "billingRulesDTO" was null or undefined when calling upsertBillingRules().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/billing/rules/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.BillingRulesDTOToJSON)(requestParameters['billingRulesDTO']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRulesDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Idempotent upsert of billing rules for a commercial account
      * Create or update billing rules
      */
-    async upsertBillingRules(requestParameters, initOverrides) {
-        const response = await this.upsertBillingRulesRaw(requestParameters, initOverrides);
-        return await response.value();
+    upsertBillingRules(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.upsertBillingRulesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.BillingRulesApi = BillingRulesApi;

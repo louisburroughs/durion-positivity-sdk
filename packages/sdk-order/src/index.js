@@ -36,6 +36,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.OrderPriceOverrideWorkflow = void 0;
 exports.createOrderClient = createOrderClient;
 /* tslint:disable */
 /* eslint-disable */
@@ -77,6 +78,8 @@ function createOrderClient(config) {
         salesOrdersApi: new GeneratedApis.SalesOrdersApi(configuration),
     };
 }
+var orderPriceOverrideWorkflow_1 = require("./workflows/orderPriceOverrideWorkflow");
+Object.defineProperty(exports, "OrderPriceOverrideWorkflow", { enumerable: true, get: function () { return orderPriceOverrideWorkflow_1.OrderPriceOverrideWorkflow; } });
 __exportStar(require("./runtime"), exports);
 __exportStar(require("./apis/index"), exports);
 __exportStar(require("./models/index"), exports);

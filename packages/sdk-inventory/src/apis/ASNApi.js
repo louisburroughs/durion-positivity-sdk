@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ASNApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,109 +66,125 @@ class ASNApi extends runtime.BaseAPI {
      * Creates an advanced shipping notice for inbound inventory
      * Create ASN
      */
-    async createAsnRaw(requestParameters, initOverrides) {
-        if (requestParameters['createAsnRequest'] == null) {
-            throw new runtime.RequiredError('createAsnRequest', 'Required parameter "createAsnRequest" was null or undefined when calling createAsn().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/asns`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateAsnRequestToJSON)(requestParameters['createAsnRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AsnResponseFromJSON)(jsonValue));
+    createAsnRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createAsnRequest'] == null) {
+                throw new runtime.RequiredError('createAsnRequest', 'Required parameter "createAsnRequest" was null or undefined when calling createAsn().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/asns`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateAsnRequestToJSON)(requestParameters['createAsnRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AsnResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates an advanced shipping notice for inbound inventory
      * Create ASN
      */
-    async createAsn(requestParameters, initOverrides) {
-        const response = await this.createAsnRaw(requestParameters, initOverrides);
-        return await response.value();
+    createAsn(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAsnRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Creates a goods receipt for an inbound shipment
      * Create goods receipt
      */
-    async createGoodsReceiptRaw(requestParameters, initOverrides) {
-        if (requestParameters['createGoodsReceiptRequest'] == null) {
-            throw new runtime.RequiredError('createGoodsReceiptRequest', 'Required parameter "createGoodsReceiptRequest" was null or undefined when calling createGoodsReceipt().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/goods-receipts`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateGoodsReceiptRequestToJSON)(requestParameters['createGoodsReceiptRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GoodsReceiptResponseFromJSON)(jsonValue));
+    createGoodsReceiptRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createGoodsReceiptRequest'] == null) {
+                throw new runtime.RequiredError('createGoodsReceiptRequest', 'Required parameter "createGoodsReceiptRequest" was null or undefined when calling createGoodsReceipt().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/goods-receipts`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateGoodsReceiptRequestToJSON)(requestParameters['createGoodsReceiptRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GoodsReceiptResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates a goods receipt for an inbound shipment
      * Create goods receipt
      */
-    async createGoodsReceipt(requestParameters, initOverrides) {
-        const response = await this.createGoodsReceiptRaw(requestParameters, initOverrides);
-        return await response.value();
+    createGoodsReceipt(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createGoodsReceiptRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves an ASN by identifier
      * Get ASN
      */
-    async getAsnRaw(requestParameters, initOverrides) {
-        if (requestParameters['asnId'] == null) {
-            throw new runtime.RequiredError('asnId', 'Required parameter "asnId" was null or undefined when calling getAsn().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/asns/{asnId}`.replace(`{${"asnId"}}`, encodeURIComponent(String(requestParameters['asnId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AsnResponseFromJSON)(jsonValue));
+    getAsnRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['asnId'] == null) {
+                throw new runtime.RequiredError('asnId', 'Required parameter "asnId" was null or undefined when calling getAsn().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/asns/{asnId}`.replace(`{${"asnId"}}`, encodeURIComponent(String(requestParameters['asnId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AsnResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves an ASN by identifier
      * Get ASN
      */
-    async getAsn(requestParameters, initOverrides) {
-        const response = await this.getAsnRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAsn(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAsnRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves a goods receipt by identifier
      * Get goods receipt
      */
-    async getGoodsReceiptRaw(requestParameters, initOverrides) {
-        if (requestParameters['receiptId'] == null) {
-            throw new runtime.RequiredError('receiptId', 'Required parameter "receiptId" was null or undefined when calling getGoodsReceipt().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/goods-receipts/{receiptId}`.replace(`{${"receiptId"}}`, encodeURIComponent(String(requestParameters['receiptId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GoodsReceiptResponseFromJSON)(jsonValue));
+    getGoodsReceiptRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['receiptId'] == null) {
+                throw new runtime.RequiredError('receiptId', 'Required parameter "receiptId" was null or undefined when calling getGoodsReceipt().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/goods-receipts/{receiptId}`.replace(`{${"receiptId"}}`, encodeURIComponent(String(requestParameters['receiptId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GoodsReceiptResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves a goods receipt by identifier
      * Get goods receipt
      */
-    async getGoodsReceipt(requestParameters, initOverrides) {
-        const response = await this.getGoodsReceiptRaw(requestParameters, initOverrides);
-        return await response.value();
+    getGoodsReceipt(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getGoodsReceiptRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.ASNApi = ASNApi;

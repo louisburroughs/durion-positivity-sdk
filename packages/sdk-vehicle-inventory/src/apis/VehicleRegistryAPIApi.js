@@ -12,24 +12,24 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function () { return m[k]; } };
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function (o, m, k, k2) {
+}) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function (o, v) {
+}) : function(o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function (o) {
+    var ownKeys = function(o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehicleRegistryAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,137 +66,157 @@ class VehicleRegistryAPIApi extends runtime.BaseAPI {
      * Create a new vehicle registry record
      * Create vehicle
      */
-    async createVehicle1Raw(requestParameters, initOverrides) {
-        if (requestParameters['createVehicleRequest'] == null) {
-            throw new runtime.RequiredError('createVehicleRequest', 'Required parameter "createVehicleRequest" was null or undefined when calling createVehicle1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/vehicle-registry`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateVehicleRequestToJSON)(requestParameters['createVehicleRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    createVehicle1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createVehicleRequest'] == null) {
+                throw new runtime.RequiredError('createVehicleRequest', 'Required parameter "createVehicleRequest" was null or undefined when calling createVehicle1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/vehicle-registry`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateVehicleRequestToJSON)(requestParameters['createVehicleRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new vehicle registry record
      * Create vehicle
      */
-    async createVehicle1(requestParameters, initOverrides) {
-        const response = await this.createVehicle1Raw(requestParameters, initOverrides);
-        return await response.value();
+    createVehicle1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createVehicle1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Deactivate a vehicle by ID
      * Delete vehicle
      */
-    async deleteVehicle1Raw(requestParameters, initOverrides) {
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling deleteVehicle1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteVehicle1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling deleteVehicle1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Deactivate a vehicle by ID
      * Delete vehicle
      */
-    async deleteVehicle1(requestParameters, initOverrides) {
-        await this.deleteVehicle1Raw(requestParameters, initOverrides);
+    deleteVehicle1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteVehicle1Raw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve a vehicle by its unique ID
      * Get vehicle by ID
      */
-    async getVehicle1Raw(requestParameters, initOverrides) {
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling getVehicle1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    getVehicle1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling getVehicle1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a vehicle by its unique ID
      * Get vehicle by ID
      */
-    async getVehicle1(requestParameters, initOverrides) {
-        const response = await this.getVehicle1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getVehicle1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getVehicle1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a vehicle by VIN
      * Get vehicle by VIN
      */
-    async getVehicleByVinRaw(requestParameters, initOverrides) {
-        if (requestParameters['vin'] == null) {
-            throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling getVehicleByVin().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicle-registry/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    getVehicleByVinRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vin'] == null) {
+                throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling getVehicleByVin().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicle-registry/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a vehicle by VIN
      * Get vehicle by VIN
      */
-    async getVehicleByVin(requestParameters, initOverrides) {
-        const response = await this.getVehicleByVinRaw(requestParameters, initOverrides);
-        return await response.value();
+    getVehicleByVin(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getVehicleByVinRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update an existing vehicle by ID
      * Update vehicle
      */
-    async updateVehicle1Raw(requestParameters, initOverrides) {
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling updateVehicle1().');
-        }
-        if (requestParameters['updateVehicleRequest'] == null) {
-            throw new runtime.RequiredError('updateVehicleRequest', 'Required parameter "updateVehicleRequest" was null or undefined when calling updateVehicle1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.UpdateVehicleRequestToJSON)(requestParameters['updateVehicleRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    updateVehicle1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling updateVehicle1().');
+            }
+            if (requestParameters['updateVehicleRequest'] == null) {
+                throw new runtime.RequiredError('updateVehicleRequest', 'Required parameter "updateVehicleRequest" was null or undefined when calling updateVehicle1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.UpdateVehicleRequestToJSON)(requestParameters['updateVehicleRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update an existing vehicle by ID
      * Update vehicle
      */
-    async updateVehicle1(requestParameters, initOverrides) {
-        const response = await this.updateVehicle1Raw(requestParameters, initOverrides);
-        return await response.value();
+    updateVehicle1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateVehicle1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.VehicleRegistryAPIApi = VehicleRegistryAPIApi;

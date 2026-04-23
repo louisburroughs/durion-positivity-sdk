@@ -59,6 +59,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
@@ -135,7 +144,7 @@ describe('SDK-007 AC-4: idempotencyKeyGenerator typed with method and url params
 //                                           → toBe(...) fails RED
 // ---------------------------------------------------------------------------
 describe('SDK-007 AC-5: buildRequestHeaders uses correlationIdProvider when present', () => {
-    it('calls correlationIdProvider from config and uses its return value as X-Correlation-Id', async () => {
+    it('calls correlationIdProvider from config and uses its return value as X-Correlation-Id', () => __awaiter(void 0, void 0, void 0, function* () {
         const mockProvider = jest.fn().mockReturnValue('test-correlation-id-123');
         // TypeScript structural typing: the extra correlationIdProvider property is
         // accepted at the call site because it is not a fresh object literal
@@ -149,12 +158,12 @@ describe('SDK-007 AC-5: buildRequestHeaders uses correlationIdProvider when pres
         const client = new http_client_1.SdkHttpClient(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         configWithProvider);
-        const headers = await client.buildRequestHeaders('GET');
+        const headers = yield client.buildRequestHeaders('GET');
         // Fails RED: mockProvider is never called by the current implementation.
         expect(mockProvider).toHaveBeenCalledTimes(1);
         // Fails RED: the current implementation uses crypto.randomUUID(), not the provider.
         expect(headers['X-Correlation-Id']).toBe('test-correlation-id-123');
-    });
+    }));
 });
 // ---------------------------------------------------------------------------
 // AC-6 — SdkHttpClient.request() calls correlationIdProvider when present.
@@ -181,7 +190,8 @@ describe('SDK-007 AC-6: request() uses correlationIdProvider when present', () =
     afterEach(() => {
         jest.clearAllMocks();
     });
-    it('calls correlationIdProvider and forwards its value as X-Correlation-Id to fetch', async () => {
+    it('calls correlationIdProvider and forwards its value as X-Correlation-Id to fetch', () => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         const mockProvider = jest.fn().mockReturnValue('test-correlation-id-123');
         const configWithProvider = {
             baseUrl: 'http://localhost:8080',
@@ -190,14 +200,14 @@ describe('SDK-007 AC-6: request() uses correlationIdProvider when present', () =
         const client = new http_client_1.SdkHttpClient(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         configWithProvider);
-        await client.request('GET', '/test');
+        yield client.request('GET', '/test');
         // Fails RED: mockProvider is never called by the current implementation.
         expect(mockProvider).toHaveBeenCalledTimes(1);
-        const fetchInit = mockFetch.mock.calls[0]?.[1];
-        const fetchHeaders = fetchInit?.headers;
+        const fetchInit = (_a = mockFetch.mock.calls[0]) === null || _a === void 0 ? void 0 : _a[1];
+        const fetchHeaders = fetchInit === null || fetchInit === void 0 ? void 0 : fetchInit.headers;
         // Fails RED: the current implementation uses crypto.randomUUID(), not the provider.
-        expect(fetchHeaders?.['X-Correlation-Id']).toBe('test-correlation-id-123');
-    });
+        expect(fetchHeaders === null || fetchHeaders === void 0 ? void 0 : fetchHeaders['X-Correlation-Id']).toBe('test-correlation-id-123');
+    }));
 });
 // ---------------------------------------------------------------------------
 // AC-7 — SdkHttpClient.buildRequestHeaders() falls back to crypto.randomUUID()
@@ -208,41 +218,41 @@ describe('SDK-007 AC-6: request() uses correlationIdProvider when present', () =
 // ---------------------------------------------------------------------------
 describe('SDK-007 AC-7: buildRequestHeaders falls back to crypto.randomUUID() when no provider', () => {
     // This test PASSES even RED — it documents existing fallback behavior.
-    it('X-Correlation-Id is a valid UUIDv4 when correlationIdProvider is not configured', async () => {
+    it('X-Correlation-Id is a valid UUIDv4 when correlationIdProvider is not configured', () => __awaiter(void 0, void 0, void 0, function* () {
         const client = new http_client_1.SdkHttpClient({ baseUrl: 'http://localhost:8080' });
-        const headers = await client.buildRequestHeaders('GET');
+        const headers = yield client.buildRequestHeaders('GET');
         expect(headers['X-Correlation-Id']).toBeDefined();
         // crypto.randomUUID() produces a standard UUIDv4.
         expect(headers['X-Correlation-Id']).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-    });
+    }));
 });
 describe('SDK-007 AC-8: buildRequestHeaders uses idempotencyKeyGenerator with normalized method and url', () => {
-    it('generates Idempotency-Key for mutating requests using an absolute URL', async () => {
+    it('generates Idempotency-Key for mutating requests using an absolute URL', () => __awaiter(void 0, void 0, void 0, function* () {
         const mockGenerator = jest.fn().mockReturnValue('generated-key-123');
         const client = new http_client_1.SdkHttpClient({
             baseUrl: 'http://localhost:8080',
             idempotencyKeyGenerator: mockGenerator,
         });
-        const headers = await client.buildRequestHeaders('post', { url: '/v1/orders/123?expand=true' });
+        const headers = yield client.buildRequestHeaders('post', { url: '/v1/orders/123?expand=true' });
         expect(mockGenerator).toHaveBeenCalledTimes(1);
         expect(mockGenerator).toHaveBeenCalledWith('POST', 'http://localhost:8080/v1/orders/123?expand=true');
         expect(headers['Idempotency-Key']).toBe('generated-key-123');
-    });
+    }));
 });
 describe('SDK-007 AC-9: explicit idempotency keys win over generated keys', () => {
-    it('does not call idempotencyKeyGenerator when an explicit key is supplied', async () => {
+    it('does not call idempotencyKeyGenerator when an explicit key is supplied', () => __awaiter(void 0, void 0, void 0, function* () {
         const mockGenerator = jest.fn().mockReturnValue('generated-key-123');
         const client = new http_client_1.SdkHttpClient({
             baseUrl: 'http://localhost:8080',
             idempotencyKeyGenerator: mockGenerator,
         });
-        const headers = await client.buildRequestHeaders('POST', {
+        const headers = yield client.buildRequestHeaders('POST', {
             url: '/v1/orders/123',
             idempotencyKey: 'explicit-key-456',
         });
         expect(mockGenerator).not.toHaveBeenCalled();
         expect(headers['Idempotency-Key']).toBe('explicit-key-456');
-    });
+    }));
 });
 describe('SDK-007 AC-10: request() uses idempotencyKeyGenerator with normalized method and absolute url', () => {
     let mockFetch;
@@ -260,17 +270,18 @@ describe('SDK-007 AC-10: request() uses idempotencyKeyGenerator with normalized 
     afterEach(() => {
         jest.clearAllMocks();
     });
-    it('forwards a generated Idempotency-Key header for mutating requests', async () => {
+    it('forwards a generated Idempotency-Key header for mutating requests', () => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         const mockGenerator = jest.fn().mockReturnValue('generated-key-789');
         const client = new http_client_1.SdkHttpClient({
             baseUrl: 'http://localhost:8080',
             idempotencyKeyGenerator: mockGenerator,
         });
-        await client.request('patch', '/v1/orders/123');
+        yield client.request('patch', '/v1/orders/123');
         expect(mockGenerator).toHaveBeenCalledTimes(1);
         expect(mockGenerator).toHaveBeenCalledWith('PATCH', 'http://localhost:8080/v1/orders/123');
-        const fetchInit = mockFetch.mock.calls[0]?.[1];
-        const fetchHeaders = fetchInit?.headers;
-        expect(fetchHeaders?.['Idempotency-Key']).toBe('generated-key-789');
-    });
+        const fetchInit = (_a = mockFetch.mock.calls[0]) === null || _a === void 0 ? void 0 : _a[1];
+        const fetchHeaders = fetchInit === null || fetchInit === void 0 ? void 0 : fetchInit.headers;
+        expect(fetchHeaders === null || fetchHeaders === void 0 ? void 0 : fetchHeaders['Idempotency-Key']).toBe('generated-key-789');
+    }));
 });

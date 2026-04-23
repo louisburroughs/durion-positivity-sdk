@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListAdjustmentsStatusEnum = exports.CycleCountAdjustmentsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,197 +66,225 @@ class CycleCountAdjustmentsApi extends runtime.BaseAPI {
      * Approves a pending adjustment and posts it to the inventory ledger
      * Approve adjustment
      */
-    async approveAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['adjustmentId'] == null) {
-            throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling approveAdjustment().');
-        }
-        if (requestParameters['approveAdjustmentRequest'] == null) {
-            throw new runtime.RequiredError('approveAdjustmentRequest', 'Required parameter "approveAdjustmentRequest" was null or undefined when calling approveAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}/approve`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ApproveAdjustmentRequestToJSON)(requestParameters['approveAdjustmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+    approveAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['adjustmentId'] == null) {
+                throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling approveAdjustment().');
+            }
+            if (requestParameters['approveAdjustmentRequest'] == null) {
+                throw new runtime.RequiredError('approveAdjustmentRequest', 'Required parameter "approveAdjustmentRequest" was null or undefined when calling approveAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}/approve`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ApproveAdjustmentRequestToJSON)(requestParameters['approveAdjustmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Approves a pending adjustment and posts it to the inventory ledger
      * Approve adjustment
      */
-    async approveAdjustment(requestParameters, initOverrides) {
-        const response = await this.approveAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    approveAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.approveAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns the count of adjustments awaiting approval
      * Count pending approvals
      */
-    async countPendingApprovalsRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountAdjustments/pending/count`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    countPendingApprovalsRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountAdjustments/pending/count`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Returns the count of adjustments awaiting approval
      * Count pending approvals
      */
-    async countPendingApprovals(initOverrides) {
-        const response = await this.countPendingApprovalsRaw(initOverrides);
-        return await response.value();
+    countPendingApprovals(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.countPendingApprovalsRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Creates a new adjustment from a cycle count. Automatically evaluates against approval thresholds.
      * Create cycle count adjustment
      */
-    async createAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['createAdjustmentRequest'] == null) {
-            throw new runtime.RequiredError('createAdjustmentRequest', 'Required parameter "createAdjustmentRequest" was null or undefined when calling createAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountAdjustments`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateAdjustmentRequestToJSON)(requestParameters['createAdjustmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+    createAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createAdjustmentRequest'] == null) {
+                throw new runtime.RequiredError('createAdjustmentRequest', 'Required parameter "createAdjustmentRequest" was null or undefined when calling createAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountAdjustments`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateAdjustmentRequestToJSON)(requestParameters['createAdjustmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates a new adjustment from a cycle count. Automatically evaluates against approval thresholds.
      * Create cycle count adjustment
      */
-    async createAdjustment(requestParameters, initOverrides) {
-        const response = await this.createAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    createAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves details of a specific cycle count adjustment
      * Get adjustment details
      */
-    async getAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['adjustmentId'] == null) {
-            throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling getAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+    getAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['adjustmentId'] == null) {
+                throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling getAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves details of a specific cycle count adjustment
      * Get adjustment details
      */
-    async getAdjustment(requestParameters, initOverrides) {
-        const response = await this.getAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Lists all adjustments matching the specified status
      * List adjustments by status
      */
-    async listAdjustmentsRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        if (requestParameters['status'] != null) {
-            queryParameters['status'] = requestParameters['status'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountAdjustments`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AdjustmentResponseFromJSON));
+    listAdjustmentsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            if (requestParameters['status'] != null) {
+                queryParameters['status'] = requestParameters['status'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountAdjustments`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AdjustmentResponseFromJSON));
+        });
     }
     /**
      * Lists all adjustments matching the specified status
      * List adjustments by status
      */
-    async listAdjustments(requestParameters = {}, initOverrides) {
-        const response = await this.listAdjustmentsRaw(requestParameters, initOverrides);
-        return await response.value();
+    listAdjustments() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.listAdjustmentsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Lists all adjustments awaiting approval
      * List pending approvals
      */
-    async listPendingApprovalsRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountAdjustments/pending`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AdjustmentResponseFromJSON));
+    listPendingApprovalsRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountAdjustments/pending`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AdjustmentResponseFromJSON));
+        });
     }
     /**
      * Lists all adjustments awaiting approval
      * List pending approvals
      */
-    async listPendingApprovals(initOverrides) {
-        const response = await this.listPendingApprovalsRaw(initOverrides);
-        return await response.value();
+    listPendingApprovals(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listPendingApprovalsRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Rejects a pending adjustment with a reason. No inventory changes are made.
      * Reject adjustment
      */
-    async rejectAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['adjustmentId'] == null) {
-            throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling rejectAdjustment().');
-        }
-        if (requestParameters['rejectAdjustmentRequest'] == null) {
-            throw new runtime.RequiredError('rejectAdjustmentRequest', 'Required parameter "rejectAdjustmentRequest" was null or undefined when calling rejectAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}/reject`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RejectAdjustmentRequestToJSON)(requestParameters['rejectAdjustmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+    rejectAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['adjustmentId'] == null) {
+                throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling rejectAdjustment().');
+            }
+            if (requestParameters['rejectAdjustmentRequest'] == null) {
+                throw new runtime.RequiredError('rejectAdjustmentRequest', 'Required parameter "rejectAdjustmentRequest" was null or undefined when calling rejectAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountAdjustments/{adjustmentId}/reject`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RejectAdjustmentRequestToJSON)(requestParameters['rejectAdjustmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Rejects a pending adjustment with a reason. No inventory changes are made.
      * Reject adjustment
      */
-    async rejectAdjustment(requestParameters, initOverrides) {
-        const response = await this.rejectAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    rejectAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.rejectAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CycleCountAdjustmentsApi = CycleCountAdjustmentsApi;

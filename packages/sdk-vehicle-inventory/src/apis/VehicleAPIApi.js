@@ -12,24 +12,24 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function () { return m[k]; } };
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function (o, m, k, k2) {
+}) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function (o, v) {
+}) : function(o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function (o) {
+    var ownKeys = function(o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehicleAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,244 +66,280 @@ class VehicleAPIApi extends runtime.BaseAPI {
      * Add a new vehicle to the inventory.
      * Create a new vehicle
      */
-    async createVehicleRaw(requestParameters, initOverrides) {
-        if (requestParameters['vehicleLegacyRequest'] == null) {
-            throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicle().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/vehicles-legacy`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+    createVehicleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vehicleLegacyRequest'] == null) {
+                throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicle().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Add a new vehicle to the inventory.
      * Create a new vehicle
      */
-    async createVehicle(requestParameters, initOverrides) {
-        const response = await this.createVehicleRaw(requestParameters, initOverrides);
-        return await response.value();
+    createVehicle(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createVehicleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Add a new vehicle to the inventory using its VIN.
      * Create vehicle by VIN
      */
-    async createVehicleByVINRaw(requestParameters, initOverrides) {
-        if (requestParameters['vehicleLegacyRequest'] == null) {
-            throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicleByVIN().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/vin`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+    createVehicleByVINRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vehicleLegacyRequest'] == null) {
+                throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicleByVIN().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy/vin`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Add a new vehicle to the inventory using its VIN.
      * Create vehicle by VIN
      */
-    async createVehicleByVIN(requestParameters, initOverrides) {
-        const response = await this.createVehicleByVINRaw(requestParameters, initOverrides);
-        return await response.value();
+    createVehicleByVIN(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createVehicleByVINRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Delete a vehicle from the inventory by its ID.
      * Delete vehicle by ID
      */
-    async deleteVehicleRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteVehicle().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteVehicleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteVehicle().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete a vehicle from the inventory by its ID.
      * Delete vehicle by ID
      */
-    async deleteVehicle(requestParameters, initOverrides) {
-        await this.deleteVehicleRaw(requestParameters, initOverrides);
+    deleteVehicle(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteVehicleRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Delete a vehicle from the inventory by its VIN.
      * Delete vehicle by VIN
      */
-    async deleteVehicleByVINRaw(requestParameters, initOverrides) {
-        if (requestParameters['vin'] == null) {
-            throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling deleteVehicleByVIN().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteVehicleByVINRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vin'] == null) {
+                throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling deleteVehicleByVIN().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete a vehicle from the inventory by its VIN.
      * Delete vehicle by VIN
      */
-    async deleteVehicleByVIN(requestParameters, initOverrides) {
-        await this.deleteVehicleByVINRaw(requestParameters, initOverrides);
+    deleteVehicleByVIN(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteVehicleByVINRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve a list of all vehicles in the inventory.
      * Get all vehicles
      */
-    async getAllVehiclesRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicles-legacy`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.VehicleLegacyResponseFromJSON));
+    getAllVehiclesRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.VehicleLegacyResponseFromJSON));
+        });
     }
     /**
      * Retrieve a list of all vehicles in the inventory.
      * Get all vehicles
      */
-    async getAllVehicles(initOverrides) {
-        const response = await this.getAllVehiclesRaw(initOverrides);
-        return await response.value();
+    getAllVehicles(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllVehiclesRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a vehicle by its unique ID.
      * Get vehicle by ID
      */
-    async getVehicleRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getVehicle().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+    getVehicleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getVehicle().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a vehicle by its unique ID.
      * Get vehicle by ID
      */
-    async getVehicle(requestParameters, initOverrides) {
-        const response = await this.getVehicleRaw(requestParameters, initOverrides);
-        return await response.value();
+    getVehicle(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getVehicleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a vehicle by its VIN.
      * Get vehicle by VIN
      */
-    async getVehicleByVINRaw(requestParameters, initOverrides) {
-        if (requestParameters['vin'] == null) {
-            throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling getVehicleByVIN().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+    getVehicleByVINRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vin'] == null) {
+                throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling getVehicleByVIN().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a vehicle by its VIN.
      * Get vehicle by VIN
      */
-    async getVehicleByVIN(requestParameters, initOverrides) {
-        const response = await this.getVehicleByVINRaw(requestParameters, initOverrides);
-        return await response.value();
+    getVehicleByVIN(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getVehicleByVINRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update an existing vehicle\'s details by its ID.
      * Update vehicle by ID
      */
-    async updateVehicleRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateVehicle().');
-        }
-        if (requestParameters['vehicleLegacyRequest'] == null) {
-            throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicle().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+    updateVehicleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateVehicle().');
+            }
+            if (requestParameters['vehicleLegacyRequest'] == null) {
+                throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicle().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update an existing vehicle\'s details by its ID.
      * Update vehicle by ID
      */
-    async updateVehicle(requestParameters, initOverrides) {
-        const response = await this.updateVehicleRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateVehicle(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateVehicleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update an existing vehicle\'s details by its VIN.
      * Update vehicle by VIN
      */
-    async updateVehicleByVINRaw(requestParameters, initOverrides) {
-        if (requestParameters['vin'] == null) {
-            throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling updateVehicleByVIN().');
-        }
-        if (requestParameters['vehicleLegacyRequest'] == null) {
-            throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicleByVIN().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+    updateVehicleByVINRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vin'] == null) {
+                throw new runtime.RequiredError('vin', 'Required parameter "vin" was null or undefined when calling updateVehicleByVIN().');
+            }
+            if (requestParameters['vehicleLegacyRequest'] == null) {
+                throw new runtime.RequiredError('vehicleLegacyRequest', 'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicleByVIN().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.VehicleLegacyRequestToJSON)(requestParameters['vehicleLegacyRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleLegacyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update an existing vehicle\'s details by its VIN.
      * Update vehicle by VIN
      */
-    async updateVehicleByVIN(requestParameters, initOverrides) {
-        const response = await this.updateVehicleByVINRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateVehicleByVIN(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateVehicleByVINRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.VehicleAPIApi = VehicleAPIApi;

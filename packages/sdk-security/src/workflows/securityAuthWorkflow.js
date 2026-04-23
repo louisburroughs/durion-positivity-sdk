@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecurityAuthWorkflow = void 0;
 class SecurityAuthWorkflow {
+    authApi;
+    jwtApi;
     constructor(authApi, jwtApi) {
         this.authApi = authApi;
         this.jwtApi = jwtApi;

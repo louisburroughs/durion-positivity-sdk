@@ -147,10 +147,11 @@ describe('SDK-005 AC-3: packages/sdk-{module}/package.json has correct @durion-s
 // ---------------------------------------------------------------------------
 describe('SDK-005 AC-4: packages/sdk-{module}/package.json depends on @durion-sdk/transport', () => {
     it.each(PHASE_2_MODULES)('packages/sdk-%s/package.json has dependencies["@durion-sdk/transport"]', (module) => {
+        var _a;
         const pkgJsonPath = path.join(PACKAGES_DIR, `sdk-${module}`, 'package.json');
         expect(fs.existsSync(pkgJsonPath)).toBe(true);
         const pkg = readJson(pkgJsonPath);
-        const dependencies = (pkg['dependencies'] ?? {});
+        const dependencies = ((_a = pkg['dependencies']) !== null && _a !== void 0 ? _a : {});
         expect(dependencies).toHaveProperty('@durion-sdk/transport');
     });
 });
@@ -168,10 +169,11 @@ describe('SDK-005 AC-5: openapitools.json has generator keys for all Phase 2 mod
         expect(fs.existsSync(openApiToolsPath)).toBe(true);
     });
     it.each(PHASE_2_MODULES)('openapitools.json generator-cli.generators has key "sdk-%s"', (module) => {
+        var _a, _b;
         expect(fs.existsSync(openApiToolsPath)).toBe(true);
         const config = readJson(openApiToolsPath);
-        const generatorCli = (config['generator-cli'] ?? {});
-        const generators = (generatorCli['generators'] ?? {});
+        const generatorCli = ((_a = config['generator-cli']) !== null && _a !== void 0 ? _a : {});
+        const generators = ((_b = generatorCli['generators']) !== null && _b !== void 0 ? _b : {});
         expect(generators).toHaveProperty(`sdk-${module}`);
     });
 });
@@ -204,11 +206,12 @@ describe('SDK-005 AC-6: scripts/generate.sh contains all Phase 2 module slugs', 
 // ---------------------------------------------------------------------------
 describe('SDK-005 AC-7: src/index.ts contains expected API instance property references', () => {
     it.each(PHASE_2_MODULES)('packages/sdk-%s/src/index.ts contains expected API property names', (module) => {
+        var _a;
         const indexPath = path.join(PACKAGES_DIR, `sdk-${module}`, 'src', 'index.ts');
         // Fails RED: neither the directory nor index.ts exist for Phase 2 modules.
         expect(fs.existsSync(indexPath)).toBe(true);
         const content = readText(indexPath);
-        const expectedProps = PHASE_2_API_PROPS[module] ?? [];
+        const expectedProps = (_a = PHASE_2_API_PROPS[module]) !== null && _a !== void 0 ? _a : [];
         for (const prop of expectedProps) {
             expect(content).toContain(prop);
         }

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrderPriceOverrideWorkflow = void 0;
 class OrderPriceOverrideWorkflow {
+    priceOverridesApi;
     constructor(priceOverridesApi) {
         this.priceOverridesApi = priceOverridesApi;
     }

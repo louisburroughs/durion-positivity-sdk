@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PromotionRedemptionsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,55 +66,63 @@ class PromotionRedemptionsApi extends runtime.BaseAPI {
      * Retrieve all recorded redemptions for a customer
      * Get redemptions by customer
      */
-    async getRedemptionsByCustomerRaw(requestParameters, initOverrides) {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getRedemptionsByCustomer().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/promotions/redemptions/by-customer/{customerId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PromotionRedemptionResponseFromJSON));
+    getRedemptionsByCustomerRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['customerId'] == null) {
+                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getRedemptionsByCustomer().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/promotions/redemptions/by-customer/{customerId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PromotionRedemptionResponseFromJSON));
+        });
     }
     /**
      * Retrieve all recorded redemptions for a customer
      * Get redemptions by customer
      */
-    async getRedemptionsByCustomer(requestParameters, initOverrides) {
-        const response = await this.getRedemptionsByCustomerRaw(requestParameters, initOverrides);
-        return await response.value();
+    getRedemptionsByCustomer(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getRedemptionsByCustomerRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Record a promotion redemption idempotently
      * Record promotion redemption
      */
-    async recordRedemptionRaw(requestParameters, initOverrides) {
-        if (requestParameters['recordRedemptionRequest'] == null) {
-            throw new runtime.RequiredError('recordRedemptionRequest', 'Required parameter "recordRedemptionRequest" was null or undefined when calling recordRedemption().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/promotions/redemptions`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RecordRedemptionRequestToJSON)(requestParameters['recordRedemptionRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionRedemptionResponseFromJSON)(jsonValue));
+    recordRedemptionRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['recordRedemptionRequest'] == null) {
+                throw new runtime.RequiredError('recordRedemptionRequest', 'Required parameter "recordRedemptionRequest" was null or undefined when calling recordRedemption().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/promotions/redemptions`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RecordRedemptionRequestToJSON)(requestParameters['recordRedemptionRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionRedemptionResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Record a promotion redemption idempotently
      * Record promotion redemption
      */
-    async recordRedemption(requestParameters, initOverrides) {
-        const response = await this.recordRedemptionRaw(requestParameters, initOverrides);
-        return await response.value();
+    recordRedemption(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.recordRedemptionRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PromotionRedemptionsApi = PromotionRedemptionsApi;

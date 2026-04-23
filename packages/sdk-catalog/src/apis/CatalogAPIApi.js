@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CatalogAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,157 +66,177 @@ class CatalogAPIApi extends runtime.BaseAPI {
      * Adds a new catalog.
      * Add a new catalog
      */
-    async addCatalogRaw(requestParameters, initOverrides) {
-        if (requestParameters['catalogDto'] == null) {
-            throw new runtime.RequiredError('catalogDto', 'Required parameter "catalogDto" was null or undefined when calling addCatalog().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/catalogs`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CatalogDtoToJSON)(requestParameters['catalogDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    addCatalogRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['catalogDto'] == null) {
+                throw new runtime.RequiredError('catalogDto', 'Required parameter "catalogDto" was null or undefined when calling addCatalog().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/catalogs`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CatalogDtoToJSON)(requestParameters['catalogDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Adds a new catalog.
      * Add a new catalog
      */
-    async addCatalog(requestParameters, initOverrides) {
-        const response = await this.addCatalogRaw(requestParameters, initOverrides);
-        return await response.value();
+    addCatalog(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.addCatalogRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Deletes a catalog by its ID.
      * Delete a catalog
      */
-    async deleteCatalogRaw(requestParameters, initOverrides) {
-        if (requestParameters['catalogId'] == null) {
-            throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling deleteCatalog().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteCatalogRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['catalogId'] == null) {
+                throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling deleteCatalog().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Deletes a catalog by its ID.
      * Delete a catalog
      */
-    async deleteCatalog(requestParameters, initOverrides) {
-        await this.deleteCatalogRaw(requestParameters, initOverrides);
+    deleteCatalog(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteCatalogRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieves a specific catalog by its unique ID.
      * Get a catalog by ID
      */
-    async getCatalogByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['catalogId'] == null) {
-            throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling getCatalogById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getCatalogByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['catalogId'] == null) {
+                throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling getCatalogById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Retrieves a specific catalog by its unique ID.
      * Get a catalog by ID
      */
-    async getCatalogById(requestParameters, initOverrides) {
-        const response = await this.getCatalogByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getCatalogById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCatalogByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves a list of catalogs matching the given name.
      * Get catalogs by name
      */
-    async getCatalogByNameRaw(requestParameters, initOverrides) {
-        if (requestParameters['name'] == null) {
-            throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getCatalogByName().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/catalogs/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getCatalogByNameRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['name'] == null) {
+                throw new runtime.RequiredError('name', 'Required parameter "name" was null or undefined when calling getCatalogByName().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/catalogs/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Retrieves a list of catalogs matching the given name.
      * Get catalogs by name
      */
-    async getCatalogByName(requestParameters, initOverrides) {
-        const response = await this.getCatalogByNameRaw(requestParameters, initOverrides);
-        return await response.value();
+    getCatalogByName(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCatalogByNameRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Updates an existing catalog.
      * Update an existing catalog
      */
-    async updateCatalogRaw(requestParameters, initOverrides) {
-        if (requestParameters['catalogId'] == null) {
-            throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling updateCatalog().');
-        }
-        if (requestParameters['catalogDto'] == null) {
-            throw new runtime.RequiredError('catalogDto', 'Required parameter "catalogDto" was null or undefined when calling updateCatalog().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CatalogDtoToJSON)(requestParameters['catalogDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    updateCatalogRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['catalogId'] == null) {
+                throw new runtime.RequiredError('catalogId', 'Required parameter "catalogId" was null or undefined when calling updateCatalog().');
+            }
+            if (requestParameters['catalogDto'] == null) {
+                throw new runtime.RequiredError('catalogDto', 'Required parameter "catalogDto" was null or undefined when calling updateCatalog().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CatalogDtoToJSON)(requestParameters['catalogDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Updates an existing catalog.
      * Update an existing catalog
      */
-    async updateCatalog(requestParameters, initOverrides) {
-        const response = await this.updateCatalogRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateCatalog(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateCatalogRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CatalogAPIApi = CatalogAPIApi;

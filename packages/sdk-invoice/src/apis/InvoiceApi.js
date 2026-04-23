@@ -12,24 +12,24 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function () { return m[k]; } };
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function (o, m, k, k2) {
+}) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function (o, v) {
+}) : function(o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function (o) {
+    var ownKeys = function(o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InvoiceApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,148 +66,168 @@ class InvoiceApi extends runtime.BaseAPI {
      * Apply discount, fee, or correction to a draft invoice
      * Apply invoice adjustment
      */
-    async applyAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['invoiceId'] == null) {
-            throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling applyAdjustment().');
-        }
-        if (requestParameters['adjustmentRequest'] == null) {
-            throw new runtime.RequiredError('adjustmentRequest', 'Required parameter "adjustmentRequest" was null or undefined when calling applyAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/invoices/{invoiceId}/adjustments`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.AdjustmentRequestToJSON)(requestParameters['adjustmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+    applyAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['invoiceId'] == null) {
+                throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling applyAdjustment().');
+            }
+            if (requestParameters['adjustmentRequest'] == null) {
+                throw new runtime.RequiredError('adjustmentRequest', 'Required parameter "adjustmentRequest" was null or undefined when calling applyAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/invoices/{invoiceId}/adjustments`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.AdjustmentRequestToJSON)(requestParameters['adjustmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Apply discount, fee, or correction to a draft invoice
      * Apply invoice adjustment
      */
-    async applyAdjustment(requestParameters, initOverrides) {
-        const response = await this.applyAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    applyAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.applyAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Create invoice draft from completed workorder data
      * Create invoice
      */
-    async createInvoiceRaw(requestParameters, initOverrides) {
-        if (requestParameters['invoiceCreationRequest'] == null) {
-            throw new runtime.RequiredError('invoiceCreationRequest', 'Required parameter "invoiceCreationRequest" was null or undefined when calling createInvoice().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/invoices`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.InvoiceCreationRequestToJSON)(requestParameters['invoiceCreationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceGenerationResponseFromJSON)(jsonValue));
+    createInvoiceRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['invoiceCreationRequest'] == null) {
+                throw new runtime.RequiredError('invoiceCreationRequest', 'Required parameter "invoiceCreationRequest" was null or undefined when calling createInvoice().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/invoices`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.InvoiceCreationRequestToJSON)(requestParameters['invoiceCreationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceGenerationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create invoice draft from completed workorder data
      * Create invoice
      */
-    async createInvoice(requestParameters, initOverrides) {
-        const response = await this.createInvoiceRaw(requestParameters, initOverrides);
-        return await response.value();
+    createInvoice(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createInvoiceRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Transition invoice from DRAFT to FINALIZED; enforces permission matrix and emits InvoiceFinalized event for async GL posting (Story #13)
      * Finalize invoice
      */
-    async finalizeInvoiceRaw(requestParameters, initOverrides) {
-        if (requestParameters['invoiceId'] == null) {
-            throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling finalizeInvoice().');
-        }
-        if (requestParameters['finalizationRequest'] == null) {
-            throw new runtime.RequiredError('finalizationRequest', 'Required parameter "finalizationRequest" was null or undefined when calling finalizeInvoice().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/invoices/{invoiceId}/finalize`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.FinalizationRequestToJSON)(requestParameters['finalizationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+    finalizeInvoiceRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['invoiceId'] == null) {
+                throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling finalizeInvoice().');
+            }
+            if (requestParameters['finalizationRequest'] == null) {
+                throw new runtime.RequiredError('finalizationRequest', 'Required parameter "finalizationRequest" was null or undefined when calling finalizeInvoice().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/invoices/{invoiceId}/finalize`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.FinalizationRequestToJSON)(requestParameters['finalizationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Transition invoice from DRAFT to FINALIZED; enforces permission matrix and emits InvoiceFinalized event for async GL posting (Story #13)
      * Finalize invoice
      */
-    async finalizeInvoice(requestParameters, initOverrides) {
-        const response = await this.finalizeInvoiceRaw(requestParameters, initOverrides);
-        return await response.value();
+    finalizeInvoice(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.finalizeInvoiceRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get invoice details
      * Get invoice
      */
-    async getInvoiceRaw(requestParameters, initOverrides) {
-        if (requestParameters['invoiceId'] == null) {
-            throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling getInvoice().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/invoices/{invoiceId}`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+    getInvoiceRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['invoiceId'] == null) {
+                throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling getInvoice().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/invoices/{invoiceId}`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Get invoice details
      * Get invoice
      */
-    async getInvoice(requestParameters, initOverrides) {
-        const response = await this.getInvoiceRaw(requestParameters, initOverrides);
-        return await response.value();
+    getInvoice(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getInvoiceRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Revert a FINALIZED invoice back to DRAFT within 24h of finalization and before GL posting (Story #13, AC6)
      * Revert finalized invoice
      */
-    async revertInvoiceRaw(requestParameters, initOverrides) {
-        if (requestParameters['invoiceId'] == null) {
-            throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling revertInvoice().');
-        }
-        if (requestParameters['revertRequest'] == null) {
-            throw new runtime.RequiredError('revertRequest', 'Required parameter "revertRequest" was null or undefined when calling revertInvoice().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/invoices/{invoiceId}/revert`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RevertRequestToJSON)(requestParameters['revertRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+    revertInvoiceRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['invoiceId'] == null) {
+                throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling revertInvoice().');
+            }
+            if (requestParameters['revertRequest'] == null) {
+                throw new runtime.RequiredError('revertRequest', 'Required parameter "revertRequest" was null or undefined when calling revertInvoice().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/invoices/{invoiceId}/revert`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RevertRequestToJSON)(requestParameters['revertRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceDetailsResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Revert a FINALIZED invoice back to DRAFT within 24h of finalization and before GL posting (Story #13, AC6)
      * Revert finalized invoice
      */
-    async revertInvoice(requestParameters, initOverrides) {
-        const response = await this.revertInvoiceRaw(requestParameters, initOverrides);
-        return await response.value();
+    revertInvoice(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.revertInvoiceRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.InvoiceApi = InvoiceApi;

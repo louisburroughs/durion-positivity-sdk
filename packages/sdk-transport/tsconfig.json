@@ -1,20 +1,15 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "declaration": true,
-    "target": "es6",
-    "module": "commonjs",
-    "moduleResolution": "node",
     "outDir": "dist",
     "rootDir": "src",
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "declaration": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts"
   ],
   "exclude": [
+    "src/**/*.d.ts",
     "dist",
     "node_modules"
   ]

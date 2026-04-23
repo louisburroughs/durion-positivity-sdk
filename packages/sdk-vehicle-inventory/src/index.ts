@@ -24,7 +24,7 @@ export function createVehicleInventoryClient(config: DurionSdkConfig) {
     fetchApi: async (url: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       const method = (init?.method ?? 'GET').toUpperCase();
       const mergedHeaders = new Headers(init?.headers);
-      const sdkHeaders = await httpClient.buildRequestHeaders(method, {
+      const sdkHeaders: Record<string, string> = await httpClient.buildRequestHeaders(method, {
         url: normalizeRequestUrl(url),
         idempotencyKey: mergedHeaders.get('Idempotency-Key') ?? undefined,
       });

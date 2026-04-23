@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CRMSnapshotsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,79 +66,91 @@ class CRMSnapshotsApi extends runtime.BaseAPI {
      * Returns complete party snapshot with accounts, contacts, vehicles
      * Fetch snapshot by party
      */
-    async fetchByPartyRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling fetchByParty().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/snapshot/party/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CrmSnapshotDTOFromJSON)(jsonValue));
+    fetchByPartyRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling fetchByParty().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/snapshot/party/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CrmSnapshotDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns complete party snapshot with accounts, contacts, vehicles
      * Fetch snapshot by party
      */
-    async fetchByParty(requestParameters, initOverrides) {
-        const response = await this.fetchByPartyRaw(requestParameters, initOverrides);
-        return await response.value();
+    fetchByParty(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.fetchByPartyRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns party snapshot based on vehicle ownership
      * Fetch snapshot by vehicle
      */
-    async fetchByVehicleRaw(requestParameters, initOverrides) {
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling fetchByVehicle().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/snapshot/vehicle/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CrmSnapshotDTOFromJSON)(jsonValue));
+    fetchByVehicleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling fetchByVehicle().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/snapshot/vehicle/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CrmSnapshotDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns party snapshot based on vehicle ownership
      * Fetch snapshot by vehicle
      */
-    async fetchByVehicle(requestParameters, initOverrides) {
-        const response = await this.fetchByVehicleRaw(requestParameters, initOverrides);
-        return await response.value();
+    fetchByVehicle(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.fetchByVehicleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns the billing rule reference for a commercial party. Returns default billing rules when the party has no explicitly configured rules. Enforcement of these rules is the responsibility of downstream services.
      * Get billing rules for a commercial party
      */
-    async getBillingRulesRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getBillingRules().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/snapshot/party/{partyId}/billing-rules`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRuleRefFromJSON)(jsonValue));
+    getBillingRulesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getBillingRules().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/snapshot/party/{partyId}/billing-rules`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRuleRefFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns the billing rule reference for a commercial party. Returns default billing rules when the party has no explicitly configured rules. Enforcement of these rules is the responsibility of downstream services.
      * Get billing rules for a commercial party
      */
-    async getBillingRules(requestParameters, initOverrides) {
-        const response = await this.getBillingRulesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getBillingRules(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getBillingRulesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CRMSnapshotsApi = CRMSnapshotsApi;

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ApprovalConfigurationAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,163 +66,187 @@ class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
      * Add a new approval configuration.
      * Create a new approval configuration
      */
-    async createConfigurationRaw(requestParameters, initOverrides) {
-        if (requestParameters['approvalConfigurationRequest'] == null) {
-            throw new runtime.RequiredError('approvalConfigurationRequest', 'Required parameter "approvalConfigurationRequest" was null or undefined when calling createConfiguration().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workexec/approvalConfigurations`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ApprovalConfigurationRequestToJSON)(requestParameters['approvalConfigurationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+    createConfigurationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['approvalConfigurationRequest'] == null) {
+                throw new runtime.RequiredError('approvalConfigurationRequest', 'Required parameter "approvalConfigurationRequest" was null or undefined when calling createConfiguration().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workexec/approvalConfigurations`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ApprovalConfigurationRequestToJSON)(requestParameters['approvalConfigurationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Add a new approval configuration.
      * Create a new approval configuration
      */
-    async createConfiguration(requestParameters, initOverrides) {
-        const response = await this.createConfigurationRaw(requestParameters, initOverrides);
-        return await response.value();
+    createConfiguration(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createConfigurationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Delete a configuration by its unique ID.
      * Delete an approval configuration
      */
-    async deleteConfigurationRaw(requestParameters, initOverrides) {
-        if (requestParameters['approvalId'] == null) {
-            throw new runtime.RequiredError('approvalId', 'Required parameter "approvalId" was null or undefined when calling deleteConfiguration().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteConfigurationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['approvalId'] == null) {
+                throw new runtime.RequiredError('approvalId', 'Required parameter "approvalId" was null or undefined when calling deleteConfiguration().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete a configuration by its unique ID.
      * Delete an approval configuration
      */
-    async deleteConfiguration(requestParameters, initOverrides) {
-        await this.deleteConfigurationRaw(requestParameters, initOverrides);
+    deleteConfiguration(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteConfigurationRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve a list of all approval configurations.
      * Get all approval configurations
      */
-    async getAllConfigurationsRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workexec`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ApprovalConfigurationResponseFromJSON));
+    getAllConfigurationsRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workexec`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ApprovalConfigurationResponseFromJSON));
+        });
     }
     /**
      * Retrieve a list of all approval configurations.
      * Get all approval configurations
      */
-    async getAllConfigurations(initOverrides) {
-        const response = await this.getAllConfigurationsRaw(initOverrides);
-        return await response.value();
+    getAllConfigurations(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllConfigurationsRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get the most specific configuration for a location and customer.
      * Get applicable configuration
      */
-    async getApplicableConfigurationRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        if (requestParameters['locationId'] != null) {
-            queryParameters['locationId'] = requestParameters['locationId'];
-        }
-        if (requestParameters['customerId'] != null) {
-            queryParameters['customerId'] = requestParameters['customerId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workexec/approvalConfigurations/applicable`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+    getApplicableConfigurationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            if (requestParameters['locationId'] != null) {
+                queryParameters['locationId'] = requestParameters['locationId'];
+            }
+            if (requestParameters['customerId'] != null) {
+                queryParameters['customerId'] = requestParameters['customerId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workexec/approvalConfigurations/applicable`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Get the most specific configuration for a location and customer.
      * Get applicable configuration
      */
-    async getApplicableConfiguration(requestParameters = {}, initOverrides) {
-        const response = await this.getApplicableConfigurationRaw(requestParameters, initOverrides);
-        return await response.value();
+    getApplicableConfiguration() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.getApplicableConfigurationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve an approval configuration by its unique ID.
      * Get configuration by ID
      */
-    async getConfigurationByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['approvalId'] == null) {
-            throw new runtime.RequiredError('approvalId', 'Required parameter "approvalId" was null or undefined when calling getConfigurationById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+    getConfigurationByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['approvalId'] == null) {
+                throw new runtime.RequiredError('approvalId', 'Required parameter "approvalId" was null or undefined when calling getConfigurationById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve an approval configuration by its unique ID.
      * Get configuration by ID
      */
-    async getConfigurationById(requestParameters, initOverrides) {
-        const response = await this.getConfigurationByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getConfigurationById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getConfigurationByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update an existing approval configuration.
      * Update an approval configuration
      */
-    async updateConfigurationRaw(requestParameters, initOverrides) {
-        if (requestParameters['approvalId'] == null) {
-            throw new runtime.RequiredError('approvalId', 'Required parameter "approvalId" was null or undefined when calling updateConfiguration().');
-        }
-        if (requestParameters['approvalConfigurationRequest'] == null) {
-            throw new runtime.RequiredError('approvalConfigurationRequest', 'Required parameter "approvalConfigurationRequest" was null or undefined when calling updateConfiguration().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ApprovalConfigurationRequestToJSON)(requestParameters['approvalConfigurationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+    updateConfigurationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['approvalId'] == null) {
+                throw new runtime.RequiredError('approvalId', 'Required parameter "approvalId" was null or undefined when calling updateConfiguration().');
+            }
+            if (requestParameters['approvalConfigurationRequest'] == null) {
+                throw new runtime.RequiredError('approvalConfigurationRequest', 'Required parameter "approvalConfigurationRequest" was null or undefined when calling updateConfiguration().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workexec/approvalConfigurations/{approvalId}`.replace(`{${"approvalId"}}`, encodeURIComponent(String(requestParameters['approvalId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ApprovalConfigurationRequestToJSON)(requestParameters['approvalConfigurationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApprovalConfigurationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update an existing approval configuration.
      * Update an approval configuration
      */
-    async updateConfiguration(requestParameters, initOverrides) {
-        const response = await this.updateConfigurationRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateConfiguration(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateConfigurationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.ApprovalConfigurationAPIApi = ApprovalConfigurationAPIApi;

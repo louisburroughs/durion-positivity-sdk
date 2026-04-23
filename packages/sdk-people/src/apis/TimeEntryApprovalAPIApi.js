@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimeEntryApprovalAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,73 +66,81 @@ class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
      * Approve multiple time entries. pos-people is authoritative for approval execution.
      * Batch approve time entries
      */
-    async approveTimeEntriesRaw(requestParameters, initOverrides) {
-        if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
-            throw new runtime.RequiredError('timeEntryDecisionBatchRequest', 'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling approveTimeEntries().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/timeEntries/approve`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.TimeEntryDecisionBatchRequestToJSON)(requestParameters['timeEntryDecisionBatchRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    approveTimeEntriesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
+                throw new runtime.RequiredError('timeEntryDecisionBatchRequest', 'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling approveTimeEntries().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/timeEntries/approve`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.TimeEntryDecisionBatchRequestToJSON)(requestParameters['timeEntryDecisionBatchRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Approve multiple time entries. pos-people is authoritative for approval execution.
      * Batch approve time entries
      */
-    async approveTimeEntries(requestParameters, initOverrides) {
-        const response = await this.approveTimeEntriesRaw(requestParameters, initOverrides);
-        return await response.value();
+    approveTimeEntries(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.approveTimeEntriesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Reject multiple time entries. rejectionReason is required for each decision.
      * Batch reject time entries
      */
-    async rejectTimeEntriesRaw(requestParameters, initOverrides) {
-        if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
-            throw new runtime.RequiredError('timeEntryDecisionBatchRequest', 'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling rejectTimeEntries().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/timeEntries/reject`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.TimeEntryDecisionBatchRequestToJSON)(requestParameters['timeEntryDecisionBatchRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    rejectTimeEntriesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
+                throw new runtime.RequiredError('timeEntryDecisionBatchRequest', 'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling rejectTimeEntries().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/timeEntries/reject`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.TimeEntryDecisionBatchRequestToJSON)(requestParameters['timeEntryDecisionBatchRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Reject multiple time entries. rejectionReason is required for each decision.
      * Batch reject time entries
      */
-    async rejectTimeEntries(requestParameters, initOverrides) {
-        const response = await this.rejectTimeEntriesRaw(requestParameters, initOverrides);
-        return await response.value();
+    rejectTimeEntries(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.rejectTimeEntriesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.TimeEntryApprovalAPIApi = TimeEntryApprovalAPIApi;

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CycleCountOperationsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,57 +66,65 @@ class CycleCountOperationsApi extends runtime.BaseAPI {
      * Records the actual quantity counted by an auditor. Calculates variance and updates task status.
      * Submit a count for a cycle count task
      */
-    async submitCountRaw(requestParameters, initOverrides) {
-        if (requestParameters['submitCountRequest'] == null) {
-            throw new runtime.RequiredError('submitCountRequest', 'Required parameter "submitCountRequest" was null or undefined when calling submitCount().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/cycleCount/submit`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.SubmitCountRequestToJSON)(requestParameters['submitCountRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CountResponseFromJSON)(jsonValue));
+    submitCountRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['submitCountRequest'] == null) {
+                throw new runtime.RequiredError('submitCountRequest', 'Required parameter "submitCountRequest" was null or undefined when calling submitCount().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCount/submit`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.SubmitCountRequestToJSON)(requestParameters['submitCountRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CountResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Records the actual quantity counted by an auditor. Calculates variance and updates task status.
      * Submit a count for a cycle count task
      */
-    async submitCount(requestParameters, initOverrides) {
-        const response = await this.submitCountRaw(requestParameters, initOverrides);
-        return await response.value();
+    submitCount(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.submitCountRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Records a recount with permission validation and limit enforcement. Maximum 2 recounts allowed (3 total counts).
      * Submit a recount for a cycle count task
      */
-    async submitRecountRaw(requestParameters, initOverrides) {
-        if (requestParameters['submitRecountRequest'] == null) {
-            throw new runtime.RequiredError('submitRecountRequest', 'Required parameter "submitRecountRequest" was null or undefined when calling submitRecount().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/cycleCount/recount`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.SubmitRecountRequestToJSON)(requestParameters['submitRecountRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CountResponseFromJSON)(jsonValue));
+    submitRecountRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['submitRecountRequest'] == null) {
+                throw new runtime.RequiredError('submitRecountRequest', 'Required parameter "submitRecountRequest" was null or undefined when calling submitRecount().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCount/recount`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.SubmitRecountRequestToJSON)(requestParameters['submitRecountRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CountResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Records a recount with permission validation and limit enforcement. Maximum 2 recounts allowed (3 total counts).
      * Submit a recount for a cycle count task
      */
-    async submitRecount(requestParameters, initOverrides) {
-        const response = await this.submitRecountRaw(requestParameters, initOverrides);
-        return await response.value();
+    submitRecount(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.submitRecountRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CycleCountOperationsApi = CycleCountOperationsApi;

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RestrictionRulesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,97 +65,113 @@ class RestrictionRulesApi extends runtime.BaseAPI {
     /**
      * Create a restriction rule
      */
-    async createRuleRaw(requestParameters, initOverrides) {
-        if (requestParameters['createRestrictionRuleRequest'] == null) {
-            throw new runtime.RequiredError('createRestrictionRuleRequest', 'Required parameter "createRestrictionRuleRequest" was null or undefined when calling createRule().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/price/restrictions/rules`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateRestrictionRuleRequestToJSON)(requestParameters['createRestrictionRuleRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.RestrictionRuleResponseFromJSON)(jsonValue));
+    createRuleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createRestrictionRuleRequest'] == null) {
+                throw new runtime.RequiredError('createRestrictionRuleRequest', 'Required parameter "createRestrictionRuleRequest" was null or undefined when calling createRule().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/price/restrictions/rules`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateRestrictionRuleRequestToJSON)(requestParameters['createRestrictionRuleRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.RestrictionRuleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a restriction rule
      */
-    async createRule(requestParameters, initOverrides) {
-        const response = await this.createRuleRaw(requestParameters, initOverrides);
-        return await response.value();
+    createRule(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createRuleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Deactivate a restriction rule
      */
-    async deactivateRuleRaw(requestParameters, initOverrides) {
-        if (requestParameters['ruleId'] == null) {
-            throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling deactivateRule().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/price/restrictions/rules/{ruleId}`.replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.RestrictionRuleResponseFromJSON)(jsonValue));
+    deactivateRuleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['ruleId'] == null) {
+                throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling deactivateRule().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/price/restrictions/rules/{ruleId}`.replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.RestrictionRuleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Deactivate a restriction rule
      */
-    async deactivateRule(requestParameters, initOverrides) {
-        const response = await this.deactivateRuleRaw(requestParameters, initOverrides);
-        return await response.value();
+    deactivateRule(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.deactivateRuleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get a restriction rule by ID
      */
-    async getRuleByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['ruleId'] == null) {
-            throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling getRuleById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/price/restrictions/rules/{ruleId}`.replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.RestrictionRuleResponseFromJSON)(jsonValue));
+    getRuleByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['ruleId'] == null) {
+                throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling getRuleById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/price/restrictions/rules/{ruleId}`.replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.RestrictionRuleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Get a restriction rule by ID
      */
-    async getRuleById(requestParameters, initOverrides) {
-        const response = await this.getRuleByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getRuleById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getRuleByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * List all active restriction rules
      */
-    async listRulesRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/price/restrictions/rules`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.RestrictionRuleResponseFromJSON));
+    listRulesRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/price/restrictions/rules`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.RestrictionRuleResponseFromJSON));
+        });
     }
     /**
      * List all active restriction rules
      */
-    async listRules(initOverrides) {
-        const response = await this.listRulesRaw(initOverrides);
-        return await response.value();
+    listRules(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listRulesRaw(initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.RestrictionRulesApi = RestrictionRulesApi;

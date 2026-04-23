@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InvoicePaymentsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,81 +66,93 @@ class InvoicePaymentsApi extends runtime.BaseAPI {
      * Retrieve billing rules for a customer.
      * Get billing rules
      */
-    async getBillingRulesRaw(requestParameters, initOverrides) {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getBillingRules().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/invoice/rules/{customerId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRuleRefResponseFromJSON)(jsonValue));
+    getBillingRulesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['customerId'] == null) {
+                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getBillingRules().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/invoice/rules/{customerId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BillingRuleRefResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve billing rules for a customer.
      * Get billing rules
      */
-    async getBillingRules(requestParameters, initOverrides) {
-        const response = await this.getBillingRulesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getBillingRules(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getBillingRulesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve current payment status for an invoice.
      * Get invoice status
      */
-    async getInvoiceStatusRaw(requestParameters, initOverrides) {
-        if (requestParameters['invoiceId'] == null) {
-            throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling getInvoiceStatus().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/invoice/{invoiceId}/status`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceStatusResponseFromJSON)(jsonValue));
+    getInvoiceStatusRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['invoiceId'] == null) {
+                throw new runtime.RequiredError('invoiceId', 'Required parameter "invoiceId" was null or undefined when calling getInvoiceStatus().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/invoice/{invoiceId}/status`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceStatusResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve current payment status for an invoice.
      * Get invoice status
      */
-    async getInvoiceStatus(requestParameters, initOverrides) {
-        const response = await this.getInvoiceStatusRaw(requestParameters, initOverrides);
-        return await response.value();
+    getInvoiceStatus(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getInvoiceStatusRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Regenerate an invoice from a workorder.
      * Regenerate invoice from workorder
      */
-    async regenerateInvoiceFromWorkorderRaw(requestParameters, initOverrides) {
-        if (requestParameters['regenerateInvoiceFromWorkorderRequest'] == null) {
-            throw new runtime.RequiredError('regenerateInvoiceFromWorkorderRequest', 'Required parameter "regenerateInvoiceFromWorkorderRequest" was null or undefined when calling regenerateInvoiceFromWorkorder().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/invoice/invoices`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RegenerateInvoiceFromWorkorderRequestToJSON)(requestParameters['regenerateInvoiceFromWorkorderRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceGenerationResponseFromJSON)(jsonValue));
+    regenerateInvoiceFromWorkorderRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['regenerateInvoiceFromWorkorderRequest'] == null) {
+                throw new runtime.RequiredError('regenerateInvoiceFromWorkorderRequest', 'Required parameter "regenerateInvoiceFromWorkorderRequest" was null or undefined when calling regenerateInvoiceFromWorkorder().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/invoice/invoices`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RegenerateInvoiceFromWorkorderRequestToJSON)(requestParameters['regenerateInvoiceFromWorkorderRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.InvoiceGenerationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Regenerate an invoice from a workorder.
      * Regenerate invoice from workorder
      */
-    async regenerateInvoiceFromWorkorder(requestParameters, initOverrides) {
-        const response = await this.regenerateInvoiceFromWorkorderRaw(requestParameters, initOverrides);
-        return await response.value();
+    regenerateInvoiceFromWorkorder(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.regenerateInvoiceFromWorkorderRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.InvoicePaymentsApi = InvoicePaymentsApi;
