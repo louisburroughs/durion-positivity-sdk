@@ -81,31 +81,31 @@ export interface TaxCalculationRequest {
      */
     referenceType?: TaxCalculationRequestReferenceTypeEnum;
     /**
-     *
+     * 
      * @type {string}
      * @memberof TaxCalculationRequest
      */
     address?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof TaxCalculationRequest
      */
     countryCode?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof TaxCalculationRequest
      */
     postalCode?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof TaxCalculationRequest
      */
     stateCode?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof TaxCalculationRequest
      */
@@ -144,7 +144,7 @@ export function TaxCalculationRequestFromJSONTyped(json: any, ignoreDiscriminato
         return json;
     }
     return {
-
+        
         'lineItems': ((json['lineItems'] as Array<any>).map(TaxLineItemFromJSON)),
         'destinationAddress': TaxAddressFromJSON(json['destinationAddress']),
         'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
@@ -166,7 +166,7 @@ export function TaxCalculationRequestToJSON(value?: TaxCalculationRequest | null
         return value;
     }
     return {
-
+        
         'lineItems': ((value['lineItems'] as Array<any>).map(TaxLineItemToJSON)),
         'destinationAddress': TaxAddressToJSON(value['destinationAddress']),
         'currencyCode': value['currencyCode'],

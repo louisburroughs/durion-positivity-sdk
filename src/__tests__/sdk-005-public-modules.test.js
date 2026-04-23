@@ -178,18 +178,18 @@ describe('SDK-005 AC-5: openapitools.json has generator keys for all Phase 2 mod
     });
 });
 // ---------------------------------------------------------------------------
-// AC-6 — scripts/generate.sh MODULES array includes all Phase 2 slugs.
+// AC-6 — scripts/generate-openapi.sh MODULES array includes all Phase 2 slugs.
 //
-//         The existing generate.sh MODULES array is:
+//         The existing generate-openapi.sh MODULES array is:
 //           (security order inventory workorder accounting)
 //         None of the 11 Phase 2 slugs appear, so all tests fail RED.
 // ---------------------------------------------------------------------------
-describe('SDK-005 AC-6: scripts/generate.sh contains all Phase 2 module slugs', () => {
-    const generateShPath = path.join(REPO_ROOT, 'scripts', 'generate.sh');
-    it('scripts/generate.sh exists', () => {
+describe('SDK-005 AC-6: scripts/generate-openapi.sh contains all Phase 2 module slugs', () => {
+    const generateShPath = path.join(REPO_ROOT, 'scripts', 'generate-openapi.sh');
+    it('scripts/generate-openapi.sh exists', () => {
         expect(fs.existsSync(generateShPath)).toBe(true);
     });
-    it.each(PHASE_2_MODULES)('scripts/generate.sh contains slug "%s"', (module) => {
+    it.each(PHASE_2_MODULES)('scripts/generate-openapi.sh contains slug "%s"', (module) => {
         expect(fs.existsSync(generateShPath)).toBe(true);
         const content = readText(generateShPath);
         // The slug must appear in the MODULES array definition or as a valid

@@ -71,7 +71,7 @@ export function LineItemTaxFromJSONTyped(json: any, ignoreDiscriminator: boolean
         return json;
     }
     return {
-
+        
         'lineItemId': json['lineItemId'],
         'subtotal': json['subtotal'],
         'taxAmount': json['taxAmount'],
@@ -85,7 +85,7 @@ export function LineItemTaxToJSON(value?: LineItemTax | null): any {
         return value;
     }
     return {
-
+        
         'lineItemId': value['lineItemId'],
         'subtotal': value['subtotal'],
         'taxAmount': value['taxAmount'],

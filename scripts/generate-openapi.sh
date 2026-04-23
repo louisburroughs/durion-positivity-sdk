@@ -29,6 +29,19 @@ done
 
 MODULES=(security order inventory workorder accounting catalog customer invoice location people price shop-manager image event-receiver vehicle-fitment vehicle-inventory internal documents inquiry bulk-loader)
 
+cleanup_vehicle_inventory_duplicate_exports() {
+	# Post-generation cleanup: VehicleAPIApi defines request-parameter interfaces named
+	# CreateVehicleRequest and UpdateVehicleRequest that clash with same-named model DTOs
+	# (TS2308 ambiguity). Drop `export` from the API-level interfaces so models win.
+	echo "[generate] Applying sdk-vehicle-inventory duplicate-export cleanup..."
+	VEHICLE_API_FILE="packages/sdk-vehicle-inventory/src/apis/VehicleAPIApi.ts"
+
+	if [[ -f "$VEHICLE_API_FILE" ]]; then
+		sed -i 's/^export interface CreateVehicleRequest {/interface CreateVehicleRequest {/;s/^export interface UpdateVehicleRequest {/interface UpdateVehicleRequest {/' "$VEHICLE_API_FILE"
+		echo "[generate] Patched VehicleAPIApi.ts to un-export CreateVehicleRequest and UpdateVehicleRequest"
+	fi
+}
+
 cleanup_inventory_duplicate_exports() {
 	# Post-generation cleanup: fix sdk-inventory duplicate exports caused by multi-tag ops
 	echo "[generate] Applying sdk-inventory duplicate-export cleanup..."
@@ -66,6 +79,9 @@ if [[ -n "$module" ]]; then
 	if [[ "$module" == "inventory" ]]; then
 		cleanup_inventory_duplicate_exports
 	fi
+	if [[ "$module" == "vehicle-inventory" ]]; then
+		cleanup_vehicle_inventory_duplicate_exports
+	fi
 else
 	# Generate all SDK modules in deterministic order
 	for m in "${MODULES[@]}"; do
@@ -74,6 +90,9 @@ else
 
 		if [[ "$m" == "inventory" ]]; then
 			cleanup_inventory_duplicate_exports
+		fi
+		if [[ "$m" == "vehicle-inventory" ]]; then
+			cleanup_vehicle_inventory_duplicate_exports
 		fi
 	done
 fi

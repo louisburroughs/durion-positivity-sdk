@@ -25,7 +25,7 @@ import {
     VehicleLegacyResponseToJSON,
 } from '../models/index';
 
-export interface CreateVehicleRequest {
+interface CreateVehicleRequest {
     vehicleLegacyRequest: VehicleLegacyRequest;
 }
 
@@ -49,7 +49,7 @@ export interface GetVehicleByVINRequest {
     vin: string;
 }
 
-export interface UpdateVehicleRequest {
+interface UpdateVehicleRequest {
     id: string;
     vehicleLegacyRequest: VehicleLegacyRequest;
 }

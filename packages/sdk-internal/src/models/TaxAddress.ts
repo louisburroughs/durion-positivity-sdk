@@ -75,7 +75,7 @@ export function TaxAddressFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         return json;
     }
     return {
-
+        
         'countryCode': json['countryCode'],
         'regionCode': json['regionCode'] == null ? undefined : json['regionCode'],
         'city': json['city'] == null ? undefined : json['city'],
@@ -90,7 +90,7 @@ export function TaxAddressToJSON(value?: TaxAddress | null): any {
         return value;
     }
     return {
-
+        
         'countryCode': value['countryCode'],
         'regionCode': value['regionCode'],
         'city': value['city'],

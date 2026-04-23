@@ -15,9 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
-    ModeResponse,
-    TaxCalculationRequest,
-    TaxCalculationResponse,
+  ModeResponse,
+  TaxCalculationRequest,
+  TaxCalculationResponse,
 } from '../models/index';
 import {
     ModeResponseFromJSON,
@@ -33,7 +33,7 @@ export interface CalculateTaxRequest {
 }
 
 /**
- *
+ * 
  */
 export class TaxApi extends runtime.BaseAPI {
 
@@ -55,6 +55,14 @@ export class TaxApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:calculate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/tax/calculate`,
             method: 'POST',
@@ -84,6 +92,14 @@ export class TaxApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:mode:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/tax/mode`,
             method: 'GET',

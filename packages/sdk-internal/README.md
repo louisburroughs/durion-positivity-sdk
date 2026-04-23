@@ -1,28 +1,46 @@
-## SDK Internal Package
+## @durion-sdk/internal@0.1.0-alpha
 
-**INTERNAL ONLY** - `@durion-sdk/internal`
+This generator creates TypeScript/JavaScript client that utilizes [Fetch API](https://fetch.spec.whatwg.org/). The generated Node module can be used in the following environments:
 
-This package is classified as internal-only under [ADR-0021](../../docs/adr/0021-tax-api-consumption-and-internal-access-policy.adr.md).
+Environment
+* Node.js
+* Webpack
+* Browserify
 
-It provides access to internal platform services (currently: Tax Service) and MUST NOT be:
+Language level
+* ES5 - you must have a Promises/A+ library installed
+* ES6
 
-- Re-exported from any public `@durion-sdk/*` package
-- Consumed by external clients
-- Listed in the public SDK documentation
+Module system
+* CommonJS
+* ES6 module system
 
-### Usage (internal services only)
+It can be used in both TypeScript and JavaScript. In TypeScript, the definition will be automatically resolved via `package.json`. ([Reference](https://www.typescriptlang.org/docs/handbook/declaration-files/consumption.html))
 
-```typescript
-import { createTaxClient } from '@durion-sdk/internal';
+### Building
 
-const taxClient = createTaxClient({ baseUrl: 'http://pos-tax:8086' });
-const result = await taxClient.taxApi.calculateTax({
-  taxCalculationRequest: { /* ... */ }
-});
+To build and compile the typescript sources to javascript use:
+```
+npm install
+npm run build
 ```
 
-### ADR-0021 Compliance
+### Publishing
 
-All consumers must handle `400 Bad Request` responses as deterministic data quality errors.
-Do not retry `400` responses automatically.
-See ADR-0021 for full compliance requirements.
+First build the package then run `npm publish`
+
+### Consuming
+
+navigate to the folder of your consuming project and run one of the following commands.
+
+_published:_
+
+```
+npm install @durion-sdk/internal@0.1.0-alpha --save
+```
+
+_unPublished (not recommended):_
+
+```
+npm install PATH_TO_GENERATED_PACKAGE --save
+```

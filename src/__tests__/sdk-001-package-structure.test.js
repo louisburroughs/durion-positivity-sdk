@@ -173,10 +173,10 @@ describe('SDK-001 AC-8: packages/ directory', () => {
     });
 });
 // ---------------------------------------------------------------------------
-// AC-9 — scripts/generate.sh existence
+// AC-9 — scripts/generate-openapi.sh existence
 // ---------------------------------------------------------------------------
-describe('SDK-001 AC-9: scripts/generate.sh', () => {
-    const generateSh = path.resolve(REPO_ROOT, 'scripts', 'generate.sh');
+describe('SDK-001 AC-9: scripts/generate-openapi.sh', () => {
+    const generateSh = path.resolve(REPO_ROOT, 'scripts', 'generate-openapi.sh');
     it('exists at repo root under scripts/', () => {
         expect(fs.existsSync(generateSh)).toBe(true);
     });

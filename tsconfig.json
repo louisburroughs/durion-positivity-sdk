@@ -10,19 +10,16 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": ".",
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@durion-sdk/*": [
-        "packages/sdk-*/dist"
+        "packages/sdk-*/src"
       ]
     }
   },
   "include": [
-    "src/**/*",
-    "packages/**/*",
-    "scripts/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

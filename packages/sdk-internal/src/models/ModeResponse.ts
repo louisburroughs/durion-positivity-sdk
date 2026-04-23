@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface ModeResponse
  */
 export interface ModeResponse {
     /**
-     *
+     * 
      * @type {string}
      * @memberof ModeResponse
      */
     mode?: string;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof ModeResponse
      */
@@ -49,7 +49,7 @@ export function ModeResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
         return json;
     }
     return {
-
+        
         'mode': json['mode'] == null ? undefined : json['mode'],
         'testMode': json['testMode'] == null ? undefined : json['testMode'],
     };
@@ -60,7 +60,7 @@ export function ModeResponseToJSON(value?: ModeResponse | null): any {
         return value;
     }
     return {
-
+        
         'mode': value['mode'],
         'testMode': value['testMode'],
     };
