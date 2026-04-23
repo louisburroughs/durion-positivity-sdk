@@ -60,7 +60,7 @@ if [[ -n "$module" ]]; then
 		exit 2
 	fi
 	echo "Generating sdk-${module}..."
-	npx openapi-generator-cli generate --generator-key "sdk-${module}"
+	npx @openapitools/openapi-generator-cli generate --generator-key "sdk-${module}"
 
 	if [[ "$module" == "inventory" ]]; then
 		cleanup_inventory_duplicate_exports
@@ -69,7 +69,7 @@ else
 	# Generate all SDK modules in deterministic order
 	for m in "${MODULES[@]}"; do
 		echo "Generating sdk-${m}..."
-		npx openapi-generator-cli generate --generator-key "sdk-${m}"
+		npx @openapitools/openapi-generator-cli generate --generator-key "sdk-${m}"
 
 		if [[ "$m" == "inventory" ]]; then
 			cleanup_inventory_duplicate_exports

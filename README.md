@@ -10,7 +10,7 @@ Angular-first but fully framework-agnostic — works in any Node.js or browser e
 
 - [durion-positivity-sdk](#durion-positivity-sdk)
   - [Table of Contents](#table-of-contents)
-  - [Package Catalogue](#package-catalogue)
+  - [Package Catalogue](#package-catalogue) (20 packages)
   - [Architecture](#architecture)
   - [Installation](#installation)
     - [In a monorepo (workspaces)](#in-a-monorepo-workspaces)
@@ -65,8 +65,11 @@ All packages are versioned together at `0.1.0-alpha` and scoped under `@durion-s
 | `@durion-sdk/event-receiver`    | Internal event ingestion                                   |
 | `@durion-sdk/vehicle-fitment`   | Part-to-vehicle compatibility data                         |
 | `@durion-sdk/vehicle-inventory` | Vehicle stock tracking                                     |
+| `@durion-sdk/documents`         | Document generation and management                        |
+| `@durion-sdk/inquiry`           | Customer inquiry and quote management                     |
+| `@durion-sdk/bulk-loader`       | Bulk data import and batch processing                     |
 
-`@durion-sdk/sdk-internal` (private) covers the internal tax service and is not published.
+`@durion-sdk/internal` (private) covers the internal tax service and is not published.
 
 ---
 
@@ -504,6 +507,9 @@ durion-positivity-sdk/
 │   ├── sdk-event-receiver/       # @durion-sdk/event-receiver
 │   ├── sdk-vehicle-fitment/      # @durion-sdk/vehicle-fitment
 │   ├── sdk-vehicle-inventory/    # @durion-sdk/vehicle-inventory
+│   ├── sdk-documents/            # @durion-sdk/documents
+│   ├── sdk-inquiry/              # @durion-sdk/inquiry
+│   ├── sdk-bulk-loader/          # @durion-sdk/bulk-loader
 │   └── sdk-internal/             # private — internal tax service only
 ├── src/                          # Shared test utilities and fixtures
 ├── scripts/

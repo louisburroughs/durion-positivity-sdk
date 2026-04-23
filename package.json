@@ -10,7 +10,7 @@
     "build": "tsc --project tsconfig.json",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
-    "generate": "bash scripts/generate.sh"
+    "generate": "bash scripts/generate-openapi.sh"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.31.1",
