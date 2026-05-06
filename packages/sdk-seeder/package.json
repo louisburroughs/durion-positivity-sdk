@@ -1,0 +1,31 @@
+{
+  "name": "@durion-sdk/seeder",
+  "version": "0.1.0-alpha",
+  "private": true,
+  "description": "Year-scale data seeder for Durion Positivity Backend using the accelerated clock profile",
+  "scripts": {
+    "seed": "ts-node src/index.ts",
+    "seed:day": "cross-env SEEDER_DAYS=1 ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@durion-sdk/transport": "*",
+    "@durion-sdk/security": "*",
+    "@durion-sdk/customer": "*",
+    "@durion-sdk/people": "*",
+    "@durion-sdk/location": "*",
+    "@durion-sdk/catalog": "*",
+    "@durion-sdk/inventory": "*",
+    "@durion-sdk/workorder": "*",
+    "@durion-sdk/order": "*",
+    "@durion-sdk/accounting": "*",
+    "@durion-sdk/vehicle-inventory": "*",
+    "@durion-sdk/invoice": "*"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "cross-env": "^7.0.3",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.4.0"
+  }
+}
