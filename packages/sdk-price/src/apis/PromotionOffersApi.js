@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PromotionOffersApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,161 +66,185 @@ class PromotionOffersApi extends runtime.BaseAPI {
      * Activates a promotion offer so it becomes eligible for application.
      * Activate promotion offer
      */
-    async activateOfferRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling activateOffer().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/promotions/offers/{id}/activate`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+    activateOfferRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling activateOffer().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/promotions/offers/{id}/activate`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'PATCH',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Activates a promotion offer so it becomes eligible for application.
      * Activate promotion offer
      */
-    async activateOffer(requestParameters, initOverrides) {
-        const response = await this.activateOfferRaw(requestParameters, initOverrides);
-        return await response.value();
+    activateOffer(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.activateOfferRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Applies a promotion offer to pricing inputs and returns resulting discount and adjusted totals.
      * Apply promotion offer during estimate pricing
      */
-    async applyPromotionRaw(requestParameters, initOverrides) {
-        if (requestParameters['applyPromotionRequest'] == null) {
-            throw new runtime.RequiredError('applyPromotionRequest', 'Required parameter "applyPromotionRequest" was null or undefined when calling applyPromotion().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/promotions/offers/apply`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ApplyPromotionRequestToJSON)(requestParameters['applyPromotionRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApplyPromotionResponseFromJSON)(jsonValue));
+    applyPromotionRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['applyPromotionRequest'] == null) {
+                throw new runtime.RequiredError('applyPromotionRequest', 'Required parameter "applyPromotionRequest" was null or undefined when calling applyPromotion().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/promotions/offers/apply`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ApplyPromotionRequestToJSON)(requestParameters['applyPromotionRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ApplyPromotionResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Applies a promotion offer to pricing inputs and returns resulting discount and adjusted totals.
      * Apply promotion offer during estimate pricing
      */
-    async applyPromotion(requestParameters, initOverrides) {
-        const response = await this.applyPromotionRaw(requestParameters, initOverrides);
-        return await response.value();
+    applyPromotion(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.applyPromotionRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Creates a new promotion offer with code, lifecycle settings, and discount policy.
      * Create promotion offer
      */
-    async createOfferRaw(requestParameters, initOverrides) {
-        if (requestParameters['createPromotionOfferRequest'] == null) {
-            throw new runtime.RequiredError('createPromotionOfferRequest', 'Required parameter "createPromotionOfferRequest" was null or undefined when calling createOffer().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/promotions/offers`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreatePromotionOfferRequestToJSON)(requestParameters['createPromotionOfferRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+    createOfferRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createPromotionOfferRequest'] == null) {
+                throw new runtime.RequiredError('createPromotionOfferRequest', 'Required parameter "createPromotionOfferRequest" was null or undefined when calling createOffer().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/promotions/offers`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreatePromotionOfferRequestToJSON)(requestParameters['createPromotionOfferRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates a new promotion offer with code, lifecycle settings, and discount policy.
      * Create promotion offer
      */
-    async createOffer(requestParameters, initOverrides) {
-        const response = await this.createOfferRaw(requestParameters, initOverrides);
-        return await response.value();
+    createOffer(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createOfferRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Deactivates a promotion offer so it is no longer eligible for application.
      * Deactivate promotion offer
      */
-    async deactivateOfferRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deactivateOffer().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/promotions/offers/{id}/deactivate`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+    deactivateOfferRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deactivateOffer().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/promotions/offers/{id}/deactivate`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'PATCH',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Deactivates a promotion offer so it is no longer eligible for application.
      * Deactivate promotion offer
      */
-    async deactivateOffer(requestParameters, initOverrides) {
-        const response = await this.deactivateOfferRaw(requestParameters, initOverrides);
-        return await response.value();
+    deactivateOffer(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.deactivateOfferRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves a promotion offer using its promotion code.
      * Get promotion offer by code
      */
-    async getOfferByCodeRaw(requestParameters, initOverrides) {
-        if (requestParameters['promoCode'] == null) {
-            throw new runtime.RequiredError('promoCode', 'Required parameter "promoCode" was null or undefined when calling getOfferByCode().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/promotions/offers/by-code/{promoCode}`.replace(`{${"promoCode"}}`, encodeURIComponent(String(requestParameters['promoCode']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+    getOfferByCodeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['promoCode'] == null) {
+                throw new runtime.RequiredError('promoCode', 'Required parameter "promoCode" was null or undefined when calling getOfferByCode().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/promotions/offers/by-code/{promoCode}`.replace(`{${"promoCode"}}`, encodeURIComponent(String(requestParameters['promoCode']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves a promotion offer using its promotion code.
      * Get promotion offer by code
      */
-    async getOfferByCode(requestParameters, initOverrides) {
-        const response = await this.getOfferByCodeRaw(requestParameters, initOverrides);
-        return await response.value();
+    getOfferByCode(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getOfferByCodeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves a promotion offer using its unique identifier.
      * Get promotion offer by ID
      */
-    async getOfferByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getOfferById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/promotions/offers/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+    getOfferByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getOfferById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/promotions/offers/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PromotionOfferResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves a promotion offer using its unique identifier.
      * Get promotion offer by ID
      */
-    async getOfferById(requestParameters, initOverrides) {
-        const response = await this.getOfferByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getOfferById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getOfferByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PromotionOffersApi = PromotionOffersApi;

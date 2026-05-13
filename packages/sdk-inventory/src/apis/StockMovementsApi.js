@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StockMovementsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,81 +66,93 @@ class StockMovementsApi extends runtime.BaseAPI {
      * Approves a pending adjustment request and posts the resulting movement to the inventory ledger.
      * Approve adjustment request
      */
-    async approveAdjustmentRequestRaw(requestParameters, initOverrides) {
-        if (requestParameters['adjustmentRequestId'] == null) {
-            throw new runtime.RequiredError('adjustmentRequestId', 'Required parameter "adjustmentRequestId" was null or undefined when calling approveAdjustmentRequest().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/adjustments/{adjustmentRequestId}/approve`.replace(`{${"adjustmentRequestId"}}`, encodeURIComponent(String(requestParameters['adjustmentRequestId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    approveAdjustmentRequestRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['adjustmentRequestId'] == null) {
+                throw new runtime.RequiredError('adjustmentRequestId', 'Required parameter "adjustmentRequestId" was null or undefined when calling approveAdjustmentRequest().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/adjustments/{adjustmentRequestId}/approve`.replace(`{${"adjustmentRequestId"}}`, encodeURIComponent(String(requestParameters['adjustmentRequestId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Approves a pending adjustment request and posts the resulting movement to the inventory ledger.
      * Approve adjustment request
      */
-    async approveAdjustmentRequest(requestParameters, initOverrides) {
-        await this.approveAdjustmentRequestRaw(requestParameters, initOverrides);
+    approveAdjustmentRequest(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.approveAdjustmentRequestRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Creates a pending adjustment request for approval before posting to the inventory ledger.
      * Create adjustment request
      */
-    async createAdjustmentRequestRaw(requestParameters, initOverrides) {
-        if (requestParameters['createAdjustmentRequestDto'] == null) {
-            throw new runtime.RequiredError('createAdjustmentRequestDto', 'Required parameter "createAdjustmentRequestDto" was null or undefined when calling createAdjustmentRequest().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/adjustments`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateAdjustmentRequestDtoToJSON)(requestParameters['createAdjustmentRequestDto']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentRequestResponseFromJSON)(jsonValue));
+    createAdjustmentRequestRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createAdjustmentRequestDto'] == null) {
+                throw new runtime.RequiredError('createAdjustmentRequestDto', 'Required parameter "createAdjustmentRequestDto" was null or undefined when calling createAdjustmentRequest().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/adjustments`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateAdjustmentRequestDtoToJSON)(requestParameters['createAdjustmentRequestDto']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.AdjustmentRequestResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates a pending adjustment request for approval before posting to the inventory ledger.
      * Create adjustment request
      */
-    async createAdjustmentRequest(requestParameters, initOverrides) {
-        const response = await this.createAdjustmentRequestRaw(requestParameters, initOverrides);
-        return await response.value();
+    createAdjustmentRequest(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAdjustmentRequestRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Records a RECEIVE, PUT_AWAY, PICK, ISSUE, RETURN, or TRANSFER movement in the inventory ledger.
      * Record a stock movement
      */
-    async recordMovementRaw(requestParameters, initOverrides) {
-        if (requestParameters['recordMovementRequest'] == null) {
-            throw new runtime.RequiredError('recordMovementRequest', 'Required parameter "recordMovementRequest" was null or undefined when calling recordMovement().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/stock-movements`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RecordMovementRequestToJSON)(requestParameters['recordMovementRequest']),
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    recordMovementRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['recordMovementRequest'] == null) {
+                throw new runtime.RequiredError('recordMovementRequest', 'Required parameter "recordMovementRequest" was null or undefined when calling recordMovement().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/stock-movements`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RecordMovementRequestToJSON)(requestParameters['recordMovementRequest']),
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Records a RECEIVE, PUT_AWAY, PICK, ISSUE, RETURN, or TRANSFER movement in the inventory ledger.
      * Record a stock movement
      */
-    async recordMovement(requestParameters, initOverrides) {
-        await this.recordMovementRaw(requestParameters, initOverrides);
+    recordMovement(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.recordMovementRaw(requestParameters, initOverrides);
+        });
     }
 }
 exports.StockMovementsApi = StockMovementsApi;

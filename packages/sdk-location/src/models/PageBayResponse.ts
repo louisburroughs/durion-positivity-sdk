@@ -19,18 +19,18 @@ import {
     BayResponseFromJSONTyped,
     BayResponseToJSON,
 } from './BayResponse';
-import type { Pageablenull } from './Pageablenull';
+import type { PageableObject } from './PageableObject';
 import {
-    PageablenullFromJSON,
-    PageablenullFromJSONTyped,
-    PageablenullToJSON,
-} from './Pageablenull';
-import type { Sortnull } from './Sortnull';
+    PageableObjectFromJSON,
+    PageableObjectFromJSONTyped,
+    PageableObjectToJSON,
+} from './PageableObject';
+import type { SortObject } from './SortObject';
 import {
-    SortnullFromJSON,
-    SortnullFromJSONTyped,
-    SortnullToJSON,
-} from './Sortnull';
+    SortObjectFromJSON,
+    SortObjectFromJSONTyped,
+    SortObjectToJSON,
+} from './SortObject';
 
 /**
  * 
@@ -52,24 +52,6 @@ export interface PageBayResponse {
     totalPages?: number;
     /**
      * 
-     * @type {Pageablenull}
-     * @memberof PageBayResponse
-     */
-    pageable?: Pageablenull;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageBayResponse
-     */
-    first?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageBayResponse
-     */
-    last?: boolean;
-    /**
-     * 
      * @type {number}
      * @memberof PageBayResponse
      */
@@ -88,10 +70,28 @@ export interface PageBayResponse {
     number?: number;
     /**
      * 
-     * @type {Sortnull}
+     * @type {PageableObject}
      * @memberof PageBayResponse
      */
-    sort?: Sortnull;
+    pageable?: PageableObject;
+    /**
+     * 
+     * @type {SortObject}
+     * @memberof PageBayResponse
+     */
+    sort?: SortObject;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageBayResponse
+     */
+    first?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageBayResponse
+     */
+    last?: boolean;
     /**
      * 
      * @type {number}
@@ -125,13 +125,13 @@ export function PageBayResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         
         'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
         'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'pageable': json['pageable'] == null ? undefined : PageablenullFromJSON(json['pageable']),
-        'first': json['first'] == null ? undefined : json['first'],
-        'last': json['last'] == null ? undefined : json['last'],
         'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(BayResponseFromJSON)),
         'number': json['number'] == null ? undefined : json['number'],
-        'sort': json['sort'] == null ? undefined : SortnullFromJSON(json['sort']),
+        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
+        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'first': json['first'] == null ? undefined : json['first'],
+        'last': json['last'] == null ? undefined : json['last'],
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
         'empty': json['empty'] == null ? undefined : json['empty'],
     };
@@ -145,13 +145,13 @@ export function PageBayResponseToJSON(value?: PageBayResponse | null): any {
         
         'totalElements': value['totalElements'],
         'totalPages': value['totalPages'],
-        'pageable': PageablenullToJSON(value['pageable']),
-        'first': value['first'],
-        'last': value['last'],
         'size': value['size'],
         'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(BayResponseToJSON)),
         'number': value['number'],
-        'sort': SortnullToJSON(value['sort']),
+        'pageable': PageableObjectToJSON(value['pageable']),
+        'sort': SortObjectToJSON(value['sort']),
+        'first': value['first'],
+        'last': value['last'],
         'numberOfElements': value['numberOfElements'],
         'empty': value['empty'],
     };

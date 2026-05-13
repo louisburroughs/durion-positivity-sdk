@@ -29,27 +29,27 @@ import {
 } from '../models/index';
 
 export interface AdjustLaborHoursRequest {
-    workorderId: any;
-    entryId: any;
+    workorderId: string;
+    entryId: string;
     adjustLaborRequest: AdjustLaborRequest;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 export interface GetLaborHistoryRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface StartLaborSessionRequest {
-    workorderId: any;
-    serviceId: any;
+    workorderId: string;
+    serviceId: string;
     startLaborRequest: StartLaborRequest;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 export interface StopLaborSessionRequest {
-    workorderId: any;
-    entryId: any;
-    idempotencyKey?: any;
+    workorderId: string;
+    entryId: string;
+    idempotencyKey?: string;
 }
 
 /**
@@ -61,7 +61,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
      * Manually adjust hours worked on a labor entry with a reason for audit trail.
      * Adjust labor hours
      */
-    async adjustLaborHoursRaw(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async adjustLaborHoursRaw(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -93,6 +93,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/labor/{entryId}/adjust`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId']))),
             method: 'PUT',
@@ -101,18 +109,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
             body: AdjustLaborRequestToJSON(requestParameters['adjustLaborRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderLaborEntryResponseFromJSON(jsonValue));
     }
 
     /**
      * Manually adjust hours worked on a labor entry with a reason for audit trail.
      * Adjust labor hours
      */
-    async adjustLaborHours(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async adjustLaborHours(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
         const response = await this.adjustLaborHoursRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -133,6 +137,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/labor`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -156,7 +168,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
      * Start tracking labor on a specific service item. Only one active session allowed per service.
      * Start labor session
      */
-    async startLaborSessionRaw(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async startLaborSessionRaw(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -188,6 +200,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/services/{serviceId}/labor/start`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"serviceId"}}`, encodeURIComponent(String(requestParameters['serviceId']))),
             method: 'POST',
@@ -196,18 +216,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
             body: StartLaborRequestToJSON(requestParameters['startLaborRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderLaborEntryResponseFromJSON(jsonValue));
     }
 
     /**
      * Start tracking labor on a specific service item. Only one active session allowed per service.
      * Start labor session
      */
-    async startLaborSession(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async startLaborSession(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
         const response = await this.startLaborSessionRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -216,7 +232,7 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
      * Stop an active labor session and calculate hours worked.
      * Stop labor session
      */
-    async stopLaborSessionRaw(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async stopLaborSessionRaw(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -239,6 +255,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/labor/{entryId}/stop`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))).replace(`{${"entryId"}}`, encodeURIComponent(String(requestParameters['entryId']))),
             method: 'POST',
@@ -246,18 +270,14 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderLaborEntryResponseFromJSON(jsonValue));
     }
 
     /**
      * Stop an active labor session and calculate hours worked.
      * Stop labor session
      */
-    async stopLaborSession(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async stopLaborSession(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
         const response = await this.stopLaborSessionRaw(requestParameters, initOverrides);
         return await response.value();
     }

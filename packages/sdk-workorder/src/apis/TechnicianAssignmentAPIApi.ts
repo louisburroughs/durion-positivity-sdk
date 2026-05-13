@@ -29,19 +29,19 @@ import {
 } from '../models/index';
 
 export interface AssignTechnicianOperationRequest {
-    workorderId: any;
+    workorderId: string;
     assignTechnicianRequest: AssignTechnicianRequest;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 export interface GetTechnicianAssignmentRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface ReassignTechnicianOperationRequest {
-    workorderId: any;
+    workorderId: string;
     reassignTechnicianRequest: ReassignTechnicianRequest;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 /**
@@ -53,7 +53,7 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
      * Assign a technician to a work order. Transitions workorder to ASSIGNED status if currently APPROVED.
      * Assign technician to workorder
      */
-    async assignTechnicianRaw(requestParameters: AssignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async assignTechnicianRaw(requestParameters: AssignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TechnicianAssignmentResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -78,6 +78,14 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:assign-technician"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -86,18 +94,14 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
             body: AssignTechnicianRequestToJSON(requestParameters['assignTechnicianRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => TechnicianAssignmentResponseFromJSON(jsonValue));
     }
 
     /**
      * Assign a technician to a work order. Transitions workorder to ASSIGNED status if currently APPROVED.
      * Assign technician to workorder
      */
-    async assignTechnician(requestParameters: AssignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async assignTechnician(requestParameters: AssignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TechnicianAssignmentResponse> {
         const response = await this.assignTechnicianRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -106,7 +110,7 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
      * Retrieve the current technician assignment and full assignment history for a workorder.
      * Get technician assignment
      */
-    async getTechnicianAssignmentRaw(requestParameters: GetTechnicianAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getTechnicianAssignmentRaw(requestParameters: GetTechnicianAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TechnicianAssignmentResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -118,6 +122,14 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -125,18 +137,14 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => TechnicianAssignmentResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieve the current technician assignment and full assignment history for a workorder.
      * Get technician assignment
      */
-    async getTechnicianAssignment(requestParameters: GetTechnicianAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getTechnicianAssignment(requestParameters: GetTechnicianAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TechnicianAssignmentResponse> {
         const response = await this.getTechnicianAssignmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -145,7 +153,7 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
      * Reassign a workorder to a different technician. Records reassignment reason and maintains history.
      * Reassign workorder to different technician
      */
-    async reassignTechnicianRaw(requestParameters: ReassignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async reassignTechnicianRaw(requestParameters: ReassignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TechnicianAssignmentResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -170,6 +178,14 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:assign-technician"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'PUT',
@@ -178,18 +194,14 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
             body: ReassignTechnicianRequestToJSON(requestParameters['reassignTechnicianRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => TechnicianAssignmentResponseFromJSON(jsonValue));
     }
 
     /**
      * Reassign a workorder to a different technician. Records reassignment reason and maintains history.
      * Reassign workorder to different technician
      */
-    async reassignTechnician(requestParameters: ReassignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async reassignTechnician(requestParameters: ReassignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TechnicianAssignmentResponse> {
         const response = await this.reassignTechnicianRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -36,6 +36,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.SecurityAuthWorkflow = void 0;
 exports.createSecurityClient = createSecurityClient;
 /* tslint:disable */
 /* eslint-disable */
@@ -85,6 +86,8 @@ function createSecurityClient(config) {
         userRoleManagementApi: new GeneratedApis.UserRoleManagementApi(configuration),
     };
 }
+var securityAuthWorkflow_1 = require("./workflows/securityAuthWorkflow");
+Object.defineProperty(exports, "SecurityAuthWorkflow", { enumerable: true, get: function () { return securityAuthWorkflow_1.SecurityAuthWorkflow; } });
 __exportStar(require("./runtime"), exports);
 __exportStar(require("./apis/index"), exports);
 __exportStar(require("./models/index"), exports);

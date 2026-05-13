@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeopleReportsAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,98 +66,106 @@ class PeopleReportsAPIApi extends runtime.BaseAPI {
      * Returns People-domain approved time rows for a date range and one or more locations. This endpoint is the stable source-data read contract for accounting export workflows.
      * Get approved time entries for accounting export
      */
-    async getApprovedTimeForExportRaw(requestParameters, initOverrides) {
-        if (requestParameters['startDate'] == null) {
-            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getApprovedTimeForExport().');
-        }
-        if (requestParameters['endDate'] == null) {
-            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getApprovedTimeForExport().');
-        }
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getApprovedTimeForExport().');
-        }
-        const queryParameters = {};
-        if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
-        }
-        if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
-        }
-        if (requestParameters['locationId'] != null) {
-            queryParameters['locationId'] = requestParameters['locationId'];
-        }
-        const headerParameters = {};
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/reports/approvedTime`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ApprovedTimeExportResponseFromJSON));
+    getApprovedTimeForExportRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['startDate'] == null) {
+                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getApprovedTimeForExport().');
+            }
+            if (requestParameters['endDate'] == null) {
+                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getApprovedTimeForExport().');
+            }
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getApprovedTimeForExport().');
+            }
+            const queryParameters = {};
+            if (requestParameters['startDate'] != null) {
+                queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
+            }
+            if (requestParameters['endDate'] != null) {
+                queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
+            }
+            if (requestParameters['locationId'] != null) {
+                queryParameters['locationId'] = requestParameters['locationId'];
+            }
+            const headerParameters = {};
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/reports/approvedTime`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ApprovedTimeExportResponseFromJSON));
+        });
     }
     /**
      * Returns People-domain approved time rows for a date range and one or more locations. This endpoint is the stable source-data read contract for accounting export workflows.
      * Get approved time entries for accounting export
      */
-    async getApprovedTimeForExport(requestParameters, initOverrides) {
-        const response = await this.getApprovedTimeForExportRaw(requestParameters, initOverrides);
-        return await response.value();
+    getApprovedTimeForExport(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getApprovedTimeForExportRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Generates a per-technician, per-location, per-day discrepancy report based on attendance and approved job time totals.
      * Get attendance and job time discrepancy report
      */
-    async getAttendanceDiscrepancyReportRaw(requestParameters, initOverrides) {
-        if (requestParameters['startDate'] == null) {
-            throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getAttendanceDiscrepancyReport().');
-        }
-        if (requestParameters['endDate'] == null) {
-            throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getAttendanceDiscrepancyReport().');
-        }
-        if (requestParameters['timezone'] == null) {
-            throw new runtime.RequiredError('timezone', 'Required parameter "timezone" was null or undefined when calling getAttendanceDiscrepancyReport().');
-        }
-        const queryParameters = {};
-        if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
-        }
-        if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
-        }
-        if (requestParameters['timezone'] != null) {
-            queryParameters['timezone'] = requestParameters['timezone'];
-        }
-        if (requestParameters['locationId'] != null) {
-            queryParameters['locationId'] = requestParameters['locationId'];
-        }
-        if (requestParameters['technicianIds'] != null) {
-            queryParameters['technicianIds'] = requestParameters['technicianIds'];
-        }
-        if (requestParameters['flaggedOnly'] != null) {
-            queryParameters['flaggedOnly'] = requestParameters['flaggedOnly'];
-        }
-        const headerParameters = {};
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/reports/attendanceJobtimeDiscrepancy`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AttendanceDiscrepancyReportResponseFromJSON));
+    getAttendanceDiscrepancyReportRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['startDate'] == null) {
+                throw new runtime.RequiredError('startDate', 'Required parameter "startDate" was null or undefined when calling getAttendanceDiscrepancyReport().');
+            }
+            if (requestParameters['endDate'] == null) {
+                throw new runtime.RequiredError('endDate', 'Required parameter "endDate" was null or undefined when calling getAttendanceDiscrepancyReport().');
+            }
+            if (requestParameters['timezone'] == null) {
+                throw new runtime.RequiredError('timezone', 'Required parameter "timezone" was null or undefined when calling getAttendanceDiscrepancyReport().');
+            }
+            const queryParameters = {};
+            if (requestParameters['startDate'] != null) {
+                queryParameters['startDate'] = requestParameters['startDate'].toISOString().substring(0, 10);
+            }
+            if (requestParameters['endDate'] != null) {
+                queryParameters['endDate'] = requestParameters['endDate'].toISOString().substring(0, 10);
+            }
+            if (requestParameters['timezone'] != null) {
+                queryParameters['timezone'] = requestParameters['timezone'];
+            }
+            if (requestParameters['locationId'] != null) {
+                queryParameters['locationId'] = requestParameters['locationId'];
+            }
+            if (requestParameters['technicianIds'] != null) {
+                queryParameters['technicianIds'] = requestParameters['technicianIds'];
+            }
+            if (requestParameters['flaggedOnly'] != null) {
+                queryParameters['flaggedOnly'] = requestParameters['flaggedOnly'];
+            }
+            const headerParameters = {};
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/reports/attendanceJobtimeDiscrepancy`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.AttendanceDiscrepancyReportResponseFromJSON));
+        });
     }
     /**
      * Generates a per-technician, per-location, per-day discrepancy report based on attendance and approved job time totals.
      * Get attendance and job time discrepancy report
      */
-    async getAttendanceDiscrepancyReport(requestParameters, initOverrides) {
-        const response = await this.getAttendanceDiscrepancyReportRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAttendanceDiscrepancyReport(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAttendanceDiscrepancyReportRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PeopleReportsAPIApi = PeopleReportsAPIApi;

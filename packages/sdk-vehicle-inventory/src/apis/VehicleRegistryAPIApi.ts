@@ -15,9 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
-    CreateVehicleRequest,
-    UpdateVehicleRequest,
-    VehicleResponse,
+  CreateVehicleRequest,
+  UpdateVehicleRequest,
+  VehicleResponse,
 } from '../models/index';
 import {
     CreateVehicleRequestFromJSON,
@@ -50,7 +50,7 @@ export interface UpdateVehicle1Request {
 }
 
 /**
- *
+ * 
  */
 export class VehicleRegistryAPIApi extends runtime.BaseAPI {
 
@@ -72,6 +72,14 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-registry`,
             method: 'POST',
@@ -108,6 +116,14 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'DELETE',
@@ -142,6 +158,14 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'GET',
@@ -177,6 +201,14 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-registry/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
             method: 'GET',
@@ -221,6 +253,14 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-registry/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'PUT',

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.List2StatusEnum = exports.List2TypeEnum = exports.StorageLocationControllerApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -55,119 +64,135 @@ const index_1 = require("../models/index");
 class StorageLocationControllerApi extends runtime.BaseAPI {
     /**
      */
-    async create2Raw(requestParameters, initOverrides) {
-        if (requestParameters['siteId'] == null) {
-            throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling create2().');
-        }
-        if (requestParameters['storageLocationRequest'] == null) {
-            throw new runtime.RequiredError('storageLocationRequest', 'Required parameter "storageLocationRequest" was null or undefined when calling create2().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/locations/{siteId}/storage-locations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.StorageLocationRequestToJSON)(requestParameters['storageLocationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationResponseFromJSON)(jsonValue));
+    create2Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['siteId'] == null) {
+                throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling create2().');
+            }
+            if (requestParameters['storageLocationRequest'] == null) {
+                throw new runtime.RequiredError('storageLocationRequest', 'Required parameter "storageLocationRequest" was null or undefined when calling create2().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/locations/{siteId}/storage-locations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.StorageLocationRequestToJSON)(requestParameters['storageLocationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      */
-    async create2(requestParameters, initOverrides) {
-        const response = await this.create2Raw(requestParameters, initOverrides);
-        return await response.value();
+    create2(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.create2Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      */
-    async getRaw(requestParameters, initOverrides) {
-        if (requestParameters['siteId'] == null) {
-            throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling get().');
-        }
-        if (requestParameters['storageLocationId'] == null) {
-            throw new runtime.RequiredError('storageLocationId', 'Required parameter "storageLocationId" was null or undefined when calling get().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{siteId}/storage-locations/{storageLocationId}`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))).replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationResponseFromJSON)(jsonValue));
+    getRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['siteId'] == null) {
+                throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling get().');
+            }
+            if (requestParameters['storageLocationId'] == null) {
+                throw new runtime.RequiredError('storageLocationId', 'Required parameter "storageLocationId" was null or undefined when calling get().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{siteId}/storage-locations/{storageLocationId}`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))).replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      */
-    async get(requestParameters, initOverrides) {
-        const response = await this.getRaw(requestParameters, initOverrides);
-        return await response.value();
+    get(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      */
-    async list2Raw(requestParameters, initOverrides) {
-        if (requestParameters['siteId'] == null) {
-            throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling list2().');
-        }
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling list2().');
-        }
-        const queryParameters = {};
-        if (requestParameters['type'] != null) {
-            queryParameters['type'] = requestParameters['type'];
-        }
-        if (requestParameters['status'] != null) {
-            queryParameters['status'] = requestParameters['status'];
-        }
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{siteId}/storage-locations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageStorageLocationResponseFromJSON)(jsonValue));
+    list2Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['siteId'] == null) {
+                throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling list2().');
+            }
+            if (requestParameters['pageable'] == null) {
+                throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling list2().');
+            }
+            const queryParameters = {};
+            if (requestParameters['type'] != null) {
+                queryParameters['type'] = requestParameters['type'];
+            }
+            if (requestParameters['status'] != null) {
+                queryParameters['status'] = requestParameters['status'];
+            }
+            if (requestParameters['pageable'] != null) {
+                queryParameters['pageable'] = requestParameters['pageable'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{siteId}/storage-locations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageStorageLocationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      */
-    async list2(requestParameters, initOverrides) {
-        const response = await this.list2Raw(requestParameters, initOverrides);
-        return await response.value();
+    list2(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.list2Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      */
-    async patch2Raw(requestParameters, initOverrides) {
-        if (requestParameters['siteId'] == null) {
-            throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling patch2().');
-        }
-        if (requestParameters['storageLocationId'] == null) {
-            throw new runtime.RequiredError('storageLocationId', 'Required parameter "storageLocationId" was null or undefined when calling patch2().');
-        }
-        if (requestParameters['storageLocationPatchRequest'] == null) {
-            throw new runtime.RequiredError('storageLocationPatchRequest', 'Required parameter "storageLocationPatchRequest" was null or undefined when calling patch2().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/locations/{siteId}/storage-locations/{storageLocationId}`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))).replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.StorageLocationPatchRequestToJSON)(requestParameters['storageLocationPatchRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationResponseFromJSON)(jsonValue));
+    patch2Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['siteId'] == null) {
+                throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling patch2().');
+            }
+            if (requestParameters['storageLocationId'] == null) {
+                throw new runtime.RequiredError('storageLocationId', 'Required parameter "storageLocationId" was null or undefined when calling patch2().');
+            }
+            if (requestParameters['storageLocationPatchRequest'] == null) {
+                throw new runtime.RequiredError('storageLocationPatchRequest', 'Required parameter "storageLocationPatchRequest" was null or undefined when calling patch2().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/locations/{siteId}/storage-locations/{storageLocationId}`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))).replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
+                method: 'PATCH',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.StorageLocationPatchRequestToJSON)(requestParameters['storageLocationPatchRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.StorageLocationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      */
-    async patch2(requestParameters, initOverrides) {
-        const response = await this.patch2Raw(requestParameters, initOverrides);
-        return await response.value();
+    patch2(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.patch2Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.StorageLocationControllerApi = StorageLocationControllerApi;

@@ -35,40 +35,40 @@ import {
 } from '../models/index';
 
 export interface ApplyEmergencyOverrideRequest {
-    changeId: any;
+    changeId: string;
     emergencyOverrideDTO: EmergencyOverrideDTO;
 }
 
 export interface ApproveChangeRequestRequest {
-    changeId: any;
+    changeId: string;
     approveChangeRequestDTO: ApproveChangeRequestDTO;
 }
 
 export interface CanCloseWorkorderRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface CreateChangeRequestRequest {
-    workorderId: any;
+    workorderId: string;
     createChangeRequestDTO: CreateChangeRequestDTO;
-    idempotencyKey?: any;
+    idempotencyKey?: string;
 }
 
 export interface DeclineChangeRequestRequest {
-    changeId: any;
+    changeId: string;
     declineChangeRequestDTO: DeclineChangeRequestDTO;
 }
 
 export interface GetChangeRequestByIdRequest {
-    changeId: any;
+    changeId: string;
 }
 
 export interface GetChangeRequestsByWorkorderRequest {
-    workorderId: any;
+    workorderId: string;
 }
 
 export interface RecordCustomerDenialAcknowledgmentRequest {
-    changeId: any;
+    changeId: string;
 }
 
 /**
@@ -101,6 +101,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:change_request:emergency_override"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/changeRequests/{changeId}/emergency-override`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
             method: 'POST',
@@ -146,6 +154,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:change_request:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/changeRequests/{changeId}/approve`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
             method: 'POST',
@@ -182,6 +198,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/canClose`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -234,6 +258,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:change_request:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/changeRequests`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -279,6 +311,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:change_request:decline"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/changeRequests/{changeId}/decline`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
             method: 'POST',
@@ -315,6 +355,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:change_request:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/changeRequests/{changeId}`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
             method: 'GET',
@@ -350,6 +398,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:change_request:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/changeRequests`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -385,6 +441,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/changeRequests/{changeId}/acknowledgeDenial`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
             method: 'POST',

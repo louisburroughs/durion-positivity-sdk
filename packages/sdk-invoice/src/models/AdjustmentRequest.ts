@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface AdjustmentRequest
  */
 export interface AdjustmentRequest {
     /**
-     *
+     * 
      * @type {string}
      * @memberof AdjustmentRequest
      */
     type: AdjustmentRequestTypeEnum;
     /**
-     *
+     * 
      * @type {number}
      * @memberof AdjustmentRequest
      */
     amount: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof AdjustmentRequest
      */
     reason: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof AdjustmentRequest
      */
@@ -76,7 +76,7 @@ export function AdjustmentRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         return json;
     }
     return {
-
+        
         'type': json['type'],
         'amount': json['amount'],
         'reason': json['reason'],
@@ -89,7 +89,7 @@ export function AdjustmentRequestToJSON(value?: AdjustmentRequest | null): any {
         return value;
     }
     return {
-
+        
         'type': value['type'],
         'amount': value['amount'],
         'reason': value['reason'],

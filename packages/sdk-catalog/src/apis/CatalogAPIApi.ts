@@ -27,19 +27,19 @@ export interface AddCatalogRequest {
 }
 
 export interface DeleteCatalogRequest {
-    catalogId: any;
+    catalogId: string;
 }
 
 export interface GetCatalogByIdRequest {
-    catalogId: any;
+    catalogId: string;
 }
 
 export interface GetCatalogByNameRequest {
-    name: any;
+    name: string;
 }
 
 export interface UpdateCatalogRequest {
-    catalogId: any;
+    catalogId: string;
     catalogDto: CatalogDto;
 }
 
@@ -52,7 +52,7 @@ export class CatalogAPIApi extends runtime.BaseAPI {
      * Adds a new catalog.
      * Add a new catalog
      */
-    async addCatalogRaw(requestParameters: AddCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async addCatalogRaw(requestParameters: AddCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogDto>> {
         if (requestParameters['catalogDto'] == null) {
             throw new runtime.RequiredError(
                 'catalogDto',
@@ -66,6 +66,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/catalogs`,
             method: 'POST',
@@ -74,18 +82,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
             body: CatalogDtoToJSON(requestParameters['catalogDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => CatalogDtoFromJSON(jsonValue));
     }
 
     /**
      * Adds a new catalog.
      * Add a new catalog
      */
-    async addCatalog(requestParameters: AddCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async addCatalog(requestParameters: AddCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogDto> {
         const response = await this.addCatalogRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -106,6 +110,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_DELETE"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
             method: 'DELETE',
@@ -128,7 +140,7 @@ export class CatalogAPIApi extends runtime.BaseAPI {
      * Retrieves a specific catalog by its unique ID.
      * Get a catalog by ID
      */
-    async getCatalogByIdRaw(requestParameters: GetCatalogByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getCatalogByIdRaw(requestParameters: GetCatalogByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogDto>> {
         if (requestParameters['catalogId'] == null) {
             throw new runtime.RequiredError(
                 'catalogId',
@@ -140,6 +152,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
             method: 'GET',
@@ -147,18 +167,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => CatalogDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a specific catalog by its unique ID.
      * Get a catalog by ID
      */
-    async getCatalogById(requestParameters: GetCatalogByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getCatalogById(requestParameters: GetCatalogByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogDto> {
         const response = await this.getCatalogByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -167,7 +183,7 @@ export class CatalogAPIApi extends runtime.BaseAPI {
      * Retrieves a list of catalogs matching the given name.
      * Get catalogs by name
      */
-    async getCatalogByNameRaw(requestParameters: GetCatalogByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getCatalogByNameRaw(requestParameters: GetCatalogByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogDto>> {
         if (requestParameters['name'] == null) {
             throw new runtime.RequiredError(
                 'name',
@@ -179,6 +195,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/catalogs/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
             method: 'GET',
@@ -186,18 +210,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => CatalogDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a list of catalogs matching the given name.
      * Get catalogs by name
      */
-    async getCatalogByName(requestParameters: GetCatalogByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getCatalogByName(requestParameters: GetCatalogByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogDto> {
         const response = await this.getCatalogByNameRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -206,7 +226,7 @@ export class CatalogAPIApi extends runtime.BaseAPI {
      * Updates an existing catalog.
      * Update an existing catalog
      */
-    async updateCatalogRaw(requestParameters: UpdateCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updateCatalogRaw(requestParameters: UpdateCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogDto>> {
         if (requestParameters['catalogId'] == null) {
             throw new runtime.RequiredError(
                 'catalogId',
@@ -227,6 +247,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/catalogs/{catalogId}`.replace(`{${"catalogId"}}`, encodeURIComponent(String(requestParameters['catalogId']))),
             method: 'PUT',
@@ -235,18 +263,14 @@ export class CatalogAPIApi extends runtime.BaseAPI {
             body: CatalogDtoToJSON(requestParameters['catalogDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => CatalogDtoFromJSON(jsonValue));
     }
 
     /**
      * Updates an existing catalog.
      * Update an existing catalog
      */
-    async updateCatalog(requestParameters: UpdateCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updateCatalog(requestParameters: UpdateCatalogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogDto> {
         const response = await this.updateCatalogRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -124,11 +124,9 @@ export interface VendorBillResponse {
 export enum VendorBillResponseStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
-    PendingReview = 'PENDING_REVIEW',
     Approved = 'APPROVED',
     Rejected = 'REJECTED',
     Paid = 'PAID',
-    Cancelled = 'CANCELLED',
     Voided = 'VOIDED'
 }
 

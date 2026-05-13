@@ -82,6 +82,14 @@ export class PeopleAccessControlApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:role:assign"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/{personUuid}/access/assignments`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
             method: 'POST',
@@ -126,6 +134,14 @@ export class PeopleAccessControlApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:role:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/{personUuid}/access/assignments`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
             method: 'GET',
@@ -161,6 +177,14 @@ export class PeopleAccessControlApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:role:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/{personUuid}/access/roles`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
             method: 'GET',
@@ -207,6 +231,14 @@ export class PeopleAccessControlApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:role:revoke"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/{personUuid}/access/assignments/{roleCode}`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))).replace(`{${"roleCode"}}`, encodeURIComponent(String(requestParameters['roleCode']))),
             method: 'DELETE',

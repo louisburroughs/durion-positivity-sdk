@@ -12,6 +12,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TextApiResponse = exports.BlobApiResponse = exports.VoidApiResponse = exports.JSONApiResponse = exports.COLLECTION_FORMATS = exports.RequiredError = exports.FetchError = exports.ResponseError = exports.BaseAPI = exports.DefaultConfig = exports.Configuration = exports.BASE_PATH = void 0;
 exports.querystring = querystring;
@@ -19,7 +28,6 @@ exports.mapValues = mapValues;
 exports.canConsumeForm = canConsumeForm;
 exports.BASE_PATH = "http://api-gateway.local/v1/customer".replace(/\/+$/, "");
 class Configuration {
-    configuration;
     constructor(configuration = {}) {
         this.configuration = configuration;
     }
@@ -54,7 +62,7 @@ class Configuration {
     get accessToken() {
         const accessToken = this.configuration.accessToken;
         if (accessToken) {
-            return typeof accessToken === 'function' ? accessToken : async () => accessToken;
+            return typeof accessToken === 'function' ? accessToken : () => __awaiter(this, void 0, void 0, function* () { return accessToken; });
         }
         return undefined;
     }
@@ -71,11 +79,52 @@ exports.DefaultConfig = new Configuration();
  * This is the base class for all generated API classes.
  */
 class BaseAPI {
-    configuration;
-    static jsonRegex = new RegExp('^(:?application\/json|[^;/ \t]+\/[^;/ \t]+[+]json)[ \t]*(:?;.*)?$', 'i');
-    middleware;
     constructor(configuration = exports.DefaultConfig) {
         this.configuration = configuration;
+        this.fetchApi = (url, init) => __awaiter(this, void 0, void 0, function* () {
+            let fetchParams = { url, init };
+            for (const middleware of this.middleware) {
+                if (middleware.pre) {
+                    fetchParams = (yield middleware.pre(Object.assign({ fetch: this.fetchApi }, fetchParams))) || fetchParams;
+                }
+            }
+            let response = undefined;
+            try {
+                response = yield (this.configuration.fetchApi || fetch)(fetchParams.url, fetchParams.init);
+            }
+            catch (e) {
+                for (const middleware of this.middleware) {
+                    if (middleware.onError) {
+                        response = (yield middleware.onError({
+                            fetch: this.fetchApi,
+                            url: fetchParams.url,
+                            init: fetchParams.init,
+                            error: e,
+                            response: response ? response.clone() : undefined,
+                        })) || response;
+                    }
+                }
+                if (response === undefined) {
+                    if (e instanceof Error) {
+                        throw new FetchError(e, 'The request failed and the interceptors did not return an alternative response');
+                    }
+                    else {
+                        throw e;
+                    }
+                }
+            }
+            for (const middleware of this.middleware) {
+                if (middleware.post) {
+                    response = (yield middleware.post({
+                        fetch: this.fetchApi,
+                        url: fetchParams.url,
+                        init: fetchParams.init,
+                        response: response.clone(),
+                    })) || response;
+                }
+            }
+            return response;
+        });
         this.middleware = configuration.middleware;
     }
     withMiddleware(...middlewares) {
@@ -107,105 +156,56 @@ class BaseAPI {
         }
         return BaseAPI.jsonRegex.test(mime);
     }
-    async request(context, initOverrides) {
-        const { url, init } = await this.createFetchParams(context, initOverrides);
-        const response = await this.fetchApi(url, init);
-        if (response && (response.status >= 200 && response.status < 300)) {
-            return response;
-        }
-        throw new ResponseError(response, 'Response returned an error code');
+    request(context, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { url, init } = yield this.createFetchParams(context, initOverrides);
+            const response = yield this.fetchApi(url, init);
+            if (response && (response.status >= 200 && response.status < 300)) {
+                return response;
+            }
+            throw new ResponseError(response, 'Response returned an error code');
+        });
     }
-    async createFetchParams(context, initOverrides) {
-        let url = this.configuration.basePath + context.path;
-        if (context.query !== undefined && Object.keys(context.query).length !== 0) {
-            // only add the querystring to the URL if there are query parameters.
-            // this is done to avoid urls ending with a "?" character which buggy webservers
-            // do not handle correctly sometimes.
-            url += '?' + this.configuration.queryParamsStringify(context.query);
-        }
-        const headers = Object.assign({}, this.configuration.headers, context.headers);
-        Object.keys(headers).forEach(key => headers[key] === undefined ? delete headers[key] : {});
-        const initOverrideFn = typeof initOverrides === "function"
-            ? initOverrides
-            : async () => initOverrides;
-        const initParams = {
-            method: context.method,
-            headers,
-            body: context.body,
-            credentials: this.configuration.credentials,
-        };
-        const overriddenInit = {
-            ...initParams,
-            ...(await initOverrideFn({
+    createFetchParams(context, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let url = this.configuration.basePath + context.path;
+            if (context.query !== undefined && Object.keys(context.query).length !== 0) {
+                // only add the querystring to the URL if there are query parameters.
+                // this is done to avoid urls ending with a "?" character which buggy webservers
+                // do not handle correctly sometimes.
+                url += '?' + this.configuration.queryParamsStringify(context.query);
+            }
+            const headers = Object.assign({}, this.configuration.headers, context.headers);
+            Object.keys(headers).forEach(key => headers[key] === undefined ? delete headers[key] : {});
+            const initOverrideFn = typeof initOverrides === "function"
+                ? initOverrides
+                : () => __awaiter(this, void 0, void 0, function* () { return initOverrides; });
+            const initParams = {
+                method: context.method,
+                headers,
+                body: context.body,
+                credentials: this.configuration.credentials,
+            };
+            const overriddenInit = Object.assign(Object.assign({}, initParams), (yield initOverrideFn({
                 init: initParams,
                 context,
-            }))
-        };
-        let body;
-        if (isFormData(overriddenInit.body)
-            || (overriddenInit.body instanceof URLSearchParams)
-            || isBlob(overriddenInit.body)) {
-            body = overriddenInit.body;
-        }
-        else if (this.isJsonMime(headers['Content-Type'])) {
-            body = JSON.stringify(overriddenInit.body);
-        }
-        else {
-            body = overriddenInit.body;
-        }
-        const init = {
-            ...overriddenInit,
-            body
-        };
-        return { url, init };
+            })));
+            let body;
+            if (isFormData(overriddenInit.body)
+                || (overriddenInit.body instanceof URLSearchParams)
+                || isBlob(overriddenInit.body)) {
+                body = overriddenInit.body;
+            }
+            else if (this.isJsonMime(headers['Content-Type'])) {
+                body = JSON.stringify(overriddenInit.body);
+            }
+            else {
+                body = overriddenInit.body;
+            }
+            const init = Object.assign(Object.assign({}, overriddenInit), { body });
+            return { url, init };
+        });
     }
-    fetchApi = async (url, init) => {
-        let fetchParams = { url, init };
-        for (const middleware of this.middleware) {
-            if (middleware.pre) {
-                fetchParams = await middleware.pre({
-                    fetch: this.fetchApi,
-                    ...fetchParams,
-                }) || fetchParams;
-            }
-        }
-        let response = undefined;
-        try {
-            response = await (this.configuration.fetchApi || fetch)(fetchParams.url, fetchParams.init);
-        }
-        catch (e) {
-            for (const middleware of this.middleware) {
-                if (middleware.onError) {
-                    response = await middleware.onError({
-                        fetch: this.fetchApi,
-                        url: fetchParams.url,
-                        init: fetchParams.init,
-                        error: e,
-                        response: response ? response.clone() : undefined,
-                    }) || response;
-                }
-            }
-            if (response === undefined) {
-                if (e instanceof Error) {
-                    throw new FetchError(e, 'The request failed and the interceptors did not return an alternative response');
-                }
-                else {
-                    throw e;
-                }
-            }
-        }
-        for (const middleware of this.middleware) {
-            if (middleware.post) {
-                response = await middleware.post({
-                    fetch: this.fetchApi,
-                    url: fetchParams.url,
-                    init: fetchParams.init,
-                    response: response.clone(),
-                }) || response;
-            }
-        }
-        return response;
-    };
     /**
      * Create a shallow clone of `this` by constructing a new instance
      * and then shallow cloning data members.
@@ -218,6 +218,7 @@ class BaseAPI {
     }
 }
 exports.BaseAPI = BaseAPI;
+BaseAPI.jsonRegex = new RegExp('^(:?application\/json|[^;/ \t]+\/[^;/ \t]+[+]json)[ \t]*(:?;.*)?$', 'i');
 ;
 function isBlob(value) {
     return typeof Blob !== 'undefined' && value instanceof Blob;
@@ -226,29 +227,26 @@ function isFormData(value) {
     return typeof FormData !== "undefined" && value instanceof FormData;
 }
 class ResponseError extends Error {
-    response;
-    name = "ResponseError";
     constructor(response, msg) {
         super(msg);
         this.response = response;
+        this.name = "ResponseError";
     }
 }
 exports.ResponseError = ResponseError;
 class FetchError extends Error {
-    cause;
-    name = "FetchError";
     constructor(cause, msg) {
         super(msg);
         this.cause = cause;
+        this.name = "FetchError";
     }
 }
 exports.FetchError = FetchError;
 class RequiredError extends Error {
-    field;
-    name = "RequiredError";
     constructor(field, msg) {
         super(msg);
         this.field = field;
+        this.name = "RequiredError";
     }
 }
 exports.RequiredError = RequiredError;
@@ -284,7 +282,7 @@ function querystringSingleKey(key, value, keyPrefix = '') {
     return `${encodeURIComponent(fullKey)}=${encodeURIComponent(String(value))}`;
 }
 function mapValues(data, fn) {
-    return Object.keys(data).reduce((acc, key) => ({ ...acc, [key]: fn(data[key]) }), {});
+    return Object.keys(data).reduce((acc, key) => (Object.assign(Object.assign({}, acc), { [key]: fn(data[key]) })), {});
 }
 function canConsumeForm(consumes) {
     for (const consume of consumes) {
@@ -295,45 +293,48 @@ function canConsumeForm(consumes) {
     return false;
 }
 class JSONApiResponse {
-    raw;
-    transformer;
     constructor(raw, transformer = (jsonValue) => jsonValue) {
         this.raw = raw;
         this.transformer = transformer;
     }
-    async value() {
-        return this.transformer(await this.raw.json());
+    value() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.transformer(yield this.raw.json());
+        });
     }
 }
 exports.JSONApiResponse = JSONApiResponse;
 class VoidApiResponse {
-    raw;
     constructor(raw) {
         this.raw = raw;
     }
-    async value() {
-        return undefined;
+    value() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return undefined;
+        });
     }
 }
 exports.VoidApiResponse = VoidApiResponse;
 class BlobApiResponse {
-    raw;
     constructor(raw) {
         this.raw = raw;
     }
-    async value() {
-        return await this.raw.blob();
+    value() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.raw.blob();
+        });
     }
     ;
 }
 exports.BlobApiResponse = BlobApiResponse;
 class TextApiResponse {
-    raw;
     constructor(raw) {
         this.raw = raw;
     }
-    async value() {
-        return await this.raw.text();
+    value() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.raw.text();
+        });
     }
     ;
 }

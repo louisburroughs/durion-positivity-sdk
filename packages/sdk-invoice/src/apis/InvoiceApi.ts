@@ -15,12 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
-    AdjustmentRequest,
-    FinalizationRequest,
-    InvoiceCreationRequest,
-    InvoiceDetailsResponse,
-    InvoiceGenerationResponse,
-    RevertRequest,
+  AdjustmentRequest,
+  FinalizationRequest,
+  InvoiceCreationRequest,
+  InvoiceDetailsResponse,
+  InvoiceGenerationResponse,
+  RevertRequest,
 } from '../models/index';
 import {
     AdjustmentRequestFromJSON,
@@ -61,7 +61,7 @@ export interface RevertInvoiceRequest {
 }
 
 /**
- *
+ * 
  */
 export class InvoiceApi extends runtime.BaseAPI {
 
@@ -90,6 +90,14 @@ export class InvoiceApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/invoices/{invoiceId}/adjustments`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
             method: 'POST',
@@ -128,6 +136,14 @@ export class InvoiceApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/invoices`,
             method: 'POST',
@@ -173,6 +189,14 @@ export class InvoiceApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:finalize"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/invoices/{invoiceId}/finalize`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
             method: 'POST',
@@ -209,6 +233,14 @@ export class InvoiceApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/invoices/{invoiceId}`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
             method: 'GET',
@@ -253,6 +285,14 @@ export class InvoiceApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:finalize"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/invoices/{invoiceId}/revert`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
             method: 'POST',

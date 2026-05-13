@@ -15,16 +15,16 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateReservationRequest,
-  InventoryErrorResponse,
   PromoteAllocationRequest,
   ReservationResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateReservationRequestFromJSON,
     CreateReservationRequestToJSON,
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
     PromoteAllocationRequestFromJSON,
     PromoteAllocationRequestToJSON,
     ReservationResponseFromJSON,
@@ -65,6 +65,14 @@ export class InventoryReservationsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/reservations/{workorderLineId}`.replace(`{${"workorderLineId"}}`, encodeURIComponent(String(requestParameters['workorderLineId']))),
             method: 'DELETE',
@@ -101,6 +109,14 @@ export class InventoryReservationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/reservations`,
             method: 'POST',
@@ -146,6 +162,14 @@ export class InventoryReservationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/reservations/{allocationId}/promote`.replace(`{${"allocationId"}}`, encodeURIComponent(String(requestParameters['allocationId']))),
             method: 'POST',

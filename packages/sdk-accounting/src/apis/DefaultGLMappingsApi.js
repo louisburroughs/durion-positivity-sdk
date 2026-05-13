@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DefaultGLMappingsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,224 +66,256 @@ class DefaultGLMappingsApi extends runtime.BaseAPI {
      * Create a new default GL account mapping for an event type
      * Create default GL mapping
      */
-    async createDefaultMappingRaw(requestParameters, initOverrides) {
-        if (requestParameters['defaultGLMappingRequest'] == null) {
-            throw new runtime.RequiredError('defaultGLMappingRequest', 'Required parameter "defaultGLMappingRequest" was null or undefined when calling createDefaultMapping().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.DefaultGLMappingRequestToJSON)(requestParameters['defaultGLMappingRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+    createDefaultMappingRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['defaultGLMappingRequest'] == null) {
+                throw new runtime.RequiredError('defaultGLMappingRequest', 'Required parameter "defaultGLMappingRequest" was null or undefined when calling createDefaultMapping().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.DefaultGLMappingRequestToJSON)(requestParameters['defaultGLMappingRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new default GL account mapping for an event type
      * Create default GL mapping
      */
-    async createDefaultMapping(requestParameters, initOverrides) {
-        const response = await this.createDefaultMappingRaw(requestParameters, initOverrides);
-        return await response.value();
+    createDefaultMapping(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createDefaultMappingRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Soft delete (deactivate) a default GL mapping
      * Deactivate default GL mapping
      */
-    async deactivateDefaultMappingRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deactivateDefaultMapping().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deactivateDefaultMappingRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deactivateDefaultMapping().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Soft delete (deactivate) a default GL mapping
      * Deactivate default GL mapping
      */
-    async deactivateDefaultMapping(requestParameters, initOverrides) {
-        await this.deactivateDefaultMappingRaw(requestParameters, initOverrides);
+    deactivateDefaultMapping(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deactivateDefaultMappingRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve a default GL mapping by identifier
      * Get default GL mapping
      */
-    async getDefaultMappingRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getDefaultMapping().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+    getDefaultMappingRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getDefaultMapping().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a default GL mapping by identifier
      * Get default GL mapping
      */
-    async getDefaultMapping(requestParameters, initOverrides) {
-        const response = await this.getDefaultMappingRaw(requestParameters, initOverrides);
-        return await response.value();
+    getDefaultMapping(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getDefaultMappingRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve paginated list of default GL mappings
      * List default GL mappings
      */
-    async listDefaultMappingsRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-        if (requestParameters['size'] != null) {
-            queryParameters['size'] = requestParameters['size'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingListResponseFromJSON)(jsonValue));
+    listDefaultMappingsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            if (requestParameters['page'] != null) {
+                queryParameters['page'] = requestParameters['page'];
+            }
+            if (requestParameters['size'] != null) {
+                queryParameters['size'] = requestParameters['size'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingListResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve paginated list of default GL mappings
      * List default GL mappings
      */
-    async listDefaultMappings(requestParameters = {}, initOverrides) {
-        const response = await this.listDefaultMappingsRaw(requestParameters, initOverrides);
-        return await response.value();
+    listDefaultMappings() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.listDefaultMappingsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all global default GL mappings (organizationId IS NULL)
      * List global default mappings
      */
-    async listGlobalDefaultsRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings/global`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.DefaultGLMappingResponseFromJSON));
+    listGlobalDefaultsRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings/global`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.DefaultGLMappingResponseFromJSON));
+        });
     }
     /**
      * Retrieve all global default GL mappings (organizationId IS NULL)
      * List global default mappings
      */
-    async listGlobalDefaults(initOverrides) {
-        const response = await this.listGlobalDefaultsRaw(initOverrides);
-        return await response.value();
+    listGlobalDefaults(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listGlobalDefaultsRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Find the most specific active default mapping for an event type and organization
      * Resolve default mapping for event
      */
-    async resolveDefaultMappingRaw(requestParameters, initOverrides) {
-        if (requestParameters['eventType'] == null) {
-            throw new runtime.RequiredError('eventType', 'Required parameter "eventType" was null or undefined when calling resolveDefaultMapping().');
-        }
-        const queryParameters = {};
-        if (requestParameters['eventType'] != null) {
-            queryParameters['eventType'] = requestParameters['eventType'];
-        }
-        if (requestParameters['organizationId'] != null) {
-            queryParameters['organizationId'] = requestParameters['organizationId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings/resolve`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+    resolveDefaultMappingRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['eventType'] == null) {
+                throw new runtime.RequiredError('eventType', 'Required parameter "eventType" was null or undefined when calling resolveDefaultMapping().');
+            }
+            const queryParameters = {};
+            if (requestParameters['eventType'] != null) {
+                queryParameters['eventType'] = requestParameters['eventType'];
+            }
+            if (requestParameters['organizationId'] != null) {
+                queryParameters['organizationId'] = requestParameters['organizationId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings/resolve`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Find the most specific active default mapping for an event type and organization
      * Resolve default mapping for event
      */
-    async resolveDefaultMapping(requestParameters, initOverrides) {
-        const response = await this.resolveDefaultMappingRaw(requestParameters, initOverrides);
-        return await response.value();
+    resolveDefaultMapping(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.resolveDefaultMappingRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Find default GL mappings by event type or organization
      * Search default GL mappings
      */
-    async searchDefaultMappingsRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        if (requestParameters['eventType'] != null) {
-            queryParameters['eventType'] = requestParameters['eventType'];
-        }
-        if (requestParameters['organizationId'] != null) {
-            queryParameters['organizationId'] = requestParameters['organizationId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings/search`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.DefaultGLMappingResponseFromJSON));
+    searchDefaultMappingsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            if (requestParameters['eventType'] != null) {
+                queryParameters['eventType'] = requestParameters['eventType'];
+            }
+            if (requestParameters['organizationId'] != null) {
+                queryParameters['organizationId'] = requestParameters['organizationId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings/search`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.DefaultGLMappingResponseFromJSON));
+        });
     }
     /**
      * Find default GL mappings by event type or organization
      * Search default GL mappings
      */
-    async searchDefaultMappings(requestParameters = {}, initOverrides) {
-        const response = await this.searchDefaultMappingsRaw(requestParameters, initOverrides);
-        return await response.value();
+    searchDefaultMappings() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.searchDefaultMappingsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update an existing default GL account mapping
      * Update default GL mapping
      */
-    async updateDefaultMappingRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateDefaultMapping().');
-        }
-        if (requestParameters['defaultGLMappingRequest'] == null) {
-            throw new runtime.RequiredError('defaultGLMappingRequest', 'Required parameter "defaultGLMappingRequest" was null or undefined when calling updateDefaultMapping().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/default-mappings/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.DefaultGLMappingRequestToJSON)(requestParameters['defaultGLMappingRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+    updateDefaultMappingRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateDefaultMapping().');
+            }
+            if (requestParameters['defaultGLMappingRequest'] == null) {
+                throw new runtime.RequiredError('defaultGLMappingRequest', 'Required parameter "defaultGLMappingRequest" was null or undefined when calling updateDefaultMapping().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/default-mappings/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.DefaultGLMappingRequestToJSON)(requestParameters['defaultGLMappingRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.DefaultGLMappingResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update an existing default GL account mapping
      * Update default GL mapping
      */
-    async updateDefaultMapping(requestParameters, initOverrides) {
-        const response = await this.updateDefaultMappingRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateDefaultMapping(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateDefaultMappingRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.DefaultGLMappingsApi = DefaultGLMappingsApi;

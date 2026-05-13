@@ -39,7 +39,7 @@ export interface ConsumePartsRequest {
 
 export interface GetUsageHistoryRequest {
     workorderId: string;
-    partLineId?: any;
+    partLineId?: string;
 }
 
 export interface IssuePartsRequest {
@@ -63,7 +63,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
      * Record actual consumption of parts. Quantity consumed cannot exceed quantity issued.
      * Consume parts on workorder
      */
-    async consumePartsRaw(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async consumePartsRaw(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -88,6 +88,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/consume`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -96,18 +104,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             body: ConsumePartRequestToJSON(requestParameters['consumePartRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartUsageEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Record actual consumption of parts. Quantity consumed cannot exceed quantity issued.
      * Consume parts on workorder
      */
-    async consumeParts(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async consumeParts(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
         const response = await this.consumePartsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -116,7 +120,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
      * Retrieve usage history (issue, consume, return events) for parts on the workorder
      * Get parts usage history
      */
-    async getUsageHistoryRaw(requestParameters: GetUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getUsageHistoryRaw(requestParameters: GetUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -132,6 +136,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/usageHistory`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'GET',
@@ -139,18 +151,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartUsageEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieve usage history (issue, consume, return events) for parts on the workorder
      * Get parts usage history
      */
-    async getUsageHistory(requestParameters: GetUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getUsageHistory(requestParameters: GetUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
         const response = await this.getUsageHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -159,7 +167,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
      * Issue parts from inventory, reserving them for consumption on the workorder
      * Issue parts to workorder
      */
-    async issuePartsRaw(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async issuePartsRaw(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -184,6 +192,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/issue`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -192,18 +208,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             body: IssuePartRequestToJSON(requestParameters['issuePartRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartUsageEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Issue parts from inventory, reserving them for consumption on the workorder
      * Issue parts to workorder
      */
-    async issueParts(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async issueParts(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
         const response = await this.issuePartsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -212,7 +224,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
      * Return unused parts after partial consumption or service completion
      * Return unused parts to inventory
      */
-    async returnPartsRaw(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async returnPartsRaw(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -237,6 +249,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:parts:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/{workorderId}/parts/return`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
             method: 'POST',
@@ -245,18 +265,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             body: ReturnPartRequestToJSON(requestParameters['returnPartRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartUsageEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Return unused parts after partial consumption or service completion
      * Return unused parts to inventory
      */
-    async returnParts(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async returnParts(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
         const response = await this.returnPartsRaw(requestParameters, initOverrides);
         return await response.value();
     }

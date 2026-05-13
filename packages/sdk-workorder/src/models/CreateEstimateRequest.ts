@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for creating an estimate
+ * Estimate creation request with customer and vehicle IDs
  * @export
  * @interface CreateEstimateRequest
  */

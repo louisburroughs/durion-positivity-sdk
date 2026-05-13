@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventorySitesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,54 +65,62 @@ class InventorySitesApi extends runtime.BaseAPI {
      * Returns configured default locations for a site. Stub implementation.
      * Get site default locations
      */
-    async getSiteDefaultLocationsRaw(requestParameters, initOverrides) {
-        if (requestParameters['siteId'] == null) {
-            throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling getSiteDefaultLocations().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/sites/{siteId}/defaultLocations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response);
+    getSiteDefaultLocationsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['siteId'] == null) {
+                throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling getSiteDefaultLocations().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/sites/{siteId}/defaultLocations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response);
+        });
     }
     /**
      * Returns configured default locations for a site. Stub implementation.
      * Get site default locations
      */
-    async getSiteDefaultLocations(requestParameters, initOverrides) {
-        const response = await this.getSiteDefaultLocationsRaw(requestParameters, initOverrides);
-        return await response.value();
+    getSiteDefaultLocations(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getSiteDefaultLocationsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Replaces the configured default locations for a site. Stub implementation.
      * Replace site default locations
      */
-    async putSiteDefaultLocationsRaw(requestParameters, initOverrides) {
-        if (requestParameters['siteId'] == null) {
-            throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling putSiteDefaultLocations().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/sites/{siteId}/defaultLocations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: requestParameters['requestBody'],
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    putSiteDefaultLocationsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['siteId'] == null) {
+                throw new runtime.RequiredError('siteId', 'Required parameter "siteId" was null or undefined when calling putSiteDefaultLocations().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/sites/{siteId}/defaultLocations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: requestParameters['requestBody'],
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Replaces the configured default locations for a site. Stub implementation.
      * Replace site default locations
      */
-    async putSiteDefaultLocations(requestParameters, initOverrides) {
-        await this.putSiteDefaultLocationsRaw(requestParameters, initOverrides);
+    putSiteDefaultLocations(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.putSiteDefaultLocationsRaw(requestParameters, initOverrides);
+        });
     }
 }
 exports.InventorySitesApi = InventorySitesApi;

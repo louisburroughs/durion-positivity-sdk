@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentApplicationsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,119 +66,135 @@ class PaymentApplicationsApi extends runtime.BaseAPI {
      * Apply a payment to an invoice and update its status.
      * Apply payment
      */
-    async applyPaymentRaw(requestParameters, initOverrides) {
-        if (requestParameters['paymentId'] == null) {
-            throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling applyPayment().');
-        }
-        if (requestParameters['paymentApplicationRequest'] == null) {
-            throw new runtime.RequiredError('paymentApplicationRequest', 'Required parameter "paymentApplicationRequest" was null or undefined when calling applyPayment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/payments/{paymentId}/applications`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PaymentApplicationRequestToJSON)(requestParameters['paymentApplicationRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PaymentApplicationResponseFromJSON)(jsonValue));
+    applyPaymentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['paymentId'] == null) {
+                throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling applyPayment().');
+            }
+            if (requestParameters['paymentApplicationRequest'] == null) {
+                throw new runtime.RequiredError('paymentApplicationRequest', 'Required parameter "paymentApplicationRequest" was null or undefined when calling applyPayment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/payments/{paymentId}/applications`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PaymentApplicationRequestToJSON)(requestParameters['paymentApplicationRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PaymentApplicationResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Apply a payment to an invoice and update its status.
      * Apply payment
      */
-    async applyPayment(requestParameters, initOverrides) {
-        const response = await this.applyPaymentRaw(requestParameters, initOverrides);
-        return await response.value();
+    applyPayment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.applyPaymentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Reverse a previously applied payment.
      * Reverse payment
      */
-    async reversePaymentRaw(requestParameters, initOverrides) {
-        if (requestParameters['paymentId'] == null) {
-            throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling reversePayment().');
-        }
-        if (requestParameters['paymentApplicationReversalRequest'] == null) {
-            throw new runtime.RequiredError('paymentApplicationReversalRequest', 'Required parameter "paymentApplicationReversalRequest" was null or undefined when calling reversePayment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/payments/{paymentId}/reverse`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PaymentApplicationReversalRequestToJSON)(requestParameters['paymentApplicationReversalRequest']),
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    reversePaymentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['paymentId'] == null) {
+                throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling reversePayment().');
+            }
+            if (requestParameters['paymentApplicationReversalRequest'] == null) {
+                throw new runtime.RequiredError('paymentApplicationReversalRequest', 'Required parameter "paymentApplicationReversalRequest" was null or undefined when calling reversePayment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/payments/{paymentId}/reverse`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PaymentApplicationReversalRequestToJSON)(requestParameters['paymentApplicationReversalRequest']),
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Reverse a previously applied payment.
      * Reverse payment
      */
-    async reversePayment(requestParameters, initOverrides) {
-        await this.reversePaymentRaw(requestParameters, initOverrides);
+    reversePayment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.reversePaymentRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Reverse a payment application with compensating transaction (no deletion).
      * Reverse payment application
      */
-    async reversePaymentApplicationRaw(requestParameters, initOverrides) {
-        if (requestParameters['applicationId'] == null) {
-            throw new runtime.RequiredError('applicationId', 'Required parameter "applicationId" was null or undefined when calling reversePaymentApplication().');
-        }
-        if (requestParameters['paymentApplicationReversalRequest'] == null) {
-            throw new runtime.RequiredError('paymentApplicationReversalRequest', 'Required parameter "paymentApplicationReversalRequest" was null or undefined when calling reversePaymentApplication().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/payment-applications/{applicationId}/reverse`.replace(`{${"applicationId"}}`, encodeURIComponent(String(requestParameters['applicationId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PaymentApplicationReversalRequestToJSON)(requestParameters['paymentApplicationReversalRequest']),
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    reversePaymentApplicationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['applicationId'] == null) {
+                throw new runtime.RequiredError('applicationId', 'Required parameter "applicationId" was null or undefined when calling reversePaymentApplication().');
+            }
+            if (requestParameters['paymentApplicationReversalRequest'] == null) {
+                throw new runtime.RequiredError('paymentApplicationReversalRequest', 'Required parameter "paymentApplicationReversalRequest" was null or undefined when calling reversePaymentApplication().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/payment-applications/{applicationId}/reverse`.replace(`{${"applicationId"}}`, encodeURIComponent(String(requestParameters['applicationId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PaymentApplicationReversalRequestToJSON)(requestParameters['paymentApplicationReversalRequest']),
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Reverse a payment application with compensating transaction (no deletion).
      * Reverse payment application
      */
-    async reversePaymentApplication(requestParameters, initOverrides) {
-        await this.reversePaymentApplicationRaw(requestParameters, initOverrides);
+    reversePaymentApplication(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.reversePaymentApplicationRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Void a payment before settlement.
      * Void payment
      */
-    async voidPaymentRaw(requestParameters, initOverrides) {
-        if (requestParameters['paymentId'] == null) {
-            throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling voidPayment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/payments/{paymentId}/void`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: requestParameters['body'],
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    voidPaymentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['paymentId'] == null) {
+                throw new runtime.RequiredError('paymentId', 'Required parameter "paymentId" was null or undefined when calling voidPayment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/payments/{paymentId}/void`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: requestParameters['body'],
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Void a payment before settlement.
      * Void payment
      */
-    async voidPayment(requestParameters, initOverrides) {
-        await this.voidPaymentRaw(requestParameters, initOverrides);
+    voidPayment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.voidPaymentRaw(requestParameters, initOverrides);
+        });
     }
 }
 exports.PaymentApplicationsApi = PaymentApplicationsApi;

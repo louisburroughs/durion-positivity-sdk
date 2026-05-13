@@ -29,22 +29,22 @@ import {
 } from '../models/index';
 
 export interface CreateMsrpRequest {
-    productId: any;
+    productId: string;
     createMsrpRequestDto: CreateMsrpRequestDto;
 }
 
 export interface GetActiveMsrpRequest {
-    productId: any;
+    productId: string;
     asOf?: Date;
 }
 
 export interface ListMsrpRequest {
-    productId: any;
+    productId: string;
 }
 
 export interface UpdateMsrpRequest {
-    productId: any;
-    msrpId: any;
+    productId: string;
+    msrpId: string;
     updateMsrpRequestDto: UpdateMsrpRequestDto;
 }
 
@@ -57,7 +57,7 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
      * Creates a product MSRP record with effective date constraints.
      * Create MSRP
      */
-    async createMsrpRaw(requestParameters: CreateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createMsrpRaw(requestParameters: CreateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -78,6 +78,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:msrp:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/msrp`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'POST',
@@ -86,18 +94,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
             body: CreateMsrpRequestDtoToJSON(requestParameters['createMsrpRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductMsrpDtoFromJSON(jsonValue));
     }
 
     /**
      * Creates a product MSRP record with effective date constraints.
      * Create MSRP
      */
-    async createMsrp(requestParameters: CreateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createMsrp(requestParameters: CreateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
         const response = await this.createMsrpRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -106,7 +110,7 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
      * Returns MSRP active for the provided asOf date (or today).
      * Get active MSRP
      */
-    async getActiveMsrpRaw(requestParameters: GetActiveMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getActiveMsrpRaw(requestParameters: GetActiveMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -122,6 +126,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:msrp:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/msrp/active`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -129,18 +141,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductMsrpDtoFromJSON(jsonValue));
     }
 
     /**
      * Returns MSRP active for the provided asOf date (or today).
      * Get active MSRP
      */
-    async getActiveMsrp(requestParameters: GetActiveMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getActiveMsrp(requestParameters: GetActiveMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
         const response = await this.getActiveMsrpRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -149,7 +157,7 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
      * Returns all MSRP records for a product.
      * List MSRP history
      */
-    async listMsrpRaw(requestParameters: ListMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async listMsrpRaw(requestParameters: ListMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -161,6 +169,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:msrp:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/msrp`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -168,18 +184,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductMsrpDtoFromJSON(jsonValue));
     }
 
     /**
      * Returns all MSRP records for a product.
      * List MSRP history
      */
-    async listMsrp(requestParameters: ListMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async listMsrp(requestParameters: ListMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
         const response = await this.listMsrpRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -188,7 +200,7 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
      * Updates a non-historical MSRP record.
      * Update MSRP
      */
-    async updateMsrpRaw(requestParameters: UpdateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updateMsrpRaw(requestParameters: UpdateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -216,6 +228,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:msrp:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/{productId}/msrp/{msrpId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))).replace(`{${"msrpId"}}`, encodeURIComponent(String(requestParameters['msrpId']))),
             method: 'PUT',
@@ -224,18 +244,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
             body: UpdateMsrpRequestDtoToJSON(requestParameters['updateMsrpRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductMsrpDtoFromJSON(jsonValue));
     }
 
     /**
      * Updates a non-historical MSRP record.
      * Update MSRP
      */
-    async updateMsrp(requestParameters: UpdateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updateMsrp(requestParameters: UpdateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
         const response = await this.updateMsrpRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -116,7 +116,7 @@ export function TaxJurisdictionFromJSONTyped(json: any, ignoreDiscriminator: boo
         return json;
     }
     return {
-
+        
         'countryCode': json['countryCode'],
         'regionCode': json['regionCode'] == null ? undefined : json['regionCode'],
         'city': json['city'] == null ? undefined : json['city'],
@@ -135,7 +135,7 @@ export function TaxJurisdictionToJSON(value?: TaxJurisdiction | null): any {
         return value;
     }
     return {
-
+        
         'countryCode': value['countryCode'],
         'regionCode': value['regionCode'],
         'city': value['city'],

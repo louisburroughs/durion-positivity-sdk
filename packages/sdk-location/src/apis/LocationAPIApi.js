@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LocationAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,339 +66,387 @@ class LocationAPIApi extends runtime.BaseAPI {
      * Add a parent relationship to a location.
      * Add a parent to a location
      */
-    async addParentRaw(requestParameters, initOverrides) {
-        if (requestParameters['childId'] == null) {
-            throw new runtime.RequiredError('childId', 'Required parameter "childId" was null or undefined when calling addParent().');
-        }
-        if (requestParameters['parentId'] == null) {
-            throw new runtime.RequiredError('parentId', 'Required parameter "parentId" was null or undefined when calling addParent().');
-        }
-        if (requestParameters['parentType'] == null) {
-            throw new runtime.RequiredError('parentType', 'Required parameter "parentType" was null or undefined when calling addParent().');
-        }
-        const queryParameters = {};
-        if (requestParameters['parentType'] != null) {
-            queryParameters['parentType'] = requestParameters['parentType'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{childId}/parents/{parentId}`.replace(`{${"childId"}}`, encodeURIComponent(String(requestParameters['childId']))).replace(`{${"parentId"}}`, encodeURIComponent(String(requestParameters['parentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationParentResponseDTOFromJSON)(jsonValue));
+    addParentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['childId'] == null) {
+                throw new runtime.RequiredError('childId', 'Required parameter "childId" was null or undefined when calling addParent().');
+            }
+            if (requestParameters['parentId'] == null) {
+                throw new runtime.RequiredError('parentId', 'Required parameter "parentId" was null or undefined when calling addParent().');
+            }
+            if (requestParameters['parentType'] == null) {
+                throw new runtime.RequiredError('parentType', 'Required parameter "parentType" was null or undefined when calling addParent().');
+            }
+            const queryParameters = {};
+            if (requestParameters['parentType'] != null) {
+                queryParameters['parentType'] = requestParameters['parentType'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{childId}/parents/{parentId}`.replace(`{${"childId"}}`, encodeURIComponent(String(requestParameters['childId']))).replace(`{${"parentId"}}`, encodeURIComponent(String(requestParameters['parentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationParentResponseDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Add a parent relationship to a location.
      * Add a parent to a location
      */
-    async addParent(requestParameters, initOverrides) {
-        const response = await this.addParentRaw(requestParameters, initOverrides);
-        return await response.value();
+    addParent(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.addParentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Add a new location to the system.
      * Create a new location
      */
-    async createLocationRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationRequestDTO'] == null) {
-            throw new runtime.RequiredError('locationRequestDTO', 'Required parameter "locationRequestDTO" was null or undefined when calling createLocation().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/locations`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.LocationRequestDTOToJSON)(requestParameters['locationRequestDTO']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+    createLocationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationRequestDTO'] == null) {
+                throw new runtime.RequiredError('locationRequestDTO', 'Required parameter "locationRequestDTO" was null or undefined when calling createLocation().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/locations`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.LocationRequestDTOToJSON)(requestParameters['locationRequestDTO']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Add a new location to the system.
      * Create a new location
      */
-    async createLocation(requestParameters, initOverrides) {
-        const response = await this.createLocationRaw(requestParameters, initOverrides);
-        return await response.value();
+    createLocation(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createLocationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Delete a location by its unique ID.
      * Delete a location
      */
-    async deleteLocationRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deleteLocation().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteLocationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deleteLocation().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete a location by its unique ID.
      * Delete a location
      */
-    async deleteLocation(requestParameters, initOverrides) {
-        await this.deleteLocationRaw(requestParameters, initOverrides);
+    deleteLocation(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteLocationRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve all child locations for a given parent location.
      * Get all children for a location
      */
-    async getAllChildrenRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getAllChildren().');
-        }
-        const queryParameters = {};
-        if (requestParameters['parentType'] != null) {
-            queryParameters['parentType'] = requestParameters['parentType'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/children`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationResponseDTOFromJSON));
+    getAllChildrenRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getAllChildren().');
+            }
+            const queryParameters = {};
+            if (requestParameters['parentType'] != null) {
+                queryParameters['parentType'] = requestParameters['parentType'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}/children`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationResponseDTOFromJSON));
+        });
     }
     /**
      * Retrieve all child locations for a given parent location.
      * Get all children for a location
      */
-    async getAllChildren(requestParameters, initOverrides) {
-        const response = await this.getAllChildrenRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAllChildren(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllChildrenRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a list of all locations.
      * Get all locations
      */
-    async getAllLocationsRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationResponseDTOFromJSON));
+    getAllLocationsRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationResponseDTOFromJSON));
+        });
     }
     /**
      * Retrieve a list of all locations.
      * Get all locations
      */
-    async getAllLocations(initOverrides) {
-        const response = await this.getAllLocationsRaw(initOverrides);
-        return await response.value();
+    getAllLocations(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllLocationsRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all parent relationships for locations.
      * Get all location parents
      */
-    async getAllParentsRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/parents`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationParentResponseDTOFromJSON));
+    getAllParentsRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/parents`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.LocationParentResponseDTOFromJSON));
+        });
     }
     /**
      * Retrieve all parent relationships for locations.
      * Get all location parents
      */
-    async getAllParents(initOverrides) {
-        const response = await this.getAllParentsRaw(initOverrides);
-        return await response.value();
+    getAllParents(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllParentsRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a location by its unique ID.
      * Get location by ID
      */
-    async getLocationByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getLocationById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+    getLocationByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getLocationById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a location by its unique ID.
      * Get location by ID
      */
-    async getLocationById(requestParameters, initOverrides) {
-        const response = await this.getLocationByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getLocationById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getLocationByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve the person responsible for a given location.
      * Get responsible person for a location
      */
-    async getResponsiblePersonRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getResponsiblePerson().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/responsible-person`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonDTOFromJSON)(jsonValue));
+    getResponsiblePersonRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getResponsiblePerson().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}/responsible-person`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PersonDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve the person responsible for a given location.
      * Get responsible person for a location
      */
-    async getResponsiblePerson(requestParameters, initOverrides) {
-        const response = await this.getResponsiblePersonRaw(requestParameters, initOverrides);
-        return await response.value();
+    getResponsiblePerson(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getResponsiblePersonRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve paginated location refs for sync consumers.
      * Get location roster
      */
-    async getRosterRaw(requestParameters, initOverrides) {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling getRoster().');
-        }
-        const queryParameters = {};
-        if (requestParameters['status'] != null) {
-            queryParameters['status'] = requestParameters['status'];
-        }
-        if (requestParameters['sinceUpdatedAt'] != null) {
-            queryParameters['sinceUpdatedAt'] = requestParameters['sinceUpdatedAt'].toISOString();
-        }
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/roster`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageLocationRefFromJSON)(jsonValue));
+    getRosterRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pageable'] == null) {
+                throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling getRoster().');
+            }
+            const queryParameters = {};
+            if (requestParameters['status'] != null) {
+                queryParameters['status'] = requestParameters['status'];
+            }
+            if (requestParameters['sinceUpdatedAt'] != null) {
+                queryParameters['sinceUpdatedAt'] = requestParameters['sinceUpdatedAt'].toISOString();
+            }
+            if (requestParameters['pageable'] != null) {
+                queryParameters['pageable'] = requestParameters['pageable'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/roster`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageLocationRefFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve paginated location refs for sync consumers.
      * Get location roster
      */
-    async getRoster(requestParameters, initOverrides) {
-        const response = await this.getRosterRaw(requestParameters, initOverrides);
-        return await response.value();
+    getRoster(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getRosterRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Patch selected fields for a location.
      * Patch a location
      */
-    async patchLocationRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling patchLocation().');
-        }
-        if (requestParameters['locationPatchRequest'] == null) {
-            throw new runtime.RequiredError('locationPatchRequest', 'Required parameter "locationPatchRequest" was null or undefined when calling patchLocation().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.LocationPatchRequestToJSON)(requestParameters['locationPatchRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+    patchLocationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling patchLocation().');
+            }
+            if (requestParameters['locationPatchRequest'] == null) {
+                throw new runtime.RequiredError('locationPatchRequest', 'Required parameter "locationPatchRequest" was null or undefined when calling patchLocation().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'PATCH',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.LocationPatchRequestToJSON)(requestParameters['locationPatchRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Patch selected fields for a location.
      * Patch a location
      */
-    async patchLocation(requestParameters, initOverrides) {
-        const response = await this.patchLocationRaw(requestParameters, initOverrides);
-        return await response.value();
+    patchLocation(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.patchLocationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update the details of an existing location.
      * Update an existing location
      */
-    async updateLocationRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling updateLocation().');
-        }
-        if (requestParameters['locationRequestDTO'] == null) {
-            throw new runtime.RequiredError('locationRequestDTO', 'Required parameter "locationRequestDTO" was null or undefined when calling updateLocation().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.LocationRequestDTOToJSON)(requestParameters['locationRequestDTO']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+    updateLocationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling updateLocation().');
+            }
+            if (requestParameters['locationRequestDTO'] == null) {
+                throw new runtime.RequiredError('locationRequestDTO', 'Required parameter "locationRequestDTO" was null or undefined when calling updateLocation().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.LocationRequestDTOToJSON)(requestParameters['locationRequestDTO']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationResponseDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Update the details of an existing location.
      * Update an existing location
      */
-    async updateLocation(requestParameters, initOverrides) {
-        const response = await this.updateLocationRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateLocation(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateLocationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Return existence and active state for a location ID.
      * Validate location reference
      */
-    async validateLocationRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling validateLocation().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/validation`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationValidationResponseDTOFromJSON)(jsonValue));
+    validateLocationRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling validateLocation().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}/validation`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationValidationResponseDTOFromJSON)(jsonValue));
+        });
     }
     /**
      * Return existence and active state for a location ID.
      * Validate location reference
      */
-    async validateLocation(requestParameters, initOverrides) {
-        const response = await this.validateLocationRaw(requestParameters, initOverrides);
-        return await response.value();
+    validateLocation(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.validateLocationRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.LocationAPIApi = LocationAPIApi;

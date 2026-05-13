@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PickListsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,226 +66,258 @@ class PickListsApi extends runtime.BaseAPI {
      * Cancels a pick list and marks pending tasks as cancelled
      * Cancel pick list
      */
-    async cancelPickListRaw(requestParameters, initOverrides) {
-        if (requestParameters['pickListId'] == null) {
-            throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling cancelPickList().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists/{pickListId}`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    cancelPickListRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pickListId'] == null) {
+                throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling cancelPickList().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists/{pickListId}`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Cancels a pick list and marks pending tasks as cancelled
      * Cancel pick list
      */
-    async cancelPickList(requestParameters, initOverrides) {
-        await this.cancelPickListRaw(requestParameters, initOverrides);
+    cancelPickList(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.cancelPickListRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Confirms a pick task using scanned SKU and location data
      * Confirm pick task
      */
-    async confirmPickTaskRaw(requestParameters, initOverrides) {
-        if (requestParameters['pickListId'] == null) {
-            throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling confirmPickTask().');
-        }
-        if (requestParameters['taskId'] == null) {
-            throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling confirmPickTask().');
-        }
-        if (requestParameters['confirmPickTaskRequest'] == null) {
-            throw new runtime.RequiredError('confirmPickTaskRequest', 'Required parameter "confirmPickTaskRequest" was null or undefined when calling confirmPickTask().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists/{pickListId}/tasks/{taskId}/confirm`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))).replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ConfirmPickTaskRequestToJSON)(requestParameters['confirmPickTaskRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickTaskResponseFromJSON)(jsonValue));
+    confirmPickTaskRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pickListId'] == null) {
+                throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling confirmPickTask().');
+            }
+            if (requestParameters['taskId'] == null) {
+                throw new runtime.RequiredError('taskId', 'Required parameter "taskId" was null or undefined when calling confirmPickTask().');
+            }
+            if (requestParameters['confirmPickTaskRequest'] == null) {
+                throw new runtime.RequiredError('confirmPickTaskRequest', 'Required parameter "confirmPickTaskRequest" was null or undefined when calling confirmPickTask().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists/{pickListId}/tasks/{taskId}/confirm`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))).replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ConfirmPickTaskRequestToJSON)(requestParameters['confirmPickTaskRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickTaskResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Confirms a pick task using scanned SKU and location data
      * Confirm pick task
      */
-    async confirmPickTask(requestParameters, initOverrides) {
-        const response = await this.confirmPickTaskRaw(requestParameters, initOverrides);
-        return await response.value();
+    confirmPickTask(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.confirmPickTaskRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Creates a pick list for a workorder and returns generated pick tasks
      * Create pick list
      */
-    async createPickListRaw(requestParameters, initOverrides) {
-        if (requestParameters['createPickListRequest'] == null) {
-            throw new runtime.RequiredError('createPickListRequest', 'Required parameter "createPickListRequest" was null or undefined when calling createPickList().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreatePickListRequestToJSON)(requestParameters['createPickListRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+    createPickListRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createPickListRequest'] == null) {
+                throw new runtime.RequiredError('createPickListRequest', 'Required parameter "createPickListRequest" was null or undefined when calling createPickList().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreatePickListRequestToJSON)(requestParameters['createPickListRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates a pick list for a workorder and returns generated pick tasks
      * Create pick list
      */
-    async createPickList(requestParameters, initOverrides) {
-        const response = await this.createPickListRaw(requestParameters, initOverrides);
-        return await response.value();
+    createPickList(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createPickListRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieves a pick list by identifier
      * Get pick list
      */
-    async getPickListRaw(requestParameters, initOverrides) {
-        if (requestParameters['pickListId'] == null) {
-            throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling getPickList().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists/{pickListId}`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+    getPickListRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pickListId'] == null) {
+                throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling getPickList().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists/{pickListId}`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieves a pick list by identifier
      * Get pick list
      */
-    async getPickList(requestParameters, initOverrides) {
-        const response = await this.getPickListRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPickList(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPickListRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns pick lists linked to the provided workorder identifier
      * List pick lists for workorder
      */
-    async getPickListsForWorkorderRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getPickListsForWorkorder().');
-        }
-        const queryParameters = {};
-        if (requestParameters['workorderId'] != null) {
-            queryParameters['workorderId'] = requestParameters['workorderId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PickListResponseFromJSON));
+    getPickListsForWorkorderRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getPickListsForWorkorder().');
+            }
+            const queryParameters = {};
+            if (requestParameters['workorderId'] != null) {
+                queryParameters['workorderId'] = requestParameters['workorderId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PickListResponseFromJSON));
+        });
     }
     /**
      * Returns pick lists linked to the provided workorder identifier
      * List pick lists for workorder
      */
-    async getPickListsForWorkorder(requestParameters, initOverrides) {
-        const response = await this.getPickListsForWorkorderRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPickListsForWorkorder(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPickListsForWorkorderRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all pick tasks associated with a pick list
      * List pick tasks for pick list
      */
-    async getPickTasksForPickListRaw(requestParameters, initOverrides) {
-        if (requestParameters['pickListId'] == null) {
-            throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling getPickTasksForPickList().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists/{pickListId}/tasks`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PickTaskResponseFromJSON));
+    getPickTasksForPickListRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pickListId'] == null) {
+                throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling getPickTasksForPickList().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists/{pickListId}/tasks`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.PickTaskResponseFromJSON));
+        });
     }
     /**
      * Returns all pick tasks associated with a pick list
      * List pick tasks for pick list
      */
-    async getPickTasksForPickList(requestParameters, initOverrides) {
-        const response = await this.getPickTasksForPickListRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPickTasksForPickList(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPickTasksForPickListRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Releases a pick list so picking tasks can be executed
      * Release pick list
      */
-    async releasePickListRaw(requestParameters, initOverrides) {
-        if (requestParameters['pickListId'] == null) {
-            throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling releasePickList().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists/{pickListId}/release`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+    releasePickListRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pickListId'] == null) {
+                throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling releasePickList().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists/{pickListId}/release`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Releases a pick list so picking tasks can be executed
      * Release pick list
      */
-    async releasePickList(requestParameters, initOverrides) {
-        const response = await this.releasePickListRaw(requestParameters, initOverrides);
-        return await response.value();
+    releasePickList(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.releasePickListRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Updates pick list lifecycle status
      * Update pick list status
      */
-    async updatePickListStatusRaw(requestParameters, initOverrides) {
-        if (requestParameters['pickListId'] == null) {
-            throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling updatePickListStatus().');
-        }
-        if (requestParameters['updatePickListStatusRequest'] == null) {
-            throw new runtime.RequiredError('updatePickListStatusRequest', 'Required parameter "updatePickListStatusRequest" was null or undefined when calling updatePickListStatus().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/pick-lists/{pickListId}/status`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.UpdatePickListStatusRequestToJSON)(requestParameters['updatePickListStatusRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+    updatePickListStatusRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pickListId'] == null) {
+                throw new runtime.RequiredError('pickListId', 'Required parameter "pickListId" was null or undefined when calling updatePickListStatus().');
+            }
+            if (requestParameters['updatePickListStatusRequest'] == null) {
+                throw new runtime.RequiredError('updatePickListStatusRequest', 'Required parameter "updatePickListStatusRequest" was null or undefined when calling updatePickListStatus().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/pick-lists/{pickListId}/status`.replace(`{${"pickListId"}}`, encodeURIComponent(String(requestParameters['pickListId']))),
+                method: 'PATCH',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.UpdatePickListStatusRequestToJSON)(requestParameters['updatePickListStatusRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PickListResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Updates pick list lifecycle status
      * Update pick list status
      */
-    async updatePickListStatus(requestParameters, initOverrides) {
-        const response = await this.updatePickListStatusRaw(requestParameters, initOverrides);
-        return await response.value();
+    updatePickListStatus(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updatePickListStatusRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PickListsApi = PickListsApi;

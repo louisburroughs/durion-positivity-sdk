@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for approving a change request
+ * Approval details including user ID and note
  * @export
  * @interface ApproveChangeRequestDTO
  */

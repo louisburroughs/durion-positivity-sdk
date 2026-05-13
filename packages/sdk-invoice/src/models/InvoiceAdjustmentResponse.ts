@@ -14,43 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface InvoiceAdjustmentResponse
  */
 export interface InvoiceAdjustmentResponse {
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceAdjustmentResponse
      */
     id?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceAdjustmentResponse
      */
     type?: InvoiceAdjustmentResponseTypeEnum;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceAdjustmentResponse
      */
     amount?: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceAdjustmentResponse
      */
     reason?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceAdjustmentResponse
      */
     authorizedBy?: string;
     /**
-     *
+     * 
      * @type {Date}
      * @memberof InvoiceAdjustmentResponse
      */
@@ -84,7 +84,7 @@ export function InvoiceAdjustmentResponseFromJSONTyped(json: any, ignoreDiscrimi
         return json;
     }
     return {
-
+        
         'id': json['id'] == null ? undefined : json['id'],
         'type': json['type'] == null ? undefined : json['type'],
         'amount': json['amount'] == null ? undefined : json['amount'],
@@ -99,7 +99,7 @@ export function InvoiceAdjustmentResponseToJSON(value?: InvoiceAdjustmentRespons
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'type': value['type'],
         'amount': value['amount'],

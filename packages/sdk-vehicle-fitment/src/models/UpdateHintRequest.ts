@@ -51,7 +51,7 @@ export function UpdateHintRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         return json;
     }
     return {
-
+        
         'fitmentTags': ((json['fitmentTags'] as Array<any>).map(FitmentTagDtoFromJSON)),
     };
 }
@@ -61,7 +61,7 @@ export function UpdateHintRequestToJSON(value?: UpdateHintRequest | null): any {
         return value;
     }
     return {
-
+        
         'fitmentTags': ((value['fitmentTags'] as Array<any>).map(FitmentTagDtoToJSON)),
     };
 }

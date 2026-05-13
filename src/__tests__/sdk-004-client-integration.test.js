@@ -47,6 +47,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = __importStar(require("node:fs"));
 const path = __importStar(require("node:path"));
@@ -105,10 +114,11 @@ describe('SDK-004 AC-1: per-package tsconfig.json extends root tsconfig', () => 
 // ---------------------------------------------------------------------------
 describe('SDK-004 AC-2: per-package package.json has @durion-sdk/transport dependency', () => {
     it.each(PHASE_1_MODULES)('packages/sdk-%s/package.json has dependencies["@durion-sdk/transport"]', (module) => {
+        var _a;
         const pkgJsonPath = path.join(PACKAGES_DIR, `sdk-${module}`, 'package.json');
         expect(fs.existsSync(pkgJsonPath)).toBe(true);
         const pkg = readJson(pkgJsonPath);
-        const dependencies = (pkg['dependencies'] ?? {});
+        const dependencies = ((_a = pkg['dependencies']) !== null && _a !== void 0 ? _a : {});
         expect(dependencies).toHaveProperty('@durion-sdk/transport');
     });
 });
@@ -205,17 +215,17 @@ describe('SDK-004 AC-6: factory file references DurionSdkConfig', () => {
 describe('SDK-004 AC-7: dynamic import — @durion-sdk/security exports createSecurityClient', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let securityMod;
-    beforeAll(async () => {
+    beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
         try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore — TS2307: suppress compile-time resolution error
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            securityMod = (await Promise.resolve().then(() => __importStar(require('@durion-sdk/security'))));
+            securityMod = (yield Promise.resolve().then(() => __importStar(require('@durion-sdk/security'))));
         }
-        catch {
+        catch (_a) {
             securityMod = null;
         }
-    });
+    }));
     it('AC-7: @durion-sdk/security module resolves as a non-null object', () => {
         // Passes once the moduleNameMapper resolves the generated index.ts.
         expect(securityMod).not.toBeNull();
@@ -224,7 +234,7 @@ describe('SDK-004 AC-7: dynamic import — @durion-sdk/security exports createSe
     it('AC-7: @durion-sdk/security exports createSecurityClient', () => {
         // Fails RED: the generated index.ts does not export createSecurityClient.
         expect(securityMod).not.toBeNull();
-        const securityFactory = securityMod?.['createSecurityClient'];
+        const securityFactory = securityMod === null || securityMod === void 0 ? void 0 : securityMod['createSecurityClient'];
         expect(securityFactory).toBeDefined();
     });
 });
@@ -237,11 +247,11 @@ describe('SDK-004 AC-7: dynamic import — @durion-sdk/security exports createSe
 // ---------------------------------------------------------------------------
 describe('SDK-004 AC-8: dynamic import — all 5 clients export their factory functions', () => {
     const resolvedMods = {};
-    beforeAll(async () => {
+    beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
         // Concrete import() literals are required so Jest's moduleNameMapper
         // can rewrite the specifiers at compile time.  eval()-based dynamic
         // imports bypass the mapper and produce MODULE_NOT_FOUND errors.
-        const loadResults = await Promise.allSettled([
+        const loadResults = yield Promise.allSettled([
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             Promise.resolve().then(() => __importStar(require('@durion-sdk/security'))),
@@ -268,14 +278,14 @@ describe('SDK-004 AC-8: dynamic import — all 5 clients export their factory fu
                     ? result.value
                     : null;
         }
-    });
+    }));
     const moduleFactoryPairs = PHASE_1_MODULES.map((m) => [m, factoryName(m)]);
     it.each(moduleFactoryPairs)('@durion-sdk/%s exports %s', (module, factory) => {
         const mod = resolvedMods[module];
         // Module resolves via moduleNameMapper — expect non-null.
         expect(mod).not.toBeNull();
         // Factory MUST be exported — fails RED in this phase.
-        const exportedFactory = mod?.[factory];
+        const exportedFactory = mod === null || mod === void 0 ? void 0 : mod[factory];
         expect(exportedFactory).toBeDefined();
     });
 });
@@ -294,10 +304,10 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('createSecurityClient returns expected API namespaces', async () => {
+    it('createSecurityClient returns expected API namespaces', () => __awaiter(void 0, void 0, void 0, function* () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { createSecurityClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
+        const { createSecurityClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const client = createSecurityClient({ baseUrl: 'http://localhost:8080', token: () => 'tok' });
         expect(client['authAPIApi']).toBeDefined();
@@ -305,47 +315,49 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
         expect(client['permissionRegistryApi']).toBeDefined();
         expect(client['roleManagementApi']).toBeDefined();
         expect(client['jwtAPIApi']).toBeDefined();
-    });
-    it('createOrderClient returns expected API namespaces', async () => {
+    }));
+    it('createOrderClient returns expected API namespaces', () => __awaiter(void 0, void 0, void 0, function* () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { createOrderClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/order')));
+        const { createOrderClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/order')));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const client = createOrderClient({ baseUrl: 'http://localhost:8081', token: () => 'tok' });
         expect(client['salesOrdersApi']).toBeDefined();
         expect(client['priceOverridesApi']).toBeDefined();
         expect(client['orderCancellationApi']).toBeDefined();
-    });
-    it('createInventoryClient returns expected API namespaces', async () => {
+    }));
+    it('createInventoryClient returns expected API namespaces', () => __awaiter(void 0, void 0, void 0, function* () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { createInventoryClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/inventory')));
+        const { createInventoryClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/inventory')));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const client = createInventoryClient({ baseUrl: 'http://localhost:8082', token: () => 'tok' });
         expect(client['inventoryManagementApi']).toBeDefined();
         expect(client['purchaseOrdersApi']).toBeDefined();
         expect(client['receivingApi']).toBeDefined();
-    });
-    it('createWorkorderClient returns expected API namespaces', async () => {
+    }));
+    it('createWorkorderClient returns expected API namespaces', () => __awaiter(void 0, void 0, void 0, function* () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { createWorkorderClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/workorder')));
+        const { createWorkorderClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/workorder')));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const client = createWorkorderClient({ baseUrl: 'http://localhost:8083', token: () => 'tok' });
         expect(client['workOrderAPIApi']).toBeDefined();
         expect(client['estimateAPIApi']).toBeDefined();
         expect(client['technicianAssignmentAPIApi']).toBeDefined();
-    });
-    it('createAccountingClient returns expected API namespaces', async () => {
+        expect(client['workorderPickFacadeApi']).toBeDefined();
+        expect(client['workorderPickedItemsApi']).toBeDefined();
+    }));
+    it('createAccountingClient returns expected API namespaces', () => __awaiter(void 0, void 0, void 0, function* () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { createAccountingClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/accounting')));
+        const { createAccountingClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/accounting')));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const client = createAccountingClient({ baseUrl: 'http://localhost:8084', token: () => 'tok' });
         expect(client['journalEntriesApi']).toBeDefined();
         expect(client['glAccountsApi']).toBeDefined();
         expect(client['financialReportingApi']).toBeDefined();
-    });
+    }));
 });
 // ---------------------------------------------------------------------------
 // AC-11 — Factory fetchApi callback branch coverage.
@@ -371,52 +383,55 @@ describe('SDK-004 AC-11: factory fetchApi callback — branch coverage for ?? fa
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('security fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
+    it('security fetchApi — explicit method (Branch A: no ?? fallback)', () => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { createSecurityClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
+        const { createSecurityClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = createSecurityClient({ baseUrl: 'http://localhost:8080', token: () => 'bearer-tok', apiVersion: '1' });
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const fetchApi = client.authAPIApi?.configuration?.fetchApi;
+        const fetchApi = (_b = (_a = client.authAPIApi) === null || _a === void 0 ? void 0 : _a.configuration) === null || _b === void 0 ? void 0 : _b.fetchApi;
         expect(fetchApi).toBeDefined();
         // init.method provided → no fallback
-        await fetchApi('http://localhost:8080/api/test', {
+        yield fetchApi('http://localhost:8080/api/test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
         });
         expect(fetchMock).toHaveBeenCalledTimes(1);
         const [, calledInit] = fetchMock.mock.calls[0];
         expect(new Headers(calledInit.headers).get('Authorization')).toBe('Bearer bearer-tok');
-    });
-    it('security fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
+    }));
+    it('security fetchApi — absent method (Branch B: ?? fallback to GET)', () => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { createSecurityClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
+        const { createSecurityClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
         const client = createSecurityClient({ baseUrl: 'http://localhost:8080', token: () => 'bearer-tok', apiVersion: '1' });
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const fetchApi = client.authAPIApi?.configuration?.fetchApi;
+        const fetchApi = (_b = (_a = client.authAPIApi) === null || _a === void 0 ? void 0 : _a.configuration) === null || _b === void 0 ? void 0 : _b.fetchApi;
         expect(fetchApi).toBeDefined();
         // init has no method property → fallback to 'GET'
-        await fetchApi('http://localhost:8080/api/list', {});
+        yield fetchApi('http://localhost:8080/api/list', {});
         expect(fetchMock).toHaveBeenCalledTimes(1);
         const [, calledInit] = fetchMock.mock.calls[0];
         expect(new Headers(calledInit.headers).get('Authorization')).toBe('Bearer bearer-tok');
-    });
-    it('order, inventory, workorder, accounting fetchApi bodies all covered', async () => {
+    }));
+    it('order, inventory, workorder, accounting fetchApi bodies all covered', () => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const orderMod = await Promise.resolve().then(() => __importStar(require('@durion-sdk/order')));
+        const orderMod = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/order')));
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const inventoryMod = await Promise.resolve().then(() => __importStar(require('@durion-sdk/inventory')));
+        const inventoryMod = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/inventory')));
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const workorderMod = await Promise.resolve().then(() => __importStar(require('@durion-sdk/workorder')));
+        const workorderMod = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/workorder')));
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const accountingMod = await Promise.resolve().then(() => __importStar(require('@durion-sdk/accounting')));
+        const accountingMod = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/accounting')));
         const cases = [
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
             { client: orderMod.createOrderClient({ baseUrl: 'http://localhost:8081', token: () => 'tok', apiVersion: '1' }), apiKey: 'salesOrdersApi' },
@@ -429,16 +444,16 @@ describe('SDK-004 AC-11: factory fetchApi callback — branch coverage for ?? fa
         ];
         for (const { client, apiKey } of cases) {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            const fetchApi = client[apiKey]?.configuration?.fetchApi;
+            const fetchApi = (_b = (_a = client[apiKey]) === null || _a === void 0 ? void 0 : _a.configuration) === null || _b === void 0 ? void 0 : _b.fetchApi;
             expect(fetchApi).toBeDefined();
             // Branch A: explicit method
-            await fetchApi('http://localhost/api', { method: 'GET', headers: { Accept: 'application/json' } });
+            yield fetchApi('http://localhost/api', { method: 'GET', headers: { Accept: 'application/json' } });
             // Branch B: method absent → ?? fallback
-            await fetchApi('http://localhost/api', {});
+            yield fetchApi('http://localhost/api', {});
         }
         // 2 calls × 4 factories
         expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(8);
-    });
+    }));
 });
 // ---------------------------------------------------------------------------
 // AC-9 (original) — factory behavioral tests
@@ -455,54 +470,55 @@ describe('AC-9: factory behavioral tests (header injection, no body double-seria
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    it('should inject Authorization, X-API-Version, X-Correlation-Id on all requests', async () => {
+    it('should inject Authorization, X-API-Version, X-Correlation-Id on all requests', () => __awaiter(void 0, void 0, void 0, function* () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { SdkHttpClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/transport')));
+        const { SdkHttpClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/transport')));
         const httpClient = new SdkHttpClient({
             baseUrl: 'http://localhost:8080',
             token: () => 'test-bearer-token',
             apiVersion: '1',
         });
         const method = 'GET';
-        const sdkHeaders = await httpClient.buildRequestHeaders(method);
+        const sdkHeaders = yield httpClient.buildRequestHeaders(method);
         const mergedHeaders = new Headers({ Accept: 'application/json' });
         Object.entries(sdkHeaders).forEach(([key, value]) => {
             mergedHeaders.set(key, value);
         });
-        await fetch('http://localhost:8080/test', { method, headers: mergedHeaders });
+        yield fetch('http://localhost:8080/test', { method, headers: mergedHeaders });
         expect(fetchMock).toHaveBeenCalledTimes(1);
         const calledInit = fetchMock.mock.calls[0][1];
         const headers = new Headers(calledInit.headers);
         expect(headers.get('Authorization')).toBe('Bearer test-bearer-token');
         expect(headers.get('X-API-Version')).toBe('1');
         expect(headers.get('X-Correlation-Id')).toMatch(/^[0-9a-f-]{36}$/);
-    });
-    it('should not double-serialize JSON body in POST requests', async () => {
+    }));
+    it('should not double-serialize JSON body in POST requests', () => __awaiter(void 0, void 0, void 0, function* () {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { SdkHttpClient } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/transport')));
+        const { SdkHttpClient } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/transport')));
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const { Configuration } = await Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
+        const { Configuration } = yield Promise.resolve().then(() => __importStar(require('@durion-sdk/security')));
         const httpClient = new SdkHttpClient({
             baseUrl: 'http://localhost:8080',
             token: () => 'test-token',
         });
         const config = new Configuration({
             basePath: 'http://localhost:8080',
-            fetchApi: async (url, init) => {
-                const method = (init?.method ?? 'GET').toUpperCase();
-                const sdkHeaders = await httpClient.buildRequestHeaders(method);
-                const mergedHeaders = new Headers(init?.headers);
+            fetchApi: (url, init) => __awaiter(void 0, void 0, void 0, function* () {
+                var _a;
+                const method = ((_a = init === null || init === void 0 ? void 0 : init.method) !== null && _a !== void 0 ? _a : 'GET').toUpperCase();
+                const sdkHeaders = yield httpClient.buildRequestHeaders(method);
+                const mergedHeaders = new Headers(init === null || init === void 0 ? void 0 : init.headers);
                 Object.entries(sdkHeaders).forEach(([key, value]) => {
                     mergedHeaders.set(key, value);
                 });
-                return fetch(url, { ...init, headers: mergedHeaders });
-            },
+                return fetch(url, Object.assign(Object.assign({}, init), { headers: mergedHeaders }));
+            }),
         });
         const body = JSON.stringify({ test: 'value' });
-        await config.fetchApi('http://localhost:8080/test', {
+        yield config.fetchApi('http://localhost:8080/test', {
             method: 'POST',
             body,
             headers: { 'Content-Type': 'application/json' },
@@ -514,7 +530,7 @@ describe('AC-9: factory behavioral tests (header injection, no body double-seria
         expect(headers.get('Authorization')).toBe('Bearer test-token');
         expect(headers.get('X-API-Version')).toBe('1');
         expect(headers.get('X-Correlation-Id')).toMatch(/^[0-9a-f-]{36}$/);
-    });
+    }));
 });
 // ---------------------------------------------------------------------------
 // AC-inv-path — Static regression guard: inventory API files must use

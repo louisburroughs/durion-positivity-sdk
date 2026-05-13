@@ -15,11 +15,11 @@
 
 import * as runtime from '../runtime';
 import type {
-    CreateHintRequest,
-    FilterProductsRequest,
-    FilterProductsResponse,
-    HintResponse,
-    UpdateHintRequest,
+  CreateHintRequest,
+  FilterProductsRequest,
+  FilterProductsResponse,
+  HintResponse,
+  UpdateHintRequest,
 } from '../models/index';
 import {
     CreateHintRequestFromJSON,
@@ -60,7 +60,7 @@ export interface UpdateHintOperationRequest {
 }
 
 /**
- *
+ * 
  */
 export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
@@ -82,6 +82,14 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/hints`,
             method: 'POST',
@@ -118,6 +126,14 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
             method: 'DELETE',
@@ -154,6 +170,14 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/hints/filter-products`,
             method: 'POST',
@@ -190,6 +214,14 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
             method: 'GET',
@@ -225,6 +257,14 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/hints/product/{productId}`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
             method: 'GET',
@@ -269,6 +309,14 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/hints/{hintId}`.replace(`{${"hintId"}}`, encodeURIComponent(String(requestParameters['hintId']))),
             method: 'PUT',

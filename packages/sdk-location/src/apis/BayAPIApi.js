@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BayAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,133 +66,149 @@ class BayAPIApi extends runtime.BaseAPI {
      * Create a new bay for a specific location.
      * Create bay
      */
-    async createBayRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling createBay().');
-        }
-        if (requestParameters['bayRequest'] == null) {
-            throw new runtime.RequiredError('bayRequest', 'Required parameter "bayRequest" was null or undefined when calling createBay().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.BayRequestToJSON)(requestParameters['bayRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BayResponseFromJSON)(jsonValue));
+    createBayRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling createBay().');
+            }
+            if (requestParameters['bayRequest'] == null) {
+                throw new runtime.RequiredError('bayRequest', 'Required parameter "bayRequest" was null or undefined when calling createBay().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.BayRequestToJSON)(requestParameters['bayRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BayResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new bay for a specific location.
      * Create bay
      */
-    async createBay(requestParameters, initOverrides) {
-        const response = await this.createBayRaw(requestParameters, initOverrides);
-        return await response.value();
+    createBay(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createBayRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Get a bay by location and bay id.
      * Get bay
      */
-    async getBayRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getBay().');
-        }
-        if (requestParameters['bayId'] == null) {
-            throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling getBay().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BayResponseFromJSON)(jsonValue));
+    getBayRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getBay().');
+            }
+            if (requestParameters['bayId'] == null) {
+                throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling getBay().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BayResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Get a bay by location and bay id.
      * Get bay
      */
-    async getBay(requestParameters, initOverrides) {
-        const response = await this.getBayRaw(requestParameters, initOverrides);
-        return await response.value();
+    getBay(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getBayRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * List bays for a location with optional status and bayType filters.
      * List bays
      */
-    async listBaysRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling listBays().');
-        }
-        const queryParameters = {};
-        if (requestParameters['status'] != null) {
-            queryParameters['status'] = requestParameters['status'];
-        }
-        if (requestParameters['bayType'] != null) {
-            queryParameters['bayType'] = requestParameters['bayType'];
-        }
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-        if (requestParameters['size'] != null) {
-            queryParameters['size'] = requestParameters['size'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageBayResponseFromJSON)(jsonValue));
+    listBaysRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling listBays().');
+            }
+            const queryParameters = {};
+            if (requestParameters['status'] != null) {
+                queryParameters['status'] = requestParameters['status'];
+            }
+            if (requestParameters['bayType'] != null) {
+                queryParameters['bayType'] = requestParameters['bayType'];
+            }
+            if (requestParameters['page'] != null) {
+                queryParameters['page'] = requestParameters['page'];
+            }
+            if (requestParameters['size'] != null) {
+                queryParameters['size'] = requestParameters['size'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageBayResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * List bays for a location with optional status and bayType filters.
      * List bays
      */
-    async listBays(requestParameters, initOverrides) {
-        const response = await this.listBaysRaw(requestParameters, initOverrides);
-        return await response.value();
+    listBays(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listBaysRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Patch bay fields including status transition and capacity.
      * Patch bay
      */
-    async patchBayRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling patchBay().');
-        }
-        if (requestParameters['bayId'] == null) {
-            throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling patchBay().');
-        }
-        if (requestParameters['bayPatchRequest'] == null) {
-            throw new runtime.RequiredError('bayPatchRequest', 'Required parameter "bayPatchRequest" was null or undefined when calling patchBay().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.BayPatchRequestToJSON)(requestParameters['bayPatchRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BayResponseFromJSON)(jsonValue));
+    patchBayRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling patchBay().');
+            }
+            if (requestParameters['bayId'] == null) {
+                throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling patchBay().');
+            }
+            if (requestParameters['bayPatchRequest'] == null) {
+                throw new runtime.RequiredError('bayPatchRequest', 'Required parameter "bayPatchRequest" was null or undefined when calling patchBay().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/locations/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
+                method: 'PATCH',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.BayPatchRequestToJSON)(requestParameters['bayPatchRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.BayResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Patch bay fields including status transition and capacity.
      * Patch bay
      */
-    async patchBay(requestParameters, initOverrides) {
-        const response = await this.patchBayRaw(requestParameters, initOverrides);
-        return await response.value();
+    patchBay(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.patchBayRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.BayAPIApi = BayAPIApi;

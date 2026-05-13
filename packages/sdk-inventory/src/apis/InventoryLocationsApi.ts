@@ -47,6 +47,14 @@ export class InventoryLocationsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/locations/{locationId}/inventory-inquiry`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'GET',

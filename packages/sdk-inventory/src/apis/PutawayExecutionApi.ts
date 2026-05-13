@@ -60,6 +60,14 @@ export class PutawayExecutionApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:putaway:execute"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/putaway/tasks/{taskId}/execute`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
             method: 'POST',

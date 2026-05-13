@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for partial update of an estimate line item
+ * Updated item fields
  * @export
  * @interface UpdateEstimateItemRequest
  */

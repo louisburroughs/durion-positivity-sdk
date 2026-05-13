@@ -15,13 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
-  ErrorResponse,
+  ApiError,
   ResolveSelfRegistrationReviewCaseRequest,
   SelfRegistrationReviewCaseResponse,
 } from '../models/index';
 import {
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ResolveSelfRegistrationReviewCaseRequestFromJSON,
     ResolveSelfRegistrationReviewCaseRequestToJSON,
     SelfRegistrationReviewCaseResponseFromJSON,
@@ -63,6 +63,14 @@ export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/self-registration/review-cases/{caseId}`.replace(`{${"caseId"}}`, encodeURIComponent(String(requestParameters['caseId']))),
             method: 'GET',
@@ -99,6 +107,14 @@ export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/self-registration/review-cases`,
             method: 'GET',
@@ -143,6 +159,14 @@ export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user_account_state:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/self-registration/review-cases/{caseId}/resolve`.replace(`{${"caseId"}}`, encodeURIComponent(String(requestParameters['caseId']))),
             method: 'POST',

@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeopleAccessControlApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,121 +66,137 @@ class PeopleAccessControlApi extends runtime.BaseAPI {
      * Assign a role to a person with optional location scope and date range
      * Assign role to person
      */
-    async createAssignmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['personUuid'] == null) {
-            throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling createAssignment().');
-        }
-        if (requestParameters['personRoleAssignmentRequest'] == null) {
-            throw new runtime.RequiredError('personRoleAssignmentRequest', 'Required parameter "personRoleAssignmentRequest" was null or undefined when calling createAssignment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/people/{personUuid}/access/assignments`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PersonRoleAssignmentRequestToJSON)(requestParameters['personRoleAssignmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserRoleDtoFromJSON)(jsonValue));
+    createAssignmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['personUuid'] == null) {
+                throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling createAssignment().');
+            }
+            if (requestParameters['personRoleAssignmentRequest'] == null) {
+                throw new runtime.RequiredError('personRoleAssignmentRequest', 'Required parameter "personRoleAssignmentRequest" was null or undefined when calling createAssignment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/people/{personUuid}/access/assignments`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PersonRoleAssignmentRequestToJSON)(requestParameters['personRoleAssignmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UserRoleDtoFromJSON)(jsonValue));
+        });
     }
     /**
      * Assign a role to a person with optional location scope and date range
      * Assign role to person
      */
-    async createAssignment(requestParameters, initOverrides) {
-        const response = await this.createAssignmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    createAssignment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAssignmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve role assignments for a person with optional history and date filtering
      * Get role assignments
      */
-    async getAssignmentsRaw(requestParameters, initOverrides) {
-        if (requestParameters['personUuid'] == null) {
-            throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling getAssignments().');
-        }
-        const queryParameters = {};
-        if (requestParameters['includeHistory'] != null) {
-            queryParameters['includeHistory'] = requestParameters['includeHistory'];
-        }
-        if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'].toISOString();
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/{personUuid}/access/assignments`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.UserRoleDtoFromJSON));
+    getAssignmentsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['personUuid'] == null) {
+                throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling getAssignments().');
+            }
+            const queryParameters = {};
+            if (requestParameters['includeHistory'] != null) {
+                queryParameters['includeHistory'] = requestParameters['includeHistory'];
+            }
+            if (requestParameters['endDate'] != null) {
+                queryParameters['endDate'] = requestParameters['endDate'].toISOString();
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/{personUuid}/access/assignments`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.UserRoleDtoFromJSON));
+        });
     }
     /**
      * Retrieve role assignments for a person with optional history and date filtering
      * Get role assignments
      */
-    async getAssignments(requestParameters, initOverrides) {
-        const response = await this.getAssignmentsRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAssignments(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAssignmentsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve list of roles that can be assigned to people
      * Get available roles
      */
-    async getRolesRaw(requestParameters, initOverrides) {
-        if (requestParameters['personUuid'] == null) {
-            throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling getRoles().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/{personUuid}/access/roles`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.RoleDtoFromJSON));
+    getRolesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['personUuid'] == null) {
+                throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling getRoles().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/{personUuid}/access/roles`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.RoleDtoFromJSON));
+        });
     }
     /**
      * Retrieve list of roles that can be assigned to people
      * Get available roles
      */
-    async getRoles(requestParameters, initOverrides) {
-        const response = await this.getRolesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getRoles(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getRolesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Revoke a role assignment from a person
      * Revoke role assignment
      */
-    async revokeAssignmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['personUuid'] == null) {
-            throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling revokeAssignment().');
-        }
-        if (requestParameters['roleCode'] == null) {
-            throw new runtime.RequiredError('roleCode', 'Required parameter "roleCode" was null or undefined when calling revokeAssignment().');
-        }
-        const queryParameters = {};
-        if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'].toISOString();
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/{personUuid}/access/assignments/{roleCode}`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))).replace(`{${"roleCode"}}`, encodeURIComponent(String(requestParameters['roleCode']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    revokeAssignmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['personUuid'] == null) {
+                throw new runtime.RequiredError('personUuid', 'Required parameter "personUuid" was null or undefined when calling revokeAssignment().');
+            }
+            if (requestParameters['roleCode'] == null) {
+                throw new runtime.RequiredError('roleCode', 'Required parameter "roleCode" was null or undefined when calling revokeAssignment().');
+            }
+            const queryParameters = {};
+            if (requestParameters['endDate'] != null) {
+                queryParameters['endDate'] = requestParameters['endDate'].toISOString();
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/{personUuid}/access/assignments/{roleCode}`.replace(`{${"personUuid"}}`, encodeURIComponent(String(requestParameters['personUuid']))).replace(`{${"roleCode"}}`, encodeURIComponent(String(requestParameters['roleCode']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Revoke a role assignment from a person
      * Revoke role assignment
      */
-    async revokeAssignment(requestParameters, initOverrides) {
-        await this.revokeAssignmentRaw(requestParameters, initOverrides);
+    revokeAssignment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.revokeAssignmentRaw(requestParameters, initOverrides);
+        });
     }
 }
 exports.PeopleAccessControlApi = PeopleAccessControlApi;

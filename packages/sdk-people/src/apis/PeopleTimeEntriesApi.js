@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PeopleTimeEntriesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,89 +66,101 @@ class PeopleTimeEntriesApi extends runtime.BaseAPI {
      * Approve a pending time entry adjustment. Requires approval permissions.
      * Approve a time entry adjustment
      */
-    async approveAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['adjustmentId'] == null) {
-            throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling approveAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-        const response = await this.request({
-            path: `/v1/people/timeEntries/adjustments/{adjustmentId}/approve`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    approveAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['adjustmentId'] == null) {
+                throw new runtime.RequiredError('adjustmentId', 'Required parameter "adjustmentId" was null or undefined when calling approveAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            if (requestParameters['xCorrelationId'] != null) {
+                headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+            }
+            const response = yield this.request({
+                path: `/v1/people/timeEntries/adjustments/{adjustmentId}/approve`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Approve a pending time entry adjustment. Requires approval permissions.
      * Approve a time entry adjustment
      */
-    async approveAdjustment(requestParameters, initOverrides) {
-        const response = await this.approveAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    approveAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.approveAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Submit a request to adjust a time entry. The adjustment will be in PENDING status until approved.
      * Create a time entry adjustment
      */
-    async createAdjustmentRaw(requestParameters, initOverrides) {
-        if (requestParameters['timeEntryAdjustmentRequest'] == null) {
-            throw new runtime.RequiredError('timeEntryAdjustmentRequest', 'Required parameter "timeEntryAdjustmentRequest" was null or undefined when calling createAdjustment().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/people/timeEntries/adjustments`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.TimeEntryAdjustmentRequestToJSON)(requestParameters['timeEntryAdjustmentRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryAdjustmentResponseFromJSON)(jsonValue));
+    createAdjustmentRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['timeEntryAdjustmentRequest'] == null) {
+                throw new runtime.RequiredError('timeEntryAdjustmentRequest', 'Required parameter "timeEntryAdjustmentRequest" was null or undefined when calling createAdjustment().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/people/timeEntries/adjustments`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.TimeEntryAdjustmentRequestToJSON)(requestParameters['timeEntryAdjustmentRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryAdjustmentResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Submit a request to adjust a time entry. The adjustment will be in PENDING status until approved.
      * Create a time entry adjustment
      */
-    async createAdjustment(requestParameters, initOverrides) {
-        const response = await this.createAdjustmentRaw(requestParameters, initOverrides);
-        return await response.value();
+    createAdjustment(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createAdjustmentRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all adjustments associated with a specific time entry.
      * List adjustments for a time entry
      */
-    async listForTimeEntryRaw(requestParameters, initOverrides) {
-        if (requestParameters['timeEntryId'] == null) {
-            throw new runtime.RequiredError('timeEntryId', 'Required parameter "timeEntryId" was null or undefined when calling listForTimeEntry().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/people/timeEntries/{timeEntryId}/adjustments`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.TimeEntryAdjustmentFromJSON));
+    listForTimeEntryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['timeEntryId'] == null) {
+                throw new runtime.RequiredError('timeEntryId', 'Required parameter "timeEntryId" was null or undefined when calling listForTimeEntry().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/people/timeEntries/{timeEntryId}/adjustments`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.TimeEntryAdjustmentFromJSON));
+        });
     }
     /**
      * Retrieve all adjustments associated with a specific time entry.
      * List adjustments for a time entry
      */
-    async listForTimeEntry(requestParameters, initOverrides) {
-        const response = await this.listForTimeEntryRaw(requestParameters, initOverrides);
-        return await response.value();
+    listForTimeEntry(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listForTimeEntryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PeopleTimeEntriesApi = PeopleTimeEntriesApi;

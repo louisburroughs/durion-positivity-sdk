@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PromotionEligibilityRulesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,117 +66,133 @@ class PromotionEligibilityRulesApi extends runtime.BaseAPI {
      * Creates and attaches a new eligibility rule to the specified promotion offer.
      * Add eligibility rule to promotion offer
      */
-    async addRuleRaw(requestParameters, initOverrides) {
-        if (requestParameters['promotionId'] == null) {
-            throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling addRule().');
-        }
-        if (requestParameters['addEligibilityRuleRequest'] == null) {
-            throw new runtime.RequiredError('addEligibilityRuleRequest', 'Required parameter "addEligibilityRuleRequest" was null or undefined when calling addRule().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/promotions/offers/{promotionId}/rules`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.AddEligibilityRuleRequestToJSON)(requestParameters['addEligibilityRuleRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EligibilityRuleResponseFromJSON)(jsonValue));
+    addRuleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['promotionId'] == null) {
+                throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling addRule().');
+            }
+            if (requestParameters['addEligibilityRuleRequest'] == null) {
+                throw new runtime.RequiredError('addEligibilityRuleRequest', 'Required parameter "addEligibilityRuleRequest" was null or undefined when calling addRule().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/promotions/offers/{promotionId}/rules`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.AddEligibilityRuleRequestToJSON)(requestParameters['addEligibilityRuleRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EligibilityRuleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates and attaches a new eligibility rule to the specified promotion offer.
      * Add eligibility rule to promotion offer
      */
-    async addRule(requestParameters, initOverrides) {
-        const response = await this.addRuleRaw(requestParameters, initOverrides);
-        return await response.value();
+    addRule(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.addRuleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Deletes an eligibility rule from the specified promotion offer.
      * Delete eligibility rule
      */
-    async deleteRuleRaw(requestParameters, initOverrides) {
-        if (requestParameters['promotionId'] == null) {
-            throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling deleteRule().');
-        }
-        if (requestParameters['ruleId'] == null) {
-            throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling deleteRule().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/promotions/offers/{promotionId}/rules/{ruleId}`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteRuleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['promotionId'] == null) {
+                throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling deleteRule().');
+            }
+            if (requestParameters['ruleId'] == null) {
+                throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling deleteRule().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/promotions/offers/{promotionId}/rules/{ruleId}`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Deletes an eligibility rule from the specified promotion offer.
      * Delete eligibility rule
      */
-    async deleteRule(requestParameters, initOverrides) {
-        await this.deleteRuleRaw(requestParameters, initOverrides);
+    deleteRule(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteRuleRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Evaluates whether a promotion offer is eligible for the provided evaluation context.
      * Evaluate promotion eligibility
      */
-    async evaluateEligibilityRaw(requestParameters, initOverrides) {
-        if (requestParameters['promotionId'] == null) {
-            throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling evaluateEligibility().');
-        }
-        if (requestParameters['eligibilityContext'] == null) {
-            throw new runtime.RequiredError('eligibilityContext', 'Required parameter "eligibilityContext" was null or undefined when calling evaluateEligibility().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/promotions/offers/{promotionId}/rules/evaluate`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.EligibilityContextToJSON)(requestParameters['eligibilityContext']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EligibilityDecisionResponseFromJSON)(jsonValue));
+    evaluateEligibilityRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['promotionId'] == null) {
+                throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling evaluateEligibility().');
+            }
+            if (requestParameters['eligibilityContext'] == null) {
+                throw new runtime.RequiredError('eligibilityContext', 'Required parameter "eligibilityContext" was null or undefined when calling evaluateEligibility().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/promotions/offers/{promotionId}/rules/evaluate`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.EligibilityContextToJSON)(requestParameters['eligibilityContext']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EligibilityDecisionResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Evaluates whether a promotion offer is eligible for the provided evaluation context.
      * Evaluate promotion eligibility
      */
-    async evaluateEligibility(requestParameters, initOverrides) {
-        const response = await this.evaluateEligibilityRaw(requestParameters, initOverrides);
-        return await response.value();
+    evaluateEligibility(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.evaluateEligibilityRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all eligibility rules configured for the specified promotion offer.
      * List eligibility rules for promotion offer
      */
-    async getRulesRaw(requestParameters, initOverrides) {
-        if (requestParameters['promotionId'] == null) {
-            throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling getRules().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/promotions/offers/{promotionId}/rules`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EligibilityRuleResponseFromJSON));
+    getRulesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['promotionId'] == null) {
+                throw new runtime.RequiredError('promotionId', 'Required parameter "promotionId" was null or undefined when calling getRules().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/promotions/offers/{promotionId}/rules`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.EligibilityRuleResponseFromJSON));
+        });
     }
     /**
      * Returns all eligibility rules configured for the specified promotion offer.
      * List eligibility rules for promotion offer
      */
-    async getRules(requestParameters, initOverrides) {
-        const response = await this.getRulesRaw(requestParameters, initOverrides);
-        return await response.value();
+    getRules(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getRulesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PromotionEligibilityRulesApi = PromotionEligibilityRulesApi;

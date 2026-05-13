@@ -21,31 +21,31 @@ import {
 } from './VehicleSummary';
 
 /**
- *
+ * 
  * @export
  * @interface SearchVehiclesResponse
  */
 export interface SearchVehiclesResponse {
     /**
-     *
+     * 
      * @type {Array<VehicleSummary>}
      * @memberof SearchVehiclesResponse
      */
     results?: Array<VehicleSummary>;
     /**
-     *
+     * 
      * @type {number}
      * @memberof SearchVehiclesResponse
      */
     totalCount?: number;
     /**
-     *
+     * 
      * @type {boolean}
      * @memberof SearchVehiclesResponse
      */
     hasMore?: boolean;
     /**
-     *
+     * 
      * @type {string}
      * @memberof SearchVehiclesResponse
      */
@@ -68,7 +68,7 @@ export function SearchVehiclesResponseFromJSONTyped(json: any, ignoreDiscriminat
         return json;
     }
     return {
-
+        
         'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(VehicleSummaryFromJSON)),
         'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
         'hasMore': json['hasMore'] == null ? undefined : json['hasMore'],
@@ -81,7 +81,7 @@ export function SearchVehiclesResponseToJSON(value?: SearchVehiclesResponse | nu
         return value;
     }
     return {
-
+        
         'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(VehicleSummaryToJSON)),
         'totalCount': value['totalCount'],
         'hasMore': value['hasMore'],

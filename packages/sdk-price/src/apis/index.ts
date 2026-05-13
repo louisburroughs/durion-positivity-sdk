@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './PriceBulkIngestAPIApi';
 export * from './PriceNormalizationApi';
 export * from './PriceQuotesApi';
 export * from './PriceRestrictionsApi';

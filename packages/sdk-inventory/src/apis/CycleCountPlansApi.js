@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CycleCountPlansApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,55 +66,63 @@ class CycleCountPlansApi extends runtime.BaseAPI {
      * Creates a cycle count plan and returns its configuration details.
      * Create cycle count plan
      */
-    async createPlanRaw(requestParameters, initOverrides) {
-        if (requestParameters['createCycleCountPlanRequest'] == null) {
-            throw new runtime.RequiredError('createCycleCountPlanRequest', 'Required parameter "createCycleCountPlanRequest" was null or undefined when calling createPlan().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountPlans`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateCycleCountPlanRequestToJSON)(requestParameters['createCycleCountPlanRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountPlanResponseFromJSON)(jsonValue));
+    createPlanRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createCycleCountPlanRequest'] == null) {
+                throw new runtime.RequiredError('createCycleCountPlanRequest', 'Required parameter "createCycleCountPlanRequest" was null or undefined when calling createPlan().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountPlans`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateCycleCountPlanRequestToJSON)(requestParameters['createCycleCountPlanRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountPlanResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Creates a cycle count plan and returns its configuration details.
      * Create cycle count plan
      */
-    async createPlan(requestParameters, initOverrides) {
-        const response = await this.createPlanRaw(requestParameters, initOverrides);
-        return await response.value();
+    createPlan(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createPlanRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns a cycle count plan by identifier.
      * Get cycle count plan
      */
-    async getPlanRaw(requestParameters, initOverrides) {
-        if (requestParameters['planId'] == null) {
-            throw new runtime.RequiredError('planId', 'Required parameter "planId" was null or undefined when calling getPlan().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/cycleCountPlans/{planId}`.replace(`{${"planId"}}`, encodeURIComponent(String(requestParameters['planId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountPlanResponseFromJSON)(jsonValue));
+    getPlanRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['planId'] == null) {
+                throw new runtime.RequiredError('planId', 'Required parameter "planId" was null or undefined when calling getPlan().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/cycleCountPlans/{planId}`.replace(`{${"planId"}}`, encodeURIComponent(String(requestParameters['planId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CycleCountPlanResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns a cycle count plan by identifier.
      * Get cycle count plan
      */
-    async getPlan(requestParameters, initOverrides) {
-        const response = await this.getPlanRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPlan(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPlanRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CycleCountPlansApi = CycleCountPlansApi;

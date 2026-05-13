@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PriceBookAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,268 +66,300 @@ class PriceBookAPIApi extends runtime.BaseAPI {
      * Creates a new price book used to group and apply pricing rules.
      * Create price book
      */
-    async createPriceBookRaw(requestParameters, initOverrides) {
-        if (requestParameters['priceBookCreateRequestDto'] == null) {
-            throw new runtime.RequiredError('priceBookCreateRequestDto', 'Required parameter "priceBookCreateRequestDto" was null or undefined when calling createPriceBook().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/price-books`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PriceBookCreateRequestDtoToJSON)(requestParameters['priceBookCreateRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    createPriceBookRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['priceBookCreateRequestDto'] == null) {
+                throw new runtime.RequiredError('priceBookCreateRequestDto', 'Required parameter "priceBookCreateRequestDto" was null or undefined when calling createPriceBook().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/price-books`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PriceBookCreateRequestDtoToJSON)(requestParameters['priceBookCreateRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Creates a new price book used to group and apply pricing rules.
      * Create price book
      */
-    async createPriceBook(requestParameters, initOverrides) {
-        const response = await this.createPriceBookRaw(requestParameters, initOverrides);
-        return await response.value();
+    createPriceBook(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createPriceBookRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Adds a new pricing rule to a specific price book.
      * Create price book rule
      */
-    async createRuleRaw(requestParameters, initOverrides) {
-        if (requestParameters['priceBookId'] == null) {
-            throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling createRule().');
-        }
-        if (requestParameters['priceBookRuleCreateRequestDto'] == null) {
-            throw new runtime.RequiredError('priceBookRuleCreateRequestDto', 'Required parameter "priceBookRuleCreateRequestDto" was null or undefined when calling createRule().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/price-books/{priceBookId}/rules`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PriceBookRuleCreateRequestDtoToJSON)(requestParameters['priceBookRuleCreateRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    createRuleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['priceBookId'] == null) {
+                throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling createRule().');
+            }
+            if (requestParameters['priceBookRuleCreateRequestDto'] == null) {
+                throw new runtime.RequiredError('priceBookRuleCreateRequestDto', 'Required parameter "priceBookRuleCreateRequestDto" was null or undefined when calling createRule().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/price-books/{priceBookId}/rules`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PriceBookRuleCreateRequestDtoToJSON)(requestParameters['priceBookRuleCreateRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Adds a new pricing rule to a specific price book.
      * Create price book rule
      */
-    async createRule(requestParameters, initOverrides) {
-        const response = await this.createRuleRaw(requestParameters, initOverrides);
-        return await response.value();
+    createRule(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createRuleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Deactivates a price book rule so it is no longer considered in price resolution.
      * Deactivate price book rule
      */
-    async deactivateRuleRaw(requestParameters, initOverrides) {
-        if (requestParameters['priceBookId'] == null) {
-            throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling deactivateRule().');
-        }
-        if (requestParameters['ruleId'] == null) {
-            throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling deactivateRule().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/products/price-books/{priceBookId}/rules/{ruleId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deactivateRuleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['priceBookId'] == null) {
+                throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling deactivateRule().');
+            }
+            if (requestParameters['ruleId'] == null) {
+                throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling deactivateRule().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/products/price-books/{priceBookId}/rules/{ruleId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Deactivates a price book rule so it is no longer considered in price resolution.
      * Deactivate price book rule
      */
-    async deactivateRule(requestParameters, initOverrides) {
-        await this.deactivateRuleRaw(requestParameters, initOverrides);
+    deactivateRule(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deactivateRuleRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieves a price book by ID, including its configuration metadata.
      * Get price book
      */
-    async getPriceBookRaw(requestParameters, initOverrides) {
-        if (requestParameters['priceBookId'] == null) {
-            throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling getPriceBook().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/products/price-books/{priceBookId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getPriceBookRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['priceBookId'] == null) {
+                throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling getPriceBook().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/products/price-books/{priceBookId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Retrieves a price book by ID, including its configuration metadata.
      * Get price book
      */
-    async getPriceBook(requestParameters, initOverrides) {
-        const response = await this.getPriceBookRaw(requestParameters, initOverrides);
-        return await response.value();
+    getPriceBook(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPriceBookRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Returns all rules associated with a price book.
      * List price book rules
      */
-    async listRulesRaw(requestParameters, initOverrides) {
-        if (requestParameters['priceBookId'] == null) {
-            throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling listRules().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/products/price-books/{priceBookId}/rules`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    listRulesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['priceBookId'] == null) {
+                throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling listRules().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/products/price-books/{priceBookId}/rules`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Returns all rules associated with a price book.
      * List price book rules
      */
-    async listRules(requestParameters, initOverrides) {
-        const response = await this.listRulesRaw(requestParameters, initOverrides);
-        return await response.value();
+    listRules(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listRulesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Calculates the effective price for a product using applicable price books and rules.
      * Resolve effective product price
      */
-    async resolvePriceRaw(requestParameters, initOverrides) {
-        if (requestParameters['resolvePriceRequestDto'] == null) {
-            throw new runtime.RequiredError('resolvePriceRequestDto', 'Required parameter "resolvePriceRequestDto" was null or undefined when calling resolvePrice().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/price-books/resolve-price`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ResolvePriceRequestDtoToJSON)(requestParameters['resolvePriceRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    resolvePriceRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['resolvePriceRequestDto'] == null) {
+                throw new runtime.RequiredError('resolvePriceRequestDto', 'Required parameter "resolvePriceRequestDto" was null or undefined when calling resolvePrice().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/price-books/resolve-price`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ResolvePriceRequestDtoToJSON)(requestParameters['resolvePriceRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Calculates the effective price for a product using applicable price books and rules.
      * Resolve effective product price
      */
-    async resolvePrice(requestParameters, initOverrides) {
-        const response = await this.resolvePriceRaw(requestParameters, initOverrides);
-        return await response.value();
+    resolvePrice(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.resolvePriceRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Updates mutable fields of an existing price book.
      * Update price book
      */
-    async updatePriceBookRaw(requestParameters, initOverrides) {
-        if (requestParameters['priceBookId'] == null) {
-            throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling updatePriceBook().');
-        }
-        if (requestParameters['priceBookCreateRequestDto'] == null) {
-            throw new runtime.RequiredError('priceBookCreateRequestDto', 'Required parameter "priceBookCreateRequestDto" was null or undefined when calling updatePriceBook().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/price-books/{priceBookId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PriceBookCreateRequestDtoToJSON)(requestParameters['priceBookCreateRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    updatePriceBookRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['priceBookId'] == null) {
+                throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling updatePriceBook().');
+            }
+            if (requestParameters['priceBookCreateRequestDto'] == null) {
+                throw new runtime.RequiredError('priceBookCreateRequestDto', 'Required parameter "priceBookCreateRequestDto" was null or undefined when calling updatePriceBook().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/price-books/{priceBookId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PriceBookCreateRequestDtoToJSON)(requestParameters['priceBookCreateRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Updates mutable fields of an existing price book.
      * Update price book
      */
-    async updatePriceBook(requestParameters, initOverrides) {
-        const response = await this.updatePriceBookRaw(requestParameters, initOverrides);
-        return await response.value();
+    updatePriceBook(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updatePriceBookRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Updates an existing pricing rule in a price book.
      * Update price book rule
      */
-    async updateRuleRaw(requestParameters, initOverrides) {
-        if (requestParameters['priceBookId'] == null) {
-            throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling updateRule().');
-        }
-        if (requestParameters['ruleId'] == null) {
-            throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling updateRule().');
-        }
-        if (requestParameters['priceBookRuleCreateRequestDto'] == null) {
-            throw new runtime.RequiredError('priceBookRuleCreateRequestDto', 'Required parameter "priceBookRuleCreateRequestDto" was null or undefined when calling updateRule().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/price-books/{priceBookId}/rules/{ruleId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.PriceBookRuleCreateRequestDtoToJSON)(requestParameters['priceBookRuleCreateRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    updateRuleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['priceBookId'] == null) {
+                throw new runtime.RequiredError('priceBookId', 'Required parameter "priceBookId" was null or undefined when calling updateRule().');
+            }
+            if (requestParameters['ruleId'] == null) {
+                throw new runtime.RequiredError('ruleId', 'Required parameter "ruleId" was null or undefined when calling updateRule().');
+            }
+            if (requestParameters['priceBookRuleCreateRequestDto'] == null) {
+                throw new runtime.RequiredError('priceBookRuleCreateRequestDto', 'Required parameter "priceBookRuleCreateRequestDto" was null or undefined when calling updateRule().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/price-books/{priceBookId}/rules/{ruleId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.PriceBookRuleCreateRequestDtoToJSON)(requestParameters['priceBookRuleCreateRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Updates an existing pricing rule in a price book.
      * Update price book rule
      */
-    async updateRule(requestParameters, initOverrides) {
-        const response = await this.updateRuleRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateRule(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateRuleRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.PriceBookAPIApi = PriceBookAPIApi;

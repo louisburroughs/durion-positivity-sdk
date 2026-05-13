@@ -51,7 +51,7 @@ export function FilterProductsResponseFromJSONTyped(json: any, ignoreDiscriminat
         return json;
     }
     return {
-
+        
         'productIds': json['productIds'],
         'count': json['count'],
     };
@@ -62,7 +62,7 @@ export function FilterProductsResponseToJSON(value?: FilterProductsResponse | nu
         return value;
     }
     return {
-
+        
         'productIds': value['productIds'],
         'count': value['count'],
     };

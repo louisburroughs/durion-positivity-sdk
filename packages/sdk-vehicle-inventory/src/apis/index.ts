@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
-export { VehicleAPIApi } from './VehicleAPIApi';
-export { VehiclePreferencesApi } from './VehiclePreferencesApi';
-export { VehicleRegistryAPIApi } from './VehicleRegistryAPIApi';
-export { VehicleSearchApi } from './VehicleSearchApi';
+export * from './VehicleAPIApi';
+export * from './VehicleBulkIngestAPIApi';
+export * from './VehiclePreferencesApi';
+export * from './VehicleRegistryAPIApi';
+export * from './VehicleSearchApi';

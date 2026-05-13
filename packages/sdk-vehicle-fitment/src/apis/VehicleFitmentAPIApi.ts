@@ -15,10 +15,10 @@
 
 import * as runtime from '../runtime';
 import type {
-    MakeResponse,
-    ManufacturerResponse,
-    ModelResponse,
-    VehicleTypeResponse,
+  MakeResponse,
+  ManufacturerResponse,
+  ModelResponse,
+  VehicleTypeResponse,
 } from '../models/index';
 import {
     MakeResponseFromJSON,
@@ -44,7 +44,7 @@ export interface GetVehicleTypesForMakeRequest {
 }
 
 /**
- *
+ * 
  */
 export class VehicleFitmentAPIApi extends runtime.BaseAPI {
 
@@ -64,6 +64,14 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/makes/{manufacturerId}`.replace(`{${"manufacturerId"}}`, encodeURIComponent(String(requestParameters['manufacturerId']))),
             method: 'GET',
@@ -92,6 +100,14 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/manufacturers`,
             method: 'GET',
@@ -127,6 +143,14 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/models/{makeId}`.replace(`{${"makeId"}}`, encodeURIComponent(String(requestParameters['makeId']))),
             method: 'GET',
@@ -162,6 +186,14 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/vehicle-fitment/vehicle-types/{makeId}`.replace(`{${"makeId"}}`, encodeURIComponent(String(requestParameters['makeId']))),
             method: 'GET',

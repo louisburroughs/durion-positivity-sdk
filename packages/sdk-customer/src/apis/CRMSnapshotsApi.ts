@@ -58,6 +58,14 @@ export class CRMSnapshotsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/snapshot/party/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',
@@ -93,6 +101,14 @@ export class CRMSnapshotsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/snapshot/vehicle/{vehicleId}`.replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
             method: 'GET',
@@ -128,6 +144,14 @@ export class CRMSnapshotsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/snapshot/party/{partyId}/billing-rules`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',

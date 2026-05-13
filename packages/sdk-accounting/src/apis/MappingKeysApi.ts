@@ -79,6 +79,14 @@ export class MappingKeysApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:mapping-key:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/mapping-keys`,
             method: 'POST',
@@ -115,6 +123,14 @@ export class MappingKeysApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:mapping-key:deactivate"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/mapping-keys/{mappingKeyId}/deactivate`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
             method: 'POST',
@@ -149,6 +165,14 @@ export class MappingKeysApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:mapping-key:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/mapping-keys/{mappingKeyId}`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
             method: 'GET',
@@ -207,6 +231,14 @@ export class MappingKeysApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:mapping-key:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/posting-categories/{postingCategoryId}/mapping-keys`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
             method: 'GET',
@@ -251,6 +283,14 @@ export class MappingKeysApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:mapping-key:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/accounting/mapping-keys/{mappingKeyId}`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
             method: 'PUT',

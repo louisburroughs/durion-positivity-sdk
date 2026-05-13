@@ -110,6 +110,18 @@ export interface VehicleResponse {
      */
     updatedAt?: Date;
     /**
+     * Username of the actor who created this record.
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    createdBy?: string;
+    /**
+     * Username of the actor who last modified this record.
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    updatedBy?: string;
+    /**
      * Optimistic lock version.
      * @type {number}
      * @memberof VehicleResponse
@@ -149,6 +161,8 @@ export function VehicleResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         'isActive': json['isActive'] == null ? undefined : json['isActive'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
         'version': json['version'] == null ? undefined : json['version'],
     };
 }
@@ -174,6 +188,8 @@ export function VehicleResponseToJSON(value?: VehicleResponse | null): any {
         'isActive': value['isActive'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'createdBy': value['createdBy'],
+        'updatedBy': value['updatedBy'],
         'version': value['version'],
     };
 }

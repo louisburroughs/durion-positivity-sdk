@@ -14,43 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface InvoiceItemResponse
  */
 export interface InvoiceItemResponse {
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceItemResponse
      */
     id?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceItemResponse
      */
     description?: string;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceItemResponse
      */
     quantity?: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceItemResponse
      */
     unitPrice?: number;
     /**
-     *
+     * 
      * @type {number}
      * @memberof InvoiceItemResponse
      */
     amount?: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof InvoiceItemResponse
      */
@@ -73,7 +73,7 @@ export function InvoiceItemResponseFromJSONTyped(json: any, ignoreDiscriminator:
         return json;
     }
     return {
-
+        
         'id': json['id'] == null ? undefined : json['id'],
         'description': json['description'] == null ? undefined : json['description'],
         'quantity': json['quantity'] == null ? undefined : json['quantity'],
@@ -88,7 +88,7 @@ export function InvoiceItemResponseToJSON(value?: InvoiceItemResponse | null): a
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'description': value['description'],
         'quantity': value['quantity'],

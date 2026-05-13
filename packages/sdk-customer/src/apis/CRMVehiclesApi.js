@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CRMVehiclesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,157 +66,177 @@ class CRMVehiclesApi extends runtime.BaseAPI {
      * Create a new vehicle for a customer
      * Create vehicle
      */
-    async createVehiclesRaw(requestParameters, initOverrides) {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling createVehicles().');
-        }
-        if (requestParameters['createVehicleForPartyRequest'] == null) {
-            throw new runtime.RequiredError('createVehicleForPartyRequest', 'Required parameter "createVehicleForPartyRequest" was null or undefined when calling createVehicles().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateVehicleForPartyRequestToJSON)(requestParameters['createVehicleForPartyRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    createVehiclesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['customerId'] == null) {
+                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling createVehicles().');
+            }
+            if (requestParameters['createVehicleForPartyRequest'] == null) {
+                throw new runtime.RequiredError('createVehicleForPartyRequest', 'Required parameter "createVehicleForPartyRequest" was null or undefined when calling createVehicles().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/{customerId}/vehicles`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateVehicleForPartyRequestToJSON)(requestParameters['createVehicleForPartyRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new vehicle for a customer
      * Create vehicle
      */
-    async createVehicles(requestParameters, initOverrides) {
-        const response = await this.createVehiclesRaw(requestParameters, initOverrides);
-        return await response.value();
+    createVehicles(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createVehiclesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Delete or deactivate a vehicle for a customer
      * Delete vehicle
      */
-    async deleteVehicleRaw(requestParameters, initOverrides) {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling deleteVehicle().');
-        }
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling deleteVehicle().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteVehicleRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['customerId'] == null) {
+                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling deleteVehicle().');
+            }
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling deleteVehicle().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete or deactivate a vehicle for a customer
      * Delete vehicle
      */
-    async deleteVehicle(requestParameters, initOverrides) {
-        await this.deleteVehicleRaw(requestParameters, initOverrides);
+    deleteVehicle(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteVehicleRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve a specific vehicle for a given customer
      * Get vehicle for customer
      */
-    async getVehiclesForCustomerRaw(requestParameters, initOverrides) {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getVehiclesForCustomer().');
-        }
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling getVehiclesForCustomer().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    getVehiclesForCustomerRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['customerId'] == null) {
+                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling getVehiclesForCustomer().');
+            }
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling getVehiclesForCustomer().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a specific vehicle for a given customer
      * Get vehicle for customer
      */
-    async getVehiclesForCustomer(requestParameters, initOverrides) {
-        const response = await this.getVehiclesForCustomerRaw(requestParameters, initOverrides);
-        return await response.value();
+    getVehiclesForCustomer(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getVehiclesForCustomerRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Transfer vehicle ownership between customers
      * Transfer vehicle
      */
-    async transferVehiclesRaw(requestParameters, initOverrides) {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling transferVehicles().');
-        }
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling transferVehicles().');
-        }
-        if (requestParameters['vehicleTransferRequest'] == null) {
-            throw new runtime.RequiredError('vehicleTransferRequest', 'Required parameter "vehicleTransferRequest" was null or undefined when calling transferVehicles().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles/{vehicleId}/transfer`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.VehicleTransferRequestToJSON)(requestParameters['vehicleTransferRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    transferVehiclesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['customerId'] == null) {
+                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling transferVehicles().');
+            }
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling transferVehicles().');
+            }
+            if (requestParameters['vehicleTransferRequest'] == null) {
+                throw new runtime.RequiredError('vehicleTransferRequest', 'Required parameter "vehicleTransferRequest" was null or undefined when calling transferVehicles().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/{customerId}/vehicles/{vehicleId}/transfer`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.VehicleTransferRequestToJSON)(requestParameters['vehicleTransferRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Transfer vehicle ownership between customers
      * Transfer vehicle
      */
-    async transferVehicles(requestParameters, initOverrides) {
-        const response = await this.transferVehiclesRaw(requestParameters, initOverrides);
-        return await response.value();
+    transferVehicles(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.transferVehiclesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update vehicle information for a customer
      * Update vehicle
      */
-    async updateVehiclesRaw(requestParameters, initOverrides) {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling updateVehicles().');
-        }
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling updateVehicles().');
-        }
-        if (requestParameters['createVehicleForPartyRequest'] == null) {
-            throw new runtime.RequiredError('createVehicleForPartyRequest', 'Required parameter "createVehicleForPartyRequest" was null or undefined when calling updateVehicles().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateVehicleForPartyRequestToJSON)(requestParameters['createVehicleForPartyRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+    updateVehiclesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['customerId'] == null) {
+                throw new runtime.RequiredError('customerId', 'Required parameter "customerId" was null or undefined when calling updateVehicles().');
+            }
+            if (requestParameters['vehicleId'] == null) {
+                throw new runtime.RequiredError('vehicleId', 'Required parameter "vehicleId" was null or undefined when calling updateVehicles().');
+            }
+            if (requestParameters['createVehicleForPartyRequest'] == null) {
+                throw new runtime.RequiredError('createVehicleForPartyRequest', 'Required parameter "createVehicleForPartyRequest" was null or undefined when calling updateVehicles().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateVehicleForPartyRequestToJSON)(requestParameters['createVehicleForPartyRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.VehicleResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update vehicle information for a customer
      * Update vehicle
      */
-    async updateVehicles(requestParameters, initOverrides) {
-        const response = await this.updateVehiclesRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateVehicles(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateVehiclesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CRMVehiclesApi = CRMVehiclesApi;

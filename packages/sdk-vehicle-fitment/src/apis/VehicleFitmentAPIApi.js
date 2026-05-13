@@ -12,24 +12,24 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function () { return m[k]; } };
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
     Object.defineProperty(o, k2, desc);
-}) : (function (o, m, k, k2) {
+}) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
 }));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function (o, v) {
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function (o, v) {
+}) : function(o, v) {
     o["default"] = v;
 });
 var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function (o) {
+    var ownKeys = function(o) {
         ownKeys = Object.getOwnPropertyNames || function (o) {
             var ar = [];
             for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VehicleFitmentAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,102 +66,118 @@ class VehicleFitmentAPIApi extends runtime.BaseAPI {
      * Retrieve all makes for a given manufacturer.
      * Get makes by manufacturer
      */
-    async getMakesByManufacturerRaw(requestParameters, initOverrides) {
-        if (requestParameters['manufacturerId'] == null) {
-            throw new runtime.RequiredError('manufacturerId', 'Required parameter "manufacturerId" was null or undefined when calling getMakesByManufacturer().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicle-fitment/makes/{manufacturerId}`.replace(`{${"manufacturerId"}}`, encodeURIComponent(String(requestParameters['manufacturerId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.MakeResponseFromJSON));
+    getMakesByManufacturerRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['manufacturerId'] == null) {
+                throw new runtime.RequiredError('manufacturerId', 'Required parameter "manufacturerId" was null or undefined when calling getMakesByManufacturer().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicle-fitment/makes/{manufacturerId}`.replace(`{${"manufacturerId"}}`, encodeURIComponent(String(requestParameters['manufacturerId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.MakeResponseFromJSON));
+        });
     }
     /**
      * Retrieve all makes for a given manufacturer.
      * Get makes by manufacturer
      */
-    async getMakesByManufacturer(requestParameters, initOverrides) {
-        const response = await this.getMakesByManufacturerRaw(requestParameters, initOverrides);
-        return await response.value();
+    getMakesByManufacturer(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getMakesByManufacturerRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a list of all vehicle manufacturers.
      * Get all manufacturers
      */
-    async getManufacturersRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicle-fitment/manufacturers`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ManufacturerResponseFromJSON));
+    getManufacturersRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicle-fitment/manufacturers`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ManufacturerResponseFromJSON));
+        });
     }
     /**
      * Retrieve a list of all vehicle manufacturers.
      * Get all manufacturers
      */
-    async getManufacturers(initOverrides) {
-        const response = await this.getManufacturersRaw(initOverrides);
-        return await response.value();
+    getManufacturers(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getManufacturersRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all models for a given make.
      * Get models by make
      */
-    async getModelsByMakeRaw(requestParameters, initOverrides) {
-        if (requestParameters['makeId'] == null) {
-            throw new runtime.RequiredError('makeId', 'Required parameter "makeId" was null or undefined when calling getModelsByMake().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicle-fitment/models/{makeId}`.replace(`{${"makeId"}}`, encodeURIComponent(String(requestParameters['makeId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ModelResponseFromJSON));
+    getModelsByMakeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['makeId'] == null) {
+                throw new runtime.RequiredError('makeId', 'Required parameter "makeId" was null or undefined when calling getModelsByMake().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicle-fitment/models/{makeId}`.replace(`{${"makeId"}}`, encodeURIComponent(String(requestParameters['makeId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.ModelResponseFromJSON));
+        });
     }
     /**
      * Retrieve all models for a given make.
      * Get models by make
      */
-    async getModelsByMake(requestParameters, initOverrides) {
-        const response = await this.getModelsByMakeRaw(requestParameters, initOverrides);
-        return await response.value();
+    getModelsByMake(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getModelsByMakeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all vehicle types for a given make.
      * Get vehicle types for make
      */
-    async getVehicleTypesForMakeRaw(requestParameters, initOverrides) {
-        if (requestParameters['makeId'] == null) {
-            throw new runtime.RequiredError('makeId', 'Required parameter "makeId" was null or undefined when calling getVehicleTypesForMake().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/vehicle-fitment/vehicle-types/{makeId}`.replace(`{${"makeId"}}`, encodeURIComponent(String(requestParameters['makeId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.VehicleTypeResponseFromJSON));
+    getVehicleTypesForMakeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['makeId'] == null) {
+                throw new runtime.RequiredError('makeId', 'Required parameter "makeId" was null or undefined when calling getVehicleTypesForMake().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/vehicle-fitment/vehicle-types/{makeId}`.replace(`{${"makeId"}}`, encodeURIComponent(String(requestParameters['makeId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(index_1.VehicleTypeResponseFromJSON));
+        });
     }
     /**
      * Retrieve all vehicle types for a given make.
      * Get vehicle types for make
      */
-    async getVehicleTypesForMake(requestParameters, initOverrides) {
-        const response = await this.getVehicleTypesForMakeRaw(requestParameters, initOverrides);
-        return await response.value();
+    getVehicleTypesForMake(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getVehicleTypesForMakeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.VehicleFitmentAPIApi = VehicleFitmentAPIApi;

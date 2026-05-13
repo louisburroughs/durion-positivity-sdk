@@ -72,6 +72,7 @@ export interface UpdateItemQuantityRequest {
 export class SalesOrdersApi extends runtime.BaseAPI {
 
     /**
+     * Add a line item to an existing sales order cart using SKU, quantity, and optional pricing context.
      * Add an item to a sales order cart
      */
     async addItemRaw(requestParameters: AddItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderLineResponse>> {
@@ -95,6 +96,14 @@ export class SalesOrdersApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts/{orderId}/items`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
             method: 'POST',
@@ -107,6 +116,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Add a line item to an existing sales order cart using SKU, quantity, and optional pricing context.
      * Add an item to a sales order cart
      */
     async addItem(requestParameters: AddItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderLineResponse> {
@@ -115,6 +125,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Create a new sales order cart for a customer, terminal, and optional vehicle context.
      * Create a sales order cart
      */
     async createCartRaw(requestParameters: CreateCartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
@@ -131,6 +142,14 @@ export class SalesOrdersApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts`,
             method: 'POST',
@@ -143,6 +162,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Create a new sales order cart for a customer, terminal, and optional vehicle context.
      * Create a sales order cart
      */
     async createCart(requestParameters: CreateCartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
@@ -151,6 +171,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve a sales order cart and its current line items by identifier.
      * Get a sales order by ID
      */
     async getOrderRaw(requestParameters: GetOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
@@ -165,6 +186,14 @@ export class SalesOrdersApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts/{orderId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
             method: 'GET',
@@ -176,6 +205,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve a sales order cart and its current line items by identifier.
      * Get a sales order by ID
      */
     async getOrder(requestParameters: GetOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
@@ -184,6 +214,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Associate an external source reference with an existing sales order cart.
      * Link a source to a sales order
      */
     async linkSourceRaw(requestParameters: LinkSourceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
@@ -207,6 +238,14 @@ export class SalesOrdersApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts/{orderId}/source`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
             method: 'PATCH',
@@ -219,6 +258,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Associate an external source reference with an existing sales order cart.
      * Link a source to a sales order
      */
     async linkSource(requestParameters: LinkSourceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
@@ -227,6 +267,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Remove a line item from an existing sales order cart.
      * Remove an item from a sales order cart
      */
     async removeItemRaw(requestParameters: RemoveItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -248,6 +289,14 @@ export class SalesOrdersApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts/{orderId}/items/{lineId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
             method: 'DELETE',
@@ -259,6 +308,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Remove a line item from an existing sales order cart.
      * Remove an item from a sales order cart
      */
     async removeItem(requestParameters: RemoveItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -266,6 +316,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Update the quantity for an existing sales order line item in a cart.
      * Update a sales order cart item quantity
      */
     async updateItemQuantityRaw(requestParameters: UpdateItemQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderLineResponse>> {
@@ -296,6 +347,14 @@ export class SalesOrdersApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts/{orderId}/items/{lineId}`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))).replace(`{${"lineId"}}`, encodeURIComponent(String(requestParameters['lineId']))),
             method: 'PUT',
@@ -308,6 +367,7 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Update the quantity for an existing sales order line item in a cart.
      * Update a sales order cart item quantity
      */
     async updateItemQuantity(requestParameters: UpdateItemQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderLineResponse> {

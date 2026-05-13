@@ -1,6 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AvailabilityInfo';
+export * from './BulkIngestRequestCatalogBulkIngestRecord';
+export * from './BulkIngestResponse';
+export * from './BulkIngestResult';
+export * from './CatalogBulkIngestRecord';
 export * from './CatalogDto';
 export * from './CatalogItemRequestDto';
 export * from './CatalogItemResponseDto';

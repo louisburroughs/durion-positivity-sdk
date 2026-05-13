@@ -19,18 +19,18 @@ import {
     EstimateSummaryResponseFromJSONTyped,
     EstimateSummaryResponseToJSON,
 } from './EstimateSummaryResponse';
-import type { Pageablenull } from './Pageablenull';
+import type { PageableObject } from './PageableObject';
 import {
-    PageablenullFromJSON,
-    PageablenullFromJSONTyped,
-    PageablenullToJSON,
-} from './Pageablenull';
-import type { Sortnull } from './Sortnull';
+    PageableObjectFromJSON,
+    PageableObjectFromJSONTyped,
+    PageableObjectToJSON,
+} from './PageableObject';
+import type { SortObject } from './SortObject';
 import {
-    SortnullFromJSON,
-    SortnullFromJSONTyped,
-    SortnullToJSON,
-} from './Sortnull';
+    SortObjectFromJSON,
+    SortObjectFromJSONTyped,
+    SortObjectToJSON,
+} from './SortObject';
 
 /**
  * 
@@ -52,24 +52,6 @@ export interface PageEstimateSummaryResponse {
     totalPages?: number;
     /**
      * 
-     * @type {Pageablenull}
-     * @memberof PageEstimateSummaryResponse
-     */
-    pageable?: Pageablenull;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageEstimateSummaryResponse
-     */
-    first?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageEstimateSummaryResponse
-     */
-    last?: boolean;
-    /**
-     * 
      * @type {number}
      * @memberof PageEstimateSummaryResponse
      */
@@ -88,10 +70,28 @@ export interface PageEstimateSummaryResponse {
     number?: number;
     /**
      * 
-     * @type {Sortnull}
+     * @type {PageableObject}
      * @memberof PageEstimateSummaryResponse
      */
-    sort?: Sortnull;
+    pageable?: PageableObject;
+    /**
+     * 
+     * @type {SortObject}
+     * @memberof PageEstimateSummaryResponse
+     */
+    sort?: SortObject;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageEstimateSummaryResponse
+     */
+    first?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageEstimateSummaryResponse
+     */
+    last?: boolean;
     /**
      * 
      * @type {number}
@@ -125,13 +125,13 @@ export function PageEstimateSummaryResponseFromJSONTyped(json: any, ignoreDiscri
         
         'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
         'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'pageable': json['pageable'] == null ? undefined : PageablenullFromJSON(json['pageable']),
-        'first': json['first'] == null ? undefined : json['first'],
-        'last': json['last'] == null ? undefined : json['last'],
         'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(EstimateSummaryResponseFromJSON)),
         'number': json['number'] == null ? undefined : json['number'],
-        'sort': json['sort'] == null ? undefined : SortnullFromJSON(json['sort']),
+        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
+        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'first': json['first'] == null ? undefined : json['first'],
+        'last': json['last'] == null ? undefined : json['last'],
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
         'empty': json['empty'] == null ? undefined : json['empty'],
     };
@@ -145,13 +145,13 @@ export function PageEstimateSummaryResponseToJSON(value?: PageEstimateSummaryRes
         
         'totalElements': value['totalElements'],
         'totalPages': value['totalPages'],
-        'pageable': PageablenullToJSON(value['pageable']),
-        'first': value['first'],
-        'last': value['last'],
         'size': value['size'],
         'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(EstimateSummaryResponseToJSON)),
         'number': value['number'],
-        'sort': SortnullToJSON(value['sort']),
+        'pageable': PageableObjectToJSON(value['pageable']),
+        'sort': SortObjectToJSON(value['sort']),
+        'first': value['first'],
+        'last': value['last'],
         'numberOfElements': value['numberOfElements'],
         'empty': value['empty'],
     };

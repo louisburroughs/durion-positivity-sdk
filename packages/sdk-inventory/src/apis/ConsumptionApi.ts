@@ -15,17 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ConsumeItemsRequest,
   ConsumptionResponse,
-  InventoryErrorResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ConsumeItemsRequestFromJSON,
     ConsumeItemsRequestToJSON,
     ConsumptionResponseFromJSON,
     ConsumptionResponseToJSON,
-    InventoryErrorResponseFromJSON,
-    InventoryErrorResponseToJSON,
 } from '../models/index';
 
 export interface ConsumePickedItemsRequest {
@@ -55,6 +55,14 @@ export class ConsumptionApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/consumption`,
             method: 'POST',

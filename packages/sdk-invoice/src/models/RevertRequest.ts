@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface RevertRequest
  */
 export interface RevertRequest {
     /**
-     *
+     * 
      * @type {string}
      * @memberof RevertRequest
      */
     managerApprovalCode: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof RevertRequest
      */
@@ -51,7 +51,7 @@ export function RevertRequestFromJSONTyped(json: any, ignoreDiscriminator: boole
         return json;
     }
     return {
-
+        
         'managerApprovalCode': json['managerApprovalCode'],
         'reason': json['reason'],
     };
@@ -62,7 +62,7 @@ export function RevertRequestToJSON(value?: RevertRequest | null): any {
         return value;
     }
     return {
-
+        
         'managerApprovalCode': value['managerApprovalCode'],
         'reason': value['reason'],
     };

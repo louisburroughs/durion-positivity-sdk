@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventTypesApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,214 +66,246 @@ class EventTypesApi extends runtime.BaseAPI {
      * Create a new event type for preregistered events
      * Create event type
      */
-    async createEventTypeRaw(requestParameters, initOverrides) {
-        if (requestParameters['eventTypeRequest'] == null) {
-            throw new runtime.RequiredError('eventTypeRequest', 'Required parameter "eventTypeRequest" was null or undefined when calling createEventType().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/eventTypes`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.EventTypeRequestToJSON)(requestParameters['eventTypeRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+    createEventTypeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['eventTypeRequest'] == null) {
+                throw new runtime.RequiredError('eventTypeRequest', 'Required parameter "eventTypeRequest" was null or undefined when calling createEventType().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/eventTypes`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.EventTypeRequestToJSON)(requestParameters['eventTypeRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new event type for preregistered events
      * Create event type
      */
-    async createEventType(requestParameters, initOverrides) {
-        const response = await this.createEventTypeRaw(requestParameters, initOverrides);
-        return await response.value();
+    createEventType(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createEventTypeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Delete an event type by ID
      * Delete event type
      */
-    async deleteEventTypeRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteEventType().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/eventTypes/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteEventTypeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteEventType().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/eventTypes/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete an event type by ID
      * Delete event type
      */
-    async deleteEventType(requestParameters, initOverrides) {
-        await this.deleteEventTypeRaw(requestParameters, initOverrides);
+    deleteEventType(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteEventTypeRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve only active event types
      * Get active event types
      */
-    async getActiveEventTypesRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/eventTypes/active`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+    getActiveEventTypesRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/eventTypes/active`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve only active event types
      * Get active event types
      */
-    async getActiveEventTypes(initOverrides) {
-        const response = await this.getActiveEventTypesRaw(initOverrides);
-        return await response.value();
+    getActiveEventTypes(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getActiveEventTypesRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all available event types
      * Get all event types
      */
-    async getAllEventTypesRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/eventTypes`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+    getAllEventTypesRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/eventTypes`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve all available event types
      * Get all event types
      */
-    async getAllEventTypes(initOverrides) {
-        const response = await this.getAllEventTypesRaw(initOverrides);
-        return await response.value();
+    getAllEventTypes(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAllEventTypesRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a specific event type by its unique type code
      * Get event type by code
      */
-    async getEventTypeByCodeRaw(requestParameters, initOverrides) {
-        if (requestParameters['typeCode'] == null) {
-            throw new runtime.RequiredError('typeCode', 'Required parameter "typeCode" was null or undefined when calling getEventTypeByCode().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/eventTypes/code/{typeCode}`.replace(`{${"typeCode"}}`, encodeURIComponent(String(requestParameters['typeCode']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+    getEventTypeByCodeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['typeCode'] == null) {
+                throw new runtime.RequiredError('typeCode', 'Required parameter "typeCode" was null or undefined when calling getEventTypeByCode().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/eventTypes/code/{typeCode}`.replace(`{${"typeCode"}}`, encodeURIComponent(String(requestParameters['typeCode']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a specific event type by its unique type code
      * Get event type by code
      */
-    async getEventTypeByCode(requestParameters, initOverrides) {
-        const response = await this.getEventTypeByCodeRaw(requestParameters, initOverrides);
-        return await response.value();
+    getEventTypeByCode(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getEventTypeByCodeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve a specific event type by its unique ID
      * Get event type by ID
      */
-    async getEventTypeByIdRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getEventTypeById().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/eventTypes/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+    getEventTypeByIdRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getEventTypeById().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/eventTypes/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a specific event type by its unique ID
      * Get event type by ID
      */
-    async getEventTypeById(requestParameters, initOverrides) {
-        const response = await this.getEventTypeByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    getEventTypeById(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getEventTypeByIdRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update an existing event type
      * Update event type
      */
-    async updateEventTypeRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateEventType().');
-        }
-        if (requestParameters['eventTypeRequest'] == null) {
-            throw new runtime.RequiredError('eventTypeRequest', 'Required parameter "eventTypeRequest" was null or undefined when calling updateEventType().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/eventTypes/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.EventTypeRequestToJSON)(requestParameters['eventTypeRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+    updateEventTypeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateEventType().');
+            }
+            if (requestParameters['eventTypeRequest'] == null) {
+                throw new runtime.RequiredError('eventTypeRequest', 'Required parameter "eventTypeRequest" was null or undefined when calling updateEventType().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/eventTypes/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.EventTypeRequestToJSON)(requestParameters['eventTypeRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update an existing event type
      * Update event type
      */
-    async updateEventType(requestParameters, initOverrides) {
-        const response = await this.updateEventTypeRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateEventType(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateEventTypeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Create or update an event type by type code
      * Upsert event type
      */
-    async upsertEventTypeRaw(requestParameters, initOverrides) {
-        if (requestParameters['typeCode'] == null) {
-            throw new runtime.RequiredError('typeCode', 'Required parameter "typeCode" was null or undefined when calling upsertEventType().');
-        }
-        if (requestParameters['eventTypeRequest'] == null) {
-            throw new runtime.RequiredError('eventTypeRequest', 'Required parameter "eventTypeRequest" was null or undefined when calling upsertEventType().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/eventTypes/code/{typeCode}`.replace(`{${"typeCode"}}`, encodeURIComponent(String(requestParameters['typeCode']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.EventTypeRequestToJSON)(requestParameters['eventTypeRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+    upsertEventTypeRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['typeCode'] == null) {
+                throw new runtime.RequiredError('typeCode', 'Required parameter "typeCode" was null or undefined when calling upsertEventType().');
+            }
+            if (requestParameters['eventTypeRequest'] == null) {
+                throw new runtime.RequiredError('eventTypeRequest', 'Required parameter "eventTypeRequest" was null or undefined when calling upsertEventType().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/eventTypes/code/{typeCode}`.replace(`{${"typeCode"}}`, encodeURIComponent(String(requestParameters['typeCode']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.EventTypeRequestToJSON)(requestParameters['eventTypeRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.EventTypeResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create or update an event type by type code
      * Upsert event type
      */
-    async upsertEventType(requestParameters, initOverrides) {
-        const response = await this.upsertEventTypeRaw(requestParameters, initOverrides);
-        return await response.value();
+    upsertEventType(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.upsertEventTypeRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.EventTypesApi = EventTypesApi;

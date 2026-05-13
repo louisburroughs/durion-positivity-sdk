@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 
 export interface CreateMobileUnitRequest {
     locationId: number;
-    body?: any;
+    body?: object;
 }
 
 export interface DeleteMobileUnitRequest {
@@ -31,7 +31,7 @@ export interface GetMobileUnits1Request {
 }
 
 export interface ManageMobileUnitsRequest {
-    body?: any;
+    body?: object;
 }
 
 /**
@@ -43,7 +43,7 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
      * Create a new mobile unit for a specific shop location. Validate baseLocationId and capabilities.
      * Create mobile unit
      */
-    async createMobileUnitRaw(requestParameters: CreateMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async createMobileUnitRaw(requestParameters: CreateMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
@@ -57,6 +57,14 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/mobileUnit`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'POST',
@@ -65,18 +73,14 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
             body: requestParameters['body'] as any,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Create a new mobile unit for a specific shop location. Validate baseLocationId and capabilities.
      * Create mobile unit
      */
-    async createMobileUnit(requestParameters: CreateMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async createMobileUnit(requestParameters: CreateMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.createMobileUnitRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -104,6 +108,14 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/mobileUnit/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
             method: 'DELETE',
@@ -126,11 +138,19 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnitsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getMobileUnitsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/mobileUnit`,
             method: 'GET',
@@ -138,18 +158,14 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnits(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getMobileUnits(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.getMobileUnitsRaw(initOverrides);
         return await response.value();
     }
@@ -158,7 +174,7 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnits1Raw(requestParameters: GetMobileUnits1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getMobileUnits1Raw(requestParameters: GetMobileUnits1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
@@ -177,6 +193,14 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/mobileUnit/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
             method: 'GET',
@@ -184,18 +208,14 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnits1(requestParameters: GetMobileUnits1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getMobileUnits1(requestParameters: GetMobileUnits1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.getMobileUnits1Raw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -204,13 +224,21 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
      * Create or update mobile units in bulk.
      * Manage mobile units
      */
-    async manageMobileUnitsRaw(requestParameters: ManageMobileUnitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async manageMobileUnitsRaw(requestParameters: ManageMobileUnitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/mobileUnit`,
             method: 'PUT',
@@ -219,18 +247,14 @@ export class ShopMobileUnitAPIApi extends runtime.BaseAPI {
             body: requestParameters['body'] as any,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Create or update mobile units in bulk.
      * Manage mobile units
      */
-    async manageMobileUnits(requestParameters: ManageMobileUnitsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async manageMobileUnits(requestParameters: ManageMobileUnitsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.manageMobileUnitsRaw(requestParameters, initOverrides);
         return await response.value();
     }

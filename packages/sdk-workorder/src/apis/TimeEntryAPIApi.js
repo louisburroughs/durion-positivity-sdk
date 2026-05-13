@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TimeEntryAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,55 +65,63 @@ class TimeEntryAPIApi extends runtime.BaseAPI {
     /**
      * Approve a time entry in SUBMITTED state
      */
-    async approveTimeEntryRaw(requestParameters, initOverrides) {
-        if (requestParameters['timeEntryId'] == null) {
-            throw new runtime.RequiredError('timeEntryId', 'Required parameter "timeEntryId" was null or undefined when calling approveTimeEntry().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/timeEntries/{timeEntryId}/approve`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryResponseFromJSON)(jsonValue));
+    approveTimeEntryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['timeEntryId'] == null) {
+                throw new runtime.RequiredError('timeEntryId', 'Required parameter "timeEntryId" was null or undefined when calling approveTimeEntry().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/timeEntries/{timeEntryId}/approve`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Approve a time entry in SUBMITTED state
      */
-    async approveTimeEntry(requestParameters, initOverrides) {
-        const response = await this.approveTimeEntryRaw(requestParameters, initOverrides);
-        return await response.value();
+    approveTimeEntry(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.approveTimeEntryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Reject a time entry in SUBMITTED state
      */
-    async rejectTimeEntryRaw(requestParameters, initOverrides) {
-        if (requestParameters['timeEntryId'] == null) {
-            throw new runtime.RequiredError('timeEntryId', 'Required parameter "timeEntryId" was null or undefined when calling rejectTimeEntry().');
-        }
-        if (requestParameters['rejectTimeEntryRequest'] == null) {
-            throw new runtime.RequiredError('rejectTimeEntryRequest', 'Required parameter "rejectTimeEntryRequest" was null or undefined when calling rejectTimeEntry().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/workorders/timeEntries/{timeEntryId}/reject`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.RejectTimeEntryRequestToJSON)(requestParameters['rejectTimeEntryRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryResponseFromJSON)(jsonValue));
+    rejectTimeEntryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['timeEntryId'] == null) {
+                throw new runtime.RequiredError('timeEntryId', 'Required parameter "timeEntryId" was null or undefined when calling rejectTimeEntry().');
+            }
+            if (requestParameters['rejectTimeEntryRequest'] == null) {
+                throw new runtime.RequiredError('rejectTimeEntryRequest', 'Required parameter "rejectTimeEntryRequest" was null or undefined when calling rejectTimeEntry().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/workorders/timeEntries/{timeEntryId}/reject`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.RejectTimeEntryRequestToJSON)(requestParameters['rejectTimeEntryRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.TimeEntryResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Reject a time entry in SUBMITTED state
      */
-    async rejectTimeEntry(requestParameters, initOverrides) {
-        const response = await this.rejectTimeEntryRaw(requestParameters, initOverrides);
-        return await response.value();
+    rejectTimeEntry(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.rejectTimeEntryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.TimeEntryAPIApi = TimeEntryAPIApi;

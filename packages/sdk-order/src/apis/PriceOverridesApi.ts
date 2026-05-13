@@ -39,23 +39,23 @@ export interface ApplyPriceOverrideOperationRequest {
 }
 
 export interface ApprovePriceOverrideOperationRequest {
-    overrideId: any;
+    overrideId: string;
     approvePriceOverrideRequest: ApprovePriceOverrideRequest;
 }
 
 export interface GetOverrideRequest {
-    overrideId: any;
+    overrideId: string;
 }
 
 export interface GetOverridesByOrderRequest {
-    orderId?: any;
-    status?: any;
-    startDate?: any;
-    endDate?: any;
+    orderId?: string;
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
 }
 
 export interface RejectPriceOverrideOperationRequest {
-    overrideId: any;
+    overrideId: string;
     rejectPriceOverrideRequest: RejectPriceOverrideRequest;
 }
 
@@ -68,7 +68,7 @@ export class PriceOverridesApi extends runtime.BaseAPI {
      * Apply a price override to an order line. May require approval based on override amount.
      * Apply price override
      */
-    async applyPriceOverrideRaw(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async applyPriceOverrideRaw(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideResult>> {
         if (requestParameters['applyPriceOverrideRequest'] == null) {
             throw new runtime.RequiredError(
                 'applyPriceOverrideRequest',
@@ -82,6 +82,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:price_override:apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/price-overrides`,
             method: 'POST',
@@ -90,18 +98,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
             body: ApplyPriceOverrideRequestToJSON(requestParameters['applyPriceOverrideRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceOverrideResultFromJSON(jsonValue));
     }
 
     /**
      * Apply a price override to an order line. May require approval based on override amount.
      * Apply price override
      */
-    async applyPriceOverride(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async applyPriceOverride(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideResult> {
         const response = await this.applyPriceOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -110,7 +114,7 @@ export class PriceOverridesApi extends runtime.BaseAPI {
      * Approve a pending price override. Validates approver permission level.
      * Approve price override
      */
-    async approvePriceOverrideRaw(requestParameters: ApprovePriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async approvePriceOverrideRaw(requestParameters: ApprovePriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideDetail>> {
         if (requestParameters['overrideId'] == null) {
             throw new runtime.RequiredError(
                 'overrideId',
@@ -131,6 +135,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:price_override:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/price-overrides/{overrideId}/approve`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
             method: 'POST',
@@ -139,18 +151,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
             body: ApprovePriceOverrideRequestToJSON(requestParameters['approvePriceOverrideRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceOverrideDetailFromJSON(jsonValue));
     }
 
     /**
      * Approve a pending price override. Validates approver permission level.
      * Approve price override
      */
-    async approvePriceOverride(requestParameters: ApprovePriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async approvePriceOverride(requestParameters: ApprovePriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideDetail> {
         const response = await this.approvePriceOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -159,7 +167,7 @@ export class PriceOverridesApi extends runtime.BaseAPI {
      * Retrieve a specific price override by ID.
      * Get price override
      */
-    async getOverrideRaw(requestParameters: GetOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getOverrideRaw(requestParameters: GetOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideDetail>> {
         if (requestParameters['overrideId'] == null) {
             throw new runtime.RequiredError(
                 'overrideId',
@@ -171,6 +179,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:price_override:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/price-overrides/{overrideId}`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
             method: 'GET',
@@ -178,18 +194,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceOverrideDetailFromJSON(jsonValue));
     }
 
     /**
      * Retrieve a specific price override by ID.
      * Get price override
      */
-    async getOverride(requestParameters: GetOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getOverride(requestParameters: GetOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideDetail> {
         const response = await this.getOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -210,15 +222,23 @@ export class PriceOverridesApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = requestParameters['startDate'];
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString();
         }
 
         if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'];
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString();
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:price_override:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/price-overrides`,
             method: 'GET',
@@ -247,6 +267,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:price_override:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/price-overrides/pending`,
             method: 'GET',
@@ -270,7 +298,7 @@ export class PriceOverridesApi extends runtime.BaseAPI {
      * Reject a pending price override with a reason.
      * Reject price override
      */
-    async rejectPriceOverrideRaw(requestParameters: RejectPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async rejectPriceOverrideRaw(requestParameters: RejectPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideDetail>> {
         if (requestParameters['overrideId'] == null) {
             throw new runtime.RequiredError(
                 'overrideId',
@@ -291,6 +319,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:price_override:reject"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/price-overrides/{overrideId}/reject`.replace(`{${"overrideId"}}`, encodeURIComponent(String(requestParameters['overrideId']))),
             method: 'POST',
@@ -299,18 +335,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
             body: RejectPriceOverrideRequestToJSON(requestParameters['rejectPriceOverrideRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceOverrideDetailFromJSON(jsonValue));
     }
 
     /**
      * Reject a pending price override with a reason.
      * Reject price override
      */
-    async rejectPriceOverride(requestParameters: RejectPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async rejectPriceOverride(requestParameters: RejectPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideDetail> {
         const response = await this.rejectPriceOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }

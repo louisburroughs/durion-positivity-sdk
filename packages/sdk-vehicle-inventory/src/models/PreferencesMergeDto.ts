@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface PreferencesMergeDto
  */
 export interface PreferencesMergeDto {
     /**
-     *
+     * 
      * @type {{ [key: string]: any; }}
      * @memberof PreferencesMergeDto
      */
     partialPreferences?: { [key: string]: any; };
     /**
-     *
+     * 
      * @type {string}
      * @memberof PreferencesMergeDto
      */
@@ -49,7 +49,7 @@ export function PreferencesMergeDtoFromJSONTyped(json: any, ignoreDiscriminator:
         return json;
     }
     return {
-
+        
         'partialPreferences': json['partialPreferences'] == null ? undefined : json['partialPreferences'],
         'updatedByUserId': json['updatedByUserId'] == null ? undefined : json['updatedByUserId'],
     };
@@ -60,7 +60,7 @@ export function PreferencesMergeDtoToJSON(value?: PreferencesMergeDto | null): a
         return value;
     }
     return {
-
+        
         'partialPreferences': value['partialPreferences'],
         'updatedByUserId': value['updatedByUserId'],
     };

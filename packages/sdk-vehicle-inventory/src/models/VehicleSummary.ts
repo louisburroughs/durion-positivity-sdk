@@ -14,55 +14,55 @@
 
 import { mapValues } from '../runtime';
 /**
- *
+ * 
  * @export
  * @interface VehicleSummary
  */
 export interface VehicleSummary {
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleSummary
      */
     vehicleId?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleSummary
      */
     vin?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleSummary
      */
     unitNumber?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleSummary
      */
     licensePlate?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleSummary
      */
     description?: string;
     /**
-     *
+     * 
      * @type {number}
      * @memberof VehicleSummary
      */
     year?: number;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleSummary
      */
     make?: string;
     /**
-     *
+     * 
      * @type {string}
      * @memberof VehicleSummary
      */
@@ -85,7 +85,7 @@ export function VehicleSummaryFromJSONTyped(json: any, ignoreDiscriminator: bool
         return json;
     }
     return {
-
+        
         'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
         'vin': json['vin'] == null ? undefined : json['vin'],
         'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
@@ -102,7 +102,7 @@ export function VehicleSummaryToJSON(value?: VehicleSummary | null): any {
         return value;
     }
     return {
-
+        
         'vehicleId': value['vehicleId'],
         'vin': value['vin'],
         'unitNumber': value['unitNumber'],

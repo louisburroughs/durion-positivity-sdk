@@ -15,9 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
-    CountResponse,
-    SubmitCountRequest,
-    SubmitRecountRequest,
+  CountResponse,
+  SubmitCountRequest,
+  SubmitRecountRequest,
 } from '../models/index';
 import {
     CountResponseFromJSON,
@@ -37,7 +37,7 @@ export interface SubmitRecountOperationRequest {
 }
 
 /**
- *
+ * 
  */
 export class CycleCountOperationsApi extends runtime.BaseAPI {
 
@@ -59,6 +59,14 @@ export class CycleCountOperationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:complete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCount/submit`,
             method: 'POST',
@@ -97,6 +105,14 @@ export class CycleCountOperationsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:complete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/inventory/cycleCount/recount`,
             method: 'POST',

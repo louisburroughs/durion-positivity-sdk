@@ -108,7 +108,7 @@ export function CreatePartyRelationshipResponseFromJSONTyped(json: any, ignoreDi
         'relationshipId': json['relationshipId'] == null ? undefined : json['relationshipId'],
         'partyId': json['partyId'] == null ? undefined : json['partyId'],
         'personId': json['personId'] == null ? undefined : json['personId'],
-        'roles': json['roles'] == null ? undefined : new Set(json['roles']),
+        'roles': json['roles'] == null ? undefined : json['roles'],
         'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
@@ -126,7 +126,7 @@ export function CreatePartyRelationshipResponseToJSON(value?: CreatePartyRelatio
         'relationshipId': value['relationshipId'],
         'partyId': value['partyId'],
         'personId': value['personId'],
-        'roles': value['roles'] == null ? undefined : Array.from(value['roles'] ?? []),
+        'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
         'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString().substring(0,10)),
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
@@ -134,3 +134,4 @@ export function CreatePartyRelationshipResponseToJSON(value?: CreatePartyRelatio
         'primaryBillingContact': value['primaryBillingContact'],
     };
 }
+

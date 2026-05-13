@@ -47,6 +47,14 @@ export class StorageLocationValidationControllerApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/storage-locations/{storageLocationId}/validation`.replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
             method: 'GET',

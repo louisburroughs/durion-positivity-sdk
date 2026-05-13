@@ -17,7 +17,7 @@ import * as runtime from '../runtime';
 
 export interface CreateBayRequest {
     locationId: number;
-    body?: any;
+    body?: object;
 }
 
 export interface DeleteBayRequest {
@@ -31,7 +31,7 @@ export interface GetBays1Request {
 }
 
 export interface ManageBaysRequest {
-    body?: any;
+    body?: object;
 }
 
 /**
@@ -43,7 +43,7 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
      * Create a new bay for a specific shop location.
      * Create bay
      */
-    async createBayRaw(requestParameters: CreateBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async createBayRaw(requestParameters: CreateBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
@@ -57,6 +57,14 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/bays`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
             method: 'POST',
@@ -65,18 +73,14 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
             body: requestParameters['body'] as any,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Create a new bay for a specific shop location.
      * Create bay
      */
-    async createBay(requestParameters: CreateBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async createBay(requestParameters: CreateBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.createBayRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -104,6 +108,14 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
             method: 'DELETE',
@@ -126,11 +138,19 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    async getBaysRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getBaysRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/bays`,
             method: 'GET',
@@ -138,18 +158,14 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    async getBays(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getBays(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.getBaysRaw(initOverrides);
         return await response.value();
     }
@@ -158,7 +174,7 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    async getBays1Raw(requestParameters: GetBays1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async getBays1Raw(requestParameters: GetBays1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
@@ -177,6 +193,14 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
             method: 'GET',
@@ -184,18 +208,14 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * List all bays or get a specific bay detail by locationId and bayId.
      * Get bays
      */
-    async getBays1(requestParameters: GetBays1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async getBays1(requestParameters: GetBays1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.getBays1Raw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -204,13 +224,21 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
      * Create or update bays in bulk.
      * Manage bays
      */
-    async manageBaysRaw(requestParameters: ManageBaysRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async manageBaysRaw(requestParameters: ManageBaysRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:bay:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/shop-manager/bays`,
             method: 'PUT',
@@ -219,18 +247,14 @@ export class ShopBayAPIApi extends runtime.BaseAPI {
             body: requestParameters['body'] as any,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Create or update bays in bulk.
      * Manage bays
      */
-    async manageBays(requestParameters: ManageBaysRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async manageBays(requestParameters: ManageBaysRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.manageBaysRaw(requestParameters, initOverrides);
         return await response.value();
     }

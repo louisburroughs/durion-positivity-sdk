@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SupplierItemCostAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,119 +65,135 @@ class SupplierItemCostAPIApi extends runtime.BaseAPI {
     /**
      * Create supplier cost structure
      */
-    async createCostStructureRaw(requestParameters, initOverrides) {
-        if (requestParameters['supplierItemCostCreateRequestDto'] == null) {
-            throw new runtime.RequiredError('supplierItemCostCreateRequestDto', 'Required parameter "supplierItemCostCreateRequestDto" was null or undefined when calling createCostStructure().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/supplier-costs`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.SupplierItemCostCreateRequestDtoToJSON)(requestParameters['supplierItemCostCreateRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    createCostStructureRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['supplierItemCostCreateRequestDto'] == null) {
+                throw new runtime.RequiredError('supplierItemCostCreateRequestDto', 'Required parameter "supplierItemCostCreateRequestDto" was null or undefined when calling createCostStructure().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/supplier-costs`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.SupplierItemCostCreateRequestDtoToJSON)(requestParameters['supplierItemCostCreateRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Create supplier cost structure
      */
-    async createCostStructure(requestParameters, initOverrides) {
-        const response = await this.createCostStructureRaw(requestParameters, initOverrides);
-        return await response.value();
+    createCostStructure(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createCostStructureRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Delete supplier cost structure
      */
-    async deleteCostStructureRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteCostStructure().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteCostStructureRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling deleteCostStructure().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete supplier cost structure
      */
-    async deleteCostStructure(requestParameters, initOverrides) {
-        await this.deleteCostStructureRaw(requestParameters, initOverrides);
+    deleteCostStructure(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteCostStructureRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Get supplier cost structure
      */
-    async getCostStructureRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getCostStructure().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getCostStructureRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling getCostStructure().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Get supplier cost structure
      */
-    async getCostStructure(requestParameters, initOverrides) {
-        const response = await this.getCostStructureRaw(requestParameters, initOverrides);
-        return await response.value();
+    getCostStructure(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCostStructureRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update supplier cost structure
      */
-    async updateCostStructureRaw(requestParameters, initOverrides) {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateCostStructure().');
-        }
-        if (requestParameters['supplierItemCostUpdateRequestDto'] == null) {
-            throw new runtime.RequiredError('supplierItemCostUpdateRequestDto', 'Required parameter "supplierItemCostUpdateRequestDto" was null or undefined when calling updateCostStructure().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.SupplierItemCostUpdateRequestDtoToJSON)(requestParameters['supplierItemCostUpdateRequestDto']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    updateCostStructureRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['id'] == null) {
+                throw new runtime.RequiredError('id', 'Required parameter "id" was null or undefined when calling updateCostStructure().');
+            }
+            if (requestParameters['supplierItemCostUpdateRequestDto'] == null) {
+                throw new runtime.RequiredError('supplierItemCostUpdateRequestDto', 'Required parameter "supplierItemCostUpdateRequestDto" was null or undefined when calling updateCostStructure().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/products/supplier-costs/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.SupplierItemCostUpdateRequestDtoToJSON)(requestParameters['supplierItemCostUpdateRequestDto']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Update supplier cost structure
      */
-    async updateCostStructure(requestParameters, initOverrides) {
-        const response = await this.updateCostStructureRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateCostStructure(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateCostStructureRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.SupplierItemCostAPIApi = SupplierItemCostAPIApi;

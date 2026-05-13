@@ -57,7 +57,7 @@ export function ModelResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         return json;
     }
     return {
-
+        
         'id': json['id'],
         'name': json['name'],
         'makeId': json['makeId'] == null ? undefined : json['makeId'],
@@ -69,7 +69,7 @@ export function ModelResponseToJSON(value?: ModelResponse | null): any {
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'name': value['name'],
         'makeId': value['makeId'],

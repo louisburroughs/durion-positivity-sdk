@@ -85,6 +85,14 @@ export class StorageLocationControllerApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{siteId}/storage-locations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
             method: 'POST',
@@ -124,6 +132,14 @@ export class StorageLocationControllerApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{siteId}/storage-locations/{storageLocationId}`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))).replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
             method: 'GET',
@@ -174,6 +190,14 @@ export class StorageLocationControllerApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{siteId}/storage-locations`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
             method: 'GET',
@@ -221,6 +245,14 @@ export class StorageLocationControllerApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/locations/{siteId}/storage-locations/{storageLocationId}`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))).replace(`{${"storageLocationId"}}`, encodeURIComponent(String(requestParameters['storageLocationId']))),
             method: 'PATCH',

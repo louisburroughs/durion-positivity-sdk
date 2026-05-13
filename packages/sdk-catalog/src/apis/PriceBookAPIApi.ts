@@ -42,21 +42,21 @@ export interface CreatePriceBookRequest {
 }
 
 export interface CreateRuleRequest {
-    priceBookId: any;
+    priceBookId: string;
     priceBookRuleCreateRequestDto: PriceBookRuleCreateRequestDto;
 }
 
 export interface DeactivateRuleRequest {
-    priceBookId: any;
-    ruleId: any;
+    priceBookId: string;
+    ruleId: string;
 }
 
 export interface GetPriceBookRequest {
-    priceBookId: any;
+    priceBookId: string;
 }
 
 export interface ListRulesRequest {
-    priceBookId: any;
+    priceBookId: string;
 }
 
 export interface ResolvePriceRequest {
@@ -64,13 +64,13 @@ export interface ResolvePriceRequest {
 }
 
 export interface UpdatePriceBookRequest {
-    priceBookId: any;
+    priceBookId: string;
     priceBookCreateRequestDto: PriceBookCreateRequestDto;
 }
 
 export interface UpdateRuleRequest {
-    priceBookId: any;
-    ruleId: any;
+    priceBookId: string;
+    ruleId: string;
     priceBookRuleCreateRequestDto: PriceBookRuleCreateRequestDto;
 }
 
@@ -83,7 +83,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Creates a new price book used to group and apply pricing rules.
      * Create price book
      */
-    async createPriceBookRaw(requestParameters: CreatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createPriceBookRaw(requestParameters: CreatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceBookDto>> {
         if (requestParameters['priceBookCreateRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'priceBookCreateRequestDto',
@@ -97,6 +97,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books`,
             method: 'POST',
@@ -105,18 +113,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             body: PriceBookCreateRequestDtoToJSON(requestParameters['priceBookCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceBookDtoFromJSON(jsonValue));
     }
 
     /**
      * Creates a new price book used to group and apply pricing rules.
      * Create price book
      */
-    async createPriceBook(requestParameters: CreatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createPriceBook(requestParameters: CreatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceBookDto> {
         const response = await this.createPriceBookRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -125,7 +129,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Adds a new pricing rule to a specific price book.
      * Create price book rule
      */
-    async createRuleRaw(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async createRuleRaw(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceBookRuleDto>> {
         if (requestParameters['priceBookId'] == null) {
             throw new runtime.RequiredError(
                 'priceBookId',
@@ -146,6 +150,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books/{priceBookId}/rules`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
             method: 'POST',
@@ -154,18 +166,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             body: PriceBookRuleCreateRequestDtoToJSON(requestParameters['priceBookRuleCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceBookRuleDtoFromJSON(jsonValue));
     }
 
     /**
      * Adds a new pricing rule to a specific price book.
      * Create price book rule
      */
-    async createRule(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async createRule(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceBookRuleDto> {
         const response = await this.createRuleRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -193,6 +201,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books/{priceBookId}/rules/{ruleId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
             method: 'DELETE',
@@ -215,7 +231,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Retrieves a price book by ID, including its configuration metadata.
      * Get price book
      */
-    async getPriceBookRaw(requestParameters: GetPriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async getPriceBookRaw(requestParameters: GetPriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceBookDto>> {
         if (requestParameters['priceBookId'] == null) {
             throw new runtime.RequiredError(
                 'priceBookId',
@@ -227,6 +243,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books/{priceBookId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
             method: 'GET',
@@ -234,18 +258,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceBookDtoFromJSON(jsonValue));
     }
 
     /**
      * Retrieves a price book by ID, including its configuration metadata.
      * Get price book
      */
-    async getPriceBook(requestParameters: GetPriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async getPriceBook(requestParameters: GetPriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceBookDto> {
         const response = await this.getPriceBookRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -254,7 +274,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Returns all rules associated with a price book.
      * List price book rules
      */
-    async listRulesRaw(requestParameters: ListRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async listRulesRaw(requestParameters: ListRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceBookRuleDto>> {
         if (requestParameters['priceBookId'] == null) {
             throw new runtime.RequiredError(
                 'priceBookId',
@@ -266,6 +286,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books/{priceBookId}/rules`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
             method: 'GET',
@@ -273,18 +301,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceBookRuleDtoFromJSON(jsonValue));
     }
 
     /**
      * Returns all rules associated with a price book.
      * List price book rules
      */
-    async listRules(requestParameters: ListRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async listRules(requestParameters: ListRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceBookRuleDto> {
         const response = await this.listRulesRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -293,7 +317,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Calculates the effective price for a product using applicable price books and rules.
      * Resolve effective product price
      */
-    async resolvePriceRaw(requestParameters: ResolvePriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async resolvePriceRaw(requestParameters: ResolvePriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResolvePriceResponseDto>> {
         if (requestParameters['resolvePriceRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'resolvePriceRequestDto',
@@ -307,6 +331,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books/resolve-price`,
             method: 'POST',
@@ -315,18 +347,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             body: ResolvePriceRequestDtoToJSON(requestParameters['resolvePriceRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => ResolvePriceResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * Calculates the effective price for a product using applicable price books and rules.
      * Resolve effective product price
      */
-    async resolvePrice(requestParameters: ResolvePriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async resolvePrice(requestParameters: ResolvePriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResolvePriceResponseDto> {
         const response = await this.resolvePriceRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -335,7 +363,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Updates mutable fields of an existing price book.
      * Update price book
      */
-    async updatePriceBookRaw(requestParameters: UpdatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updatePriceBookRaw(requestParameters: UpdatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceBookDto>> {
         if (requestParameters['priceBookId'] == null) {
             throw new runtime.RequiredError(
                 'priceBookId',
@@ -356,6 +384,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books/{priceBookId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))),
             method: 'PUT',
@@ -364,18 +400,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             body: PriceBookCreateRequestDtoToJSON(requestParameters['priceBookCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceBookDtoFromJSON(jsonValue));
     }
 
     /**
      * Updates mutable fields of an existing price book.
      * Update price book
      */
-    async updatePriceBook(requestParameters: UpdatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updatePriceBook(requestParameters: UpdatePriceBookRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceBookDto> {
         const response = await this.updatePriceBookRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -384,7 +416,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Updates an existing pricing rule in a price book.
      * Update price book rule
      */
-    async updateRuleRaw(requestParameters: UpdateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async updateRuleRaw(requestParameters: UpdateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceBookRuleDto>> {
         if (requestParameters['priceBookId'] == null) {
             throw new runtime.RequiredError(
                 'priceBookId',
@@ -412,6 +444,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["catalog:price_book:write"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/products/price-books/{priceBookId}/rules/{ruleId}`.replace(`{${"priceBookId"}}`, encodeURIComponent(String(requestParameters['priceBookId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
             method: 'PUT',
@@ -420,18 +460,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             body: PriceBookRuleCreateRequestDtoToJSON(requestParameters['priceBookRuleCreateRequestDto']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<{ [key: string]: any; }>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceBookRuleDtoFromJSON(jsonValue));
     }
 
     /**
      * Updates an existing pricing rule in a price book.
      * Update price book rule
      */
-    async updateRule(requestParameters: UpdateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async updateRule(requestParameters: UpdateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceBookRuleDto> {
         const response = await this.updateRuleRaw(requestParameters, initOverrides);
         return await response.value();
     }

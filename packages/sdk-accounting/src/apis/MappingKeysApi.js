@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MappingKeysApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,152 +66,172 @@ class MappingKeysApi extends runtime.BaseAPI {
      * Create a new mapping key for a posting category.
      * Create mapping key
      */
-    async createMappingKeyRaw(requestParameters, initOverrides) {
-        if (requestParameters['mappingKeyCreateRequest'] == null) {
-            throw new runtime.RequiredError('mappingKeyCreateRequest', 'Required parameter "mappingKeyCreateRequest" was null or undefined when calling createMappingKey().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/mapping-keys`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.MappingKeyCreateRequestToJSON)(requestParameters['mappingKeyCreateRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyResponseFromJSON)(jsonValue));
+    createMappingKeyRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['mappingKeyCreateRequest'] == null) {
+                throw new runtime.RequiredError('mappingKeyCreateRequest', 'Required parameter "mappingKeyCreateRequest" was null or undefined when calling createMappingKey().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/mapping-keys`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.MappingKeyCreateRequestToJSON)(requestParameters['mappingKeyCreateRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new mapping key for a posting category.
      * Create mapping key
      */
-    async createMappingKey(requestParameters, initOverrides) {
-        const response = await this.createMappingKeyRaw(requestParameters, initOverrides);
-        return await response.value();
+    createMappingKey(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createMappingKeyRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Deactivate a mapping key.
      * Deactivate mapping key
      */
-    async deactivateMappingKeyRaw(requestParameters, initOverrides) {
-        if (requestParameters['mappingKeyId'] == null) {
-            throw new runtime.RequiredError('mappingKeyId', 'Required parameter "mappingKeyId" was null or undefined when calling deactivateMappingKey().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/mapping-keys/{mappingKeyId}/deactivate`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deactivateMappingKeyRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['mappingKeyId'] == null) {
+                throw new runtime.RequiredError('mappingKeyId', 'Required parameter "mappingKeyId" was null or undefined when calling deactivateMappingKey().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/mapping-keys/{mappingKeyId}/deactivate`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Deactivate a mapping key.
      * Deactivate mapping key
      */
-    async deactivateMappingKey(requestParameters, initOverrides) {
-        await this.deactivateMappingKeyRaw(requestParameters, initOverrides);
+    deactivateMappingKey(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deactivateMappingKeyRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * Retrieve a mapping key by identifier.
      * Get mapping key
      */
-    async getMappingKeyRaw(requestParameters, initOverrides) {
-        if (requestParameters['mappingKeyId'] == null) {
-            throw new runtime.RequiredError('mappingKeyId', 'Required parameter "mappingKeyId" was null or undefined when calling getMappingKey().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/mapping-keys/{mappingKeyId}`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyResponseFromJSON)(jsonValue));
+    getMappingKeyRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['mappingKeyId'] == null) {
+                throw new runtime.RequiredError('mappingKeyId', 'Required parameter "mappingKeyId" was null or undefined when calling getMappingKey().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/mapping-keys/{mappingKeyId}`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve a mapping key by identifier.
      * Get mapping key
      */
-    async getMappingKey(requestParameters, initOverrides) {
-        const response = await this.getMappingKeyRaw(requestParameters, initOverrides);
-        return await response.value();
+    getMappingKey(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getMappingKeyRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve paginated mapping keys for a posting category.
      * List mapping keys by category
      */
-    async listMappingKeysByCategoryRaw(requestParameters, initOverrides) {
-        if (requestParameters['postingCategoryId'] == null) {
-            throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling listMappingKeysByCategory().');
-        }
-        if (requestParameters['sort'] == null) {
-            throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listMappingKeysByCategory().');
-        }
-        const queryParameters = {};
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-        if (requestParameters['size'] != null) {
-            queryParameters['size'] = requestParameters['size'];
-        }
-        if (requestParameters['sort'] != null) {
-            queryParameters['sort'] = requestParameters['sort'];
-        }
-        if (requestParameters['isActive'] != null) {
-            queryParameters['isActive'] = requestParameters['isActive'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/posting-categories/{postingCategoryId}/mapping-keys`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyListResponseFromJSON)(jsonValue));
+    listMappingKeysByCategoryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['postingCategoryId'] == null) {
+                throw new runtime.RequiredError('postingCategoryId', 'Required parameter "postingCategoryId" was null or undefined when calling listMappingKeysByCategory().');
+            }
+            if (requestParameters['sort'] == null) {
+                throw new runtime.RequiredError('sort', 'Required parameter "sort" was null or undefined when calling listMappingKeysByCategory().');
+            }
+            const queryParameters = {};
+            if (requestParameters['page'] != null) {
+                queryParameters['page'] = requestParameters['page'];
+            }
+            if (requestParameters['size'] != null) {
+                queryParameters['size'] = requestParameters['size'];
+            }
+            if (requestParameters['sort'] != null) {
+                queryParameters['sort'] = requestParameters['sort'];
+            }
+            if (requestParameters['isActive'] != null) {
+                queryParameters['isActive'] = requestParameters['isActive'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/posting-categories/{postingCategoryId}/mapping-keys`.replace(`{${"postingCategoryId"}}`, encodeURIComponent(String(requestParameters['postingCategoryId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyListResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve paginated mapping keys for a posting category.
      * List mapping keys by category
      */
-    async listMappingKeysByCategory(requestParameters, initOverrides) {
-        const response = await this.listMappingKeysByCategoryRaw(requestParameters, initOverrides);
-        return await response.value();
+    listMappingKeysByCategory(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listMappingKeysByCategoryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Update an existing mapping key.
      * Update mapping key
      */
-    async updateMappingKeyRaw(requestParameters, initOverrides) {
-        if (requestParameters['mappingKeyId'] == null) {
-            throw new runtime.RequiredError('mappingKeyId', 'Required parameter "mappingKeyId" was null or undefined when calling updateMappingKey().');
-        }
-        if (requestParameters['mappingKeyUpdateRequest'] == null) {
-            throw new runtime.RequiredError('mappingKeyUpdateRequest', 'Required parameter "mappingKeyUpdateRequest" was null or undefined when calling updateMappingKey().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/mapping-keys/{mappingKeyId}`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.MappingKeyUpdateRequestToJSON)(requestParameters['mappingKeyUpdateRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyResponseFromJSON)(jsonValue));
+    updateMappingKeyRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['mappingKeyId'] == null) {
+                throw new runtime.RequiredError('mappingKeyId', 'Required parameter "mappingKeyId" was null or undefined when calling updateMappingKey().');
+            }
+            if (requestParameters['mappingKeyUpdateRequest'] == null) {
+                throw new runtime.RequiredError('mappingKeyUpdateRequest', 'Required parameter "mappingKeyUpdateRequest" was null or undefined when calling updateMappingKey().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/mapping-keys/{mappingKeyId}`.replace(`{${"mappingKeyId"}}`, encodeURIComponent(String(requestParameters['mappingKeyId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.MappingKeyUpdateRequestToJSON)(requestParameters['mappingKeyUpdateRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MappingKeyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Update an existing mapping key.
      * Update mapping key
      */
-    async updateMappingKey(requestParameters, initOverrides) {
-        const response = await this.updateMappingKeyRaw(requestParameters, initOverrides);
-        return await response.value();
+    updateMappingKey(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateMappingKeyRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.MappingKeysApi = MappingKeysApi;

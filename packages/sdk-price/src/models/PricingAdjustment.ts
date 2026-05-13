@@ -44,7 +44,7 @@ export interface PricingAdjustment {
      */
     amount?: number;
     /**
-     * 
+     * Optional adjustment metadata bag
      * @type {any}
      * @memberof PricingAdjustment
      */

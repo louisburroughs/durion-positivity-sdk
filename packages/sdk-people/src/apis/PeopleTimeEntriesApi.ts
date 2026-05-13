@@ -50,7 +50,7 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
      * Approve a pending time entry adjustment. Requires approval permissions.
      * Approve a time entry adjustment
      */
-    async approveAdjustmentRaw(requestParameters: ApproveAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async approveAdjustmentRaw(requestParameters: ApproveAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['adjustmentId'] == null) {
             throw new runtime.RequiredError(
                 'adjustmentId',
@@ -66,6 +66,14 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeAdjustment:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/timeEntries/adjustments/{adjustmentId}/approve`.replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
             method: 'POST',
@@ -73,18 +81,14 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Approve a pending time entry adjustment. Requires approval permissions.
      * Approve a time entry adjustment
      */
-    async approveAdjustment(requestParameters: ApproveAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async approveAdjustment(requestParameters: ApproveAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.approveAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -107,6 +111,14 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeAdjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/timeEntries/adjustments`,
             method: 'POST',
@@ -143,6 +155,14 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeAdjustment:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/timeEntries/{timeEntryId}/adjustments`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
             method: 'GET',

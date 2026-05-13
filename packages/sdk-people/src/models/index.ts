@@ -3,6 +3,9 @@
 export * from './ApprovedTimeExportResponse';
 export * from './AttendanceDiscrepancyReportResponse';
 export * from './BreakDto';
+export * from './BulkIngestRequestPersonBulkIngestRecord';
+export * from './BulkIngestResponse';
+export * from './BulkIngestResult';
 export * from './CreateEmployeeRequest';
 export * from './CreateStaffingAssignmentRequest';
 export * from './CreateUserLinkRequest';
@@ -15,6 +18,7 @@ export * from './EmployeeProfileDto';
 export * from './LinkUserToPersonRequest';
 export * from './PeopleAvailabilityResponse';
 export * from './Person';
+export * from './PersonBulkIngestRecord';
 export * from './PersonResponse';
 export * from './PersonRoleAssignmentRequest';
 export * from './PrimaryLocationResponse';

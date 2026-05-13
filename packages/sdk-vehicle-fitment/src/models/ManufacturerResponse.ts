@@ -51,7 +51,7 @@ export function ManufacturerResponseFromJSONTyped(json: any, ignoreDiscriminator
         return json;
     }
     return {
-
+        
         'id': json['id'],
         'name': json['name'],
     };
@@ -62,7 +62,7 @@ export function ManufacturerResponseToJSON(value?: ManufacturerResponse | null):
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'name': value['name'],
     };

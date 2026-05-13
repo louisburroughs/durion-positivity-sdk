@@ -137,7 +137,7 @@ export function TaxCalculationResponseFromJSONTyped(json: any, ignoreDiscriminat
         return json;
     }
     return {
-
+        
         'subtotal': json['subtotal'],
         'totalTax': json['totalTax'],
         'total': json['total'],
@@ -157,7 +157,7 @@ export function TaxCalculationResponseToJSON(value?: TaxCalculationResponse | nu
         return value;
     }
     return {
-
+        
         'subtotal': value['subtotal'],
         'totalTax': value['totalTax'],
         'total': value['total'],

@@ -94,22 +94,22 @@ export interface WorkorderDetailResponse {
     createdBy: string;
     /**
      * Is workorder started (derived from status)
-     * @type {boolean}
+     * @type {string}
      * @memberof WorkorderDetailResponse
      */
-    isStarted?: boolean;
+    isStarted?: string;
     /**
      * Is workorder in progress (derived from status)
-     * @type {boolean}
+     * @type {string}
      * @memberof WorkorderDetailResponse
      */
-    isInProgress?: boolean;
+    isInProgress?: string;
     /**
      * Is workorder completed (derived from status)
-     * @type {boolean}
+     * @type {string}
      * @memberof WorkorderDetailResponse
      */
-    isCompleted?: boolean;
+    isCompleted?: string;
     /**
      * Start timestamp
      * @type {Date}

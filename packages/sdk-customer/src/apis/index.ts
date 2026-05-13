@@ -8,4 +8,5 @@ export * from './CRMPersonsApi';
 export * from './CRMSnapshotsApi';
 export * from './CRMVehiclesApi';
 export * from './CustomerAPIApi';
+export * from './CustomerBulkIngestAPIApi';
 export * from './PromotionRedemptionsApi';

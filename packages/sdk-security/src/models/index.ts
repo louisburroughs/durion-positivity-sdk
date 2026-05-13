@@ -1,13 +1,14 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AccountStateResponse';
+export * from './ApiError';
 export * from './AuditEventCreatedResponse';
 export * from './AuditLogEventDto';
 export * from './AuditLogEventRequest';
 export * from './AuthorizationDecisionResponse';
 export * from './CatalogVersionResponse';
 export * from './CrmMatchSummaryDto';
-export * from './ErrorResponse';
+export * from './FieldError';
 export * from './InternalTokenRequest';
 export * from './LoginRequest';
 export * from './PermissionDecodeRequest';

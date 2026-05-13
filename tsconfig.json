@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
+    "moduleResolution": "node",
     "lib": [
       "ES2022",
       "DOM"
@@ -9,8 +10,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": ".",
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@durion-sdk/*": [
@@ -19,9 +19,7 @@
     }
   },
   "include": [
-    "src/**/*",
-    "packages/**/*",
-    "scripts/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

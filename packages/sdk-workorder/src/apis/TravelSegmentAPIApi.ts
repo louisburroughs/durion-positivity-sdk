@@ -85,6 +85,14 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/travelSegments/{travelSegmentId}/adjustments`.replace(`{${"travelSegmentId"}}`, encodeURIComponent(String(requestParameters['travelSegmentId']))),
             method: 'POST',
@@ -121,6 +129,14 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/travelSegments/start`,
             method: 'POST',
@@ -164,6 +180,14 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/travelSegments/{travelSegmentId}/stop`.replace(`{${"travelSegmentId"}}`, encodeURIComponent(String(requestParameters['travelSegmentId']))),
             method: 'POST',
@@ -207,6 +231,14 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/travelSegments/submit/{mobileWorkAssignmentId}`.replace(`{${"mobileWorkAssignmentId"}}`, encodeURIComponent(String(requestParameters['mobileWorkAssignmentId']))),
             method: 'POST',

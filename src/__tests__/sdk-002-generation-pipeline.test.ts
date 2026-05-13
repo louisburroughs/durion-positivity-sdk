@@ -3,7 +3,7 @@
  *
  * Verifies that the OpenAPI generation pipeline satisfies the acceptance
  * criteria defined in Story SDK-002.  These are fast structural tests;
- * they do NOT invoke {@code scripts/generate.sh} at runtime.
+ * they do NOT invoke {@code scripts/generate-openapi.sh} at runtime.
  *
  * Issue: SDK-002
  */
@@ -60,24 +60,24 @@ describe('SDK-002 AC-2: openapitools.json has typescript-fetch generator configu
 });
 
 // ---------------------------------------------------------------------------
-// AC-3 — generate.sh invokes openapi-generator-cli
+// AC-3 — generate-openapi.sh invokes openapi-generator-cli
 // ---------------------------------------------------------------------------
 
-describe('SDK-002 AC-3: generate.sh invokes openapi-generator-cli', () => {
-  it('scripts/generate.sh contains openapi-generator-cli generate', () => {
-    const scriptPath = path.join(REPO_ROOT, 'scripts', 'generate.sh');
+describe('SDK-002 AC-3: generate-openapi.sh invokes openapi-generator-cli', () => {
+  it('scripts/generate-openapi.sh contains openapi-generator-cli generate', () => {
+    const scriptPath = path.join(REPO_ROOT, 'scripts', 'generate-openapi.sh');
     const content = readText(scriptPath);
     expect(content).toContain('openapi-generator-cli generate');
   });
 });
 
 // ---------------------------------------------------------------------------
-// AC-4 — generate.sh supports --module argument
+// AC-4 — generate-openapi.sh supports --module argument
 // ---------------------------------------------------------------------------
 
-describe('SDK-002 AC-4: generate.sh accepts --module argument', () => {
-  it('scripts/generate.sh contains --module argument handling', () => {
-    const scriptPath = path.join(REPO_ROOT, 'scripts', 'generate.sh');
+describe('SDK-002 AC-4: generate-openapi.sh accepts --module argument', () => {
+  it('scripts/generate-openapi.sh contains --module argument handling', () => {
+    const scriptPath = path.join(REPO_ROOT, 'scripts', 'generate-openapi.sh');
     const content = readText(scriptPath);
     // Accept either explicit --module flag parsing or a $module variable reference.
     const hasModuleArg = content.includes('--module') || content.includes('$module');

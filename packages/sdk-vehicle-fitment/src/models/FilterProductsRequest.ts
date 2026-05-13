@@ -44,7 +44,7 @@ export function FilterProductsRequestFromJSONTyped(json: any, ignoreDiscriminato
         return json;
     }
     return {
-
+        
         'vehicleAttributes': json['vehicleAttributes'],
     };
 }
@@ -54,7 +54,7 @@ export function FilterProductsRequestToJSON(value?: FilterProductsRequest | null
         return value;
     }
     return {
-
+        
         'vehicleAttributes': value['vehicleAttributes'],
     };
 }

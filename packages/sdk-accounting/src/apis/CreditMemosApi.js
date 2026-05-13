@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ListCreditMemosStatusEnum = exports.CreditMemosApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,93 +66,105 @@ class CreditMemosApi extends runtime.BaseAPI {
      * Create a new Credit Memo to reverse invoice charges. Reduces Accounts Receivable by posting offsetting GL entries. Requires finalized invoice and credit amount within outstanding balance.
      * Create credit memo
      */
-    async createCreditMemoRaw(requestParameters, initOverrides) {
-        if (requestParameters['createCreditMemoRequest'] == null) {
-            throw new runtime.RequiredError('createCreditMemoRequest', 'Required parameter "createCreditMemoRequest" was null or undefined when calling createCreditMemo().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/accounting/credit-memos`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateCreditMemoRequestToJSON)(requestParameters['createCreditMemoRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreditMemoResponseFromJSON)(jsonValue));
+    createCreditMemoRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['createCreditMemoRequest'] == null) {
+                throw new runtime.RequiredError('createCreditMemoRequest', 'Required parameter "createCreditMemoRequest" was null or undefined when calling createCreditMemo().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/accounting/credit-memos`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateCreditMemoRequestToJSON)(requestParameters['createCreditMemoRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreditMemoResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new Credit Memo to reverse invoice charges. Reduces Accounts Receivable by posting offsetting GL entries. Requires finalized invoice and credit amount within outstanding balance.
      * Create credit memo
      */
-    async createCreditMemo(requestParameters, initOverrides) {
-        const response = await this.createCreditMemoRaw(requestParameters, initOverrides);
-        return await response.value();
+    createCreditMemo(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createCreditMemoRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve details for a specific Credit Memo by ID. Includes full audit trail and current invoice balance.
      * Get credit memo
      */
-    async getCreditMemoRaw(requestParameters, initOverrides) {
-        if (requestParameters['creditMemoId'] == null) {
-            throw new runtime.RequiredError('creditMemoId', 'Required parameter "creditMemoId" was null or undefined when calling getCreditMemo().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/credit-memos/{creditMemoId}`.replace(`{${"creditMemoId"}}`, encodeURIComponent(String(requestParameters['creditMemoId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreditMemoResponseFromJSON)(jsonValue));
+    getCreditMemoRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['creditMemoId'] == null) {
+                throw new runtime.RequiredError('creditMemoId', 'Required parameter "creditMemoId" was null or undefined when calling getCreditMemo().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/credit-memos/{creditMemoId}`.replace(`{${"creditMemoId"}}`, encodeURIComponent(String(requestParameters['creditMemoId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreditMemoResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve details for a specific Credit Memo by ID. Includes full audit trail and current invoice balance.
      * Get credit memo
      */
-    async getCreditMemo(requestParameters, initOverrides) {
-        const response = await this.getCreditMemoRaw(requestParameters, initOverrides);
-        return await response.value();
+    getCreditMemo(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCreditMemoRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve paginated credit memos with optional filters. Filter by customer, invoice, or status. Supports standard pagination parameters (page, size, sort).
      * List credit memos
      */
-    async listCreditMemosRaw(requestParameters, initOverrides) {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling listCreditMemos().');
-        }
-        const queryParameters = {};
-        if (requestParameters['customerId'] != null) {
-            queryParameters['customerId'] = requestParameters['customerId'];
-        }
-        if (requestParameters['originalInvoiceId'] != null) {
-            queryParameters['originalInvoiceId'] = requestParameters['originalInvoiceId'];
-        }
-        if (requestParameters['status'] != null) {
-            queryParameters['status'] = requestParameters['status'];
-        }
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/accounting/credit-memos`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageCreditMemoResponseFromJSON)(jsonValue));
+    listCreditMemosRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['pageable'] == null) {
+                throw new runtime.RequiredError('pageable', 'Required parameter "pageable" was null or undefined when calling listCreditMemos().');
+            }
+            const queryParameters = {};
+            if (requestParameters['customerId'] != null) {
+                queryParameters['customerId'] = requestParameters['customerId'];
+            }
+            if (requestParameters['originalInvoiceId'] != null) {
+                queryParameters['originalInvoiceId'] = requestParameters['originalInvoiceId'];
+            }
+            if (requestParameters['status'] != null) {
+                queryParameters['status'] = requestParameters['status'];
+            }
+            if (requestParameters['pageable'] != null) {
+                queryParameters['pageable'] = requestParameters['pageable'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/accounting/credit-memos`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.PageCreditMemoResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve paginated credit memos with optional filters. Filter by customer, invoice, or status. Supports standard pagination parameters (page, size, sort).
      * List credit memos
      */
-    async listCreditMemos(requestParameters, initOverrides) {
-        const response = await this.listCreditMemosRaw(requestParameters, initOverrides);
-        return await response.value();
+    listCreditMemos(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.listCreditMemosRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CreditMemosApi = CreditMemosApi;

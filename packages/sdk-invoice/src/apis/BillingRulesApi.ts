@@ -15,7 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
-    BillingRulesDTO,
+  BillingRulesDTO,
 } from '../models/index';
 import {
     BillingRulesDTOFromJSON,
@@ -32,7 +32,7 @@ export interface UpsertBillingRulesRequest {
 }
 
 /**
- *
+ * 
  */
 export class BillingRulesApi extends runtime.BaseAPI {
 
@@ -52,6 +52,14 @@ export class BillingRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:billing-rules"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/billing/rules/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',
@@ -96,6 +104,14 @@ export class BillingRulesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:billing-rules"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/billing/rules/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'PUT',

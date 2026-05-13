@@ -64,7 +64,7 @@ export function VehicleTypeResponseFromJSONTyped(json: any, ignoreDiscriminator:
         return json;
     }
     return {
-
+        
         'id': json['id'],
         'makeId': json['makeId'] == null ? undefined : json['makeId'],
         'vehicleTypeId': json['vehicleTypeId'],
@@ -77,7 +77,7 @@ export function VehicleTypeResponseToJSON(value?: VehicleTypeResponse | null): a
         return value;
     }
     return {
-
+        
         'id': value['id'],
         'makeId': value['makeId'],
         'vehicleTypeId': value['vehicleTypeId'],

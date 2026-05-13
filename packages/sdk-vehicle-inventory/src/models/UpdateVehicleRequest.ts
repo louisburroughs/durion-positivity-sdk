@@ -85,7 +85,7 @@ export function UpdateVehicleRequestFromJSONTyped(json: any, ignoreDiscriminator
         return json;
     }
     return {
-
+        
         'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
         'description': json['description'] == null ? undefined : json['description'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
@@ -102,7 +102,7 @@ export function UpdateVehicleRequestToJSON(value?: UpdateVehicleRequest | null):
         return value;
     }
     return {
-
+        
         'unitNumber': value['unitNumber'],
         'description': value['description'],
         'licensePlate': value['licensePlate'],

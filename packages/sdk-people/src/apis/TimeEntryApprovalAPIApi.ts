@@ -41,7 +41,7 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
      * Approve multiple time entries. pos-people is authoritative for approval execution.
      * Batch approve time entries
      */
-    async approveTimeEntriesRaw(requestParameters: ApproveTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async approveTimeEntriesRaw(requestParameters: ApproveTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryDecisionBatchRequest',
@@ -59,6 +59,14 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeEntry:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/timeEntries/approve`,
             method: 'POST',
@@ -67,18 +75,14 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
             body: TimeEntryDecisionBatchRequestToJSON(requestParameters['timeEntryDecisionBatchRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Approve multiple time entries. pos-people is authoritative for approval execution.
      * Batch approve time entries
      */
-    async approveTimeEntries(requestParameters: ApproveTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async approveTimeEntries(requestParameters: ApproveTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.approveTimeEntriesRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -87,7 +91,7 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
      * Reject multiple time entries. rejectionReason is required for each decision.
      * Batch reject time entries
      */
-    async rejectTimeEntriesRaw(requestParameters: RejectTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+    async rejectTimeEntriesRaw(requestParameters: RejectTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryDecisionBatchRequest',
@@ -105,6 +109,14 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
         }
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeEntry:reject"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/people/timeEntries/reject`,
             method: 'POST',
@@ -113,18 +125,14 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
             body: TimeEntryDecisionBatchRequestToJSON(requestParameters['timeEntryDecisionBatchRequest']),
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<any>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
      * Reject multiple time entries. rejectionReason is required for each decision.
      * Batch reject time entries
      */
-    async rejectTimeEntries(requestParameters: RejectTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+    async rejectTimeEntries(requestParameters: RejectTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.rejectTimeEntriesRaw(requestParameters, initOverrides);
         return await response.value();
     }

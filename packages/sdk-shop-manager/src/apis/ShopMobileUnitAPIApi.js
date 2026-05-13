@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShopMobileUnitAPIApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -56,154 +65,174 @@ class ShopMobileUnitAPIApi extends runtime.BaseAPI {
      * Create a new mobile unit for a specific shop location. Validate baseLocationId and capabilities.
      * Create mobile unit
      */
-    async createMobileUnitRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling createMobileUnit().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/shop-manager/{locationId}/mobileUnit`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: requestParameters['body'],
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    createMobileUnitRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling createMobileUnit().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/shop-manager/{locationId}/mobileUnit`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: requestParameters['body'],
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Create a new mobile unit for a specific shop location. Validate baseLocationId and capabilities.
      * Create mobile unit
      */
-    async createMobileUnit(requestParameters, initOverrides) {
-        const response = await this.createMobileUnitRaw(requestParameters, initOverrides);
-        return await response.value();
+    createMobileUnit(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createMobileUnitRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Delete a specific mobile unit by locationId and bayId.
      * Delete mobile unit
      */
-    async deleteMobileUnitRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deleteMobileUnit().');
-        }
-        if (requestParameters['bayId'] == null) {
-            throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling deleteMobileUnit().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/shop-manager/{locationId}/mobileUnit/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.VoidApiResponse(response);
+    deleteMobileUnitRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling deleteMobileUnit().');
+            }
+            if (requestParameters['bayId'] == null) {
+                throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling deleteMobileUnit().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/shop-manager/{locationId}/mobileUnit/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
+                method: 'DELETE',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.VoidApiResponse(response);
+        });
     }
     /**
      * Delete a specific mobile unit by locationId and bayId.
      * Delete mobile unit
      */
-    async deleteMobileUnit(requestParameters, initOverrides) {
-        await this.deleteMobileUnitRaw(requestParameters, initOverrides);
+    deleteMobileUnit(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.deleteMobileUnitRaw(requestParameters, initOverrides);
+        });
     }
     /**
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnitsRaw(initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/shop-manager/mobileUnit`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getMobileUnitsRaw(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/shop-manager/mobileUnit`,
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnits(initOverrides) {
-        const response = await this.getMobileUnitsRaw(initOverrides);
-        return await response.value();
+    getMobileUnits(initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getMobileUnitsRaw(initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnits1Raw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getMobileUnits1().');
-        }
-        if (requestParameters['bayId'] == null) {
-            throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling getMobileUnits1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/shop-manager/{locationId}/mobileUnit/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getMobileUnits1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getMobileUnits1().');
+            }
+            if (requestParameters['bayId'] == null) {
+                throw new runtime.RequiredError('bayId', 'Required parameter "bayId" was null or undefined when calling getMobileUnits1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/shop-manager/{locationId}/mobileUnit/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * List all mobile units or get a specific mobile unit detail by locationId and bayId.
      * Get mobile units
      */
-    async getMobileUnits1(requestParameters, initOverrides) {
-        const response = await this.getMobileUnits1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getMobileUnits1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getMobileUnits1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Create or update mobile units in bulk.
      * Manage mobile units
      */
-    async manageMobileUnitsRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/shop-manager/mobileUnit`,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: requestParameters['body'],
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    manageMobileUnitsRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/shop-manager/mobileUnit`,
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: requestParameters['body'],
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Create or update mobile units in bulk.
      * Manage mobile units
      */
-    async manageMobileUnits(requestParameters = {}, initOverrides) {
-        const response = await this.manageMobileUnitsRaw(requestParameters, initOverrides);
-        return await response.value();
+    manageMobileUnits() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.manageMobileUnitsRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.ShopMobileUnitAPIApi = ShopMobileUnitAPIApi;

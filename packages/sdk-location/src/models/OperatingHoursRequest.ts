@@ -13,13 +13,6 @@
  */
 
 import { mapValues } from '../runtime';
-import type { LocalTime } from './LocalTime';
-import {
-    LocalTimeFromJSON,
-    LocalTimeFromJSONTyped,
-    LocalTimeToJSON,
-} from './LocalTime';
-
 /**
  * 
  * @export
@@ -34,16 +27,16 @@ export interface OperatingHoursRequest {
     dayOfWeek?: string;
     /**
      * 
-     * @type {LocalTime}
+     * @type {string}
      * @memberof OperatingHoursRequest
      */
-    openTime?: LocalTime;
+    openTime?: string;
     /**
      * 
-     * @type {LocalTime}
+     * @type {string}
      * @memberof OperatingHoursRequest
      */
-    closeTime?: LocalTime;
+    closeTime?: string;
 }
 
 /**
@@ -64,8 +57,8 @@ export function OperatingHoursRequestFromJSONTyped(json: any, ignoreDiscriminato
     return {
         
         'dayOfWeek': json['dayOfWeek'] == null ? undefined : json['dayOfWeek'],
-        'openTime': json['openTime'] == null ? undefined : LocalTimeFromJSON(json['openTime']),
-        'closeTime': json['closeTime'] == null ? undefined : LocalTimeFromJSON(json['closeTime']),
+        'openTime': json['openTime'] == null ? undefined : json['openTime'],
+        'closeTime': json['closeTime'] == null ? undefined : json['closeTime'],
     };
 }
 
@@ -76,8 +69,8 @@ export function OperatingHoursRequestToJSON(value?: OperatingHoursRequest | null
     return {
         
         'dayOfWeek': value['dayOfWeek'],
-        'openTime': LocalTimeToJSON(value['openTime']),
-        'closeTime': LocalTimeToJSON(value['closeTime']),
+        'openTime': value['openTime'],
+        'closeTime': value['closeTime'],
     };
 }
 

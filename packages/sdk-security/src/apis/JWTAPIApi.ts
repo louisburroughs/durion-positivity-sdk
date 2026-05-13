@@ -15,7 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
-  ErrorResponse,
+  ApiError,
   InternalTokenRequest,
   RefreshTokenRequest,
   TokenPairRequest,
@@ -24,8 +24,8 @@ import type {
   ValidateResponse,
 } from '../models/index';
 import {
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     InternalTokenRequestFromJSON,
     InternalTokenRequestToJSON,
     RefreshTokenRequestFromJSON,
@@ -42,10 +42,6 @@ import {
 
 export interface GenerateTokenPairRequest {
     tokenPairRequest: TokenPairRequest;
-}
-
-export interface GetAuthoritiesRequest {
-    token: string;
 }
 
 export interface GetRolesRequest {
@@ -120,45 +116,6 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get the authorities claim from a JWT token (expanded by gateway)
-     * Extract authorities from JWT token
-     */
-    async getAuthoritiesRaw(requestParameters: GetAuthoritiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<string>>> {
-        if (requestParameters['token'] == null) {
-            throw new runtime.RequiredError(
-                'token',
-                'Required parameter "token" was null or undefined when calling getAuthorities().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['token'] != null) {
-            queryParameters['token'] = requestParameters['token'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/v1/auth/authorities`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse<any>(response);
-    }
-
-    /**
-     * Get the authorities claim from a JWT token (expanded by gateway)
-     * Extract authorities from JWT token
-     */
-    async getAuthorities(requestParameters: GetAuthoritiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<string>> {
-        const response = await this.getAuthoritiesRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Get the roles claim from a JWT token
      * Extract roles from JWT token
      */
@@ -178,6 +135,14 @@ export class JWTAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/auth/roles`,
             method: 'GET',
@@ -217,6 +182,14 @@ export class JWTAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/auth/subject`,
             method: 'GET',
@@ -260,6 +233,14 @@ export class JWTAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/auth/user-id`,
             method: 'GET',
@@ -301,6 +282,14 @@ export class JWTAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:token:issue_internal"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/auth/internal/token`,
             method: 'POST',
@@ -379,6 +368,14 @@ export class JWTAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/auth/revoke`,
             method: 'DELETE',

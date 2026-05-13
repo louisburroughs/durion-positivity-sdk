@@ -138,6 +138,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties`,
             method: 'POST',
@@ -176,6 +184,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:vehicle:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/{partyId}/vehicles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'POST',
@@ -212,6 +228,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/{accountId}/tier`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
             method: 'GET',
@@ -247,6 +271,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:contact_preference:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',
@@ -282,6 +314,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:contact:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',
@@ -317,6 +357,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'GET',
@@ -354,6 +402,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:merge"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/{partyId}/merge`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'POST',
@@ -392,6 +448,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/tierResolve`,
             method: 'POST',
@@ -423,6 +487,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/search`,
             method: 'POST',
@@ -468,6 +540,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:contact_role:assign"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/{partyId}/contacts/{contactId}/roles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"contactId"}}`, encodeURIComponent(String(requestParameters['contactId']))),
             method: 'PUT',
@@ -506,6 +586,14 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:contact_preference:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
             method: 'POST',

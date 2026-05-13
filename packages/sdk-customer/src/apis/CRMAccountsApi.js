@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CRMAccountsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,298 +66,342 @@ class CRMAccountsApi extends runtime.BaseAPI {
      * Create a new commercial party/account in the CRM system
      * Create commercial account
      */
-    async createCommercialAccountRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateCommercialAccountRequestToJSON)(requestParameters['createCommercialAccountRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreateCommercialAccountResponseFromJSON)(jsonValue));
+    createCommercialAccountRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateCommercialAccountRequestToJSON)(requestParameters['createCommercialAccountRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreateCommercialAccountResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Create a new commercial party/account in the CRM system
      * Create commercial account
      */
-    async createCommercialAccount(requestParameters = {}, initOverrides) {
-        const response = await this.createCommercialAccountRaw(requestParameters, initOverrides);
-        return await response.value();
+    createCommercialAccount() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.createCommercialAccountRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Associate a new vehicle with a party/customer
      * Create vehicle for party
      */
-    async createVehicleForPartyRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling createVehicleForParty().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/vehicles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CreateVehicleForPartyRequestToJSON)(requestParameters['createVehicleForPartyRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreateVehicleForPartyResponseFromJSON)(jsonValue));
+    createVehicleForPartyRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling createVehicleForParty().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/{partyId}/vehicles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CreateVehicleForPartyRequestToJSON)(requestParameters['createVehicleForPartyRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.CreateVehicleForPartyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Associate a new vehicle with a party/customer
      * Create vehicle for party
      */
-    async createVehicleForParty(requestParameters, initOverrides) {
-        const response = await this.createVehicleForPartyRaw(requestParameters, initOverrides);
-        return await response.value();
+    createVehicleForParty(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.createVehicleForPartyRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve the tier level for a specific account
      * Get account tier
      */
-    async getAccountTierRaw(requestParameters, initOverrides) {
-        if (requestParameters['accountId'] == null) {
-            throw new runtime.RequiredError('accountId', 'Required parameter "accountId" was null or undefined when calling getAccountTier().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/accounts/{accountId}/tier`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetAccountTierResponseFromJSON)(jsonValue));
+    getAccountTierRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['accountId'] == null) {
+                throw new runtime.RequiredError('accountId', 'Required parameter "accountId" was null or undefined when calling getAccountTier().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/accounts/{accountId}/tier`.replace(`{${"accountId"}}`, encodeURIComponent(String(requestParameters['accountId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetAccountTierResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve the tier level for a specific account
      * Get account tier
      */
-    async getAccountTier(requestParameters, initOverrides) {
-        const response = await this.getAccountTierRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAccountTier(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAccountTierRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve communication preferences and consent flags for a party
      * Get communication preferences
      */
-    async getCommunicationPreferences1Raw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getCommunicationPreferences1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetCommunicationPreferencesResponseFromJSON)(jsonValue));
+    getCommunicationPreferences1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getCommunicationPreferences1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetCommunicationPreferencesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve communication preferences and consent flags for a party
      * Get communication preferences
      */
-    async getCommunicationPreferences1(requestParameters, initOverrides) {
-        const response = await this.getCommunicationPreferences1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getCommunicationPreferences1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getCommunicationPreferences1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve all contacts for a party including their role assignments
      * Get contacts with roles
      */
-    async getContactsWithRoles1Raw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getContactsWithRoles1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetContactsWithRolesResponseFromJSON)(jsonValue));
+    getContactsWithRoles1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getContactsWithRoles1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetContactsWithRolesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve all contacts for a party including their role assignments
      * Get contacts with roles
      */
-    async getContactsWithRoles1(requestParameters, initOverrides) {
-        const response = await this.getContactsWithRoles1Raw(requestParameters, initOverrides);
-        return await response.value();
+    getContactsWithRoles1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getContactsWithRoles1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve details for a specific party by ID
      * Get party details
      */
-    async getPartyRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getParty().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetPartyResponseFromJSON)(jsonValue));
+    getPartyRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling getParty().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/{partyId}`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.GetPartyResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Retrieve details for a specific party by ID
      * Get party details
      */
-    async getParty(requestParameters, initOverrides) {
-        const response = await this.getPartyRaw(requestParameters, initOverrides);
-        return await response.value();
+    getParty(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getPartyRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Merge multiple parties into a single party record
      * Merge parties
      */
-    async mergePartiesRaw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling mergeParties().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/merge`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.MergePartiesRequestToJSON)(requestParameters['mergePartiesRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MergePartiesResponseFromJSON)(jsonValue));
+    mergePartiesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling mergeParties().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/{partyId}/merge`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.MergePartiesRequestToJSON)(requestParameters['mergePartiesRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.MergePartiesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Merge multiple parties into a single party record
      * Merge parties
      */
-    async mergeParties(requestParameters, initOverrides) {
-        const response = await this.mergePartiesRaw(requestParameters, initOverrides);
-        return await response.value();
+    mergeParties(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.mergePartiesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Resolve or compute the account tier based on business rules
      * Resolve account tier
      */
-    async resolveAccountTierRaw(requestParameters, initOverrides) {
-        if (requestParameters['resolveAccountTierRequest'] == null) {
-            throw new runtime.RequiredError('resolveAccountTierRequest', 'Required parameter "resolveAccountTierRequest" was null or undefined when calling resolveAccountTier().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/accounts/tierResolve`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ResolveAccountTierRequestToJSON)(requestParameters['resolveAccountTierRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ResolveAccountTierResponseFromJSON)(jsonValue));
+    resolveAccountTierRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['resolveAccountTierRequest'] == null) {
+                throw new runtime.RequiredError('resolveAccountTierRequest', 'Required parameter "resolveAccountTierRequest" was null or undefined when calling resolveAccountTier().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/accounts/tierResolve`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ResolveAccountTierRequestToJSON)(requestParameters['resolveAccountTierRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.ResolveAccountTierResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Resolve or compute the account tier based on business rules
      * Resolve account tier
      */
-    async resolveAccountTier(requestParameters, initOverrides) {
-        const response = await this.resolveAccountTierRaw(requestParameters, initOverrides);
-        return await response.value();
+    resolveAccountTier(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.resolveAccountTierRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Search for parties based on various criteria
      * Search parties
      */
-    async searchPartiesRaw(requestParameters, initOverrides) {
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/search`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.SearchPartiesRequestToJSON)(requestParameters['searchPartiesRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SearchPartiesResponseFromJSON)(jsonValue));
+    searchPartiesRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/search`,
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.SearchPartiesRequestToJSON)(requestParameters['searchPartiesRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.SearchPartiesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Search for parties based on various criteria
      * Search parties
      */
-    async searchParties(requestParameters = {}, initOverrides) {
-        const response = await this.searchPartiesRaw(requestParameters, initOverrides);
-        return await response.value();
+    searchParties() {
+        return __awaiter(this, arguments, void 0, function* (requestParameters = {}, initOverrides) {
+            const response = yield this.searchPartiesRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Assign or update role assignments for a specific contact within a party
      * Update contact roles
      */
-    async updateContactRoles1Raw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling updateContactRoles1().');
-        }
-        if (requestParameters['contactId'] == null) {
-            throw new runtime.RequiredError('contactId', 'Required parameter "contactId" was null or undefined when calling updateContactRoles1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/contacts/{contactId}/roles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"contactId"}}`, encodeURIComponent(String(requestParameters['contactId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.UpdateContactRolesRequestToJSON)(requestParameters['updateContactRolesRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpdateContactRolesResponseFromJSON)(jsonValue));
+    updateContactRoles1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling updateContactRoles1().');
+            }
+            if (requestParameters['contactId'] == null) {
+                throw new runtime.RequiredError('contactId', 'Required parameter "contactId" was null or undefined when calling updateContactRoles1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/{partyId}/contacts/{contactId}/roles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"contactId"}}`, encodeURIComponent(String(requestParameters['contactId']))),
+                method: 'PUT',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.UpdateContactRolesRequestToJSON)(requestParameters['updateContactRolesRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpdateContactRolesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Assign or update role assignments for a specific contact within a party
      * Update contact roles
      */
-    async updateContactRoles1(requestParameters, initOverrides) {
-        const response = await this.updateContactRoles1Raw(requestParameters, initOverrides);
-        return await response.value();
+    updateContactRoles1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.updateContactRoles1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Set or update communication preferences and consent flags for a party
      * Create or update communication preferences
      */
-    async upsertCommunicationPreferences1Raw(requestParameters, initOverrides) {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling upsertCommunicationPreferences1().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.UpsertCommunicationPreferencesRequestToJSON)(requestParameters['upsertCommunicationPreferencesRequest']),
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpsertCommunicationPreferencesResponseFromJSON)(jsonValue));
+    upsertCommunicationPreferences1Raw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['partyId'] == null) {
+                throw new runtime.RequiredError('partyId', 'Required parameter "partyId" was null or undefined when calling upsertCommunicationPreferences1().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            const response = yield this.request({
+                path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.UpsertCommunicationPreferencesRequestToJSON)(requestParameters['upsertCommunicationPreferencesRequest']),
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.UpsertCommunicationPreferencesResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Set or update communication preferences and consent flags for a party
      * Create or update communication preferences
      */
-    async upsertCommunicationPreferences1(requestParameters, initOverrides) {
-        const response = await this.upsertCommunicationPreferences1Raw(requestParameters, initOverrides);
-        return await response.value();
+    upsertCommunicationPreferences1(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.upsertCommunicationPreferences1Raw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.CRMAccountsApi = CRMAccountsApi;

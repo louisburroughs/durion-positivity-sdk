@@ -41,6 +41,7 @@ export interface RetryCancellationRequest {
 export class OrderCancellationApi extends runtime.BaseAPI {
 
     /**
+     * Initiate cancellation for a sales order cart using the supplied cancellation context.
      * Cancel order
      */
     async cancelOrderRaw(requestParameters: CancelOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CancellationResponse>> {
@@ -64,6 +65,14 @@ export class OrderCancellationApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:order:cancel"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts/{orderId}/cancel`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
             method: 'POST',
@@ -76,6 +85,7 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
+     * Initiate cancellation for a sales order cart using the supplied cancellation context.
      * Cancel order
      */
     async cancelOrder(requestParameters: CancelOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CancellationResponse> {
@@ -84,6 +94,7 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retry a previously failed order cancellation using the original idempotency key.
      * Retry failed cancellation
      */
     async retryCancellationRaw(requestParameters: RetryCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CancellationResponse>> {
@@ -109,6 +120,14 @@ export class OrderCancellationApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:order:cancel"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/orders/carts/{orderId}/cancel/retry`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
             method: 'POST',
@@ -120,6 +139,7 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retry a previously failed order cancellation using the original idempotency key.
      * Retry failed cancellation
      */
     async retryCancellation(requestParameters: RetryCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CancellationResponse> {

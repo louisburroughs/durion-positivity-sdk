@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WorkorderPartAdjustmentsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,152 +66,168 @@ class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
      * Administrative correction for data entry errors
      * Correct part quantity
      */
-    async correctPartQuantityRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling correctPartQuantity().');
-        }
-        if (requestParameters['correctPartQuantityRequest'] == null) {
-            throw new runtime.RequiredError('correctPartQuantityRequest', 'Required parameter "correctPartQuantityRequest" was null or undefined when calling correctPartQuantity().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/correct`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.CorrectPartQuantityRequestToJSON)(requestParameters['correctPartQuantityRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    correctPartQuantityRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling correctPartQuantity().');
+            }
+            if (requestParameters['correctPartQuantityRequest'] == null) {
+                throw new runtime.RequiredError('correctPartQuantityRequest', 'Required parameter "correctPartQuantityRequest" was null or undefined when calling correctPartQuantity().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/correct`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.CorrectPartQuantityRequestToJSON)(requestParameters['correctPartQuantityRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Administrative correction for data entry errors
      * Correct part quantity
      */
-    async correctPartQuantity(requestParameters, initOverrides) {
-        const response = await this.correctPartQuantityRaw(requestParameters, initOverrides);
-        return await response.value();
+    correctPartQuantity(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.correctPartQuantityRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Retrieve adjustment history (substitutions, returns, corrections) for parts on the workorder
      * Get part adjustment history
      */
-    async getAdjustmentHistoryRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getAdjustmentHistory().');
-        }
-        const queryParameters = {};
-        if (requestParameters['partId'] != null) {
-            queryParameters['partId'] = requestParameters['partId'];
-        }
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/adjustments`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    getAdjustmentHistoryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling getAdjustmentHistory().');
+            }
+            const queryParameters = {};
+            if (requestParameters['partId'] != null) {
+                queryParameters['partId'] = requestParameters['partId'];
+            }
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/adjustments`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Retrieve adjustment history (substitutions, returns, corrections) for parts on the workorder
      * Get part adjustment history
      */
-    async getAdjustmentHistory(requestParameters, initOverrides) {
-        const response = await this.getAdjustmentHistoryRaw(requestParameters, initOverrides);
-        return await response.value();
+    getAdjustmentHistory(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getAdjustmentHistoryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Return unused part quantity beyond normal return flow
      * Return unused quantity
      */
-    async returnUnusedQuantityRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling returnUnusedQuantity().');
-        }
-        if (requestParameters['returnPartQuantityRequest'] == null) {
-            throw new runtime.RequiredError('returnPartQuantityRequest', 'Required parameter "returnPartQuantityRequest" was null or undefined when calling returnUnusedQuantity().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/returnUnused`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.ReturnPartQuantityRequestToJSON)(requestParameters['returnPartQuantityRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    returnUnusedQuantityRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling returnUnusedQuantity().');
+            }
+            if (requestParameters['returnPartQuantityRequest'] == null) {
+                throw new runtime.RequiredError('returnPartQuantityRequest', 'Required parameter "returnPartQuantityRequest" was null or undefined when calling returnUnusedQuantity().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/returnUnused`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.ReturnPartQuantityRequestToJSON)(requestParameters['returnPartQuantityRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Return unused part quantity beyond normal return flow
      * Return unused quantity
      */
-    async returnUnusedQuantity(requestParameters, initOverrides) {
-        const response = await this.returnUnusedQuantityRaw(requestParameters, initOverrides);
-        return await response.value();
+    returnUnusedQuantity(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.returnUnusedQuantityRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
     /**
      * Replace one part with another. Original part preserved for history.
      * Substitute part
      */
-    async substitutePartRaw(requestParameters, initOverrides) {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling substitutePart().');
-        }
-        if (requestParameters['substitutePartRequest'] == null) {
-            throw new runtime.RequiredError('substitutePartRequest', 'Required parameter "substitutePartRequest" was null or undefined when calling substitutePart().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        headerParameters['Content-Type'] = 'application/json';
-        if (requestParameters['idempotencyKey'] != null) {
-            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/parts/substitute`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: (0, index_1.SubstitutePartRequestToJSON)(requestParameters['substitutePartRequest']),
-        }, initOverrides);
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse(response);
-        }
-        else {
-            return new runtime.TextApiResponse(response);
-        }
+    substitutePartRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['workorderId'] == null) {
+                throw new runtime.RequiredError('workorderId', 'Required parameter "workorderId" was null or undefined when calling substitutePart().');
+            }
+            if (requestParameters['substitutePartRequest'] == null) {
+                throw new runtime.RequiredError('substitutePartRequest', 'Required parameter "substitutePartRequest" was null or undefined when calling substitutePart().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            headerParameters['Content-Type'] = 'application/json';
+            if (requestParameters['idempotencyKey'] != null) {
+                headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+            }
+            const response = yield this.request({
+                path: `/v1/workorders/{workorderId}/parts/substitute`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+                method: 'POST',
+                headers: headerParameters,
+                query: queryParameters,
+                body: (0, index_1.SubstitutePartRequestToJSON)(requestParameters['substitutePartRequest']),
+            }, initOverrides);
+            if (this.isJsonMime(response.headers.get('content-type'))) {
+                return new runtime.JSONApiResponse(response);
+            }
+            else {
+                return new runtime.TextApiResponse(response);
+            }
+        });
     }
     /**
      * Replace one part with another. Original part preserved for history.
      * Substitute part
      */
-    async substitutePart(requestParameters, initOverrides) {
-        const response = await this.substitutePartRaw(requestParameters, initOverrides);
-        return await response.value();
+    substitutePart(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.substitutePartRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.WorkorderPartAdjustmentsApi = WorkorderPartAdjustmentsApi;

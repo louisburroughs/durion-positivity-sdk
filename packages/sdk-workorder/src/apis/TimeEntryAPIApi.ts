@@ -54,6 +54,14 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["TimeEntry:Approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/timeEntries/{timeEntryId}/approve`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
             method: 'POST',
@@ -96,6 +104,14 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["TimeEntry:Reject"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/workorders/timeEntries/{timeEntryId}/reject`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
             method: 'POST',

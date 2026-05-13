@@ -45,6 +45,15 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InventoryLocationsApi = void 0;
 const runtime = __importStar(require("../runtime"));
@@ -57,27 +66,31 @@ class InventoryLocationsApi extends runtime.BaseAPI {
      * Returns on-hand quantity aggregated for a storage location.
      * Get location inventory summary
      */
-    async getLocationInventoryRaw(requestParameters, initOverrides) {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getLocationInventory().');
-        }
-        const queryParameters = {};
-        const headerParameters = {};
-        const response = await this.request({
-            path: `/v1/inventory/locations/{locationId}/inventory-inquiry`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-        return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationInventoryInquiryResponseFromJSON)(jsonValue));
+    getLocationInventoryRaw(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (requestParameters['locationId'] == null) {
+                throw new runtime.RequiredError('locationId', 'Required parameter "locationId" was null or undefined when calling getLocationInventory().');
+            }
+            const queryParameters = {};
+            const headerParameters = {};
+            const response = yield this.request({
+                path: `/v1/inventory/locations/{locationId}/inventory-inquiry`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+                method: 'GET',
+                headers: headerParameters,
+                query: queryParameters,
+            }, initOverrides);
+            return new runtime.JSONApiResponse(response, (jsonValue) => (0, index_1.LocationInventoryInquiryResponseFromJSON)(jsonValue));
+        });
     }
     /**
      * Returns on-hand quantity aggregated for a storage location.
      * Get location inventory summary
      */
-    async getLocationInventory(requestParameters, initOverrides) {
-        const response = await this.getLocationInventoryRaw(requestParameters, initOverrides);
-        return await response.value();
+    getLocationInventory(requestParameters, initOverrides) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.getLocationInventoryRaw(requestParameters, initOverrides);
+            return yield response.value();
+        });
     }
 }
 exports.InventoryLocationsApi = InventoryLocationsApi;

@@ -80,6 +80,14 @@ export class PromotionEligibilityRulesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/{promotionId}/rules`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
             method: 'POST',
@@ -123,6 +131,14 @@ export class PromotionEligibilityRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/{promotionId}/rules/{ruleId}`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))).replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
             method: 'DELETE',
@@ -166,6 +182,14 @@ export class PromotionEligibilityRulesApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:Apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/{promotionId}/rules/evaluate`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
             method: 'POST',
@@ -202,6 +226,14 @@ export class PromotionEligibilityRulesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["Promotion:View"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/promotions/offers/{promotionId}/rules`.replace(`{${"promotionId"}}`, encodeURIComponent(String(requestParameters['promotionId']))),
             method: 'GET',

@@ -91,7 +91,7 @@ export function InvoiceGenerationResponseFromJSONTyped(json: any, ignoreDiscrimi
         return json;
     }
     return {
-
+        
         'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'status': json['status'] == null ? undefined : json['status'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
@@ -109,7 +109,7 @@ export function InvoiceGenerationResponseToJSON(value?: InvoiceGenerationRespons
         return value;
     }
     return {
-
+        
         'invoiceId': value['invoiceId'],
         'status': value['status'],
         'workorderId': value['workorderId'],
