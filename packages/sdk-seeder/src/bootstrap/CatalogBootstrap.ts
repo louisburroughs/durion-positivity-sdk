@@ -109,7 +109,10 @@ export class CatalogBootstrap {
 
     for (const product of PRODUCT_SEEDS) {
       const existingId = await this.findCatalogEntityIdByName(
-        () => productsApi.getProductByName({ name: product.name }),
+        async () => {
+          const raw = await productsApi.getProductByNameRaw({ name: product.name });
+          return raw.raw.json();
+        },
       );
 
       if (existingId) {
@@ -147,7 +150,10 @@ export class CatalogBootstrap {
         }
 
         const duplicateId = await this.findCatalogEntityIdByName(
-          () => productsApi.getProductByName({ name: product.name }),
+          async () => {
+            const raw = await productsApi.getProductByNameRaw({ name: product.name });
+            return raw.raw.json();
+          },
         );
         if (!duplicateId) {
           throw error;

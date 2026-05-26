@@ -4,6 +4,12 @@ import { SecurityBootstrap } from './bootstrap/SecurityBootstrap';
 import { BootstrapOrchestrator } from './bootstrap/BootstrapOrchestrator';
 import { DailyLoopRunner } from './loop/DailyLoopRunner';
 
+const ts = (): string => new Date().toISOString();
+const _log = console.log.bind(console);
+const _err = console.error.bind(console);
+console.log = (...args: unknown[]) => _log(`[${ts()}]`, ...args);
+console.error = (...args: unknown[]) => _err(`[${ts()}]`, ...args);
+
 async function main(): Promise<void> {
   const config = SeederConfig.fromEnv();
   const auth = new SeederAuth(config);

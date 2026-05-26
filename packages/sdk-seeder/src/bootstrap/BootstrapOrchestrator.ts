@@ -1,10 +1,12 @@
+import { createLocationClient, type LocationResponseDTO } from '@durion-sdk/location';
 import { SeederAuth } from '../SeederAuth';
 import { SeederConfig } from '../SeederConfig';
-import { ReferenceCache } from '../support/ReferenceCache';
+import type { ReferenceCache } from '../support/ReferenceCache';
 import { CatalogBootstrap } from './CatalogBootstrap';
 import { InventoryBootstrap } from './InventoryBootstrap';
-import { LocationBootstrap } from './LocationBootstrap';
 import { PeopleBootstrap } from './PeopleBootstrap';
+
+const LOCATION_CODE = 'MAIN-01';
 
 export class BootstrapOrchestrator {
   constructor(
@@ -17,38 +19,54 @@ export class BootstrapOrchestrator {
   async run(): Promise<ReferenceCache> {
     console.log('[Bootstrap] Starting bootstrap sequence...');
 
-    const locationResult = await new LocationBootstrap(this.auth.buildSdkConfig('location')).run();
-    console.log(
-      `[Bootstrap] LocationBootstrap: ${locationResult.createdCount} created, ${locationResult.skippedCount} skipped.`,
-    );
+    // -- Location --------------------------------------------------------------
+    const { locationApi, bayApi } = createLocationClient(this.auth.buildSdkConfig('location'));
+    const allLocations = await locationApi.getAllLocations();
+    const location = allLocations.find((l: LocationResponseDTO) => l.code === LOCATION_CODE);
+    if (!location?.id) {
+      throw new Error(`[Bootstrap] Location with code ${LOCATION_CODE} not found`);
+    }
+    const locationId = location.id;
 
-    const peopleResult = await new PeopleBootstrap(this.auth.buildSdkConfig('people')).run(locationResult.locationId);
+    const baysPage = await bayApi.listBays({ locationId, size: 20 });
+    const bayIds = (baysPage.content ?? [])
+      .map((b) => b.id)
+      .filter((id): id is string => !!id);
+
+    console.log(`[Bootstrap] Location resolved: ${locationId}, ${bayIds.length} bays.`);
+
+    // -- People ----------------------------------------------------------------
+    const peopleResult = await new PeopleBootstrap(this.auth.buildSdkConfig('people')).run(locationId);
+    const { employees } = peopleResult;
     console.log(
       `[Bootstrap] PeopleBootstrap: ${peopleResult.createdCount} created, ${peopleResult.skippedCount} skipped.`,
     );
 
+    // -- Catalog ---------------------------------------------------------------
     const catalogResult = await new CatalogBootstrap(this.auth.buildSdkConfig('catalog')).run();
+    const { serviceEntityIds, productEntityIds } = catalogResult;
     console.log(
-      `[Bootstrap] CatalogBootstrap: ${catalogResult.createdCount} created, ${catalogResult.skippedCount} skipped.`,
+      `[Bootstrap] CatalogBootstrap: ${catalogResult.createdCount} created, ${catalogResult.skippedCount} skipped. ` +
+      `${serviceEntityIds.length} services, ${productEntityIds.length} products.`,
     );
 
+    // -- Inventory -------------------------------------------------------------
     const inventoryResult = await new InventoryBootstrap(this.auth.buildSdkConfig('inventory')).run(
-      catalogResult.productEntityIds,
-      locationResult.locationId,
+      productEntityIds,
+      locationId,
     );
     console.log(
       `[Bootstrap] InventoryBootstrap: ${inventoryResult.createdCount} created, ${inventoryResult.skippedCount} skipped.`,
     );
 
-    const refs: ReferenceCache = {
-      locationId: locationResult.locationId,
-      bayIds: locationResult.bayIds,
-      employees: peopleResult.employees,
-      serviceEntityIds: catalogResult.serviceEntityIds,
-      productEntityIds: catalogResult.productEntityIds,
-    };
-
     console.log('[Bootstrap] Complete.');
-    return refs;
+    return {
+      locationId,
+      bayIds,
+      employees,
+      serviceEntityIds,
+      productEntityIds,
+    };
   }
+
 }

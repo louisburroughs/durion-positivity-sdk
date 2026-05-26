@@ -1,4 +1,4 @@
-import { createLocationClient, type BayRequest, type LocationRef, type LocationResponseDTO } from '@durion-sdk/location';
+import { createLocationClient, type BayRequest, type LocationResponseDTO } from '@durion-sdk/location';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
 
 interface LocationBootstrapResult {
@@ -34,12 +34,10 @@ export class LocationBootstrap {
     let createdCount = 0;
     let skippedCount = 0;
 
-    const roster = await locationApi.getRoster({
-      pageable: { page: 0, size: 10 },
-    });
+    const roster = await locationApi.getAllLocations();
 
-    const existingLocation = (roster.content ?? []).find(
-      (location: LocationRef) => location.code === LOCATION_CODE,
+    const existingLocation = roster.find(
+      (location: LocationResponseDTO) => location.code === LOCATION_CODE,
     );
 
     let locationId = existingLocation?.id;

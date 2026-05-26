@@ -2,7 +2,6 @@ import { SeederConfig } from '../SeederConfig';
 
 /**
  * UUID of the SYSTEM_ADMINISTRATOR role as seeded in R__seed_reference_security.sql.
- * This role is assigned to the seeder's login user (marcus.webb).
  */
 const SYSADMIN_ROLE_ID = 'e9b3e6ba-af10-08ff-0376-1f2fa60d5093';
 
@@ -37,6 +36,12 @@ export class SecurityBootstrap {
 
     console.log(
       `[SecurityBootstrap] Granted ${permissionNames.length} permissions to SYSTEM_ADMINISTRATOR.`,
+    );
+
+    await this.ensureSysAdminRole(baseUrl);
+
+    console.log(
+      `[SecurityBootstrap] Confirmed SYSTEM_ADMINISTRATOR role is assigned to "${this.config.username}".`,
     );
   }
 
@@ -93,6 +98,50 @@ export class SecurityBootstrap {
       const body = await response.text();
       throw new Error(
         `[SecurityBootstrap] Failed to grant permissions to SYSTEM_ADMINISTRATOR: ${response.status} ${response.statusText} — ${body}`,
+      );
+    }
+  }
+
+  private async ensureSysAdminRole(baseUrl: string): Promise<void> {
+    const usersUrl = `${baseUrl}/v1/users`;
+    const usersResponse = await fetch(usersUrl, {
+      method: 'GET',
+      headers: {
+        'X-Authorities': 'security:user:view',
+        'X-User': 'seeder-bootstrap',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!usersResponse.ok) {
+      throw new Error(
+        `[SecurityBootstrap] Failed to list users: ${usersResponse.status} ${usersResponse.statusText}`,
+      );
+    }
+
+    const users = (await usersResponse.json()) as Array<{ id?: string; username?: string }>;
+    const user = users.find((u) => u.username === this.config.username);
+
+    if (!user?.id) {
+      throw new Error(
+        `[SecurityBootstrap] Login user "${this.config.username}" not found — cannot assign SYSTEM_ADMINISTRATOR role`,
+      );
+    }
+
+    const assignUrl = `${baseUrl}/v1/users/${encodeURIComponent(user.id)}/roles/${SYSADMIN_ROLE_ID}`;
+    const assignResponse = await fetch(assignUrl, {
+      method: 'PUT',
+      headers: {
+        'X-Authorities': 'security:role:assign',
+        'X-User': 'seeder-bootstrap',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!assignResponse.ok) {
+      const body = await assignResponse.text();
+      throw new Error(
+        `[SecurityBootstrap] Failed to assign SYSTEM_ADMINISTRATOR to "${this.config.username}": ${assignResponse.status} ${assignResponse.statusText} — ${body}`,
       );
     }
   }
