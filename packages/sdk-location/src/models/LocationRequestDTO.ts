@@ -148,10 +148,10 @@ export interface LocationRequestDTO {
     type: LocationTypeDTO;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof LocationRequestDTO
      */
-    parents?: { [key: string]: any; };
+    parents?: object;
 }
 
 /**

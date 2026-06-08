@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Decline details including note
+ * Request payload for declining a change request
  * @export
  * @interface DeclineChangeRequestDTO
  */

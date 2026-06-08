@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   CatalogVersionResponse,
+  Page,
   PermissionDecodeRequest,
   PermissionDecodeResponse,
   PermissionDto,
@@ -28,6 +29,8 @@ import {
     ApiErrorToJSON,
     CatalogVersionResponseFromJSON,
     CatalogVersionResponseToJSON,
+    PageFromJSON,
+    PageToJSON,
     PermissionDecodeRequestFromJSON,
     PermissionDecodeRequestToJSON,
     PermissionDecodeResponseFromJSON,
@@ -48,14 +51,6 @@ export interface DecodePermissions1Request {
     permissionDecodeRequest: PermissionDecodeRequest;
 }
 
-export interface GetAllPermissionsRequest {
-    domain: string;
-}
-
-export interface GetAllPermissions1Request {
-    domain: string;
-}
-
 export interface GetPermissionByIdRequest {
     id: string;
 }
@@ -70,6 +65,14 @@ export interface GetPermissionsByDomainRequest {
 
 export interface GetPermissionsByDomain1Request {
     domain: string;
+}
+
+export interface ListPermissionsRequest {
+    domain?: string;
+}
+
+export interface ListPermissions1Request {
+    domain?: string;
 }
 
 export interface PermissionExistsRequest {
@@ -198,100 +201,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      */
     async decodePermissions1(requestParameters: DecodePermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionDecodeResponse> {
         const response = await this.decodePermissions1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns all registered permissions for the requested domain using the domain query parameter.
-     * Query permissions by domain
-     */
-    async getAllPermissionsRaw(requestParameters: GetAllPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PermissionDto>>> {
-        if (requestParameters['domain'] == null) {
-            throw new runtime.RequiredError(
-                'domain',
-                'Required parameter "domain" was null or undefined when calling getAllPermissions().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['domain'] != null) {
-            queryParameters['domain'] = requestParameters['domain'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PermissionDtoFromJSON));
-    }
-
-    /**
-     * Returns all registered permissions for the requested domain using the domain query parameter.
-     * Query permissions by domain
-     */
-    async getAllPermissions(requestParameters: GetAllPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PermissionDto>> {
-        const response = await this.getAllPermissionsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns all registered permissions for the requested domain using the domain query parameter.
-     * Query permissions by domain
-     */
-    async getAllPermissions1Raw(requestParameters: GetAllPermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PermissionDto>>> {
-        if (requestParameters['domain'] == null) {
-            throw new runtime.RequiredError(
-                'domain',
-                'Required parameter "domain" was null or undefined when calling getAllPermissions1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['domain'] != null) {
-            queryParameters['domain'] = requestParameters['domain'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/permissions`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PermissionDtoFromJSON));
-    }
-
-    /**
-     * Returns all registered permissions for the requested domain using the domain query parameter.
-     * Query permissions by domain
-     */
-    async getAllPermissions1(requestParameters: GetAllPermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PermissionDto>> {
-        const response = await this.getAllPermissions1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -520,6 +429,86 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      */
     async getPermissionsByDomain1(requestParameters: GetPermissionsByDomain1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PermissionDto>> {
         const response = await this.getPermissionsByDomain1Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a paged list of registered permissions, optionally filtered by domain.
+     * List permissions
+     */
+    async listPermissionsRaw(requestParameters: ListPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Page>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['domain'] != null) {
+            queryParameters['domain'] = requestParameters['domain'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users/permissions`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a paged list of registered permissions, optionally filtered by domain.
+     * List permissions
+     */
+    async listPermissions(requestParameters: ListPermissionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Page> {
+        const response = await this.listPermissionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a paged list of registered permissions, optionally filtered by domain.
+     * List permissions
+     */
+    async listPermissions1Raw(requestParameters: ListPermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Page>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['domain'] != null) {
+            queryParameters['domain'] = requestParameters['domain'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:permission:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/permissions`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a paged list of registered permissions, optionally filtered by domain.
+     * List permissions
+     */
+    async listPermissions1(requestParameters: ListPermissions1Request = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Page> {
+        const response = await this.listPermissions1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

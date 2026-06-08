@@ -73,6 +73,7 @@ export interface ResolveScanOperationRequest {
 export class WorkorderPickFacadeApi extends runtime.BaseAPI {
 
     /**
+     * Complete a workorder pick task after all of its pick lines are confirmed
      * Complete pick task
      */
     async completePickTaskRaw(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickTaskResponse>> {
@@ -116,6 +117,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Complete a workorder pick task after all of its pick lines are confirmed
      * Complete pick task
      */
     async completePickTask(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickTaskResponse> {
@@ -124,6 +126,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Confirm the picked quantity for a workorder pick line after scan resolution
      * Confirm pick line quantity
      */
     async confirmPickLineRaw(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickTaskResponse>> {
@@ -181,6 +184,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Confirm the picked quantity for a workorder pick line after scan resolution
      * Confirm pick line quantity
      */
     async confirmPickLine(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickTaskResponse> {
@@ -189,6 +193,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve the pick list for a workorder so parts can be staged and fulfilled
      * Get pick list for workorder
      */
     async getPickListRaw(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickListResponse>> {
@@ -222,6 +227,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve the pick list for a workorder so parts can be staged and fulfilled
      * Get pick list for workorder
      */
     async getPickList(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickListResponse> {
@@ -230,6 +236,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve the pick tasks for a workorder to guide pick-list execution
      * Get pick tasks for workorder
      */
     async getPickTasksRaw(requestParameters: GetPickTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderPickTaskResponse>>> {
@@ -263,6 +270,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve the pick tasks for a workorder to guide pick-list execution
      * Get pick tasks for workorder
      */
     async getPickTasks(requestParameters: GetPickTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderPickTaskResponse>> {
@@ -271,6 +279,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Resolve a scanned item for a workorder pick task before confirming fulfillment
      * Resolve scan for pick task
      */
     async resolveScanRaw(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResolveScanResponse>> {
@@ -321,6 +330,7 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
+     * Resolve a scanned item for a workorder pick task before confirming fulfillment
      * Resolve scan for pick task
      */
     async resolveScan(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResolveScanResponse> {

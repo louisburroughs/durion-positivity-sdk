@@ -7,7 +7,7 @@ export * from './EstimateAPIApi';
 export * from './EstimateSearchApi';
 export * from './EstimatesFromAppointmentsApi';
 export * from './OperationalContextApi';
-export * from './SubstituteLinkControllerApi';
+export * from './SubstituteLinkAPIApi';
 export * from './TechnicianAssignmentAPIApi';
 export * from './TimeEntryAPIApi';
 export * from './TravelSegmentAPIApi';

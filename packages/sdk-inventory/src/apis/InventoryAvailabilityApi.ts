@@ -34,19 +34,22 @@ import {
     LocationAvailabilityDtoToJSON,
 } from '../models/index';
 
-export interface QueryAvailabilityBySkuRequest {
-    productSku: string;
-    locationId: string;
+export interface GetInventoryAvailabilityRequest {
+    productId: string;
+}
+
+export interface GetLeadTimeRequest {
+    productId: string;
+    locationId?: string;
     storageLocationId?: string;
+    sourceType?: GetLeadTimeSourceTypeEnum;
 }
 
-export interface QueryInventoryAvailabilityRequest {
-    productId: string;
-}
-
-export interface QueryLeadTimeRequest {
-    productId: string;
-    locationId: string;
+export interface ListAvailabilityBySkuRequest {
+    productSku: string;
+    locationId?: string;
+    storageLocationId?: string;
+    sourceType?: ListAvailabilityBySkuSourceTypeEnum;
 }
 
 export interface UpdateInventoryAvailabilityRequest {
@@ -60,76 +63,14 @@ export interface UpdateInventoryAvailabilityRequest {
 export class InventoryAvailabilityApi extends runtime.BaseAPI {
 
     /**
-     * Returns on-hand, allocated, and available-to-promise quantities for a product at a specific location. storageLocationId is optional to narrow the scope to a sub-location.
-     * Query inventory availability by SKU and location
-     */
-    async queryAvailabilityBySkuRaw(requestParameters: QueryAvailabilityBySkuRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AvailabilityView>> {
-        if (requestParameters['productSku'] == null) {
-            throw new runtime.RequiredError(
-                'productSku',
-                'Required parameter "productSku" was null or undefined when calling queryAvailabilityBySku().'
-            );
-        }
-
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError(
-                'locationId',
-                'Required parameter "locationId" was null or undefined when calling queryAvailabilityBySku().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['productSku'] != null) {
-            queryParameters['productSku'] = requestParameters['productSku'];
-        }
-
-        if (requestParameters['locationId'] != null) {
-            queryParameters['locationId'] = requestParameters['locationId'];
-        }
-
-        if (requestParameters['storageLocationId'] != null) {
-            queryParameters['storageLocationId'] = requestParameters['storageLocationId'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["inventory:on_hand:view", "inventory:on_hand:search"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/inventory/availability/query`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AvailabilityViewFromJSON(jsonValue));
-    }
-
-    /**
-     * Returns on-hand, allocated, and available-to-promise quantities for a product at a specific location. storageLocationId is optional to narrow the scope to a sub-location.
-     * Query inventory availability by SKU and location
-     */
-    async queryAvailabilityBySku(requestParameters: QueryAvailabilityBySkuRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AvailabilityView> {
-        const response = await this.queryAvailabilityBySkuRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Returns per-location availability for a product.
      * Query inventory availability
      */
-    async queryInventoryAvailabilityRaw(requestParameters: QueryInventoryAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationAvailabilityDto>>> {
+    async getInventoryAvailabilityRaw(requestParameters: GetInventoryAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationAvailabilityDto>>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling queryInventoryAvailability().'
+                'Required parameter "productId" was null or undefined when calling getInventoryAvailability().'
             );
         }
 
@@ -159,8 +100,8 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
      * Returns per-location availability for a product.
      * Query inventory availability
      */
-    async queryInventoryAvailability(requestParameters: QueryInventoryAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationAvailabilityDto>> {
-        const response = await this.queryInventoryAvailabilityRaw(requestParameters, initOverrides);
+    async getInventoryAvailability(requestParameters: GetInventoryAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationAvailabilityDto>> {
+        const response = await this.getInventoryAvailabilityRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -168,18 +109,11 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
      * Returns dynamic lead-time estimate for a product at a location.
      * Query product lead time
      */
-    async queryLeadTimeRaw(requestParameters: QueryLeadTimeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LeadTimeView>> {
+    async getLeadTimeRaw(requestParameters: GetLeadTimeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LeadTimeView>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling queryLeadTime().'
-            );
-        }
-
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError(
-                'locationId',
-                'Required parameter "locationId" was null or undefined when calling queryLeadTime().'
+                'Required parameter "productId" was null or undefined when calling getLeadTime().'
             );
         }
 
@@ -191,6 +125,14 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
 
         if (requestParameters['locationId'] != null) {
             queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['storageLocationId'] != null) {
+            queryParameters['storageLocationId'] = requestParameters['storageLocationId'];
+        }
+
+        if (requestParameters['sourceType'] != null) {
+            queryParameters['sourceType'] = requestParameters['sourceType'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -217,8 +159,67 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
      * Returns dynamic lead-time estimate for a product at a location.
      * Query product lead time
      */
-    async queryLeadTime(requestParameters: QueryLeadTimeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LeadTimeView> {
-        const response = await this.queryLeadTimeRaw(requestParameters, initOverrides);
+    async getLeadTime(requestParameters: GetLeadTimeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LeadTimeView> {
+        const response = await this.getLeadTimeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns on-hand, allocated, and available-to-promise quantities for a product at a specific location. storageLocationId is optional to narrow the scope to a sub-location.
+     * Query inventory availability by SKU and location
+     */
+    async listAvailabilityBySkuRaw(requestParameters: ListAvailabilityBySkuRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AvailabilityView>> {
+        if (requestParameters['productSku'] == null) {
+            throw new runtime.RequiredError(
+                'productSku',
+                'Required parameter "productSku" was null or undefined when calling listAvailabilityBySku().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['productSku'] != null) {
+            queryParameters['productSku'] = requestParameters['productSku'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['storageLocationId'] != null) {
+            queryParameters['storageLocationId'] = requestParameters['storageLocationId'];
+        }
+
+        if (requestParameters['sourceType'] != null) {
+            queryParameters['sourceType'] = requestParameters['sourceType'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view", "inventory:on_hand:search"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/availability/by-sku`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AvailabilityViewFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns on-hand, allocated, and available-to-promise quantities for a product at a specific location. storageLocationId is optional to narrow the scope to a sub-location.
+     * Query inventory availability by SKU and location
+     */
+    async listAvailabilityBySku(requestParameters: ListAvailabilityBySkuRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AvailabilityView> {
+        const response = await this.listAvailabilityBySkuRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -268,4 +269,23 @@ export class InventoryAvailabilityApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum GetLeadTimeSourceTypeEnum {
+    Warehouse = 'WAREHOUSE',
+    Supplier = 'SUPPLIER',
+    Transit = 'TRANSIT'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListAvailabilityBySkuSourceTypeEnum {
+    Warehouse = 'WAREHOUSE',
+    Supplier = 'SUPPLIER',
+    Transit = 'TRANSIT'
 }

@@ -63,13 +63,13 @@ export interface ProductDetailView {
      */
     specifications?: Array<ProductSpecification>;
     /**
-     * Pricing information with status indicator
+     * 
      * @type {PricingInfo}
      * @memberof ProductDetailView
      */
     pricing?: PricingInfo;
     /**
-     * Availability information with status indicator
+     * 
      * @type {AvailabilityInfo}
      * @memberof ProductDetailView
      */

@@ -46,6 +46,7 @@ export interface GetPickedItemsRequest {
 export class WorkorderPickedItemsApi extends runtime.BaseAPI {
 
     /**
+     * Consume the picked items for a workorder so parts usage is recorded against the job
      * Consume picked items into workorder
      */
     async consumePickedItemsRaw(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConsumePickedItemsResponse>> {
@@ -89,6 +90,7 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Consume the picked items for a workorder so parts usage is recorded against the job
      * Consume picked items into workorder
      */
     async consumePickedItems(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConsumePickedItemsResponse> {
@@ -97,6 +99,7 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve the items already picked for a workorder before they are consumed
      * Get picked items for workorder
      */
     async getPickedItemsRaw(requestParameters: GetPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderPickedItemResponse>>> {
@@ -130,6 +133,7 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Retrieve the items already picked for a workorder before they are consumed
      * Get picked items for workorder
      */
     async getPickedItems(requestParameters: GetPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderPickedItemResponse>> {

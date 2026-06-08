@@ -50,12 +50,12 @@ export interface ListMobileUnitsRequest {
 
 export interface PatchMobileUnitRequest {
     id: string;
-    requestBody: { [key: string]: any; };
+    body: object;
 }
 
 export interface ReplaceCoverageRulesRequest {
     id: string;
-    requestBody: { [key: string]: any; };
+    body: object;
 }
 
 /**
@@ -251,10 +251,10 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['requestBody'] == null) {
+        if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
-                'requestBody',
-                'Required parameter "requestBody" was null or undefined when calling patchMobileUnit().'
+                'body',
+                'Required parameter "body" was null or undefined when calling patchMobileUnit().'
             );
         }
 
@@ -277,7 +277,7 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => MobileUnitResponseFromJSON(jsonValue));
@@ -304,10 +304,10 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['requestBody'] == null) {
+        if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
-                'requestBody',
-                'Required parameter "requestBody" was null or undefined when calling replaceCoverageRules().'
+                'body',
+                'Required parameter "body" was null or undefined when calling replaceCoverageRules().'
             );
         }
 
@@ -330,7 +330,7 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CoverageRuleResponseFromJSON));

@@ -21,7 +21,7 @@ import {
 } from './LineItemApprovalDto';
 
 /**
- * Approval request with customer ID, signature capture, and optional selective line item approvals
+ * Request to approve an estimate with customer signature
  * @export
  * @interface ApproveEstimateRequest
  */

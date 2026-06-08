@@ -39,7 +39,7 @@ export interface TaxCalculationRequest {
      */
     lineItems: Array<TaxLineItem>;
     /**
-     * Destination address used to determine applicable tax jurisdictions
+     * 
      * @type {TaxAddress}
      * @memberof TaxCalculationRequest
      */

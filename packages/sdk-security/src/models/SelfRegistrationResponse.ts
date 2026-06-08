@@ -57,7 +57,7 @@ export interface SelfRegistrationResponse {
      */
     matchedExistingPerson?: boolean;
     /**
-     * Summary of CRM person search candidates
+     * 
      * @type {CrmMatchSummaryDto}
      * @memberof SelfRegistrationResponse
      */

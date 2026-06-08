@@ -33,10 +33,10 @@ export interface VehicleCarePreferenceResponse {
     vehicleId?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof VehicleCarePreferenceResponse
      */
-    preferences?: { [key: string]: any; };
+    preferences?: object;
     /**
      * 
      * @type {string}

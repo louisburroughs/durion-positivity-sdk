@@ -7,6 +7,6 @@ export * from './MobileUnitAPIApi';
 export * from './MobileUnitEligibilityControllerApi';
 export * from './ServiceAreaAPIApi';
 export * from './SiteDefaultsAPIApi';
-export * from './StorageLocationControllerApi';
+export * from './StorageLocationAPIApi';
 export * from './StorageLocationValidationControllerApi';
 export * from './TravelBufferPolicyAPIApi';

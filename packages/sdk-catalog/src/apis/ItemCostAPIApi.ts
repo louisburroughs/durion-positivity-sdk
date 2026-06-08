@@ -47,6 +47,7 @@ export interface UpdateStandardCostRequest {
 export class ItemCostAPIApi extends runtime.BaseAPI {
 
     /**
+     * Returns the recorded audit history entries for item cost changes on the specified item.
      * Get item cost audit history
      */
     async getAuditHistoryRaw(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostAuditDto>> {
@@ -80,6 +81,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the recorded audit history entries for item cost changes on the specified item.
      * Get item cost audit history
      */
     async getAuditHistory(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostAuditDto> {
@@ -88,6 +90,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the current standard, average, and last known cost values for the specified item.
      * Get current item costs
      */
     async getItemCostsRaw(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostsDto>> {
@@ -121,6 +124,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the current standard, average, and last known cost values for the specified item.
      * Get current item costs
      */
     async getItemCosts(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostsDto> {
@@ -129,6 +133,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Updates the standard cost for the specified item and returns the refreshed item cost values.
      * Update standard item cost
      */
     async updateStandardCostRaw(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostsDto>> {
@@ -172,6 +177,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Updates the standard cost for the specified item and returns the refreshed item cost values.
      * Update standard item cost
      */
     async updateStandardCost(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostsDto> {

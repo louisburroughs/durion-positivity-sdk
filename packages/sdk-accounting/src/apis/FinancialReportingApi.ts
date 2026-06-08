@@ -19,6 +19,10 @@ import type {
   BalanceSheetReport,
   IncomeStatementReport,
   JournalLineDrilldownResponse,
+  PageReportExportResponse,
+  Pageable,
+  ReportExportRequest,
+  ReportExportResponse,
 } from '../models/index';
 import {
     AccountDrilldownResponseFromJSON,
@@ -29,6 +33,14 @@ import {
     IncomeStatementReportToJSON,
     JournalLineDrilldownResponseFromJSON,
     JournalLineDrilldownResponseToJSON,
+    PageReportExportResponseFromJSON,
+    PageReportExportResponseToJSON,
+    PageableFromJSON,
+    PageableToJSON,
+    ReportExportRequestFromJSON,
+    ReportExportRequestToJSON,
+    ReportExportResponseFromJSON,
+    ReportExportResponseToJSON,
 } from '../models/index';
 
 export interface DrilldownToAccountsRequest {
@@ -50,6 +62,18 @@ export interface GenerateBalanceSheetRequest {
 export interface GenerateIncomeStatementRequest {
     startDate: Date;
     endDate: Date;
+}
+
+export interface GetExportHistoryRequest {
+    pageable: Pageable;
+}
+
+export interface GetExportStatusRequest {
+    exportId: string;
+}
+
+export interface RequestExportRequest {
+    reportExportRequest: ReportExportRequest;
 }
 
 /**
@@ -289,6 +313,142 @@ export class FinancialReportingApi extends runtime.BaseAPI {
      */
     async generateIncomeStatement(requestParameters: GenerateIncomeStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<IncomeStatementReport> {
         const response = await this.generateIncomeStatementRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * List all async report export jobs, paginated and sorted by most-recent first.
+     * List export history
+     */
+    async getExportHistoryRaw(requestParameters: GetExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageReportExportResponse>> {
+        if (requestParameters['pageable'] == null) {
+            throw new runtime.RequiredError(
+                'pageable',
+                'Required parameter "pageable" was null or undefined when calling getExportHistory().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/export`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageReportExportResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * List all async report export jobs, paginated and sorted by most-recent first.
+     * List export history
+     */
+    async getExportHistory(requestParameters: GetExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageReportExportResponse> {
+        const response = await this.getExportHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Poll the current status of an async report export job.
+     * Get export status
+     */
+    async getExportStatusRaw(requestParameters: GetExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReportExportResponse>> {
+        if (requestParameters['exportId'] == null) {
+            throw new runtime.RequiredError(
+                'exportId',
+                'Required parameter "exportId" was null or undefined when calling getExportStatus().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/export/{exportId}`.replace(`{${"exportId"}}`, encodeURIComponent(String(requestParameters['exportId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReportExportResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Poll the current status of an async report export job.
+     * Get export status
+     */
+    async getExportStatus(requestParameters: GetExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReportExportResponse> {
+        const response = await this.getExportStatusRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Submit an asynchronous report export job. Returns immediately with PENDING status.
+     * Request async report export
+     */
+    async requestExportRaw(requestParameters: RequestExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReportExportResponse>> {
+        if (requestParameters['reportExportRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reportExportRequest',
+                'Required parameter "reportExportRequest" was null or undefined when calling requestExport().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/export`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReportExportRequestToJSON(requestParameters['reportExportRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReportExportResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Submit an asynchronous report export job. Returns immediately with PENDING status.
+     * Request async report export
+     */
+    async requestExport(requestParameters: RequestExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReportExportResponse> {
+        const response = await this.requestExportRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

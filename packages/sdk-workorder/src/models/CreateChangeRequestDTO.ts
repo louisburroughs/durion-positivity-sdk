@@ -21,7 +21,7 @@ import {
 } from './WorkorderItemDTO';
 
 /**
- * Change request details including items
+ * Request payload for creating a change request
  * @export
  * @interface CreateChangeRequestDTO
  */

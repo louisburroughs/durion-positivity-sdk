@@ -17,7 +17,10 @@ import * as runtime from '../runtime';
 import type {
   AccountingEventResponse,
   AccountingEventSubmitRequest,
-  PagedResponseAccountingEventResponse,
+  EventEnvelopeContract,
+  EventProcessingLogEntry,
+  PageAccountingEventResponse,
+  Pageable,
   ReprocessEventRequest,
   ReprocessingAttemptHistoryResponse,
 } from '../models/index';
@@ -26,8 +29,14 @@ import {
     AccountingEventResponseToJSON,
     AccountingEventSubmitRequestFromJSON,
     AccountingEventSubmitRequestToJSON,
-    PagedResponseAccountingEventResponseFromJSON,
-    PagedResponseAccountingEventResponseToJSON,
+    EventEnvelopeContractFromJSON,
+    EventEnvelopeContractToJSON,
+    EventProcessingLogEntryFromJSON,
+    EventProcessingLogEntryToJSON,
+    PageAccountingEventResponseFromJSON,
+    PageAccountingEventResponseToJSON,
+    PageableFromJSON,
+    PageableToJSON,
     ReprocessEventRequestFromJSON,
     ReprocessEventRequestToJSON,
     ReprocessingAttemptHistoryResponseFromJSON,
@@ -46,10 +55,17 @@ export interface GetReprocessingHistoryRequest {
     eventId: string;
 }
 
-export interface ListEventsRequest {
-    organizationId: string;
-    page?: number;
-    size?: number;
+export interface ListAccountingEventsRequest {
+    pageable: Pageable;
+    organizationId?: string;
+    eventType?: string;
+    idempotencyOutcome?: string;
+    receivedAtFrom?: Date;
+    receivedAtTo?: Date;
+    eventId?: string;
+    ingestionId?: string;
+    domainKeyId?: string;
+    invoiceId?: string;
     status?: string;
 }
 
@@ -116,10 +132,46 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the processing log for an accounting event.
+     * Returns the current event envelope schema contract for SDK validation.
+     * Get event envelope contract
+     */
+    async getEventContractRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventEnvelopeContract>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:events:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/events/contract`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EventEnvelopeContractFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the current event envelope schema contract for SDK validation.
+     * Get event envelope contract
+     */
+    async getEventContract(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventEnvelopeContract> {
+        const response = await this.getEventContractRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retrieve the structured processing audit log for an accounting event. Returns an empty list if the event has no processing log.
      * Get event processing log
      */
-    async getEventProcessingLogRaw(requestParameters: GetEventProcessingLogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+    async getEventProcessingLogRaw(requestParameters: GetEventProcessingLogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventProcessingLogEntry>>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
@@ -146,18 +198,14 @@ export class AccountingEventsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<string>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventProcessingLogEntryFromJSON));
     }
 
     /**
-     * Retrieve the processing log for an accounting event.
+     * Retrieve the structured processing audit log for an accounting event. Returns an empty list if the event has no processing log.
      * Get event processing log
      */
-    async getEventProcessingLog(requestParameters: GetEventProcessingLogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+    async getEventProcessingLog(requestParameters: GetEventProcessingLogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventProcessingLogEntry>> {
         const response = await this.getEventProcessingLogRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -207,13 +255,13 @@ export class AccountingEventsApi extends runtime.BaseAPI {
 
     /**
      * Retrieve paginated accounting events with optional filters.
-     * List events
+     * List accounting events
      */
-    async listEventsRaw(requestParameters: ListEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseAccountingEventResponse>> {
-        if (requestParameters['organizationId'] == null) {
+    async listAccountingEventsRaw(requestParameters: ListAccountingEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageAccountingEventResponse>> {
+        if (requestParameters['pageable'] == null) {
             throw new runtime.RequiredError(
-                'organizationId',
-                'Required parameter "organizationId" was null or undefined when calling listEvents().'
+                'pageable',
+                'Required parameter "pageable" was null or undefined when calling listAccountingEvents().'
             );
         }
 
@@ -223,16 +271,44 @@ export class AccountingEventsApi extends runtime.BaseAPI {
             queryParameters['organizationId'] = requestParameters['organizationId'];
         }
 
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
+        if (requestParameters['eventType'] != null) {
+            queryParameters['eventType'] = requestParameters['eventType'];
         }
 
-        if (requestParameters['size'] != null) {
-            queryParameters['size'] = requestParameters['size'];
+        if (requestParameters['idempotencyOutcome'] != null) {
+            queryParameters['idempotencyOutcome'] = requestParameters['idempotencyOutcome'];
+        }
+
+        if (requestParameters['receivedAtFrom'] != null) {
+            queryParameters['receivedAtFrom'] = (requestParameters['receivedAtFrom'] as any).toISOString();
+        }
+
+        if (requestParameters['receivedAtTo'] != null) {
+            queryParameters['receivedAtTo'] = (requestParameters['receivedAtTo'] as any).toISOString();
+        }
+
+        if (requestParameters['eventId'] != null) {
+            queryParameters['eventId'] = requestParameters['eventId'];
+        }
+
+        if (requestParameters['ingestionId'] != null) {
+            queryParameters['ingestionId'] = requestParameters['ingestionId'];
+        }
+
+        if (requestParameters['domainKeyId'] != null) {
+            queryParameters['domainKeyId'] = requestParameters['domainKeyId'];
+        }
+
+        if (requestParameters['invoiceId'] != null) {
+            queryParameters['invoiceId'] = requestParameters['invoiceId'];
         }
 
         if (requestParameters['status'] != null) {
             queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -252,15 +328,15 @@ export class AccountingEventsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseAccountingEventResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageAccountingEventResponseFromJSON(jsonValue));
     }
 
     /**
      * Retrieve paginated accounting events with optional filters.
-     * List events
+     * List accounting events
      */
-    async listEvents(requestParameters: ListEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseAccountingEventResponse> {
-        const response = await this.listEventsRaw(requestParameters, initOverrides);
+    async listAccountingEvents(requestParameters: ListAccountingEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageAccountingEventResponse> {
+        const response = await this.listAccountingEventsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

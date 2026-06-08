@@ -51,10 +51,10 @@ export interface AccountingEventResponse {
     transactionDate?: Date;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof AccountingEventResponse
      */
-    payload?: { [key: string]: any; };
+    payload?: object;
     /**
      * 
      * @type {string}
@@ -127,6 +127,30 @@ export interface AccountingEventResponse {
      * @memberof AccountingEventResponse
      */
     mappingVersionAttempted?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    idempotencyOutcome?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    ingestionId?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    domainKeyId?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    invoiceId?: string;
 }
 
 /**
@@ -177,6 +201,10 @@ export function AccountingEventResponseFromJSONTyped(json: any, ignoreDiscrimina
         'finalPostingReferenceId': json['finalPostingReferenceId'] == null ? undefined : json['finalPostingReferenceId'],
         'resolvedByUserId': json['resolvedByUserId'] == null ? undefined : json['resolvedByUserId'],
         'mappingVersionAttempted': json['mappingVersionAttempted'] == null ? undefined : json['mappingVersionAttempted'],
+        'idempotencyOutcome': json['idempotencyOutcome'] == null ? undefined : json['idempotencyOutcome'],
+        'ingestionId': json['ingestionId'] == null ? undefined : json['ingestionId'],
+        'domainKeyId': json['domainKeyId'] == null ? undefined : json['domainKeyId'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
     };
 }
 
@@ -204,6 +232,10 @@ export function AccountingEventResponseToJSON(value?: AccountingEventResponse | 
         'finalPostingReferenceId': value['finalPostingReferenceId'],
         'resolvedByUserId': value['resolvedByUserId'],
         'mappingVersionAttempted': value['mappingVersionAttempted'],
+        'idempotencyOutcome': value['idempotencyOutcome'],
+        'ingestionId': value['ingestionId'],
+        'domainKeyId': value['domainKeyId'],
+        'invoiceId': value['invoiceId'],
     };
 }
 

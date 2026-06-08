@@ -31,7 +31,7 @@ export interface CreateRequest {
 
 export interface PatchRequest {
     id: string;
-    requestBody: { [key: string]: any; };
+    body: object;
 }
 
 /**
@@ -40,6 +40,7 @@ export interface PatchRequest {
 export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
 
     /**
+     * Create a travel buffer policy that defines extra travel time handling rules
      * Create travel buffer policy
      */
     async createRaw(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelBufferPolicyResponse>> {
@@ -76,6 +77,7 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Create a travel buffer policy that defines extra travel time handling rules
      * Create travel buffer policy
      */
     async create(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelBufferPolicyResponse> {
@@ -84,6 +86,7 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * List configured travel buffer policies available for routing and scheduling decisions
      * List travel buffer policies
      */
     async listRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TravelBufferPolicyResponse>>> {
@@ -110,6 +113,7 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * List configured travel buffer policies available for routing and scheduling decisions
      * List travel buffer policies
      */
     async list(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TravelBufferPolicyResponse>> {
@@ -118,6 +122,7 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Patch an existing travel buffer policy using the provided partial field updates
      * Patch travel buffer policy
      */
     async patchRaw(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelBufferPolicyResponse>> {
@@ -128,10 +133,10 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['requestBody'] == null) {
+        if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
-                'requestBody',
-                'Required parameter "requestBody" was null or undefined when calling patch().'
+                'body',
+                'Required parameter "body" was null or undefined when calling patch().'
             );
         }
 
@@ -154,13 +159,14 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => TravelBufferPolicyResponseFromJSON(jsonValue));
     }
 
     /**
+     * Patch an existing travel buffer policy using the provided partial field updates
      * Patch travel buffer policy
      */
     async patch(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelBufferPolicyResponse> {

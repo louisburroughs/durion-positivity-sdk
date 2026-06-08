@@ -15,15 +15,19 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   LocationInventoryInquiryResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     LocationInventoryInquiryResponseFromJSON,
     LocationInventoryInquiryResponseToJSON,
 } from '../models/index';
 
 export interface GetLocationInventoryRequest {
     locationId: string;
+    sku?: string;
 }
 
 /**
@@ -44,6 +48,10 @@ export class InventoryLocationsApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['sku'] != null) {
+            queryParameters['sku'] = requestParameters['sku'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 

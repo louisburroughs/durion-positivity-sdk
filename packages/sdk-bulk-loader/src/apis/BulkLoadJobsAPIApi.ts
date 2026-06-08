@@ -47,6 +47,10 @@ export interface ListJobsRequest {
     pageable: Pageable;
 }
 
+export interface RetryJobRequest {
+    jobId: string;
+}
+
 /**
  * 
  */
@@ -228,6 +232,49 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
      */
     async listJobs(requestParameters: ListJobsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageBulkLoadJobResponse> {
         const response = await this.listJobsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Retries a bulk load job that has reached the FAILED state, resetting it to CREATED and re-queuing it for processing. The operator can only retry their own jobs. Returns 409 if the job is not in FAILED state.
+     * Retry a failed bulk load job
+     */
+    async retryJobRaw(requestParameters: RetryJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
+        if (requestParameters['jobId'] == null) {
+            throw new runtime.RequiredError(
+                'jobId',
+                'Required parameter "jobId" was null or undefined when calling retryJob().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "bulkImport:status:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/bulk-jobs/{jobId}/retry`.replace(`{${"jobId"}}`, encodeURIComponent(String(requestParameters['jobId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BulkLoadJobResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Retries a bulk load job that has reached the FAILED state, resetting it to CREATED and re-queuing it for processing. The operator can only retry their own jobs. Returns 409 if the job is not in FAILED state.
+     * Retry a failed bulk load job
+     */
+    async retryJob(requestParameters: RetryJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
+        const response = await this.retryJobRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

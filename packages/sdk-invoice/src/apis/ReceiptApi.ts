@@ -63,6 +63,8 @@ export interface SendEmailReceiptRequest {
 export class ReceiptApi extends runtime.BaseAPI {
 
     /**
+     * Generate a receipt for an invoice payment using the requested terminal and template
+     * Generate invoice receipt
      */
     async generateReceiptRaw(requestParameters: GenerateReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -105,6 +107,8 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
+     * Generate a receipt for an invoice payment using the requested terminal and template
+     * Generate invoice receipt
      */
     async generateReceipt(requestParameters: GenerateReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptResponse> {
         const response = await this.generateReceiptRaw(requestParameters, initOverrides);
@@ -112,6 +116,8 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
+     * Record the delivery status for a printed receipt associated with an invoice
+     * Record printed receipt delivery
      */
     async recordPrintDeliveryRaw(requestParameters: RecordPrintDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['invoiceId'] == null) {
@@ -161,12 +167,16 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
+     * Record the delivery status for a printed receipt associated with an invoice
+     * Record printed receipt delivery
      */
     async recordPrintDelivery(requestParameters: RecordPrintDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.recordPrintDeliveryRaw(requestParameters, initOverrides);
     }
 
     /**
+     * Create a reprint of an existing receipt and record the reason for the reprint
+     * Reprint invoice receipt
      */
     async reprintReceiptRaw(requestParameters: ReprintReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -216,6 +226,8 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
+     * Create a reprint of an existing receipt and record the reason for the reprint
+     * Reprint invoice receipt
      */
     async reprintReceipt(requestParameters: ReprintReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptResponse> {
         const response = await this.reprintReceiptRaw(requestParameters, initOverrides);
@@ -223,6 +235,8 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
+     * Send an invoice receipt by email and record the delivery status for the attempt
+     * Email invoice receipt
      */
     async sendEmailReceiptRaw(requestParameters: SendEmailReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['invoiceId'] == null) {
@@ -272,6 +286,8 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
+     * Send an invoice receipt by email and record the delivery status for the attempt
+     * Email invoice receipt
      */
     async sendEmailReceipt(requestParameters: SendEmailReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.sendEmailReceiptRaw(requestParameters, initOverrides);

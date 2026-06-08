@@ -45,16 +45,16 @@ export interface StorageLocationRequest {
     parentStorageLocationId?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof StorageLocationRequest
      */
-    capacity?: { [key: string]: any; };
+    capacity?: object;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof StorageLocationRequest
      */
-    temperature?: { [key: string]: any; };
+    temperature?: object;
 }
 
 /**

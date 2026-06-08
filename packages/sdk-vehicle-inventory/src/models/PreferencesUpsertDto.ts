@@ -21,10 +21,10 @@ import { mapValues } from '../runtime';
 export interface PreferencesUpsertDto {
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof PreferencesUpsertDto
      */
-    preferences?: { [key: string]: any; };
+    preferences?: object;
     /**
      * 
      * @type {string}

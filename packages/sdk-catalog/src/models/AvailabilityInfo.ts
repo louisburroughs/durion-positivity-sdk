@@ -39,7 +39,7 @@ export interface AvailabilityInfo {
      */
     availableToPromiseQuantity?: number;
     /**
-     * Lead time information
+     * 
      * @type {LeadTimeInfo}
      * @memberof AvailabilityInfo
      */

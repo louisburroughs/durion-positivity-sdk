@@ -45,6 +45,7 @@ export interface InitiatePaymentOperationRequest {
 export class PaymentApi extends runtime.BaseAPI {
 
     /**
+     * Capture all or part of a previously authorized invoice payment hold
      * Capture authorized payment hold
      */
     async capturePaymentRaw(requestParameters: CapturePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InitiatePaymentResponse>> {
@@ -95,6 +96,7 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
+     * Capture all or part of a previously authorized invoice payment hold
      * Capture authorized payment hold
      */
     async capturePayment(requestParameters: CapturePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {

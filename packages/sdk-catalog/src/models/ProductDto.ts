@@ -159,13 +159,13 @@ export interface ProductDto {
      */
     productCodeType?: ProductDtoProductCodeTypeEnum;
     /**
-     * Category detail
+     * 
      * @type {CategoryDto}
      * @memberof ProductDto
      */
     category?: CategoryDto;
     /**
-     * Subcategory detail
+     * 
      * @type {SubcategoryDto}
      * @memberof ProductDto
      */

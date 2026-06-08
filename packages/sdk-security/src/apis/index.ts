@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './AdminAccountStateAPIApi';
 export * from './AuditApi';
+export * from './AuditExportsApi';
 export * from './AuthAPIApi';
 export * from './AuthorizationApi';
 export * from './JWTAPIApi';

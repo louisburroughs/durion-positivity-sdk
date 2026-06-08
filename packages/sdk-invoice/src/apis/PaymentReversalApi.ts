@@ -46,6 +46,7 @@ export interface VoidPaymentOperationRequest {
 export class PaymentReversalApi extends runtime.BaseAPI {
 
     /**
+     * Create a refund for a captured invoice payment and record the refund details
      * Refund captured payment
      */
     async refundPaymentRaw(requestParameters: RefundPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RefundPaymentResponse>> {
@@ -96,6 +97,7 @@ export class PaymentReversalApi extends runtime.BaseAPI {
     }
 
     /**
+     * Create a refund for a captured invoice payment and record the refund details
      * Refund captured payment
      */
     async refundPayment(requestParameters: RefundPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RefundPaymentResponse> {
@@ -104,6 +106,7 @@ export class PaymentReversalApi extends runtime.BaseAPI {
     }
 
     /**
+     * Void a previously authorized invoice payment before it is captured
      * Void authorized payment
      */
     async voidPaymentRaw(requestParameters: VoidPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -154,6 +157,7 @@ export class PaymentReversalApi extends runtime.BaseAPI {
     }
 
     /**
+     * Void a previously authorized invoice payment before it is captured
      * Void authorized payment
      */
     async voidPayment(requestParameters: VoidPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

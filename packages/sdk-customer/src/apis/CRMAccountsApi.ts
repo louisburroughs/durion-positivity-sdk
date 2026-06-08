@@ -15,26 +15,35 @@
 
 import * as runtime from '../runtime';
 import type {
+  BillingRuleRef,
+  BillingTermsRef,
   CreateCommercialAccountRequest,
   CreateCommercialAccountResponse,
   CreateVehicleForPartyRequest,
   CreateVehicleForPartyResponse,
+  DuplicateCheckResponse,
   GetAccountTierResponse,
   GetCommunicationPreferencesResponse,
   GetContactsWithRolesResponse,
   GetPartyResponse,
   MergePartiesRequest,
   MergePartiesResponse,
+  Pageable,
   ResolveAccountTierRequest,
   ResolveAccountTierResponse,
   SearchPartiesRequest,
   SearchPartiesResponse,
   UpdateContactRolesRequest,
   UpdateContactRolesResponse,
+  UpsertBillingRulesRequest,
   UpsertCommunicationPreferencesRequest,
   UpsertCommunicationPreferencesResponse,
 } from '../models/index';
 import {
+    BillingRuleRefFromJSON,
+    BillingRuleRefToJSON,
+    BillingTermsRefFromJSON,
+    BillingTermsRefToJSON,
     CreateCommercialAccountRequestFromJSON,
     CreateCommercialAccountRequestToJSON,
     CreateCommercialAccountResponseFromJSON,
@@ -43,6 +52,8 @@ import {
     CreateVehicleForPartyRequestToJSON,
     CreateVehicleForPartyResponseFromJSON,
     CreateVehicleForPartyResponseToJSON,
+    DuplicateCheckResponseFromJSON,
+    DuplicateCheckResponseToJSON,
     GetAccountTierResponseFromJSON,
     GetAccountTierResponseToJSON,
     GetCommunicationPreferencesResponseFromJSON,
@@ -55,6 +66,8 @@ import {
     MergePartiesRequestToJSON,
     MergePartiesResponseFromJSON,
     MergePartiesResponseToJSON,
+    PageableFromJSON,
+    PageableToJSON,
     ResolveAccountTierRequestFromJSON,
     ResolveAccountTierRequestToJSON,
     ResolveAccountTierResponseFromJSON,
@@ -67,11 +80,21 @@ import {
     UpdateContactRolesRequestToJSON,
     UpdateContactRolesResponseFromJSON,
     UpdateContactRolesResponseToJSON,
+    UpsertBillingRulesRequestFromJSON,
+    UpsertBillingRulesRequestToJSON,
     UpsertCommunicationPreferencesRequestFromJSON,
     UpsertCommunicationPreferencesRequestToJSON,
     UpsertCommunicationPreferencesResponseFromJSON,
     UpsertCommunicationPreferencesResponseToJSON,
 } from '../models/index';
+
+export interface BrowsePartiesRequest {
+    pageable: Pageable;
+}
+
+export interface CheckPartyDuplicatesRequest {
+    legalName: string;
+}
 
 export interface CreateCommercialAccountOperationRequest {
     createCommercialAccountRequest?: CreateCommercialAccountRequest;
@@ -117,6 +140,11 @@ export interface UpdateContactRoles1Request {
     updateContactRolesRequest?: UpdateContactRolesRequest;
 }
 
+export interface UpsertBillingRulesOperationRequest {
+    partyId: string;
+    upsertBillingRulesRequest: UpsertBillingRulesRequest;
+}
+
 export interface UpsertCommunicationPreferences1Request {
     partyId: string;
     upsertCommunicationPreferencesRequest?: UpsertCommunicationPreferencesRequest;
@@ -126,6 +154,100 @@ export interface UpsertCommunicationPreferences1Request {
  * 
  */
 export class CRMAccountsApi extends runtime.BaseAPI {
+
+    /**
+     * Browse parties with paging and sorting. The service sorts by legalName ascending by default, appends partyId ascending as a stable tie-breaker whenever the requested sort list does not explicitly include partyId, and applies case-insensitive legalName sorting.
+     * Browse parties
+     */
+    async browsePartiesRaw(requestParameters: BrowsePartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchPartiesResponse>> {
+        if (requestParameters['pageable'] == null) {
+            throw new runtime.RequiredError(
+                'pageable',
+                'Required parameter "pageable" was null or undefined when calling browseParties().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/accounts/parties`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SearchPartiesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Browse parties with paging and sorting. The service sorts by legalName ascending by default, appends partyId ascending as a stable tie-breaker whenever the requested sort list does not explicitly include partyId, and applies case-insensitive legalName sorting.
+     * Browse parties
+     */
+    async browseParties(requestParameters: BrowsePartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchPartiesResponse> {
+        const response = await this.browsePartiesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Search for existing parties with a similar legal name to detect potential duplicates before creating a new commercial account.
+     * Check for duplicate commercial parties
+     */
+    async checkPartyDuplicatesRaw(requestParameters: CheckPartyDuplicatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DuplicateCheckResponse>> {
+        if (requestParameters['legalName'] == null) {
+            throw new runtime.RequiredError(
+                'legalName',
+                'Required parameter "legalName" was null or undefined when calling checkPartyDuplicates().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['legalName'] != null) {
+            queryParameters['legalName'] = requestParameters['legalName'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:search"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/accounts/parties/duplicate-check`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => DuplicateCheckResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Search for existing parties with a similar legal name to detect potential duplicates before creating a new commercial account.
+     * Check for duplicate commercial parties
+     */
+    async checkPartyDuplicates(requestParameters: CheckPartyDuplicatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DuplicateCheckResponse> {
+        const response = await this.checkPartyDuplicatesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Create a new commercial party/account in the CRM system
@@ -385,6 +507,42 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the reference list of all available billing terms. This is a static reference endpoint; it does not vary per party or account.
+     * List billing terms
+     */
+    async listBillingTermsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<BillingTermsRef>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/billing-terms`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BillingTermsRefFromJSON));
+    }
+
+    /**
+     * Returns the reference list of all available billing terms. This is a static reference endpoint; it does not vary per party or account.
+     * List billing terms
+     */
+    async listBillingTerms(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<BillingTermsRef>> {
+        const response = await this.listBillingTermsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Merge multiple parties into a single party record
      * Merge parties
      */
@@ -565,6 +723,59 @@ export class CRMAccountsApi extends runtime.BaseAPI {
      */
     async updateContactRoles1(requestParameters: UpdateContactRoles1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UpdateContactRolesResponse> {
         const response = await this.updateContactRoles1Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Create or update the billing rules configuration for a commercial party.
+     * Upsert billing rules for a party
+     */
+    async upsertBillingRulesRaw(requestParameters: UpsertBillingRulesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillingRuleRef>> {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError(
+                'partyId',
+                'Required parameter "partyId" was null or undefined when calling upsertBillingRules().'
+            );
+        }
+
+        if (requestParameters['upsertBillingRulesRequest'] == null) {
+            throw new runtime.RequiredError(
+                'upsertBillingRulesRequest',
+                'Required parameter "upsertBillingRulesRequest" was null or undefined when calling upsertBillingRules().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:billing_rules:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/accounts/parties/{partyId}/billing-rules`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpsertBillingRulesRequestToJSON(requestParameters['upsertBillingRulesRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillingRuleRefFromJSON(jsonValue));
+    }
+
+    /**
+     * Create or update the billing rules configuration for a commercial party.
+     * Upsert billing rules for a party
+     */
+    async upsertBillingRules(requestParameters: UpsertBillingRulesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillingRuleRef> {
+        const response = await this.upsertBillingRulesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

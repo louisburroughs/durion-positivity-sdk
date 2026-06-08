@@ -165,7 +165,7 @@ export interface WorkorderDetailResponse {
      */
     taxTotal?: number;
     /**
-     * Capability flags indicating allowed actions
+     * 
      * @type {WorkorderCapabilities}
      * @memberof WorkorderDetailResponse
      */

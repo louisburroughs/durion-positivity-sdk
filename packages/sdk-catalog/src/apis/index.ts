@@ -8,4 +8,5 @@ export * from './PriceBookAPIApi';
 export * from './ProductMSRPAPIApi';
 export * from './ProductsAPIApi';
 export * from './SupplierItemCostAPIApi';
+export * from './SupplierItemCostListAPIApi';
 export * from './UOMConversionAPIApi';

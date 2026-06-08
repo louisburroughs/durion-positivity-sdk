@@ -19,6 +19,7 @@ import type {
   AuditEventCreatedResponse,
   AuditLogEventDto,
   AuditLogEventRequest,
+  PageAuditLogEventDto,
   PricingSnapshotCreatedResponse,
   PricingSnapshotDto,
   PricingSnapshotRequest,
@@ -32,6 +33,8 @@ import {
     AuditLogEventDtoToJSON,
     AuditLogEventRequestFromJSON,
     AuditLogEventRequestToJSON,
+    PageAuditLogEventDtoFromJSON,
+    PageAuditLogEventDtoToJSON,
     PricingSnapshotCreatedResponseFromJSON,
     PricingSnapshotCreatedResponseToJSON,
     PricingSnapshotDtoFromJSON,
@@ -56,12 +59,20 @@ export interface GetPricingSnapshotRequest {
     snapshotId: string;
 }
 
-export interface SearchEventsRequest {
-    entityId?: string;
-    entityType?: string;
+export interface SearchAuditEventsRequest {
+    fromDate?: Date;
+    toDate?: Date;
+    actorId?: string;
+    workorderId?: string;
+    movementId?: string;
+    productId?: string;
+    sku?: string;
     eventType?: string;
-    from?: Date;
-    to?: Date;
+    aggregateId?: string;
+    correlationId?: string;
+    reasonCode?: string;
+    pageToken?: string;
+    locationIds?: Array<string>;
 }
 
 /**
@@ -89,7 +100,7 @@ export class AuditApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+            const tokenString = await token("bearerAuth", []);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -135,7 +146,7 @@ export class AuditApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+            const tokenString = await token("bearerAuth", []);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -172,7 +183,7 @@ export class AuditApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+            const tokenString = await token("bearerAuth", []);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -214,7 +225,7 @@ export class AuditApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:audit:view"]);
+            const tokenString = await token("bearerAuth", []);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -257,7 +268,7 @@ export class AuditApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:audit:view"]);
+            const tokenString = await token("bearerAuth", []);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -283,37 +294,69 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches audit events by event type alone or by entity identity with an optional time range.
+     * Searches audit events using rich filter criteria with pagination support.
      * Search audit events
      */
-    async searchEventsRaw(requestParameters: SearchEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AuditLogEventDto>>> {
+    async searchAuditEventsRaw(requestParameters: SearchAuditEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageAuditLogEventDto>> {
         const queryParameters: any = {};
 
-        if (requestParameters['entityId'] != null) {
-            queryParameters['entityId'] = requestParameters['entityId'];
+        if (requestParameters['fromDate'] != null) {
+            queryParameters['fromDate'] = (requestParameters['fromDate'] as any).toISOString();
         }
 
-        if (requestParameters['entityType'] != null) {
-            queryParameters['entityType'] = requestParameters['entityType'];
+        if (requestParameters['toDate'] != null) {
+            queryParameters['toDate'] = (requestParameters['toDate'] as any).toISOString();
+        }
+
+        if (requestParameters['actorId'] != null) {
+            queryParameters['actorId'] = requestParameters['actorId'];
+        }
+
+        if (requestParameters['workorderId'] != null) {
+            queryParameters['workorderId'] = requestParameters['workorderId'];
+        }
+
+        if (requestParameters['movementId'] != null) {
+            queryParameters['movementId'] = requestParameters['movementId'];
+        }
+
+        if (requestParameters['productId'] != null) {
+            queryParameters['productId'] = requestParameters['productId'];
+        }
+
+        if (requestParameters['sku'] != null) {
+            queryParameters['sku'] = requestParameters['sku'];
         }
 
         if (requestParameters['eventType'] != null) {
             queryParameters['eventType'] = requestParameters['eventType'];
         }
 
-        if (requestParameters['from'] != null) {
-            queryParameters['from'] = (requestParameters['from'] as any).toISOString();
+        if (requestParameters['aggregateId'] != null) {
+            queryParameters['aggregateId'] = requestParameters['aggregateId'];
         }
 
-        if (requestParameters['to'] != null) {
-            queryParameters['to'] = (requestParameters['to'] as any).toISOString();
+        if (requestParameters['correlationId'] != null) {
+            queryParameters['correlationId'] = requestParameters['correlationId'];
+        }
+
+        if (requestParameters['reasonCode'] != null) {
+            queryParameters['reasonCode'] = requestParameters['reasonCode'];
+        }
+
+        if (requestParameters['pageToken'] != null) {
+            queryParameters['pageToken'] = requestParameters['pageToken'];
+        }
+
+        if (requestParameters['locationIds'] != null) {
+            queryParameters['locationIds'] = requestParameters['locationIds'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:audit:view"]);
+            const tokenString = await token("bearerAuth", []);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -326,15 +369,15 @@ export class AuditApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditLogEventDtoFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageAuditLogEventDtoFromJSON(jsonValue));
     }
 
     /**
-     * Searches audit events by event type alone or by entity identity with an optional time range.
+     * Searches audit events using rich filter criteria with pagination support.
      * Search audit events
      */
-    async searchEvents(requestParameters: SearchEventsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AuditLogEventDto>> {
-        const response = await this.searchEventsRaw(requestParameters, initOverrides);
+    async searchAuditEvents(requestParameters: SearchAuditEventsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageAuditLogEventDto> {
+        const response = await this.searchAuditEventsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -349,7 +392,7 @@ export class AuditApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:audit:create"]);
+            const tokenString = await token("bearerAuth", []);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

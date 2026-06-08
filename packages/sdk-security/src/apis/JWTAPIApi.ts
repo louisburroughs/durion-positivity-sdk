@@ -78,8 +78,8 @@ export interface ValidateTokenRequest {
 export class JWTAPIApi extends runtime.BaseAPI {
 
     /**
-     * Authenticate and receive both access token (1-hour) and refresh token (7-day). See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
-     * Issue JWT token pair (access + refresh)
+     * Privileged internal endpoint that issues both access token (1-hour) and refresh token (7-day). Requires authority security:token:issue_internal. See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
+     * Issue privileged JWT token pair (access + refresh)
      */
     async generateTokenPairRaw(requestParameters: GenerateTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
         if (requestParameters['tokenPairRequest'] == null) {
@@ -95,6 +95,14 @@ export class JWTAPIApi extends runtime.BaseAPI {
 
         headerParameters['Content-Type'] = 'application/json';
 
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:token:issue_internal"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
         const response = await this.request({
             path: `/v1/auth/token-pair`,
             method: 'POST',
@@ -107,8 +115,8 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Authenticate and receive both access token (1-hour) and refresh token (7-day). See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
-     * Issue JWT token pair (access + refresh)
+     * Privileged internal endpoint that issues both access token (1-hour) and refresh token (7-day). Requires authority security:token:issue_internal. See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
+     * Issue privileged JWT token pair (access + refresh)
      */
     async generateTokenPair(requestParameters: GenerateTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
         const response = await this.generateTokenPairRaw(requestParameters, initOverrides);

@@ -28,12 +28,6 @@ import {
 export interface PricingSnapshotRequest {
     /**
      * 
-     * @type {any}
-     * @memberof PricingSnapshotRequest
-     */
-    quoteContext?: any;
-    /**
-     * 
      * @type {number}
      * @memberof PricingSnapshotRequest
      */
@@ -63,7 +57,6 @@ export function PricingSnapshotRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'quoteContext': json['quoteContext'] == null ? undefined : json['quoteContext'],
         'finalPrice': json['finalPrice'] == null ? undefined : json['finalPrice'],
         'evaluationSteps': json['evaluationSteps'] == null ? undefined : ((json['evaluationSteps'] as Array<any>).map(PricingRuleTraceEntryRequestFromJSON)),
     };
@@ -75,7 +68,6 @@ export function PricingSnapshotRequestToJSON(value?: PricingSnapshotRequest | nu
     }
     return {
         
-        'quoteContext': value['quoteContext'],
         'finalPrice': value['finalPrice'],
         'evaluationSteps': value['evaluationSteps'] == null ? undefined : ((value['evaluationSteps'] as Array<any>).map(PricingRuleTraceEntryRequestToJSON)),
     };

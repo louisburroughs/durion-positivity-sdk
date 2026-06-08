@@ -41,11 +41,11 @@ export interface CreateLaborPerformedRequest {
 }
 
 export interface GetJobTimeTotalsRequest {
-    startDate: Date;
-    endDate: Date;
+    startDate: string;
+    endDate: string;
     timezone: string;
     locationId?: string;
-    technicianIds?: Array<string>;
+    technicianIds?: string;
 }
 
 export interface StartTimerRequest {
@@ -184,11 +184,11 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
         const queryParameters: any = {};
 
         if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
+            queryParameters['startDate'] = requestParameters['startDate'];
         }
 
         if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
+            queryParameters['endDate'] = requestParameters['endDate'];
         }
 
         if (requestParameters['timezone'] != null) {

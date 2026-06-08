@@ -25,12 +25,17 @@ import {
     PutawayTaskResponseToJSON,
 } from '../models/index';
 
-export interface ClaimTaskRequest {
+export interface ClaimPutawayTaskRequest {
     taskId: string;
 }
 
-export interface GenerateTasksRequest {
+export interface GeneratePutawayTasksOperationRequest {
     generatePutawayTasksRequest: GeneratePutawayTasksRequest;
+}
+
+export interface ListPutawayTasksRequest {
+    locationId?: string;
+    storageLocationId?: string;
 }
 
 /**
@@ -42,11 +47,11 @@ export class PutawayApi extends runtime.BaseAPI {
      * Claims an available putaway task for the current actor.
      * Claim a putaway task
      */
-    async claimTaskRaw(requestParameters: ClaimTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PutawayTaskResponse>> {
+    async claimPutawayTaskRaw(requestParameters: ClaimPutawayTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PutawayTaskResponse>> {
         if (requestParameters['taskId'] == null) {
             throw new runtime.RequiredError(
                 'taskId',
-                'Required parameter "taskId" was null or undefined when calling claimTask().'
+                'Required parameter "taskId" was null or undefined when calling claimPutawayTask().'
             );
         }
 
@@ -76,8 +81,8 @@ export class PutawayApi extends runtime.BaseAPI {
      * Claims an available putaway task for the current actor.
      * Claim a putaway task
      */
-    async claimTask(requestParameters: ClaimTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PutawayTaskResponse> {
-        const response = await this.claimTaskRaw(requestParameters, initOverrides);
+    async claimPutawayTask(requestParameters: ClaimPutawayTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PutawayTaskResponse> {
+        const response = await this.claimPutawayTaskRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -85,11 +90,11 @@ export class PutawayApi extends runtime.BaseAPI {
      * Generates putaway tasks for received inventory lines.
      * Generate putaway tasks
      */
-    async generateTasksRaw(requestParameters: GenerateTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PutawayTaskResponse>>> {
+    async generatePutawayTasksRaw(requestParameters: GeneratePutawayTasksOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PutawayTaskResponse>>> {
         if (requestParameters['generatePutawayTasksRequest'] == null) {
             throw new runtime.RequiredError(
                 'generatePutawayTasksRequest',
-                'Required parameter "generatePutawayTasksRequest" was null or undefined when calling generateTasks().'
+                'Required parameter "generatePutawayTasksRequest" was null or undefined when calling generatePutawayTasks().'
             );
         }
 
@@ -122,8 +127,8 @@ export class PutawayApi extends runtime.BaseAPI {
      * Generates putaway tasks for received inventory lines.
      * Generate putaway tasks
      */
-    async generateTasks(requestParameters: GenerateTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PutawayTaskResponse>> {
-        const response = await this.generateTasksRaw(requestParameters, initOverrides);
+    async generatePutawayTasks(requestParameters: GeneratePutawayTasksOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PutawayTaskResponse>> {
+        const response = await this.generatePutawayTasksRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -131,8 +136,16 @@ export class PutawayApi extends runtime.BaseAPI {
      * Returns all currently available putaway tasks.
      * List available putaway tasks
      */
-    async getAvailableTasksRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PutawayTaskResponse>>> {
+    async listPutawayTasksRaw(requestParameters: ListPutawayTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PutawayTaskResponse>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['storageLocationId'] != null) {
+            queryParameters['storageLocationId'] = requestParameters['storageLocationId'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -158,8 +171,8 @@ export class PutawayApi extends runtime.BaseAPI {
      * Returns all currently available putaway tasks.
      * List available putaway tasks
      */
-    async getAvailableTasks(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PutawayTaskResponse>> {
-        const response = await this.getAvailableTasksRaw(initOverrides);
+    async listPutawayTasks(requestParameters: ListPutawayTasksRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PutawayTaskResponse>> {
+        const response = await this.listPutawayTasksRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
