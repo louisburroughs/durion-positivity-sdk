@@ -31,7 +31,7 @@ export interface Create1Request {
 
 export interface Patch1Request {
     id: string;
-    requestBody: { [key: string]: any; };
+    body: object;
 }
 
 /**
@@ -40,6 +40,7 @@ export interface Patch1Request {
 export class ServiceAreaAPIApi extends runtime.BaseAPI {
 
     /**
+     * Create a service area that defines where a location can provide service coverage
      * Create service area
      */
     async create1Raw(requestParameters: Create1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
@@ -76,6 +77,7 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Create a service area that defines where a location can provide service coverage
      * Create service area
      */
     async create1(requestParameters: Create1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {
@@ -84,6 +86,7 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * List configured service areas available for dispatching and coverage management
      * List service areas
      */
     async list1Raw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServiceAreaResponse>>> {
@@ -110,6 +113,7 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * List configured service areas available for dispatching and coverage management
      * List service areas
      */
     async list1(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServiceAreaResponse>> {
@@ -118,6 +122,7 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Patch an existing service area using the provided partial field updates
      * Patch service area
      */
     async patch1Raw(requestParameters: Patch1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
@@ -128,10 +133,10 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['requestBody'] == null) {
+        if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
-                'requestBody',
-                'Required parameter "requestBody" was null or undefined when calling patch1().'
+                'body',
+                'Required parameter "body" was null or undefined when calling patch1().'
             );
         }
 
@@ -154,13 +159,14 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => ServiceAreaResponseFromJSON(jsonValue));
     }
 
     /**
+     * Patch an existing service area using the provided partial field updates
      * Patch service area
      */
     async patch1(requestParameters: Patch1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {

@@ -51,6 +51,7 @@ export interface UpdateCostStructureRequest {
 export class SupplierItemCostAPIApi extends runtime.BaseAPI {
 
     /**
+     * Creates a supplier-specific item cost structure with the submitted supplier, item, and tier details.
      * Create supplier cost structure
      */
     async createCostStructureRaw(requestParameters: CreateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SupplierItemCostDto>> {
@@ -87,6 +88,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates a supplier-specific item cost structure with the submitted supplier, item, and tier details.
      * Create supplier cost structure
      */
     async createCostStructure(requestParameters: CreateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SupplierItemCostDto> {
@@ -95,6 +97,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Deletes the supplier item cost structure identified by the supplied cost structure ID.
      * Delete supplier cost structure
      */
     async deleteCostStructureRaw(requestParameters: DeleteCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -128,6 +131,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Deletes the supplier item cost structure identified by the supplied cost structure ID.
      * Delete supplier cost structure
      */
     async deleteCostStructure(requestParameters: DeleteCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -135,6 +139,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the supplier item cost structure identified by the supplied cost structure ID.
      * Get supplier cost structure
      */
     async getCostStructureRaw(requestParameters: GetCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SupplierItemCostDto>> {
@@ -168,6 +173,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the supplier item cost structure identified by the supplied cost structure ID.
      * Get supplier cost structure
      */
     async getCostStructure(requestParameters: GetCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SupplierItemCostDto> {
@@ -176,6 +182,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Updates the supplier item cost structure identified by the supplied cost structure ID.
      * Update supplier cost structure
      */
     async updateCostStructureRaw(requestParameters: UpdateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SupplierItemCostDto>> {
@@ -219,6 +226,7 @@ export class SupplierItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Updates the supplier item cost structure identified by the supplied cost structure ID.
      * Update supplier cost structure
      */
     async updateCostStructure(requestParameters: UpdateCostStructureRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SupplierItemCostDto> {

@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Work order creation request
+ * Request DTO for workorder creation
  * @export
  * @interface CreateWorkorderRequest
  */

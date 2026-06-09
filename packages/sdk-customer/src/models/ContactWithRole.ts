@@ -63,7 +63,7 @@ export interface ContactWithRole {
      */
     effectiveTo?: Date;
     /**
-     * Individual person details
+     * 
      * @type {IndividualDetails}
      * @memberof ContactWithRole
      */

@@ -35,7 +35,7 @@ export interface GetWipDetailRequest {
 export interface ListWipRequest {
     locationId: string;
     pageable: Pageable;
-    multiLocation?: boolean;
+    multiLocation?: string;
 }
 
 /**

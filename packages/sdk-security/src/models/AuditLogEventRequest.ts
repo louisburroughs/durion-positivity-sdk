@@ -43,24 +43,6 @@ export interface AuditLogEventRequest {
      * @memberof AuditLogEventRequest
      */
     entityType?: string;
-    /**
-     * 
-     * @type {any}
-     * @memberof AuditLogEventRequest
-     */
-    oldValue?: any;
-    /**
-     * 
-     * @type {any}
-     * @memberof AuditLogEventRequest
-     */
-    newValue?: any;
-    /**
-     * 
-     * @type {any}
-     * @memberof AuditLogEventRequest
-     */
-    context?: any;
 }
 
 /**
@@ -84,9 +66,6 @@ export function AuditLogEventRequestFromJSONTyped(json: any, ignoreDiscriminator
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
         'entityId': json['entityId'] == null ? undefined : json['entityId'],
         'entityType': json['entityType'] == null ? undefined : json['entityType'],
-        'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
-        'newValue': json['newValue'] == null ? undefined : json['newValue'],
-        'context': json['context'] == null ? undefined : json['context'],
     };
 }
 
@@ -100,9 +79,6 @@ export function AuditLogEventRequestToJSON(value?: AuditLogEventRequest | null):
         'actorId': value['actorId'],
         'entityId': value['entityId'],
         'entityType': value['entityType'],
-        'oldValue': value['oldValue'],
-        'newValue': value['newValue'],
-        'context': value['context'],
     };
 }
 

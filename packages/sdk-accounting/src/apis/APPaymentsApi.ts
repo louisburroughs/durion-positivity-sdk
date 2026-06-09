@@ -17,15 +17,18 @@ import * as runtime from '../runtime';
 import type {
   APPaymentResponse,
   ExecuteAPPaymentRequest,
-  VendorBillSummaryResponse,
+  PageVendorBillSummaryResponse,
+  Pageable,
 } from '../models/index';
 import {
     APPaymentResponseFromJSON,
     APPaymentResponseToJSON,
     ExecuteAPPaymentRequestFromJSON,
     ExecuteAPPaymentRequestToJSON,
-    VendorBillSummaryResponseFromJSON,
-    VendorBillSummaryResponseToJSON,
+    PageVendorBillSummaryResponseFromJSON,
+    PageVendorBillSummaryResponseToJSON,
+    PageableFromJSON,
+    PageableToJSON,
 } from '../models/index';
 
 export interface ExecutePaymentRequest {
@@ -40,8 +43,9 @@ export interface GetPaymentByRefRequest {
     paymentRef: string;
 }
 
-export interface ListBillsRequest {
-    vendorId: string;
+export interface ListApBillsRequest {
+    pageable: Pageable;
+    vendorId?: string;
 }
 
 /**
@@ -182,14 +186,14 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID.
+     * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID. Sort order is server-controlled.
      * List eligible vendor bills
      */
-    async listBillsRaw(requestParameters: ListBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VendorBillSummaryResponse>>> {
-        if (requestParameters['vendorId'] == null) {
+    async listApBillsRaw(requestParameters: ListApBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageVendorBillSummaryResponse>> {
+        if (requestParameters['pageable'] == null) {
             throw new runtime.RequiredError(
-                'vendorId',
-                'Required parameter "vendorId" was null or undefined when calling listBills().'
+                'pageable',
+                'Required parameter "pageable" was null or undefined when calling listApBills().'
             );
         }
 
@@ -197,6 +201,10 @@ export class APPaymentsApi extends runtime.BaseAPI {
 
         if (requestParameters['vendorId'] != null) {
             queryParameters['vendorId'] = requestParameters['vendorId'];
+        }
+
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -216,15 +224,15 @@ export class APPaymentsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(VendorBillSummaryResponseFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageVendorBillSummaryResponseFromJSON(jsonValue));
     }
 
     /**
-     * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID.
+     * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID. Sort order is server-controlled.
      * List eligible vendor bills
      */
-    async listBills(requestParameters: ListBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VendorBillSummaryResponse>> {
-        const response = await this.listBillsRaw(requestParameters, initOverrides);
+    async listApBills(requestParameters: ListApBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillSummaryResponse> {
+        const response = await this.listApBillsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

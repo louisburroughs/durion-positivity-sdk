@@ -51,10 +51,10 @@ export interface AccountingEventSubmitRequest {
     transactionDate?: Date;
     /**
      * Event-specific payload content
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof AccountingEventSubmitRequest
      */
-    payload: { [key: string]: any; };
+    payload: object;
 }
 
 /**

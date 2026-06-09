@@ -14,55 +14,55 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Filter criteria for querying the shop audit trail. At least one field must be non-null.
  * @export
  * @interface ShopAuditFilter
  */
 export interface ShopAuditFilter {
     /**
-     * 
+     * Workorder UUID to filter by - one word per workspace naming policy
      * @type {string}
      * @memberof ShopAuditFilter
      */
     workorderId?: string;
     /**
-     * 
+     * Appointment UUID to filter by
      * @type {string}
      * @memberof ShopAuditFilter
      */
     appointmentId?: string;
     /**
-     * 
+     * Mechanic user ID to filter by
      * @type {string}
      * @memberof ShopAuditFilter
      */
     mechanicId?: string;
     /**
-     * 
+     * Actor user ID to filter by
      * @type {string}
      * @memberof ShopAuditFilter
      */
     actorUserId?: string;
     /**
-     * 
+     * Specific audit event type to filter by
      * @type {string}
      * @memberof ShopAuditFilter
      */
     eventType?: ShopAuditFilterEventTypeEnum;
     /**
-     * 
+     * Location ID to filter by
      * @type {string}
      * @memberof ShopAuditFilter
      */
     locationId?: string;
     /**
-     * 
+     * Inclusive start timestamp for date-time range filter
      * @type {Date}
      * @memberof ShopAuditFilter
      */
     fromDateTime?: Date;
     /**
-     * 
+     * Inclusive end timestamp for date-time range filter
      * @type {Date}
      * @memberof ShopAuditFilter
      */

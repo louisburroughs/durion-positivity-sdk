@@ -45,19 +45,19 @@ export interface PriceQuoteResponse {
      */
     quantity?: number;
     /**
-     * Manufacturer suggested retail price
+     * 
      * @type {MoneyAmount}
      * @memberof PriceQuoteResponse
      */
     msrp?: MoneyAmount;
     /**
-     * Final unit price after applying applicable rules
+     * 
      * @type {MoneyAmount}
      * @memberof PriceQuoteResponse
      */
     unitPrice?: MoneyAmount;
     /**
-     * Extended price (unit price multiplied by quantity)
+     * 
      * @type {MoneyAmount}
      * @memberof PriceQuoteResponse
      */

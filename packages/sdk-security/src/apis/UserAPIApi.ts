@@ -30,11 +30,11 @@ import {
 
 export interface AssignRolesRequest {
     username: string;
-    requestBody: { [key: string]: any; };
+    body: object;
 }
 
 export interface CreateUserRequest {
-    requestBody: { [key: string]: any; };
+    body: object;
 }
 
 export interface DeleteUserRequest {
@@ -67,10 +67,10 @@ export class UserAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['requestBody'] == null) {
+        if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
-                'requestBody',
-                'Required parameter "requestBody" was null or undefined when calling assignRoles().'
+                'body',
+                'Required parameter "body" was null or undefined when calling assignRoles().'
             );
         }
 
@@ -93,7 +93,7 @@ export class UserAPIApi extends runtime.BaseAPI {
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserDtoFromJSON(jsonValue));
@@ -113,10 +113,10 @@ export class UserAPIApi extends runtime.BaseAPI {
      * Create a new user
      */
     async createUserRaw(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
-        if (requestParameters['requestBody'] == null) {
+        if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
-                'requestBody',
-                'Required parameter "requestBody" was null or undefined when calling createUser().'
+                'body',
+                'Required parameter "body" was null or undefined when calling createUser().'
             );
         }
 
@@ -139,7 +139,7 @@ export class UserAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserDtoFromJSON(jsonValue));

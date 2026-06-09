@@ -16,20 +16,27 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  ShortageResolutionRequest,
-  ShortageResolutionResponse,
+  ShortageOptionDto,
+  ShortageResolutionResultDto,
+  ShortageResolveRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    ShortageResolutionRequestFromJSON,
-    ShortageResolutionRequestToJSON,
-    ShortageResolutionResponseFromJSON,
-    ShortageResolutionResponseToJSON,
+    ShortageOptionDtoFromJSON,
+    ShortageOptionDtoToJSON,
+    ShortageResolutionResultDtoFromJSON,
+    ShortageResolutionResultDtoToJSON,
+    ShortageResolveRequestFromJSON,
+    ShortageResolveRequestToJSON,
 } from '../models/index';
 
+export interface ListShortageOptionsRequest {
+    allocationId: string;
+}
+
 export interface ResolveShortageRequest {
-    shortageResolutionRequest: ShortageResolutionRequest;
+    shortageResolveRequest: ShortageResolveRequest;
 }
 
 /**
@@ -38,14 +45,61 @@ export interface ResolveShortageRequest {
 export class ShortageResolutionApi extends runtime.BaseAPI {
 
     /**
-     * Returns candidate shortage resolution options from substitutes and external availability
+     * Returns available shortage resolution options for an allocation.
+     * List shortage options
+     */
+    async listShortageOptionsRaw(requestParameters: ListShortageOptionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ShortageOptionDto>>> {
+        if (requestParameters['allocationId'] == null) {
+            throw new runtime.RequiredError(
+                'allocationId',
+                'Required parameter "allocationId" was null or undefined when calling listShortageOptions().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['allocationId'] != null) {
+            queryParameters['allocationId'] = requestParameters['allocationId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:shortage:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/shortage/options`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ShortageOptionDtoFromJSON));
+    }
+
+    /**
+     * Returns available shortage resolution options for an allocation.
+     * List shortage options
+     */
+    async listShortageOptions(requestParameters: ListShortageOptionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ShortageOptionDto>> {
+        const response = await this.listShortageOptionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Resolves inventory shortage using a selected strategy.
      * Resolve shortage
      */
-    async resolveShortageRaw(requestParameters: ResolveShortageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ShortageResolutionResponse>> {
-        if (requestParameters['shortageResolutionRequest'] == null) {
+    async resolveShortageRaw(requestParameters: ResolveShortageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ShortageResolutionResultDto>> {
+        if (requestParameters['shortageResolveRequest'] == null) {
             throw new runtime.RequiredError(
-                'shortageResolutionRequest',
-                'Required parameter "shortageResolutionRequest" was null or undefined when calling resolveShortage().'
+                'shortageResolveRequest',
+                'Required parameter "shortageResolveRequest" was null or undefined when calling resolveShortage().'
             );
         }
 
@@ -57,28 +111,28 @@ export class ShortageResolutionApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["inventory:shortages:resolve"]);
+            const tokenString = await token("bearerAuth", ["inventory:shortage:resolve"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
         const response = await this.request({
-            path: `/v1/inventory/allocations/shortages/resolve`,
+            path: `/v1/inventory/shortage/resolve`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ShortageResolutionRequestToJSON(requestParameters['shortageResolutionRequest']),
+            body: ShortageResolveRequestToJSON(requestParameters['shortageResolveRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ShortageResolutionResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ShortageResolutionResultDtoFromJSON(jsonValue));
     }
 
     /**
-     * Returns candidate shortage resolution options from substitutes and external availability
+     * Resolves inventory shortage using a selected strategy.
      * Resolve shortage
      */
-    async resolveShortage(requestParameters: ResolveShortageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ShortageResolutionResponse> {
+    async resolveShortage(requestParameters: ResolveShortageRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ShortageResolutionResultDto> {
         const response = await this.resolveShortageRaw(requestParameters, initOverrides);
         return await response.value();
     }

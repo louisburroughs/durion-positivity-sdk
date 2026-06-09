@@ -81,10 +81,10 @@ export interface BillingRuleRefResponse {
     currency?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof BillingRuleRefResponse
      */
-    extensions?: { [key: string]: any; };
+    extensions?: object;
 }
 
 /**

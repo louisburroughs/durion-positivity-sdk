@@ -16,10 +16,22 @@
 import * as runtime from '../runtime';
 import type {
   AuditRecordResponse,
+  BulkCorrectionItem,
+  BulkCorrectionRequest,
+  BulkCorrectionResponse,
+  CorrectionResultDto,
 } from '../models/index';
 import {
     AuditRecordResponseFromJSON,
     AuditRecordResponseToJSON,
+    BulkCorrectionItemFromJSON,
+    BulkCorrectionItemToJSON,
+    BulkCorrectionRequestFromJSON,
+    BulkCorrectionRequestToJSON,
+    BulkCorrectionResponseFromJSON,
+    BulkCorrectionResponseToJSON,
+    CorrectionResultDtoFromJSON,
+    CorrectionResultDtoToJSON,
 } from '../models/index';
 
 export interface DownloadErrorReportRequest {
@@ -28,6 +40,16 @@ export interface DownloadErrorReportRequest {
 
 export interface GetAuditRecordsRequest {
     jobId: string;
+}
+
+export interface SubmitCorrectionsRequest {
+    jobId: string;
+    bulkCorrectionRequest: BulkCorrectionRequest;
+}
+
+export interface SubmitSingleCorrectionRequest {
+    jobId: string;
+    bulkCorrectionItem: BulkCorrectionItem;
 }
 
 /**
@@ -118,6 +140,112 @@ export class ReviewQueueAPIApi extends runtime.BaseAPI {
      */
     async getAuditRecords(requestParameters: GetAuditRecordsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AuditRecordResponse>> {
         const response = await this.getAuditRecordsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Submits corrected data for one or more error records from a bulk import audit. The job must be in FAILED state to accept corrections. Returns 409 if the job is not in a correctable state.
+     * Submit corrected records for a bulk load job
+     */
+    async submitCorrectionsRaw(requestParameters: SubmitCorrectionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkCorrectionResponse>> {
+        if (requestParameters['jobId'] == null) {
+            throw new runtime.RequiredError(
+                'jobId',
+                'Required parameter "jobId" was null or undefined when calling submitCorrections().'
+            );
+        }
+
+        if (requestParameters['bulkCorrectionRequest'] == null) {
+            throw new runtime.RequiredError(
+                'bulkCorrectionRequest',
+                'Required parameter "bulkCorrectionRequest" was null or undefined when calling submitCorrections().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "bulkImport:status:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/bulk-jobs/{jobId}/corrections`.replace(`{${"jobId"}}`, encodeURIComponent(String(requestParameters['jobId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BulkCorrectionRequestToJSON(requestParameters['bulkCorrectionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BulkCorrectionResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Submits corrected data for one or more error records from a bulk import audit. The job must be in FAILED state to accept corrections. Returns 409 if the job is not in a correctable state.
+     * Submit corrected records for a bulk load job
+     */
+    async submitCorrections(requestParameters: SubmitCorrectionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkCorrectionResponse> {
+        const response = await this.submitCorrectionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Submits a corrected data record for a single failed audit entry from a bulk import job. The job must be in FAILED state. Returns the acceptance or rejection status for the submitted record.
+     * Submit a single correction record
+     */
+    async submitSingleCorrectionRaw(requestParameters: SubmitSingleCorrectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CorrectionResultDto>> {
+        if (requestParameters['jobId'] == null) {
+            throw new runtime.RequiredError(
+                'jobId',
+                'Required parameter "jobId" was null or undefined when calling submitSingleCorrection().'
+            );
+        }
+
+        if (requestParameters['bulkCorrectionItem'] == null) {
+            throw new runtime.RequiredError(
+                'bulkCorrectionItem',
+                'Required parameter "bulkCorrectionItem" was null or undefined when calling submitSingleCorrection().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "bulkImport:status:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/bulk-jobs/{jobId}/corrections/single`.replace(`{${"jobId"}}`, encodeURIComponent(String(requestParameters['jobId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BulkCorrectionItemToJSON(requestParameters['bulkCorrectionItem']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CorrectionResultDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Submits a corrected data record for a single failed audit entry from a bulk import job. The job must be in FAILED state. Returns the acceptance or rejection status for the submitted record.
+     * Submit a single correction record
+     */
+    async submitSingleCorrection(requestParameters: SubmitSingleCorrectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CorrectionResultDto> {
+        const response = await this.submitSingleCorrectionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

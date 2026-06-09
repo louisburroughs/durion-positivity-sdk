@@ -50,8 +50,8 @@ export interface GetOverrideRequest {
 export interface GetOverridesByOrderRequest {
     orderId?: string;
     status?: string;
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: string;
+    endDate?: string;
 }
 
 export interface RejectPriceOverrideOperationRequest {
@@ -222,11 +222,11 @@ export class PriceOverridesApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString();
+            queryParameters['startDate'] = requestParameters['startDate'];
         }
 
         if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString();
+            queryParameters['endDate'] = requestParameters['endDate'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

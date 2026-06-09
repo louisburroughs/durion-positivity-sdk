@@ -21,7 +21,7 @@ import {
 } from './LineItemApprovalDto';
 
 /**
- * Approval request with customer ID and signature capture
+ * Request to approve a work order with customer signature
  * @export
  * @interface ApproveWorkorderRequest
  */

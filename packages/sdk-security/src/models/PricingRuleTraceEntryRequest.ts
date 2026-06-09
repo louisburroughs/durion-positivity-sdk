@@ -31,18 +31,6 @@ export interface PricingRuleTraceEntryRequest {
      * @memberof PricingRuleTraceEntryRequest
      */
     status?: string;
-    /**
-     * 
-     * @type {any}
-     * @memberof PricingRuleTraceEntryRequest
-     */
-    inputs?: any;
-    /**
-     * 
-     * @type {any}
-     * @memberof PricingRuleTraceEntryRequest
-     */
-    outputs?: any;
 }
 
 /**
@@ -64,8 +52,6 @@ export function PricingRuleTraceEntryRequestFromJSONTyped(json: any, ignoreDiscr
         
         'ruleId': json['ruleId'] == null ? undefined : json['ruleId'],
         'status': json['status'] == null ? undefined : json['status'],
-        'inputs': json['inputs'] == null ? undefined : json['inputs'],
-        'outputs': json['outputs'] == null ? undefined : json['outputs'],
     };
 }
 
@@ -77,8 +63,6 @@ export function PricingRuleTraceEntryRequestToJSON(value?: PricingRuleTraceEntry
         
         'ruleId': value['ruleId'],
         'status': value['status'],
-        'inputs': value['inputs'],
-        'outputs': value['outputs'],
     };
 }
 

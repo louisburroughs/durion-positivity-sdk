@@ -51,13 +51,13 @@ export interface WorkexecLaborPerformedRequest {
      */
     performedAt: Date;
     /**
-     * Labor quantity and unit
+     * 
      * @type {LaborQuantity}
      * @memberof WorkexecLaborPerformedRequest
      */
     labor: LaborQuantity;
     /**
-     * External source metadata
+     * 
      * @type {SourceReference}
      * @memberof WorkexecLaborPerformedRequest
      */

@@ -16,20 +16,30 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  ReturnItemsRequest,
-  ReturnResponse,
+  ReasonCodeDto,
+  ReturnSubmissionResultDto,
+  ReturnSubmitRequest,
+  ReturnableItemDto,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    ReturnItemsRequestFromJSON,
-    ReturnItemsRequestToJSON,
-    ReturnResponseFromJSON,
-    ReturnResponseToJSON,
+    ReasonCodeDtoFromJSON,
+    ReasonCodeDtoToJSON,
+    ReturnSubmissionResultDtoFromJSON,
+    ReturnSubmissionResultDtoToJSON,
+    ReturnSubmitRequestFromJSON,
+    ReturnSubmitRequestToJSON,
+    ReturnableItemDtoFromJSON,
+    ReturnableItemDtoToJSON,
 } from '../models/index';
 
-export interface ReturnItemsToStockRequest {
-    returnItemsRequest: ReturnItemsRequest;
+export interface ListReturnableItemsRequest {
+    workorderId: string;
+}
+
+export interface SubmitReturnToStockRequest {
+    returnSubmitRequest: ReturnSubmitRequest;
 }
 
 /**
@@ -38,14 +48,97 @@ export interface ReturnItemsToStockRequest {
 export class ReturnsApi extends runtime.BaseAPI {
 
     /**
-     * Returns issued parts to inventory and records resulting return movement
-     * Return items to stock
+     * Returns reason codes available for inventory returns.
+     * List return reason codes
      */
-    async returnItemsToStockRaw(requestParameters: ReturnItemsToStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReturnResponse>> {
-        if (requestParameters['returnItemsRequest'] == null) {
+    async listReturnReasonCodesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReasonCodeDto>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:return:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/returns/reason-codes`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReasonCodeDtoFromJSON));
+    }
+
+    /**
+     * Returns reason codes available for inventory returns.
+     * List return reason codes
+     */
+    async listReturnReasonCodes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReasonCodeDto>> {
+        const response = await this.listReturnReasonCodesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns items that can be returned to stock for a workorder.
+     * List returnable items
+     */
+    async listReturnableItemsRaw(requestParameters: ListReturnableItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReturnableItemDto>>> {
+        if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
-                'returnItemsRequest',
-                'Required parameter "returnItemsRequest" was null or undefined when calling returnItemsToStock().'
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling listReturnableItems().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['workorderId'] != null) {
+            queryParameters['workorderId'] = requestParameters['workorderId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:return:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/returns/returnable-items`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReturnableItemDtoFromJSON));
+    }
+
+    /**
+     * Returns items that can be returned to stock for a workorder.
+     * List returnable items
+     */
+    async listReturnableItems(requestParameters: ListReturnableItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReturnableItemDto>> {
+        const response = await this.listReturnableItemsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Submits inventory returns to stock.
+     * Submit return to stock
+     */
+    async submitReturnToStockRaw(requestParameters: SubmitReturnToStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReturnSubmissionResultDto>> {
+        if (requestParameters['returnSubmitRequest'] == null) {
+            throw new runtime.RequiredError(
+                'returnSubmitRequest',
+                'Required parameter "returnSubmitRequest" was null or undefined when calling submitReturnToStock().'
             );
         }
 
@@ -57,29 +150,29 @@ export class ReturnsApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+            const tokenString = await token("bearerAuth", ["inventory:return:write"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
         const response = await this.request({
-            path: `/v1/inventory/returns`,
+            path: `/v1/inventory/returns/submit-to-stock`,
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ReturnItemsRequestToJSON(requestParameters['returnItemsRequest']),
+            body: ReturnSubmitRequestToJSON(requestParameters['returnSubmitRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ReturnResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReturnSubmissionResultDtoFromJSON(jsonValue));
     }
 
     /**
-     * Returns issued parts to inventory and records resulting return movement
-     * Return items to stock
+     * Submits inventory returns to stock.
+     * Submit return to stock
      */
-    async returnItemsToStock(requestParameters: ReturnItemsToStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReturnResponse> {
-        const response = await this.returnItemsToStockRaw(requestParameters, initOverrides);
+    async submitReturnToStock(requestParameters: SubmitReturnToStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReturnSubmissionResultDto> {
+        const response = await this.submitReturnToStockRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -110,7 +110,7 @@ export interface GetEstimatesByShopRequest {
 
 export interface PatchEstimateStatusRequest {
     estimateId: string;
-    requestBody: { [key: string]: any; };
+    body: object;
 }
 
 export interface PromoteEstimateToWorkorderRequest {
@@ -247,7 +247,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Calculate subtotal, tax amount, and total for an estimate based on its line items. Estimate must be in DRAFT status. Uses stub tax calculation (8.25% flat rate) pending pos-accounting integration.
      * Calculate taxes and totals
      */
-    async calculateEstimateTotalsRaw(requestParameters: CalculateEstimateTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: any; }>> {
+    async calculateEstimateTotalsRaw(requestParameters: CalculateEstimateTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
@@ -281,7 +281,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Calculate subtotal, tax amount, and total for an estimate based on its line items. Estimate must be in DRAFT status. Uses stub tax calculation (8.25% flat rate) pending pos-accounting integration.
      * Calculate taxes and totals
      */
-    async calculateEstimateTotals(requestParameters: CalculateEstimateTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: any; }> {
+    async calculateEstimateTotals(requestParameters: CalculateEstimateTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.calculateEstimateTotalsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -525,7 +525,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
      * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
      * Generate estimate PDF
      */
-    async generateEstimatePdfRaw(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async generateEstimatePdfRaw(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
@@ -552,15 +552,16 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.BlobApiResponse(response);
     }
 
     /**
      * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
      * Generate estimate PDF
      */
-    async generateEstimatePdf(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.generateEstimatePdfRaw(requestParameters, initOverrides);
+    async generateEstimatePdf(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.generateEstimatePdfRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
@@ -815,6 +816,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Patch the status of an estimate by applying an allowed workflow transition
+     * Patch estimate status
      */
     async patchEstimateStatusRaw(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['estimateId'] == null) {
@@ -824,10 +827,10 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['requestBody'] == null) {
+        if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
-                'requestBody',
-                'Required parameter "requestBody" was null or undefined when calling patchEstimateStatus().'
+                'body',
+                'Required parameter "body" was null or undefined when calling patchEstimateStatus().'
             );
         }
 
@@ -850,13 +853,15 @@ export class EstimateAPIApi extends runtime.BaseAPI {
             method: 'PATCH',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['requestBody'],
+            body: requestParameters['body'] as any,
         }, initOverrides);
 
         return new runtime.JSONApiResponse<any>(response);
     }
 
     /**
+     * Patch the status of an estimate by applying an allowed workflow transition
+     * Patch estimate status
      */
     async patchEstimateStatus(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.patchEstimateStatusRaw(requestParameters, initOverrides);

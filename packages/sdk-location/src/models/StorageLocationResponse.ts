@@ -63,16 +63,16 @@ export interface StorageLocationResponse {
     parentStorageLocationId?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof StorageLocationResponse
      */
-    capacity?: { [key: string]: any; };
+    capacity?: object;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof StorageLocationResponse
      */
-    temperature?: { [key: string]: any; };
+    temperature?: object;
     /**
      * 
      * @type {number}

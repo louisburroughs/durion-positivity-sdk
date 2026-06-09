@@ -70,18 +70,6 @@ export interface PageCreditMemoResponse {
     number?: number;
     /**
      * 
-     * @type {boolean}
-     * @memberof PageCreditMemoResponse
-     */
-    first?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PageCreditMemoResponse
-     */
-    last?: boolean;
-    /**
-     * 
      * @type {PageableObject}
      * @memberof PageCreditMemoResponse
      */
@@ -92,6 +80,18 @@ export interface PageCreditMemoResponse {
      * @memberof PageCreditMemoResponse
      */
     sort?: SortObject;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageCreditMemoResponse
+     */
+    first?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PageCreditMemoResponse
+     */
+    last?: boolean;
     /**
      * 
      * @type {number}
@@ -128,10 +128,10 @@ export function PageCreditMemoResponseFromJSONTyped(json: any, ignoreDiscriminat
         'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(CreditMemoResponseFromJSON)),
         'number': json['number'] == null ? undefined : json['number'],
-        'first': json['first'] == null ? undefined : json['first'],
-        'last': json['last'] == null ? undefined : json['last'],
         'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
         'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'first': json['first'] == null ? undefined : json['first'],
+        'last': json['last'] == null ? undefined : json['last'],
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
         'empty': json['empty'] == null ? undefined : json['empty'],
     };
@@ -148,10 +148,10 @@ export function PageCreditMemoResponseToJSON(value?: PageCreditMemoResponse | nu
         'size': value['size'],
         'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(CreditMemoResponseToJSON)),
         'number': value['number'],
-        'first': value['first'],
-        'last': value['last'],
         'pageable': PageableObjectToJSON(value['pageable']),
         'sort': SortObjectToJSON(value['sort']),
+        'first': value['first'],
+        'last': value['last'],
         'numberOfElements': value['numberOfElements'],
         'empty': value['empty'],
     };

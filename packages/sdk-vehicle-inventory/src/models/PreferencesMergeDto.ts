@@ -21,10 +21,10 @@ import { mapValues } from '../runtime';
 export interface PreferencesMergeDto {
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof PreferencesMergeDto
      */
-    partialPreferences?: { [key: string]: any; };
+    partialPreferences?: object;
     /**
      * 
      * @type {string}

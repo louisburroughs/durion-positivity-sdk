@@ -39,13 +39,13 @@ export interface PricingBreakdownEntry {
      */
     ruleType?: string;
     /**
-     * Amount adjusted by this rule
+     * 
      * @type {MoneyAmount}
      * @memberof PricingBreakdownEntry
      */
     adjustment?: MoneyAmount;
     /**
-     * Running value after this rule adjustment
+     * 
      * @type {MoneyAmount}
      * @memberof PricingBreakdownEntry
      */

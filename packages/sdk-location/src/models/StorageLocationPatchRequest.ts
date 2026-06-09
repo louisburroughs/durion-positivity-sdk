@@ -51,16 +51,16 @@ export interface StorageLocationPatchRequest {
     destinationStorageLocationId?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof StorageLocationPatchRequest
      */
-    capacity?: { [key: string]: any; };
+    capacity?: object;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof StorageLocationPatchRequest
      */
-    temperature?: { [key: string]: any; };
+    temperature?: object;
 }
 
 /**

@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface ReceivedLineItem {
     /**
+     * 
+     * @type {boolean}
+     * @memberof ReceivedLineItem
+     */
+    inventoryItem?: boolean;
+    /**
      * Product/SKU UUID
      * @type {string}
      * @memberof ReceivedLineItem
@@ -72,6 +78,7 @@ export function ReceivedLineItemFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'inventoryItem': json['inventoryItem'] == null ? undefined : json['inventoryItem'],
         'productId': json['productId'],
         'description': json['description'],
         'quantity': json['quantity'],
@@ -86,6 +93,7 @@ export function ReceivedLineItemToJSON(value?: ReceivedLineItem | null): any {
     }
     return {
         
+        'inventoryItem': value['inventoryItem'],
         'productId': value['productId'],
         'description': value['description'],
         'quantity': value['quantity'],

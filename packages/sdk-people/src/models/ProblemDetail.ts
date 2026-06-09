@@ -51,10 +51,10 @@ export interface ProblemDetail {
     instance?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof ProblemDetail
      */
-    properties?: { [key: string]: any; };
+    properties?: object;
 }
 
 /**

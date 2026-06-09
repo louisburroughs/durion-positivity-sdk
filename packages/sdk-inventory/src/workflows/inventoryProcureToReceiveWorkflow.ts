@@ -36,8 +36,8 @@ export class InventoryProcureToReceiveWorkflow {
     return this.receivingApi.receiveItemsIntoStaging(params);
   }
 
-  /** @operationId queryInventoryAvailability */
-  checkAvailability(params: Parameters<InventoryAvailabilityApi['queryInventoryAvailability']>[0]) {
-    return this.availabilityApi.queryInventoryAvailability(params);
+  /** @operationId getInventoryAvailability */
+  checkAvailability(params: Parameters<InventoryAvailabilityApi['getInventoryAvailability']>[0]) {
+    return this.availabilityApi.getInventoryAvailability(params);
   }
 }

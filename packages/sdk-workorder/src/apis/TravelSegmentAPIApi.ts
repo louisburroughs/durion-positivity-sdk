@@ -62,6 +62,7 @@ export interface SubmitTravelSegmentsOperationRequest {
 export class TravelSegmentAPIApi extends runtime.BaseAPI {
 
     /**
+     * Create an adjustment for a previously recorded travel segment after approval
      * Create a post-approval adjustment for a travel segment
      */
     async createAdjustmentRaw(requestParameters: CreateAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelSegmentAdjustmentResponse>> {
@@ -105,6 +106,7 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Create an adjustment for a previously recorded travel segment after approval
      * Create a post-approval adjustment for a travel segment
      */
     async createAdjustment(requestParameters: CreateAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentAdjustmentResponse> {
@@ -113,6 +115,7 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Start a travel segment for a technician beginning travel related to work execution
      * Start a travel segment
      */
     async startTravelSegmentRaw(requestParameters: StartTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelSegmentResponse>> {
@@ -149,6 +152,7 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Start a travel segment for a technician beginning travel related to work execution
      * Start a travel segment
      */
     async startTravelSegment(requestParameters: StartTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentResponse> {
@@ -157,6 +161,7 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Stop an active travel segment and record the final travel details
      * Stop a travel segment
      */
     async stopTravelSegmentRaw(requestParameters: StopTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelSegmentResponse>> {
@@ -200,6 +205,7 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Stop an active travel segment and record the final travel details
      * Stop a travel segment
      */
     async stopTravelSegment(requestParameters: StopTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentResponse> {
@@ -208,6 +214,7 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Submit recorded travel segments for a mobile work assignment for downstream processing
      * Submit travel segments for a mobile work assignment
      */
     async submitTravelSegmentsRaw(requestParameters: SubmitTravelSegmentsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TravelSegmentResponse>>> {
@@ -251,6 +258,7 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Submit recorded travel segments for a mobile work assignment for downstream processing
      * Submit travel segments for a mobile work assignment
      */
     async submitTravelSegments(requestParameters: SubmitTravelSegmentsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TravelSegmentResponse>> {

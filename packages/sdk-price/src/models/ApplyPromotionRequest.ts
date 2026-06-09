@@ -33,7 +33,7 @@ export interface ApplyPromotionRequest {
      */
     promotionCode: string;
     /**
-     * Estimate context used for promotion evaluation
+     * 
      * @type {EstimateContext}
      * @memberof ApplyPromotionRequest
      */

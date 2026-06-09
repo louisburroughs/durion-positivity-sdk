@@ -40,6 +40,7 @@ export interface RejectTimeEntryOperationRequest {
 export class TimeEntryAPIApi extends runtime.BaseAPI {
 
     /**
+     * Approve a submitted time entry so it can move forward in the workorder timekeeping workflow
      * Approve a time entry in SUBMITTED state
      */
     async approveTimeEntryRaw(requestParameters: ApproveTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryResponse>> {
@@ -73,6 +74,7 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Approve a submitted time entry so it can move forward in the workorder timekeeping workflow
      * Approve a time entry in SUBMITTED state
      */
     async approveTimeEntry(requestParameters: ApproveTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryResponse> {
@@ -81,6 +83,7 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Reject a submitted time entry and record the rejection details for follow-up
      * Reject a time entry in SUBMITTED state
      */
     async rejectTimeEntryRaw(requestParameters: RejectTimeEntryOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryResponse>> {
@@ -124,6 +127,7 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Reject a submitted time entry and record the rejection details for follow-up
      * Reject a time entry in SUBMITTED state
      */
     async rejectTimeEntry(requestParameters: RejectTimeEntryOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryResponse> {

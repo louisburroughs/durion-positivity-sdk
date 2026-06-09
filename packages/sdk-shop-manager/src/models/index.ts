@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ApiError';
 export * from './AppointmentCreateRequest';
 export * from './AppointmentResponse';
 export * from './AssignedMechanicInfo';
@@ -9,6 +10,7 @@ export * from './ConflictDetails';
 export * from './ConflictOverrideRequest';
 export * from './ConflictOverrideResponse';
 export * from './CreateAssignmentRequest';
+export * from './FieldError';
 export * from './MechanicAssignmentItem';
 export * from './PersonDTO';
 export * from './RescheduleAppointmentRequest';

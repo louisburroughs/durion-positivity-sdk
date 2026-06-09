@@ -93,16 +93,16 @@ export interface AppointmentResponse {
     serviceRequestIds?: Array<string>;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof AppointmentResponse
      */
-    customerSnapshot?: { [key: string]: any; };
+    customerSnapshot?: object;
     /**
      * 
-     * @type {{ [key: string]: any; }}
+     * @type {object}
      * @memberof AppointmentResponse
      */
-    vehicleSnapshot?: { [key: string]: any; };
+    vehicleSnapshot?: object;
 }
 
 /**

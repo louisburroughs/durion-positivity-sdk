@@ -142,7 +142,7 @@ export interface SearchProductsRequest {
     category?: string;
     sku?: string;
     cursor?: string;
-    limit?: number;
+    limit?: string;
 }
 
 export interface SetLifecycleStateRequest {

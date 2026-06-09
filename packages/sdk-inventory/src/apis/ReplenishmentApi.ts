@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   CreateReplenishmentPolicyRequest,
+  Pageable,
   ReplenishmentPolicyResponse,
   ReplenishmentTaskResponse,
 } from '../models/index';
 import {
     CreateReplenishmentPolicyRequestFromJSON,
     CreateReplenishmentPolicyRequestToJSON,
+    PageableFromJSON,
+    PageableToJSON,
     ReplenishmentPolicyResponseFromJSON,
     ReplenishmentPolicyResponseToJSON,
     ReplenishmentTaskResponseFromJSON,
@@ -30,6 +33,11 @@ import {
 
 export interface CreateReplenishmentPolicyOperationRequest {
     createReplenishmentPolicyRequest: CreateReplenishmentPolicyRequest;
+}
+
+export interface ListReplenishmentPoliciesRequest {
+    pageable: Pageable;
+    locationId?: string;
 }
 
 /**
@@ -87,8 +95,23 @@ export class ReplenishmentApi extends runtime.BaseAPI {
      * Returns configured replenishment policies.
      * List replenishment policies
      */
-    async getReplenishmentPoliciesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReplenishmentPolicyResponse>>> {
+    async listReplenishmentPoliciesRaw(requestParameters: ListReplenishmentPoliciesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+        if (requestParameters['pageable'] == null) {
+            throw new runtime.RequiredError(
+                'pageable',
+                'Required parameter "pageable" was null or undefined when calling listReplenishmentPolicies().'
+            );
+        }
+
         const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['pageable'] != null) {
+            queryParameters['pageable'] = requestParameters['pageable'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -107,15 +130,19 @@ export class ReplenishmentApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReplenishmentPolicyResponseFromJSON));
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<string>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
      * Returns configured replenishment policies.
      * List replenishment policies
      */
-    async getReplenishmentPolicies(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReplenishmentPolicyResponse>> {
-        const response = await this.getReplenishmentPoliciesRaw(initOverrides);
+    async listReplenishmentPolicies(requestParameters: ListReplenishmentPoliciesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.listReplenishmentPoliciesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -123,7 +150,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
      * Returns replenishment tasks that should be fulfilled.
      * List replenishment tasks
      */
-    async getReplenishmentTasksRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReplenishmentTaskResponse>>> {
+    async listReplenishmentTasksRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReplenishmentTaskResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -150,8 +177,8 @@ export class ReplenishmentApi extends runtime.BaseAPI {
      * Returns replenishment tasks that should be fulfilled.
      * List replenishment tasks
      */
-    async getReplenishmentTasks(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReplenishmentTaskResponse>> {
-        const response = await this.getReplenishmentTasksRaw(initOverrides);
+    async listReplenishmentTasks(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReplenishmentTaskResponse>> {
+        const response = await this.listReplenishmentTasksRaw(initOverrides);
         return await response.value();
     }
 

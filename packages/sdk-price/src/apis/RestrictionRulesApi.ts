@@ -43,6 +43,7 @@ export interface GetRuleByIdRequest {
 export class RestrictionRulesApi extends runtime.BaseAPI {
 
     /**
+     * Creates a price restriction rule for a product, location tag, and service tag combination.
      * Create a restriction rule
      */
     async createRuleRaw(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
@@ -79,6 +80,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Creates a price restriction rule for a product, location tag, and service tag combination.
      * Create a restriction rule
      */
     async createRule(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
@@ -87,6 +89,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Deactivates the specified restriction rule so it no longer participates in price restriction evaluation.
      * Deactivate a restriction rule
      */
     async deactivateRuleRaw(requestParameters: DeactivateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
@@ -120,6 +123,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Deactivates the specified restriction rule so it no longer participates in price restriction evaluation.
      * Deactivate a restriction rule
      */
     async deactivateRule(requestParameters: DeactivateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
@@ -128,6 +132,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the active or inactive restriction rule identified by the supplied rule ID.
      * Get a restriction rule by ID
      */
     async getRuleByIdRaw(requestParameters: GetRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
@@ -161,6 +166,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the active or inactive restriction rule identified by the supplied rule ID.
      * Get a restriction rule by ID
      */
     async getRuleById(requestParameters: GetRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
@@ -169,6 +175,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns all currently active price restriction rules that can affect pricing decisions.
      * List all active restriction rules
      */
     async listRulesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RestrictionRuleResponse>>> {
@@ -195,6 +202,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns all currently active price restriction rules that can affect pricing decisions.
      * List all active restriction rules
      */
     async listRules(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RestrictionRuleResponse>> {
