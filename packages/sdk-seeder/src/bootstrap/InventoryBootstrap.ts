@@ -4,6 +4,8 @@ import type { DurionSdkConfig } from '@durion-sdk/transport';
 interface InventoryBootstrapResult {
   createdCount: number;
   skippedCount: number;
+  created: string[];
+  skipped: string[];
 }
 
 export const SEED_VENDOR_ID = 'sdk-seeder-vendor-main';
@@ -12,11 +14,13 @@ const SEED_CURRENCY = 'USD';
 export class InventoryBootstrap {
   constructor(private readonly sdkConfig: DurionSdkConfig) {}
 
-  async run(productEntityIds: string[], locationId: string): Promise<InventoryBootstrapResult> {
+  async run(products: { id: string; name: string }[], locationId: string): Promise<InventoryBootstrapResult> {
     const { asnApi, purchaseOrdersApi } = createInventoryClient(this.sdkConfig);
 
     let createdCount = 0;
     let skippedCount = 0;
+    const created: string[] = [];
+    const skipped: string[] = [];
 
     let existingPurchaseOrders: PurchaseOrderResponse[] = [];
     try {
@@ -33,15 +37,20 @@ export class InventoryBootstrap {
       });
       existingPurchaseOrders = purchaseOrderPage.content ?? [];
     } catch (error) {
-      console.error('[Bootstrap] InventoryBootstrap: failed to query existing purchase orders.', error);
+      console.warn(
+        '[Bootstrap] InventoryBootstrap: failed to query existing purchase orders — idempotency check skipped, duplicate POs may be created.',
+        error,
+      );
     }
 
-    for (const [index, productEntityId] of productEntityIds.entries()) {
+    for (const [index, product] of products.entries()) {
+      const { id: productEntityId, name: productName } = product;
       const existingPurchaseOrder = existingPurchaseOrders.find(
         (purchaseOrder) => purchaseOrder.comment === this.buildSeedComment(productEntityId),
       );
 
       if (existingPurchaseOrder) {
+        skipped.push(productName);
         skippedCount += 1;
         continue;
       }
@@ -95,7 +104,7 @@ export class InventoryBootstrap {
         const asn = await asnApi.createAsn({
           createAsnRequest: {
             vendorId: SEED_VENDOR_ID,
-            asnReferenceNumber: `ASN-${index + 1}-${productEntityId}`,
+            asnReferenceNumber: `ASN-SEED-${poId}`,
             relatedPoIds: [poId],
             shipDate: purchaseOrderDate,
             expectedArrivalDate: expectedDeliveryDate,
@@ -135,12 +144,14 @@ export class InventoryBootstrap {
           },
         });
 
+        created.push(productName);
         createdCount += 1;
       } catch (error) {
         console.error(
           `[Bootstrap] InventoryBootstrap: failed to seed stock for ${productEntityId}.`,
           error,
         );
+        skipped.push(productName);
         skippedCount += 1;
       }
     }
@@ -148,6 +159,8 @@ export class InventoryBootstrap {
     return {
       createdCount,
       skippedCount,
+      created,
+      skipped,
     };
   }
 

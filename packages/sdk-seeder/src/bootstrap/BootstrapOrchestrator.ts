@@ -38,28 +38,34 @@ export class BootstrapOrchestrator {
     // -- People ----------------------------------------------------------------
     const peopleResult = await new PeopleBootstrap(this.auth.buildSdkConfig('people')).run(locationId);
     const { employees } = peopleResult;
-    console.log(
-      `[Bootstrap] PeopleBootstrap: ${peopleResult.createdCount} created, ${peopleResult.skippedCount} skipped.`,
-    );
 
     // -- Catalog ---------------------------------------------------------------
     const catalogResult = await new CatalogBootstrap(this.auth.buildSdkConfig('catalog')).run();
-    const { serviceEntityIds, productEntityIds } = catalogResult;
-    console.log(
-      `[Bootstrap] CatalogBootstrap: ${catalogResult.createdCount} created, ${catalogResult.skippedCount} skipped. ` +
-      `${serviceEntityIds.length} services, ${productEntityIds.length} products.`,
-    );
+    const { serviceEntityIds, productEntityIds, productNameById } = catalogResult;
 
     // -- Inventory -------------------------------------------------------------
+    const namedProducts = productEntityIds.map((id) => ({
+      id,
+      name: productNameById.get(id) ?? id,
+    }));
     const inventoryResult = await new InventoryBootstrap(this.auth.buildSdkConfig('inventory')).run(
-      productEntityIds,
+      namedProducts,
       locationId,
     );
-    console.log(
-      `[Bootstrap] InventoryBootstrap: ${inventoryResult.createdCount} created, ${inventoryResult.skippedCount} skipped.`,
-    );
 
+    // -- Summary ---------------------------------------------------------------
+    const sep = '─'.repeat(71);
+    console.log(`[Bootstrap] ${sep}`);
+    console.log(`[Bootstrap]  BOOTSTRAP SUMMARY`);
+    console.log(`[Bootstrap] ${sep}`);
+    console.log(`[Bootstrap]  Location  : ${locationId}  (${bayIds.length} bays)`);
+    this.logNamedResult('[Bootstrap]  People    ', peopleResult.created, peopleResult.skipped);
+    this.logNamedResult('[Bootstrap]  Services  ', catalogResult.createdServiceNames, catalogResult.skippedServiceNames);
+    this.logNamedResult('[Bootstrap]  Products  ', catalogResult.createdProductNames, catalogResult.skippedProductNames);
+    this.logNamedResult('[Bootstrap]  Inventory ', inventoryResult.created, inventoryResult.skipped);
+    console.log(`[Bootstrap] ${sep}`);
     console.log('[Bootstrap] Complete.');
+
     return {
       locationId,
       bayIds,
@@ -67,6 +73,22 @@ export class BootstrapOrchestrator {
       serviceEntityIds,
       productEntityIds,
     };
+  }
+
+  private logNamedResult(
+    prefix: string,
+    created: string[],
+    skipped: string[],
+  ): void {
+    if (created.length > 0) {
+      console.log(`${prefix}: ${created.length} created — ${created.join(', ')}`);
+    }
+    if (skipped.length > 0) {
+      console.log(`${prefix}: ${skipped.length} skipped — ${skipped.join(', ')}`);
+    }
+    if (created.length === 0 && skipped.length === 0) {
+      console.log(`${prefix}: nothing to report`);
+    }
   }
 
 }

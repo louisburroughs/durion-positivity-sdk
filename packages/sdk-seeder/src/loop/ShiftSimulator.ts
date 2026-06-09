@@ -26,6 +26,26 @@ export class ShiftSimulator {
     this.peopleClient = createPeopleClient(this.auth.buildSdkConfig('people'));
   }
 
+  /**
+   * Close any open session for a person, silently swallowing 404 (no active session).
+   * Called before each clock-in to ensure a clean slate even after a crashed prior run.
+   */
+  private async closeStaleSession(personId: string): Promise<void> {
+    try {
+      await this.peopleClient.workSessionsAPIApi.stopWorkSession({
+        workSessionRequest: { personId },
+      });
+      console.log(`[Shift] Closed stale session for ${personId}.`);
+    } catch (error) {
+      const httpStatus = (error as { response?: { status?: number } }).response?.status;
+      // 404 = no active session, which is the happy path; anything else is worth logging.
+      if (httpStatus !== 404) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.log(`[Shift] Warning: could not close stale session for ${personId}: ${message}`);
+      }
+    }
+  }
+
   async clockIn(): Promise<void> {
     const everyone = Array.from(
       new Set([
@@ -51,6 +71,9 @@ export class ShiftSimulator {
     this.activePersonIds = [];
 
     for (const personId of selected) {
+      // Ensure no stale session exists before starting a fresh one.
+      await this.closeStaleSession(personId);
+
       try {
         const response = await this.peopleClient.workSessionsAPIApi.startWorkSession({
           workSessionRequest: { personId },

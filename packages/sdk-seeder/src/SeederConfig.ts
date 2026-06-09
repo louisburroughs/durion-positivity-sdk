@@ -4,11 +4,10 @@ export interface SeederConfigShape {
   username: string;
   password: string;
   days: number;
-  scale: number;
   seed: number | undefined;
   minCustomersPerDay: number;
   maxCustomersPerDay: number;
-  sleepBetweenDaysMs: number;
+  pollIntervalMs: number;
 }
 
 function parseInteger(value: string, key: string): number {
@@ -25,11 +24,10 @@ export class SeederConfig implements SeederConfigShape {
   readonly username: string;
   readonly password: string;
   readonly days: number;
-  readonly scale: number;
   readonly seed: number | undefined;
   readonly minCustomersPerDay: number;
   readonly maxCustomersPerDay: number;
-  readonly sleepBetweenDaysMs: number;
+  readonly pollIntervalMs: number;
 
   private constructor(env: NodeJS.ProcessEnv) {
     const required = (key: string): string => {
@@ -50,14 +48,11 @@ export class SeederConfig implements SeederConfigShape {
     this.username = required('SEEDER_USERNAME');
     this.password = required('SEEDER_PASSWORD');
     this.days = optInt('SEEDER_DAYS', 365);
-    this.scale = optInt('SEEDER_SCALE', 1000);
     this.seed = env['SEEDER_SEED'] !== undefined ? parseInteger(env['SEEDER_SEED'], 'SEEDER_SEED') : undefined;
     this.minCustomersPerDay = optInt('SEEDER_MIN_CUSTOMERS_PER_DAY', 4);
     this.maxCustomersPerDay = optInt('SEEDER_MAX_CUSTOMERS_PER_DAY', 12);
+    this.pollIntervalMs = optInt('SEEDER_POLL_INTERVAL_MS', 1000);
 
-    if (this.scale <= 0) {
-      throw new Error('SEEDER_SCALE must be greater than 0');
-    }
     if (this.days <= 0) {
       throw new Error('SEEDER_DAYS must be greater than 0');
     }
@@ -67,8 +62,9 @@ export class SeederConfig implements SeederConfigShape {
     if (this.maxCustomersPerDay < this.minCustomersPerDay) {
       throw new Error('SEEDER_MAX_CUSTOMERS_PER_DAY must be greater than or equal to SEEDER_MIN_CUSTOMERS_PER_DAY');
     }
-
-    this.sleepBetweenDaysMs = Math.floor(86_400_000 / this.scale);
+    if (this.pollIntervalMs <= 0) {
+      throw new Error('SEEDER_POLL_INTERVAL_MS must be greater than 0');
+    }
   }
 
   static fromEnv(): SeederConfig {

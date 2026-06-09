@@ -72,6 +72,29 @@ const requireField = (value: string | undefined, name: string): string => {
   return value;
 };
 
+const formatError = async (error: unknown): Promise<string> => {
+  if (
+    error !== null &&
+    typeof error === 'object' &&
+    'response' in error &&
+    (error as { response: unknown }).response !== null &&
+    typeof (error as { response: unknown }).response === 'object'
+  ) {
+    const response = (error as { response: { status?: unknown; text?: unknown } }).response;
+    const status = typeof response.status === 'number' ? response.status : '?';
+    if (typeof response.text === 'function') {
+      try {
+        const body = await (response.text as () => Promise<string>)();
+        return `HTTP ${status}: ${body}`;
+      } catch {
+        return `HTTP ${status}: (could not read body)`;
+      }
+    }
+    return `HTTP ${status}`;
+  }
+  return error instanceof Error ? error.message : String(error);
+};
+
 export class CustomerEventSimulator {
   private readonly customerClient;
   private readonly workorderClient;
@@ -109,7 +132,8 @@ export class CustomerEventSimulator {
     const serviceLineIds: string[] = [];
     const selectedServiceIds: string[] = [];
 
-    const logStepError = (stepName: string, message: string): void => {
+    const logStepError = async (stepName: string, error: unknown): Promise<void> => {
+      const message = await formatError(error);
       console.log(`[Day ${dayNumber}] ERROR at step '${stepName}' for workorder ${workorderId}: ${message}`);
     };
 
@@ -126,7 +150,7 @@ export class CustomerEventSimulator {
             createCommercialAccountRequest: {
               legalName: `${firstName} ${lastName}`,
               displayName: `${firstName} ${lastName}`,
-              partyType: 'INDIVIDUAL',
+              partyType: 'PERSON',
               contactFirstName: firstName,
               contactLastName: lastName,
               email: this.random.email(firstName, lastName),
@@ -142,8 +166,7 @@ export class CustomerEventSimulator {
         partyId = requireField(partyId, 'partyId');
         this.lastLoggedCustomerId = partyId;
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('pickOrCreateCustomer', message);
+        await logStepError('pickOrCreateCustomer', error);
         return 'error';
       }
 
@@ -171,8 +194,7 @@ export class CustomerEventSimulator {
 
         vehicleId = requireField(vehicleId, 'vehicleId');
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('pickOrRegisterVehicle', message);
+        await logStepError('pickOrRegisterVehicle', error);
         return 'error';
       }
 
@@ -191,8 +213,7 @@ export class CustomerEventSimulator {
 
         estimateId = requireField(readString(estimateResponse, 'id', 'estimateId'), 'estimateId');
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('createEstimate', message);
+        await logStepError('createEstimate', error);
         return 'error';
       }
 
@@ -237,23 +258,20 @@ export class CustomerEventSimulator {
           });
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('addEstimateLines', message);
+        await logStepError('addEstimateLines', error);
         return 'error';
       }
 
       try {
         await this.workorderClient.estimateAPIApi.calculateEstimateTotals({ estimateId });
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('calculateEstimate', message);
+        await logStepError('calculateEstimate', error);
       }
 
       try {
         await this.workorderClient.estimateAPIApi.submitForApproval({ estimateId });
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('submitForApproval', message);
+        await logStepError('submitForApproval', error);
         return 'error';
       }
 
@@ -278,8 +296,7 @@ export class CustomerEventSimulator {
           return 'ignored';
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('customerDecision', message);
+        await logStepError('customerDecision', error);
         return 'error';
       }
 
@@ -287,8 +304,7 @@ export class CustomerEventSimulator {
         const workorderResponse = await this.workorderClient.estimateAPIApi.promoteEstimateToWorkorder({ estimateId });
         workorderId = requireField(readString(workorderResponse, 'id', 'workorderId'), 'workorderId');
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('promoteToWorkorder', message);
+        await logStepError('promoteToWorkorder', error);
         return 'error';
       }
 
@@ -302,8 +318,7 @@ export class CustomerEventSimulator {
           },
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('assignTechnician', message);
+        await logStepError('assignTechnician', error);
       }
 
       try {
@@ -331,8 +346,7 @@ export class CustomerEventSimulator {
         });
         workSessionId = session.workSessionId;
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('startWorkorderWorkSession', message);
+        await logStepError('startWorkorderWorkSession', error);
       }
 
       try {
@@ -350,8 +364,7 @@ export class CustomerEventSimulator {
           await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('laborLoop', message);
+        await logStepError('laborLoop', error);
       }
 
       try {
@@ -381,8 +394,7 @@ export class CustomerEventSimulator {
           });
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('pickAndConsumeParts', message);
+        await logStepError('pickAndConsumeParts', error);
       }
 
       try {
@@ -407,15 +419,13 @@ export class CustomerEventSimulator {
           }
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('changeRequest', message);
+        await logStepError('changeRequest', error);
       }
 
       try {
         // AWAITING_PARTS flow is intentionally deferred in this wave.
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('awaitingParts', message);
+        await logStepError('awaitingParts', error);
       }
 
       try {
@@ -426,8 +436,7 @@ export class CustomerEventSimulator {
           },
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('completeWorkorder', message);
+        await logStepError('completeWorkorder', error);
         return 'error';
       }
 
@@ -436,8 +445,7 @@ export class CustomerEventSimulator {
         const invoiceResponse = await this.workorderClient.workOrderAPIApi.generateInvoice({ workorderId });
         invoiceId = requireField(invoiceResponse.invoiceId, 'invoiceId');
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('generateInvoice', message);
+        await logStepError('generateInvoice', error);
         return 'error';
       }
 
@@ -449,8 +457,7 @@ export class CustomerEventSimulator {
         });
         invoiceTotal = finalizedInvoice.total;
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('finalizeInvoice', message);
+        await logStepError('finalizeInvoice', error);
         return 'error';
       }
 
@@ -469,8 +476,7 @@ export class CustomerEventSimulator {
           },
         });
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('processPayment', message);
+        await logStepError('processPayment', error);
         // Non-fatal: continue even if payment event fails
       }
 
@@ -484,14 +490,12 @@ export class CustomerEventSimulator {
           });
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logStepError('stopWorkorderWorkSession', message);
+        await logStepError('stopWorkorderWorkSession', error);
       }
 
       return 'completed';
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      logStepError(`simulateCustomer${customerIndex}`, message);
+      await logStepError(`simulateCustomer${customerIndex}`, error);
       return 'error';
     }
   }

@@ -23,6 +23,8 @@ interface PeopleBootstrapResult {
   employees: EmployeeRefs;
   createdCount: number;
   skippedCount: number;
+  created: string[];
+  skipped: string[];
 }
 
 const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
@@ -92,6 +94,8 @@ export class PeopleBootstrap {
 
     let createdCount = 0;
     let skippedCount = 0;
+    const created: string[] = [];
+    const skipped: string[] = [];
 
     const people = await peopleApi.getAllPeople();
     const employeeIndex = await this.buildEmployeeIndex(
@@ -107,6 +111,7 @@ export class PeopleBootstrap {
     };
 
     for (const seed of EMPLOYEE_SEEDS) {
+      const label = seed.preferredName ?? seed.legalName;
       let employeeId = employeeIndex.get(seed.employeeNumber);
       if (!employeeId) {
         const createEmployeeRequest: CreateEmployeeRequest = {
@@ -120,8 +125,10 @@ export class PeopleBootstrap {
         const createdEmployee = await employeeApi.createEmployee({ createEmployeeRequest });
         employeeId = this.requireEmployeeId(createdEmployee, seed.employeeNumber);
         employeeIndex.set(seed.employeeNumber, employeeId);
+        created.push(label);
         createdCount += 1;
       } else {
+        skipped.push(label);
         skippedCount += 1;
       }
 
@@ -154,6 +161,8 @@ export class PeopleBootstrap {
       employees,
       createdCount,
       skippedCount,
+      created,
+      skipped,
     };
   }
 

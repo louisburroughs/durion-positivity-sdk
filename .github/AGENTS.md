@@ -38,6 +38,13 @@ This repository uses `.github/agents/*.agent.md` files to define automation-read
 - Invocation: Parent orchestrator only after `SeederScaffold` completes.
 - Dependencies: `sdk-seeder-plan.json`, scaffold outputs, `packages/sdk-workorder/src/`, `packages/sdk-customer/src/`, `packages/sdk-invoice/src/`, `packages/sdk-inventory/src/`, `packages/sdk-people/src/`.
 
+### SeederDebug
+
+- File: `.github/agents/seeder-debug.agent.md`
+- Role: User-invokable agent for debugging and resolving issues with the `sdk-seeder` package. Traces failures through the execution flow (config → auth → bootstrap → daily loop), cross-references the backend at `C:\POS\durion-positivity-backend`, and updates `.github/seeder-run-notes.md` after every session.
+- Invocation: User-invokable. Not a subagent.
+- Dependencies: `.github/seeder-run-notes.md`, `run-seeder.ps1`, `packages/sdk-seeder/src/`, `C:\POS\durion-positivity-backend` (read-only reference).
+
 ### SeederBackendChanges
 
 - File: `.github/agents/seeder-backend-changes.agent.md`

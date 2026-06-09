@@ -20,6 +20,11 @@ interface CatalogBootstrapResult {
   productEntityIds: string[];
   createdCount: number;
   skippedCount: number;
+  createdServiceNames: string[];
+  skippedServiceNames: string[];
+  createdProductNames: string[];
+  skippedProductNames: string[];
+  productNameById: Map<string, string>;
 }
 
 const SERVICE_SEEDS: ServiceSeedDefinition[] = [
@@ -57,6 +62,11 @@ export class CatalogBootstrap {
     const productEntityIds: string[] = [];
     let createdCount = 0;
     let skippedCount = 0;
+    const createdServiceNames: string[] = [];
+    const skippedServiceNames: string[] = [];
+    const createdProductNames: string[] = [];
+    const skippedProductNames: string[] = [];
+    const productNameById = new Map<string, string>();
 
     for (const service of SERVICE_SEEDS) {
       const existingId = await this.findCatalogEntityIdByName(
@@ -65,6 +75,7 @@ export class CatalogBootstrap {
 
       if (existingId) {
         serviceEntityIds.push(existingId);
+        skippedServiceNames.push(service.name);
         skippedCount += 1;
         continue;
       }
@@ -90,6 +101,7 @@ export class CatalogBootstrap {
           throw new Error(`CatalogBootstrap: service ${service.name} was created without an id`);
         }
         serviceEntityIds.push(createdId);
+        createdServiceNames.push(service.name);
         createdCount += 1;
       } catch (error) {
         if (!this.isDuplicateLikeError(error)) {
@@ -103,6 +115,7 @@ export class CatalogBootstrap {
           throw error;
         }
         serviceEntityIds.push(duplicateId);
+        skippedServiceNames.push(service.name);
         skippedCount += 1;
       }
     }
@@ -117,6 +130,8 @@ export class CatalogBootstrap {
 
       if (existingId) {
         productEntityIds.push(existingId);
+        productNameById.set(existingId, product.name);
+        skippedProductNames.push(product.name);
         skippedCount += 1;
         continue;
       }
@@ -143,6 +158,8 @@ export class CatalogBootstrap {
           throw new Error(`CatalogBootstrap: product ${product.sku} was created without an id`);
         }
         productEntityIds.push(createdId);
+        productNameById.set(createdId, product.name);
+        createdProductNames.push(product.name);
         createdCount += 1;
       } catch (error) {
         if (!this.isDuplicateLikeError(error)) {
@@ -159,6 +176,8 @@ export class CatalogBootstrap {
           throw error;
         }
         productEntityIds.push(duplicateId);
+        productNameById.set(duplicateId, product.name);
+        skippedProductNames.push(product.name);
         skippedCount += 1;
       }
     }
@@ -168,6 +187,11 @@ export class CatalogBootstrap {
       productEntityIds,
       createdCount,
       skippedCount,
+      createdServiceNames,
+      skippedServiceNames,
+      createdProductNames,
+      skippedProductNames,
+      productNameById,
     };
   }
 

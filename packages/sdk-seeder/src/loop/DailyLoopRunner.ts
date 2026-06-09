@@ -1,13 +1,22 @@
 import { SeederAuth } from '../SeederAuth';
 import { SeederConfig } from '../SeederConfig';
 import { CustomerPool } from '../support/CustomerPool';
+import { Logger } from '../support/Logger';
 import { ReferenceCache } from '../support/ReferenceCache';
 import { SeederRandom } from '../support/SeederRandom';
+import { VirtualClock } from '../support/VirtualClock';
 import { CustomerEventSimulator } from './CustomerEventSimulator';
 import { InventoryMaintenanceSimulator } from './InventoryMaintenanceSimulator';
 import { ShiftSimulator } from './ShiftSimulator';
 
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+/**
+ * Returns the start-of-day (midnight UTC) for a given Date.
+ */
+function startOfDayUTC(date: Date): Date {
+  const d = new Date(date);
+  d.setUTCHours(0, 0, 0, 0);
+  return d;
+}
 
 export class DailyLoopRunner {
   private readonly random: SeederRandom;
@@ -17,6 +26,8 @@ export class DailyLoopRunner {
     private readonly config: SeederConfig,
     private readonly auth: SeederAuth,
     private readonly refs: ReferenceCache,
+    private readonly virtualClock: VirtualClock,
+    private readonly logger: Logger,
   ) {
     this.random = new SeederRandom(config.seed);
     this.customerPool = new CustomerPool();
@@ -33,12 +44,30 @@ export class DailyLoopRunner {
       this.customerPool,
     );
 
+    // Fetch initial virtual time from backend — this is day 1's baseline
+    let currentVT = await this.virtualClock.getCurrentVirtualTime();
+    this.logger.setVirtualTime(currentVT);
+    this.logger.setScale(this.virtualClock.getLastScale());
+
     for (let day = 1; day <= this.config.days; day += 1) {
+      const dayStart = startOfDayUTC(currentVT);
+      this.logger.setDay(day, this.config.days);
+      this.logger.daySeparator();
+
+      // Refresh auth token
       await this.auth.refreshIfNeeded();
-      console.log(`[Day ${day}/${this.config.days}] Virtual day starting — real time: ${new Date().toISOString()}`);
+
+      // Refresh virtual time at start of each day's work
+      currentVT = await this.virtualClock.getCurrentVirtualTime();
+      this.logger.setVirtualTime(currentVT);
+
+      this.logger.setPhase('SHIFT-IN');
+      this.logger.info(`Virtual day starting — VT date: ${currentVT.toISOString().slice(0, 10)}`);
 
       await shift.clockIn();
+      this.logger.info('Employees clocked in');
 
+      this.logger.setPhase('CUSTOMER');
       const numCustomers = this.random.int(
         this.config.minCustomersPerDay,
         this.config.maxCustomersPerDay,
@@ -50,7 +79,12 @@ export class DailyLoopRunner {
       for (let customerIndex = 1; customerIndex <= numCustomers; customerIndex += 1) {
         const status = await simulator.simulate(day, customerIndex);
         const customerId = simulator.lastCustomerId ?? 'unknown';
-        console.log(`[Day ${day}] Customer ${customerIndex}/${numCustomers}: ${status} — ${customerId}`);
+
+        // Refresh VT after each customer for accurate logging
+        currentVT = await this.virtualClock.getCurrentVirtualTime();
+        this.logger.setVirtualTime(currentVT);
+
+        this.logger.info(`Customer ${customerIndex}/${numCustomers}: ${status} — ${customerId}`);
 
         if (status === 'completed') {
           completed += 1;
@@ -61,24 +95,41 @@ export class DailyLoopRunner {
         }
       }
 
+      this.logger.setPhase('SHIFT-OUT');
       await shift.clockOut();
       await shift.approveTimeEntries();
+      this.logger.info('Shift ended, time entries approved');
 
       if (day % 7 === 0) {
+        this.logger.setPhase('MAINTENANCE');
         await inventory.runCycleCount();
+        this.logger.info('Weekly cycle count completed');
       }
 
       if (day % 30 === 0) {
+        this.logger.setPhase('MAINTENANCE');
         await inventory.runMonthlyRestock();
+        this.logger.info('Monthly restock completed');
       }
 
-      console.log(
-        `[Day ${day}] Complete — ${completed} workorders, ${declined} declined, ${errors} errors. Sleeping ${this.config.sleepBetweenDaysMs}ms.`,
+      this.logger.setPhase('COMPLETE');
+      currentVT = await this.virtualClock.getCurrentVirtualTime();
+      this.logger.setVirtualTime(currentVT);
+      this.logger.info(
+        `Day done — ${completed} workorders, ${declined} declined, ${errors} errors`,
       );
 
+      // Wait for backend virtual time to cross into the next calendar day
       if (day < this.config.days) {
-        await sleep(this.config.sleepBetweenDaysMs);
+        this.logger.setPhase('WAIT');
+        this.logger.info(`Waiting for backend clock to reach next day (${dayStart.toISOString().slice(0, 10)} → next)...`);
+        currentVT = await this.virtualClock.waitForNextDay(dayStart);
+        this.logger.setVirtualTime(currentVT);
       }
     }
+
+    this.logger.daySeparator();
+    this.logger.setPhase('COMPLETE');
+    this.logger.info(`All ${this.config.days} virtual days completed.`);
   }
 }
