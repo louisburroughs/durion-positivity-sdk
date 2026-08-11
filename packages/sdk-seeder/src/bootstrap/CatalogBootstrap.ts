@@ -24,6 +24,7 @@ interface CatalogBootstrapResult {
   skippedServiceNames: string[];
   createdProductNames: string[];
   skippedProductNames: string[];
+  serviceNameById: Map<string, string>;
   productNameById: Map<string, string>;
 }
 
@@ -66,6 +67,7 @@ export class CatalogBootstrap {
     const skippedServiceNames: string[] = [];
     const createdProductNames: string[] = [];
     const skippedProductNames: string[] = [];
+    const serviceNameById = new Map<string, string>();
     const productNameById = new Map<string, string>();
 
     for (const service of SERVICE_SEEDS) {
@@ -75,6 +77,7 @@ export class CatalogBootstrap {
 
       if (existingId) {
         serviceEntityIds.push(existingId);
+        serviceNameById.set(existingId, service.name);
         skippedServiceNames.push(service.name);
         skippedCount += 1;
         continue;
@@ -101,6 +104,7 @@ export class CatalogBootstrap {
           throw new Error(`CatalogBootstrap: service ${service.name} was created without an id`);
         }
         serviceEntityIds.push(createdId);
+        serviceNameById.set(createdId, service.name);
         createdServiceNames.push(service.name);
         createdCount += 1;
       } catch (error) {
@@ -115,6 +119,7 @@ export class CatalogBootstrap {
           throw error;
         }
         serviceEntityIds.push(duplicateId);
+        serviceNameById.set(duplicateId, service.name);
         skippedServiceNames.push(service.name);
         skippedCount += 1;
       }
@@ -191,6 +196,7 @@ export class CatalogBootstrap {
       skippedServiceNames,
       createdProductNames,
       skippedProductNames,
+      serviceNameById,
       productNameById,
     };
   }

@@ -1,12 +1,10 @@
-import { createLocationClient, type LocationResponseDTO } from '@durion-sdk/location';
 import { SeederAuth } from '../SeederAuth';
 import { SeederConfig } from '../SeederConfig';
 import type { ReferenceCache } from '../support/ReferenceCache';
 import { CatalogBootstrap } from './CatalogBootstrap';
 import { InventoryBootstrap } from './InventoryBootstrap';
+import { LocationBootstrap } from './LocationBootstrap';
 import { PeopleBootstrap } from './PeopleBootstrap';
-
-const LOCATION_CODE = 'MAIN-01';
 
 export class BootstrapOrchestrator {
   constructor(
@@ -20,28 +18,16 @@ export class BootstrapOrchestrator {
     console.log('[Bootstrap] Starting bootstrap sequence...');
 
     // -- Location --------------------------------------------------------------
-    const { locationApi, bayApi } = createLocationClient(this.auth.buildSdkConfig('location'));
-    const allLocations = await locationApi.getAllLocations();
-    const location = allLocations.find((l: LocationResponseDTO) => l.code === LOCATION_CODE);
-    if (!location?.id) {
-      throw new Error(`[Bootstrap] Location with code ${LOCATION_CODE} not found`);
-    }
-    const locationId = location.id;
-
-    const baysPage = await bayApi.listBays({ locationId, size: 20 });
-    const bayIds = (baysPage.content ?? [])
-      .map((b) => b.id)
-      .filter((id): id is string => !!id);
-
-    console.log(`[Bootstrap] Location resolved: ${locationId}, ${bayIds.length} bays.`);
+    const locationResult = await new LocationBootstrap(this.auth.buildSdkConfig('location')).run();
+    const { locationId, bayIds } = locationResult;
 
     // -- People ----------------------------------------------------------------
     const peopleResult = await new PeopleBootstrap(this.auth.buildSdkConfig('people')).run(locationId);
-    const { employees } = peopleResult;
+    const { employees, employeeNameById } = peopleResult;
 
     // -- Catalog ---------------------------------------------------------------
     const catalogResult = await new CatalogBootstrap(this.auth.buildSdkConfig('catalog')).run();
-    const { serviceEntityIds, productEntityIds, productNameById } = catalogResult;
+    const { serviceEntityIds, productEntityIds, productNameById, serviceNameById } = catalogResult;
 
     // -- Inventory -------------------------------------------------------------
     const namedProducts = productEntityIds.map((id) => ({
@@ -72,6 +58,9 @@ export class BootstrapOrchestrator {
       employees,
       serviceEntityIds,
       productEntityIds,
+      serviceNameById,
+      productNameById,
+      employeeNameById,
     };
   }
 

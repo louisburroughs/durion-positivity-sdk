@@ -3,7 +3,6 @@ import {
   CreateEmployeeRequestStatusEnum,
   type CreateEmployeeRequest,
   type EmployeeProfileDto,
-  type Person,
   type StaffingAssignmentResponse,
   type CreateStaffingAssignmentRequest,
 } from '@durion-sdk/people';
@@ -21,6 +20,7 @@ interface EmployeeSeedDefinition {
 
 interface PeopleBootstrapResult {
   employees: EmployeeRefs;
+  employeeNameById: Map<string, string>;
   createdCount: number;
   skippedCount: number;
   created: string[];
@@ -90,18 +90,15 @@ export class PeopleBootstrap {
   constructor(private readonly sdkConfig: DurionSdkConfig) {}
 
   async run(locationId: string): Promise<PeopleBootstrapResult> {
-    const { employeeApi, peopleApi, peopleStaffingAssignmentsApi } = createPeopleClient(this.sdkConfig);
+    const { employeeApi, peopleStaffingAssignmentsApi } = createPeopleClient(this.sdkConfig);
 
     let createdCount = 0;
     let skippedCount = 0;
     const created: string[] = [];
     const skipped: string[] = [];
+    const employeeNameById = new Map<string, string>();
 
-    const people = await peopleApi.getAllPeople();
-    const employeeIndex = await this.buildEmployeeIndex(
-      people,
-      async (personId: string) => employeeApi.getEmployee({ employeeId: personId }),
-    );
+    const employeeIndex = await this.buildEmployeeIndex();
 
     const employees: EmployeeRefs = {
       technicians: [],
@@ -132,6 +129,8 @@ export class PeopleBootstrap {
         skippedCount += 1;
       }
 
+      employeeNameById.set(employeeId, label);
+
       await this.ensureAssignment(
         employeeId,
         seed.role,
@@ -159,6 +158,7 @@ export class PeopleBootstrap {
 
     return {
       employees,
+      employeeNameById,
       createdCount,
       skippedCount,
       created,
@@ -166,29 +166,44 @@ export class PeopleBootstrap {
     };
   }
 
-  private async buildEmployeeIndex(
-    people: Person[],
-    getEmployee: (personId: string) => Promise<EmployeeProfileDto>,
-  ): Promise<Map<string, string>> {
+  private async buildEmployeeIndex(): Promise<Map<string, string>> {
     const employeeIndex = new Map<string, string>();
-
-    for (const person of people) {
-      const personId = this.extractPersonId(person);
-      if (!personId) {
-        continue;
-      }
-
-      try {
-        const employee = await getEmployee(personId);
-        if (employee.employeeNumber && employee.id) {
-          employeeIndex.set(employee.employeeNumber, employee.id);
-        }
-      } catch {
-        continue;
+    for (const seed of EMPLOYEE_SEEDS) {
+      const personId = await this.resolvePersonIdByEmployeeNumber(seed.employeeNumber);
+      if (personId) {
+        employeeIndex.set(seed.employeeNumber, personId);
       }
     }
 
     return employeeIndex;
+  }
+
+  private async resolvePersonIdByEmployeeNumber(employeeNumber: string): Promise<string | undefined> {
+    const token = this.sdkConfig.token ? await this.sdkConfig.token() : undefined;
+    const response = await fetch(
+      `${this.sdkConfig.baseUrl}/v1/people/employees/by-number/${encodeURIComponent(employeeNumber)}`,
+      {
+        method: 'GET',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'X-API-Version': '1',
+          'X-Correlation-Id': crypto.randomUUID(),
+        },
+      },
+    );
+
+    if (response.status === 404) {
+      return undefined;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `PeopleBootstrap: employee lookup by number failed for ${employeeNumber} (${response.status} ${response.statusText})`,
+      );
+    }
+
+    const payload = (await response.json()) as { personId?: unknown };
+    return typeof payload.personId === 'string' ? payload.personId : undefined;
   }
 
   private async ensureAssignment(
@@ -222,13 +237,6 @@ export class PeopleBootstrap {
       effectiveFrom: new Date('2024-01-01'),
       isPrimary: true,
     });
-  }
-
-  private extractPersonId(person: Person): string | undefined {
-    if ('id' in person && typeof person.id === 'string') {
-      return person.id;
-    }
-    return undefined;
   }
 
   private requireEmployeeId(employee: EmployeeProfileDto, employeeNumber: string): string {

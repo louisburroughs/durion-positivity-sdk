@@ -14,6 +14,7 @@ import { ReferenceCache } from '../support/ReferenceCache';
 import { SeederRandom } from '../support/SeederRandom';
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const COMPLETABLE_ITEM_STATUSES = new Set(['OPEN', 'READY_TO_EXECUTE', 'IN_PROGRESS']);
 
 type CustomerStatus = 'completed' | 'declined' | 'ignored' | 'error';
 
@@ -72,6 +73,14 @@ const requireField = (value: string | undefined, name: string): string => {
   return value;
 };
 
+const isHttpStatus = (error: unknown, status: number): boolean => {
+  const rec = asRecord(error);
+  if (!rec) return false;
+  const response = asRecord(rec['response']);
+  if (!response) return false;
+  return response['status'] === status;
+};
+
 const formatError = async (error: unknown): Promise<string> => {
   if (
     error !== null &&
@@ -102,6 +111,7 @@ export class CustomerEventSimulator {
   private readonly accountingClient;
   private readonly vehiclesByParty = new Map<string, string[]>();
   private lastLoggedCustomerId: string | undefined;
+  private lastLoggedCustomerName: string | undefined;
 
   constructor(
     private readonly config: SeederConfig,
@@ -118,6 +128,87 @@ export class CustomerEventSimulator {
 
   get lastCustomerId(): string | undefined {
     return this.lastLoggedCustomerId;
+  }
+
+  get lastCustomerName(): string | undefined {
+    return this.lastLoggedCustomerName;
+  }
+
+  private async completeOutstandingWorkorderItems(dayNumber: number, workorderId: string): Promise<void> {
+    const workorderDetails = await this.workorderClient.workorderDetailApi.getWorkorderDetail({ workorderId });
+
+    let attempted = 0;
+    let completed = 0;
+
+    for (const service of workorderDetails.services ?? []) {
+      if (!service.id || !service.status || !COMPLETABLE_ITEM_STATUSES.has(service.status)) {
+        continue;
+      }
+
+      attempted += 1;
+      const status = await this.postWorkorderItemCompletion(
+        `/v1/workorders/${encodeURIComponent(workorderId)}/services/${encodeURIComponent(service.id)}/complete`,
+      );
+      if (status === 200 || status === 204) {
+        completed += 1;
+      }
+    }
+
+    for (const part of workorderDetails.parts ?? []) {
+      if (!part.id || !part.status || !COMPLETABLE_ITEM_STATUSES.has(part.status)) {
+        continue;
+      }
+
+      attempted += 1;
+      const status = await this.postWorkorderItemCompletion(
+        `/v1/workorders/${encodeURIComponent(workorderId)}/parts/${encodeURIComponent(part.id)}/complete`,
+      );
+      if (status === 200 || status === 204) {
+        completed += 1;
+      }
+    }
+
+    if (attempted > 0) {
+      console.log(
+        `[Day ${dayNumber}] Item completion pass for workorder ${workorderId}: attempted=${attempted}, completed=${completed}`,
+      );
+    }
+  }
+
+  private async postWorkorderItemCompletion(path: string): Promise<number> {
+    const response = await fetch(`${this.config.baseUrl}/workorder${path}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.auth.getToken()}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 200 || response.status === 204) {
+      return response.status;
+    }
+
+    if (response.status === 400 || response.status === 404) {
+      let responseBody = '';
+      try {
+        responseBody = await response.text();
+      } catch {
+        responseBody = '(could not read body)';
+      }
+      console.log(
+        `[Seeder] Item completion skipped (${response.status}) for ${path}: ${responseBody || '(empty body)'}`,
+      );
+      return response.status;
+    }
+
+    let responseBody = '';
+    try {
+      responseBody = await response.text();
+    } catch {
+      responseBody = '(could not read body)';
+    }
+
+    throw new Error(`Item completion request failed with HTTP ${response.status}: ${responseBody}`);
   }
 
   async simulate(dayNumber: number, customerIndex: number): Promise<CustomerStatus> {
@@ -138,6 +229,7 @@ export class CustomerEventSimulator {
     };
 
     this.lastLoggedCustomerId = undefined;
+    this.lastLoggedCustomerName = undefined;
 
     try {
       try {
@@ -165,6 +257,7 @@ export class CustomerEventSimulator {
 
         partyId = requireField(partyId, 'partyId');
         this.lastLoggedCustomerId = partyId;
+        this.lastLoggedCustomerName = `${firstName} ${lastName}`;
       } catch (error) {
         await logStepError('pickOrCreateCustomer', error);
         return 'error';
@@ -224,6 +317,7 @@ export class CustomerEventSimulator {
         );
         selectedServiceIds.push(...services);
         for (const serviceId of services) {
+          const serviceName = this.refs.serviceNameById.get(serviceId) ?? serviceId;
           const estimateItem = await this.workorderClient.estimateAPIApi.addEstimateItem({
             estimateId,
             addEstimateItemRequest: {
@@ -231,7 +325,7 @@ export class CustomerEventSimulator {
               quantity: 1,
               unitPrice: Number((100 * (1 + this.random.price(-0.15, 0.15))).toFixed(2)),
               serviceId,
-              description: `Service ${serviceId}`,
+              description: serviceName,
             },
           });
           const estimateItemId = readString(estimateItem, 'id');
@@ -246,6 +340,7 @@ export class CustomerEventSimulator {
           : this.random.pickN(this.refs.productEntityIds, Math.min(partCount, this.refs.productEntityIds.length));
 
         for (const productId of products) {
+          const productName = this.refs.productNameById.get(productId) ?? productId;
           await this.workorderClient.estimateAPIApi.addEstimateItem({
             estimateId,
             addEstimateItemRequest: {
@@ -253,7 +348,7 @@ export class CustomerEventSimulator {
               quantity: this.random.int(1, 2),
               unitPrice: Number((40 * (1 + this.random.price(-0.15, 0.15))).toFixed(2)),
               productId,
-              description: `Part ${productId}`,
+              description: productName,
             },
           });
         }
@@ -300,59 +395,72 @@ export class CustomerEventSimulator {
         return 'error';
       }
 
+      let serviceToWorkorderItemMap = new Map<string, string>();
+
       try {
         const workorderResponse = await this.workorderClient.estimateAPIApi.promoteEstimateToWorkorder({ estimateId });
         workorderId = requireField(readString(workorderResponse, 'id', 'workorderId'), 'workorderId');
+
+        // Build mapping from serviceEntityId to workorder item ID via detail endpoint
+        const workorderDetails = await this.workorderClient.workorderDetailApi.getWorkorderDetail({ workorderId });
+        for (const service of workorderDetails.services ?? []) {
+          if (service.id && service.serviceEntityId) {
+            serviceToWorkorderItemMap.set(service.serviceEntityId, service.id);
+          }
+        }
       } catch (error) {
         await logStepError('promoteToWorkorder', error);
         return 'error';
       }
 
       try {
-        const technicianId = this.random.pickOne(this.refs.employees.technicians);
-        await this.workorderClient.technicianAssignmentAPIApi.assignTechnician({
+        await this.workorderClient.workOrderAPIApi.approveWorkorder({
           workorderId,
-          assignTechnicianRequest: {
-            technicianId,
-            notes: 'Seeder assignment',
+          approveWorkorderRequest: {
+            customerId: partyId,
+            signatureData: this.random.base64(32),
+            signatureMimeType: 'image/png',
+            signerName: `${firstName} ${lastName}`,
+            notes: 'Seeder approval',
           },
         });
       } catch (error) {
-        await logStepError('assignTechnician', error);
+        await logStepError('approveWorkorder', error);
+        return 'error';
       }
 
       try {
-        const technicianId = this.random.pickOne(this.refs.employees.technicians);
-        const workorderDetails = await this.workorderClient.workOrderAPIApi.getWorkorderById({ workorderId });
-        const taskCandidates = [
-          ...readUnknownArray(workorderDetails, 'tasks'),
-          ...readUnknownArray(workorderDetails, 'lineItems'),
-          ...readUnknownArray(workorderDetails, 'items'),
-        ];
-        const workOrderTaskId = taskCandidates.map(readTaskId).find((value): value is string => Boolean(value));
-
-        if (!workOrderTaskId) {
-          throw new Error('No workorder task ID available on workorder payload');
-        }
-
-        const session = await this.workorderClient.workSessionAPIApi.startWorkSession({
-          startWorkSessionRequest: {
-            mechanicId: technicianId,
-            workOrderId: workorderId,
-            workOrderTaskId,
-            locationId: this.refs.locationId,
-            resourceId: this.refs.bayIds[0],
-          },
+        await this.workorderClient.operationalContextApi.startWork({
+          workorderId,
         });
-        workSessionId = session.workSessionId;
       } catch (error) {
         await logStepError('startWorkorderWorkSession', error);
       }
 
-      try {
-        for (let index = 0; index < selectedServiceIds.length; index += 1) {
-          const serviceId = selectedServiceIds[index];
-          const workorderItemId = serviceLineIds[index];
+      // assignTechnician is called AFTER the timer loop intentionally.
+      // stopTimers always targets the authenticated user (admin.alpha) from the JWT.
+      // startTimer, when no technicianId is in the request, attributes labor to the currently
+      // assigned technician — creating a mismatch where stop can never reach that timer.
+      // With no assignment present during the loop, the backend falls back to the actor
+      // (admin.alpha), keeping start and stop on the same identity.
+
+      for (let index = 0; index < selectedServiceIds.length; index += 1) {
+        const serviceId = selectedServiceIds[index];
+        const serviceName = this.refs.serviceNameById.get(serviceId) ?? serviceId;
+        const workorderItemId = serviceToWorkorderItemMap.get(serviceId);
+        if (!workorderItemId) {
+          console.log(`[Day ${dayNumber}] WARNING: No workorder item found for service ${serviceName}, skipping timer`);
+          continue;
+        }
+
+        try {
+          await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
+        } catch {
+          // No active timer is common here; continue to start attempt.
+        }
+
+        let timerStarted = false;
+        try {
           await this.workorderClient.workexecTimeTrackingAPIApi.startTimer({
             workexecTimerStartRequest: {
               workorderId,
@@ -360,11 +468,61 @@ export class CustomerEventSimulator {
               laborCode: serviceId,
             },
           });
-          await sleep(this.random.int(100, 500));
-          await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
+          timerStarted = true;
+        } catch (startError) {
+          if (isHttpStatus(startError, 409)) {
+            try {
+              await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
+              await this.workorderClient.workexecTimeTrackingAPIApi.startTimer({
+                workexecTimerStartRequest: {
+                  workorderId,
+                  workorderItemId,
+                  laborCode: serviceId,
+                },
+              });
+              timerStarted = true;
+              console.log(
+                `[Day ${dayNumber}] WARNING: recovered from active timer conflict for service ${serviceName} (workorder ${workorderId}).`,
+              );
+            } catch (retryError) {
+              const retryMessage = await formatError(retryError);
+              console.log(
+                `[Day ${dayNumber}] WARNING: could not recover timer for service ${serviceName} (workorder ${workorderId}): ${retryMessage}`,
+              );
+            }
+          } else {
+            const startMessage = await formatError(startError);
+            console.log(
+              `[Day ${dayNumber}] WARNING: startTimer failed for service ${serviceName} (workorder ${workorderId}): ${startMessage}`,
+            );
+          }
         }
+
+        if (!timerStarted) {
+          continue;
+        }
+
+        await sleep(this.random.int(100, 500));
+        try {
+          await this.workorderClient.workexecTimeTrackingAPIApi.stopTimers();
+        } catch (postStopError) {
+          const postStopMsg = await formatError(postStopError);
+          console.log(`[Day ${dayNumber}] WARNING: post-stop failed after service ${serviceName} timer (workorder ${workorderId}): ${postStopMsg}`);
+        }
+      }
+
+      try {
+        const technicianId = this.random.pickOne(this.refs.employees.technicians);
+        const technicianName = this.refs.employeeNameById.get(technicianId) ?? technicianId;
+        await this.workorderClient.technicianAssignmentAPIApi.assignTechnician({
+          workorderId,
+          assignTechnicianRequest: {
+            technicianId,
+            notes: `Assigned by seeder to ${technicianName}`,
+          },
+        });
       } catch (error) {
-        await logStepError('laborLoop', error);
+        await logStepError('assignTechnician', error);
       }
 
       try {
@@ -394,7 +552,10 @@ export class CustomerEventSimulator {
           });
         }
       } catch (error) {
-        await logStepError('pickAndConsumeParts', error);
+        if (!isHttpStatus(error, 404)) {
+          await logStepError('pickAndConsumeParts', error);
+        }
+        // 404 = no pick list exists for this workorder (no product items were added); skip silently
       }
 
       try {
@@ -426,6 +587,12 @@ export class CustomerEventSimulator {
         // AWAITING_PARTS flow is intentionally deferred in this wave.
       } catch (error) {
         await logStepError('awaitingParts', error);
+      }
+
+      try {
+        await this.completeOutstandingWorkorderItems(dayNumber, workorderId);
+      } catch (error) {
+        await logStepError('completeOutstandingItems', error);
       }
 
       try {
@@ -466,7 +633,7 @@ export class CustomerEventSimulator {
         await this.accountingClient.accountingEventsApi.submitEvent({
           accountingEventSubmitRequest: {
             eventType: 'INVOICE_PAYMENT',
-            organizationId: 'DEFAULT',
+            organizationId: this.refs.locationId,
             sourceSystem: 'SDK_SEEDER',
             payload: {
               invoiceId,

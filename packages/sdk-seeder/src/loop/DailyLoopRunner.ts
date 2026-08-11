@@ -79,12 +79,13 @@ export class DailyLoopRunner {
       for (let customerIndex = 1; customerIndex <= numCustomers; customerIndex += 1) {
         const status = await simulator.simulate(day, customerIndex);
         const customerId = simulator.lastCustomerId ?? 'unknown';
+        const customerName = simulator.lastCustomerName ?? 'unknown';
 
         // Refresh VT after each customer for accurate logging
         currentVT = await this.virtualClock.getCurrentVirtualTime();
         this.logger.setVirtualTime(currentVT);
 
-        this.logger.info(`Customer ${customerIndex}/${numCustomers}: ${status} — ${customerId}`);
+        this.logger.info(`Customer ${customerIndex}/${numCustomers}: ${status} — ${customerName} (${customerId})`);
 
         if (status === 'completed') {
           completed += 1;

@@ -66,6 +66,7 @@ export class InventoryMaintenanceSimulator {
       }
 
       for (const productId of candidates) {
+        const productName = this.refs.productNameById.get(productId) ?? productId;
         // The inventory system stores stock items keyed by SKU, which equals the productEntityId
         const stockItemId = productId;
         const quantityOnHandBefore = 50;
@@ -86,17 +87,19 @@ export class InventoryMaintenanceSimulator {
         });
 
         if (!adjustment.adjustmentId) {
-          console.log(`[Inventory] Cycle count create returned no adjustmentId for ${productId}.`);
+          console.log(`[Inventory] Cycle count create returned no adjustmentId for ${productName}.`);
           continue;
         }
 
+        const managerName = this.refs.employeeNameById.get(this.refs.employees.manager) ?? 'Manager';
         await this.inventoryClient.cycleCountAdjustmentsApi.approveAdjustment({
           adjustmentId: adjustment.adjustmentId,
           approveAdjustmentRequest: {
             approverUserId: this.refs.employees.manager,
-            notes: 'Seeder weekly cycle count',
+            notes: `Seeder weekly cycle count for ${productName}`,
           },
         });
+        console.log(`[Inventory] Cycle count approved for ${productName} by ${managerName}.`);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -114,6 +117,10 @@ export class InventoryMaintenanceSimulator {
         return;
       }
 
+      const productNames = products.map(id => this.refs.productNameById.get(id) ?? id);
+      console.log(`[Inventory] Creating monthly restock PO for: ${productNames.join(', ')}`);
+
+      const partsClerkName = this.refs.employeeNameById.get(this.refs.employees.partsClerk) ?? 'Parts Clerk';
       const purchaseOrder = await this.inventoryClient.purchaseOrdersApi.createPurchaseOrder({
         createPurchaseOrderRequest: {
           vendorId,
@@ -121,11 +128,11 @@ export class InventoryMaintenanceSimulator {
           currency: 'USD',
           shipToLocationId: this.refs.locationId,
           requestedBy: this.refs.employees.partsClerk,
-          comment: 'Seeder monthly restock',
+          comment: `Seeder monthly restock requested by ${partsClerkName}`,
           lines: products.map((productId, index) => ({
             lineNumber: index + 1,
             skuId: productId,
-            description: `Restock ${productId}`,
+            description: `Restock ${this.refs.productNameById.get(productId) ?? productId}`,
             quantity: 50,
             unitCostMinor: 1000,
           })),
@@ -183,6 +190,8 @@ export class InventoryMaintenanceSimulator {
           }),
         },
       });
+
+      console.log(`[Inventory] Monthly restock completed: PO ${purchaseOrder.purchaseOrderId}.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.log(`[Inventory] Monthly restock failed: ${message}`);

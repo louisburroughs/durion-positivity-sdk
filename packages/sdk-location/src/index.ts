@@ -34,6 +34,7 @@ async function buildRequestHeaders(
   }
   return headers;
 }
+
 export function createLocationClient(config: DurionSdkConfig) {
   const configuration = new Configuration({
     basePath: config.baseUrl,
@@ -50,15 +51,16 @@ export function createLocationClient(config: DurionSdkConfig) {
     },
   });
   return {
-    bayApi: new GeneratedApis.BayAPIApi(configuration),
     locationApi: new GeneratedApis.LocationAPIApi(configuration),
+    bayApi: new GeneratedApis.BayAPIApi(configuration),
+    locationBulkIngestApi: new GeneratedApis.LocationBulkIngestAPIApi(configuration),
     mobileUnitApi: new GeneratedApis.MobileUnitAPIApi(configuration),
+    mobileUnitEligibilityApi: new GeneratedApis.MobileUnitEligibilityControllerApi(configuration),
     serviceAreaApi: new GeneratedApis.ServiceAreaAPIApi(configuration),
-    mobileUnitEligibilityControllerApi: new GeneratedApis.MobileUnitEligibilityControllerApi(configuration),
-    siteDefaultsAPIApi: new GeneratedApis.SiteDefaultsAPIApi(configuration),
-    storageLocationControllerApi: new GeneratedApis.StorageLocationControllerApi(configuration),
-    storageLocationValidationControllerApi: new GeneratedApis.StorageLocationValidationControllerApi(configuration),
-    travelBufferPolicyAPIApi: new GeneratedApis.TravelBufferPolicyAPIApi(configuration),
+    siteDefaultsApi: new GeneratedApis.SiteDefaultsAPIApi(configuration),
+    storageLocationApi: new GeneratedApis.StorageLocationAPIApi(configuration),
+    storageLocationValidationApi: new GeneratedApis.StorageLocationValidationControllerApi(configuration),
+    travelBufferPolicyApi: new GeneratedApis.TravelBufferPolicyAPIApi(configuration),
   };
 }
 

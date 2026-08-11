@@ -6,7 +6,7 @@ This file is maintained by the **SeederDebug** agent. It is updated after every 
 
 ## Last Updated
 
-2026-06-01
+2026-07-28
 
 ---
 
@@ -85,15 +85,69 @@ The backend runs **locally via Docker** (`docker compose up`). Ensure containers
 
 ## Known Issues / Observations
 
-- `sdk-transport/tsconfig.json` (and potentially other packages) inherit `"noEmit": true` from the root tsconfig. Any package that needs to emit to `dist/` must explicitly set `"noEmit": false` in its own tsconfig. If `tsc` runs silently with no errors but produces no `dist/` output, this is the cause.
+- Root cause for recurring shift clock-in 404s after ADR-0044 split: `WorkSessionServiceImpl.startSession()` now validates `personId` against `ext_people_contact_person` (identity replica), not `employee`. The `employee` row can exist while replica row is missing because migration V5 dropped local `person` table/FKs and left `employee.person_id` as an unfenced UUID. In docker-compose defaults, both `POS_PEOPLE_KAFKA_ENABLED` and `POS_PEOPLE_CONTACT_KAFKA_ENABLED` are `false`, so `createEmployee` writes employment rows but does not emit/consume identity upsert events; this creates orphan `employee.person_id` values that fail work-session start with 404.
+- Clock-in failures that only print `Response returned an error code` can mask backend `404 Person not found with id: ...` responses from `POST /people/v1/people/workSessions/start`. In current `pos-people`, `WorkSessionServiceImpl.startSession()` requires `ext_person_replica` to contain the provided `personId`; otherwise it throws `PersonNotFoundException` (mapped to 404 by `PeopleExceptionHandler`). This can happen when employee records still resolve via `GET /v1/people/employees/by-number/{employeeNumber}` but their person identity replica rows are missing/drifted.
+- Backend `pos-people` no longer exposes `GET /v1/people` (there is no `PersonController` in the current runtime), while `packages/sdk-people` still includes `PeopleAPIApi.getAllPeople()` targeting that route. Seeder must not call the deprecated endpoint. `PeopleBootstrap` now resolves existing employees only via `GET /v1/people/employees/by-number/{employeeNumber}` and uses the returned `personId`.
+- SDK packages using `Object.entries()` must target/lib ES2017 or later. If a package build fails with `TS2550: Property 'entries' does not exist on type 'ObjectConstructor'`, update that package `tsconfig.json` target/lib to `es2017` or later.
 - The generated OpenAPI SDK clients (in `sdk-people`, `sdk-customer`, etc.) throw `ResponseError` from their `runtime.ts`, NOT `DurionSdkError` from `sdk-transport`. `ResponseError` has a `response: Response` field. To check HTTP status in seeder catch blocks, use `(error as { response?: { status?: number } }).response?.status`.
 - `SecurityBootstrap.ensureSysAdminRole` must use `X-Authorities: security:role:assign` (not `security:user:edit`) when calling `PUT /v1/users/{userId}/roles/{roleId}`. The endpoint is guarded by `@PreAuthorize("hasAuthority('security:role:assign')")` in `UserRoleController.java`.
 - All SDK package `dist/` dirs are not rebuilt automatically. If any `src/index.ts` changes (new `createXxxClient` factory or workflow export), the dist will be stale and the seeder will get either a TS2305 compile error or a runtime "is not a function" error. Fix: rebuild all seeder dependencies at once with `npm run build -w packages/sdk-security -w packages/sdk-people -w packages/sdk-customer -w packages/sdk-location -w packages/sdk-catalog -w packages/sdk-inventory -w packages/sdk-workorder -w packages/sdk-order -w packages/sdk-accounting -w packages/sdk-vehicle-inventory -w packages/sdk-invoice`.
 - `CatalogServiceImpl.getProductsByName()` (and `getServicesByName()`) in the backend has no `@Transactional` annotation. `ProductEntity.attributes` and `.specifications` are `@Lob` fields. Reading them outside a transaction throws `PSQLException: Large Objects may not be used in auto-commit mode` → backend returns 500. The seeder's `findCatalogEntityIdByName` silently swallows this 500, causing the "product exists but can't be found" deadlock (409 on create, null on fallback fetch → fatal re-throw). **Workaround**: use `productsApi.searchProducts({ sku })` instead of `productsApi.getProductByName({ name })` — the search path goes through `ProductSearchServiceImpl` which IS `@Transactional(readOnly=true)` and maps to `ProductSummary` (no LOB access).
+- Seeder now issues explicit per-item completion calls before `completeWorkorder`: `POST /v1/workorders/{workorderId}/services/{serviceLineId}/complete` and `POST /v1/workorders/{workorderId}/parts/{partId}/complete`. If these endpoints (and/or state-machine auto-complete during workorder completion) are not deployed in the running backend container image yet, line completion attempts return non-success and workorder completion can still fail with "service/part items not in COMPLETED/CANCELLED state".
+- Accounting event submission (`POST /accounting/v1/accounting/events`) can intermittently return HTTP 503 in the current local runtime. Seeder already treats `processPayment` failures as non-fatal and continues customer flow.
 
 ---
 
 ## Run History
+
+### 2026-07-28 — Backend root cause traced to identity-replica split + compose defaults
+- Duration: ~35 min
+- Days simulated: 0 (backend runtime unavailable during final probe)
+- Customers: completed=0, declined=0, errors=0
+- Issues encountered: Clock-in 404s persisted despite valid employee-number lookups. Backend endpoint and migration review showed `startWorkSession` gates on `ext_people_contact_person` existence, while `employee` rows survive without person FK after ADR-0044 migration (`V5__drop_identity_tables.sql`). docker-compose defaults currently set `POS_PEOPLE_KAFKA_ENABLED=false` and `POS_PEOPLE_CONTACT_KAFKA_ENABLED=false`, which disables outbox/replica sync and allows orphan `employee.person_id` values.
+- Fix applied: No backend code changes (investigation-only). Seeder diagnostics updated to include explicit Kafka-flag hint in fail-fast message when all selected employees hit 404 person-not-found.
+
+### 2026-07-28 — Clock-in 404 root cause confirmed; shift diagnostics improved
+- Duration: ~20 min
+- Days simulated: 1 (aborted at Day 1 SHIFT-IN)
+- Customers: completed=0, declined=0, errors=0
+- Issues encountered: All selected employees failed `startWorkSession` with generic SDK error text (`Response returned an error code`). Direct gateway probes confirmed HTTP 404 with detail `Person not found with id: ...` for all seeded person IDs (James/Marcus/Elena/Olivia/Daniel/Michelle/Avery), while `GET /v1/people/employees/by-number/*` still returns ACTIVE employee records for those numbers.
+- Fix applied: Updated `ShiftSimulator` to parse `ResponseError.response` and log actionable HTTP status/detail for clock-in failures. Added fail-fast guard that throws when all selected employees fail with 404 person-not-found, preventing the seeder from continuing into customer flow with zero active staff and hiding the real root cause.
+
+### 2026-07-28 — People bootstrap migrated to new endpoint only
+- Duration: ~1 min
+- Days simulated: 1
+- Customers: completed=0, declined=0, errors=9
+- Issues encountered: Legacy `GET /v1/people` is fully deprecated in current backend runtime; downstream customer-flow still fails at `pickOrRegisterVehicle` with HTTP 405 on `POST /v1/crm/{partyId}/vehicles`.
+- Fix applied: Removed legacy `peopleApi.getAllPeople()` usage and all 404 fallback logic from `PeopleBootstrap`; seeder now indexes existing employees exclusively with `GET /v1/people/employees/by-number/{employeeNumber}`.
+
+### 2026-07-28 — People bootstrap 404 mitigated via by-number fallback
+- Duration: ~1 min
+- Days simulated: 1
+- Customers: completed=0, declined=0, errors=7
+- Issues encountered: Legacy `GET /people/v1/people` returned 404 in current backend runtime. Also observed downstream customer-flow failures at `pickOrRegisterVehicle` with HTTP 405 on `POST /v1/crm/{partyId}/vehicles`.
+- Fix applied: Updated `PeopleBootstrap` to treat 404 from `peopleApi.getAllPeople()` as a contract-drift signal and fallback to `GET /v1/people/employees/by-number/{employeeNumber}` lookups using the existing seeder token.
+
+### 2026-06-30 — Timer conflicts and invoice tax-jurisdiction failure resolved
+- Duration: ~1 min
+- Days simulated: 1
+- Customers: completed=5, declined=1, errors=0
+- Issues encountered: Non-fatal HTTP 503 during `processPayment` (`/accounting/v1/accounting/events`); one shift time-entry approval warning still logged by `ShiftSimulator`.
+- Fix applied: Updated `CustomerEventSimulator` labor loop to handle timer start/stop per-service with one-shot 409 recovery (clear active timer then retry). Updated `LocationBootstrap` to always seed address fields on create and to backfill `country`/`postalCode` via `updateLocation` for existing `MAIN-01`, which removed `generateInvoice` failures caused by missing tax-jurisdiction data.
+
+### 2026-06-25 — Explicit completion endpoints confirmed 404 in active runtime
+- Duration: ~3 min (1-day run)
+- Days simulated: 1 (partial)
+- Customers: completed=0, declined=2, errors=4+
+- Issues encountered: Explicit item completion calls now log per-request outcomes and consistently returned 404 `Not Found` for `/v1/workorders/{workorderId}/services/{serviceLineId}/complete` in the running environment. Subsequent `completeWorkorder` still failed with 400 due to non-terminal service/part items.
+- Fix applied: Added response-body logging for item completion 400/404 responses to make endpoint availability and routing issues immediately visible during runs.
+
+### 2026-06-25 — Seeder wired for explicit item completion, runtime backend appears outdated
+- Duration: ~4 min (1-day run)
+- Days simulated: 1 (partial; failed during customer flow)
+- Customers: completed=0, declined=0, errors=3+
+- Issues encountered: Seeder attempted explicit service/part line completion before workorder close (`attempted=2`), but no item completions succeeded and `completeWorkorder` still returned 400 requiring terminal item states. Direct probe to `POST /workorder/v1/workorders/{id}/services/{serviceLineId}/complete` returned 404 from the running environment, indicating the active backend containers likely do not yet include the new completion endpoints and/or auto-complete logic.
+- Fix applied: Updated `CustomerEventSimulator` to perform explicit per-item completion pass using line IDs from `workorderDetail` before closing the workorder, with graceful handling for 400/404 outcomes so newer and older backends can both be exercised.
 
 ### 2026-05-12 — 403 on role assignment fixed
 - Duration: N/A (failed at bootstrap)
@@ -171,3 +225,36 @@ The backend runs **locally via Docker** (`docker compose up`). Ensure containers
   - `pos-people`: RestClientConfig (securityServiceRestClient, workexecRestClient), application.yml
   - `pos-security-service`: RestClientConfig (peopleRegistrationRestClient, customerRegistrationRestClient), application.yml
 - Architectural note: `pos-mcp-server` intentionally uses `@LoadBalanced` + `BearerTokenRelayInterceptor` (JWT relay) — this is correct by design for an AI gateway aggregator and must NOT be changed.
+
+### 2026-06-18 — Duplicate key on `commercial_party_party_number_key` (recurring)
+- Duration: N/A (failed at CustomerEventSimulator.simulate → pickOrCreateCustomer)
+- Days simulated: 0
+- Customers: completed=0, declined=0, errors=0
+- Issues encountered: `generatePartyNumber()` in `PartyServiceImpl` still used `.toString().substring(0, 8)` without stripping hyphens first. In a UUIDv7 string (format `019EDAFC-ECFB-7079-...`), the first 8 characters are the high 32 bits of the millisecond timestamp, which only increments every **65,536 ms (~65 seconds)**. Every commercial party created within the same 65-second window receives the same `party_number` (e.g. `PARTY-019EDAFC`), guaranteed to violate the `UNIQUE` constraint. The 2026-06-08 session identified this pattern but the fix was not fully applied — `generateCustomerNumber()` was corrected (strips hyphens, takes last 8 random chars) but `generatePartyNumber()` was left in the broken state.
+- Fix applied: Changed `generatePartyNumber()` in `pos-customer/PartyServiceImpl.java` to match the `generateCustomerNumber()` pattern — strip hyphens first, then take the last 12 chars (pure `rand_b` random bits, ~48-bit entropy). Format changes from `PARTY-XXXXXXXX` (8 timestamp chars, 65-sec collision window) to `PARTY-XXXXXXXXXXXX` (12 random chars, essentially zero collision probability). Column is `varchar(255)` so no schema change required.
+
+### 2026-06-23 — 409 laborLoop + 404 pickAndConsumeParts
+- Duration: ~30 min
+- Days simulated: 1 (partial — errors at laborLoop and pickAndConsumeParts)
+- Customers: completed=0, declined=1, errors=1+
+- Issues encountered:
+  1. **409 `TIMER_ALREADY_ACTIVE` at `laborLoop`**: `stopTimers()` errors were swallowed by a silent `catch {}` block. When `stopTimers` failed (e.g., 400 or 409 from the backend), the timer for the current service remained active. The next `startTimer` call in the loop hit 409 `TIMER_ALREADY_ACTIVE`, which propagated to the outer try-catch and aborted all remaining service timer iterations.
+  2. **404 at `pickAndConsumeParts`**: When a workorder has no product/part items, the inventory service creates no pick list. `WorkorderPickFacadeServiceImpl.resolvePrimaryPickList()` throws a `ResponseStatusException(404)` which propagates back to the caller. The seeder logged this as an ERROR, but it is expected behavior when the estimate contained only labor services (no products).
+- Fix applied:
+  1. Wrapped each service iteration's `startTimer` + `stopTimers` in its own try-catch. Timer conflicts are now logged as `WARNING` and skipped per-service rather than aborting the entire loop.
+  2. Added `isHttpStatus(error, status)` helper to `CustomerEventSimulator.ts`. In `pickAndConsumeParts`, 404 is now swallowed silently (no parts = no pick list = expected); all other errors still log as ERROR.
+
+### 2026-06-23 — TIMER_ALREADY_ACTIVE caused by labor attribution mismatch
+- Duration: ~20 min (investigation + fix)
+- Days simulated: 0 (blocked at Day 1 laborLoop)
+- Customers: completed=0, declined=1, errors=1
+- Issues encountered: Pre-stop `stopTimers` throws 409 `NO_ACTIVE_TIMER`, then `startTimer` immediately throws 409 `TIMER_ALREADY_ACTIVE` for the second service in the loop. Appeared paradoxical.
+- Root cause: `stopTimers` (backend) always resolves mechanic from the JWT → targets admin.alpha's labor entries. `startTimer`, when no `technicianId` is in the request body and the workorder has an assigned technician T1, attributes the timer to **T1** (via `resolveTrackedTechnician`). So the pre-stop and post-stop never find admin.alpha's timer, T1's timer is never closed, and the second `startTimer` for the same T1 hits TIMER_ALREADY_ACTIVE. Note: the SDK-generated `WorkexecTimerStartRequest` type does not expose a `technicianId` field, so the seeder cannot override the attribution target.
+- Fix applied: Moved `assignTechnician` to after the timer loop (before pick parts) in `CustomerEventSimulator.ts`. With no assignment present during the loop, `resolveTrackedTechnician` falls back to `actorPersonId` (admin.alpha), so timers are attributed to admin.alpha and `stopTimers` correctly finds and stops them.
+
+### 2026-06-23 — Duplicate key on `commercial_party_customer_number_key` (regression)
+- Duration: N/A (failed at CustomerEventSimulator.simulate → pickOrCreateCustomer)
+- Days simulated: 0
+- Customers: completed=0, declined=0, errors=0
+- Issues encountered: `duplicate key value violates unique constraint "commercial_party_customer_number_key"` — Key `(customer_number)=(CUST-019EF57F)`. The 2026-06-18 session fixed `generatePartyNumber()` but left `generateCustomerNumber()` in its broken state: `.toString().substring(0, 8)` extracts the UUIDv7 timestamp prefix without stripping hyphens first, giving every customer created within the same ~65-second window the same `CUST-XXXXXXXX` value → constraint violation.
+- Fix applied: Changed `generateCustomerNumber()` in `pos-customer/PartyServiceImpl.java` from `.toString().substring(0, 8)` to `.toString().replace("-", "").substring(20)` — strips hyphens then takes the last 12 chars (positions 20–31 of the 32-char hex UUID, which are the pure `rand_b` random bits). This matches the corrected `generatePartyNumber()` pattern. **Requires rebuilding and restarting the `pos-customer` Docker container.**

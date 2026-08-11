@@ -18,6 +18,11 @@ const LOCATION_CODE = 'MAIN-01';
 const LOCATION_NAME = 'Main Street Auto Service';
 const LOCATION_TIMEZONE = 'America/New_York';
 const LOCATION_TYPE_NAME = 'SHOP';
+const LOCATION_ADDRESS_LINE_1 = '100 Main Street';
+const LOCATION_CITY = 'Austin';
+const LOCATION_STATE = 'TX';
+const LOCATION_POSTAL_CODE = '78701';
+const LOCATION_COUNTRY = 'US';
 
 const BAY_DEFINITIONS: BaySeedDefinition[] = [
   { name: 'Bay 1', bayType: 'GENERAL_SERVICE', maxConcurrentVehicles: 1 },
@@ -46,6 +51,11 @@ export class LocationBootstrap {
         locationRequestDTO: {
           name: LOCATION_NAME,
           code: LOCATION_CODE,
+          addressLine1: LOCATION_ADDRESS_LINE_1,
+          city: LOCATION_CITY,
+          state: LOCATION_STATE,
+          postalCode: LOCATION_POSTAL_CODE,
+          country: LOCATION_COUNTRY,
           timezone: LOCATION_TIMEZONE,
           active: true,
           type: { name: LOCATION_TYPE_NAME },
@@ -56,6 +66,34 @@ export class LocationBootstrap {
       createdCount += 1;
     } else {
       skippedCount += 1;
+      const currentLocation = existingLocation;
+      if (!currentLocation) {
+        throw new Error('LocationBootstrap: existing location lookup failed unexpectedly');
+      }
+
+      const needsTaxAddressBackfill = !currentLocation.postalCode || !currentLocation.country;
+      if (needsTaxAddressBackfill) {
+        await locationApi.updateLocation({
+          locationId,
+          locationRequestDTO: {
+            name: currentLocation.name ?? LOCATION_NAME,
+            code: currentLocation.code ?? LOCATION_CODE,
+            addressLine1: currentLocation.addressLine1 ?? LOCATION_ADDRESS_LINE_1,
+            addressLine2: currentLocation.addressLine2,
+            city: currentLocation.city ?? LOCATION_CITY,
+            state: currentLocation.state ?? LOCATION_STATE,
+            postalCode: currentLocation.postalCode ?? LOCATION_POSTAL_CODE,
+            country: currentLocation.country ?? LOCATION_COUNTRY,
+            timezone: LOCATION_TIMEZONE,
+            active: currentLocation.active ?? true,
+            type: currentLocation.type ?? { name: LOCATION_TYPE_NAME },
+          },
+        });
+
+        console.log(
+          `[Bootstrap] Updated location ${locationId} with missing tax address fields (country/postalCode).`,
+        );
+      }
     }
 
     const baysPage = await bayApi.listBays({ locationId, size: 10 });

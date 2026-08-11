@@ -18,6 +18,8 @@ export class ShiftSimulator {
   private readonly peopleClient;
   private activePersonIds: string[] = [];
 
+  private static readonly PERSON_NOT_FOUND_PREFIX = 'Person not found with id:';
+
   constructor(
     private readonly config: SeederConfig,
     private readonly auth: SeederAuth,
@@ -46,6 +48,34 @@ export class ShiftSimulator {
     }
   }
 
+  private async formatHttpError(error: unknown): Promise<string> {
+    const message = error instanceof Error ? error.message : String(error);
+    const response = (error as { response?: Response }).response;
+    if (!response) {
+      return message;
+    }
+
+    let detail = '';
+    try {
+      const bodyText = await response.clone().text();
+      const parsed = JSON.parse(bodyText) as { detail?: unknown; message?: unknown; error?: unknown };
+      if (typeof parsed.detail === 'string') {
+        detail = parsed.detail;
+      } else if (typeof parsed.message === 'string') {
+        detail = parsed.message;
+      } else if (typeof parsed.error === 'string') {
+        detail = parsed.error;
+      }
+    } catch {
+      // Keep message-only fallback when the body is not parseable JSON.
+    }
+
+    if (detail) {
+      return `HTTP ${response.status} ${response.statusText} - ${detail}`;
+    }
+    return `HTTP ${response.status} ${response.statusText} - ${message}`;
+  }
+
   async clockIn(): Promise<void> {
     const everyone = Array.from(
       new Set([
@@ -70,6 +100,8 @@ export class ShiftSimulator {
 
     this.activePersonIds = [];
 
+    let personNotFoundCount = 0;
+
     for (const personId of selected) {
       // Ensure no stale session exists before starting a fresh one.
       await this.closeStaleSession(personId);
@@ -79,13 +111,29 @@ export class ShiftSimulator {
           workSessionRequest: { personId },
         });
         this.activePersonIds.push(personId);
-        console.log(`[Shift] Clocked in ${personId} (${response.sessionId ?? 'session-opened'}).`);
+        const employeeName = this.refs.employeeNameById.get(personId) ?? personId;
+        console.log(`[Shift] Clocked in ${employeeName} (${personId}, ${response.sessionId ?? 'session-opened'}).`);
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.log(`[Shift] Clock-in failed for ${personId}: ${message}`);
+        const message = await this.formatHttpError(error);
+        const status = (error as { response?: { status?: number } }).response?.status;
+        if (status === 404 && message.includes(ShiftSimulator.PERSON_NOT_FOUND_PREFIX)) {
+          personNotFoundCount += 1;
+        }
+        const employeeName = this.refs.employeeNameById.get(personId) ?? personId;
+        console.log(`[Shift] Clock-in failed for ${employeeName} (${personId}): ${message}`);
       }
 
       await sleep(1000 + Math.floor(Math.random() * 1001));
+    }
+
+    if (this.activePersonIds.length === 0 && selected.length > 0 && personNotFoundCount === selected.length) {
+      throw new Error(
+        '[Shift] All selected employees failed clock-in with HTTP 404 "Person not found". ' +
+          'Employee records exist but their person identities are missing in pos-people. ' +
+          'Recreate or repair seeded employees in the backend before rerunning the seeder. ' +
+          'If using docker-compose, verify POS_PEOPLE_KAFKA_ENABLED=true and POS_PEOPLE_CONTACT_KAFKA_ENABLED=true ' +
+          'so people-contact replica sync is active.',
+      );
     }
   }
 
@@ -95,10 +143,12 @@ export class ShiftSimulator {
         await this.peopleClient.workSessionsAPIApi.stopWorkSession({
           workSessionRequest: { personId },
         });
-        console.log(`[Shift] Clocked out ${personId}.`);
+        const employeeName = this.refs.employeeNameById.get(personId) ?? personId;
+        console.log(`[Shift] Clocked out ${employeeName}.`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.log(`[Shift] Clock-out failed for ${personId}: ${message}`);
+        const employeeName = this.refs.employeeNameById.get(personId) ?? personId;
+        console.log(`[Shift] Clock-out failed for ${employeeName}: ${message}`);
       }
     }
 

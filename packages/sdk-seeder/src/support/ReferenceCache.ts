@@ -11,4 +11,7 @@ export interface ReferenceCache {
   employees: EmployeeRefs;
   serviceEntityIds: string[];
   productEntityIds: string[];
+  serviceNameById: Map<string, string>;
+  productNameById: Map<string, string>;
+  employeeNameById: Map<string, string>;
 }
