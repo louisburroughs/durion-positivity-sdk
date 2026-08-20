@@ -1,6 +1,7 @@
 import { SeederAuth } from '../SeederAuth';
 import { SeederConfig } from '../SeederConfig';
 import type { ReferenceCache } from '../support/ReferenceCache';
+import { VirtualClock } from '../support/VirtualClock';
 import { CatalogBootstrap } from './CatalogBootstrap';
 import { InventoryBootstrap } from './InventoryBootstrap';
 import { LocationBootstrap } from './LocationBootstrap';
@@ -10,9 +11,7 @@ export class BootstrapOrchestrator {
   constructor(
     private readonly config: SeederConfig,
     private readonly auth: SeederAuth,
-  ) {
-    void this.config;
-  }
+  ) {}
 
   async run(): Promise<ReferenceCache> {
     console.log('[Bootstrap] Starting bootstrap sequence...');
@@ -34,9 +33,12 @@ export class BootstrapOrchestrator {
       id,
       name: productNameById.get(id) ?? id,
     }));
+    const virtualNow = await new VirtualClock(this.config.baseUrl, this.config.pollIntervalMs)
+      .getCurrentVirtualTime();
     const inventoryResult = await new InventoryBootstrap(this.auth.buildSdkConfig('inventory')).run(
       namedProducts,
       locationId,
+      virtualNow,
     );
 
     // -- Summary ---------------------------------------------------------------

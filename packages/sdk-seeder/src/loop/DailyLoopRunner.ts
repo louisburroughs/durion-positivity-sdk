@@ -109,7 +109,7 @@ export class DailyLoopRunner {
 
       if (day % 30 === 0) {
         this.logger.setPhase('MAINTENANCE');
-        await inventory.runMonthlyRestock();
+        await inventory.runMonthlyRestock(currentVT);
         this.logger.info('Monthly restock completed');
       }
 

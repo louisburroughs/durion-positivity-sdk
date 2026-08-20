@@ -39,7 +39,13 @@ export class VirtualClock {
    */
   async getCurrentVirtualTime(): Promise<Date> {
     const resp = await this.fetchTime();
-    return new Date(resp.virtualTime);
+    const parsed = new Date(resp.virtualTime);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new Error(
+        `Backend /system/time returned an unparseable virtualTime: ${JSON.stringify(resp.virtualTime)}`,
+      );
+    }
+    return parsed;
   }
 
   /**

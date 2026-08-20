@@ -14,7 +14,11 @@ const SEED_CURRENCY = 'USD';
 export class InventoryBootstrap {
   constructor(private readonly sdkConfig: DurionSdkConfig) {}
 
-  async run(products: { id: string; name: string }[], locationId: string): Promise<InventoryBootstrapResult> {
+  async run(
+    products: { id: string; name: string }[],
+    locationId: string,
+    virtualNow: Date,
+  ): Promise<InventoryBootstrapResult> {
     const { asnApi, purchaseOrdersApi } = createInventoryClient(this.sdkConfig);
 
     let createdCount = 0;
@@ -57,8 +61,10 @@ export class InventoryBootstrap {
 
       const quantity = 50 + (index * 5) % 151;
       const unitCostMinor = 900 + index * 37;
-      const purchaseOrderDate = new Date('2024-01-01');
-      const expectedDeliveryDate = new Date('2024-01-02');
+      // Anchor seed dates to the backend's virtual timeline rather than fixed
+      // calendar dates, so bootstrap data lands inside the simulated year.
+      const purchaseOrderDate = new Date(virtualNow);
+      const expectedDeliveryDate = new Date(virtualNow.getTime() + 24 * 60 * 60 * 1000);
       const poComment = this.buildSeedComment(productEntityId);
 
       try {

@@ -48,12 +48,12 @@ All configuration is via environment variables.
 | `SEEDER_USERNAME`              | —                       | **Yes**  | Login username                                                       |
 | `SEEDER_PASSWORD`              | —                       | **Yes**  | Login password                                                       |
 | `SEEDER_DAYS`                  | `365`                   | No       | Number of virtual days to simulate                                   |
-| `SEEDER_SCALE`                 | `1000`                  | No       | Time compression factor (sleep between days = `86400000 / scale` ms) |
+| `SEEDER_POLL_INTERVAL_MS`      | `1000`                  | No       | How often (ms) to poll the backend `/system/time` endpoint           |
 | `SEEDER_SEED`                  | _(random)_              | No       | Integer RNG seed for reproducible runs                               |
 | `SEEDER_MIN_CUSTOMERS_PER_DAY` | `4`                     | No       | Minimum customer events per virtual day                              |
 | `SEEDER_MAX_CUSTOMERS_PER_DAY` | `12`                    | No       | Maximum customer events per virtual day                              |
 
-At the default scale of 1000, each virtual day takes approximately 86 seconds of real time, so a full 365-day run completes in roughly 9 hours.
+The seeder does no time scaling itself: the backend's `/system/time` endpoint is the single source of truth for virtual time, and the backend's clock scale determines how fast virtual days elapse in real time. At a backend scale of 1000, each virtual day takes approximately 86 seconds of real time, so a full 365-day run completes in roughly 9 hours.
 
 ---
 
@@ -84,7 +84,7 @@ Repeats for `SEEDER_DAYS` iterations. Each virtual day:
 4. **Cycle count** — inventory cycle count runs every 7 days
 5. **Monthly restock** — inventory restock runs every 30 days
 6. **Token refresh** — JWT is refreshed automatically if within 60 seconds of expiry
-7. **Sleep** — the process sleeps for `sleepBetweenDaysMs` before the next day
+7. **Wait for next virtual day** — the seeder polls the backend's `/system/time` endpoint every `SEEDER_POLL_INTERVAL_MS` until virtual time crosses midnight into the next day
 
 ---
 

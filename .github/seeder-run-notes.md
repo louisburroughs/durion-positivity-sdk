@@ -16,9 +16,10 @@ This file is maintained by the **SeederDebug** agent. It is updated after every 
 packages/sdk-seeder/
   src/
     index.ts                        ← Entry point; wires config, auth, bootstrap, daily loop
-    SeederConfig.ts                 ← Reads env vars (SEEDER_BASE_URL, SEEDER_USERNAME, SEEDER_PASSWORD,
-                                       SEEDER_DAYS, SEEDER_SCALE, SEEDER_SEED, SEEDER_MIN_CUSTOMERS_PER_DAY,
-                                       SEEDER_MAX_CUSTOMERS_PER_DAY, SEEDER_SLEEP_BETWEEN_DAYS_MS)
+    SeederConfig.ts                 ← Reads env vars (SEEDER_BASE_URL, SEEDER_SECURITY_SERVICE_URL,
+                                       SEEDER_USERNAME, SEEDER_PASSWORD, SEEDER_DAYS, SEEDER_SEED,
+                                       SEEDER_MIN_CUSTOMERS_PER_DAY, SEEDER_MAX_CUSTOMERS_PER_DAY,
+                                       SEEDER_POLL_INTERVAL_MS)
     SeederAuth.ts                   ← Handles login, token cache, refresh-if-needed, buildSdkConfig()
     bootstrap/
       BootstrapOrchestrator.ts      ← Orchestrates location lookup, people, catalog, inventory in order
@@ -73,9 +74,9 @@ Known service prefixes (used in `BootstrapOrchestrator` and sub-bootstraps):
 |----------|----------------|-------------|
 | `SEEDER_BASE_URL` | `http://localhost:8080` | Backend gateway root |
 | `SEEDER_USERNAME` | `admin.alpha` | Admin credential |
-| `SEEDER_PASSWORD` | `s3cur1ty!` | Admin credential |
+| `SEEDER_PASSWORD` | _(must be set out-of-band before running — never committed)_ | Admin credential |
 | `SEEDER_DAYS` | _(not set — uses SeederConfig default)_ | Number of virtual days to simulate |
-| `SEEDER_SCALE` | _(not set)_ | Multiplier for customer volume |
+| `SEEDER_POLL_INTERVAL_MS` | `1000` | Poll interval for the backend `/system/time` endpoint |
 
 ## Backend Project Reference
 

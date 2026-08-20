@@ -107,7 +107,7 @@ export class InventoryMaintenanceSimulator {
     }
   }
 
-  async runMonthlyRestock(): Promise<void> {
+  async runMonthlyRestock(virtualNow: Date): Promise<void> {
     try {
       const vendorId = SEED_VENDOR_ID;
 
@@ -124,7 +124,7 @@ export class InventoryMaintenanceSimulator {
       const purchaseOrder = await this.inventoryClient.purchaseOrdersApi.createPurchaseOrder({
         createPurchaseOrderRequest: {
           vendorId,
-          poDate: new Date(),
+          poDate: new Date(virtualNow),
           currency: 'USD',
           shipToLocationId: this.refs.locationId,
           requestedBy: this.refs.employees.partsClerk,
@@ -157,8 +157,8 @@ export class InventoryMaintenanceSimulator {
           vendorId,
           asnReferenceNumber: `ASN-${Date.now()}`,
           relatedPoIds: [purchaseOrder.purchaseOrderId],
-          shipDate: new Date(),
-          expectedArrivalDate: new Date(),
+          shipDate: new Date(virtualNow),
+          expectedArrivalDate: new Date(virtualNow.getTime() + 3 * 24 * 60 * 60 * 1000),
           lineItems: products.map((productId, index) => {
             const poLine = purchaseOrderLines[index];
             return {

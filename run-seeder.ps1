@@ -22,10 +22,15 @@ $GatewayHealthUrl = "http://localhost:8080/actuator/health"
 $GatewayTimeUrl = "http://localhost:8080/system/time"
 $LocationHealthUrl = "http://localhost:8084/actuator/health"
 
-# Seeder env
-$env:SEEDER_BASE_URL = "http://localhost:8080"
-$env:SEEDER_USERNAME = "admin.alpha"
-$env:SEEDER_PASSWORD = "s3cur1ty!"
+# Seeder env — non-sensitive defaults apply only when the caller has not set them.
+# SEEDER_PASSWORD must be provided out-of-band and is never committed to the repo.
+if (-not $env:SEEDER_BASE_URL) { $env:SEEDER_BASE_URL = "http://localhost:8080" }
+if (-not $env:SEEDER_USERNAME) { $env:SEEDER_USERNAME = "admin.alpha" }
+if (-not $env:SEEDER_PASSWORD) {
+    Write-Host "SEEDER_PASSWORD is not set. Provide it before running, e.g.:" -ForegroundColor Red
+    Write-Host '  $env:SEEDER_PASSWORD = "<admin password>"' -ForegroundColor Red
+    exit 1
+}
 $env:SEEDER_DAYS = "$Days"
 $env:SEEDER_POLL_INTERVAL_MS = "$PollIntervalMs"
 
