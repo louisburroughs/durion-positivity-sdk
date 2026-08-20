@@ -24,55 +24,19 @@ export interface SelfRegistrationReviewCaseResponse {
      * @type {string}
      * @memberof SelfRegistrationReviewCaseResponse
      */
-    caseId?: string;
+    caseId: string;
     /**
      * Case type
      * @type {string}
      * @memberof SelfRegistrationReviewCaseResponse
      */
-    caseType?: SelfRegistrationReviewCaseResponseCaseTypeEnum;
+    caseType: SelfRegistrationReviewCaseResponseCaseTypeEnum;
     /**
-     * Case status
-     * @type {string}
+     * Case creation timestamp
+     * @type {Date}
      * @memberof SelfRegistrationReviewCaseResponse
      */
-    status?: SelfRegistrationReviewCaseResponseStatusEnum;
-    /**
-     * Reason code that created the case
-     * @type {string}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    reasonCode?: string;
-    /**
-     * Reason message recorded for the case
-     * @type {string}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    reasonMessage?: string;
-    /**
-     * Submitted email address
-     * @type {string}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    email?: string;
-    /**
-     * Requested username, when available
-     * @type {string}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    requestedUsername?: string;
-    /**
-     * Resolved or created person identifier, when available
-     * @type {string}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    personId?: string;
-    /**
-     * Linked or recoverable user identifier, when available
-     * @type {string}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    linkedUserId?: string;
+    createdAt: Date;
     /**
      * CRM candidate count, when available
      * @type {number}
@@ -80,23 +44,11 @@ export interface SelfRegistrationReviewCaseResponse {
      */
     crmCandidateCount?: number;
     /**
-     * CRM shared-identity candidate count, when available
-     * @type {number}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    crmSharedIdentityCandidateCount?: number;
-    /**
      * CRM exact email match flag, when available
      * @type {boolean}
      * @memberof SelfRegistrationReviewCaseResponse
      */
     crmExactEmailMatch?: boolean;
-    /**
-     * CRM exact phone match flag, when available
-     * @type {boolean}
-     * @memberof SelfRegistrationReviewCaseResponse
-     */
-    crmExactPhoneMatch?: boolean;
     /**
      * CRM exact name match flag, when available
      * @type {boolean}
@@ -104,23 +56,65 @@ export interface SelfRegistrationReviewCaseResponse {
      */
     crmExactNameMatch?: boolean;
     /**
+     * CRM exact phone match flag, when available
+     * @type {boolean}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    crmExactPhoneMatch?: boolean;
+    /**
+     * CRM shared-identity candidate count, when available
+     * @type {number}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    crmSharedIdentityCandidateCount?: number;
+    /**
+     * Submitted email address
+     * @type {string}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    email: string;
+    /**
+     * Linked or recoverable user identifier, when available
+     * @type {string}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    linkedUserId?: string;
+    /**
      * Operator notes recorded for the case
      * @type {string}
      * @memberof SelfRegistrationReviewCaseResponse
      */
     notes?: string;
     /**
-     * Case creation timestamp
-     * @type {Date}
+     * Resolved or created person identifier, when available
+     * @type {string}
      * @memberof SelfRegistrationReviewCaseResponse
      */
-    createdAt?: Date;
+    personId?: string;
     /**
-     * Case last-updated timestamp
-     * @type {Date}
+     * Reason code that created the case
+     * @type {string}
      * @memberof SelfRegistrationReviewCaseResponse
      */
-    updatedAt?: Date;
+    reasonCode: string;
+    /**
+     * Reason message recorded for the case
+     * @type {string}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    reasonMessage: string;
+    /**
+     * Requested username, when available
+     * @type {string}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    requestedUsername?: string;
+    /**
+     * Resolution notes, when resolved
+     * @type {string}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    resolutionNotes?: string;
     /**
      * Resolution timestamp, when resolved
      * @type {Date}
@@ -134,11 +128,17 @@ export interface SelfRegistrationReviewCaseResponse {
      */
     resolvedBy?: string;
     /**
-     * Resolution notes, when resolved
+     * Case status
      * @type {string}
      * @memberof SelfRegistrationReviewCaseResponse
      */
-    resolutionNotes?: string;
+    status: SelfRegistrationReviewCaseResponseStatusEnum;
+    /**
+     * Case last-updated timestamp
+     * @type {Date}
+     * @memberof SelfRegistrationReviewCaseResponse
+     */
+    updatedAt: Date;
 }
 
 /**
@@ -163,6 +163,14 @@ export enum SelfRegistrationReviewCaseResponseStatusEnum {
  * Check if a given object implements the SelfRegistrationReviewCaseResponse interface.
  */
 export function instanceOfSelfRegistrationReviewCaseResponse(value: object): boolean {
+    if (!('caseId' in value)) return false;
+    if (!('caseType' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('email' in value)) return false;
+    if (!('reasonCode' in value)) return false;
+    if (!('reasonMessage' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('updatedAt' in value)) return false;
     return true;
 }
 
@@ -176,26 +184,26 @@ export function SelfRegistrationReviewCaseResponseFromJSONTyped(json: any, ignor
     }
     return {
         
-        'caseId': json['caseId'] == null ? undefined : json['caseId'],
-        'caseType': json['caseType'] == null ? undefined : json['caseType'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'reasonMessage': json['reasonMessage'] == null ? undefined : json['reasonMessage'],
-        'email': json['email'] == null ? undefined : json['email'],
-        'requestedUsername': json['requestedUsername'] == null ? undefined : json['requestedUsername'],
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'linkedUserId': json['linkedUserId'] == null ? undefined : json['linkedUserId'],
+        'caseId': json['caseId'],
+        'caseType': json['caseType'],
+        'createdAt': (new Date(json['createdAt'])),
         'crmCandidateCount': json['crmCandidateCount'] == null ? undefined : json['crmCandidateCount'],
-        'crmSharedIdentityCandidateCount': json['crmSharedIdentityCandidateCount'] == null ? undefined : json['crmSharedIdentityCandidateCount'],
         'crmExactEmailMatch': json['crmExactEmailMatch'] == null ? undefined : json['crmExactEmailMatch'],
-        'crmExactPhoneMatch': json['crmExactPhoneMatch'] == null ? undefined : json['crmExactPhoneMatch'],
         'crmExactNameMatch': json['crmExactNameMatch'] == null ? undefined : json['crmExactNameMatch'],
+        'crmExactPhoneMatch': json['crmExactPhoneMatch'] == null ? undefined : json['crmExactPhoneMatch'],
+        'crmSharedIdentityCandidateCount': json['crmSharedIdentityCandidateCount'] == null ? undefined : json['crmSharedIdentityCandidateCount'],
+        'email': json['email'],
+        'linkedUserId': json['linkedUserId'] == null ? undefined : json['linkedUserId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'personId': json['personId'] == null ? undefined : json['personId'],
+        'reasonCode': json['reasonCode'],
+        'reasonMessage': json['reasonMessage'],
+        'requestedUsername': json['requestedUsername'] == null ? undefined : json['requestedUsername'],
+        'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
         'resolvedAt': json['resolvedAt'] == null ? undefined : (new Date(json['resolvedAt'])),
         'resolvedBy': json['resolvedBy'] == null ? undefined : json['resolvedBy'],
-        'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
+        'status': json['status'],
+        'updatedAt': (new Date(json['updatedAt'])),
     };
 }
 
@@ -207,24 +215,24 @@ export function SelfRegistrationReviewCaseResponseToJSON(value?: SelfRegistratio
         
         'caseId': value['caseId'],
         'caseType': value['caseType'],
-        'status': value['status'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'crmCandidateCount': value['crmCandidateCount'],
+        'crmExactEmailMatch': value['crmExactEmailMatch'],
+        'crmExactNameMatch': value['crmExactNameMatch'],
+        'crmExactPhoneMatch': value['crmExactPhoneMatch'],
+        'crmSharedIdentityCandidateCount': value['crmSharedIdentityCandidateCount'],
+        'email': value['email'],
+        'linkedUserId': value['linkedUserId'],
+        'notes': value['notes'],
+        'personId': value['personId'],
         'reasonCode': value['reasonCode'],
         'reasonMessage': value['reasonMessage'],
-        'email': value['email'],
         'requestedUsername': value['requestedUsername'],
-        'personId': value['personId'],
-        'linkedUserId': value['linkedUserId'],
-        'crmCandidateCount': value['crmCandidateCount'],
-        'crmSharedIdentityCandidateCount': value['crmSharedIdentityCandidateCount'],
-        'crmExactEmailMatch': value['crmExactEmailMatch'],
-        'crmExactPhoneMatch': value['crmExactPhoneMatch'],
-        'crmExactNameMatch': value['crmExactNameMatch'],
-        'notes': value['notes'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'resolutionNotes': value['resolutionNotes'],
         'resolvedAt': value['resolvedAt'] == null ? undefined : ((value['resolvedAt']).toISOString()),
         'resolvedBy': value['resolvedBy'],
-        'resolutionNotes': value['resolutionNotes'],
+        'status': value['status'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
     };
 }
 

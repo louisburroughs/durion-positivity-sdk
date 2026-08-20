@@ -18,6 +18,7 @@ import type {
   ModeResponse,
   TaxCalculationRequest,
   TaxCalculationResponse,
+  TaxProviderTransactionResult,
 } from '../models/index';
 import {
     ModeResponseFromJSON,
@@ -26,10 +27,21 @@ import {
     TaxCalculationRequestToJSON,
     TaxCalculationResponseFromJSON,
     TaxCalculationResponseToJSON,
+    TaxProviderTransactionResultFromJSON,
+    TaxProviderTransactionResultToJSON,
 } from '../models/index';
 
 export interface CalculateTaxRequest {
     taxCalculationRequest: TaxCalculationRequest;
+}
+
+export interface CommitTaxDocumentRequest {
+    referenceId: string;
+    referenceType?: string;
+}
+
+export interface VoidTaxDocumentRequest {
+    referenceId: string;
 }
 
 /**
@@ -38,7 +50,7 @@ export interface CalculateTaxRequest {
 export class TaxApi extends runtime.BaseAPI {
 
     /**
-     * Calculate tax for line items based on location. Routes to external service in production or test calculator in test mode.
+     * Calculates tax for the supplied line items against the destination address and returns the per-line and total tax amounts. Use this tool whenever a quote, estimate or invoice needs tax figures; do not use it to make a calculation permanent, which is commitTaxDocument. Preconditions: none beyond an authenticated caller; when an exemption is claimed the referenced certificate must already exist in the registry and be ACTIVE for the destination state on the transaction date, otherwise tax is calculated as taxable. Required inputs: lineItems (at least one) and destinationAddress with countryCode and postalCode; currencyCode defaults to USD, calculationType defaults to SALE, and referenceId should carry the source document id so the result can later be committed. Emits a TAX_CALCULATE event and, in production mode, calls the configured external tax provider; no provider document is created until commitTaxDocument is called. Returns 400 when line items or the destination address are missing or malformed, and 500 when the provider is unreachable in production mode. 
      * Calculate tax
      */
     async calculateTaxRaw(requestParameters: CalculateTaxRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxCalculationResponse>> {
@@ -75,7 +87,7 @@ export class TaxApi extends runtime.BaseAPI {
     }
 
     /**
-     * Calculate tax for line items based on location. Routes to external service in production or test calculator in test mode.
+     * Calculates tax for the supplied line items against the destination address and returns the per-line and total tax amounts. Use this tool whenever a quote, estimate or invoice needs tax figures; do not use it to make a calculation permanent, which is commitTaxDocument. Preconditions: none beyond an authenticated caller; when an exemption is claimed the referenced certificate must already exist in the registry and be ACTIVE for the destination state on the transaction date, otherwise tax is calculated as taxable. Required inputs: lineItems (at least one) and destinationAddress with countryCode and postalCode; currencyCode defaults to USD, calculationType defaults to SALE, and referenceId should carry the source document id so the result can later be committed. Emits a TAX_CALCULATE event and, in production mode, calls the configured external tax provider; no provider document is created until commitTaxDocument is called. Returns 400 when line items or the destination address are missing or malformed, and 500 when the provider is unreachable in production mode. 
      * Calculate tax
      */
     async calculateTax(requestParameters: CalculateTaxRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxCalculationResponse> {
@@ -84,10 +96,57 @@ export class TaxApi extends runtime.BaseAPI {
     }
 
     /**
-     * Check if the tax service is currently in test mode or production mode
+     * Commits the provider tax document for a finalized invoice so the recorded tax becomes filing-visible at the provider. Use this tool when an invoice is finalized; do not use it to recalculate amounts, which is calculateTax, and do not use it to reverse a commit, which is voidTaxDocument. Preconditions: tax must already have been calculated for this referenceId with a committable request, so that a provider document exists to commit. Required inputs: referenceId (UUID) path parameter, which is the source invoice id; referenceType is an optional query parameter defaulting to INVOICE. Emits a TAX_COMMIT event and updates the stored provider transaction; the call is idempotent, so an already-COMMITTED document is returned unchanged. Returns 200 with status PENDING_COMMIT rather than an error when the provider call fails, because a sale is never blocked on the provider, so callers must read the returned status instead of treating 200 as a completed commit and leave the re-commit job to true it up. 
+     * Commit tax document
+     */
+    async commitTaxDocumentRaw(requestParameters: CommitTaxDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxProviderTransactionResult>> {
+        if (requestParameters['referenceId'] == null) {
+            throw new runtime.RequiredError(
+                'referenceId',
+                'Required parameter "referenceId" was null or undefined when calling commitTaxDocument().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['referenceType'] != null) {
+            queryParameters['referenceType'] = requestParameters['referenceType'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:commit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/transactions/{referenceId}/commit`.replace(`{${"referenceId"}}`, encodeURIComponent(String(requestParameters['referenceId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxProviderTransactionResultFromJSON(jsonValue));
+    }
+
+    /**
+     * Commits the provider tax document for a finalized invoice so the recorded tax becomes filing-visible at the provider. Use this tool when an invoice is finalized; do not use it to recalculate amounts, which is calculateTax, and do not use it to reverse a commit, which is voidTaxDocument. Preconditions: tax must already have been calculated for this referenceId with a committable request, so that a provider document exists to commit. Required inputs: referenceId (UUID) path parameter, which is the source invoice id; referenceType is an optional query parameter defaulting to INVOICE. Emits a TAX_COMMIT event and updates the stored provider transaction; the call is idempotent, so an already-COMMITTED document is returned unchanged. Returns 200 with status PENDING_COMMIT rather than an error when the provider call fails, because a sale is never blocked on the provider, so callers must read the returned status instead of treating 200 as a completed commit and leave the re-commit job to true it up. 
+     * Commit tax document
+     */
+    async commitTaxDocument(requestParameters: CommitTaxDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxProviderTransactionResult> {
+        const response = await this.commitTaxDocumentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns whether the tax service is running against the external provider or against the built-in test calculator. Use this tool to interpret a calculation result before relying on it; do not use it as a health check, which is the actuator health endpoint instead. Preconditions: none; the mode is service configuration and is readable at any time. Required inputs: none, and there is no request body or query parameter. No events are emitted and no state changes; this is a read-only configuration projection. Returns 200 in all cases, so an absent or unexpected mode value indicates a misconfigured deployment rather than a request error. 
      * Get tax service mode
      */
-    async getModeRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModeResponse>> {
+    async getTaxServiceModeRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ModeResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -111,11 +170,54 @@ export class TaxApi extends runtime.BaseAPI {
     }
 
     /**
-     * Check if the tax service is currently in test mode or production mode
+     * Returns whether the tax service is running against the external provider or against the built-in test calculator. Use this tool to interpret a calculation result before relying on it; do not use it as a health check, which is the actuator health endpoint instead. Preconditions: none; the mode is service configuration and is readable at any time. Required inputs: none, and there is no request body or query parameter. No events are emitted and no state changes; this is a read-only configuration projection. Returns 200 in all cases, so an absent or unexpected mode value indicates a misconfigured deployment rather than a request error. 
      * Get tax service mode
      */
-    async getMode(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModeResponse> {
-        const response = await this.getModeRaw(initOverrides);
+    async getTaxServiceMode(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ModeResponse> {
+        const response = await this.getTaxServiceModeRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Voids the provider tax document for an invoice that has been reverted to DRAFT, withdrawing the committed tax from the provider. Use this tool when a finalized invoice reverts to DRAFT; do not use it for ordinary corrections, where calculateTax followed by commitTaxDocument replaces the figures instead. Preconditions: a provider transaction must already exist for this referenceId, which means tax was calculated and committed earlier. Required inputs: referenceId (UUID) path parameter, which is the source invoice id; there is no request body and no referenceType, because the existing transaction supplies it. Emits a TAX_VOID event and moves the stored provider transaction to VOIDED, or to FAILED when the provider rejects the void. Returns 200 with status FAILED when the provider call fails, so callers must read the returned status rather than treating 200 as a completed void. 
+     * Void tax document
+     */
+    async voidTaxDocumentRaw(requestParameters: VoidTaxDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxProviderTransactionResult>> {
+        if (requestParameters['referenceId'] == null) {
+            throw new runtime.RequiredError(
+                'referenceId',
+                'Required parameter "referenceId" was null or undefined when calling voidTaxDocument().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:commit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/transactions/{referenceId}/void`.replace(`{${"referenceId"}}`, encodeURIComponent(String(requestParameters['referenceId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxProviderTransactionResultFromJSON(jsonValue));
+    }
+
+    /**
+     * Voids the provider tax document for an invoice that has been reverted to DRAFT, withdrawing the committed tax from the provider. Use this tool when a finalized invoice reverts to DRAFT; do not use it for ordinary corrections, where calculateTax followed by commitTaxDocument replaces the figures instead. Preconditions: a provider transaction must already exist for this referenceId, which means tax was calculated and committed earlier. Required inputs: referenceId (UUID) path parameter, which is the source invoice id; there is no request body and no referenceType, because the existing transaction supplies it. Emits a TAX_VOID event and moves the stored provider transaction to VOIDED, or to FAILED when the provider rejects the void. Returns 200 with status FAILED when the provider call fails, so callers must read the returned status rather than treating 200 as a completed void. 
+     * Void tax document
+     */
+    async voidTaxDocument(requestParameters: VoidTaxDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxProviderTransactionResult> {
+        const response = await this.voidTaxDocumentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

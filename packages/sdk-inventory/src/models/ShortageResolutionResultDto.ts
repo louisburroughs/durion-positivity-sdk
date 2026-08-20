@@ -14,41 +14,78 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of applying a resolution to an inventory shortage
  * @export
  * @interface ShortageResolutionResultDto
  */
 export interface ShortageResolutionResultDto {
     /**
-     * 
+     * Identifier of the allocation that was resolved
      * @type {string}
      * @memberof ShortageResolutionResultDto
      */
-    allocationId?: string;
+    allocationId: string;
     /**
-     * 
+     * Identifier of the created artifact; null for CANCEL_LINE
      * @type {string}
      * @memberof ShortageResolutionResultDto
      */
-    resolution?: string;
+    artifactId?: string;
     /**
-     * 
+     * Kind of artifact created (BACKORDER, RESERVATION, TRANSFER_ORDER, PURCHASE_SUGGESTION, NONE)
+     * @type {string}
+     * @memberof ShortageResolutionResultDto
+     */
+    artifactType: string;
+    /**
+     * Idempotency key the resolution was recorded under
+     * @type {string}
+     * @memberof ShortageResolutionResultDto
+     */
+    idempotencyKey: string;
+    /**
+     * The resolution option that was executed
+     * @type {string}
+     * @memberof ShortageResolutionResultDto
+     */
+    optionType: ShortageResolutionResultDtoOptionTypeEnum;
+    /**
+     * Timestamp when the shortage was resolved
      * @type {Date}
      * @memberof ShortageResolutionResultDto
      */
-    resolvedAt?: Date;
+    resolvedAt: Date;
     /**
-     * 
+     * Resulting status of the resolution
      * @type {string}
      * @memberof ShortageResolutionResultDto
      */
-    status?: string;
+    status: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ShortageResolutionResultDtoOptionTypeEnum {
+    Backorder = 'BACKORDER',
+    Substitute = 'SUBSTITUTE',
+    TransferIn = 'TRANSFER_IN',
+    EmergencyPurchase = 'EMERGENCY_PURCHASE',
+    CancelLine = 'CANCEL_LINE'
+}
+
 
 /**
  * Check if a given object implements the ShortageResolutionResultDto interface.
  */
 export function instanceOfShortageResolutionResultDto(value: object): boolean {
+    if (!('allocationId' in value)) return false;
+    if (!('artifactType' in value)) return false;
+    if (!('idempotencyKey' in value)) return false;
+    if (!('optionType' in value)) return false;
+    if (!('resolvedAt' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -62,10 +99,13 @@ export function ShortageResolutionResultDtoFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'allocationId': json['allocationId'] == null ? undefined : json['allocationId'],
-        'resolution': json['resolution'] == null ? undefined : json['resolution'],
-        'resolvedAt': json['resolvedAt'] == null ? undefined : (new Date(json['resolvedAt'])),
-        'status': json['status'] == null ? undefined : json['status'],
+        'allocationId': json['allocationId'],
+        'artifactId': json['artifactId'] == null ? undefined : json['artifactId'],
+        'artifactType': json['artifactType'],
+        'idempotencyKey': json['idempotencyKey'],
+        'optionType': json['optionType'],
+        'resolvedAt': (new Date(json['resolvedAt'])),
+        'status': json['status'],
     };
 }
 
@@ -76,8 +116,11 @@ export function ShortageResolutionResultDtoToJSON(value?: ShortageResolutionResu
     return {
         
         'allocationId': value['allocationId'],
-        'resolution': value['resolution'],
-        'resolvedAt': value['resolvedAt'] == null ? undefined : ((value['resolvedAt']).toISOString()),
+        'artifactId': value['artifactId'],
+        'artifactType': value['artifactType'],
+        'idempotencyKey': value['idempotencyKey'],
+        'optionType': value['optionType'],
+        'resolvedAt': ((value['resolvedAt']).toISOString()),
         'status': value['status'],
     };
 }

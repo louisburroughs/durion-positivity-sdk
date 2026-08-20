@@ -14,38 +14,70 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to submit the initial physical count for a cycle count task
  * @export
  * @interface SubmitCountRequest
  */
 export interface SubmitCountRequest {
     /**
-     * 
-     * @type {string}
+     * Quantity physically measured, in unitOfMeasure (or the product's base UoM when unitOfMeasure is omitted). Converted to base UoM before variance is computed.
+     * @type {number}
      * @memberof SubmitCountRequest
      */
-    taskId: string;
+    actualQuantity: number;
     /**
-     * 
+     * Identifier of the auditor submitting the count
      * @type {string}
      * @memberof SubmitCountRequest
      */
     auditorId: string;
     /**
-     * 
-     * @type {number}
+     * How the quantity was obtained. Defaults to MANUAL_COUNT.
+     * @type {string}
      * @memberof SubmitCountRequest
      */
-    actualQuantity: number;
+    measurementMethod?: SubmitCountRequestMeasurementMethodEnum;
+    /**
+     * Identifier of the cycle count task being counted
+     * @type {string}
+     * @memberof SubmitCountRequest
+     */
+    taskId: string;
+    /**
+     * Unit the quantity was physically measured in. Omit for the product's base UoM.
+     * @type {string}
+     * @memberof SubmitCountRequest
+     */
+    unitOfMeasure?: string;
+    /**
+     * Reason for the variance, if already known at submission time. Optional: a count and its eventual adjustment are separate transactions, and the adjustment's own reason code is what ultimately gates posting an out-of-tolerance variance.
+     * @type {string}
+     * @memberof SubmitCountRequest
+     */
+    varianceReason?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum SubmitCountRequestMeasurementMethodEnum {
+    ManualCount = 'MANUAL_COUNT',
+    Dip = 'DIP',
+    Gauge = 'GAUGE',
+    Scale = 'SCALE',
+    Meter = 'METER',
+    Sensor = 'SENSOR'
+}
+
 
 /**
  * Check if a given object implements the SubmitCountRequest interface.
  */
 export function instanceOfSubmitCountRequest(value: object): boolean {
-    if (!('taskId' in value)) return false;
-    if (!('auditorId' in value)) return false;
     if (!('actualQuantity' in value)) return false;
+    if (!('auditorId' in value)) return false;
+    if (!('taskId' in value)) return false;
     return true;
 }
 
@@ -59,9 +91,12 @@ export function SubmitCountRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'taskId': json['taskId'],
-        'auditorId': json['auditorId'],
         'actualQuantity': json['actualQuantity'],
+        'auditorId': json['auditorId'],
+        'measurementMethod': json['measurementMethod'] == null ? undefined : json['measurementMethod'],
+        'taskId': json['taskId'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'varianceReason': json['varianceReason'] == null ? undefined : json['varianceReason'],
     };
 }
 
@@ -71,9 +106,12 @@ export function SubmitCountRequestToJSON(value?: SubmitCountRequest | null): any
     }
     return {
         
-        'taskId': value['taskId'],
-        'auditorId': value['auditorId'],
         'actualQuantity': value['actualQuantity'],
+        'auditorId': value['auditorId'],
+        'measurementMethod': value['measurementMethod'],
+        'taskId': value['taskId'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'varianceReason': value['varianceReason'],
     };
 }
 

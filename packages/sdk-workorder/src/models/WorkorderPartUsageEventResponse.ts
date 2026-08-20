@@ -20,47 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderPartUsageEventResponse {
     /**
-     * Usage event identifier
-     * @type {string}
-     * @memberof WorkorderPartUsageEventResponse
-     */
-    id?: string;
-    /**
-     * Workorder part identifier
-     * @type {string}
-     * @memberof WorkorderPartUsageEventResponse
-     */
-    workorderPartId?: string;
-    /**
-     * Workorder identifier
-     * @type {string}
-     * @memberof WorkorderPartUsageEventResponse
-     */
-    workorderId?: string;
-    /**
      * Event type
      * @type {string}
      * @memberof WorkorderPartUsageEventResponse
      */
-    eventType?: string;
+    eventType: string;
     /**
-     * Quantity associated with event
-     * @type {number}
-     * @memberof WorkorderPartUsageEventResponse
-     */
-    quantity?: number;
-    /**
-     * Actor identifier who performed event
+     * Usage event identifier
      * @type {string}
      * @memberof WorkorderPartUsageEventResponse
      */
-    performedBy?: string;
-    /**
-     * Event timestamp
-     * @type {Date}
-     * @memberof WorkorderPartUsageEventResponse
-     */
-    performedAt?: Date;
+    id: string;
     /**
      * Optional event notes
      * @type {string}
@@ -73,12 +43,49 @@ export interface WorkorderPartUsageEventResponse {
      * @memberof WorkorderPartUsageEventResponse
      */
     partDescription?: string;
+    /**
+     * Event timestamp
+     * @type {Date}
+     * @memberof WorkorderPartUsageEventResponse
+     */
+    performedAt: Date;
+    /**
+     * Actor identifier who performed event
+     * @type {string}
+     * @memberof WorkorderPartUsageEventResponse
+     */
+    performedBy: string;
+    /**
+     * Quantity associated with event
+     * @type {number}
+     * @memberof WorkorderPartUsageEventResponse
+     */
+    quantity: number;
+    /**
+     * Workorder identifier
+     * @type {string}
+     * @memberof WorkorderPartUsageEventResponse
+     */
+    workorderId: string;
+    /**
+     * Workorder part identifier
+     * @type {string}
+     * @memberof WorkorderPartUsageEventResponse
+     */
+    workorderPartId: string;
 }
 
 /**
  * Check if a given object implements the WorkorderPartUsageEventResponse interface.
  */
 export function instanceOfWorkorderPartUsageEventResponse(value: object): boolean {
+    if (!('eventType' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('performedAt' in value)) return false;
+    if (!('performedBy' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('workorderId' in value)) return false;
+    if (!('workorderPartId' in value)) return false;
     return true;
 }
 
@@ -92,15 +99,15 @@ export function WorkorderPartUsageEventResponseFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'workorderPartId': json['workorderPartId'] == null ? undefined : json['workorderPartId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'performedBy': json['performedBy'] == null ? undefined : json['performedBy'],
-        'performedAt': json['performedAt'] == null ? undefined : (new Date(json['performedAt'])),
+        'eventType': json['eventType'],
+        'id': json['id'],
         'notes': json['notes'] == null ? undefined : json['notes'],
         'partDescription': json['partDescription'] == null ? undefined : json['partDescription'],
+        'performedAt': (new Date(json['performedAt'])),
+        'performedBy': json['performedBy'],
+        'quantity': json['quantity'],
+        'workorderId': json['workorderId'],
+        'workorderPartId': json['workorderPartId'],
     };
 }
 
@@ -110,15 +117,15 @@ export function WorkorderPartUsageEventResponseToJSON(value?: WorkorderPartUsage
     }
     return {
         
-        'id': value['id'],
-        'workorderPartId': value['workorderPartId'],
-        'workorderId': value['workorderId'],
         'eventType': value['eventType'],
-        'quantity': value['quantity'],
-        'performedBy': value['performedBy'],
-        'performedAt': value['performedAt'] == null ? undefined : ((value['performedAt']).toISOString()),
+        'id': value['id'],
         'notes': value['notes'],
         'partDescription': value['partDescription'],
+        'performedAt': ((value['performedAt']).toISOString()),
+        'performedBy': value['performedBy'],
+        'quantity': value['quantity'],
+        'workorderId': value['workorderId'],
+        'workorderPartId': value['workorderPartId'],
     };
 }
 

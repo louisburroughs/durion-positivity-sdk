@@ -20,23 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface EstimateItemResponse {
     /**
-     * Estimate item identifier
-     * @type {string}
+     * Record creation timestamp
+     * @type {Date}
      * @memberof EstimateItemResponse
      */
-    id?: string;
-    /**
-     * Parent estimate identifier
-     * @type {string}
-     * @memberof EstimateItemResponse
-     */
-    estimateId?: string;
-    /**
-     * Estimate item type
-     * @type {string}
-     * @memberof EstimateItemResponse
-     */
-    itemType?: EstimateItemResponseItemTypeEnum;
+    createdAt?: Date;
     /**
      * Item description
      * @type {string}
@@ -44,17 +32,23 @@ export interface EstimateItemResponse {
      */
     description?: string;
     /**
-     * Item quantity
-     * @type {number}
+     * Parent estimate identifier
+     * @type {string}
      * @memberof EstimateItemResponse
      */
-    quantity?: number;
+    estimateId?: string;
     /**
-     * Unit price
-     * @type {number}
+     * Estimate item identifier
+     * @type {string}
      * @memberof EstimateItemResponse
      */
-    unitPrice?: number;
+    id?: string;
+    /**
+     * Estimate item type
+     * @type {string}
+     * @memberof EstimateItemResponse
+     */
+    itemType?: EstimateItemResponseItemTypeEnum;
     /**
      * Computed line total
      * @type {number}
@@ -62,17 +56,17 @@ export interface EstimateItemResponse {
      */
     lineTotal?: number;
     /**
-     * Tax code
-     * @type {string}
-     * @memberof EstimateItemResponse
-     */
-    taxCode?: string;
-    /**
      * Referenced product identifier when itemType=PART
      * @type {string}
      * @memberof EstimateItemResponse
      */
     productId?: string;
+    /**
+     * Item quantity
+     * @type {number}
+     * @memberof EstimateItemResponse
+     */
+    quantity?: number;
     /**
      * Referenced service identifier when itemType=LABOR
      * @type {string}
@@ -80,11 +74,17 @@ export interface EstimateItemResponse {
      */
     serviceId?: string;
     /**
-     * Record creation timestamp
-     * @type {Date}
+     * Tax code
+     * @type {string}
      * @memberof EstimateItemResponse
      */
-    createdAt?: Date;
+    taxCode?: string;
+    /**
+     * Unit price
+     * @type {number}
+     * @memberof EstimateItemResponse
+     */
+    unitPrice?: number;
     /**
      * Record last update timestamp
      * @type {Date}
@@ -120,17 +120,17 @@ export function EstimateItemResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
-        'itemType': json['itemType'] == null ? undefined : json['itemType'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
-        'lineTotal': json['lineTotal'] == null ? undefined : json['lineTotal'],
-        'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'serviceId': json['serviceId'] == null ? undefined : json['serviceId'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'description': json['description'] == null ? undefined : json['description'],
+        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'itemType': json['itemType'] == null ? undefined : json['itemType'],
+        'lineTotal': json['lineTotal'] == null ? undefined : json['lineTotal'],
+        'productId': json['productId'] == null ? undefined : json['productId'],
+        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'serviceId': json['serviceId'] == null ? undefined : json['serviceId'],
+        'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
+        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -141,17 +141,17 @@ export function EstimateItemResponseToJSON(value?: EstimateItemResponse | null):
     }
     return {
         
-        'id': value['id'],
-        'estimateId': value['estimateId'],
-        'itemType': value['itemType'],
-        'description': value['description'],
-        'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
-        'lineTotal': value['lineTotal'],
-        'taxCode': value['taxCode'],
-        'productId': value['productId'],
-        'serviceId': value['serviceId'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'description': value['description'],
+        'estimateId': value['estimateId'],
+        'id': value['id'],
+        'itemType': value['itemType'],
+        'lineTotal': value['lineTotal'],
+        'productId': value['productId'],
+        'quantity': value['quantity'],
+        'serviceId': value['serviceId'],
+        'taxCode': value['taxCode'],
+        'unitPrice': value['unitPrice'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

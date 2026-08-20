@@ -21,47 +21,52 @@ import {
 } from './GLAccountResponse';
 
 /**
- * 
+ * Paginated list of GL accounts
  * @export
  * @interface GLAccountListResponse
  */
 export interface GLAccountListResponse {
     /**
-     * 
-     * @type {number}
-     * @memberof GLAccountListResponse
-     */
-    pageNumber?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof GLAccountListResponse
-     */
-    pageSize?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof GLAccountListResponse
-     */
-    totalPages?: number;
-    /**
-     * 
+     * GL accounts on the current page
      * @type {Array<GLAccountResponse>}
      * @memberof GLAccountListResponse
      */
-    glAccounts?: Array<GLAccountResponse>;
+    glAccounts: Array<GLAccountResponse>;
     /**
-     * 
+     * Zero-based page index
      * @type {number}
      * @memberof GLAccountListResponse
      */
-    totalElements?: number;
+    pageNumber: number;
+    /**
+     * Page size
+     * @type {number}
+     * @memberof GLAccountListResponse
+     */
+    pageSize: number;
+    /**
+     * Total number of matching GL accounts
+     * @type {number}
+     * @memberof GLAccountListResponse
+     */
+    totalElements: number;
+    /**
+     * Total number of pages
+     * @type {number}
+     * @memberof GLAccountListResponse
+     */
+    totalPages: number;
 }
 
 /**
  * Check if a given object implements the GLAccountListResponse interface.
  */
 export function instanceOfGLAccountListResponse(value: object): boolean {
+    if (!('glAccounts' in value)) return false;
+    if (!('pageNumber' in value)) return false;
+    if (!('pageSize' in value)) return false;
+    if (!('totalElements' in value)) return false;
+    if (!('totalPages' in value)) return false;
     return true;
 }
 
@@ -75,11 +80,11 @@ export function GLAccountListResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'pageNumber': json['pageNumber'] == null ? undefined : json['pageNumber'],
-        'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'glAccounts': json['glAccounts'] == null ? undefined : ((json['glAccounts'] as Array<any>).map(GLAccountResponseFromJSON)),
-        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
+        'glAccounts': ((json['glAccounts'] as Array<any>).map(GLAccountResponseFromJSON)),
+        'pageNumber': json['pageNumber'],
+        'pageSize': json['pageSize'],
+        'totalElements': json['totalElements'],
+        'totalPages': json['totalPages'],
     };
 }
 
@@ -89,11 +94,11 @@ export function GLAccountListResponseToJSON(value?: GLAccountListResponse | null
     }
     return {
         
+        'glAccounts': ((value['glAccounts'] as Array<any>).map(GLAccountResponseToJSON)),
         'pageNumber': value['pageNumber'],
         'pageSize': value['pageSize'],
-        'totalPages': value['totalPages'],
-        'glAccounts': value['glAccounts'] == null ? undefined : ((value['glAccounts'] as Array<any>).map(GLAccountResponseToJSON)),
         'totalElements': value['totalElements'],
+        'totalPages': value['totalPages'],
     };
 }
 

@@ -25,11 +25,11 @@ import {
     ServiceAreaResponseToJSON,
 } from '../models/index';
 
-export interface Create1Request {
+export interface CreateServiceAreaRequest {
     serviceAreaRequest: ServiceAreaRequest;
 }
 
-export interface Patch1Request {
+export interface PatchServiceAreaRequest {
     id: string;
     body: object;
 }
@@ -40,14 +40,14 @@ export interface Patch1Request {
 export class ServiceAreaAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create a service area that defines where a location can provide service coverage
-     * Create service area
+     * Creates a service area, a named set of postal codes that defines where mobile coverage can be offered. Use this tool before wiring coverage rules that reference the area; do not use patchServiceArea, which edits an existing area. Preconditions: at least one postal code entry must be supplied and every entry must carry a countryCode; the name must not collide with an existing service area. Required inputs: name and postalCodes, each entry with postalCode and countryCode; description is optional and active defaults to true. Emits a LOCATION_SERVICE_AREA_CREATE event. Returns 201 with the created area and 409 when the name is already taken. 
+     * Create a Postal Code Service Area
      */
-    async create1Raw(requestParameters: Create1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
+    async createServiceAreaRaw(requestParameters: CreateServiceAreaRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
         if (requestParameters['serviceAreaRequest'] == null) {
             throw new runtime.RequiredError(
                 'serviceAreaRequest',
-                'Required parameter "serviceAreaRequest" was null or undefined when calling create1().'
+                'Required parameter "serviceAreaRequest" was null or undefined when calling createServiceArea().'
             );
         }
 
@@ -77,19 +77,19 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a service area that defines where a location can provide service coverage
-     * Create service area
+     * Creates a service area, a named set of postal codes that defines where mobile coverage can be offered. Use this tool before wiring coverage rules that reference the area; do not use patchServiceArea, which edits an existing area. Preconditions: at least one postal code entry must be supplied and every entry must carry a countryCode; the name must not collide with an existing service area. Required inputs: name and postalCodes, each entry with postalCode and countryCode; description is optional and active defaults to true. Emits a LOCATION_SERVICE_AREA_CREATE event. Returns 201 with the created area and 409 when the name is already taken. 
+     * Create a Postal Code Service Area
      */
-    async create1(requestParameters: Create1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {
-        const response = await this.create1Raw(requestParameters, initOverrides);
+    async createServiceArea(requestParameters: CreateServiceAreaRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {
+        const response = await this.createServiceAreaRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * List configured service areas available for dispatching and coverage management
-     * List service areas
+     * Lists all configured service areas with their postal code sets and active flags. Use this tool to discover area ids for coverage rules; use listCoverageRules instead to see which areas a specific mobile unit uses. Preconditions: none beyond the location:service-area:read authority. Required inputs: none; there are no parameters, no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full unpaginated list. 
+     * List All Configured Service Areas
      */
-    async list1Raw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServiceAreaResponse>>> {
+    async listServiceAreasRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServiceAreaResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -113,30 +113,30 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * List configured service areas available for dispatching and coverage management
-     * List service areas
+     * Lists all configured service areas with their postal code sets and active flags. Use this tool to discover area ids for coverage rules; use listCoverageRules instead to see which areas a specific mobile unit uses. Preconditions: none beyond the location:service-area:read authority. Required inputs: none; there are no parameters, no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full unpaginated list. 
+     * List All Configured Service Areas
      */
-    async list1(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServiceAreaResponse>> {
-        const response = await this.list1Raw(initOverrides);
+    async listServiceAreas(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServiceAreaResponse>> {
+        const response = await this.listServiceAreasRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Patch an existing service area using the provided partial field updates
-     * Patch service area
+     * Applies a partial update to a service area, accepting only the keys description and active. Use this tool to retire an area with active=false or amend its description; do not use it to rename an area or change its postal codes, which are immutable after createServiceArea. Preconditions: the service area must exist. Required inputs: id (UUID) as a path parameter and a JSON object; keys other than description and active are silently ignored. Emits a LOCATION_SERVICE_AREA_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no service area exists for it. 
+     * Patch Fields of a Service Area
      */
-    async patch1Raw(requestParameters: Patch1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
+    async patchServiceAreaRaw(requestParameters: PatchServiceAreaRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling patch1().'
+                'Required parameter "id" was null or undefined when calling patchServiceArea().'
             );
         }
 
         if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
                 'body',
-                'Required parameter "body" was null or undefined when calling patch1().'
+                'Required parameter "body" was null or undefined when calling patchServiceArea().'
             );
         }
 
@@ -166,11 +166,11 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Patch an existing service area using the provided partial field updates
-     * Patch service area
+     * Applies a partial update to a service area, accepting only the keys description and active. Use this tool to retire an area with active=false or amend its description; do not use it to rename an area or change its postal codes, which are immutable after createServiceArea. Preconditions: the service area must exist. Required inputs: id (UUID) as a path parameter and a JSON object; keys other than description and active are silently ignored. Emits a LOCATION_SERVICE_AREA_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no service area exists for it. 
+     * Patch Fields of a Service Area
      */
-    async patch1(requestParameters: Patch1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {
-        const response = await this.patch1Raw(requestParameters, initOverrides);
+    async patchServiceArea(requestParameters: PatchServiceAreaRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {
+        const response = await this.patchServiceAreaRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

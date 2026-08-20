@@ -14,53 +14,64 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Inventory reservation with its allocation state for a workorder line
  * @export
  * @interface ReservationResponse
  */
 export interface ReservationResponse {
     /**
-     * 
+     * Quantity currently allocated against the reservation
+     * @type {number}
+     * @memberof ReservationResponse
+     */
+    allocatedQuantity: number;
+    /**
+     * Quantity of the stock item required by the reservation
+     * @type {number}
+     * @memberof ReservationResponse
+     */
+    requiredQuantity: number;
+    /**
+     * Identifier of the reservation
      * @type {string}
      * @memberof ReservationResponse
      */
-    reservationId?: string;
+    reservationId: string;
     /**
-     * 
+     * Identifier of the sales-order line the reservation fulfils (CAP #1315), when demand is from a sales order; null when demand is from a workorder instead.
+     * @type {string}
+     * @memberof ReservationResponse
+     */
+    salesOrderLineId?: string;
+    /**
+     * Status of the reservation, such as PENDING, ALLOCATED, or HARDENED
+     * @type {string}
+     * @memberof ReservationResponse
+     */
+    status: string;
+    /**
+     * Identifier of the stock item being reserved
+     * @type {string}
+     * @memberof ReservationResponse
+     */
+    stockItemId: string;
+    /**
+     * Identifier of the workorder line the reservation fulfils, when demand is from a workorder; null when demand is from a sales order instead.
      * @type {string}
      * @memberof ReservationResponse
      */
     workorderLineId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReservationResponse
-     */
-    stockItemId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ReservationResponse
-     */
-    requiredQuantity?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ReservationResponse
-     */
-    allocatedQuantity?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReservationResponse
-     */
-    status?: string;
 }
 
 /**
  * Check if a given object implements the ReservationResponse interface.
  */
 export function instanceOfReservationResponse(value: object): boolean {
+    if (!('allocatedQuantity' in value)) return false;
+    if (!('requiredQuantity' in value)) return false;
+    if (!('reservationId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('stockItemId' in value)) return false;
     return true;
 }
 
@@ -74,12 +85,13 @@ export function ReservationResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'reservationId': json['reservationId'] == null ? undefined : json['reservationId'],
+        'allocatedQuantity': json['allocatedQuantity'],
+        'requiredQuantity': json['requiredQuantity'],
+        'reservationId': json['reservationId'],
+        'salesOrderLineId': json['salesOrderLineId'] == null ? undefined : json['salesOrderLineId'],
+        'status': json['status'],
+        'stockItemId': json['stockItemId'],
         'workorderLineId': json['workorderLineId'] == null ? undefined : json['workorderLineId'],
-        'stockItemId': json['stockItemId'] == null ? undefined : json['stockItemId'],
-        'requiredQuantity': json['requiredQuantity'] == null ? undefined : json['requiredQuantity'],
-        'allocatedQuantity': json['allocatedQuantity'] == null ? undefined : json['allocatedQuantity'],
-        'status': json['status'] == null ? undefined : json['status'],
     };
 }
 
@@ -89,12 +101,13 @@ export function ReservationResponseToJSON(value?: ReservationResponse | null): a
     }
     return {
         
-        'reservationId': value['reservationId'],
-        'workorderLineId': value['workorderLineId'],
-        'stockItemId': value['stockItemId'],
-        'requiredQuantity': value['requiredQuantity'],
         'allocatedQuantity': value['allocatedQuantity'],
+        'requiredQuantity': value['requiredQuantity'],
+        'reservationId': value['reservationId'],
+        'salesOrderLineId': value['salesOrderLineId'],
         'status': value['status'],
+        'stockItemId': value['stockItemId'],
+        'workorderLineId': value['workorderLineId'],
     };
 }
 

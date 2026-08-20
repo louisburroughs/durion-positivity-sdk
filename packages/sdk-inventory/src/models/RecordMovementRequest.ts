@@ -14,29 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request body for recording a directional stock movement in the inventory ledger
  * @export
  * @interface RecordMovementRequest
  */
 export interface RecordMovementRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof RecordMovementRequest
-     */
-    productSku: string;
-    /**
-     * 
+     * Identifier of the location the stock moves from
      * @type {string}
      * @memberof RecordMovementRequest
      */
     fromLocationId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RecordMovementRequest
-     */
-    toLocationId?: string;
     /**
      * Direct ledger movement type. ADJUST is workflow-only and must use /v1/inventory/adjustments endpoints.
      * @type {string}
@@ -44,23 +32,35 @@ export interface RecordMovementRequest {
      */
     movementType: RecordMovementRequestMovementTypeEnum;
     /**
-     * 
+     * Stock keeping unit code of the product being moved
+     * @type {string}
+     * @memberof RecordMovementRequest
+     */
+    productSku: string;
+    /**
+     * Quantity of units being moved
      * @type {number}
      * @memberof RecordMovementRequest
      */
     quantity: number;
     /**
-     * 
-     * @type {string}
-     * @memberof RecordMovementRequest
-     */
-    unitOfMeasure?: string;
-    /**
-     * 
+     * Reference to the originating system transaction that caused the movement
      * @type {string}
      * @memberof RecordMovementRequest
      */
     sourceTransactionId?: string;
+    /**
+     * Identifier of the destination location; required for TRANSFER movements
+     * @type {string}
+     * @memberof RecordMovementRequest
+     */
+    toLocationId?: string;
+    /**
+     * Unit of measure for the quantity
+     * @type {string}
+     * @memberof RecordMovementRequest
+     */
+    unitOfMeasure?: string;
 }
 
 /**
@@ -81,9 +81,9 @@ export enum RecordMovementRequestMovementTypeEnum {
  * Check if a given object implements the RecordMovementRequest interface.
  */
 export function instanceOfRecordMovementRequest(value: object): boolean {
-    if (!('productSku' in value)) return false;
     if (!('fromLocationId' in value)) return false;
     if (!('movementType' in value)) return false;
+    if (!('productSku' in value)) return false;
     if (!('quantity' in value)) return false;
     return true;
 }
@@ -98,13 +98,13 @@ export function RecordMovementRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'productSku': json['productSku'],
         'fromLocationId': json['fromLocationId'],
-        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
         'movementType': json['movementType'],
+        'productSku': json['productSku'],
         'quantity': json['quantity'],
-        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
         'sourceTransactionId': json['sourceTransactionId'] == null ? undefined : json['sourceTransactionId'],
+        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
     };
 }
 
@@ -114,13 +114,13 @@ export function RecordMovementRequestToJSON(value?: RecordMovementRequest | null
     }
     return {
         
-        'productSku': value['productSku'],
         'fromLocationId': value['fromLocationId'],
-        'toLocationId': value['toLocationId'],
         'movementType': value['movementType'],
+        'productSku': value['productSku'],
         'quantity': value['quantity'],
-        'unitOfMeasure': value['unitOfMeasure'],
         'sourceTransactionId': value['sourceTransactionId'],
+        'toLocationId': value['toLocationId'],
+        'unitOfMeasure': value['unitOfMeasure'],
     };
 }
 

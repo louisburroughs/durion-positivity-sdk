@@ -21,29 +21,36 @@ import {
 } from './PricingRuleTraceEntryRequest';
 
 /**
- * 
+ * Request to create a pricing snapshot with its rule-evaluation trace
  * @export
  * @interface PricingSnapshotRequest
  */
 export interface PricingSnapshotRequest {
     /**
-     * 
-     * @type {number}
-     * @memberof PricingSnapshotRequest
-     */
-    finalPrice?: number;
-    /**
-     * 
+     * Ordered rule-evaluation steps that produced the price
      * @type {Array<PricingRuleTraceEntryRequest>}
      * @memberof PricingSnapshotRequest
      */
     evaluationSteps?: Array<PricingRuleTraceEntryRequest>;
+    /**
+     * Final computed price
+     * @type {number}
+     * @memberof PricingSnapshotRequest
+     */
+    finalPrice: number;
+    /**
+     * 
+     * @type {any}
+     * @memberof PricingSnapshotRequest
+     */
+    quoteContext?: any;
 }
 
 /**
  * Check if a given object implements the PricingSnapshotRequest interface.
  */
 export function instanceOfPricingSnapshotRequest(value: object): boolean {
+    if (!('finalPrice' in value)) return false;
     return true;
 }
 
@@ -57,8 +64,9 @@ export function PricingSnapshotRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'finalPrice': json['finalPrice'] == null ? undefined : json['finalPrice'],
         'evaluationSteps': json['evaluationSteps'] == null ? undefined : ((json['evaluationSteps'] as Array<any>).map(PricingRuleTraceEntryRequestFromJSON)),
+        'finalPrice': json['finalPrice'],
+        'quoteContext': json['quoteContext'] == null ? undefined : json['quoteContext'],
     };
 }
 
@@ -68,8 +76,9 @@ export function PricingSnapshotRequestToJSON(value?: PricingSnapshotRequest | nu
     }
     return {
         
-        'finalPrice': value['finalPrice'],
         'evaluationSteps': value['evaluationSteps'] == null ? undefined : ((value['evaluationSteps'] as Array<any>).map(PricingRuleTraceEntryRequestToJSON)),
+        'finalPrice': value['finalPrice'],
+        'quoteContext': value['quoteContext'],
     };
 }
 

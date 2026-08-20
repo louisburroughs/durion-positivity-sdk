@@ -21,29 +21,31 @@ import {
 } from './ContactWithRoles';
 
 /**
- * 
+ * Contacts with their assigned roles and primary flags for a party
  * @export
  * @interface GetContactsWithRolesResponse
  */
 export interface GetContactsWithRolesResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof GetContactsWithRolesResponse
-     */
-    partyId?: string;
-    /**
-     * 
+     * List of contacts with assigned roles
      * @type {Array<ContactWithRoles>}
      * @memberof GetContactsWithRolesResponse
      */
-    contacts?: Array<ContactWithRoles>;
+    contacts: Array<ContactWithRoles>;
+    /**
+     * Party identifier the contacts belong to
+     * @type {string}
+     * @memberof GetContactsWithRolesResponse
+     */
+    partyId: string;
 }
 
 /**
  * Check if a given object implements the GetContactsWithRolesResponse interface.
  */
 export function instanceOfGetContactsWithRolesResponse(value: object): boolean {
+    if (!('contacts' in value)) return false;
+    if (!('partyId' in value)) return false;
     return true;
 }
 
@@ -57,8 +59,8 @@ export function GetContactsWithRolesResponseFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'contacts': json['contacts'] == null ? undefined : ((json['contacts'] as Array<any>).map(ContactWithRolesFromJSON)),
+        'contacts': ((json['contacts'] as Array<any>).map(ContactWithRolesFromJSON)),
+        'partyId': json['partyId'],
     };
 }
 
@@ -68,8 +70,8 @@ export function GetContactsWithRolesResponseToJSON(value?: GetContactsWithRolesR
     }
     return {
         
+        'contacts': ((value['contacts'] as Array<any>).map(ContactWithRolesToJSON)),
         'partyId': value['partyId'],
-        'contacts': value['contacts'] == null ? undefined : ((value['contacts'] as Array<any>).map(ContactWithRolesToJSON)),
     };
 }
 

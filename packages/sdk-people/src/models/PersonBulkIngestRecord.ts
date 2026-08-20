@@ -14,43 +14,49 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single person record within a bulk ingest payload
  * @export
  * @interface PersonBulkIngestRecord
  */
 export interface PersonBulkIngestRecord {
     /**
-     * 
-     * @type {string}
-     * @memberof PersonBulkIngestRecord
-     */
-    legalName: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PersonBulkIngestRecord
-     */
-    preferredName?: string;
-    /**
-     * 
+     * Unique employee number
      * @type {string}
      * @memberof PersonBulkIngestRecord
      */
     employeeNumber: string;
     /**
-     * 
+     * First (given) name of the person
+     * @type {string}
+     * @memberof PersonBulkIngestRecord
+     */
+    firstName: string;
+    /**
+     * Date the person was hired (ISO 8601 date)
      * @type {string}
      * @memberof PersonBulkIngestRecord
      */
     hireDate: string;
     /**
-     * 
+     * Last (family) name of the person
+     * @type {string}
+     * @memberof PersonBulkIngestRecord
+     */
+    lastName: string;
+    /**
+     * Preferred name of the person
+     * @type {string}
+     * @memberof PersonBulkIngestRecord
+     */
+    preferredName?: string;
+    /**
+     * Primary email address
      * @type {string}
      * @memberof PersonBulkIngestRecord
      */
     primaryEmail?: string;
     /**
-     * 
+     * Primary phone number
      * @type {string}
      * @memberof PersonBulkIngestRecord
      */
@@ -61,9 +67,10 @@ export interface PersonBulkIngestRecord {
  * Check if a given object implements the PersonBulkIngestRecord interface.
  */
 export function instanceOfPersonBulkIngestRecord(value: object): boolean {
-    if (!('legalName' in value)) return false;
     if (!('employeeNumber' in value)) return false;
+    if (!('firstName' in value)) return false;
     if (!('hireDate' in value)) return false;
+    if (!('lastName' in value)) return false;
     return true;
 }
 
@@ -77,10 +84,11 @@ export function PersonBulkIngestRecordFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'legalName': json['legalName'],
-        'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
         'employeeNumber': json['employeeNumber'],
+        'firstName': json['firstName'],
         'hireDate': json['hireDate'],
+        'lastName': json['lastName'],
+        'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
         'primaryEmail': json['primaryEmail'] == null ? undefined : json['primaryEmail'],
         'primaryPhone': json['primaryPhone'] == null ? undefined : json['primaryPhone'],
     };
@@ -92,10 +100,11 @@ export function PersonBulkIngestRecordToJSON(value?: PersonBulkIngestRecord | nu
     }
     return {
         
-        'legalName': value['legalName'],
-        'preferredName': value['preferredName'],
         'employeeNumber': value['employeeNumber'],
+        'firstName': value['firstName'],
         'hireDate': value['hireDate'],
+        'lastName': value['lastName'],
+        'preferredName': value['preferredName'],
         'primaryEmail': value['primaryEmail'],
         'primaryPhone': value['primaryPhone'],
     };

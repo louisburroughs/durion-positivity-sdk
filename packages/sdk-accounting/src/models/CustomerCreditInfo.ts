@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Customer credit created from an overpayment
  * @export
  * @interface CustomerCreditInfo
  */
 export interface CustomerCreditInfo {
     /**
-     * 
-     * @type {string}
-     * @memberof CustomerCreditInfo
-     */
-    creditId?: string;
-    /**
-     * 
+     * Credit amount created from overpayment
      * @type {number}
      * @memberof CustomerCreditInfo
      */
     amount?: number;
     /**
-     * 
+     * Timestamp when the credit was created (ISO 8601)
      * @type {Date}
      * @memberof CustomerCreditInfo
      */
     createdAt?: Date;
+    /**
+     * Identifier of the customer credit record
+     * @type {string}
+     * @memberof CustomerCreditInfo
+     */
+    creditId?: string;
 }
 
 /**
@@ -56,9 +56,9 @@ export function CustomerCreditInfoFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'creditId': json['creditId'] == null ? undefined : json['creditId'],
         'amount': json['amount'] == null ? undefined : json['amount'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'creditId': json['creditId'] == null ? undefined : json['creditId'],
     };
 }
 
@@ -68,9 +68,9 @@ export function CustomerCreditInfoToJSON(value?: CustomerCreditInfo | null): any
     }
     return {
         
-        'creditId': value['creditId'],
         'amount': value['amount'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'creditId': value['creditId'],
     };
 }
 

@@ -20,23 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface InvoiceGenerationResponse {
     /**
-     * Generated invoice identifier.
+     * Approval identifier used for generation.
      * @type {string}
      * @memberof InvoiceGenerationResponse
      */
-    invoiceId?: string;
+    approvalId?: string;
     /**
-     * Invoice status.
-     * @type {string}
+     * Creation timestamp (UTC).
+     * @type {Date}
      * @memberof InvoiceGenerationResponse
      */
-    status?: string;
-    /**
-     * Source workorder identifier.
-     * @type {string}
-     * @memberof InvoiceGenerationResponse
-     */
-    workorderId?: string;
+    createdAt: Date;
     /**
      * Source estimate identifier.
      * @type {string}
@@ -44,41 +38,54 @@ export interface InvoiceGenerationResponse {
      */
     estimateId?: string;
     /**
-     * Approval identifier used for generation.
+     * Generated invoice identifier.
      * @type {string}
      * @memberof InvoiceGenerationResponse
      */
-    approvalId?: string;
+    invoiceId: string;
+    /**
+     * Invoice status.
+     * @type {string}
+     * @memberof InvoiceGenerationResponse
+     */
+    status: string;
     /**
      * Subtotal amount before tax.
      * @type {number}
      * @memberof InvoiceGenerationResponse
      */
-    subtotal?: number;
+    subtotal: number;
     /**
      * Tax amount.
      * @type {number}
      * @memberof InvoiceGenerationResponse
      */
-    taxAmount?: number;
+    taxAmount: number;
     /**
      * Total amount after tax.
      * @type {number}
      * @memberof InvoiceGenerationResponse
      */
-    totalAmount?: number;
+    totalAmount: number;
     /**
-     * Creation timestamp (UTC).
-     * @type {Date}
+     * Source workorder identifier.
+     * @type {string}
      * @memberof InvoiceGenerationResponse
      */
-    createdAt?: Date;
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the InvoiceGenerationResponse interface.
  */
 export function instanceOfInvoiceGenerationResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('invoiceId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('subtotal' in value)) return false;
+    if (!('taxAmount' in value)) return false;
+    if (!('totalAmount' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -92,15 +99,15 @@ export function InvoiceGenerationResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
         'approvalId': json['approvalId'] == null ? undefined : json['approvalId'],
-        'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
-        'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
-        'totalAmount': json['totalAmount'] == null ? undefined : json['totalAmount'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'createdAt': (new Date(json['createdAt'])),
+        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
+        'invoiceId': json['invoiceId'],
+        'status': json['status'],
+        'subtotal': json['subtotal'],
+        'taxAmount': json['taxAmount'],
+        'totalAmount': json['totalAmount'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -110,15 +117,15 @@ export function InvoiceGenerationResponseToJSON(value?: InvoiceGenerationRespons
     }
     return {
         
+        'approvalId': value['approvalId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'estimateId': value['estimateId'],
         'invoiceId': value['invoiceId'],
         'status': value['status'],
-        'workorderId': value['workorderId'],
-        'estimateId': value['estimateId'],
-        'approvalId': value['approvalId'],
         'subtotal': value['subtotal'],
         'taxAmount': value['taxAmount'],
         'totalAmount': value['totalAmount'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

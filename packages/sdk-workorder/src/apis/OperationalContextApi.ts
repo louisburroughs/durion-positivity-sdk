@@ -40,7 +40,7 @@ export interface OverrideOperationalContextRequest {
     operationalContextOverrideRequest: OperationalContextOverrideRequest;
 }
 
-export interface StartWorkRequest {
+export interface StartWorkorderOperationRequest {
     workorderId: string;
     startWorkorderRequest?: StartWorkorderRequest;
 }
@@ -51,8 +51,8 @@ export interface StartWorkRequest {
 export class OperationalContextApi extends runtime.BaseAPI {
 
     /**
-     * Returns the current operational context for a workorder, including flags and source data used to drive execution decisions.
-     * Get operational context for workorder
+     * Returns the workorder\'s current operational context — location, bay (derived from the assigned resource), assigned mechanics, assigned resources, and a locked flag that is true once work has started. Use this tool when checking execution context before dispatch or override; do not use overrideOperationalContext, which mutates the context rather than reading it. Preconditions: the workorder must exist; the context is served from the workorder\'s own assignment state, not from the shop-management service. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no workorder exists for the id. 
+     * Get Workorder Operational Context
      */
     async getOperationalContextRaw(requestParameters: GetOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OperationalContextResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -85,8 +85,8 @@ export class OperationalContextApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current operational context for a workorder, including flags and source data used to drive execution decisions.
-     * Get operational context for workorder
+     * Returns the workorder\'s current operational context — location, bay (derived from the assigned resource), assigned mechanics, assigned resources, and a locked flag that is true once work has started. Use this tool when checking execution context before dispatch or override; do not use overrideOperationalContext, which mutates the context rather than reading it. Preconditions: the workorder must exist; the context is served from the workorder\'s own assignment state, not from the shop-management service. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no workorder exists for the id. 
+     * Get Workorder Operational Context
      */
     async getOperationalContext(requestParameters: GetOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OperationalContextResponse> {
         const response = await this.getOperationalContextRaw(requestParameters, initOverrides);
@@ -94,8 +94,8 @@ export class OperationalContextApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a manager-authorized override to operational context values before work starts; request is rejected once context is locked.
-     * Manager override of operational context
+     * Applies a manager-authorized override of the workorder\'s operational context, replacing the location, assigned mechanics, and assigned resources (the first assigned resource becomes the bay) before work starts. Use this tool when a manager must re-slot a workorder to a different bay, crew, or location prior to execution; do not use getOperationalContext, which only reads the current context. Preconditions: the workorder must exist and work must not have started — once workStartedAt is set the context is locked and overrides are rejected. Required inputs: workorderId (UUID) as a path parameter and a body with locationId (UUID, required); bayId, assignedMechanics, assignedResources, and constraints are optional, and constraints are echoed back but not persisted. Emits a WORKORDER_OPERATIONAL_CONTEXT_OVERRIDE event and marks the workorder fact changed for downstream replication. Returns 404 when no workorder exists for the id, and 409 when work has already started and the context is locked. 
+     * Override Workorder Operational Context
      */
     async overrideOperationalContextRaw(requestParameters: OverrideOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OperationalContextResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -138,8 +138,8 @@ export class OperationalContextApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a manager-authorized override to operational context values before work starts; request is rejected once context is locked.
-     * Manager override of operational context
+     * Applies a manager-authorized override of the workorder\'s operational context, replacing the location, assigned mechanics, and assigned resources (the first assigned resource becomes the bay) before work starts. Use this tool when a manager must re-slot a workorder to a different bay, crew, or location prior to execution; do not use getOperationalContext, which only reads the current context. Preconditions: the workorder must exist and work must not have started — once workStartedAt is set the context is locked and overrides are rejected. Required inputs: workorderId (UUID) as a path parameter and a body with locationId (UUID, required); bayId, assignedMechanics, assignedResources, and constraints are optional, and constraints are echoed back but not persisted. Emits a WORKORDER_OPERATIONAL_CONTEXT_OVERRIDE event and marks the workorder fact changed for downstream replication. Returns 404 when no workorder exists for the id, and 409 when work has already started and the context is locked. 
+     * Override Workorder Operational Context
      */
     async overrideOperationalContext(requestParameters: OverrideOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OperationalContextResponse> {
         const response = await this.overrideOperationalContextRaw(requestParameters, initOverrides);
@@ -147,14 +147,14 @@ export class OperationalContextApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transitions the workorder into active execution and locks operational context to prevent further overrides.
-     * Start work on workorder, locking operational context
+     * Transitions the workorder to WORK_IN_PROGRESS, stamps workStartedAt, assigns a new operational context version, and locks the context against further overrides. Use this tool when the technician actually begins work; do not use overrideOperationalContext, which adjusts context and is only possible before this call. Preconditions: the workorder must exist in APPROVED or ASSIGNED status, work must not already have started, and no change requests may be awaiting advisor review. Required inputs: workorderId (UUID) as a path parameter; the body is optional and may carry a reason (defaults to \"Work started\") — the acting user is taken from the security context. Emits a WORKORDER_START event, captures a state snapshot, and records the status transition. Returns 400 when pending change requests block the start, 404 when no workorder exists for the id, and 409 when work has already started or the status is not start-eligible. 
+     * Start Workorder Execution and Lock Context
      */
-    async startWorkRaw(requestParameters: StartWorkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderStartResponse>> {
+    async startWorkorderRaw(requestParameters: StartWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderStartResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling startWork().'
+                'Required parameter "workorderId" was null or undefined when calling startWorkorder().'
             );
         }
 
@@ -184,11 +184,11 @@ export class OperationalContextApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transitions the workorder into active execution and locks operational context to prevent further overrides.
-     * Start work on workorder, locking operational context
+     * Transitions the workorder to WORK_IN_PROGRESS, stamps workStartedAt, assigns a new operational context version, and locks the context against further overrides. Use this tool when the technician actually begins work; do not use overrideOperationalContext, which adjusts context and is only possible before this call. Preconditions: the workorder must exist in APPROVED or ASSIGNED status, work must not already have started, and no change requests may be awaiting advisor review. Required inputs: workorderId (UUID) as a path parameter; the body is optional and may carry a reason (defaults to \"Work started\") — the acting user is taken from the security context. Emits a WORKORDER_START event, captures a state snapshot, and records the status transition. Returns 400 when pending change requests block the start, 404 when no workorder exists for the id, and 409 when work has already started or the status is not start-eligible. 
+     * Start Workorder Execution and Lock Context
      */
-    async startWork(requestParameters: StartWorkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderStartResponse> {
-        const response = await this.startWorkRaw(requestParameters, initOverrides);
+    async startWorkorder(requestParameters: StartWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderStartResponse> {
+        const response = await this.startWorkorderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

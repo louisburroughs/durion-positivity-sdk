@@ -26,18 +26,6 @@ export interface ReassignTechnicianRequest {
      */
     newTechnicianId: string;
     /**
-     * ID of the user performing the reassignment (defaults from X-User-Id header if not provided)
-     * @type {string}
-     * @memberof ReassignTechnicianRequest
-     */
-    reassignedByUserId?: string;
-    /**
-     * Reason for reassignment
-     * @type {string}
-     * @memberof ReassignTechnicianRequest
-     */
-    reason?: string;
-    /**
      * Additional notes for the reassignment
      * @type {string}
      * @memberof ReassignTechnicianRequest
@@ -49,6 +37,18 @@ export interface ReassignTechnicianRequest {
      * @memberof ReassignTechnicianRequest
      */
     notifyPreviousTechnician?: boolean;
+    /**
+     * Reason for reassignment
+     * @type {string}
+     * @memberof ReassignTechnicianRequest
+     */
+    reason?: string;
+    /**
+     * ID of the user performing the reassignment (defaults from X-User-Id header if not provided)
+     * @type {string}
+     * @memberof ReassignTechnicianRequest
+     */
+    reassignedByUserId?: string;
 }
 
 /**
@@ -70,10 +70,10 @@ export function ReassignTechnicianRequestFromJSONTyped(json: any, ignoreDiscrimi
     return {
         
         'newTechnicianId': json['newTechnicianId'],
-        'reassignedByUserId': json['reassignedByUserId'] == null ? undefined : json['reassignedByUserId'],
-        'reason': json['reason'] == null ? undefined : json['reason'],
         'notes': json['notes'] == null ? undefined : json['notes'],
         'notifyPreviousTechnician': json['notifyPreviousTechnician'] == null ? undefined : json['notifyPreviousTechnician'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'reassignedByUserId': json['reassignedByUserId'] == null ? undefined : json['reassignedByUserId'],
     };
 }
 
@@ -84,10 +84,10 @@ export function ReassignTechnicianRequestToJSON(value?: ReassignTechnicianReques
     return {
         
         'newTechnicianId': value['newTechnicianId'],
-        'reassignedByUserId': value['reassignedByUserId'],
-        'reason': value['reason'],
         'notes': value['notes'],
         'notifyPreviousTechnician': value['notifyPreviousTechnician'],
+        'reason': value['reason'],
+        'reassignedByUserId': value['reassignedByUserId'],
     };
 }
 

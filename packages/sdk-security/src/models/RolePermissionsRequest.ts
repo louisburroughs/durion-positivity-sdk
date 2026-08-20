@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to replace the permission set granted to a role
  * @export
  * @interface RolePermissionsRequest
  */
 export interface RolePermissionsRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof RolePermissionsRequest
-     */
-    roleId?: string;
-    /**
-     * 
+     * Replacement set of permission names in format domain:resource:action
      * @type {Set<string>}
      * @memberof RolePermissionsRequest
      */
-    permissionNames?: Set<string>;
+    permissionNames: Set<string>;
+    /**
+     * Identifier of the role to update
+     * @type {string}
+     * @memberof RolePermissionsRequest
+     */
+    roleId: string;
 }
 
 /**
  * Check if a given object implements the RolePermissionsRequest interface.
  */
 export function instanceOfRolePermissionsRequest(value: object): boolean {
+    if (!('permissionNames' in value)) return false;
+    if (!('roleId' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function RolePermissionsRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'roleId': json['roleId'] == null ? undefined : json['roleId'],
-        'permissionNames': json['permissionNames'] == null ? undefined : json['permissionNames'],
+        'permissionNames': json['permissionNames'],
+        'roleId': json['roleId'],
     };
 }
 
@@ -61,8 +63,8 @@ export function RolePermissionsRequestToJSON(value?: RolePermissionsRequest | nu
     }
     return {
         
+        'permissionNames': Array.from(value['permissionNames'] as Set<any>),
         'roleId': value['roleId'],
-        'permissionNames': value['permissionNames'] == null ? undefined : Array.from(value['permissionNames'] as Set<any>),
     };
 }
 

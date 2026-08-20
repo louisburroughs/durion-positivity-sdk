@@ -21,49 +21,49 @@ import {
 } from './PostalCodeEntry';
 
 /**
- * 
+ * Response payload describing a service area
  * @export
  * @interface ServiceAreaResponse
  */
 export interface ServiceAreaResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof ServiceAreaResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ServiceAreaResponse
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ServiceAreaResponse
-     */
-    description?: string;
-    /**
-     * 
+     * Whether the service area is active
      * @type {boolean}
      * @memberof ServiceAreaResponse
      */
     active?: boolean;
     /**
-     * 
-     * @type {Array<PostalCodeEntry>}
-     * @memberof ServiceAreaResponse
-     */
-    postalCodes?: Array<PostalCodeEntry>;
-    /**
-     * 
+     * Timestamp when the service area was created (ISO 8601)
      * @type {Date}
      * @memberof ServiceAreaResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Description of the service area
+     * @type {string}
+     * @memberof ServiceAreaResponse
+     */
+    description?: string;
+    /**
+     * Unique identifier of the service area
+     * @type {string}
+     * @memberof ServiceAreaResponse
+     */
+    id: string;
+    /**
+     * Display name of the service area
+     * @type {string}
+     * @memberof ServiceAreaResponse
+     */
+    name?: string;
+    /**
+     * Postal codes included in the service area
+     * @type {Array<PostalCodeEntry>}
+     * @memberof ServiceAreaResponse
+     */
+    postalCodes?: Array<PostalCodeEntry>;
+    /**
+     * Timestamp when the service area was last updated (ISO 8601)
      * @type {Date}
      * @memberof ServiceAreaResponse
      */
@@ -74,6 +74,7 @@ export interface ServiceAreaResponse {
  * Check if a given object implements the ServiceAreaResponse interface.
  */
 export function instanceOfServiceAreaResponse(value: object): boolean {
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -87,12 +88,12 @@ export function ServiceAreaResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'description': json['description'] == null ? undefined : json['description'],
         'active': json['active'] == null ? undefined : json['active'],
-        'postalCodes': json['postalCodes'] == null ? undefined : ((json['postalCodes'] as Array<any>).map(PostalCodeEntryFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'description': json['description'] == null ? undefined : json['description'],
+        'id': json['id'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'postalCodes': json['postalCodes'] == null ? undefined : ((json['postalCodes'] as Array<any>).map(PostalCodeEntryFromJSON)),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -103,12 +104,12 @@ export function ServiceAreaResponseToJSON(value?: ServiceAreaResponse | null): a
     }
     return {
         
+        'active': value['active'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'description': value['description'],
         'id': value['id'],
         'name': value['name'],
-        'description': value['description'],
-        'active': value['active'],
         'postalCodes': value['postalCodes'] == null ? undefined : ((value['postalCodes'] as Array<any>).map(PostalCodeEntryToJSON)),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

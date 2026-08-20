@@ -14,85 +14,85 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single location record within a bulk ingest request
  * @export
  * @interface LocationBulkIngestRecord
  */
 export interface LocationBulkIngestRecord {
     /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    code: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    addressLine1?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    addressLine2?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    city?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    stateOrProvince?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    postalCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    countryCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationBulkIngestRecord
-     */
-    phoneNumber?: string;
-    /**
-     * 
+     * Whether the location is active
      * @type {boolean}
      * @memberof LocationBulkIngestRecord
      */
     active?: boolean;
     /**
-     * 
+     * First line of the street address
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    addressLine1?: string;
+    /**
+     * Second line of the street address
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    addressLine2?: string;
+    /**
+     * City of the location
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    city?: string;
+    /**
+     * Unique business code of the location
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    code: string;
+    /**
+     * ISO 3166-1 alpha-2 country code
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    countryCode?: string;
+    /**
+     * Name of the location type to resolve during ingest
      * @type {string}
      * @memberof LocationBulkIngestRecord
      */
     locationTypeName?: string;
+    /**
+     * Display name of the location
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    name: string;
+    /**
+     * Primary phone number for the location
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    phoneNumber?: string;
+    /**
+     * Postal or ZIP code of the location
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    postalCode?: string;
+    /**
+     * State or province of the location
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    stateOrProvince?: string;
 }
 
 /**
  * Check if a given object implements the LocationBulkIngestRecord interface.
  */
 export function instanceOfLocationBulkIngestRecord(value: object): boolean {
-    if (!('name' in value)) return false;
     if (!('code' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -106,17 +106,17 @@ export function LocationBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'name': json['name'],
-        'code': json['code'],
+        'active': json['active'] == null ? undefined : json['active'],
         'addressLine1': json['addressLine1'] == null ? undefined : json['addressLine1'],
         'addressLine2': json['addressLine2'] == null ? undefined : json['addressLine2'],
         'city': json['city'] == null ? undefined : json['city'],
-        'stateOrProvince': json['stateOrProvince'] == null ? undefined : json['stateOrProvince'],
-        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
+        'code': json['code'],
         'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
-        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
-        'active': json['active'] == null ? undefined : json['active'],
         'locationTypeName': json['locationTypeName'] == null ? undefined : json['locationTypeName'],
+        'name': json['name'],
+        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
+        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
+        'stateOrProvince': json['stateOrProvince'] == null ? undefined : json['stateOrProvince'],
     };
 }
 
@@ -126,17 +126,17 @@ export function LocationBulkIngestRecordToJSON(value?: LocationBulkIngestRecord 
     }
     return {
         
-        'name': value['name'],
-        'code': value['code'],
+        'active': value['active'],
         'addressLine1': value['addressLine1'],
         'addressLine2': value['addressLine2'],
         'city': value['city'],
-        'stateOrProvince': value['stateOrProvince'],
-        'postalCode': value['postalCode'],
+        'code': value['code'],
         'countryCode': value['countryCode'],
-        'phoneNumber': value['phoneNumber'],
-        'active': value['active'],
         'locationTypeName': value['locationTypeName'],
+        'name': value['name'],
+        'phoneNumber': value['phoneNumber'],
+        'postalCode': value['postalCode'],
+        'stateOrProvince': value['stateOrProvince'],
     };
 }
 

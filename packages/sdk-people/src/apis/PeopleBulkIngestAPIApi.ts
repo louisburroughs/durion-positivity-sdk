@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface CreateEmployeesBulkRequest {
     bulkIngestRequestPersonBulkIngestRecord: BulkIngestRequestPersonBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class PeopleBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of employee records, creating each one through the same path as createEmployee with status forced to ACTIVE. Use this tool for initial loads or migrations of many employees; use createEmployee instead for a single hire, since per-record failures here are reported in the response body rather than as an HTTP error. Preconditions: each record is checked under the STRICT duplicate policy, so an existing employee number, email, or phone fails that record. Required inputs: jobId (UUID), locationId (UUID), and records, each with firstName, lastName, employeeNumber, and hireDate as a YYYY-MM-DD string. Emits a PEOPLE_BULK_INGEST event, and each successfully created employee also publishes its identity upsert command and people.employee.updated fact. Returns 200 even when individual records fail (inspect per-record success flags and errorCode PEOPLE_INGEST_FAILED), and 400 when the envelope itself is invalid or the records list is empty. 
+     * Bulk Import Employee Records From Batch
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async createEmployeesBulkRaw(requestParameters: CreateEmployeesBulkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestPersonBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestPersonBulkIngestRecord',
-                'Required parameter "bulkIngestRequestPersonBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestPersonBulkIngestRecord" was null or undefined when calling createEmployeesBulk().'
             );
         }
 
@@ -72,11 +72,11 @@ export class PeopleBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of employee records, creating each one through the same path as createEmployee with status forced to ACTIVE. Use this tool for initial loads or migrations of many employees; use createEmployee instead for a single hire, since per-record failures here are reported in the response body rather than as an HTTP error. Preconditions: each record is checked under the STRICT duplicate policy, so an existing employee number, email, or phone fails that record. Required inputs: jobId (UUID), locationId (UUID), and records, each with firstName, lastName, employeeNumber, and hireDate as a YYYY-MM-DD string. Emits a PEOPLE_BULK_INGEST event, and each successfully created employee also publishes its identity upsert command and people.employee.updated fact. Returns 200 even when individual records fail (inspect per-record success flags and errorCode PEOPLE_INGEST_FAILED), and 400 when the envelope itself is invalid or the records list is empty. 
+     * Bulk Import Employee Records From Batch
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async createEmployeesBulk(requestParameters: CreateEmployeesBulkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.createEmployeesBulkRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -17,24 +17,24 @@ import * as runtime from '../runtime';
 import type {
   BulkLoadJobResponse,
   FileUploadResponse,
-  UploadFileRequest,
+  ProblemDetail,
 } from '../models/index';
 import {
     BulkLoadJobResponseFromJSON,
     BulkLoadJobResponseToJSON,
     FileUploadResponseFromJSON,
     FileUploadResponseToJSON,
-    UploadFileRequestFromJSON,
-    UploadFileRequestToJSON,
+    ProblemDetailFromJSON,
+    ProblemDetailToJSON,
 } from '../models/index';
 
-export interface StartProcessingRequest {
+export interface StartJobProcessingRequest {
     jobId: string;
 }
 
-export interface UploadFileOperationRequest {
+export interface UploadJobFileRequest {
     jobId: string;
-    uploadFileRequest?: UploadFileRequest;
+    file?: Blob;
 }
 
 /**
@@ -43,14 +43,14 @@ export interface UploadFileOperationRequest {
 export class BulkLoadFileUploadAPIApi extends runtime.BaseAPI {
 
     /**
-     * Starts Spring Batch execution for the specified bulk load job and transitions it to PROCESSING. The job must be in CREATED, UPLOADING, or MAPPING_REVIEW state and must already have a persisted upload and locationId.
-     * Launch a bulk load job for processing
+     * Starts asynchronous Spring Batch processing for a bulk load job and transitions it to PROCESSING. Use this tool once the uploaded file is persisted and the mappings are acceptable; do not treat the 200 response as import completion, and poll getBulkLoadJob instead because the batch run continues in the background. Preconditions: the job must belong to the authenticated operator, be in CREATED, UPLOADING or MAPPING_REVIEW state, and already have both a persisted uploaded file and a locationId assigned. Required inputs: jobId (UUID) as a path parameter; there is no request body, and the caller\'s Authorization bearer token is forwarded to downstream domain services for the row-level writes. Emits a BULK_LOADER_JOB_START event, launches the Spring Batch job, and stamps startedAt; row counters on the job update as chunks are processed. Returns 404 when the job does not exist, 403 when it belongs to another operator, and 409 when the state is not launchable or the uploaded file or locationId is missing. 
+     * Launch a Bulk Load Job
      */
-    async startProcessingRaw(requestParameters: StartProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
+    async startJobProcessingRaw(requestParameters: StartJobProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling startProcessing().'
+                'Required parameter "jobId" was null or undefined when calling startJobProcessing().'
             );
         }
 
@@ -77,31 +77,29 @@ export class BulkLoadFileUploadAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Starts Spring Batch execution for the specified bulk load job and transitions it to PROCESSING. The job must be in CREATED, UPLOADING, or MAPPING_REVIEW state and must already have a persisted upload and locationId.
-     * Launch a bulk load job for processing
+     * Starts asynchronous Spring Batch processing for a bulk load job and transitions it to PROCESSING. Use this tool once the uploaded file is persisted and the mappings are acceptable; do not treat the 200 response as import completion, and poll getBulkLoadJob instead because the batch run continues in the background. Preconditions: the job must belong to the authenticated operator, be in CREATED, UPLOADING or MAPPING_REVIEW state, and already have both a persisted uploaded file and a locationId assigned. Required inputs: jobId (UUID) as a path parameter; there is no request body, and the caller\'s Authorization bearer token is forwarded to downstream domain services for the row-level writes. Emits a BULK_LOADER_JOB_START event, launches the Spring Batch job, and stamps startedAt; row counters on the job update as chunks are processed. Returns 404 when the job does not exist, 403 when it belongs to another operator, and 409 when the state is not launchable or the uploaded file or locationId is missing. 
+     * Launch a Bulk Load Job
      */
-    async startProcessing(requestParameters: StartProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
-        const response = await this.startProcessingRaw(requestParameters, initOverrides);
+    async startJobProcessing(requestParameters: StartJobProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
+        const response = await this.startJobProcessingRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Uploads a file for the specified bulk load job. The file is stored and associated with the job for later processing. The job must be in CREATED or UPLOADING state. Multiple files can be uploaded, but only the latest file will be processed.
-     * Upload a file for a bulk load job
+     * Uploads the source data file for a bulk load job as a single multipart request, stores it, and runs content detection to propose column mappings. Use this tool for files small enough to send in one request; use createTusUpload instead for large files that need resumable, chunked upload. Preconditions: the job must exist, belong to the authenticated operator, and not be in a terminal state (COMPLETED, CANCELLED or FAILED); a CREATED job moves to UPLOADING. Required inputs: a multipart form part named file; formats understood by content detection are csv, tsv, txt, psv, xlsx, xlsm, xls, json, xml, yaml and yml, with the first row or record treated as the column headers. Emits a BULK_LOADER_FILE_UPLOAD event and persists suggested column mappings from detection; when detection fails the upload still succeeds with a null detection field in the response, and re-uploading replaces the file to be processed because only the latest upload is used. Returns 404 when the job does not exist for the authenticated operator, and 409 when the job is already in a terminal state. 
+     * Upload a File for Bulk Load Job
      */
-    async uploadFileRaw(requestParameters: UploadFileOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FileUploadResponse>> {
+    async uploadJobFileRaw(requestParameters: UploadJobFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FileUploadResponse>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling uploadFile().'
+                'Required parameter "jobId" was null or undefined when calling uploadJobFile().'
             );
         }
 
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -111,23 +109,43 @@ export class BulkLoadFileUploadAPIApi extends runtime.BaseAPI {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
+        const consumes: runtime.Consume[] = [
+            { contentType: 'multipart/form-data' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        // use FormData to transmit files using content-type "multipart/form-data"
+        useForm = canConsumeForm;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['file'] != null) {
+            formParams.append('file', requestParameters['file'] as any);
+        }
+
         const response = await this.request({
             path: `/v1/bulk-jobs/{jobId}/upload`.replace(`{${"jobId"}}`, encodeURIComponent(String(requestParameters['jobId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: UploadFileRequestToJSON(requestParameters['uploadFileRequest']),
+            body: formParams,
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => FileUploadResponseFromJSON(jsonValue));
     }
 
     /**
-     * Uploads a file for the specified bulk load job. The file is stored and associated with the job for later processing. The job must be in CREATED or UPLOADING state. Multiple files can be uploaded, but only the latest file will be processed.
-     * Upload a file for a bulk load job
+     * Uploads the source data file for a bulk load job as a single multipart request, stores it, and runs content detection to propose column mappings. Use this tool for files small enough to send in one request; use createTusUpload instead for large files that need resumable, chunked upload. Preconditions: the job must exist, belong to the authenticated operator, and not be in a terminal state (COMPLETED, CANCELLED or FAILED); a CREATED job moves to UPLOADING. Required inputs: a multipart form part named file; formats understood by content detection are csv, tsv, txt, psv, xlsx, xlsm, xls, json, xml, yaml and yml, with the first row or record treated as the column headers. Emits a BULK_LOADER_FILE_UPLOAD event and persists suggested column mappings from detection; when detection fails the upload still succeeds with a null detection field in the response, and re-uploading replaces the file to be processed because only the latest upload is used. Returns 404 when the job does not exist for the authenticated operator, and 409 when the job is already in a terminal state. 
+     * Upload a File for Bulk Load Job
      */
-    async uploadFile(requestParameters: UploadFileOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FileUploadResponse> {
-        const response = await this.uploadFileRaw(requestParameters, initOverrides);
+    async uploadJobFile(requestParameters: UploadJobFileRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FileUploadResponse> {
+        const response = await this.uploadJobFileRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

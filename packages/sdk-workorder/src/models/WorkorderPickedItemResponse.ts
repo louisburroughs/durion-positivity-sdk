@@ -14,59 +14,66 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response describing a picked item resulting from a pick task
  * @export
  * @interface WorkorderPickedItemResponse
  */
 export interface WorkorderPickedItemResponse {
     /**
-     * 
+     * Identifier of the pick list the task belongs to
      * @type {string}
      * @memberof WorkorderPickedItemResponse
      */
-    pickTaskId?: string;
+    pickListId: string;
     /**
-     * 
+     * Identifier of the pick task that produced this item
      * @type {string}
      * @memberof WorkorderPickedItemResponse
      */
-    pickListId?: string;
+    pickTaskId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof WorkorderPickedItemResponse
-     */
-    skuId?: string;
-    /**
-     * 
+     * Quantity consumed from the picked amount
      * @type {number}
      * @memberof WorkorderPickedItemResponse
      */
-    qtyPicked?: number;
+    qtyConsumed: number;
     /**
-     * 
+     * Quantity picked
      * @type {number}
      * @memberof WorkorderPickedItemResponse
      */
-    qtyConsumed?: number;
+    qtyPicked: number;
     /**
-     * 
+     * Quantity remaining from the picked amount
      * @type {number}
      * @memberof WorkorderPickedItemResponse
      */
-    qtyRemaining?: number;
+    qtyRemaining: number;
     /**
-     * 
+     * Identifier of the SKU that was picked
      * @type {string}
      * @memberof WorkorderPickedItemResponse
      */
-    status?: string;
+    skuId: string;
+    /**
+     * Status of the picked item
+     * @type {string}
+     * @memberof WorkorderPickedItemResponse
+     */
+    status: string;
 }
 
 /**
  * Check if a given object implements the WorkorderPickedItemResponse interface.
  */
 export function instanceOfWorkorderPickedItemResponse(value: object): boolean {
+    if (!('pickListId' in value)) return false;
+    if (!('pickTaskId' in value)) return false;
+    if (!('qtyConsumed' in value)) return false;
+    if (!('qtyPicked' in value)) return false;
+    if (!('qtyRemaining' in value)) return false;
+    if (!('skuId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -80,13 +87,13 @@ export function WorkorderPickedItemResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'pickTaskId': json['pickTaskId'] == null ? undefined : json['pickTaskId'],
-        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
-        'skuId': json['skuId'] == null ? undefined : json['skuId'],
-        'qtyPicked': json['qtyPicked'] == null ? undefined : json['qtyPicked'],
-        'qtyConsumed': json['qtyConsumed'] == null ? undefined : json['qtyConsumed'],
-        'qtyRemaining': json['qtyRemaining'] == null ? undefined : json['qtyRemaining'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'pickListId': json['pickListId'],
+        'pickTaskId': json['pickTaskId'],
+        'qtyConsumed': json['qtyConsumed'],
+        'qtyPicked': json['qtyPicked'],
+        'qtyRemaining': json['qtyRemaining'],
+        'skuId': json['skuId'],
+        'status': json['status'],
     };
 }
 
@@ -96,12 +103,12 @@ export function WorkorderPickedItemResponseToJSON(value?: WorkorderPickedItemRes
     }
     return {
         
-        'pickTaskId': value['pickTaskId'],
         'pickListId': value['pickListId'],
-        'skuId': value['skuId'],
-        'qtyPicked': value['qtyPicked'],
+        'pickTaskId': value['pickTaskId'],
         'qtyConsumed': value['qtyConsumed'],
+        'qtyPicked': value['qtyPicked'],
         'qtyRemaining': value['qtyRemaining'],
+        'skuId': value['skuId'],
         'status': value['status'],
     };
 }

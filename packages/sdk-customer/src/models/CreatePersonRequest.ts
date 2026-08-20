@@ -33,6 +33,12 @@ import {
  */
 export interface CreatePersonRequest {
     /**
+     * Email addresses for this person
+     * @type {Array<EmailInput>}
+     * @memberof CreatePersonRequest
+     */
+    emails?: Array<EmailInput>;
+    /**
      * First name of the person
      * @type {string}
      * @memberof CreatePersonRequest
@@ -45,23 +51,17 @@ export interface CreatePersonRequest {
      */
     lastName: string;
     /**
-     * Preferred method of contact
-     * @type {string}
-     * @memberof CreatePersonRequest
-     */
-    preferredContactMethod: CreatePersonRequestPreferredContactMethodEnum;
-    /**
-     * Email addresses for this person
-     * @type {Array<EmailInput>}
-     * @memberof CreatePersonRequest
-     */
-    emails?: Array<EmailInput>;
-    /**
      * Phone numbers for this person
      * @type {Array<PhoneInput>}
      * @memberof CreatePersonRequest
      */
     phones?: Array<PhoneInput>;
+    /**
+     * Preferred method of contact
+     * @type {string}
+     * @memberof CreatePersonRequest
+     */
+    preferredContactMethod: CreatePersonRequestPreferredContactMethodEnum;
 }
 
 /**
@@ -96,11 +96,11 @@ export function CreatePersonRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'emails': json['emails'] == null ? undefined : ((json['emails'] as Array<any>).map(EmailInputFromJSON)),
         'firstName': json['firstName'],
         'lastName': json['lastName'],
-        'preferredContactMethod': json['preferredContactMethod'],
-        'emails': json['emails'] == null ? undefined : ((json['emails'] as Array<any>).map(EmailInputFromJSON)),
         'phones': json['phones'] == null ? undefined : ((json['phones'] as Array<any>).map(PhoneInputFromJSON)),
+        'preferredContactMethod': json['preferredContactMethod'],
     };
 }
 
@@ -110,11 +110,11 @@ export function CreatePersonRequestToJSON(value?: CreatePersonRequest | null): a
     }
     return {
         
+        'emails': value['emails'] == null ? undefined : ((value['emails'] as Array<any>).map(EmailInputToJSON)),
         'firstName': value['firstName'],
         'lastName': value['lastName'],
-        'preferredContactMethod': value['preferredContactMethod'],
-        'emails': value['emails'] == null ? undefined : ((value['emails'] as Array<any>).map(EmailInputToJSON)),
         'phones': value['phones'] == null ? undefined : ((value['phones'] as Array<any>).map(PhoneInputToJSON)),
+        'preferredContactMethod': value['preferredContactMethod'],
     };
 }
 

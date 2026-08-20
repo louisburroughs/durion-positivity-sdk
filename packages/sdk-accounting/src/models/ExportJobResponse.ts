@@ -20,25 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface ExportJobResponse {
     /**
-     * Unique job identifier
-     * @type {string}
-     * @memberof ExportJobResponse
-     */
-    jobId?: string;
-    /**
-     * Current job status
-     * @type {string}
-     * @memberof ExportJobResponse
-     */
-    status?: string;
-    /**
-     * When the export was requested
-     * @type {Date}
-     * @memberof ExportJobResponse
-     */
-    requestedAt?: Date;
-    /**
-     * When the export completed
+     * When the export completed (ISO 8601)
      * @type {Date}
      * @memberof ExportJobResponse
      */
@@ -55,12 +37,33 @@ export interface ExportJobResponse {
      * @memberof ExportJobResponse
      */
     errorMessage?: string;
+    /**
+     * Unique job identifier
+     * @type {string}
+     * @memberof ExportJobResponse
+     */
+    jobId: string;
+    /**
+     * When the export was requested (ISO 8601)
+     * @type {Date}
+     * @memberof ExportJobResponse
+     */
+    requestedAt: Date;
+    /**
+     * Current job status
+     * @type {string}
+     * @memberof ExportJobResponse
+     */
+    status: string;
 }
 
 /**
  * Check if a given object implements the ExportJobResponse interface.
  */
 export function instanceOfExportJobResponse(value: object): boolean {
+    if (!('jobId' in value)) return false;
+    if (!('requestedAt' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -74,12 +77,12 @@ export function ExportJobResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'jobId': json['jobId'] == null ? undefined : json['jobId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
         'downloadUrl': json['downloadUrl'] == null ? undefined : json['downloadUrl'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
+        'jobId': json['jobId'],
+        'requestedAt': (new Date(json['requestedAt'])),
+        'status': json['status'],
     };
 }
 
@@ -89,12 +92,12 @@ export function ExportJobResponseToJSON(value?: ExportJobResponse | null): any {
     }
     return {
         
-        'jobId': value['jobId'],
-        'status': value['status'],
-        'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt'] as any).toISOString()),
         'downloadUrl': value['downloadUrl'],
         'errorMessage': value['errorMessage'],
+        'jobId': value['jobId'],
+        'requestedAt': ((value['requestedAt']).toISOString()),
+        'status': value['status'],
     };
 }
 

@@ -14,47 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Balance of a GL account as of a point in time
  * @export
  * @interface GLAccountBalanceResponse
  */
 export interface GLAccountBalanceResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof GLAccountBalanceResponse
-     */
-    glAccountId?: string;
-    /**
-     * 
+     * Account code of the GL account
      * @type {string}
      * @memberof GLAccountBalanceResponse
      */
     accountCode?: string;
     /**
-     * 
+     * Account name of the GL account
      * @type {string}
      * @memberof GLAccountBalanceResponse
      */
     accountName?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof GLAccountBalanceResponse
-     */
-    balance?: number;
-    /**
-     * 
+     * Point in time the balance is computed as of (ISO 8601)
      * @type {Date}
      * @memberof GLAccountBalanceResponse
      */
-    asOfDate?: Date;
+    asOfDate: Date;
+    /**
+     * Balance of the account
+     * @type {number}
+     * @memberof GLAccountBalanceResponse
+     */
+    balance: number;
+    /**
+     * Unique identifier of the GL account
+     * @type {string}
+     * @memberof GLAccountBalanceResponse
+     */
+    glAccountId: string;
 }
 
 /**
  * Check if a given object implements the GLAccountBalanceResponse interface.
  */
 export function instanceOfGLAccountBalanceResponse(value: object): boolean {
+    if (!('asOfDate' in value)) return false;
+    if (!('balance' in value)) return false;
+    if (!('glAccountId' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function GLAccountBalanceResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
         'accountCode': json['accountCode'] == null ? undefined : json['accountCode'],
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
-        'balance': json['balance'] == null ? undefined : json['balance'],
-        'asOfDate': json['asOfDate'] == null ? undefined : (new Date(json['asOfDate'])),
+        'asOfDate': (new Date(json['asOfDate'])),
+        'balance': json['balance'],
+        'glAccountId': json['glAccountId'],
     };
 }
 
@@ -82,11 +85,11 @@ export function GLAccountBalanceResponseToJSON(value?: GLAccountBalanceResponse 
     }
     return {
         
-        'glAccountId': value['glAccountId'],
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
+        'asOfDate': ((value['asOfDate']).toISOString()),
         'balance': value['balance'],
-        'asOfDate': value['asOfDate'] == null ? undefined : ((value['asOfDate']).toISOString()),
+        'glAccountId': value['glAccountId'],
     };
 }
 

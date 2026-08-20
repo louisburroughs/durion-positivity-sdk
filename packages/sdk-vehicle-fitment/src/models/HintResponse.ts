@@ -27,6 +27,24 @@ import {
  */
 export interface HintResponse {
     /**
+     * Hint creation timestamp
+     * @type {Date}
+     * @memberof HintResponse
+     */
+    createdAt: Date;
+    /**
+     * User or system identity that created the hint
+     * @type {string}
+     * @memberof HintResponse
+     */
+    createdBy?: string;
+    /**
+     * Fitment tags for this hint
+     * @type {Array<FitmentTagDto>}
+     * @memberof HintResponse
+     */
+    fitmentTags: Array<FitmentTagDto>;
+    /**
      * Hint identifier
      * @type {string}
      * @memberof HintResponse
@@ -39,29 +57,11 @@ export interface HintResponse {
      */
     productId: string;
     /**
-     * Fitment tags for this hint
-     * @type {Array<FitmentTagDto>}
-     * @memberof HintResponse
-     */
-    fitmentTags: Array<FitmentTagDto>;
-    /**
-     * Hint creation timestamp
-     * @type {Date}
-     * @memberof HintResponse
-     */
-    createdAt: Date;
-    /**
      * Hint last update timestamp
      * @type {Date}
      * @memberof HintResponse
      */
     updatedAt: Date;
-    /**
-     * User or system identity that created the hint
-     * @type {string}
-     * @memberof HintResponse
-     */
-    createdBy?: string;
     /**
      * User or system identity that last updated the hint
      * @type {string}
@@ -74,10 +74,10 @@ export interface HintResponse {
  * Check if a given object implements the HintResponse interface.
  */
 export function instanceOfHintResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('fitmentTags' in value)) return false;
     if (!('hintId' in value)) return false;
     if (!('productId' in value)) return false;
-    if (!('fitmentTags' in value)) return false;
-    if (!('createdAt' in value)) return false;
     if (!('updatedAt' in value)) return false;
     return true;
 }
@@ -92,12 +92,12 @@ export function HintResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
+        'createdAt': (new Date(json['createdAt'])),
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'fitmentTags': ((json['fitmentTags'] as Array<any>).map(FitmentTagDtoFromJSON)),
         'hintId': json['hintId'],
         'productId': json['productId'],
-        'fitmentTags': ((json['fitmentTags'] as Array<any>).map(FitmentTagDtoFromJSON)),
-        'createdAt': (new Date(json['createdAt'])),
         'updatedAt': (new Date(json['updatedAt'])),
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
     };
 }
@@ -108,12 +108,12 @@ export function HintResponseToJSON(value?: HintResponse | null): any {
     }
     return {
         
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
+        'fitmentTags': ((value['fitmentTags'] as Array<any>).map(FitmentTagDtoToJSON)),
         'hintId': value['hintId'],
         'productId': value['productId'],
-        'fitmentTags': ((value['fitmentTags'] as Array<any>).map(FitmentTagDtoToJSON)),
-        'createdAt': ((value['createdAt']).toISOString()),
         'updatedAt': ((value['updatedAt']).toISOString()),
-        'createdBy': value['createdBy'],
         'updatedBy': value['updatedBy'],
     };
 }

@@ -14,71 +14,83 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Vehicle care preferences record
  * @export
  * @interface VehicleCarePreferenceResponse
  */
 export interface VehicleCarePreferenceResponse {
     /**
-     * 
-     * @type {string}
+     * Timestamp when the preference record was created
+     * @type {Date}
      * @memberof VehicleCarePreferenceResponse
      */
-    id?: string;
+    createdAt: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof VehicleCarePreferenceResponse
-     */
-    vehicleId?: string;
-    /**
-     * 
-     * @type {object}
-     * @memberof VehicleCarePreferenceResponse
-     */
-    preferences?: object;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleCarePreferenceResponse
-     */
-    serviceNotes?: string;
-    /**
-     * 
+     * User identifier that created the preference record
      * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
     createdByUserId?: string;
     /**
-     * 
+     * Unique identifier of the preference record
+     * @type {string}
+     * @memberof VehicleCarePreferenceResponse
+     */
+    id: string;
+    /**
+     * Preferences payload stored as flexible key/value JSON
+     * @type {object}
+     * @memberof VehicleCarePreferenceResponse
+     */
+    preferences: object;
+    /**
+     * Structured service interval in whole months; null means use the CRM default (#1175)
+     * @type {number}
+     * @memberof VehicleCarePreferenceResponse
+     */
+    serviceIntervalMonths?: number;
+    /**
+     * Service notes for technicians
+     * @type {string}
+     * @memberof VehicleCarePreferenceResponse
+     */
+    serviceNotes?: string;
+    /**
+     * Timestamp when the preference record was last updated
+     * @type {Date}
+     * @memberof VehicleCarePreferenceResponse
+     */
+    updatedAt: Date;
+    /**
+     * User identifier that last updated the preference record
      * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
     updatedByUserId?: string;
     /**
-     * 
-     * @type {Date}
+     * Identifier of the vehicle the preferences apply to
+     * @type {string}
      * @memberof VehicleCarePreferenceResponse
      */
-    createdAt?: Date;
+    vehicleId: string;
     /**
-     * 
-     * @type {Date}
-     * @memberof VehicleCarePreferenceResponse
-     */
-    updatedAt?: Date;
-    /**
-     * 
+     * Optimistic-locking version of the preference record
      * @type {number}
      * @memberof VehicleCarePreferenceResponse
      */
-    version?: number;
+    version: number;
 }
 
 /**
  * Check if a given object implements the VehicleCarePreferenceResponse interface.
  */
 export function instanceOfVehicleCarePreferenceResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('preferences' in value)) return false;
+    if (!('updatedAt' in value)) return false;
+    if (!('vehicleId' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -92,15 +104,16 @@ export function VehicleCarePreferenceResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'preferences': json['preferences'] == null ? undefined : json['preferences'],
-        'serviceNotes': json['serviceNotes'] == null ? undefined : json['serviceNotes'],
+        'createdAt': (new Date(json['createdAt'])),
         'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
+        'id': json['id'],
+        'preferences': json['preferences'],
+        'serviceIntervalMonths': json['serviceIntervalMonths'] == null ? undefined : json['serviceIntervalMonths'],
+        'serviceNotes': json['serviceNotes'] == null ? undefined : json['serviceNotes'],
+        'updatedAt': (new Date(json['updatedAt'])),
         'updatedByUserId': json['updatedByUserId'] == null ? undefined : json['updatedByUserId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'version': json['version'] == null ? undefined : json['version'],
+        'vehicleId': json['vehicleId'],
+        'version': json['version'],
     };
 }
 
@@ -110,14 +123,15 @@ export function VehicleCarePreferenceResponseToJSON(value?: VehicleCarePreferenc
     }
     return {
         
-        'id': value['id'],
-        'vehicleId': value['vehicleId'],
-        'preferences': value['preferences'],
-        'serviceNotes': value['serviceNotes'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'createdByUserId': value['createdByUserId'],
+        'id': value['id'],
+        'preferences': value['preferences'],
+        'serviceIntervalMonths': value['serviceIntervalMonths'],
+        'serviceNotes': value['serviceNotes'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
         'updatedByUserId': value['updatedByUserId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'vehicleId': value['vehicleId'],
         'version': value['version'],
     };
 }

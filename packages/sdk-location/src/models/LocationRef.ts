@@ -14,43 +14,49 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Lightweight location reference for reconciliation roster consumers
  * @export
  * @interface LocationRef
  */
 export interface LocationRef {
     /**
-     * 
-     * @type {string}
-     * @memberof LocationRef
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRef
-     */
-    name?: string;
-    /**
-     * 
+     * Unique business code of the location
      * @type {string}
      * @memberof LocationRef
      */
     code?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof LocationRef
-     */
-    status?: string;
-    /**
-     * 
+     * Identifier of the location in the HR system of record
      * @type {string}
      * @memberof LocationRef
      */
     hrLocationId?: string;
     /**
-     * 
+     * Unique identifier of the location
+     * @type {string}
+     * @memberof LocationRef
+     */
+    id: string;
+    /**
+     * Display name of the location
+     * @type {string}
+     * @memberof LocationRef
+     */
+    name?: string;
+    /**
+     * Operational status of the location
+     * @type {string}
+     * @memberof LocationRef
+     */
+    status?: string;
+    /**
+     * IANA timezone identifier of the location
+     * @type {string}
+     * @memberof LocationRef
+     */
+    timezone?: string;
+    /**
+     * Timestamp when the location was last updated (ISO 8601)
      * @type {Date}
      * @memberof LocationRef
      */
@@ -61,6 +67,7 @@ export interface LocationRef {
  * Check if a given object implements the LocationRef interface.
  */
 export function instanceOfLocationRef(value: object): boolean {
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -74,11 +81,12 @@ export function LocationRefFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
         'code': json['code'] == null ? undefined : json['code'],
-        'status': json['status'] == null ? undefined : json['status'],
         'hrLocationId': json['hrLocationId'] == null ? undefined : json['hrLocationId'],
+        'id': json['id'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'timezone': json['timezone'] == null ? undefined : json['timezone'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -89,11 +97,12 @@ export function LocationRefToJSON(value?: LocationRef | null): any {
     }
     return {
         
+        'code': value['code'],
+        'hrLocationId': value['hrLocationId'],
         'id': value['id'],
         'name': value['name'],
-        'code': value['code'],
         'status': value['status'],
-        'hrLocationId': value['hrLocationId'],
+        'timezone': value['timezone'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

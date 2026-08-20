@@ -19,6 +19,7 @@ import type {
   PermissionDto,
   RoleAssignmentDto,
   RoleAssignmentRequest,
+  RoleDefaultPermissionsResponse,
   RoleDto,
   RolePermissionGrantRequest,
   RolePermissionsRequest,
@@ -32,6 +33,8 @@ import {
     RoleAssignmentDtoToJSON,
     RoleAssignmentRequestFromJSON,
     RoleAssignmentRequestToJSON,
+    RoleDefaultPermissionsResponseFromJSON,
+    RoleDefaultPermissionsResponseToJSON,
     RoleDtoFromJSON,
     RoleDtoToJSON,
     RolePermissionGrantRequestFromJSON,
@@ -40,12 +43,12 @@ import {
     RolePermissionsRequestToJSON,
 } from '../models/index';
 
-export interface AssignPermissionToRoleRequest {
+export interface AssignRolePermissionByKeyRequest {
     roleId: string;
     permissionKey: string;
 }
 
-export interface AssignPermissionToRole1Request {
+export interface AssignRolePermissionByKey1Request {
     roleId: string;
     permissionKey: string;
 }
@@ -102,42 +105,40 @@ export interface GetRoleByName1Request {
     name: string;
 }
 
-export interface GetUserPermissionsByUserIdRequest {
+export interface GetRoleDefaultPermissionsRequest {
+    role: string;
+}
+
+export interface GetRoleDefaultPermissions1Request {
+    role: string;
+}
+
+export interface GetUserPermissionsLegacyRequest {
     userId: string;
 }
 
-export interface GetUserPermissionsByUserId1Request {
+export interface GetUserPermissionsLegacy1Request {
     userId: string;
 }
 
-export interface GetUserRoleAssignmentsRequest {
-    userId: string;
-    includeHistory?: boolean;
-}
-
-export interface GetUserRoleAssignments1Request {
-    userId: string;
-    includeHistory?: boolean;
-}
-
-export interface GrantPermissionToRoleRequest {
+export interface GrantRolePermissionRequest {
     roleId: string;
     rolePermissionGrantRequest: RolePermissionGrantRequest;
 }
 
-export interface GrantPermissionToRole1Request {
+export interface GrantRolePermission1Request {
     roleId: string;
     rolePermissionGrantRequest: RolePermissionGrantRequest;
 }
 
-export interface RevokePermissionFromRoleRequest {
-    roleId: string;
-    permissionKey: string;
+export interface ListUserRoleAssignmentsRequest {
+    userId: string;
+    includeHistory?: boolean;
 }
 
-export interface RevokePermissionFromRole1Request {
-    roleId: string;
-    permissionKey: string;
+export interface ListUserRoleAssignments1Request {
+    userId: string;
+    includeHistory?: boolean;
 }
 
 export interface RevokeRoleAssignmentRequest {
@@ -148,6 +149,16 @@ export interface RevokeRoleAssignmentRequest {
 export interface RevokeRoleAssignment1Request {
     assignmentId: string;
     endDate?: Date;
+}
+
+export interface RevokeRolePermissionRequest {
+    roleId: string;
+    permissionKey: string;
+}
+
+export interface RevokeRolePermission1Request {
+    roleId: string;
+    permissionKey: string;
 }
 
 export interface UpdateRolePermissionsRequest {
@@ -164,21 +175,21 @@ export interface UpdateRolePermissions1Request {
 export class RoleManagementApi extends runtime.BaseAPI {
 
     /**
-     * Assigns the permission identified by path key to the specified role
-     * Assign permission to a role by key
+     * Adds an already-registered permission, identified by its key in the path, to a role\'s grant set. Use this tool when the permission is known to be registered; do not use grantRolePermission, which auto-registers unknown keys, and do not use updateRolePermissions, which replaces the whole set. Preconditions: the caller must hold security:role:edit, the role must exist, and the permission key must already be registered (modules register at startup via registerModulePermissions). Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_ASSIGN event. Returns 404 when the role does not exist or the permission key has not been registered. 
+     * Assign a Registered Permission to a Role
      */
-    async assignPermissionToRoleRaw(requestParameters: AssignPermissionToRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async assignRolePermissionByKeyRaw(requestParameters: AssignRolePermissionByKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
-                'Required parameter "roleId" was null or undefined when calling assignPermissionToRole().'
+                'Required parameter "roleId" was null or undefined when calling assignRolePermissionByKey().'
             );
         }
 
         if (requestParameters['permissionKey'] == null) {
             throw new runtime.RequiredError(
                 'permissionKey',
-                'Required parameter "permissionKey" was null or undefined when calling assignPermissionToRole().'
+                'Required parameter "permissionKey" was null or undefined when calling assignRolePermissionByKey().'
             );
         }
 
@@ -205,29 +216,29 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns the permission identified by path key to the specified role
-     * Assign permission to a role by key
+     * Adds an already-registered permission, identified by its key in the path, to a role\'s grant set. Use this tool when the permission is known to be registered; do not use grantRolePermission, which auto-registers unknown keys, and do not use updateRolePermissions, which replaces the whole set. Preconditions: the caller must hold security:role:edit, the role must exist, and the permission key must already be registered (modules register at startup via registerModulePermissions). Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_ASSIGN event. Returns 404 when the role does not exist or the permission key has not been registered. 
+     * Assign a Registered Permission to a Role
      */
-    async assignPermissionToRole(requestParameters: AssignPermissionToRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.assignPermissionToRoleRaw(requestParameters, initOverrides);
+    async assignRolePermissionByKey(requestParameters: AssignRolePermissionByKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.assignRolePermissionByKeyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Assigns the permission identified by path key to the specified role
-     * Assign permission to a role by key
+     * Adds an already-registered permission, identified by its key in the path, to a role\'s grant set. Use this tool when the permission is known to be registered; do not use grantRolePermission, which auto-registers unknown keys, and do not use updateRolePermissions, which replaces the whole set. Preconditions: the caller must hold security:role:edit, the role must exist, and the permission key must already be registered (modules register at startup via registerModulePermissions). Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_ASSIGN event. Returns 404 when the role does not exist or the permission key has not been registered. 
+     * Assign a Registered Permission to a Role
      */
-    async assignPermissionToRole1Raw(requestParameters: AssignPermissionToRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async assignRolePermissionByKey1Raw(requestParameters: AssignRolePermissionByKey1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
-                'Required parameter "roleId" was null or undefined when calling assignPermissionToRole1().'
+                'Required parameter "roleId" was null or undefined when calling assignRolePermissionByKey1().'
             );
         }
 
         if (requestParameters['permissionKey'] == null) {
             throw new runtime.RequiredError(
                 'permissionKey',
-                'Required parameter "permissionKey" was null or undefined when calling assignPermissionToRole1().'
+                'Required parameter "permissionKey" was null or undefined when calling assignRolePermissionByKey1().'
             );
         }
 
@@ -254,16 +265,16 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns the permission identified by path key to the specified role
-     * Assign permission to a role by key
+     * Adds an already-registered permission, identified by its key in the path, to a role\'s grant set. Use this tool when the permission is known to be registered; do not use grantRolePermission, which auto-registers unknown keys, and do not use updateRolePermissions, which replaces the whole set. Preconditions: the caller must hold security:role:edit, the role must exist, and the permission key must already be registered (modules register at startup via registerModulePermissions). Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_ASSIGN event. Returns 404 when the role does not exist or the permission key has not been registered. 
+     * Assign a Registered Permission to a Role
      */
-    async assignPermissionToRole1(requestParameters: AssignPermissionToRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.assignPermissionToRole1Raw(requestParameters, initOverrides);
+    async assignRolePermissionByKey1(requestParameters: AssignRolePermissionByKey1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.assignRolePermissionByKey1Raw(requestParameters, initOverrides);
     }
 
     /**
-     * Checks if a user has a specific permission for a location
-     * Check user permission
+     * Checks whether a user holds a specific permission through a currently effective role assignment whose scope covers the given location. Use this tool for a point authorization probe by user UUID; use getAuthorizationDecision instead when the caller has a principal identifier from the RBAC matrix rather than a user id. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) and permission (domain:resource:action) as query parameters; locationId is optional and defaults to GLOBAL. No events are emitted and no state changes; this is a read-only check. Returns 200 with a plain boolean body, and 404 when the user does not exist. 
+     * Check One User Permission at a Location
      */
     async checkUserPermissionRaw(requestParameters: CheckUserPermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
         if (requestParameters['userId'] == null) {
@@ -319,8 +330,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Checks if a user has a specific permission for a location
-     * Check user permission
+     * Checks whether a user holds a specific permission through a currently effective role assignment whose scope covers the given location. Use this tool for a point authorization probe by user UUID; use getAuthorizationDecision instead when the caller has a principal identifier from the RBAC matrix rather than a user id. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) and permission (domain:resource:action) as query parameters; locationId is optional and defaults to GLOBAL. No events are emitted and no state changes; this is a read-only check. Returns 200 with a plain boolean body, and 404 when the user does not exist. 
+     * Check One User Permission at a Location
      */
     async checkUserPermission(requestParameters: CheckUserPermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
         const response = await this.checkUserPermissionRaw(requestParameters, initOverrides);
@@ -328,8 +339,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Checks if a user has a specific permission for a location
-     * Check user permission
+     * Checks whether a user holds a specific permission through a currently effective role assignment whose scope covers the given location. Use this tool for a point authorization probe by user UUID; use getAuthorizationDecision instead when the caller has a principal identifier from the RBAC matrix rather than a user id. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) and permission (domain:resource:action) as query parameters; locationId is optional and defaults to GLOBAL. No events are emitted and no state changes; this is a read-only check. Returns 200 with a plain boolean body, and 404 when the user does not exist. 
+     * Check One User Permission at a Location
      */
     async checkUserPermission1Raw(requestParameters: CheckUserPermission1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
         if (requestParameters['userId'] == null) {
@@ -385,8 +396,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Checks if a user has a specific permission for a location
-     * Check user permission
+     * Checks whether a user holds a specific permission through a currently effective role assignment whose scope covers the given location. Use this tool for a point authorization probe by user UUID; use getAuthorizationDecision instead when the caller has a principal identifier from the RBAC matrix rather than a user id. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) and permission (domain:resource:action) as query parameters; locationId is optional and defaults to GLOBAL. No events are emitted and no state changes; this is a read-only check. Returns 200 with a plain boolean body, and 404 when the user does not exist. 
+     * Check One User Permission at a Location
      */
     async checkUserPermission1(requestParameters: CheckUserPermission1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
         const response = await this.checkUserPermission1Raw(requestParameters, initOverrides);
@@ -394,8 +405,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new role with the specified name and description
-     * Create a new role
+     * Creates a new role with the given name and optional description; the role starts with no permissions and no user assignments. Use this tool to define a new role; do not use createRoleAssignment, which links an existing role to a user, and do not use updateRolePermissions, which changes an existing role\'s grants. Preconditions: the caller must hold security:role:create and no role with the same name (compared case-insensitively) may already exist. Required inputs: name, non-blank; description is optional. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank, and 409 with DUPLICATE_ROLE_NAME when the name is already taken regardless of case. 
+     * Create a New Role
      */
     async createRoleRaw(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['requestBody'] == null) {
@@ -431,8 +442,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new role with the specified name and description
-     * Create a new role
+     * Creates a new role with the given name and optional description; the role starts with no permissions and no user assignments. Use this tool to define a new role; do not use createRoleAssignment, which links an existing role to a user, and do not use updateRolePermissions, which changes an existing role\'s grants. Preconditions: the caller must hold security:role:create and no role with the same name (compared case-insensitively) may already exist. Required inputs: name, non-blank; description is optional. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank, and 409 with DUPLICATE_ROLE_NAME when the name is already taken regardless of case. 
+     * Create a New Role
      */
     async createRole(requestParameters: CreateRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.createRoleRaw(requestParameters, initOverrides);
@@ -440,8 +451,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new role with the specified name and description
-     * Create a new role
+     * Creates a new role with the given name and optional description; the role starts with no permissions and no user assignments. Use this tool to define a new role; do not use createRoleAssignment, which links an existing role to a user, and do not use updateRolePermissions, which changes an existing role\'s grants. Preconditions: the caller must hold security:role:create and no role with the same name (compared case-insensitively) may already exist. Required inputs: name, non-blank; description is optional. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank, and 409 with DUPLICATE_ROLE_NAME when the name is already taken regardless of case. 
+     * Create a New Role
      */
     async createRole1Raw(requestParameters: CreateRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['requestBody'] == null) {
@@ -477,8 +488,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new role with the specified name and description
-     * Create a new role
+     * Creates a new role with the given name and optional description; the role starts with no permissions and no user assignments. Use this tool to define a new role; do not use createRoleAssignment, which links an existing role to a user, and do not use updateRolePermissions, which changes an existing role\'s grants. Preconditions: the caller must hold security:role:create and no role with the same name (compared case-insensitively) may already exist. Required inputs: name, non-blank; description is optional. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank, and 409 with DUPLICATE_ROLE_NAME when the name is already taken regardless of case. 
+     * Create a New Role
      */
     async createRole1(requestParameters: CreateRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.createRole1Raw(requestParameters, initOverrides);
@@ -486,8 +497,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a role to a user with optional scope and effective dates
-     * Create role assignment
+     * Assigns a role to a user with a scope (GLOBAL or LOCATION) and an optional effective date window. Use this tool when the assignment needs scope or dates; do not use assignUserRole, the simple path-parameter variant that always creates a GLOBAL assignment starting now. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same role, scope, and (for LOCATION scope) location. Required inputs: userId and roleId (UUIDs); scopeType defaults to GLOBAL, scopeLocationIds is required for LOCATION scope and forbidden for GLOBAL, and effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 400 when the scope and location combination is invalid, 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
+     * Create a Scoped Role Assignment
      */
     async createRoleAssignmentRaw(requestParameters: CreateRoleAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleAssignmentDto>> {
         if (requestParameters['roleAssignmentRequest'] == null) {
@@ -523,8 +534,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a role to a user with optional scope and effective dates
-     * Create role assignment
+     * Assigns a role to a user with a scope (GLOBAL or LOCATION) and an optional effective date window. Use this tool when the assignment needs scope or dates; do not use assignUserRole, the simple path-parameter variant that always creates a GLOBAL assignment starting now. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same role, scope, and (for LOCATION scope) location. Required inputs: userId and roleId (UUIDs); scopeType defaults to GLOBAL, scopeLocationIds is required for LOCATION scope and forbidden for GLOBAL, and effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 400 when the scope and location combination is invalid, 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
+     * Create a Scoped Role Assignment
      */
     async createRoleAssignment(requestParameters: CreateRoleAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleAssignmentDto> {
         const response = await this.createRoleAssignmentRaw(requestParameters, initOverrides);
@@ -532,8 +543,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a role to a user with optional scope and effective dates
-     * Create role assignment
+     * Assigns a role to a user with a scope (GLOBAL or LOCATION) and an optional effective date window. Use this tool when the assignment needs scope or dates; do not use assignUserRole, the simple path-parameter variant that always creates a GLOBAL assignment starting now. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same role, scope, and (for LOCATION scope) location. Required inputs: userId and roleId (UUIDs); scopeType defaults to GLOBAL, scopeLocationIds is required for LOCATION scope and forbidden for GLOBAL, and effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 400 when the scope and location combination is invalid, 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
+     * Create a Scoped Role Assignment
      */
     async createRoleAssignment1Raw(requestParameters: CreateRoleAssignment1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleAssignmentDto>> {
         if (requestParameters['roleAssignmentRequest'] == null) {
@@ -569,8 +580,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a role to a user with optional scope and effective dates
-     * Create role assignment
+     * Assigns a role to a user with a scope (GLOBAL or LOCATION) and an optional effective date window. Use this tool when the assignment needs scope or dates; do not use assignUserRole, the simple path-parameter variant that always creates a GLOBAL assignment starting now. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same role, scope, and (for LOCATION scope) location. Required inputs: userId and roleId (UUIDs); scopeType defaults to GLOBAL, scopeLocationIds is required for LOCATION scope and forbidden for GLOBAL, and effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 400 when the scope and location combination is invalid, 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
+     * Create a Scoped Role Assignment
      */
     async createRoleAssignment1(requestParameters: CreateRoleAssignment1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleAssignmentDto> {
         const response = await this.createRoleAssignment1Raw(requestParameters, initOverrides);
@@ -578,8 +589,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a role by UUID and removes its associations
-     * Delete a role
+     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist. 
+     * Delete a Role and Its Associations
      */
     async deleteRoleRaw(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -612,16 +623,16 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a role by UUID and removes its associations
-     * Delete a role
+     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist. 
+     * Delete a Role and Its Associations
      */
     async deleteRole(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteRoleRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Deletes a role by UUID and removes its associations
-     * Delete a role
+     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist. 
+     * Delete a Role and Its Associations
      */
     async deleteRole1Raw(requestParameters: DeleteRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -654,88 +665,16 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a role by UUID and removes its associations
-     * Delete a role
+     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist. 
+     * Delete a Role and Its Associations
      */
     async deleteRole1(requestParameters: DeleteRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteRole1Raw(requestParameters, initOverrides);
     }
 
     /**
-     * Returns all roles in the system
-     * Get all roles
-     */
-    async getAllRolesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleDto>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleDtoFromJSON));
-    }
-
-    /**
-     * Returns all roles in the system
-     * Get all roles
-     */
-    async getAllRoles(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleDto>> {
-        const response = await this.getAllRolesRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns all roles in the system
-     * Get all roles
-     */
-    async getAllRoles1Raw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleDto>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/roles`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleDtoFromJSON));
-    }
-
-    /**
-     * Returns all roles in the system
-     * Get all roles
-     */
-    async getAllRoles1(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleDto>> {
-        const response = await this.getAllRoles1Raw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns a specific role by its UUID
-     * Get role by ID
+     * Returns a single role looked up by its UUID, including its permission set and audit metadata. Use this tool when the role id is known; use getRoleByName instead when only the name is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
+     * Get a Single Role by UUID
      */
     async getRoleByIdRaw(requestParameters: GetRoleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['id'] == null) {
@@ -768,8 +707,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a specific role by its UUID
-     * Get role by ID
+     * Returns a single role looked up by its UUID, including its permission set and audit metadata. Use this tool when the role id is known; use getRoleByName instead when only the name is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
+     * Get a Single Role by UUID
      */
     async getRoleById(requestParameters: GetRoleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.getRoleByIdRaw(requestParameters, initOverrides);
@@ -777,8 +716,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a specific role by its UUID
-     * Get role by ID
+     * Returns a single role looked up by its UUID, including its permission set and audit metadata. Use this tool when the role id is known; use getRoleByName instead when only the name is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
+     * Get a Single Role by UUID
      */
     async getRoleById1Raw(requestParameters: GetRoleById1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['id'] == null) {
@@ -811,8 +750,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a specific role by its UUID
-     * Get role by ID
+     * Returns a single role looked up by its UUID, including its permission set and audit metadata. Use this tool when the role id is known; use getRoleByName instead when only the name is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and the role must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no role exists for the supplied UUID. 
+     * Get a Single Role by UUID
      */
     async getRoleById1(requestParameters: GetRoleById1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.getRoleById1Raw(requestParameters, initOverrides);
@@ -820,8 +759,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a specific role by its name
-     * Get role by name
+     * Returns a single role looked up by its exact name, including its permission set. Use this tool when only the role name is known; use getRoleById instead when the UUID is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that exact (case-sensitive) name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied name. 
+     * Get a Single Role by Name
      */
     async getRoleByNameRaw(requestParameters: GetRoleByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['name'] == null) {
@@ -854,8 +793,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a specific role by its name
-     * Get role by name
+     * Returns a single role looked up by its exact name, including its permission set. Use this tool when only the role name is known; use getRoleById instead when the UUID is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that exact (case-sensitive) name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied name. 
+     * Get a Single Role by Name
      */
     async getRoleByName(requestParameters: GetRoleByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.getRoleByNameRaw(requestParameters, initOverrides);
@@ -863,8 +802,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a specific role by its name
-     * Get role by name
+     * Returns a single role looked up by its exact name, including its permission set. Use this tool when only the role name is known; use getRoleById instead when the UUID is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that exact (case-sensitive) name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied name. 
+     * Get a Single Role by Name
      */
     async getRoleByName1Raw(requestParameters: GetRoleByName1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['name'] == null) {
@@ -897,8 +836,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a specific role by its name
-     * Get role by name
+     * Returns a single role looked up by its exact name, including its permission set. Use this tool when only the role name is known; use getRoleById instead when the UUID is available, and listRoles to browse. Preconditions: the caller must hold security:role:view and a role with that exact (case-sensitive) name must exist. Required inputs: name as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with ROLE_NOT_FOUND when no role has the supplied name. 
+     * Get a Single Role by Name
      */
     async getRoleByName1(requestParameters: GetRoleByName1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.getRoleByName1Raw(requestParameters, initOverrides);
@@ -906,14 +845,100 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all permissions for a user from their role assignments
-     * Get user permissions (legacy path)
+     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s scoped role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Get a Role\'s Default Authority Expansion
      */
-    async getUserPermissionsByUserIdRaw(requestParameters: GetUserPermissionsByUserIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<PermissionDto>>> {
+    async getRoleDefaultPermissionsRaw(requestParameters: GetRoleDefaultPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDefaultPermissionsResponse>> {
+        if (requestParameters['role'] == null) {
+            throw new runtime.RequiredError(
+                'role',
+                'Required parameter "role" was null or undefined when calling getRoleDefaultPermissions().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users/roles/{role}/default-permissions`.replace(`{${"role"}}`, encodeURIComponent(String(requestParameters['role']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDefaultPermissionsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s scoped role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Get a Role\'s Default Authority Expansion
+     */
+    async getRoleDefaultPermissions(requestParameters: GetRoleDefaultPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDefaultPermissionsResponse> {
+        const response = await this.getRoleDefaultPermissionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s scoped role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Get a Role\'s Default Authority Expansion
+     */
+    async getRoleDefaultPermissions1Raw(requestParameters: GetRoleDefaultPermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDefaultPermissionsResponse>> {
+        if (requestParameters['role'] == null) {
+            throw new runtime.RequiredError(
+                'role',
+                'Required parameter "role" was null or undefined when calling getRoleDefaultPermissions1().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/roles/{role}/default-permissions`.replace(`{${"role"}}`, encodeURIComponent(String(requestParameters['role']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDefaultPermissionsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s scoped role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Get a Role\'s Default Authority Expansion
+     */
+    async getRoleDefaultPermissions1(requestParameters: GetRoleDefaultPermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDefaultPermissionsResponse> {
+        const response = await this.getRoleDefaultPermissions1Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Get User Permissions at Legacy Path
+     */
+    async getUserPermissionsLegacyRaw(requestParameters: GetUserPermissionsLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<PermissionDto>>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
-                'Required parameter "userId" was null or undefined when calling getUserPermissionsByUserId().'
+                'Required parameter "userId" was null or undefined when calling getUserPermissionsLegacy().'
             );
         }
 
@@ -940,23 +965,23 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all permissions for a user from their role assignments
-     * Get user permissions (legacy path)
+     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Get User Permissions at Legacy Path
      */
-    async getUserPermissionsByUserId(requestParameters: GetUserPermissionsByUserIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<PermissionDto>> {
-        const response = await this.getUserPermissionsByUserIdRaw(requestParameters, initOverrides);
+    async getUserPermissionsLegacy(requestParameters: GetUserPermissionsLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<PermissionDto>> {
+        const response = await this.getUserPermissionsLegacyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns all permissions for a user from their role assignments
-     * Get user permissions (legacy path)
+     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Get User Permissions at Legacy Path
      */
-    async getUserPermissionsByUserId1Raw(requestParameters: GetUserPermissionsByUserId1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<PermissionDto>>> {
+    async getUserPermissionsLegacy1Raw(requestParameters: GetUserPermissionsLegacy1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<PermissionDto>>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
-                'Required parameter "userId" was null or undefined when calling getUserPermissionsByUserId1().'
+                'Required parameter "userId" was null or undefined when calling getUserPermissionsLegacy1().'
             );
         }
 
@@ -983,23 +1008,201 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all permissions for a user from their role assignments
-     * Get user permissions (legacy path)
+     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Get User Permissions at Legacy Path
      */
-    async getUserPermissionsByUserId1(requestParameters: GetUserPermissionsByUserId1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<PermissionDto>> {
-        const response = await this.getUserPermissionsByUserId1Raw(requestParameters, initOverrides);
+    async getUserPermissionsLegacy1(requestParameters: GetUserPermissionsLegacy1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<PermissionDto>> {
+        const response = await this.getUserPermissionsLegacy1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns currently effective assignments by default. Set includeHistory=true to return all assignments including expired/revoked
-     * Get user role assignments
+     * Grants a single permission key to a role, auto-registering the key in the permission registry when it is not yet known. Use this tool for additive one-off grants; do not use updateRolePermissions, which replaces the role\'s entire permission set, and do not use assignRolePermissionByKey, which requires the permission to be registered already. Preconditions: the caller must hold security:role:edit and the role must exist; the permission key does not need to exist beforehand. Required inputs: roleId (UUID) as a path parameter and permission (domain:resource:action) in the body; permissionKey is accepted as a field alias. Emits a SECURITY_ROLE_PERMISSION_GRANT event and publishes an internal grant audit record, then returns the updated role. Returns 400 when permission is missing or blank, and 404 when the role does not exist. 
+     * Grant a Permission to a Role
      */
-    async getUserRoleAssignmentsRaw(requestParameters: GetUserRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleAssignmentDto>>> {
+    async grantRolePermissionRaw(requestParameters: GrantRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
+        if (requestParameters['roleId'] == null) {
+            throw new runtime.RequiredError(
+                'roleId',
+                'Required parameter "roleId" was null or undefined when calling grantRolePermission().'
+            );
+        }
+
+        if (requestParameters['rolePermissionGrantRequest'] == null) {
+            throw new runtime.RequiredError(
+                'rolePermissionGrantRequest',
+                'Required parameter "rolePermissionGrantRequest" was null or undefined when calling grantRolePermission().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users/roles/{roleId}/permissions/grant`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RolePermissionGrantRequestToJSON(requestParameters['rolePermissionGrantRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Grants a single permission key to a role, auto-registering the key in the permission registry when it is not yet known. Use this tool for additive one-off grants; do not use updateRolePermissions, which replaces the role\'s entire permission set, and do not use assignRolePermissionByKey, which requires the permission to be registered already. Preconditions: the caller must hold security:role:edit and the role must exist; the permission key does not need to exist beforehand. Required inputs: roleId (UUID) as a path parameter and permission (domain:resource:action) in the body; permissionKey is accepted as a field alias. Emits a SECURITY_ROLE_PERMISSION_GRANT event and publishes an internal grant audit record, then returns the updated role. Returns 400 when permission is missing or blank, and 404 when the role does not exist. 
+     * Grant a Permission to a Role
+     */
+    async grantRolePermission(requestParameters: GrantRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
+        const response = await this.grantRolePermissionRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Grants a single permission key to a role, auto-registering the key in the permission registry when it is not yet known. Use this tool for additive one-off grants; do not use updateRolePermissions, which replaces the role\'s entire permission set, and do not use assignRolePermissionByKey, which requires the permission to be registered already. Preconditions: the caller must hold security:role:edit and the role must exist; the permission key does not need to exist beforehand. Required inputs: roleId (UUID) as a path parameter and permission (domain:resource:action) in the body; permissionKey is accepted as a field alias. Emits a SECURITY_ROLE_PERMISSION_GRANT event and publishes an internal grant audit record, then returns the updated role. Returns 400 when permission is missing or blank, and 404 when the role does not exist. 
+     * Grant a Permission to a Role
+     */
+    async grantRolePermission1Raw(requestParameters: GrantRolePermission1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
+        if (requestParameters['roleId'] == null) {
+            throw new runtime.RequiredError(
+                'roleId',
+                'Required parameter "roleId" was null or undefined when calling grantRolePermission1().'
+            );
+        }
+
+        if (requestParameters['rolePermissionGrantRequest'] == null) {
+            throw new runtime.RequiredError(
+                'rolePermissionGrantRequest',
+                'Required parameter "rolePermissionGrantRequest" was null or undefined when calling grantRolePermission1().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/roles/{roleId}/permissions/grant`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RolePermissionGrantRequestToJSON(requestParameters['rolePermissionGrantRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Grants a single permission key to a role, auto-registering the key in the permission registry when it is not yet known. Use this tool for additive one-off grants; do not use updateRolePermissions, which replaces the role\'s entire permission set, and do not use assignRolePermissionByKey, which requires the permission to be registered already. Preconditions: the caller must hold security:role:edit and the role must exist; the permission key does not need to exist beforehand. Required inputs: roleId (UUID) as a path parameter and permission (domain:resource:action) in the body; permissionKey is accepted as a field alias. Emits a SECURITY_ROLE_PERMISSION_GRANT event and publishes an internal grant audit record, then returns the updated role. Returns 400 when permission is missing or blank, and 404 when the role does not exist. 
+     * Grant a Permission to a Role
+     */
+    async grantRolePermission1(requestParameters: GrantRolePermission1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
+        const response = await this.grantRolePermission1Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every role in the system with its permission set and audit metadata. Use this tool to enumerate roles; use getRoleById or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
+     * List All Roles in the System
+     */
+    async listRolesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleDto>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/roles`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleDtoFromJSON));
+    }
+
+    /**
+     * Returns every role in the system with its permission set and audit metadata. Use this tool to enumerate roles; use getRoleById or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
+     * List All Roles in the System
+     */
+    async listRoles(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleDto>> {
+        const response = await this.listRolesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every role in the system with its permission set and audit metadata. Use this tool to enumerate roles; use getRoleById or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
+     * List All Roles in the System
+     */
+    async listRoles1Raw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleDto>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users/roles`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleDtoFromJSON));
+    }
+
+    /**
+     * Returns every role in the system with its permission set and audit metadata. Use this tool to enumerate roles; use getRoleById or getRoleByName instead for a single known role. Preconditions: the caller must hold security:role:view. Required inputs: none; there are no filters or paging parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no roles exist; there are no business error conditions. 
+     * List All Roles in the System
+     */
+    async listRoles1(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleDto>> {
+        const response = await this.listRoles1Raw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a user\'s role assignments with their scope and effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and in what scope; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * List a User\'s Role Assignments
+     */
+    async listUserRoleAssignmentsRaw(requestParameters: ListUserRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleAssignmentDto>>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
-                'Required parameter "userId" was null or undefined when calling getUserRoleAssignments().'
+                'Required parameter "userId" was null or undefined when calling listUserRoleAssignments().'
             );
         }
 
@@ -1030,23 +1233,23 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns currently effective assignments by default. Set includeHistory=true to return all assignments including expired/revoked
-     * Get user role assignments
+     * Returns a user\'s role assignments with their scope and effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and in what scope; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * List a User\'s Role Assignments
      */
-    async getUserRoleAssignments(requestParameters: GetUserRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleAssignmentDto>> {
-        const response = await this.getUserRoleAssignmentsRaw(requestParameters, initOverrides);
+    async listUserRoleAssignments(requestParameters: ListUserRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleAssignmentDto>> {
+        const response = await this.listUserRoleAssignmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns currently effective assignments by default. Set includeHistory=true to return all assignments including expired/revoked
-     * Get user role assignments
+     * Returns a user\'s role assignments with their scope and effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and in what scope; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * List a User\'s Role Assignments
      */
-    async getUserRoleAssignments1Raw(requestParameters: GetUserRoleAssignments1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleAssignmentDto>>> {
+    async listUserRoleAssignments1Raw(requestParameters: ListUserRoleAssignments1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleAssignmentDto>>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
-                'Required parameter "userId" was null or undefined when calling getUserRoleAssignments1().'
+                'Required parameter "userId" was null or undefined when calling listUserRoleAssignments1().'
             );
         }
 
@@ -1077,221 +1280,17 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns currently effective assignments by default. Set includeHistory=true to return all assignments including expired/revoked
-     * Get user role assignments
+     * Returns a user\'s role assignments with their scope and effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and in what scope; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * List a User\'s Role Assignments
      */
-    async getUserRoleAssignments1(requestParameters: GetUserRoleAssignments1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleAssignmentDto>> {
-        const response = await this.getUserRoleAssignments1Raw(requestParameters, initOverrides);
+    async listUserRoleAssignments1(requestParameters: ListUserRoleAssignments1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleAssignmentDto>> {
+        const response = await this.listUserRoleAssignments1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Grants a single permission to the specified role and returns the updated role
-     * Grant permission to a role
-     */
-    async grantPermissionToRoleRaw(requestParameters: GrantPermissionToRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
-        if (requestParameters['roleId'] == null) {
-            throw new runtime.RequiredError(
-                'roleId',
-                'Required parameter "roleId" was null or undefined when calling grantPermissionToRole().'
-            );
-        }
-
-        if (requestParameters['rolePermissionGrantRequest'] == null) {
-            throw new runtime.RequiredError(
-                'rolePermissionGrantRequest',
-                'Required parameter "rolePermissionGrantRequest" was null or undefined when calling grantPermissionToRole().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/roles/{roleId}/permissions/grant`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RolePermissionGrantRequestToJSON(requestParameters['rolePermissionGrantRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDtoFromJSON(jsonValue));
-    }
-
-    /**
-     * Grants a single permission to the specified role and returns the updated role
-     * Grant permission to a role
-     */
-    async grantPermissionToRole(requestParameters: GrantPermissionToRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
-        const response = await this.grantPermissionToRoleRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Grants a single permission to the specified role and returns the updated role
-     * Grant permission to a role
-     */
-    async grantPermissionToRole1Raw(requestParameters: GrantPermissionToRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
-        if (requestParameters['roleId'] == null) {
-            throw new runtime.RequiredError(
-                'roleId',
-                'Required parameter "roleId" was null or undefined when calling grantPermissionToRole1().'
-            );
-        }
-
-        if (requestParameters['rolePermissionGrantRequest'] == null) {
-            throw new runtime.RequiredError(
-                'rolePermissionGrantRequest',
-                'Required parameter "rolePermissionGrantRequest" was null or undefined when calling grantPermissionToRole1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles/{roleId}/permissions/grant`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: RolePermissionGrantRequestToJSON(requestParameters['rolePermissionGrantRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => RoleDtoFromJSON(jsonValue));
-    }
-
-    /**
-     * Grants a single permission to the specified role and returns the updated role
-     * Grant permission to a role
-     */
-    async grantPermissionToRole1(requestParameters: GrantPermissionToRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
-        const response = await this.grantPermissionToRole1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Removes the specified permission from the role
-     * Revoke permission from a role
-     */
-    async revokePermissionFromRoleRaw(requestParameters: RevokePermissionFromRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['roleId'] == null) {
-            throw new runtime.RequiredError(
-                'roleId',
-                'Required parameter "roleId" was null or undefined when calling revokePermissionFromRole().'
-            );
-        }
-
-        if (requestParameters['permissionKey'] == null) {
-            throw new runtime.RequiredError(
-                'permissionKey',
-                'Required parameter "permissionKey" was null or undefined when calling revokePermissionFromRole().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/roles/{roleId}/permissions/{permissionKey}`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))).replace(`{${"permissionKey"}}`, encodeURIComponent(String(requestParameters['permissionKey']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Removes the specified permission from the role
-     * Revoke permission from a role
-     */
-    async revokePermissionFromRole(requestParameters: RevokePermissionFromRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.revokePermissionFromRoleRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Removes the specified permission from the role
-     * Revoke permission from a role
-     */
-    async revokePermissionFromRole1Raw(requestParameters: RevokePermissionFromRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['roleId'] == null) {
-            throw new runtime.RequiredError(
-                'roleId',
-                'Required parameter "roleId" was null or undefined when calling revokePermissionFromRole1().'
-            );
-        }
-
-        if (requestParameters['permissionKey'] == null) {
-            throw new runtime.RequiredError(
-                'permissionKey',
-                'Required parameter "permissionKey" was null or undefined when calling revokePermissionFromRole1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:role:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles/{roleId}/permissions/{permissionKey}`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))).replace(`{${"permissionKey"}}`, encodeURIComponent(String(requestParameters['permissionKey']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Removes the specified permission from the role
-     * Revoke permission from a role
-     */
-    async revokePermissionFromRole1(requestParameters: RevokePermissionFromRole1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.revokePermissionFromRole1Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Revokes a role assignment by setting its end date. Supports past, present, or future dates. The system automatically records when the revocation was requested. Defaults to today when endDate is omitted
-     * Revoke role assignment
+     * Revokes a role assignment by setting its effective end date, preserving the row for history. Use this tool when the assignment id is known or a past or future end date is needed; do not use revokeUserRole, which finds the active assignment from userId and roleId and ends it now. Preconditions: the caller must hold security:role:assign and the assignment must exist. Required inputs: assignmentId (UUID) as a path parameter; endDate (ISO date-time) is optional and defaults to the current time, and the revocation timestamp is recorded automatically. Emits a SECURITY_ROLE_ASSIGNMENT_REVOKE event. Returns 400 when endDate is malformed, and 404 when the assignment does not exist. 
+     * Revoke a Role Assignment by Id
      */
     async revokeRoleAssignmentRaw(requestParameters: RevokeRoleAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['assignmentId'] == null) {
@@ -1328,16 +1327,16 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Revokes a role assignment by setting its end date. Supports past, present, or future dates. The system automatically records when the revocation was requested. Defaults to today when endDate is omitted
-     * Revoke role assignment
+     * Revokes a role assignment by setting its effective end date, preserving the row for history. Use this tool when the assignment id is known or a past or future end date is needed; do not use revokeUserRole, which finds the active assignment from userId and roleId and ends it now. Preconditions: the caller must hold security:role:assign and the assignment must exist. Required inputs: assignmentId (UUID) as a path parameter; endDate (ISO date-time) is optional and defaults to the current time, and the revocation timestamp is recorded automatically. Emits a SECURITY_ROLE_ASSIGNMENT_REVOKE event. Returns 400 when endDate is malformed, and 404 when the assignment does not exist. 
+     * Revoke a Role Assignment by Id
      */
     async revokeRoleAssignment(requestParameters: RevokeRoleAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.revokeRoleAssignmentRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Revokes a role assignment by setting its end date. Supports past, present, or future dates. The system automatically records when the revocation was requested. Defaults to today when endDate is omitted
-     * Revoke role assignment
+     * Revokes a role assignment by setting its effective end date, preserving the row for history. Use this tool when the assignment id is known or a past or future end date is needed; do not use revokeUserRole, which finds the active assignment from userId and roleId and ends it now. Preconditions: the caller must hold security:role:assign and the assignment must exist. Required inputs: assignmentId (UUID) as a path parameter; endDate (ISO date-time) is optional and defaults to the current time, and the revocation timestamp is recorded automatically. Emits a SECURITY_ROLE_ASSIGNMENT_REVOKE event. Returns 400 when endDate is malformed, and 404 when the assignment does not exist. 
+     * Revoke a Role Assignment by Id
      */
     async revokeRoleAssignment1Raw(requestParameters: RevokeRoleAssignment1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['assignmentId'] == null) {
@@ -1374,16 +1373,114 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Revokes a role assignment by setting its end date. Supports past, present, or future dates. The system automatically records when the revocation was requested. Defaults to today when endDate is omitted
-     * Revoke role assignment
+     * Revokes a role assignment by setting its effective end date, preserving the row for history. Use this tool when the assignment id is known or a past or future end date is needed; do not use revokeUserRole, which finds the active assignment from userId and roleId and ends it now. Preconditions: the caller must hold security:role:assign and the assignment must exist. Required inputs: assignmentId (UUID) as a path parameter; endDate (ISO date-time) is optional and defaults to the current time, and the revocation timestamp is recorded automatically. Emits a SECURITY_ROLE_ASSIGNMENT_REVOKE event. Returns 400 when endDate is malformed, and 404 when the assignment does not exist. 
+     * Revoke a Role Assignment by Id
      */
     async revokeRoleAssignment1(requestParameters: RevokeRoleAssignment1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.revokeRoleAssignment1Raw(requestParameters, initOverrides);
     }
 
     /**
-     * Assigns a set of permissions to a role
-     * Update role permissions
+     * Removes a permission key from a role\'s grant set. Use this tool to take one permission away from a role; do not use deleteRole, which removes the role entirely, and do not use revokeRoleAssignment, which ends a user\'s assignment instead. Preconditions: the caller must hold security:role:edit and the role must exist; revoking a key the role does not hold is a silent no-op. Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_REVOKE event. Returns 404 when the role does not exist; an unknown permission key still yields 204. 
+     * Revoke a Permission From a Role
+     */
+    async revokeRolePermissionRaw(requestParameters: RevokeRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['roleId'] == null) {
+            throw new runtime.RequiredError(
+                'roleId',
+                'Required parameter "roleId" was null or undefined when calling revokeRolePermission().'
+            );
+        }
+
+        if (requestParameters['permissionKey'] == null) {
+            throw new runtime.RequiredError(
+                'permissionKey',
+                'Required parameter "permissionKey" was null or undefined when calling revokeRolePermission().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users/roles/{roleId}/permissions/{permissionKey}`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))).replace(`{${"permissionKey"}}`, encodeURIComponent(String(requestParameters['permissionKey']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Removes a permission key from a role\'s grant set. Use this tool to take one permission away from a role; do not use deleteRole, which removes the role entirely, and do not use revokeRoleAssignment, which ends a user\'s assignment instead. Preconditions: the caller must hold security:role:edit and the role must exist; revoking a key the role does not hold is a silent no-op. Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_REVOKE event. Returns 404 when the role does not exist; an unknown permission key still yields 204. 
+     * Revoke a Permission From a Role
+     */
+    async revokeRolePermission(requestParameters: RevokeRolePermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.revokeRolePermissionRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Removes a permission key from a role\'s grant set. Use this tool to take one permission away from a role; do not use deleteRole, which removes the role entirely, and do not use revokeRoleAssignment, which ends a user\'s assignment instead. Preconditions: the caller must hold security:role:edit and the role must exist; revoking a key the role does not hold is a silent no-op. Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_REVOKE event. Returns 404 when the role does not exist; an unknown permission key still yields 204. 
+     * Revoke a Permission From a Role
+     */
+    async revokeRolePermission1Raw(requestParameters: RevokeRolePermission1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['roleId'] == null) {
+            throw new runtime.RequiredError(
+                'roleId',
+                'Required parameter "roleId" was null or undefined when calling revokeRolePermission1().'
+            );
+        }
+
+        if (requestParameters['permissionKey'] == null) {
+            throw new runtime.RequiredError(
+                'permissionKey',
+                'Required parameter "permissionKey" was null or undefined when calling revokeRolePermission1().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:role:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/roles/{roleId}/permissions/{permissionKey}`.replace(`{${"roleId"}}`, encodeURIComponent(String(requestParameters['roleId']))).replace(`{${"permissionKey"}}`, encodeURIComponent(String(requestParameters['permissionKey']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Removes a permission key from a role\'s grant set. Use this tool to take one permission away from a role; do not use deleteRole, which removes the role entirely, and do not use revokeRoleAssignment, which ends a user\'s assignment instead. Preconditions: the caller must hold security:role:edit and the role must exist; revoking a key the role does not hold is a silent no-op. Required inputs: roleId (UUID) and permissionKey (domain:resource:action) as path parameters; there is no request body. Emits a SECURITY_ROLE_PERMISSION_REVOKE event. Returns 404 when the role does not exist; an unknown permission key still yields 204. 
+     * Revoke a Permission From a Role
+     */
+    async revokeRolePermission1(requestParameters: RevokeRolePermission1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.revokeRolePermission1Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Replaces a role\'s entire permission set with the supplied list of permission names. Use this tool for wholesale permission resets; do not use grantRolePermission or revokeRolePermission, which change one key at a time and preserve the rest. Preconditions: the caller must hold security:role:edit, the role must exist, and every named permission must already be registered. Required inputs: roleId (UUID) and permissionNames, a set of domain:resource:action strings; an empty set clears all grants. Emits a SECURITY_ROLE_PERMISSIONS_UPDATE event and returns the updated role with its new permission set. Returns 404 when the role or any named permission does not exist; nothing is applied on failure. 
+     * Replace a Role\'s Permission Set
      */
     async updateRolePermissionsRaw(requestParameters: UpdateRolePermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['rolePermissionsRequest'] == null) {
@@ -1419,8 +1516,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a set of permissions to a role
-     * Update role permissions
+     * Replaces a role\'s entire permission set with the supplied list of permission names. Use this tool for wholesale permission resets; do not use grantRolePermission or revokeRolePermission, which change one key at a time and preserve the rest. Preconditions: the caller must hold security:role:edit, the role must exist, and every named permission must already be registered. Required inputs: roleId (UUID) and permissionNames, a set of domain:resource:action strings; an empty set clears all grants. Emits a SECURITY_ROLE_PERMISSIONS_UPDATE event and returns the updated role with its new permission set. Returns 404 when the role or any named permission does not exist; nothing is applied on failure. 
+     * Replace a Role\'s Permission Set
      */
     async updateRolePermissions(requestParameters: UpdateRolePermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.updateRolePermissionsRaw(requestParameters, initOverrides);
@@ -1428,8 +1525,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a set of permissions to a role
-     * Update role permissions
+     * Replaces a role\'s entire permission set with the supplied list of permission names. Use this tool for wholesale permission resets; do not use grantRolePermission or revokeRolePermission, which change one key at a time and preserve the rest. Preconditions: the caller must hold security:role:edit, the role must exist, and every named permission must already be registered. Required inputs: roleId (UUID) and permissionNames, a set of domain:resource:action strings; an empty set clears all grants. Emits a SECURITY_ROLE_PERMISSIONS_UPDATE event and returns the updated role with its new permission set. Returns 404 when the role or any named permission does not exist; nothing is applied on failure. 
+     * Replace a Role\'s Permission Set
      */
     async updateRolePermissions1Raw(requestParameters: UpdateRolePermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDto>> {
         if (requestParameters['rolePermissionsRequest'] == null) {
@@ -1465,8 +1562,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a set of permissions to a role
-     * Update role permissions
+     * Replaces a role\'s entire permission set with the supplied list of permission names. Use this tool for wholesale permission resets; do not use grantRolePermission or revokeRolePermission, which change one key at a time and preserve the rest. Preconditions: the caller must hold security:role:edit, the role must exist, and every named permission must already be registered. Required inputs: roleId (UUID) and permissionNames, a set of domain:resource:action strings; an empty set clears all grants. Emits a SECURITY_ROLE_PERMISSIONS_UPDATE event and returns the updated role with its new permission set. Returns 404 when the role or any named permission does not exist; nothing is applied on failure. 
+     * Replace a Role\'s Permission Set
      */
     async updateRolePermissions1(requestParameters: UpdateRolePermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDto> {
         const response = await this.updateRolePermissions1Raw(requestParameters, initOverrides);

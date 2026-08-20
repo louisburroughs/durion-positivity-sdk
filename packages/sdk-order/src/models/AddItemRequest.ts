@@ -14,35 +14,59 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for adding an item line to a cart
  * @export
  * @interface AddItemRequest
  */
 export interface AddItemRequest {
     /**
-     * 
+     * Customer-visible line note
+     * @type {string}
+     * @memberof AddItemRequest
+     */
+    customerNote?: string;
+    /**
+     * Shop-internal line note
+     * @type {string}
+     * @memberof AddItemRequest
+     */
+    internalNote?: string;
+    /**
+     * Stock keeping unit identifying the item to add
      * @type {string}
      * @memberof AddItemRequest
      */
     itemSku: string;
     /**
-     * 
+     * Client-supplied stable line identity; a replayed add with a known lineUuid updates the existing line instead of duplicating it
+     * @type {string}
+     * @memberof AddItemRequest
+     */
+    lineUuid?: string;
+    /**
+     * Manual unit price override for the item, when applicable
      * @type {number}
      * @memberof AddItemRequest
      */
-    quantity?: number;
+    manualPrice?: number;
     /**
-     * 
+     * Quantity of the item to add to the cart
+     * @type {number}
+     * @memberof AddItemRequest
+     */
+    quantity: number;
+    /**
+     * Reason code justifying a manual price or special handling
      * @type {string}
      * @memberof AddItemRequest
      */
     reasonCode?: string;
     /**
-     * 
-     * @type {number}
+     * Captured lot/serial numbers for tracked products (count must not exceed quantity; SERIAL-tracked products require one per unit at checkout, LOT-tracked at least one)
+     * @type {Array<string>}
      * @memberof AddItemRequest
      */
-    manualPrice?: number;
+    serialNumbers?: Array<string>;
 }
 
 /**
@@ -50,6 +74,7 @@ export interface AddItemRequest {
  */
 export function instanceOfAddItemRequest(value: object): boolean {
     if (!('itemSku' in value)) return false;
+    if (!('quantity' in value)) return false;
     return true;
 }
 
@@ -63,10 +88,14 @@ export function AddItemRequestFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
+        'customerNote': json['customerNote'] == null ? undefined : json['customerNote'],
+        'internalNote': json['internalNote'] == null ? undefined : json['internalNote'],
         'itemSku': json['itemSku'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'lineUuid': json['lineUuid'] == null ? undefined : json['lineUuid'],
         'manualPrice': json['manualPrice'] == null ? undefined : json['manualPrice'],
+        'quantity': json['quantity'],
+        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'serialNumbers': json['serialNumbers'] == null ? undefined : json['serialNumbers'],
     };
 }
 
@@ -76,10 +105,14 @@ export function AddItemRequestToJSON(value?: AddItemRequest | null): any {
     }
     return {
         
+        'customerNote': value['customerNote'],
+        'internalNote': value['internalNote'],
         'itemSku': value['itemSku'],
+        'lineUuid': value['lineUuid'],
+        'manualPrice': value['manualPrice'],
         'quantity': value['quantity'],
         'reasonCode': value['reasonCode'],
-        'manualPrice': value['manualPrice'],
+        'serialNumbers': value['serialNumbers'],
     };
 }
 

@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface AttendanceDiscrepancyReportResponse {
     /**
-     * Technician identifier
-     * @type {string}
+     * Attendance minus job time in decimal hours
+     * @type {number}
      * @memberof AttendanceDiscrepancyReportResponse
      */
-    technicianId: string;
+    discrepancyHours: number;
     /**
-     * Technician display name
-     * @type {string}
+     * True when absolute discrepancy exceeds threshold
+     * @type {boolean}
      * @memberof AttendanceDiscrepancyReportResponse
      */
-    technicianName: string;
+    isFlagged: boolean;
     /**
      * Location identifier
      * @type {string}
@@ -44,6 +44,24 @@ export interface AttendanceDiscrepancyReportResponse {
      */
     reportDate: Date;
     /**
+     * Technician identifier
+     * @type {string}
+     * @memberof AttendanceDiscrepancyReportResponse
+     */
+    technicianId: string;
+    /**
+     * Technician display name
+     * @type {string}
+     * @memberof AttendanceDiscrepancyReportResponse
+     */
+    technicianName: string;
+    /**
+     * Threshold in minutes used for this row
+     * @type {number}
+     * @memberof AttendanceDiscrepancyReportResponse
+     */
+    thresholdApplied: number;
+    /**
      * Total attendance time in decimal hours
      * @type {number}
      * @memberof AttendanceDiscrepancyReportResponse
@@ -55,39 +73,21 @@ export interface AttendanceDiscrepancyReportResponse {
      * @memberof AttendanceDiscrepancyReportResponse
      */
     totalJobHours: number;
-    /**
-     * Attendance minus job time in decimal hours
-     * @type {number}
-     * @memberof AttendanceDiscrepancyReportResponse
-     */
-    discrepancyHours: number;
-    /**
-     * Threshold in minutes used for this row
-     * @type {number}
-     * @memberof AttendanceDiscrepancyReportResponse
-     */
-    thresholdApplied: number;
-    /**
-     * True when absolute discrepancy exceeds threshold
-     * @type {boolean}
-     * @memberof AttendanceDiscrepancyReportResponse
-     */
-    isFlagged: boolean;
 }
 
 /**
  * Check if a given object implements the AttendanceDiscrepancyReportResponse interface.
  */
 export function instanceOfAttendanceDiscrepancyReportResponse(value: object): boolean {
-    if (!('technicianId' in value)) return false;
-    if (!('technicianName' in value)) return false;
+    if (!('discrepancyHours' in value)) return false;
+    if (!('isFlagged' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('reportDate' in value)) return false;
+    if (!('technicianId' in value)) return false;
+    if (!('technicianName' in value)) return false;
+    if (!('thresholdApplied' in value)) return false;
     if (!('totalAttendanceHours' in value)) return false;
     if (!('totalJobHours' in value)) return false;
-    if (!('discrepancyHours' in value)) return false;
-    if (!('thresholdApplied' in value)) return false;
-    if (!('isFlagged' in value)) return false;
     return true;
 }
 
@@ -101,15 +101,15 @@ export function AttendanceDiscrepancyReportResponseFromJSONTyped(json: any, igno
     }
     return {
         
-        'technicianId': json['technicianId'],
-        'technicianName': json['technicianName'],
+        'discrepancyHours': json['discrepancyHours'],
+        'isFlagged': json['isFlagged'],
         'locationId': json['locationId'],
         'reportDate': (new Date(json['reportDate'])),
+        'technicianId': json['technicianId'],
+        'technicianName': json['technicianName'],
+        'thresholdApplied': json['thresholdApplied'],
         'totalAttendanceHours': json['totalAttendanceHours'],
         'totalJobHours': json['totalJobHours'],
-        'discrepancyHours': json['discrepancyHours'],
-        'thresholdApplied': json['thresholdApplied'],
-        'isFlagged': json['isFlagged'],
     };
 }
 
@@ -119,15 +119,15 @@ export function AttendanceDiscrepancyReportResponseToJSON(value?: AttendanceDisc
     }
     return {
         
-        'technicianId': value['technicianId'],
-        'technicianName': value['technicianName'],
+        'discrepancyHours': value['discrepancyHours'],
+        'isFlagged': value['isFlagged'],
         'locationId': value['locationId'],
         'reportDate': ((value['reportDate']).toISOString().substring(0,10)),
+        'technicianId': value['technicianId'],
+        'technicianName': value['technicianName'],
+        'thresholdApplied': value['thresholdApplied'],
         'totalAttendanceHours': value['totalAttendanceHours'],
         'totalJobHours': value['totalJobHours'],
-        'discrepancyHours': value['discrepancyHours'],
-        'thresholdApplied': value['thresholdApplied'],
-        'isFlagged': value['isFlagged'],
     };
 }
 

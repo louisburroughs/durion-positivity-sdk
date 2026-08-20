@@ -21,31 +21,31 @@ import {
 } from './VarianceSummaryResponse';
 
 /**
- * 
+ * Result of recording received quantities for a receiving session
  * @export
  * @interface ReceiveItemsResponse
  */
 export interface ReceiveItemsResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof ReceiveItemsResponse
-     */
-    sessionId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReceiveItemsResponse
-     */
-    sessionStatus?: string;
-    /**
-     * 
+     * Number of receiving lines processed in this request
      * @type {number}
      * @memberof ReceiveItemsResponse
      */
-    linesProcessed?: number;
+    linesProcessed: number;
     /**
-     * 
+     * Identifier of the receiving session the items were recorded against
+     * @type {string}
+     * @memberof ReceiveItemsResponse
+     */
+    sessionId: string;
+    /**
+     * Status of the receiving session after recording the items
+     * @type {string}
+     * @memberof ReceiveItemsResponse
+     */
+    sessionStatus: string;
+    /**
+     * Variance summaries for lines whose received quantity differed from the expected quantity
      * @type {Array<VarianceSummaryResponse>}
      * @memberof ReceiveItemsResponse
      */
@@ -56,6 +56,9 @@ export interface ReceiveItemsResponse {
  * Check if a given object implements the ReceiveItemsResponse interface.
  */
 export function instanceOfReceiveItemsResponse(value: object): boolean {
+    if (!('linesProcessed' in value)) return false;
+    if (!('sessionId' in value)) return false;
+    if (!('sessionStatus' in value)) return false;
     return true;
 }
 
@@ -69,9 +72,9 @@ export function ReceiveItemsResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
-        'sessionStatus': json['sessionStatus'] == null ? undefined : json['sessionStatus'],
-        'linesProcessed': json['linesProcessed'] == null ? undefined : json['linesProcessed'],
+        'linesProcessed': json['linesProcessed'],
+        'sessionId': json['sessionId'],
+        'sessionStatus': json['sessionStatus'],
         'variances': json['variances'] == null ? undefined : ((json['variances'] as Array<any>).map(VarianceSummaryResponseFromJSON)),
     };
 }
@@ -82,9 +85,9 @@ export function ReceiveItemsResponseToJSON(value?: ReceiveItemsResponse | null):
     }
     return {
         
+        'linesProcessed': value['linesProcessed'],
         'sessionId': value['sessionId'],
         'sessionStatus': value['sessionStatus'],
-        'linesProcessed': value['linesProcessed'],
         'variances': value['variances'] == null ? undefined : ((value['variances'] as Array<any>).map(VarianceSummaryResponseToJSON)),
     };
 }

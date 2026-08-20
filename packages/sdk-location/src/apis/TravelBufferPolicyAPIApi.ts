@@ -25,11 +25,11 @@ import {
     TravelBufferPolicyResponseToJSON,
 } from '../models/index';
 
-export interface CreateRequest {
+export interface CreateTravelBufferPolicyRequest {
     travelBufferPolicyRequest: TravelBufferPolicyRequest;
 }
 
-export interface PatchRequest {
+export interface PatchTravelBufferPolicyRequest {
     id: string;
     body: object;
 }
@@ -40,14 +40,14 @@ export interface PatchRequest {
 export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create a travel buffer policy that defines extra travel time handling rules
-     * Create travel buffer policy
+     * Creates a travel buffer policy that adds slack time around mobile unit travel for scheduling decisions. Use this tool before assigning the policy to mobile units via createMobileUnit or patchMobileUnit; do not use patchTravelBufferPolicy, which edits an existing policy. Preconditions: the name must not collide with an existing policy. Required inputs: name and bufferType, one of FLAT_MINUTES, PERCENTAGE_OF_TRAVEL or DISTANCE_MULTIPLIER; bufferValue is optional, must be non-negative, and is interpreted according to the bufferType. Emits a LOCATION_TRAVEL_BUFFER_POLICY_CREATE event. Returns 201 with the created policy and 409 when the name is already taken. 
+     * Create a New Travel Buffer Policy
      */
-    async createRaw(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelBufferPolicyResponse>> {
+    async createTravelBufferPolicyRaw(requestParameters: CreateTravelBufferPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelBufferPolicyResponse>> {
         if (requestParameters['travelBufferPolicyRequest'] == null) {
             throw new runtime.RequiredError(
                 'travelBufferPolicyRequest',
-                'Required parameter "travelBufferPolicyRequest" was null or undefined when calling create().'
+                'Required parameter "travelBufferPolicyRequest" was null or undefined when calling createTravelBufferPolicy().'
             );
         }
 
@@ -77,19 +77,19 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a travel buffer policy that defines extra travel time handling rules
-     * Create travel buffer policy
+     * Creates a travel buffer policy that adds slack time around mobile unit travel for scheduling decisions. Use this tool before assigning the policy to mobile units via createMobileUnit or patchMobileUnit; do not use patchTravelBufferPolicy, which edits an existing policy. Preconditions: the name must not collide with an existing policy. Required inputs: name and bufferType, one of FLAT_MINUTES, PERCENTAGE_OF_TRAVEL or DISTANCE_MULTIPLIER; bufferValue is optional, must be non-negative, and is interpreted according to the bufferType. Emits a LOCATION_TRAVEL_BUFFER_POLICY_CREATE event. Returns 201 with the created policy and 409 when the name is already taken. 
+     * Create a New Travel Buffer Policy
      */
-    async create(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelBufferPolicyResponse> {
-        const response = await this.createRaw(requestParameters, initOverrides);
+    async createTravelBufferPolicy(requestParameters: CreateTravelBufferPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelBufferPolicyResponse> {
+        const response = await this.createTravelBufferPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * List configured travel buffer policies available for routing and scheduling decisions
-     * List travel buffer policies
+     * Lists all travel buffer policies with their buffer type, value and notes. Use this tool to discover policy ids for createMobileUnit or patchMobileUnit; use patchTravelBufferPolicy instead to change one. Preconditions: none beyond the location:travel-buffer-policy:read authority. Required inputs: none; there are no parameters, no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full unpaginated list. 
+     * List All Travel Buffer Policies
      */
-    async listRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TravelBufferPolicyResponse>>> {
+    async listTravelBufferPoliciesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TravelBufferPolicyResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -113,30 +113,30 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * List configured travel buffer policies available for routing and scheduling decisions
-     * List travel buffer policies
+     * Lists all travel buffer policies with their buffer type, value and notes. Use this tool to discover policy ids for createMobileUnit or patchMobileUnit; use patchTravelBufferPolicy instead to change one. Preconditions: none beyond the location:travel-buffer-policy:read authority. Required inputs: none; there are no parameters, no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full unpaginated list. 
+     * List All Travel Buffer Policies
      */
-    async list(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TravelBufferPolicyResponse>> {
-        const response = await this.listRaw(initOverrides);
+    async listTravelBufferPolicies(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TravelBufferPolicyResponse>> {
+        const response = await this.listTravelBufferPoliciesRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Patch an existing travel buffer policy using the provided partial field updates
-     * Patch travel buffer policy
+     * Applies a partial update to a travel buffer policy, accepting the keys bufferType, bufferValue and notes. Use this tool to tune buffer behavior; do not use it to rename a policy, whose name is immutable after createTravelBufferPolicy. Preconditions: the policy must exist; the resulting bufferType must remain one of FLAT_MINUTES, PERCENTAGE_OF_TRAVEL or DISTANCE_MULTIPLIER and the resulting bufferValue non-negative. Required inputs: id (UUID) as a path parameter and a JSON object of the fields to change; keys other than bufferType, bufferValue and notes are silently ignored. Emits a LOCATION_TRAVEL_BUFFER_POLICY_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no policy exists for it. 
+     * Patch Fields of Travel Buffer Policy
      */
-    async patchRaw(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelBufferPolicyResponse>> {
+    async patchTravelBufferPolicyRaw(requestParameters: PatchTravelBufferPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelBufferPolicyResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling patch().'
+                'Required parameter "id" was null or undefined when calling patchTravelBufferPolicy().'
             );
         }
 
         if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
                 'body',
-                'Required parameter "body" was null or undefined when calling patch().'
+                'Required parameter "body" was null or undefined when calling patchTravelBufferPolicy().'
             );
         }
 
@@ -166,11 +166,11 @@ export class TravelBufferPolicyAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Patch an existing travel buffer policy using the provided partial field updates
-     * Patch travel buffer policy
+     * Applies a partial update to a travel buffer policy, accepting the keys bufferType, bufferValue and notes. Use this tool to tune buffer behavior; do not use it to rename a policy, whose name is immutable after createTravelBufferPolicy. Preconditions: the policy must exist; the resulting bufferType must remain one of FLAT_MINUTES, PERCENTAGE_OF_TRAVEL or DISTANCE_MULTIPLIER and the resulting bufferValue non-negative. Required inputs: id (UUID) as a path parameter and a JSON object of the fields to change; keys other than bufferType, bufferValue and notes are silently ignored. Emits a LOCATION_TRAVEL_BUFFER_POLICY_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no policy exists for it. 
+     * Patch Fields of Travel Buffer Policy
      */
-    async patch(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelBufferPolicyResponse> {
-        const response = await this.patchRaw(requestParameters, initOverrides);
+    async patchTravelBufferPolicy(requestParameters: PatchTravelBufferPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelBufferPolicyResponse> {
+        const response = await this.patchTravelBufferPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

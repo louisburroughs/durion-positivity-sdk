@@ -14,67 +14,67 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a price book rule
  * @export
  * @interface PriceBookRuleCreateRequestDto
  */
 export interface PriceBookRuleCreateRequestDto {
     /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleCreateRequestDto
-     */
-    targetType: PriceBookRuleCreateRequestDtoTargetTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleCreateRequestDto
-     */
-    targetId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleCreateRequestDto
-     */
-    pricingLogic: string;
-    /**
-     * 
+     * Condition type gating the rule
      * @type {string}
      * @memberof PriceBookRuleCreateRequestDto
      */
     conditionType?: PriceBookRuleCreateRequestDtoConditionTypeEnum;
     /**
-     * 
+     * Value evaluated against the condition type
      * @type {string}
      * @memberof PriceBookRuleCreateRequestDto
      */
     conditionValue?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof PriceBookRuleCreateRequestDto
-     */
-    priority?: number;
-    /**
-     * 
-     * @type {Date}
-     * @memberof PriceBookRuleCreateRequestDto
-     */
-    effectiveStartAt: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof PriceBookRuleCreateRequestDto
-     */
-    effectiveEndAt?: Date;
-    /**
-     * 
+     * Identifier of the user creating the rule
      * @type {string}
      * @memberof PriceBookRuleCreateRequestDto
      */
     createdByUserId: string;
     /**
-     * 
+     * Instant the rule stops being effective
+     * @type {Date}
+     * @memberof PriceBookRuleCreateRequestDto
+     */
+    effectiveEndAt?: Date;
+    /**
+     * Instant the rule becomes effective
+     * @type {Date}
+     * @memberof PriceBookRuleCreateRequestDto
+     */
+    effectiveStartAt: Date;
+    /**
+     * Pricing logic expression applied by the rule
+     * @type {string}
+     * @memberof PriceBookRuleCreateRequestDto
+     */
+    pricingLogic: string;
+    /**
+     * Evaluation priority; lower wins
+     * @type {number}
+     * @memberof PriceBookRuleCreateRequestDto
+     */
+    priority?: number;
+    /**
+     * Identifier of the targeted entity (SKU or category)
+     * @type {string}
+     * @memberof PriceBookRuleCreateRequestDto
+     */
+    targetId?: string;
+    /**
+     * Target type the rule applies to
+     * @type {string}
+     * @memberof PriceBookRuleCreateRequestDto
+     */
+    targetType: PriceBookRuleCreateRequestDtoTargetTypeEnum;
+    /**
+     * Version for optimistic locking
      * @type {number}
      * @memberof PriceBookRuleCreateRequestDto
      */
@@ -85,19 +85,19 @@ export interface PriceBookRuleCreateRequestDto {
 * @export
 * @enum {string}
 */
-export enum PriceBookRuleCreateRequestDtoTargetTypeEnum {
-    Sku = 'SKU',
-    Category = 'CATEGORY',
-    Global = 'GLOBAL'
+export enum PriceBookRuleCreateRequestDtoConditionTypeEnum {
+    CustomerTier = 'CUSTOMER_TIER',
+    Location = 'LOCATION',
+    None = 'NONE'
 }
 /**
 * @export
 * @enum {string}
 */
-export enum PriceBookRuleCreateRequestDtoConditionTypeEnum {
-    CustomerTier = 'CUSTOMER_TIER',
-    Location = 'LOCATION',
-    None = 'NONE'
+export enum PriceBookRuleCreateRequestDtoTargetTypeEnum {
+    Sku = 'SKU',
+    Category = 'CATEGORY',
+    Global = 'GLOBAL'
 }
 
 
@@ -105,10 +105,10 @@ export enum PriceBookRuleCreateRequestDtoConditionTypeEnum {
  * Check if a given object implements the PriceBookRuleCreateRequestDto interface.
  */
 export function instanceOfPriceBookRuleCreateRequestDto(value: object): boolean {
-    if (!('targetType' in value)) return false;
-    if (!('pricingLogic' in value)) return false;
-    if (!('effectiveStartAt' in value)) return false;
     if (!('createdByUserId' in value)) return false;
+    if (!('effectiveStartAt' in value)) return false;
+    if (!('pricingLogic' in value)) return false;
+    if (!('targetType' in value)) return false;
     return true;
 }
 
@@ -122,15 +122,15 @@ export function PriceBookRuleCreateRequestDtoFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'targetType': json['targetType'],
-        'targetId': json['targetId'] == null ? undefined : json['targetId'],
-        'pricingLogic': json['pricingLogic'],
         'conditionType': json['conditionType'] == null ? undefined : json['conditionType'],
         'conditionValue': json['conditionValue'] == null ? undefined : json['conditionValue'],
-        'priority': json['priority'] == null ? undefined : json['priority'],
-        'effectiveStartAt': (new Date(json['effectiveStartAt'])),
-        'effectiveEndAt': json['effectiveEndAt'] == null ? undefined : (new Date(json['effectiveEndAt'])),
         'createdByUserId': json['createdByUserId'],
+        'effectiveEndAt': json['effectiveEndAt'] == null ? undefined : (new Date(json['effectiveEndAt'])),
+        'effectiveStartAt': (new Date(json['effectiveStartAt'])),
+        'pricingLogic': json['pricingLogic'],
+        'priority': json['priority'] == null ? undefined : json['priority'],
+        'targetId': json['targetId'] == null ? undefined : json['targetId'],
+        'targetType': json['targetType'],
         'version': json['version'] == null ? undefined : json['version'],
     };
 }
@@ -141,15 +141,15 @@ export function PriceBookRuleCreateRequestDtoToJSON(value?: PriceBookRuleCreateR
     }
     return {
         
-        'targetType': value['targetType'],
-        'targetId': value['targetId'],
-        'pricingLogic': value['pricingLogic'],
         'conditionType': value['conditionType'],
         'conditionValue': value['conditionValue'],
-        'priority': value['priority'],
-        'effectiveStartAt': ((value['effectiveStartAt']).toISOString()),
-        'effectiveEndAt': value['effectiveEndAt'] == null ? undefined : ((value['effectiveEndAt']).toISOString()),
         'createdByUserId': value['createdByUserId'],
+        'effectiveEndAt': value['effectiveEndAt'] == null ? undefined : ((value['effectiveEndAt']).toISOString()),
+        'effectiveStartAt': ((value['effectiveStartAt']).toISOString()),
+        'pricingLogic': value['pricingLogic'],
+        'priority': value['priority'],
+        'targetId': value['targetId'],
+        'targetType': value['targetType'],
         'version': value['version'],
     };
 }

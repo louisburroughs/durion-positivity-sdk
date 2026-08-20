@@ -20,35 +20,36 @@ import { mapValues } from '../runtime';
  */
 export interface ItemCostsDto {
     /**
-     * 
-     * @type {string}
-     * @memberof ItemCostsDto
-     */
-    itemId?: string;
-    /**
-     * 
+     * Weighted average cost
      * @type {number}
      * @memberof ItemCostsDto
      */
-    standardCost?: number;
+    averageCost?: number;
     /**
-     * 
+     * Item identifier
+     * @type {string}
+     * @memberof ItemCostsDto
+     */
+    itemId: string;
+    /**
+     * Most recent purchase cost
      * @type {number}
      * @memberof ItemCostsDto
      */
     lastCost?: number;
     /**
-     * 
+     * Current standard cost
      * @type {number}
      * @memberof ItemCostsDto
      */
-    averageCost?: number;
+    standardCost?: number;
 }
 
 /**
  * Check if a given object implements the ItemCostsDto interface.
  */
 export function instanceOfItemCostsDto(value: object): boolean {
+    if (!('itemId' in value)) return false;
     return true;
 }
 
@@ -62,10 +63,10 @@ export function ItemCostsDtoFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'itemId': json['itemId'] == null ? undefined : json['itemId'],
-        'standardCost': json['standardCost'] == null ? undefined : json['standardCost'],
-        'lastCost': json['lastCost'] == null ? undefined : json['lastCost'],
         'averageCost': json['averageCost'] == null ? undefined : json['averageCost'],
+        'itemId': json['itemId'],
+        'lastCost': json['lastCost'] == null ? undefined : json['lastCost'],
+        'standardCost': json['standardCost'] == null ? undefined : json['standardCost'],
     };
 }
 
@@ -75,10 +76,10 @@ export function ItemCostsDtoToJSON(value?: ItemCostsDto | null): any {
     }
     return {
         
-        'itemId': value['itemId'],
-        'standardCost': value['standardCost'],
-        'lastCost': value['lastCost'],
         'averageCost': value['averageCost'],
+        'itemId': value['itemId'],
+        'lastCost': value['lastCost'],
+        'standardCost': value['standardCost'],
     };
 }
 

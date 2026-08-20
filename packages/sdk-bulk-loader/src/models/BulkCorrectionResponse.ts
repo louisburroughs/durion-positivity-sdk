@@ -20,41 +20,45 @@ import { mapValues } from '../runtime';
  */
 export interface BulkCorrectionResponse {
     /**
-     * The bulk load job ID
-     * @type {string}
-     * @memberof BulkCorrectionResponse
-     */
-    jobId?: string;
-    /**
-     * Total number of corrections submitted
-     * @type {number}
-     * @memberof BulkCorrectionResponse
-     */
-    submittedCount?: number;
-    /**
      * Number of corrections accepted for processing
      * @type {number}
      * @memberof BulkCorrectionResponse
      */
-    acceptedCount?: number;
+    acceptedCount: number;
+    /**
+     * The bulk load job ID
+     * @type {string}
+     * @memberof BulkCorrectionResponse
+     */
+    jobId: string;
     /**
      * Number of corrections rejected
      * @type {number}
      * @memberof BulkCorrectionResponse
      */
-    rejectedCount?: number;
+    rejectedCount: number;
     /**
      * Rejection detail messages for each rejected correction, if any
      * @type {Array<string>}
      * @memberof BulkCorrectionResponse
      */
     rejections?: Array<string>;
+    /**
+     * Total number of corrections submitted
+     * @type {number}
+     * @memberof BulkCorrectionResponse
+     */
+    submittedCount: number;
 }
 
 /**
  * Check if a given object implements the BulkCorrectionResponse interface.
  */
 export function instanceOfBulkCorrectionResponse(value: object): boolean {
+    if (!('acceptedCount' in value)) return false;
+    if (!('jobId' in value)) return false;
+    if (!('rejectedCount' in value)) return false;
+    if (!('submittedCount' in value)) return false;
     return true;
 }
 
@@ -68,11 +72,11 @@ export function BulkCorrectionResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'jobId': json['jobId'] == null ? undefined : json['jobId'],
-        'submittedCount': json['submittedCount'] == null ? undefined : json['submittedCount'],
-        'acceptedCount': json['acceptedCount'] == null ? undefined : json['acceptedCount'],
-        'rejectedCount': json['rejectedCount'] == null ? undefined : json['rejectedCount'],
+        'acceptedCount': json['acceptedCount'],
+        'jobId': json['jobId'],
+        'rejectedCount': json['rejectedCount'],
         'rejections': json['rejections'] == null ? undefined : json['rejections'],
+        'submittedCount': json['submittedCount'],
     };
 }
 
@@ -82,11 +86,11 @@ export function BulkCorrectionResponseToJSON(value?: BulkCorrectionResponse | nu
     }
     return {
         
-        'jobId': value['jobId'],
-        'submittedCount': value['submittedCount'],
         'acceptedCount': value['acceptedCount'],
+        'jobId': value['jobId'],
         'rejectedCount': value['rejectedCount'],
         'rejections': value['rejections'],
+        'submittedCount': value['submittedCount'],
     };
 }
 

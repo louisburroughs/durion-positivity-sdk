@@ -14,71 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single vehicle record within a bulk ingest request
  * @export
  * @interface VehicleBulkIngestRecord
  */
 export interface VehicleBulkIngestRecord {
     /**
-     * 
+     * Identifier of the account that owns the vehicle
      * @type {string}
      * @memberof VehicleBulkIngestRecord
      */
     accountId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof VehicleBulkIngestRecord
-     */
-    vin: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleBulkIngestRecord
-     */
-    unitNumber: string;
-    /**
-     * 
+     * Human-readable description of the vehicle
      * @type {string}
      * @memberof VehicleBulkIngestRecord
      */
     description: string;
     /**
-     * 
+     * License plate number
      * @type {string}
      * @memberof VehicleBulkIngestRecord
      */
     licensePlate?: string;
     /**
-     * 
+     * Jurisdiction (state/province) that issued the license plate
      * @type {string}
      * @memberof VehicleBulkIngestRecord
      */
     licensePlateJurisdiction?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof VehicleBulkIngestRecord
-     */
-    year?: number;
-    /**
-     * 
+     * Manufacturer of the vehicle
      * @type {string}
      * @memberof VehicleBulkIngestRecord
      */
     make?: string;
     /**
-     * 
+     * Model of the vehicle
      * @type {string}
      * @memberof VehicleBulkIngestRecord
      */
     model?: string;
     /**
-     * 
+     * Trim level of the vehicle
      * @type {string}
      * @memberof VehicleBulkIngestRecord
      */
     trim?: string;
+    /**
+     * Fleet unit number assigned to the vehicle
+     * @type {string}
+     * @memberof VehicleBulkIngestRecord
+     */
+    unitNumber: string;
+    /**
+     * 17-character Vehicle Identification Number
+     * @type {string}
+     * @memberof VehicleBulkIngestRecord
+     */
+    vin: string;
+    /**
+     * Model year of the vehicle
+     * @type {number}
+     * @memberof VehicleBulkIngestRecord
+     */
+    year?: number;
 }
 
 /**
@@ -86,9 +86,9 @@ export interface VehicleBulkIngestRecord {
  */
 export function instanceOfVehicleBulkIngestRecord(value: object): boolean {
     if (!('accountId' in value)) return false;
-    if (!('vin' in value)) return false;
-    if (!('unitNumber' in value)) return false;
     if (!('description' in value)) return false;
+    if (!('unitNumber' in value)) return false;
+    if (!('vin' in value)) return false;
     return true;
 }
 
@@ -103,15 +103,15 @@ export function VehicleBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'accountId': json['accountId'],
-        'vin': json['vin'],
-        'unitNumber': json['unitNumber'],
         'description': json['description'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
-        'year': json['year'] == null ? undefined : json['year'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
         'trim': json['trim'] == null ? undefined : json['trim'],
+        'unitNumber': json['unitNumber'],
+        'vin': json['vin'],
+        'year': json['year'] == null ? undefined : json['year'],
     };
 }
 
@@ -122,15 +122,15 @@ export function VehicleBulkIngestRecordToJSON(value?: VehicleBulkIngestRecord | 
     return {
         
         'accountId': value['accountId'],
-        'vin': value['vin'],
-        'unitNumber': value['unitNumber'],
         'description': value['description'],
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],
-        'year': value['year'],
         'make': value['make'],
         'model': value['model'],
         'trim': value['trim'],
+        'unitNumber': value['unitNumber'],
+        'vin': value['vin'],
+        'year': value['year'],
     };
 }
 

@@ -14,59 +14,64 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Outcome of a permission catalog registration request
  * @export
  * @interface PermissionRegistrationResponse
  */
 export interface PermissionRegistrationResponse {
     /**
-     * 
-     * @type {boolean}
+     * Per-permission error messages, when any occurred
+     * @type {Array<string>}
      * @memberof PermissionRegistrationResponse
      */
-    success?: boolean;
+    errors?: Array<string>;
     /**
-     * 
+     * Human-readable summary of the registration outcome
      * @type {string}
      * @memberof PermissionRegistrationResponse
      */
     message?: string;
     /**
-     * 
+     * Number of new permissions registered
      * @type {number}
      * @memberof PermissionRegistrationResponse
      */
-    totalPermissions?: number;
+    registeredPermissions: number;
     /**
-     * 
+     * Number of permissions skipped because they were unchanged
      * @type {number}
      * @memberof PermissionRegistrationResponse
      */
-    registeredPermissions?: number;
+    skippedPermissions: number;
     /**
-     * 
+     * True when the registration completed without fatal errors
+     * @type {boolean}
+     * @memberof PermissionRegistrationResponse
+     */
+    success: boolean;
+    /**
+     * Total number of permissions submitted in the manifest
      * @type {number}
      * @memberof PermissionRegistrationResponse
      */
-    updatedPermissions?: number;
+    totalPermissions: number;
     /**
-     * 
+     * Number of existing permissions updated
      * @type {number}
      * @memberof PermissionRegistrationResponse
      */
-    skippedPermissions?: number;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof PermissionRegistrationResponse
-     */
-    errors?: Array<string>;
+    updatedPermissions: number;
 }
 
 /**
  * Check if a given object implements the PermissionRegistrationResponse interface.
  */
 export function instanceOfPermissionRegistrationResponse(value: object): boolean {
+    if (!('registeredPermissions' in value)) return false;
+    if (!('skippedPermissions' in value)) return false;
+    if (!('success' in value)) return false;
+    if (!('totalPermissions' in value)) return false;
+    if (!('updatedPermissions' in value)) return false;
     return true;
 }
 
@@ -80,13 +85,13 @@ export function PermissionRegistrationResponseFromJSONTyped(json: any, ignoreDis
     }
     return {
         
-        'success': json['success'] == null ? undefined : json['success'],
-        'message': json['message'] == null ? undefined : json['message'],
-        'totalPermissions': json['totalPermissions'] == null ? undefined : json['totalPermissions'],
-        'registeredPermissions': json['registeredPermissions'] == null ? undefined : json['registeredPermissions'],
-        'updatedPermissions': json['updatedPermissions'] == null ? undefined : json['updatedPermissions'],
-        'skippedPermissions': json['skippedPermissions'] == null ? undefined : json['skippedPermissions'],
         'errors': json['errors'] == null ? undefined : json['errors'],
+        'message': json['message'] == null ? undefined : json['message'],
+        'registeredPermissions': json['registeredPermissions'],
+        'skippedPermissions': json['skippedPermissions'],
+        'success': json['success'],
+        'totalPermissions': json['totalPermissions'],
+        'updatedPermissions': json['updatedPermissions'],
     };
 }
 
@@ -96,13 +101,13 @@ export function PermissionRegistrationResponseToJSON(value?: PermissionRegistrat
     }
     return {
         
-        'success': value['success'],
-        'message': value['message'],
-        'totalPermissions': value['totalPermissions'],
-        'registeredPermissions': value['registeredPermissions'],
-        'updatedPermissions': value['updatedPermissions'],
-        'skippedPermissions': value['skippedPermissions'],
         'errors': value['errors'],
+        'message': value['message'],
+        'registeredPermissions': value['registeredPermissions'],
+        'skippedPermissions': value['skippedPermissions'],
+        'success': value['success'],
+        'totalPermissions': value['totalPermissions'],
+        'updatedPermissions': value['updatedPermissions'],
     };
 }
 

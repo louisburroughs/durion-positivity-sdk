@@ -25,12 +25,12 @@ import {
     SiteDefaultsResponseToJSON,
 } from '../models/index';
 
-export interface ConfigureDefaultsRequest {
+export interface ConfigureSiteDefaultsRequest {
     locationId: string;
     siteDefaultsRequest: SiteDefaultsRequest;
 }
 
-export interface GetDefaultsRequest {
+export interface GetSiteDefaultsRequest {
     locationId: string;
 }
 
@@ -40,21 +40,21 @@ export interface GetDefaultsRequest {
 export class SiteDefaultsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create or update default site configuration for a location.
-     * Configure site defaults
+     * Creates or replaces the default staging and quarantine storage locations of a site in a single idempotent upsert. Use this tool when commissioning a site\'s receiving flow or moving its defaults; use getSiteDefaults instead to read the current assignment. Preconditions: the site must exist, and both referenced storage locations must belong to that site. Required inputs: locationId (UUID) as a path parameter and a body with both defaultStagingLocationId and defaultQuarantineLocationId; the two ids must differ. Emits a LOCATION_SITE_DEFAULTS_PUT event and republishes the location fact carrying the new defaults. Returns 404 when the site does not exist, 400 when either id is missing or both ids are the same, and 422 when a referenced storage location does not belong to the site. 
+     * Configure Default Storage Locations for Site
      */
-    async configureDefaultsRaw(requestParameters: ConfigureDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SiteDefaultsResponse>> {
+    async configureSiteDefaultsRaw(requestParameters: ConfigureSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SiteDefaultsResponse>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling configureDefaults().'
+                'Required parameter "locationId" was null or undefined when calling configureSiteDefaults().'
             );
         }
 
         if (requestParameters['siteDefaultsRequest'] == null) {
             throw new runtime.RequiredError(
                 'siteDefaultsRequest',
-                'Required parameter "siteDefaultsRequest" was null or undefined when calling configureDefaults().'
+                'Required parameter "siteDefaultsRequest" was null or undefined when calling configureSiteDefaults().'
             );
         }
 
@@ -84,23 +84,23 @@ export class SiteDefaultsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create or update default site configuration for a location.
-     * Configure site defaults
+     * Creates or replaces the default staging and quarantine storage locations of a site in a single idempotent upsert. Use this tool when commissioning a site\'s receiving flow or moving its defaults; use getSiteDefaults instead to read the current assignment. Preconditions: the site must exist, and both referenced storage locations must belong to that site. Required inputs: locationId (UUID) as a path parameter and a body with both defaultStagingLocationId and defaultQuarantineLocationId; the two ids must differ. Emits a LOCATION_SITE_DEFAULTS_PUT event and republishes the location fact carrying the new defaults. Returns 404 when the site does not exist, 400 when either id is missing or both ids are the same, and 422 when a referenced storage location does not belong to the site. 
+     * Configure Default Storage Locations for Site
      */
-    async configureDefaults(requestParameters: ConfigureDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SiteDefaultsResponse> {
-        const response = await this.configureDefaultsRaw(requestParameters, initOverrides);
+    async configureSiteDefaults(requestParameters: ConfigureSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SiteDefaultsResponse> {
+        const response = await this.configureSiteDefaultsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve default site configuration for a location.
-     * Get site defaults
+     * Returns the default staging and quarantine storage location ids configured for a site. Use this tool when routing received or quarantined inventory; do not use configureSiteDefaults, which overwrites the assignment. Preconditions: the site must exist; both ids are null when defaults were never configured. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_SITE_DEFAULTS_GET event; no state changes. Returns 404 when the site does not exist. 
+     * Get Default Storage Locations for Site
      */
-    async getDefaultsRaw(requestParameters: GetDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SiteDefaultsResponse>> {
+    async getSiteDefaultsRaw(requestParameters: GetSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SiteDefaultsResponse>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling getDefaults().'
+                'Required parameter "locationId" was null or undefined when calling getSiteDefaults().'
             );
         }
 
@@ -127,11 +127,11 @@ export class SiteDefaultsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve default site configuration for a location.
-     * Get site defaults
+     * Returns the default staging and quarantine storage location ids configured for a site. Use this tool when routing received or quarantined inventory; do not use configureSiteDefaults, which overwrites the assignment. Preconditions: the site must exist; both ids are null when defaults were never configured. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_SITE_DEFAULTS_GET event; no state changes. Returns 404 when the site does not exist. 
+     * Get Default Storage Locations for Site
      */
-    async getDefaults(requestParameters: GetDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SiteDefaultsResponse> {
-        const response = await this.getDefaultsRaw(requestParameters, initOverrides);
+    async getSiteDefaults(requestParameters: GetSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SiteDefaultsResponse> {
+        const response = await this.getSiteDefaultsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

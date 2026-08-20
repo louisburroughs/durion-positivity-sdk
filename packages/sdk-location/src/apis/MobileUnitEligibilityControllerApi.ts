@@ -34,8 +34,8 @@ export interface FindEligibleMobileUnitsRequest {
 export class MobileUnitEligibilityControllerApi extends runtime.BaseAPI {
 
     /**
-     * Return eligible active units for a service request.
-     * Find eligible mobile units
+     * Finds the ACTIVE mobile units whose coverage rules include a postal code on a given date, ordered by ascending rule priority. Use this tool when dispatching a mobile service request to a customer address; use listMobileUnits instead for plain enumeration without eligibility matching. Preconditions: coverage rules must already link units to service areas containing the postal code; units whose status is not ACTIVE are excluded. Required inputs: postalCode, countryCode and at (an ISO-8601 instant), all mandatory; the instant is reduced to a UTC calendar date for validFrom and validTo matching. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the eligible units, empty when nothing covers the address on that date. 
+     * Find Eligible Mobile Units for Address
      */
     async findEligibleMobileUnitsRaw(requestParameters: FindEligibleMobileUnitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EligibleMobileUnitResponse>>> {
         if (requestParameters['postalCode'] == null) {
@@ -94,8 +94,8 @@ export class MobileUnitEligibilityControllerApi extends runtime.BaseAPI {
     }
 
     /**
-     * Return eligible active units for a service request.
-     * Find eligible mobile units
+     * Finds the ACTIVE mobile units whose coverage rules include a postal code on a given date, ordered by ascending rule priority. Use this tool when dispatching a mobile service request to a customer address; use listMobileUnits instead for plain enumeration without eligibility matching. Preconditions: coverage rules must already link units to service areas containing the postal code; units whose status is not ACTIVE are excluded. Required inputs: postalCode, countryCode and at (an ISO-8601 instant), all mandatory; the instant is reduced to a UTC calendar date for validFrom and validTo matching. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the eligible units, empty when nothing covers the address on that date. 
+     * Find Eligible Mobile Units for Address
      */
     async findEligibleMobileUnits(requestParameters: FindEligibleMobileUnitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EligibleMobileUnitResponse>> {
         const response = await this.findEligibleMobileUnitsRaw(requestParameters, initOverrides);

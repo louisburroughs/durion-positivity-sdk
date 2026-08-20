@@ -21,59 +21,60 @@ import {
 } from './CoverageRuleRequest';
 
 /**
- * Mobile unit creation request body
+ * Request payload for creating or updating a mobile unit
  * @export
  * @interface MobileUnitRequest
  */
 export interface MobileUnitRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitRequest
-     */
-    name?: string;
-    /**
-     * 
+     * Identifier of the base location the mobile unit operates from
      * @type {string}
      * @memberof MobileUnitRequest
      */
     baseLocationId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitRequest
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitRequest
-     */
-    travelBufferPolicyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitRequest
-     */
-    notes?: string;
-    /**
-     * 
+     * Identifiers of capabilities the mobile unit can perform
      * @type {Array<string>}
      * @memberof MobileUnitRequest
      */
     capabilityIds?: Array<string>;
     /**
-     * 
+     * Coverage rules defining where the mobile unit can operate
      * @type {Array<CoverageRuleRequest>}
      * @memberof MobileUnitRequest
      */
     coverageRules?: Array<CoverageRuleRequest>;
+    /**
+     * Display name of the mobile unit
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    name: string;
+    /**
+     * Free-text notes about the mobile unit
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    notes?: string;
+    /**
+     * Operational status of the mobile unit
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    status?: string;
+    /**
+     * Identifier of the travel buffer policy applied to the mobile unit
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    travelBufferPolicyId?: string;
 }
 
 /**
  * Check if a given object implements the MobileUnitRequest interface.
  */
 export function instanceOfMobileUnitRequest(value: object): boolean {
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -87,13 +88,13 @@ export function MobileUnitRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
         'capabilityIds': json['capabilityIds'] == null ? undefined : json['capabilityIds'],
         'coverageRules': json['coverageRules'] == null ? undefined : ((json['coverageRules'] as Array<any>).map(CoverageRuleRequestFromJSON)),
+        'name': json['name'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
     };
 }
 
@@ -103,13 +104,13 @@ export function MobileUnitRequestToJSON(value?: MobileUnitRequest | null): any {
     }
     return {
         
-        'name': value['name'],
         'baseLocationId': value['baseLocationId'],
-        'status': value['status'],
-        'travelBufferPolicyId': value['travelBufferPolicyId'],
-        'notes': value['notes'],
         'capabilityIds': value['capabilityIds'],
         'coverageRules': value['coverageRules'] == null ? undefined : ((value['coverageRules'] as Array<any>).map(CoverageRuleRequestToJSON)),
+        'name': value['name'],
+        'notes': value['notes'],
+        'status': value['status'],
+        'travelBufferPolicyId': value['travelBufferPolicyId'],
     };
 }
 

@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to activate a GL account
  * @export
  * @interface GLAccountActivateRequest
  */
 export interface GLAccountActivateRequest {
     /**
-     * 
+     * Date the activation takes effect (ISO 8601 date)
      * @type {Date}
      * @memberof GLAccountActivateRequest
      */

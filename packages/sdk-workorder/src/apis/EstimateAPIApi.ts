@@ -88,7 +88,7 @@ export interface GenerateEstimatePdfRequest {
     estimateId: string;
 }
 
-export interface GetEstimateByIdRequest {
+export interface GetEstimateRequest {
     estimateId: string;
 }
 
@@ -96,15 +96,15 @@ export interface GetEstimateSummaryRequest {
     estimateId: string;
 }
 
-export interface GetEstimatesByCustomerRequest {
+export interface ListEstimatesByCustomerRequest {
     customerId: string;
 }
 
-export interface GetEstimatesByLocationRequest {
+export interface ListEstimatesByLocationRequest {
     locationId: string;
 }
 
-export interface GetEstimatesByShopRequest {
+export interface ListEstimatesByShopRequest {
     locationId: string;
 }
 
@@ -113,7 +113,7 @@ export interface PatchEstimateStatusRequest {
     body: object;
 }
 
-export interface PromoteEstimateToWorkorderRequest {
+export interface PromoteEstimateRequest {
     estimateId: string;
     idempotencyKey?: string;
 }
@@ -122,7 +122,7 @@ export interface ReopenEstimateRequest {
     estimateId: string;
 }
 
-export interface SubmitForApprovalRequest {
+export interface SubmitEstimateForApprovalRequest {
     estimateId: string;
 }
 
@@ -138,8 +138,8 @@ export interface UpdateEstimateItemOperationRequest {
 export class EstimateAPIApi extends runtime.BaseAPI {
 
     /**
-     * Add a part or labor line item to a draft estimate. Estimate must be in DRAFT status. For PART items, provide productId or description. For LABOR items, provide serviceId or description.
-     * Add line item to estimate
+     * Adds a PART or LABOR line item to a draft estimate with quantity, unit price, and optional tax code. Use this tool while building the draft; do not use updateEstimateItem, which edits an existing line, and run calculateEstimateTotals afterwards to refresh totals. Preconditions: the estimate must be in DRAFT status; PART items need a productId or description, and LABOR items need a serviceId or description. Required inputs: estimateId (UUID) as a path parameter, plus itemType (PART or LABOR), quantity, and unitPrice in the body; description, taxCode, productId, serviceId, and uomCode are conditional or optional. uomCode is the unit quantity is expressed in for PART items (omit for the product\'s base unit); it must be omitted on LABOR items. Emits an ESTIMATE_ITEM_ADD event. Returns 404 when the estimate does not exist, 400 on validation failures (including a uomCode on a LABOR item), 422 when the referenced product has no conversion row for uomCode or the converted quantity exceeds the product\'s declared decimal scale, and 409 when the estimate is not in DRAFT status. 
+     * Add Line Item to Estimate
      */
     async addEstimateItemRaw(requestParameters: AddEstimateItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateItemResponse>> {
         if (requestParameters['estimateId'] == null) {
@@ -182,8 +182,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Add a part or labor line item to a draft estimate. Estimate must be in DRAFT status. For PART items, provide productId or description. For LABOR items, provide serviceId or description.
-     * Add line item to estimate
+     * Adds a PART or LABOR line item to a draft estimate with quantity, unit price, and optional tax code. Use this tool while building the draft; do not use updateEstimateItem, which edits an existing line, and run calculateEstimateTotals afterwards to refresh totals. Preconditions: the estimate must be in DRAFT status; PART items need a productId or description, and LABOR items need a serviceId or description. Required inputs: estimateId (UUID) as a path parameter, plus itemType (PART or LABOR), quantity, and unitPrice in the body; description, taxCode, productId, serviceId, and uomCode are conditional or optional. uomCode is the unit quantity is expressed in for PART items (omit for the product\'s base unit); it must be omitted on LABOR items. Emits an ESTIMATE_ITEM_ADD event. Returns 404 when the estimate does not exist, 400 on validation failures (including a uomCode on a LABOR item), 422 when the referenced product has no conversion row for uomCode or the converted quantity exceeds the product\'s declared decimal scale, and 409 when the estimate is not in DRAFT status. 
+     * Add Line Item to Estimate
      */
     async addEstimateItem(requestParameters: AddEstimateItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateItemResponse> {
         const response = await this.addEstimateItemRaw(requestParameters, initOverrides);
@@ -191,8 +191,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transition estimate to approved state with customer signature capture. Estimate can be approved from DRAFT status. Requires customer ID validation and signature data (base64-encoded image). For commercial accounts with PO enforcement enabled, a purchase order number must be provided (CAP:092 Story #98).
-     * Approve an estimate with customer signature
+     * Approves a PENDING_APPROVAL estimate, transitioning it to APPROVED with the captured signature, signer, notes, optional purchase order, and optional selective line-item approvals. Use this tool when the customer accepts the submitted estimate; do not use approveWorkorder, which authorizes a workorder rather than an estimate — submitEstimateForApproval must have run first, and promoteEstimate is the follow-up that turns the approval into a workorder. Preconditions: the estimate must exist in PENDING_APPROVAL status and belong to the customerId in the request; commercial accounts with PO enforcement must supply a purchaseOrderNumber. Required inputs: estimateId (UUID) as a path parameter and customerId (UUID) in the body; signatureData, signerName, notes, purchaseOrderNumber, and lineItemApprovals are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_ESTIMATE_APPROVE event. Returns 404 when the estimate does not exist, and 400 when the customer does not match, the status is not PENDING_APPROVAL, or a required purchase order is missing. 
+     * Approve Estimate With Customer Signature
      */
     async approveEstimateRaw(requestParameters: ApproveEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
         if (requestParameters['estimateId'] == null) {
@@ -235,8 +235,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transition estimate to approved state with customer signature capture. Estimate can be approved from DRAFT status. Requires customer ID validation and signature data (base64-encoded image). For commercial accounts with PO enforcement enabled, a purchase order number must be provided (CAP:092 Story #98).
-     * Approve an estimate with customer signature
+     * Approves a PENDING_APPROVAL estimate, transitioning it to APPROVED with the captured signature, signer, notes, optional purchase order, and optional selective line-item approvals. Use this tool when the customer accepts the submitted estimate; do not use approveWorkorder, which authorizes a workorder rather than an estimate — submitEstimateForApproval must have run first, and promoteEstimate is the follow-up that turns the approval into a workorder. Preconditions: the estimate must exist in PENDING_APPROVAL status and belong to the customerId in the request; commercial accounts with PO enforcement must supply a purchaseOrderNumber. Required inputs: estimateId (UUID) as a path parameter and customerId (UUID) in the body; signatureData, signerName, notes, purchaseOrderNumber, and lineItemApprovals are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_ESTIMATE_APPROVE event. Returns 404 when the estimate does not exist, and 400 when the customer does not match, the status is not PENDING_APPROVAL, or a required purchase order is missing. 
+     * Approve Estimate With Customer Signature
      */
     async approveEstimate(requestParameters: ApproveEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
         const response = await this.approveEstimateRaw(requestParameters, initOverrides);
@@ -244,8 +244,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Calculate subtotal, tax amount, and total for an estimate based on its line items. Estimate must be in DRAFT status. Uses stub tax calculation (8.25% flat rate) pending pos-accounting integration.
-     * Calculate taxes and totals
+     * Calculates and persists the estimate\'s subtotal, tax amount, and total from its non-deleted line items, delegating tax to the tax service against the jurisdiction of the estimate\'s location. Use this tool after editing line items and before submitEstimateForApproval; do not use getEstimateSummary, which reads the stored figures without recalculating. Preconditions: the estimate must be in DRAFT status; an estimate with no line items has its totals zeroed. Required inputs: estimateId (UUID) as a path parameter; there is no request body. Emits an ESTIMATE_CALCULATE event; when the tax service is unreachable the subtotal is summed locally, tax is stored as zero, and the estimate is flagged taxPending with no fallback rate applied. Returns 404 when the estimate does not exist, and 409 when it is not in DRAFT status. 
+     * Calculate Estimate Taxes and Totals
      */
     async calculateEstimateTotalsRaw(requestParameters: CalculateEstimateTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['estimateId'] == null) {
@@ -278,8 +278,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Calculate subtotal, tax amount, and total for an estimate based on its line items. Estimate must be in DRAFT status. Uses stub tax calculation (8.25% flat rate) pending pos-accounting integration.
-     * Calculate taxes and totals
+     * Calculates and persists the estimate\'s subtotal, tax amount, and total from its non-deleted line items, delegating tax to the tax service against the jurisdiction of the estimate\'s location. Use this tool after editing line items and before submitEstimateForApproval; do not use getEstimateSummary, which reads the stored figures without recalculating. Preconditions: the estimate must be in DRAFT status; an estimate with no line items has its totals zeroed. Required inputs: estimateId (UUID) as a path parameter; there is no request body. Emits an ESTIMATE_CALCULATE event; when the tax service is unreachable the subtotal is summed locally, tax is stored as zero, and the estimate is flagged taxPending with no fallback rate applied. Returns 404 when the estimate does not exist, and 409 when it is not in DRAFT status. 
+     * Calculate Estimate Taxes and Totals
      */
     async calculateEstimateTotals(requestParameters: CalculateEstimateTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.calculateEstimateTotalsRaw(requestParameters, initOverrides);
@@ -287,8 +287,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new estimate in DRAFT status for a customer and vehicle. Requires ESTIMATE_CREATE permission. System will generate a unique estimate number and apply default values for location, currency, and tax region if not provided.
-     * Create a new draft estimate
+     * Creates an estimate in DRAFT status for a customer and vehicle, generating a unique estimate number and applying defaults for location and currency when omitted. Use this tool for a from-scratch estimate; do not use createEstimateFromAppointment, which seeds the estimate from a scheduled appointment and is idempotent on the appointment id. Preconditions: none beyond the caller holding workorder:estimate:create; when financial fields are supplied, subtotal plus taxAmount must equal total and none may be negative. Required inputs: customerId and vehicleId (UUIDs), crmPartyId, crmVehicleId, and crmContactIds; locationId, currencyUomId, and the financial fields are optional, and an Idempotency-Key header replays the originally created estimate. Emits a WORKORDER_ESTIMATE_CREATE event. Returns 201 with the estimate, 400 with code VALIDATION_ERROR when required fields are missing or negative, and 409 with code CONFLICT when totals are inconsistent or an integrity constraint fails. 
+     * Create a New Draft Estimate
      */
     async createEstimateRaw(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['createEstimateRequest'] == null) {
@@ -328,8 +328,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new estimate in DRAFT status for a customer and vehicle. Requires ESTIMATE_CREATE permission. System will generate a unique estimate number and apply default values for location, currency, and tax region if not provided.
-     * Create a new draft estimate
+     * Creates an estimate in DRAFT status for a customer and vehicle, generating a unique estimate number and applying defaults for location and currency when omitted. Use this tool for a from-scratch estimate; do not use createEstimateFromAppointment, which seeds the estimate from a scheduled appointment and is idempotent on the appointment id. Preconditions: none beyond the caller holding workorder:estimate:create; when financial fields are supplied, subtotal plus taxAmount must equal total and none may be negative. Required inputs: customerId and vehicleId (UUIDs), crmPartyId, crmVehicleId, and crmContactIds; locationId, currencyUomId, and the financial fields are optional, and an Idempotency-Key header replays the originally created estimate. Emits a WORKORDER_ESTIMATE_CREATE event. Returns 201 with the estimate, 400 with code VALIDATION_ERROR when required fields are missing or negative, and 409 with code CONFLICT when totals are inconsistent or an integrity constraint fails. 
+     * Create a New Draft Estimate
      */
     async createEstimate(requestParameters: CreateEstimateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.createEstimateRaw(requestParameters, initOverrides);
@@ -337,8 +337,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Capture an immutable snapshot of the estimate\'s complete state (estimate + all line items) for audit trail and version history purposes.
-     * Create historical snapshot
+     * Captures an immutable snapshot of the estimate\'s complete state — the estimate plus all its line items — for audit trail and version history. Use this tool to preserve state before a significant change; submitEstimateForApproval already snapshots automatically, so do not duplicate it around submission. Preconditions: the estimate must exist; snapshots are additive and never modify the estimate itself. Required inputs: estimateId (UUID) as a path parameter; notes is an optional query parameter explaining why the snapshot was taken. Emits an ESTIMATE_SNAPSHOT_CREATE event. Returns 404 when the estimate does not exist, and 409 when the snapshot cannot be serialized. 
+     * Create Estimate Historical Snapshot
      */
     async createEstimateSnapshotRaw(requestParameters: CreateEstimateSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateSnapshotResponse>> {
         if (requestParameters['estimateId'] == null) {
@@ -375,8 +375,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Capture an immutable snapshot of the estimate\'s complete state (estimate + all line items) for audit trail and version history purposes.
-     * Create historical snapshot
+     * Captures an immutable snapshot of the estimate\'s complete state — the estimate plus all its line items — for audit trail and version history. Use this tool to preserve state before a significant change; submitEstimateForApproval already snapshots automatically, so do not duplicate it around submission. Preconditions: the estimate must exist; snapshots are additive and never modify the estimate itself. Required inputs: estimateId (UUID) as a path parameter; notes is an optional query parameter explaining why the snapshot was taken. Emits an ESTIMATE_SNAPSHOT_CREATE event. Returns 404 when the estimate does not exist, and 409 when the snapshot cannot be serialized. 
+     * Create Estimate Historical Snapshot
      */
     async createEstimateSnapshot(requestParameters: CreateEstimateSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateSnapshotResponse> {
         const response = await this.createEstimateSnapshotRaw(requestParameters, initOverrides);
@@ -384,8 +384,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transition estimate to declined state. Estimate can be declined from DRAFT or APPROVED status.
-     * Decline an estimate
+     * Declines an estimate, setting DECLINED status with the decline reason and timestamp and stamping an expiry date from the applicable approval configuration\'s declineExpiryDays. Use this tool when the customer rejects the estimate; do not use reopenEstimate, which reverses a decline while the expiry window is still open. Preconditions: the estimate must exist and be in DRAFT, PENDING_APPROVAL, or APPROVED status. Required inputs: estimateId (UUID) as a path parameter; reason is an optional query parameter recorded as the decline reason. Emits a WORKORDER_ESTIMATE_DECLINE event and marks the estimate fact changed. Returns 400 when the estimate is missing or cannot be declined from its current status — both failures surface as 400 in this operation. 
+     * Decline an Estimate
      */
     async declineEstimateRaw(requestParameters: DeclineEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
         if (requestParameters['estimateId'] == null) {
@@ -422,8 +422,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transition estimate to declined state. Estimate can be declined from DRAFT or APPROVED status.
-     * Decline an estimate
+     * Declines an estimate, setting DECLINED status with the decline reason and timestamp and stamping an expiry date from the applicable approval configuration\'s declineExpiryDays. Use this tool when the customer rejects the estimate; do not use reopenEstimate, which reverses a decline while the expiry window is still open. Preconditions: the estimate must exist and be in DRAFT, PENDING_APPROVAL, or APPROVED status. Required inputs: estimateId (UUID) as a path parameter; reason is an optional query parameter recorded as the decline reason. Emits a WORKORDER_ESTIMATE_DECLINE event and marks the estimate fact changed. Returns 400 when the estimate is missing or cannot be declined from its current status — both failures surface as 400 in this operation. 
+     * Decline an Estimate
      */
     async declineEstimate(requestParameters: DeclineEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
         const response = await this.declineEstimateRaw(requestParameters, initOverrides);
@@ -431,8 +431,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete an estimate by its unique ID.
-     * Delete an estimate
+     * Deletes an estimate row by id — a hard delete with no status guard, removing the estimate regardless of its lifecycle state. Use this tool only for mistakenly created estimates; do not use declineEstimate, which records the customer\'s rejection while preserving the record. Preconditions: none are enforced — deletion is idempotent and deleting an unknown id is a silent no-op. Required inputs: estimateId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_ESTIMATE_DELETE event. Returns 204 regardless of whether the estimate previously existed. 
+     * Delete an Estimate
      */
     async deleteEstimateRaw(requestParameters: DeleteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['estimateId'] == null) {
@@ -465,16 +465,16 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete an estimate by its unique ID.
-     * Delete an estimate
+     * Deletes an estimate row by id — a hard delete with no status guard, removing the estimate regardless of its lifecycle state. Use this tool only for mistakenly created estimates; do not use declineEstimate, which records the customer\'s rejection while preserving the record. Preconditions: none are enforced — deletion is idempotent and deleting an unknown id is a silent no-op. Required inputs: estimateId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_ESTIMATE_DELETE event. Returns 204 regardless of whether the estimate previously existed. 
+     * Delete an Estimate
      */
     async deleteEstimate(requestParameters: DeleteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteEstimateRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Remove a line item from a draft estimate (soft delete). Estimate must be in DRAFT status.
-     * Remove line item
+     * Removes a line item from a draft estimate as a soft delete, so the row is flagged deleted and excluded from future calculations rather than destroyed. Use this tool to drop an unwanted line; do not use deleteEstimate, which hard-deletes the whole estimate. Preconditions: the estimate must be in DRAFT status and the item must exist on that estimate. Required inputs: estimateId and itemId (UUIDs) as path parameters; there is no request body. Emits an ESTIMATE_ITEM_DELETE event; totals are not recalculated until calculateEstimateTotals runs. Returns 404 when the estimate or item does not exist, and 409 when the estimate is not in DRAFT status. 
+     * Remove Estimate Line Item
      */
     async deleteEstimateItemRaw(requestParameters: DeleteEstimateItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['estimateId'] == null) {
@@ -514,16 +514,16 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Remove a line item from a draft estimate (soft delete). Estimate must be in DRAFT status.
-     * Remove line item
+     * Removes a line item from a draft estimate as a soft delete, so the row is flagged deleted and excluded from future calculations rather than destroyed. Use this tool to drop an unwanted line; do not use deleteEstimate, which hard-deletes the whole estimate. Preconditions: the estimate must be in DRAFT status and the item must exist on that estimate. Required inputs: estimateId and itemId (UUIDs) as path parameters; there is no request body. Emits an ESTIMATE_ITEM_DELETE event; totals are not recalculated until calculateEstimateTotals runs. Returns 404 when the estimate or item does not exist, and 409 when the estimate is not in DRAFT status. 
+     * Remove Estimate Line Item
      */
     async deleteEstimateItem(requestParameters: DeleteEstimateItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteEstimateItemRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
-     * Generate estimate PDF
+     * Renders the estimate as a PDF via the pos-documents service, containing header details, line items grouped into parts and labor, and financial totals, returned as an attachment. Use this tool when a printable or emailable document is needed; use getEstimateSummary instead for the same content as JSON. Preconditions: the estimate must exist and the pos-documents service must be reachable. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_PDF_GENERATE audit event; no estimate state changes — the render is performed on demand and not stored. Returns 404 when the estimate does not exist, and 502 when the document service fails to render the PDF. 
+     * Generate Estimate PDF Document
      */
     async generateEstimatePdfRaw(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
         if (requestParameters['estimateId'] == null) {
@@ -556,8 +556,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generate a PDF document for an estimate containing header details, line items grouped by type (parts and labor), and financial totals. Rendered via pos-documents service.
-     * Generate estimate PDF
+     * Renders the estimate as a PDF via the pos-documents service, containing header details, line items grouped into parts and labor, and financial totals, returned as an attachment. Use this tool when a printable or emailable document is needed; use getEstimateSummary instead for the same content as JSON. Preconditions: the estimate must exist and the pos-documents service must be reachable. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_PDF_GENERATE audit event; no estimate state changes — the render is performed on demand and not stored. Returns 404 when the estimate does not exist, and 502 when the document service fails to render the PDF. 
+     * Generate Estimate PDF Document
      */
     async generateEstimatePdf(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
         const response = await this.generateEstimatePdfRaw(requestParameters, initOverrides);
@@ -565,50 +565,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a list of all estimates.
-     * Get all estimates
+     * Returns one estimate with its status, customer, vehicle, financial totals, and approval-related fields. Use this tool when the estimate id is known; use getEstimateSummary instead for the customer-facing grouped view, or searchEstimates to find estimates by text. Preconditions: the estimate must exist. Required inputs: estimateId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Get Estimate by Id
      */
-    async getAllEstimatesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/workorders/estimates`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EstimateResponseFromJSON));
-    }
-
-    /**
-     * Retrieve a list of all estimates.
-     * Get all estimates
-     */
-    async getAllEstimates(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
-        const response = await this.getAllEstimatesRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve an estimate by its unique ID.
-     * Get estimate by ID
-     */
-    async getEstimateByIdRaw(requestParameters: GetEstimateByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
+    async getEstimateRaw(requestParameters: GetEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
-                'Required parameter "estimateId" was null or undefined when calling getEstimateById().'
+                'Required parameter "estimateId" was null or undefined when calling getEstimate().'
             );
         }
 
@@ -635,17 +599,17 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve an estimate by its unique ID.
-     * Get estimate by ID
+     * Returns one estimate with its status, customer, vehicle, financial totals, and approval-related fields. Use this tool when the estimate id is known; use getEstimateSummary instead for the customer-facing grouped view, or searchEstimates to find estimates by text. Preconditions: the estimate must exist. Required inputs: estimateId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Get Estimate by Id
      */
-    async getEstimateById(requestParameters: GetEstimateByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
-        const response = await this.getEstimateByIdRaw(requestParameters, initOverrides);
+    async getEstimate(requestParameters: GetEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
+        const response = await this.getEstimateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve a customer-facing summary of an estimate with grouped line items (parts and labor) and financial breakdown. Use the /{estimateId}/pdf endpoint to generate a PDF document.
-     * Get estimate summary (customer-facing)
+     * Returns the customer-facing summary of an estimate with line items grouped into parts and labor plus the financial breakdown. Use this tool for presentation to the customer; use getEstimate instead for the raw record, and generateEstimatePdf to render the same content as a PDF document. Preconditions: the estimate must exist; totals reflect the last calculateEstimateTotals run. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_SUMMARY_VIEW audit event; no estimate state changes — this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Get Customer-Facing Estimate Summary
      */
     async getEstimateSummaryRaw(requestParameters: GetEstimateSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateSummaryResponse>> {
         if (requestParameters['estimateId'] == null) {
@@ -678,8 +642,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a customer-facing summary of an estimate with grouped line items (parts and labor) and financial breakdown. Use the /{estimateId}/pdf endpoint to generate a PDF document.
-     * Get estimate summary (customer-facing)
+     * Returns the customer-facing summary of an estimate with line items grouped into parts and labor plus the financial breakdown. Use this tool for presentation to the customer; use getEstimate instead for the raw record, and generateEstimatePdf to render the same content as a PDF document. Preconditions: the estimate must exist; totals reflect the last calculateEstimateTotals run. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_SUMMARY_VIEW audit event; no estimate state changes — this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Get Customer-Facing Estimate Summary
      */
     async getEstimateSummary(requestParameters: GetEstimateSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateSummaryResponse> {
         const response = await this.getEstimateSummaryRaw(requestParameters, initOverrides);
@@ -687,14 +651,50 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all estimates for a specific customer.
-     * Get estimates by customer
+     * Returns every estimate in the system as an unpaginated list, in all statuses from DRAFT through APPROVED, DECLINED, and EXPIRED. Use this tool only for small datasets or admin views; use searchEstimates instead for paginated, filtered lookup by query, customer, or vehicle. Preconditions: none beyond the caller holding workorder:estimate:view. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_ESTIMATE_LIST audit event; no estimate state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
+     * List All Estimates
      */
-    async getEstimatesByCustomerRaw(requestParameters: GetEstimatesByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
+    async listEstimatesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:estimate:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/estimates`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EstimateResponseFromJSON));
+    }
+
+    /**
+     * Returns every estimate in the system as an unpaginated list, in all statuses from DRAFT through APPROVED, DECLINED, and EXPIRED. Use this tool only for small datasets or admin views; use searchEstimates instead for paginated, filtered lookup by query, customer, or vehicle. Preconditions: none beyond the caller holding workorder:estimate:view. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_ESTIMATE_LIST audit event; no estimate state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
+     * List All Estimates
+     */
+    async listEstimates(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
+        const response = await this.listEstimatesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns all estimates belonging to one customer, unpaginated and in every status. Use this tool for a customer\'s estimate history; use searchEstimates instead when pagination or a combined vehicle filter is needed. Preconditions: none — an unknown customerId simply yields an empty list. Required inputs: customerId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_CUSTOMER audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty; no 404 is produced for unknown customers. 
+     * List Estimates for a Customer
+     */
+    async listEstimatesByCustomerRaw(requestParameters: ListEstimatesByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
         if (requestParameters['customerId'] == null) {
             throw new runtime.RequiredError(
                 'customerId',
-                'Required parameter "customerId" was null or undefined when calling getEstimatesByCustomer().'
+                'Required parameter "customerId" was null or undefined when calling listEstimatesByCustomer().'
             );
         }
 
@@ -721,23 +721,23 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all estimates for a specific customer.
-     * Get estimates by customer
+     * Returns all estimates belonging to one customer, unpaginated and in every status. Use this tool for a customer\'s estimate history; use searchEstimates instead when pagination or a combined vehicle filter is needed. Preconditions: none — an unknown customerId simply yields an empty list. Required inputs: customerId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_CUSTOMER audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty; no 404 is produced for unknown customers. 
+     * List Estimates for a Customer
      */
-    async getEstimatesByCustomer(requestParameters: GetEstimatesByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
-        const response = await this.getEstimatesByCustomerRaw(requestParameters, initOverrides);
+    async listEstimatesByCustomer(requestParameters: ListEstimatesByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
+        const response = await this.listEstimatesByCustomerRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all estimates for a specific location.
-     * Get estimates by location
+     * Returns all estimates recorded against one location, unpaginated and in every status. Use this tool for a location\'s estimate book; do not use listEstimatesByShop, which is the legacy alias of this same lookup. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_LOCATION audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * List Estimates for a Location
      */
-    async getEstimatesByLocationRaw(requestParameters: GetEstimatesByLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
+    async listEstimatesByLocationRaw(requestParameters: ListEstimatesByLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling getEstimatesByLocation().'
+                'Required parameter "locationId" was null or undefined when calling listEstimatesByLocation().'
             );
         }
 
@@ -764,23 +764,23 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all estimates for a specific location.
-     * Get estimates by location
+     * Returns all estimates recorded against one location, unpaginated and in every status. Use this tool for a location\'s estimate book; do not use listEstimatesByShop, which is the legacy alias of this same lookup. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_LOCATION audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * List Estimates for a Location
      */
-    async getEstimatesByLocation(requestParameters: GetEstimatesByLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
-        const response = await this.getEstimatesByLocationRaw(requestParameters, initOverrides);
+    async listEstimatesByLocation(requestParameters: ListEstimatesByLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
+        const response = await this.listEstimatesByLocationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all estimates for a specific shop.
-     * Get estimates by shop
+     * Returns all estimates recorded against one shop location, unpaginated and in every status. Use this tool when the caller\'s route vocabulary says shop; it is a legacy alias of listEstimatesByLocation and returns identical results, so use listEstimatesByLocation instead in new integrations. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_SHOP audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * List Estimates for a Shop
      */
-    async getEstimatesByShopRaw(requestParameters: GetEstimatesByShopRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
+    async listEstimatesByShopRaw(requestParameters: ListEstimatesByShopRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling getEstimatesByShop().'
+                'Required parameter "locationId" was null or undefined when calling listEstimatesByShop().'
             );
         }
 
@@ -807,17 +807,17 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all estimates for a specific shop.
-     * Get estimates by shop
+     * Returns all estimates recorded against one shop location, unpaginated and in every status. Use this tool when the caller\'s route vocabulary says shop; it is a legacy alias of listEstimatesByLocation and returns identical results, so use listEstimatesByLocation instead in new integrations. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_SHOP audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * List Estimates for a Shop
      */
-    async getEstimatesByShop(requestParameters: GetEstimatesByShopRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
-        const response = await this.getEstimatesByShopRaw(requestParameters, initOverrides);
+    async listEstimatesByShop(requestParameters: ListEstimatesByShopRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
+        const response = await this.listEstimatesByShopRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Patch the status of an estimate by applying an allowed workflow transition
-     * Patch estimate status
+     * Applies a workflow transition to an estimate by target status: DECLINED delegates to the decline flow without a reason, and DRAFT delegates to the reopen flow — no other target is accepted. Use this tool only for generic UI status toggles; prefer declineEstimate, which records a decline reason, and reopenEstimate rather than this generic patch. Preconditions: the estimate must exist and the delegated transition\'s own rules apply — decline requires DRAFT, PENDING_APPROVAL, or APPROVED status, and reopen requires DECLINED within the expiry window. Required inputs: estimateId (UUID) as a path parameter and a JSON body whose status field is DECLINED or DRAFT. Emits a WORKORDER_ESTIMATE_PATCH event. Returns 400 with VALIDATION_ERROR when status is missing or not a known value, and 409 with CONFLICT when the target is unsupported or the transition is not allowed from the current state. 
+     * Patch Estimate Status
      */
     async patchEstimateStatusRaw(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['estimateId'] == null) {
@@ -860,8 +860,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Patch the status of an estimate by applying an allowed workflow transition
-     * Patch estimate status
+     * Applies a workflow transition to an estimate by target status: DECLINED delegates to the decline flow without a reason, and DRAFT delegates to the reopen flow — no other target is accepted. Use this tool only for generic UI status toggles; prefer declineEstimate, which records a decline reason, and reopenEstimate rather than this generic patch. Preconditions: the estimate must exist and the delegated transition\'s own rules apply — decline requires DRAFT, PENDING_APPROVAL, or APPROVED status, and reopen requires DECLINED within the expiry window. Required inputs: estimateId (UUID) as a path parameter and a JSON body whose status field is DECLINED or DRAFT. Emits a WORKORDER_ESTIMATE_PATCH event. Returns 400 with VALIDATION_ERROR when status is missing or not a known value, and 409 with CONFLICT when the target is unsupported or the transition is not allowed from the current state. 
+     * Patch Estimate Status
      */
     async patchEstimateStatus(requestParameters: PatchEstimateStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.patchEstimateStatusRaw(requestParameters, initOverrides);
@@ -869,14 +869,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Promote an approved estimate to a workorder. Validates preconditions: estimate must be APPROVED, not expired, have approved items, and not already promoted. Returns 409 ALREADY_PROMOTED with existingWorkorderId if estimate was previously promoted (idempotency). CAP:004 Story #26 - Create a workorder from approved estimate.
-     * Promote approved estimate to workorder
+     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when promotion validation fails, and 400 on invalid arguments. 
+     * Promote Approved Estimate to Workorder
      */
-    async promoteEstimateToWorkorderRaw(requestParameters: PromoteEstimateToWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
+    async promoteEstimateRaw(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
-                'Required parameter "estimateId" was null or undefined when calling promoteEstimateToWorkorder().'
+                'Required parameter "estimateId" was null or undefined when calling promoteEstimate().'
             );
         }
 
@@ -907,17 +907,17 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Promote an approved estimate to a workorder. Validates preconditions: estimate must be APPROVED, not expired, have approved items, and not already promoted. Returns 409 ALREADY_PROMOTED with existingWorkorderId if estimate was previously promoted (idempotency). CAP:004 Story #26 - Create a workorder from approved estimate.
-     * Promote approved estimate to workorder
+     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when promotion validation fails, and 400 on invalid arguments. 
+     * Promote Approved Estimate to Workorder
      */
-    async promoteEstimateToWorkorder(requestParameters: PromoteEstimateToWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {
-        const response = await this.promoteEstimateToWorkorderRaw(requestParameters, initOverrides);
+    async promoteEstimate(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {
+        const response = await this.promoteEstimateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Transition a declined estimate back to DRAFT state. Can only be done within the configured expiry period.
-     * Reopen a declined estimate
+     * Reopens a DECLINED estimate back to DRAFT, clearing the decline reason, decline timestamp, and expiry date. Use this tool when a customer changes their mind after declining; do not use reopenWorkorder, which reopens a completed workorder rather than an estimate. Preconditions: the estimate must be DECLINED and still within the declineExpiryDays window of its approval configuration — expired declines cannot be reopened. Required inputs: estimateId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_ESTIMATE_REOPEN event and marks the estimate fact changed. Returns 400 when the estimate is missing, not declined, or past its expiry window — all failures surface as 400 in this operation. 
+     * Reopen a Declined Estimate
      */
     async reopenEstimateRaw(requestParameters: ReopenEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
         if (requestParameters['estimateId'] == null) {
@@ -950,8 +950,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transition a declined estimate back to DRAFT state. Can only be done within the configured expiry period.
-     * Reopen a declined estimate
+     * Reopens a DECLINED estimate back to DRAFT, clearing the decline reason, decline timestamp, and expiry date. Use this tool when a customer changes their mind after declining; do not use reopenWorkorder, which reopens a completed workorder rather than an estimate. Preconditions: the estimate must be DECLINED and still within the declineExpiryDays window of its approval configuration — expired declines cannot be reopened. Required inputs: estimateId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_ESTIMATE_REOPEN event and marks the estimate fact changed. Returns 400 when the estimate is missing, not declined, or past its expiry window — all failures surface as 400 in this operation. 
+     * Reopen a Declined Estimate
      */
     async reopenEstimate(requestParameters: ReopenEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
         const response = await this.reopenEstimateRaw(requestParameters, initOverrides);
@@ -959,14 +959,14 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit a DRAFT estimate for customer approval. Creates immutable snapshot and transitions to PENDING_APPROVAL state. Validates completeness (has customer, vehicle, line items, calculated totals). CAP:003 Issue #168 - Submit Estimate for Customer Approval
-     * Submit estimate for customer approval
+     * Submits a DRAFT estimate for customer approval, creating an immutable snapshot and transitioning it to PENDING_APPROVAL. Use this tool when the draft is ready to present; do not use approveEstimate before submission, since approval requires PENDING_APPROVAL status, and calculateEstimateTotals should already have produced totals. Preconditions: the estimate must be in DRAFT status and complete — a customer, a vehicle, at least one line item, and calculated totals are all required. Required inputs: estimateId (UUID) as a path parameter; there is no request body, and the submitting user comes from the security context. Emits a WORKORDER_ESTIMATE_SUBMIT event and persists a submission snapshot. Returns 404 when the estimate does not exist, and 400 when it is not DRAFT or fails a completeness check. 
+     * Submit Estimate for Customer Approval
      */
-    async submitForApprovalRaw(requestParameters: SubmitForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
+    async submitEstimateForApprovalRaw(requestParameters: SubmitEstimateForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
         if (requestParameters['estimateId'] == null) {
             throw new runtime.RequiredError(
                 'estimateId',
-                'Required parameter "estimateId" was null or undefined when calling submitForApproval().'
+                'Required parameter "estimateId" was null or undefined when calling submitEstimateForApproval().'
             );
         }
 
@@ -993,17 +993,17 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit a DRAFT estimate for customer approval. Creates immutable snapshot and transitions to PENDING_APPROVAL state. Validates completeness (has customer, vehicle, line items, calculated totals). CAP:003 Issue #168 - Submit Estimate for Customer Approval
-     * Submit estimate for customer approval
+     * Submits a DRAFT estimate for customer approval, creating an immutable snapshot and transitioning it to PENDING_APPROVAL. Use this tool when the draft is ready to present; do not use approveEstimate before submission, since approval requires PENDING_APPROVAL status, and calculateEstimateTotals should already have produced totals. Preconditions: the estimate must be in DRAFT status and complete — a customer, a vehicle, at least one line item, and calculated totals are all required. Required inputs: estimateId (UUID) as a path parameter; there is no request body, and the submitting user comes from the security context. Emits a WORKORDER_ESTIMATE_SUBMIT event and persists a submission snapshot. Returns 404 when the estimate does not exist, and 400 when it is not DRAFT or fails a completeness check. 
+     * Submit Estimate for Customer Approval
      */
-    async submitForApproval(requestParameters: SubmitForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
-        const response = await this.submitForApprovalRaw(requestParameters, initOverrides);
+    async submitEstimateForApproval(requestParameters: SubmitEstimateForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
+        const response = await this.submitEstimateForApprovalRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Update an existing line item on a draft estimate. Estimate must be in DRAFT status. Only provided fields will be updated.
-     * Update line item
+     * Updates an existing line item on a draft estimate, changing only the fields provided and leaving omitted fields untouched. Use this tool to adjust a line\'s description, quantity, price, or tax code; do not use addEstimateItem, which appends a new line, or deleteEstimateItem, which removes one. Preconditions: the estimate must be in DRAFT status and the item must exist on that estimate. Required inputs: estimateId and itemId (UUIDs) as path parameters; description, quantity, unitPrice, taxCode, and uomCode are all optional body fields. uomCode is rejected on a LABOR item. Emits an ESTIMATE_ITEM_UPDATE event; totals are not recalculated until calculateEstimateTotals runs. Returns 404 when the estimate or item does not exist, 400 on validation failures (including a uomCode on a LABOR item), 422 when the effective uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the estimate is not in DRAFT status. 
+     * Update Estimate Line Item
      */
     async updateEstimateItemRaw(requestParameters: UpdateEstimateItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateItemResponse>> {
         if (requestParameters['estimateId'] == null) {
@@ -1053,8 +1053,8 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing line item on a draft estimate. Estimate must be in DRAFT status. Only provided fields will be updated.
-     * Update line item
+     * Updates an existing line item on a draft estimate, changing only the fields provided and leaving omitted fields untouched. Use this tool to adjust a line\'s description, quantity, price, or tax code; do not use addEstimateItem, which appends a new line, or deleteEstimateItem, which removes one. Preconditions: the estimate must be in DRAFT status and the item must exist on that estimate. Required inputs: estimateId and itemId (UUIDs) as path parameters; description, quantity, unitPrice, taxCode, and uomCode are all optional body fields. uomCode is rejected on a LABOR item. Emits an ESTIMATE_ITEM_UPDATE event; totals are not recalculated until calculateEstimateTotals runs. Returns 404 when the estimate or item does not exist, 400 on validation failures (including a uomCode on a LABOR item), 422 when the effective uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the estimate is not in DRAFT status. 
+     * Update Estimate Line Item
      */
     async updateEstimateItem(requestParameters: UpdateEstimateItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateItemResponse> {
         const response = await this.updateEstimateItemRaw(requestParameters, initOverrides);

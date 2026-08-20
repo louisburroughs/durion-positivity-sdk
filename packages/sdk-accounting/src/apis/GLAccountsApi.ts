@@ -56,11 +56,11 @@ export interface DeactivateGLAccountRequest {
     body?: object;
 }
 
-export interface GetAccountBalanceRequest {
+export interface GetGLAccountRequest {
     glAccountId: string;
 }
 
-export interface GetGLAccountRequest {
+export interface GetGLAccountBalanceRequest {
     glAccountId: string;
 }
 
@@ -82,8 +82,8 @@ export interface UpdateGLAccountRequest {
 export class GLAccountsApi extends runtime.BaseAPI {
 
     /**
-     * Mark a GL account as active.
-     * Activate GL account
+     * Activates a GL account for posting by setting its activation date to the start of the supplied effective date and clearing any deactivation date. Use this tool when re-enabling an inactive account or bringing a not-yet-active account into service; do not use deactivateGLAccount, which does the reverse. Preconditions: the GL account must exist; activation is idempotent and simply resets the effective dates. Required inputs: glAccountId (UUID) as a path parameter and effectiveDate (ISO date) in the body; the account becomes ACTIVE at start of day on that date. Emits an ACCOUNTING_GL_ACCOUNT_ACTIVATE event; no journal entries are created or altered. Returns 404 when no GL account exists for the supplied id. 
+     * Activate GL Account
      */
     async activateGLAccountRaw(requestParameters: ActivateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
         if (requestParameters['glAccountId'] == null) {
@@ -126,8 +126,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark a GL account as active.
-     * Activate GL account
+     * Activates a GL account for posting by setting its activation date to the start of the supplied effective date and clearing any deactivation date. Use this tool when re-enabling an inactive account or bringing a not-yet-active account into service; do not use deactivateGLAccount, which does the reverse. Preconditions: the GL account must exist; activation is idempotent and simply resets the effective dates. Required inputs: glAccountId (UUID) as a path parameter and effectiveDate (ISO date) in the body; the account becomes ACTIVE at start of day on that date. Emits an ACCOUNTING_GL_ACCOUNT_ACTIVATE event; no journal entries are created or altered. Returns 404 when no GL account exists for the supplied id. 
+     * Activate GL Account
      */
     async activateGLAccount(requestParameters: ActivateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {
         const response = await this.activateGLAccountRaw(requestParameters, initOverrides);
@@ -135,8 +135,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Archive a GL account and remove it from active use.
-     * Archive GL account
+     * Archives an inactive GL account as a soft delete, tagging it [ARCHIVED] while keeping the record and its posting history. Use this tool only after deactivateGLAccount has succeeded; do not use it on an ACTIVE account, which must be deactivated to zero balance first. Preconditions: the GL account must exist and its derived status must be INACTIVE. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_ARCHIVE event; the row is never physically deleted. Returns 404 when no GL account exists for the supplied id, and 400 when the account is not INACTIVE. 
+     * Archive GL Account
      */
     async archiveGLAccountRaw(requestParameters: ArchiveGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
         if (requestParameters['glAccountId'] == null) {
@@ -172,8 +172,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Archive a GL account and remove it from active use.
-     * Archive GL account
+     * Archives an inactive GL account as a soft delete, tagging it [ARCHIVED] while keeping the record and its posting history. Use this tool only after deactivateGLAccount has succeeded; do not use it on an ACTIVE account, which must be deactivated to zero balance first. Preconditions: the GL account must exist and its derived status must be INACTIVE. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_ARCHIVE event; the row is never physically deleted. Returns 404 when no GL account exists for the supplied id, and 400 when the account is not INACTIVE. 
+     * Archive GL Account
      */
     async archiveGLAccount(requestParameters: ArchiveGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {
         const response = await this.archiveGLAccountRaw(requestParameters, initOverrides);
@@ -181,8 +181,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new GL account.
-     * Create GL account
+     * Creates a GL account in the chart of accounts with a unique account code, classification and activation date. Use this tool when adding a new account to the chart; do not use updateGLAccount, which edits the mutable fields of an account that already exists. Preconditions: no account may already exist with the same accountCode; a parentAccountId, when supplied, must reference an existing account. Required inputs: accountCode (pattern #### or ####-###), accountName, accountType (ASSET, LIABILITY, EQUITY, REVENUE or EXPENSE) and activationDate; accountSubtype, description and parentAccountId are optional, and reconcilable defaults to false. Emits an ACCOUNTING_GL_ACCOUNT_CREATE event; the account code and type are immutable after creation. Returns 409 when the account code already exists, and 400 when the parent account cannot be resolved. 
+     * Create GL Account
      */
     async createGLAccountRaw(requestParameters: CreateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
         if (requestParameters['gLAccountCreateRequest'] == null) {
@@ -218,8 +218,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new GL account.
-     * Create GL account
+     * Creates a GL account in the chart of accounts with a unique account code, classification and activation date. Use this tool when adding a new account to the chart; do not use updateGLAccount, which edits the mutable fields of an account that already exists. Preconditions: no account may already exist with the same accountCode; a parentAccountId, when supplied, must reference an existing account. Required inputs: accountCode (pattern #### or ####-###), accountName, accountType (ASSET, LIABILITY, EQUITY, REVENUE or EXPENSE) and activationDate; accountSubtype, description and parentAccountId are optional, and reconcilable defaults to false. Emits an ACCOUNTING_GL_ACCOUNT_CREATE event; the account code and type are immutable after creation. Returns 409 when the account code already exists, and 400 when the parent account cannot be resolved. 
+     * Create GL Account
      */
     async createGLAccount(requestParameters: CreateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {
         const response = await this.createGLAccountRaw(requestParameters, initOverrides);
@@ -227,8 +227,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark a GL account as inactive.
-     * Deactivate GL account
+     * Deactivates a GL account by stamping its deactivation date now, preventing future postings to it. Use this tool when retiring an account from active use; do not use archiveGLAccount, which additionally flags an already-INACTIVE account as archived, and do not use it while the account still carries a balance. Preconditions: the GL account must exist and its posted balance must be exactly zero. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_DEACTIVATE event; historical journal entries remain intact. Returns 404 when no GL account exists for the supplied id, and 400 when the account balance is not zero. 
+     * Deactivate GL Account
      */
     async deactivateGLAccountRaw(requestParameters: DeactivateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
         if (requestParameters['glAccountId'] == null) {
@@ -264,8 +264,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark a GL account as inactive.
-     * Deactivate GL account
+     * Deactivates a GL account by stamping its deactivation date now, preventing future postings to it. Use this tool when retiring an account from active use; do not use archiveGLAccount, which additionally flags an already-INACTIVE account as archived, and do not use it while the account still carries a balance. Preconditions: the GL account must exist and its posted balance must be exactly zero. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_DEACTIVATE event; historical journal entries remain intact. Returns 404 when no GL account exists for the supplied id, and 400 when the account balance is not zero. 
+     * Deactivate GL Account
      */
     async deactivateGLAccount(requestParameters: DeactivateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {
         const response = await this.deactivateGLAccountRaw(requestParameters, initOverrides);
@@ -273,51 +273,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the current balance for a GL account.
-     * Get GL account balance
-     */
-    async getAccountBalanceRaw(requestParameters: GetAccountBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountBalanceResponse>> {
-        if (requestParameters['glAccountId'] == null) {
-            throw new runtime.RequiredError(
-                'glAccountId',
-                'Required parameter "glAccountId" was null or undefined when calling getAccountBalance().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["accounting:coa:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/accounting/gl-accounts/{glAccountId}/balance`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => GLAccountBalanceResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve the current balance for a GL account.
-     * Get GL account balance
-     */
-    async getAccountBalance(requestParameters: GetAccountBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountBalanceResponse> {
-        const response = await this.getAccountBalanceRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve a GL account by identifier.
-     * Get GL account
+     * Returns one GL account with its code, name, type, subtype, reconcilable flag and derived lifecycle status. Use this tool when the GL account id is already known; use listGLAccounts instead when searching by code, name or status. Preconditions: the GL account must exist. Required inputs: glAccountId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no GL account exists for the supplied id. 
+     * Get GL Account
      */
     async getGLAccountRaw(requestParameters: GetGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
         if (requestParameters['glAccountId'] == null) {
@@ -350,8 +307,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a GL account by identifier.
-     * Get GL account
+     * Returns one GL account with its code, name, type, subtype, reconcilable flag and derived lifecycle status. Use this tool when the GL account id is already known; use listGLAccounts instead when searching by code, name or status. Preconditions: the GL account must exist. Required inputs: glAccountId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no GL account exists for the supplied id. 
+     * Get GL Account
      */
     async getGLAccount(requestParameters: GetGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {
         const response = await this.getGLAccountRaw(requestParameters, initOverrides);
@@ -359,8 +316,51 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated GL accounts filtered by status and sorted by a field.
-     * List GL accounts
+     * Returns the current posted balance of one GL account, computed from its journal entry lines. Use this tool for a single account\'s balance; use the trial balance report in financial reporting instead when balances for the whole chart are needed. Preconditions: the GL account must exist; an account with no postings reports a zero balance. Required inputs: glAccountId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no GL account exists for the supplied id. 
+     * Get GL Account Balance
+     */
+    async getGLAccountBalanceRaw(requestParameters: GetGLAccountBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountBalanceResponse>> {
+        if (requestParameters['glAccountId'] == null) {
+            throw new runtime.RequiredError(
+                'glAccountId',
+                'Required parameter "glAccountId" was null or undefined when calling getGLAccountBalance().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:coa:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/gl-accounts/{glAccountId}/balance`.replace(`{${"glAccountId"}}`, encodeURIComponent(String(requestParameters['glAccountId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GLAccountBalanceResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the current posted balance of one GL account, computed from its journal entry lines. Use this tool for a single account\'s balance; use the trial balance report in financial reporting instead when balances for the whole chart are needed. Preconditions: the GL account must exist; an account with no postings reports a zero balance. Required inputs: glAccountId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no GL account exists for the supplied id. 
+     * Get GL Account Balance
+     */
+    async getGLAccountBalance(requestParameters: GetGLAccountBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountBalanceResponse> {
+        const response = await this.getGLAccountBalanceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists the chart of accounts as a paginated projection, optionally filtered by derived lifecycle status and sorted by a named field. Use this tool when browsing or searching the chart of accounts; do not use getGLAccount, which retrieves one account by its known id. Preconditions: none beyond the caller holding accounting:coa:view; an empty chart returns an empty page rather than an error. Required inputs: none; page defaults to 0, size to 20, sort to accountCode ascending (format \'field,direction\'), and status optionally filters by ACTIVE, INACTIVE or NOT_YET_ACTIVE. Emits an ACCOUNTING_GL_ACCOUNT_LIST audit event; no accounting state changes. Returns 400 when the sort property is not one of the supported fields. 
+     * List GL Accounts
      */
     async listGLAccountsRaw(requestParameters: ListGLAccountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountListResponse>> {
         if (requestParameters['sort'] == null) {
@@ -409,8 +409,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated GL accounts filtered by status and sorted by a field.
-     * List GL accounts
+     * Lists the chart of accounts as a paginated projection, optionally filtered by derived lifecycle status and sorted by a named field. Use this tool when browsing or searching the chart of accounts; do not use getGLAccount, which retrieves one account by its known id. Preconditions: none beyond the caller holding accounting:coa:view; an empty chart returns an empty page rather than an error. Required inputs: none; page defaults to 0, size to 20, sort to accountCode ascending (format \'field,direction\'), and status optionally filters by ACTIVE, INACTIVE or NOT_YET_ACTIVE. Emits an ACCOUNTING_GL_ACCOUNT_LIST audit event; no accounting state changes. Returns 400 when the sort property is not one of the supported fields. 
+     * List GL Accounts
      */
     async listGLAccounts(requestParameters: ListGLAccountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountListResponse> {
         const response = await this.listGLAccountsRaw(requestParameters, initOverrides);
@@ -418,8 +418,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update details for an existing GL account.
-     * Update GL account
+     * Updates the mutable descriptive fields of an existing GL account: name, description, subtype and the reconcilable flag. Use this tool when correcting or enriching an account\'s metadata; do not use createGLAccount, which adds a new account, and note that accountCode and accountType are immutable and cannot be changed by any operation. Preconditions: the GL account must exist. Required inputs: glAccountId (UUID) as a path parameter; all body fields are optional and only supplied fields are changed (accountName max 100 chars, description max 500). Emits an ACCOUNTING_GL_ACCOUNT_UPDATE event; posted journal entries referencing the account are unaffected. Returns 404 when no GL account exists for the supplied id. 
+     * Update GL Account
      */
     async updateGLAccountRaw(requestParameters: UpdateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
         if (requestParameters['glAccountId'] == null) {
@@ -462,8 +462,8 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update details for an existing GL account.
-     * Update GL account
+     * Updates the mutable descriptive fields of an existing GL account: name, description, subtype and the reconcilable flag. Use this tool when correcting or enriching an account\'s metadata; do not use createGLAccount, which adds a new account, and note that accountCode and accountType are immutable and cannot be changed by any operation. Preconditions: the GL account must exist. Required inputs: glAccountId (UUID) as a path parameter; all body fields are optional and only supplied fields are changed (accountName max 100 chars, description max 500). Emits an ACCOUNTING_GL_ACCOUNT_UPDATE event; posted journal entries referencing the account are unaffected. Returns 404 when no GL account exists for the supplied id. 
+     * Update GL Account
      */
     async updateGLAccount(requestParameters: UpdateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {
         const response = await this.updateGLAccountRaw(requestParameters, initOverrides);

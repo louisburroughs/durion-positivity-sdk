@@ -14,23 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Received quantity recorded against a single receiving session line
  * @export
  * @interface ReceiveLineRequest
  */
 export interface ReceiveLineRequest {
     /**
-     * 
+     * Quantity received expressed in documentUom; must be supplied together with documentUom
+     * @type {number}
+     * @memberof ReceiveLineRequest
+     */
+    documentQuantity?: number;
+    /**
+     * Optional UoM the line is keyed in (e.g. CASE). When present, documentQuantity is converted to the product's base UoM at posting time; a UoM with no conversion path is rejected with 422 UOM_CONVERSION_UNDEFINED
+     * @type {string}
+     * @memberof ReceiveLineRequest
+     */
+    documentUom?: string;
+    /**
+     * Optional expiration date of the received lot (odoo-parity E3). Stamped on the lot on first receipt for LOT-tracked products; ignored for untracked products and for lots that already exist (correct an existing lot via the lot-management endpoint)
+     * @type {Date}
+     * @memberof ReceiveLineRequest
+     */
+    expirationDate?: Date;
+    /**
+     * Identifier of the receiving line being recorded
      * @type {string}
      * @memberof ReceiveLineRequest
      */
     lineId: string;
     /**
-     * 
+     * Lot or batch number of the received stock. Required (422 LOT_NUMBER_REQUIRED) when the product is LOT-tracked per the catalog replica; ignored for tracking purposes otherwise
+     * @type {string}
+     * @memberof ReceiveLineRequest
+     */
+    lotNumber?: string;
+    /**
+     * Quantity actually received for the line, in the product's base UoM; may be zero. Required unless documentUom/documentQuantity are supplied, in which case the base quantity is derived and this field is ignored
      * @type {number}
      * @memberof ReceiveLineRequest
      */
-    receivedQuantity: number;
+    receivedQuantity?: number;
+    /**
+     * Serial numbers of the received units (odoo-parity E4). Required for SERIAL-tracked products: the list size must equal the received base quantity (422 SERIAL_COUNT_MISMATCH otherwise), and each serial is enumerated as an in-stock unit. Ignored for untracked and LOT-tracked products
+     * @type {Array<string>}
+     * @memberof ReceiveLineRequest
+     */
+    serialNumbers?: Array<string>;
 }
 
 /**
@@ -38,7 +68,6 @@ export interface ReceiveLineRequest {
  */
 export function instanceOfReceiveLineRequest(value: object): boolean {
     if (!('lineId' in value)) return false;
-    if (!('receivedQuantity' in value)) return false;
     return true;
 }
 
@@ -52,8 +81,13 @@ export function ReceiveLineRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'documentQuantity': json['documentQuantity'] == null ? undefined : json['documentQuantity'],
+        'documentUom': json['documentUom'] == null ? undefined : json['documentUom'],
+        'expirationDate': json['expirationDate'] == null ? undefined : (new Date(json['expirationDate'])),
         'lineId': json['lineId'],
-        'receivedQuantity': json['receivedQuantity'],
+        'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
+        'receivedQuantity': json['receivedQuantity'] == null ? undefined : json['receivedQuantity'],
+        'serialNumbers': json['serialNumbers'] == null ? undefined : json['serialNumbers'],
     };
 }
 
@@ -63,8 +97,13 @@ export function ReceiveLineRequestToJSON(value?: ReceiveLineRequest | null): any
     }
     return {
         
+        'documentQuantity': value['documentQuantity'],
+        'documentUom': value['documentUom'],
+        'expirationDate': value['expirationDate'] == null ? undefined : ((value['expirationDate']).toISOString().substring(0,10)),
         'lineId': value['lineId'],
+        'lotNumber': value['lotNumber'],
         'receivedQuantity': value['receivedQuantity'],
+        'serialNumbers': value['serialNumbers'],
     };
 }
 

@@ -20,18 +20,18 @@ import { mapValues } from '../runtime';
  */
 export interface StartWorkorderRequest {
     /**
+     * Optional reason associated with start transition
+     * @type {string}
+     * @memberof StartWorkorderRequest
+     */
+    reason?: string;
+    /**
      * Deprecated. Actor identity is resolved from authenticated security context.
      * @type {string}
      * @memberof StartWorkorderRequest
      * @deprecated
      */
     userId?: string;
-    /**
-     * Optional reason associated with start transition
-     * @type {string}
-     * @memberof StartWorkorderRequest
-     */
-    reason?: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function StartWorkorderRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'userId': json['userId'] == null ? undefined : json['userId'],
         'reason': json['reason'] == null ? undefined : json['reason'],
+        'userId': json['userId'] == null ? undefined : json['userId'],
     };
 }
 
@@ -62,8 +62,8 @@ export function StartWorkorderRequestToJSON(value?: StartWorkorderRequest | null
     }
     return {
         
-        'userId': value['userId'],
         'reason': value['reason'],
+        'userId': value['userId'],
     };
 }
 

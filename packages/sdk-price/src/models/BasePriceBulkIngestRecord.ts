@@ -14,45 +14,45 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single base-price record within a bulk ingest payload
  * @export
  * @interface BasePriceBulkIngestRecord
  */
 export interface BasePriceBulkIngestRecord {
     /**
-     * 
-     * @type {string}
-     * @memberof BasePriceBulkIngestRecord
-     */
-    productId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BasePriceBulkIngestRecord
-     */
-    msrp: string;
-    /**
-     * 
+     * ISO-4217 currency code
      * @type {string}
      * @memberof BasePriceBulkIngestRecord
      */
     currency: string;
     /**
-     * 
+     * Date the base price becomes effective
      * @type {string}
      * @memberof BasePriceBulkIngestRecord
      */
     effectiveFrom: string;
+    /**
+     * Manufacturer suggested retail price
+     * @type {string}
+     * @memberof BasePriceBulkIngestRecord
+     */
+    msrp: string;
+    /**
+     * Product identifier the base price applies to
+     * @type {string}
+     * @memberof BasePriceBulkIngestRecord
+     */
+    productId: string;
 }
 
 /**
  * Check if a given object implements the BasePriceBulkIngestRecord interface.
  */
 export function instanceOfBasePriceBulkIngestRecord(value: object): boolean {
-    if (!('productId' in value)) return false;
-    if (!('msrp' in value)) return false;
     if (!('currency' in value)) return false;
     if (!('effectiveFrom' in value)) return false;
+    if (!('msrp' in value)) return false;
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -66,10 +66,10 @@ export function BasePriceBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'productId': json['productId'],
-        'msrp': json['msrp'],
         'currency': json['currency'],
         'effectiveFrom': json['effectiveFrom'],
+        'msrp': json['msrp'],
+        'productId': json['productId'],
     };
 }
 
@@ -79,10 +79,10 @@ export function BasePriceBulkIngestRecordToJSON(value?: BasePriceBulkIngestRecor
     }
     return {
         
-        'productId': value['productId'],
-        'msrp': value['msrp'],
         'currency': value['currency'],
         'effectiveFrom': value['effectiveFrom'],
+        'msrp': value['msrp'],
+        'productId': value['productId'],
     };
 }
 

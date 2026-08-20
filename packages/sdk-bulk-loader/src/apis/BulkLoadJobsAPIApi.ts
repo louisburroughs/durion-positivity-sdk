@@ -31,23 +31,23 @@ import {
     PageableToJSON,
 } from '../models/index';
 
-export interface CancelJobRequest {
+export interface CancelBulkLoadJobRequest {
     jobId: string;
 }
 
-export interface CreateJobRequest {
+export interface CreateBulkLoadJobRequest {
     bulkLoadJobCreateRequest: BulkLoadJobCreateRequest;
 }
 
-export interface GetJobRequest {
+export interface GetBulkLoadJobRequest {
     jobId: string;
 }
 
-export interface ListJobsRequest {
+export interface ListBulkLoadJobsRequest {
     pageable: Pageable;
 }
 
-export interface RetryJobRequest {
+export interface RetryBulkLoadJobRequest {
     jobId: string;
 }
 
@@ -57,14 +57,14 @@ export interface RetryJobRequest {
 export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Cancels a bulk load job that is currently in progress. The operator can only cancel their own jobs.
-     * Cancel a running bulk load job
+     * Cancels an in-flight bulk load job by moving it to the terminal CANCELLED state. Use this tool to abandon a job that is no longer wanted; do not use retryBulkLoadJob, which re-queues a FAILED job rather than stopping one. Preconditions: the job must belong to the authenticated operator and must not already be in a terminal state (COMPLETED, CANCELLED or FAILED). Required inputs: jobId (UUID) as a path parameter; there is no request body. Emits a BULK_LOADER_JOB_CANCEL event and sets the job status to CANCELLED; rows already imported are not rolled back. Returns 404 when the job does not exist, 403 when it belongs to another operator, and 409 when the job is already COMPLETED, CANCELLED or FAILED. 
+     * Cancel a Running Bulk Load Job
      */
-    async cancelJobRaw(requestParameters: CancelJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
+    async cancelBulkLoadJobRaw(requestParameters: CancelBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling cancelJob().'
+                'Required parameter "jobId" was null or undefined when calling cancelBulkLoadJob().'
             );
         }
 
@@ -91,23 +91,23 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Cancels a bulk load job that is currently in progress. The operator can only cancel their own jobs.
-     * Cancel a running bulk load job
+     * Cancels an in-flight bulk load job by moving it to the terminal CANCELLED state. Use this tool to abandon a job that is no longer wanted; do not use retryBulkLoadJob, which re-queues a FAILED job rather than stopping one. Preconditions: the job must belong to the authenticated operator and must not already be in a terminal state (COMPLETED, CANCELLED or FAILED). Required inputs: jobId (UUID) as a path parameter; there is no request body. Emits a BULK_LOADER_JOB_CANCEL event and sets the job status to CANCELLED; rows already imported are not rolled back. Returns 404 when the job does not exist, 403 when it belongs to another operator, and 409 when the job is already COMPLETED, CANCELLED or FAILED. 
+     * Cancel a Running Bulk Load Job
      */
-    async cancelJob(requestParameters: CancelJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
-        const response = await this.cancelJobRaw(requestParameters, initOverrides);
+    async cancelBulkLoadJob(requestParameters: CancelBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
+        const response = await this.cancelBulkLoadJobRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates a new bulk load job for the authenticated operator. Each operator can only have one active job at a time. The job starts in CREATED state and must be populated with a file upload before processing can begin.
-     * Create a new bulk load job
+     * Creates a bulk load import job owned by the authenticated operator, starting in CREATED state with the target domain and expected file name recorded. Use this tool when starting a new bulk import from a file; do not use uploadJobFile, which attaches the file to a job that already exists, and do not use retryBulkLoadJob, which re-queues a FAILED job. Preconditions: the operator must have no other job in an active state (CREATED, UPLOADING, DETECTING, MAPPING_REVIEW, DEDUP or PROCESSING); only one active job per operator is allowed. Required inputs: fileName (name of the source file that will be uploaded later) and domainType (one of CATALOG_PRODUCT, INVENTORY_STOCK_COUNT, LOCATION, CUSTOMER, PERSON, BASE_PRICE, VEHICLE or VEHICLE_FITMENT); locationId (UUID) is optional at creation but must be set before processing can start. Emits a BULK_LOADER_JOB_CREATE event; no file content is stored by this call. Returns 201 with the new job, and 409 when the operator already has an active bulk load job in progress. 
+     * Create a New Bulk Load Job
      */
-    async createJobRaw(requestParameters: CreateJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
+    async createBulkLoadJobRaw(requestParameters: CreateBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
         if (requestParameters['bulkLoadJobCreateRequest'] == null) {
             throw new runtime.RequiredError(
                 'bulkLoadJobCreateRequest',
-                'Required parameter "bulkLoadJobCreateRequest" was null or undefined when calling createJob().'
+                'Required parameter "bulkLoadJobCreateRequest" was null or undefined when calling createBulkLoadJob().'
             );
         }
 
@@ -137,23 +137,23 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new bulk load job for the authenticated operator. Each operator can only have one active job at a time. The job starts in CREATED state and must be populated with a file upload before processing can begin.
-     * Create a new bulk load job
+     * Creates a bulk load import job owned by the authenticated operator, starting in CREATED state with the target domain and expected file name recorded. Use this tool when starting a new bulk import from a file; do not use uploadJobFile, which attaches the file to a job that already exists, and do not use retryBulkLoadJob, which re-queues a FAILED job. Preconditions: the operator must have no other job in an active state (CREATED, UPLOADING, DETECTING, MAPPING_REVIEW, DEDUP or PROCESSING); only one active job per operator is allowed. Required inputs: fileName (name of the source file that will be uploaded later) and domainType (one of CATALOG_PRODUCT, INVENTORY_STOCK_COUNT, LOCATION, CUSTOMER, PERSON, BASE_PRICE, VEHICLE or VEHICLE_FITMENT); locationId (UUID) is optional at creation but must be set before processing can start. Emits a BULK_LOADER_JOB_CREATE event; no file content is stored by this call. Returns 201 with the new job, and 409 when the operator already has an active bulk load job in progress. 
+     * Create a New Bulk Load Job
      */
-    async createJob(requestParameters: CreateJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
-        const response = await this.createJobRaw(requestParameters, initOverrides);
+    async createBulkLoadJob(requestParameters: CreateBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
+        const response = await this.createBulkLoadJobRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves the details of a bulk load job for the authenticated operator. The operator can only access their own jobs.
-     * Get a bulk load job by ID
+     * Returns the current state of a single bulk load job, including status, row counts and success and failure totals. Use this tool to poll job progress after startJobProcessing, or whenever the job id is already known; use listBulkLoadJobs instead when the id is unknown. Preconditions: the job must exist and belong to the authenticated operator; jobs owned by other operators are reported as not found rather than forbidden. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no job exists with the supplied id for the authenticated operator. 
+     * Get a Bulk Load Job by ID
      */
-    async getJobRaw(requestParameters: GetJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
+    async getBulkLoadJobRaw(requestParameters: GetBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling getJob().'
+                'Required parameter "jobId" was null or undefined when calling getBulkLoadJob().'
             );
         }
 
@@ -180,23 +180,23 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves the details of a bulk load job for the authenticated operator. The operator can only access their own jobs.
-     * Get a bulk load job by ID
+     * Returns the current state of a single bulk load job, including status, row counts and success and failure totals. Use this tool to poll job progress after startJobProcessing, or whenever the job id is already known; use listBulkLoadJobs instead when the id is unknown. Preconditions: the job must exist and belong to the authenticated operator; jobs owned by other operators are reported as not found rather than forbidden. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no job exists with the supplied id for the authenticated operator. 
+     * Get a Bulk Load Job by ID
      */
-    async getJob(requestParameters: GetJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
-        const response = await this.getJobRaw(requestParameters, initOverrides);
+    async getBulkLoadJob(requestParameters: GetBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
+        const response = await this.getBulkLoadJobRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves a paginated list of bulk load jobs for the authenticated operator. The operator can only access their own jobs.
-     * List bulk load jobs for the authenticated operator
+     * Returns a paginated list of the authenticated operator\'s bulk load jobs with their statuses and progress counters. Use this tool to find a job id or review import history; use getBulkLoadJob instead when a specific job id is already known. Preconditions: none beyond authentication; the listing is always scoped to the caller\'s own jobs and other operators\' jobs are never included. Required inputs: standard page, size and sort query parameters, all optional with Spring defaults (page 0, size 20). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when the operator has no jobs; there are no operation-specific error responses. 
+     * List Bulk Load Jobs for Operator
      */
-    async listJobsRaw(requestParameters: ListJobsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageBulkLoadJobResponse>> {
+    async listBulkLoadJobsRaw(requestParameters: ListBulkLoadJobsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageBulkLoadJobResponse>> {
         if (requestParameters['pageable'] == null) {
             throw new runtime.RequiredError(
                 'pageable',
-                'Required parameter "pageable" was null or undefined when calling listJobs().'
+                'Required parameter "pageable" was null or undefined when calling listBulkLoadJobs().'
             );
         }
 
@@ -227,23 +227,23 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a paginated list of bulk load jobs for the authenticated operator. The operator can only access their own jobs.
-     * List bulk load jobs for the authenticated operator
+     * Returns a paginated list of the authenticated operator\'s bulk load jobs with their statuses and progress counters. Use this tool to find a job id or review import history; use getBulkLoadJob instead when a specific job id is already known. Preconditions: none beyond authentication; the listing is always scoped to the caller\'s own jobs and other operators\' jobs are never included. Required inputs: standard page, size and sort query parameters, all optional with Spring defaults (page 0, size 20). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when the operator has no jobs; there are no operation-specific error responses. 
+     * List Bulk Load Jobs for Operator
      */
-    async listJobs(requestParameters: ListJobsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageBulkLoadJobResponse> {
-        const response = await this.listJobsRaw(requestParameters, initOverrides);
+    async listBulkLoadJobs(requestParameters: ListBulkLoadJobsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageBulkLoadJobResponse> {
+        const response = await this.listBulkLoadJobsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retries a bulk load job that has reached the FAILED state, resetting it to CREATED and re-queuing it for processing. The operator can only retry their own jobs. Returns 409 if the job is not in FAILED state.
-     * Retry a failed bulk load job
+     * Resets a FAILED bulk load job back to CREATED and clears its progress counters so it can be processed again. Use this tool after fixing the cause of a failure, typically via submitCorrections; do not use cancelBulkLoadJob, which terminates a job instead of re-queuing it. Preconditions: the job must belong to the authenticated operator, must be in FAILED state, and the operator must have no other active job. Required inputs: jobId (UUID) as a path parameter; there is no request body. Emits a BULK_LOADER_JOB_RETRY event and resets startedAt, completedAt, totalRows and all row counters; processing does not start until startJobProcessing is called again. Returns 404 when the job does not exist, 403 when it belongs to another operator, and 409 when the job is not in FAILED state or the operator already has an active job. 
+     * Retry a Failed Bulk Load Job
      */
-    async retryJobRaw(requestParameters: RetryJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
+    async retryBulkLoadJobRaw(requestParameters: RetryBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkLoadJobResponse>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling retryJob().'
+                'Required parameter "jobId" was null or undefined when calling retryBulkLoadJob().'
             );
         }
 
@@ -270,11 +270,11 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retries a bulk load job that has reached the FAILED state, resetting it to CREATED and re-queuing it for processing. The operator can only retry their own jobs. Returns 409 if the job is not in FAILED state.
-     * Retry a failed bulk load job
+     * Resets a FAILED bulk load job back to CREATED and clears its progress counters so it can be processed again. Use this tool after fixing the cause of a failure, typically via submitCorrections; do not use cancelBulkLoadJob, which terminates a job instead of re-queuing it. Preconditions: the job must belong to the authenticated operator, must be in FAILED state, and the operator must have no other active job. Required inputs: jobId (UUID) as a path parameter; there is no request body. Emits a BULK_LOADER_JOB_RETRY event and resets startedAt, completedAt, totalRows and all row counters; processing does not start until startJobProcessing is called again. Returns 404 when the job does not exist, 403 when it belongs to another operator, and 409 when the job is not in FAILED state or the operator already has an active job. 
+     * Retry a Failed Bulk Load Job
      */
-    async retryJob(requestParameters: RetryJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
-        const response = await this.retryJobRaw(requestParameters, initOverrides);
+    async retryBulkLoadJob(requestParameters: RetryBulkLoadJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkLoadJobResponse> {
+        const response = await this.retryBulkLoadJobRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

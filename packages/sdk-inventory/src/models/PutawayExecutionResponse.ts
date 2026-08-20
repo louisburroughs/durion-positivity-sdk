@@ -14,77 +14,85 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of executing a putaway move, including the ledger entry and final placement
  * @export
  * @interface PutawayExecutionResponse
  */
 export interface PutawayExecutionResponse {
     /**
-     * 
+     * Identifier of the actor who executed the putaway
      * @type {string}
      * @memberof PutawayExecutionResponse
      */
-    ledgerEntryId?: string;
+    actorId?: string;
     /**
-     * 
+     * Identifier of the storage location the goods moved to
      * @type {string}
      * @memberof PutawayExecutionResponse
      */
-    taskId?: string;
+    destinationLocationId: string;
     /**
-     * 
+     * Timestamp when the putaway was executed
      * @type {string}
      * @memberof PutawayExecutionResponse
      */
-    skuId?: string;
+    executedAt: string;
     /**
-     * 
+     * Identifier of the inventory ledger entry recorded for the move
+     * @type {string}
+     * @memberof PutawayExecutionResponse
+     */
+    ledgerEntryId: string;
+    /**
+     * Quantity of units moved during the putaway
+     * @type {number}
+     * @memberof PutawayExecutionResponse
+     */
+    quantityMoved: number;
+    /**
+     * Identifier of the SKU that was moved
+     * @type {string}
+     * @memberof PutawayExecutionResponse
+     */
+    skuId: string;
+    /**
+     * Identifier of the staging location the goods moved from
      * @type {string}
      * @memberof PutawayExecutionResponse
      */
     sourceLocationId?: string;
     /**
-     * 
+     * Outcome status of the putaway execution
      * @type {string}
      * @memberof PutawayExecutionResponse
      */
-    destinationLocationId?: string;
+    status: string;
     /**
-     * 
-     * @type {number}
-     * @memberof PutawayExecutionResponse
-     */
-    quantityMoved?: number;
-    /**
-     * 
+     * Identifier of the putaway task that was executed
      * @type {string}
      * @memberof PutawayExecutionResponse
      */
-    transactionType?: string;
+    taskId: string;
     /**
-     * 
+     * Ledger transaction type recorded for the move
      * @type {string}
      * @memberof PutawayExecutionResponse
      */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayExecutionResponse
-     */
-    executedAt?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayExecutionResponse
-     */
-    actorId?: string;
+    transactionType: string;
 }
 
 /**
  * Check if a given object implements the PutawayExecutionResponse interface.
  */
 export function instanceOfPutawayExecutionResponse(value: object): boolean {
+    if (!('destinationLocationId' in value)) return false;
+    if (!('executedAt' in value)) return false;
+    if (!('ledgerEntryId' in value)) return false;
+    if (!('quantityMoved' in value)) return false;
+    if (!('skuId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('taskId' in value)) return false;
+    if (!('transactionType' in value)) return false;
     return true;
 }
 
@@ -98,16 +106,16 @@ export function PutawayExecutionResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'ledgerEntryId': json['ledgerEntryId'] == null ? undefined : json['ledgerEntryId'],
-        'taskId': json['taskId'] == null ? undefined : json['taskId'],
-        'skuId': json['skuId'] == null ? undefined : json['skuId'],
-        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
-        'destinationLocationId': json['destinationLocationId'] == null ? undefined : json['destinationLocationId'],
-        'quantityMoved': json['quantityMoved'] == null ? undefined : json['quantityMoved'],
-        'transactionType': json['transactionType'] == null ? undefined : json['transactionType'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'executedAt': json['executedAt'] == null ? undefined : json['executedAt'],
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
+        'destinationLocationId': json['destinationLocationId'],
+        'executedAt': json['executedAt'],
+        'ledgerEntryId': json['ledgerEntryId'],
+        'quantityMoved': json['quantityMoved'],
+        'skuId': json['skuId'],
+        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
+        'status': json['status'],
+        'taskId': json['taskId'],
+        'transactionType': json['transactionType'],
     };
 }
 
@@ -117,16 +125,16 @@ export function PutawayExecutionResponseToJSON(value?: PutawayExecutionResponse 
     }
     return {
         
+        'actorId': value['actorId'],
+        'destinationLocationId': value['destinationLocationId'],
+        'executedAt': value['executedAt'],
         'ledgerEntryId': value['ledgerEntryId'],
-        'taskId': value['taskId'],
+        'quantityMoved': value['quantityMoved'],
         'skuId': value['skuId'],
         'sourceLocationId': value['sourceLocationId'],
-        'destinationLocationId': value['destinationLocationId'],
-        'quantityMoved': value['quantityMoved'],
-        'transactionType': value['transactionType'],
         'status': value['status'],
-        'executedAt': value['executedAt'],
-        'actorId': value['actorId'],
+        'taskId': value['taskId'],
+        'transactionType': value['transactionType'],
     };
 }
 

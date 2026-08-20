@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface CreateEstimateFromAppointmentRequest {
     /**
-     * Idempotency key to prevent duplicate estimate creation
-     * @type {string}
-     * @memberof CreateEstimateFromAppointmentRequest
-     */
-    idempotencyKey: string;
-    /**
      * Appointment identifier
      * @type {string}
      * @memberof CreateEstimateFromAppointmentRequest
@@ -38,11 +32,11 @@ export interface CreateEstimateFromAppointmentRequest {
      */
     customerId: string;
     /**
-     * Vehicle identifier
+     * Idempotency key to prevent duplicate estimate creation
      * @type {string}
      * @memberof CreateEstimateFromAppointmentRequest
      */
-    vehicleId: string;
+    idempotencyKey: string;
     /**
      * Location identifier
      * @type {string}
@@ -55,17 +49,23 @@ export interface CreateEstimateFromAppointmentRequest {
      * @memberof CreateEstimateFromAppointmentRequest
      */
     requestedServices?: Array<string>;
+    /**
+     * Vehicle identifier
+     * @type {string}
+     * @memberof CreateEstimateFromAppointmentRequest
+     */
+    vehicleId: string;
 }
 
 /**
  * Check if a given object implements the CreateEstimateFromAppointmentRequest interface.
  */
 export function instanceOfCreateEstimateFromAppointmentRequest(value: object): boolean {
-    if (!('idempotencyKey' in value)) return false;
     if (!('appointmentId' in value)) return false;
     if (!('customerId' in value)) return false;
-    if (!('vehicleId' in value)) return false;
+    if (!('idempotencyKey' in value)) return false;
     if (!('locationId' in value)) return false;
+    if (!('vehicleId' in value)) return false;
     return true;
 }
 
@@ -79,12 +79,12 @@ export function CreateEstimateFromAppointmentRequestFromJSONTyped(json: any, ign
     }
     return {
         
-        'idempotencyKey': json['idempotencyKey'],
         'appointmentId': json['appointmentId'],
         'customerId': json['customerId'],
-        'vehicleId': json['vehicleId'],
+        'idempotencyKey': json['idempotencyKey'],
         'locationId': json['locationId'],
         'requestedServices': json['requestedServices'] == null ? undefined : json['requestedServices'],
+        'vehicleId': json['vehicleId'],
     };
 }
 
@@ -94,12 +94,12 @@ export function CreateEstimateFromAppointmentRequestToJSON(value?: CreateEstimat
     }
     return {
         
-        'idempotencyKey': value['idempotencyKey'],
         'appointmentId': value['appointmentId'],
         'customerId': value['customerId'],
-        'vehicleId': value['vehicleId'],
+        'idempotencyKey': value['idempotencyKey'],
         'locationId': value['locationId'],
         'requestedServices': value['requestedServices'],
+        'vehicleId': value['vehicleId'],
     };
 }
 

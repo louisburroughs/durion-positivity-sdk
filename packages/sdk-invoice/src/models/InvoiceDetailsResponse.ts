@@ -27,131 +27,143 @@ import {
 } from './InvoiceItemResponse';
 
 /**
- * 
+ * Full details of an invoice including line items and adjustments
  * @export
  * @interface InvoiceDetailsResponse
  */
 export interface InvoiceDetailsResponse {
     /**
-     * 
-     * @type {string}
+     * Monetary adjustment entries applied to the invoice
+     * @type {Array<InvoiceAdjustmentResponse>}
      * @memberof InvoiceDetailsResponse
      */
-    invoiceId?: string;
+    adjustmentEntries: Array<InvoiceAdjustmentResponse>;
     /**
-     * 
-     * @type {string}
-     * @memberof InvoiceDetailsResponse
-     */
-    invoiceNumber?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InvoiceDetailsResponse
-     */
-    workorderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InvoiceDetailsResponse
-     */
-    estimateId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InvoiceDetailsResponse
-     */
-    approvalId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InvoiceDetailsResponse
-     */
-    partyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InvoiceDetailsResponse
-     */
-    status?: InvoiceDetailsResponseStatusEnum;
-    /**
-     * 
-     * @type {number}
-     * @memberof InvoiceDetailsResponse
-     */
-    subtotal?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof InvoiceDetailsResponse
-     */
-    tax?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof InvoiceDetailsResponse
-     */
-    total?: number;
-    /**
-     * 
+     * Net total of all monetary adjustments
      * @type {number}
      * @memberof InvoiceDetailsResponse
      */
     adjustments?: number;
     /**
-     * 
+     * Identifier of the approval record
+     * @type {string}
+     * @memberof InvoiceDetailsResponse
+     */
+    approvalId?: string;
+    /**
+     * Timestamp when the invoice was created
      * @type {Date}
      * @memberof InvoiceDetailsResponse
      */
     createdAt?: Date;
     /**
-     * 
-     * @type {Date}
+     * Identifier of the source estimate
+     * @type {string}
      * @memberof InvoiceDetailsResponse
      */
-    updatedAt?: Date;
+    estimateId?: string;
     /**
-     * 
+     * Timestamp when the invoice was finalized
      * @type {Date}
      * @memberof InvoiceDetailsResponse
      */
     finalizedAt?: Date;
     /**
-     * 
+     * Identifier of the actor who finalized the invoice
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     finalizedBy?: string;
     /**
-     * 
-     * @type {Date}
+     * Unique identifier of the invoice
+     * @type {string}
      * @memberof InvoiceDetailsResponse
      */
-    revertedAt?: Date;
+    invoiceId?: string;
     /**
-     * 
+     * Human-readable invoice number
+     * @type {string}
+     * @memberof InvoiceDetailsResponse
+     */
+    invoiceNumber?: string;
+    /**
+     * Line items belonging to the invoice
+     * @type {Array<InvoiceItemResponse>}
+     * @memberof InvoiceDetailsResponse
+     */
+    items: Array<InvoiceItemResponse>;
+    /**
+     * Identifier of the billed party
+     * @type {string}
+     * @memberof InvoiceDetailsResponse
+     */
+    partyId?: string;
+    /**
+     * Whether finalizing this invoice requires a manager approval code (DRAFT total exceeds the service-advisor threshold)
+     * @type {boolean}
+     * @memberof InvoiceDetailsResponse
+     */
+    requiresManagerApproval?: boolean;
+    /**
+     * Reason the invoice was reverted
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     reversionReason?: string;
     /**
-     * 
+     * Timestamp when the invoice was reverted to draft
+     * @type {Date}
+     * @memberof InvoiceDetailsResponse
+     */
+    revertedAt?: Date;
+    /**
+     * Identifier of the actor who reverted the invoice
      * @type {string}
      * @memberof InvoiceDetailsResponse
      */
     revertedBy?: string;
     /**
-     * 
-     * @type {Array<InvoiceItemResponse>}
+     * Current lifecycle status of the invoice
+     * @type {string}
      * @memberof InvoiceDetailsResponse
      */
-    items?: Array<InvoiceItemResponse>;
+    status?: InvoiceDetailsResponseStatusEnum;
     /**
-     * 
-     * @type {Array<InvoiceAdjustmentResponse>}
+     * Sum of line items before tax and adjustments
+     * @type {number}
      * @memberof InvoiceDetailsResponse
      */
-    adjustmentEntries?: Array<InvoiceAdjustmentResponse>;
+    subtotal?: number;
+    /**
+     * Total tax applied to the invoice
+     * @type {number}
+     * @memberof InvoiceDetailsResponse
+     */
+    tax?: number;
+    /**
+     * Grand total payable on the invoice
+     * @type {number}
+     * @memberof InvoiceDetailsResponse
+     */
+    total?: number;
+    /**
+     * Timestamp when the invoice was last updated
+     * @type {Date}
+     * @memberof InvoiceDetailsResponse
+     */
+    updatedAt?: Date;
+    /**
+     * Identifier of the associated workorder
+     * @type {string}
+     * @memberof InvoiceDetailsResponse
+     */
+    workorderId?: string;
+    /**
+     * Human-readable number of the associated workorder
+     * @type {string}
+     * @memberof InvoiceDetailsResponse
+     */
+    workorderNumber?: string;
 }
 
 /**
@@ -162,7 +174,8 @@ export enum InvoiceDetailsResponseStatusEnum {
     Draft = 'DRAFT',
     Finalized = 'FINALIZED',
     Posted = 'POSTED',
-    Error = 'ERROR'
+    Error = 'ERROR',
+    Cancelled = 'CANCELLED'
 }
 
 
@@ -170,6 +183,8 @@ export enum InvoiceDetailsResponseStatusEnum {
  * Check if a given object implements the InvoiceDetailsResponse interface.
  */
 export function instanceOfInvoiceDetailsResponse(value: object): boolean {
+    if (!('adjustmentEntries' in value)) return false;
+    if (!('items' in value)) return false;
     return true;
 }
 
@@ -183,26 +198,28 @@ export function InvoiceDetailsResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'adjustmentEntries': ((json['adjustmentEntries'] as Array<any>).map(InvoiceAdjustmentResponseFromJSON)),
+        'adjustments': json['adjustments'] == null ? undefined : json['adjustments'],
+        'approvalId': json['approvalId'] == null ? undefined : json['approvalId'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
+        'finalizedAt': json['finalizedAt'] == null ? undefined : (new Date(json['finalizedAt'])),
+        'finalizedBy': json['finalizedBy'] == null ? undefined : json['finalizedBy'],
         'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'invoiceNumber': json['invoiceNumber'] == null ? undefined : json['invoiceNumber'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
-        'approvalId': json['approvalId'] == null ? undefined : json['approvalId'],
+        'items': ((json['items'] as Array<any>).map(InvoiceItemResponseFromJSON)),
         'partyId': json['partyId'] == null ? undefined : json['partyId'],
+        'requiresManagerApproval': json['requiresManagerApproval'] == null ? undefined : json['requiresManagerApproval'],
+        'reversionReason': json['reversionReason'] == null ? undefined : json['reversionReason'],
+        'revertedAt': json['revertedAt'] == null ? undefined : (new Date(json['revertedAt'])),
+        'revertedBy': json['revertedBy'] == null ? undefined : json['revertedBy'],
         'status': json['status'] == null ? undefined : json['status'],
         'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
         'tax': json['tax'] == null ? undefined : json['tax'],
         'total': json['total'] == null ? undefined : json['total'],
-        'adjustments': json['adjustments'] == null ? undefined : json['adjustments'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'finalizedAt': json['finalizedAt'] == null ? undefined : (new Date(json['finalizedAt'])),
-        'finalizedBy': json['finalizedBy'] == null ? undefined : json['finalizedBy'],
-        'revertedAt': json['revertedAt'] == null ? undefined : (new Date(json['revertedAt'])),
-        'reversionReason': json['reversionReason'] == null ? undefined : json['reversionReason'],
-        'revertedBy': json['revertedBy'] == null ? undefined : json['revertedBy'],
-        'items': json['items'] == null ? undefined : ((json['items'] as Array<any>).map(InvoiceItemResponseFromJSON)),
-        'adjustmentEntries': json['adjustmentEntries'] == null ? undefined : ((json['adjustmentEntries'] as Array<any>).map(InvoiceAdjustmentResponseFromJSON)),
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
+        'workorderNumber': json['workorderNumber'] == null ? undefined : json['workorderNumber'],
     };
 }
 
@@ -212,26 +229,28 @@ export function InvoiceDetailsResponseToJSON(value?: InvoiceDetailsResponse | nu
     }
     return {
         
+        'adjustmentEntries': ((value['adjustmentEntries'] as Array<any>).map(InvoiceAdjustmentResponseToJSON)),
+        'adjustments': value['adjustments'],
+        'approvalId': value['approvalId'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'estimateId': value['estimateId'],
+        'finalizedAt': value['finalizedAt'] == null ? undefined : ((value['finalizedAt']).toISOString()),
+        'finalizedBy': value['finalizedBy'],
         'invoiceId': value['invoiceId'],
         'invoiceNumber': value['invoiceNumber'],
-        'workorderId': value['workorderId'],
-        'estimateId': value['estimateId'],
-        'approvalId': value['approvalId'],
+        'items': ((value['items'] as Array<any>).map(InvoiceItemResponseToJSON)),
         'partyId': value['partyId'],
+        'requiresManagerApproval': value['requiresManagerApproval'],
+        'reversionReason': value['reversionReason'],
+        'revertedAt': value['revertedAt'] == null ? undefined : ((value['revertedAt']).toISOString()),
+        'revertedBy': value['revertedBy'],
         'status': value['status'],
         'subtotal': value['subtotal'],
         'tax': value['tax'],
         'total': value['total'],
-        'adjustments': value['adjustments'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
-        'finalizedAt': value['finalizedAt'] == null ? undefined : ((value['finalizedAt']).toISOString()),
-        'finalizedBy': value['finalizedBy'],
-        'revertedAt': value['revertedAt'] == null ? undefined : ((value['revertedAt']).toISOString()),
-        'reversionReason': value['reversionReason'],
-        'revertedBy': value['revertedBy'],
-        'items': value['items'] == null ? undefined : ((value['items'] as Array<any>).map(InvoiceItemResponseToJSON)),
-        'adjustmentEntries': value['adjustmentEntries'] == null ? undefined : ((value['adjustmentEntries'] as Array<any>).map(InvoiceAdjustmentResponseToJSON)),
+        'workorderId': value['workorderId'],
+        'workorderNumber': value['workorderNumber'],
     };
 }
 

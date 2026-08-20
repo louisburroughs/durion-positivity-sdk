@@ -1,14 +1,12 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "target": "es2017",
-    "module": "node16",
-    "moduleResolution": "node16",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "skipLibCheck": true
   },
   "exclude": [
     "dist",

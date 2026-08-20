@@ -34,12 +34,12 @@ import {
     WorkSessionResponseToJSON,
 } from '../models/index';
 
-export interface AddBreakSegmentOperationRequest {
+export interface StartBreakSegmentRequest {
     workSessionId: string;
     addBreakSegmentRequest: AddBreakSegmentRequest;
 }
 
-export interface StartWorkSessionOperationRequest {
+export interface StartWorkexecWorkSessionRequest {
     startWorkSessionRequest: StartWorkSessionRequest;
 }
 
@@ -48,7 +48,7 @@ export interface StopBreakSegmentRequest {
     breakSegmentId: string;
 }
 
-export interface StopWorkSessionOperationRequest {
+export interface StopWorkexecWorkSessionRequest {
     workSessionId: string;
     stopWorkSessionRequest: StopWorkSessionRequest;
 }
@@ -59,21 +59,21 @@ export interface StopWorkSessionOperationRequest {
 export class WorkSessionAPIApi extends runtime.BaseAPI {
 
     /**
-     * Technician records the start of a break within an active work session.
-     * Start a break segment
+     * Opens a break segment inside an active work session, recording the break start time so break minutes are excluded from the session\'s net duration. Use this tool when a technician pauses work; do not use stopWorkexecWorkSession, which ends the whole session rather than pausing it. Preconditions: the session must exist, be IN_PROGRESS, not be locked, and have no other break segment still open. Required inputs: workSessionId (UUID) as a path parameter; breakType (MEAL, REST, or OTHER) and notes are optional body fields. Emits a WORKORDER_WORK_SESSION_BREAK_START event. Returns 201 with the new break segment, 404 when the session does not exist, and 409 when the session is not IN_PROGRESS, is locked, or already has an open break. 
+     * Start a Break Segment
      */
-    async addBreakSegmentRaw(requestParameters: AddBreakSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BreakSegmentResponse>> {
+    async startBreakSegmentRaw(requestParameters: StartBreakSegmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BreakSegmentResponse>> {
         if (requestParameters['workSessionId'] == null) {
             throw new runtime.RequiredError(
                 'workSessionId',
-                'Required parameter "workSessionId" was null or undefined when calling addBreakSegment().'
+                'Required parameter "workSessionId" was null or undefined when calling startBreakSegment().'
             );
         }
 
         if (requestParameters['addBreakSegmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'addBreakSegmentRequest',
-                'Required parameter "addBreakSegmentRequest" was null or undefined when calling addBreakSegment().'
+                'Required parameter "addBreakSegmentRequest" was null or undefined when calling startBreakSegment().'
             );
         }
 
@@ -103,23 +103,23 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Technician records the start of a break within an active work session.
-     * Start a break segment
+     * Opens a break segment inside an active work session, recording the break start time so break minutes are excluded from the session\'s net duration. Use this tool when a technician pauses work; do not use stopWorkexecWorkSession, which ends the whole session rather than pausing it. Preconditions: the session must exist, be IN_PROGRESS, not be locked, and have no other break segment still open. Required inputs: workSessionId (UUID) as a path parameter; breakType (MEAL, REST, or OTHER) and notes are optional body fields. Emits a WORKORDER_WORK_SESSION_BREAK_START event. Returns 201 with the new break segment, 404 when the session does not exist, and 409 when the session is not IN_PROGRESS, is locked, or already has an open break. 
+     * Start a Break Segment
      */
-    async addBreakSegment(requestParameters: AddBreakSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BreakSegmentResponse> {
-        const response = await this.addBreakSegmentRaw(requestParameters, initOverrides);
+    async startBreakSegment(requestParameters: StartBreakSegmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BreakSegmentResponse> {
+        const response = await this.startBreakSegmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Technician starts a work session on a work order. Creates an IN_PROGRESS work session and records the start time.
-     * Start a work session
+     * Creates an IN_PROGRESS work session binding a mechanic to a workorder task, stamping the start time from the server clock. Use this tool when a technician clocks onto a task; do not use stopWorkexecWorkSession, which ends a running session, or addBreakSegment, which pauses one. Preconditions: the workorder must exist, and the mechanic must have no other IN_PROGRESS session unless overlapping sessions are enabled by configuration, the caller holds timekeeping:overlap_override, and an overlapOverrideReason is supplied. Required inputs: mechanicId, workOrderId, workOrderTaskId, and locationId (all UUIDs); resourceId and overlapOverrideReason are optional. Emits a WORKORDER_WORK_SESSION_START event; any overlap override is recorded with the overriding user and timestamp. Returns 201 with the new session, 404 when the workorder does not exist, and 409 when the mechanic already has an active session and no valid override applies. 
+     * Start a Technician Work Session
      */
-    async startWorkSessionRaw(requestParameters: StartWorkSessionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionResponse>> {
+    async startWorkexecWorkSessionRaw(requestParameters: StartWorkexecWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionResponse>> {
         if (requestParameters['startWorkSessionRequest'] == null) {
             throw new runtime.RequiredError(
                 'startWorkSessionRequest',
-                'Required parameter "startWorkSessionRequest" was null or undefined when calling startWorkSession().'
+                'Required parameter "startWorkSessionRequest" was null or undefined when calling startWorkexecWorkSession().'
             );
         }
 
@@ -149,17 +149,17 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Technician starts a work session on a work order. Creates an IN_PROGRESS work session and records the start time.
-     * Start a work session
+     * Creates an IN_PROGRESS work session binding a mechanic to a workorder task, stamping the start time from the server clock. Use this tool when a technician clocks onto a task; do not use stopWorkexecWorkSession, which ends a running session, or addBreakSegment, which pauses one. Preconditions: the workorder must exist, and the mechanic must have no other IN_PROGRESS session unless overlapping sessions are enabled by configuration, the caller holds timekeeping:overlap_override, and an overlapOverrideReason is supplied. Required inputs: mechanicId, workOrderId, workOrderTaskId, and locationId (all UUIDs); resourceId and overlapOverrideReason are optional. Emits a WORKORDER_WORK_SESSION_START event; any overlap override is recorded with the overriding user and timestamp. Returns 201 with the new session, 404 when the workorder does not exist, and 409 when the mechanic already has an active session and no valid override applies. 
+     * Start a Technician Work Session
      */
-    async startWorkSession(requestParameters: StartWorkSessionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionResponse> {
-        const response = await this.startWorkSessionRaw(requestParameters, initOverrides);
+    async startWorkexecWorkSession(requestParameters: StartWorkexecWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionResponse> {
+        const response = await this.startWorkexecWorkSessionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Technician records the end of a break segment within an active work session.
-     * Stop a break segment
+     * Closes an open break segment within a work session, recording the break end time used to reduce the session\'s net worked duration. Use this tool when a technician resumes work after a pause; do not use stopWorkexecWorkSession, which ends the entire session. Preconditions: the session and break segment must exist, the break must belong to that session and still be open, and the session must not be locked. Required inputs: workSessionId (UUID) and breakSegmentId (UUID) as path parameters; there is no request body. Emits a WORKORDER_WORK_SESSION_BREAK_STOP event. Returns 404 when the session or break segment cannot be found, and 409 when the break is already stopped or the session is locked. 
+     * Stop a Break Segment
      */
     async stopBreakSegmentRaw(requestParameters: StopBreakSegmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BreakSegmentResponse>> {
         if (requestParameters['workSessionId'] == null) {
@@ -199,8 +199,8 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Technician records the end of a break segment within an active work session.
-     * Stop a break segment
+     * Closes an open break segment within a work session, recording the break end time used to reduce the session\'s net worked duration. Use this tool when a technician resumes work after a pause; do not use stopWorkexecWorkSession, which ends the entire session. Preconditions: the session and break segment must exist, the break must belong to that session and still be open, and the session must not be locked. Required inputs: workSessionId (UUID) and breakSegmentId (UUID) as path parameters; there is no request body. Emits a WORKORDER_WORK_SESSION_BREAK_STOP event. Returns 404 when the session or break segment cannot be found, and 409 when the break is already stopped or the session is locked. 
+     * Stop a Break Segment
      */
     async stopBreakSegment(requestParameters: StopBreakSegmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BreakSegmentResponse> {
         const response = await this.stopBreakSegmentRaw(requestParameters, initOverrides);
@@ -208,21 +208,21 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Technician stops an active work session. Records end time and transitions the session to COMPLETED status.
-     * Stop a work session
+     * Stops an IN_PROGRESS work session, transitioning it to COMPLETED and computing net worked seconds as elapsed time minus finished break segments. Use this tool when a technician clocks off a task; do not use stopBreakSegment, which only ends a break while the session keeps running. Preconditions: the session must exist, be IN_PROGRESS, and not be locked by payroll processing. Required inputs: workSessionId (UUID) as a path parameter; the body\'s mechanicId is optional and not used to determine the session. Emits a WORKORDER_WORK_SESSION_STOP event carrying the net duration. Returns 404 when no session exists for the id, and 409 when the session is not IN_PROGRESS or is locked. 
+     * Stop an Active Work Session
      */
-    async stopWorkSessionRaw(requestParameters: StopWorkSessionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionResponse>> {
+    async stopWorkexecWorkSessionRaw(requestParameters: StopWorkexecWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionResponse>> {
         if (requestParameters['workSessionId'] == null) {
             throw new runtime.RequiredError(
                 'workSessionId',
-                'Required parameter "workSessionId" was null or undefined when calling stopWorkSession().'
+                'Required parameter "workSessionId" was null or undefined when calling stopWorkexecWorkSession().'
             );
         }
 
         if (requestParameters['stopWorkSessionRequest'] == null) {
             throw new runtime.RequiredError(
                 'stopWorkSessionRequest',
-                'Required parameter "stopWorkSessionRequest" was null or undefined when calling stopWorkSession().'
+                'Required parameter "stopWorkSessionRequest" was null or undefined when calling stopWorkexecWorkSession().'
             );
         }
 
@@ -252,11 +252,11 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Technician stops an active work session. Records end time and transitions the session to COMPLETED status.
-     * Stop a work session
+     * Stops an IN_PROGRESS work session, transitioning it to COMPLETED and computing net worked seconds as elapsed time minus finished break segments. Use this tool when a technician clocks off a task; do not use stopBreakSegment, which only ends a break while the session keeps running. Preconditions: the session must exist, be IN_PROGRESS, and not be locked by payroll processing. Required inputs: workSessionId (UUID) as a path parameter; the body\'s mechanicId is optional and not used to determine the session. Emits a WORKORDER_WORK_SESSION_STOP event carrying the net duration. Returns 404 when no session exists for the id, and 409 when the session is not IN_PROGRESS or is locked. 
+     * Stop an Active Work Session
      */
-    async stopWorkSession(requestParameters: StopWorkSessionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionResponse> {
-        const response = await this.stopWorkSessionRaw(requestParameters, initOverrides);
+    async stopWorkexecWorkSession(requestParameters: StopWorkexecWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionResponse> {
+        const response = await this.stopWorkexecWorkSessionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

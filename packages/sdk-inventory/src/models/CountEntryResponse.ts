@@ -14,77 +14,152 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single recorded count entry in a cycle count task's history
  * @export
  * @interface CountEntryResponse
  */
 export interface CountEntryResponse {
     /**
-     * 
+     * Quantity counted, converted to the product's base UoM — what expectedQuantity and variance are computed against
+     * @type {number}
+     * @memberof CountEntryResponse
+     */
+    actualQuantity: number;
+    /**
+     * Resolved absolute-tolerance bound at count time, if configured for this product/location
+     * @type {number}
+     * @memberof CountEntryResponse
+     */
+    allowedToleranceAbsolute?: number;
+    /**
+     * Resolved percentage-tolerance bound at count time, if configured for this product/location
+     * @type {number}
+     * @memberof CountEntryResponse
+     */
+    allowedTolerancePercentage?: number;
+    /**
+     * Identifier of the auditor who recorded the count
      * @type {string}
      * @memberof CountEntryResponse
      */
-    countEntryId?: string;
+    auditorId: string;
     /**
-     * 
+     * Unique identifier of the count entry
      * @type {string}
      * @memberof CountEntryResponse
      */
-    cycleCountTaskId?: string;
+    countEntryId: string;
     /**
-     * 
+     * Measurement timestamp — when the count was physically taken and recorded
+     * @type {Date}
+     * @memberof CountEntryResponse
+     */
+    countedAt: Date;
+    /**
+     * Identifier of the cycle count task this entry belongs to
      * @type {string}
      * @memberof CountEntryResponse
      */
-    auditorId?: string;
+    cycleCountTaskId: string;
     /**
-     * 
+     * Book (expected) quantity at the time of the count, in base UoM
      * @type {number}
      * @memberof CountEntryResponse
      */
-    actualQuantity?: number;
+    expectedQuantity: number;
     /**
-     * 
+     * Quantity exactly as measured, in unitOfMeasure. Equal to actualQuantity when unitOfMeasure is null.
      * @type {number}
      * @memberof CountEntryResponse
      */
-    expectedQuantity?: number;
+    measuredQuantity: number;
     /**
-     * 
-     * @type {number}
+     * How the quantity was obtained
+     * @type {string}
      * @memberof CountEntryResponse
      */
-    variance?: number;
+    measurementMethod: CountEntryResponseMeasurementMethodEnum;
     /**
-     * 
-     * @type {number}
+     * Whether this entry is a recount of a prior count
+     * @type {boolean}
      * @memberof CountEntryResponse
      */
-    recountSequenceNumber?: number;
+    recount: boolean;
     /**
-     * 
+     * Identifier of the count entry this entry is a recount of, if any
      * @type {string}
      * @memberof CountEntryResponse
      */
     recountOfCountEntryId?: string;
     /**
-     * 
-     * @type {Date}
+     * Sequence number of this count within the recount chain; 0 for the initial count
+     * @type {number}
      * @memberof CountEntryResponse
      */
-    countedAt?: Date;
+    recountSequenceNumber: number;
     /**
-     * 
+     * Unit the count was physically measured in; null means the product's base UoM
+     * @type {string}
+     * @memberof CountEntryResponse
+     */
+    unitOfMeasure?: string;
+    /**
+     * Difference between counted and expected quantity, in base UoM (actual minus expected)
+     * @type {number}
+     * @memberof CountEntryResponse
+     */
+    variance: number;
+    /**
+     * Absolute variance as a percentage of book quantity; 100 when book quantity is zero
+     * @type {number}
+     * @memberof CountEntryResponse
+     */
+    variancePercentage: number;
+    /**
+     * Reason for the variance, when known. Optional even for an out-of-tolerance count — the eventual adjustment's own reason code is what gates posting.
+     * @type {string}
+     * @memberof CountEntryResponse
+     */
+    varianceReason?: string;
+    /**
+     * Whether the variance fell within the resolved tolerance. true: reconciled, no adjustment created. false: flagged for investigation and review before an adjustment may be posted.
      * @type {boolean}
      * @memberof CountEntryResponse
      */
-    recount?: boolean;
+    withinTolerance: boolean;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CountEntryResponseMeasurementMethodEnum {
+    ManualCount = 'MANUAL_COUNT',
+    Dip = 'DIP',
+    Gauge = 'GAUGE',
+    Scale = 'SCALE',
+    Meter = 'METER',
+    Sensor = 'SENSOR'
+}
+
 
 /**
  * Check if a given object implements the CountEntryResponse interface.
  */
 export function instanceOfCountEntryResponse(value: object): boolean {
+    if (!('actualQuantity' in value)) return false;
+    if (!('auditorId' in value)) return false;
+    if (!('countEntryId' in value)) return false;
+    if (!('countedAt' in value)) return false;
+    if (!('cycleCountTaskId' in value)) return false;
+    if (!('expectedQuantity' in value)) return false;
+    if (!('measuredQuantity' in value)) return false;
+    if (!('measurementMethod' in value)) return false;
+    if (!('recount' in value)) return false;
+    if (!('recountSequenceNumber' in value)) return false;
+    if (!('variance' in value)) return false;
+    if (!('variancePercentage' in value)) return false;
+    if (!('withinTolerance' in value)) return false;
     return true;
 }
 
@@ -98,16 +173,24 @@ export function CountEntryResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'countEntryId': json['countEntryId'] == null ? undefined : json['countEntryId'],
-        'cycleCountTaskId': json['cycleCountTaskId'] == null ? undefined : json['cycleCountTaskId'],
-        'auditorId': json['auditorId'] == null ? undefined : json['auditorId'],
-        'actualQuantity': json['actualQuantity'] == null ? undefined : json['actualQuantity'],
-        'expectedQuantity': json['expectedQuantity'] == null ? undefined : json['expectedQuantity'],
-        'variance': json['variance'] == null ? undefined : json['variance'],
-        'recountSequenceNumber': json['recountSequenceNumber'] == null ? undefined : json['recountSequenceNumber'],
+        'actualQuantity': json['actualQuantity'],
+        'allowedToleranceAbsolute': json['allowedToleranceAbsolute'] == null ? undefined : json['allowedToleranceAbsolute'],
+        'allowedTolerancePercentage': json['allowedTolerancePercentage'] == null ? undefined : json['allowedTolerancePercentage'],
+        'auditorId': json['auditorId'],
+        'countEntryId': json['countEntryId'],
+        'countedAt': (new Date(json['countedAt'])),
+        'cycleCountTaskId': json['cycleCountTaskId'],
+        'expectedQuantity': json['expectedQuantity'],
+        'measuredQuantity': json['measuredQuantity'],
+        'measurementMethod': json['measurementMethod'],
+        'recount': json['recount'],
         'recountOfCountEntryId': json['recountOfCountEntryId'] == null ? undefined : json['recountOfCountEntryId'],
-        'countedAt': json['countedAt'] == null ? undefined : (new Date(json['countedAt'])),
-        'recount': json['recount'] == null ? undefined : json['recount'],
+        'recountSequenceNumber': json['recountSequenceNumber'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'variance': json['variance'],
+        'variancePercentage': json['variancePercentage'],
+        'varianceReason': json['varianceReason'] == null ? undefined : json['varianceReason'],
+        'withinTolerance': json['withinTolerance'],
     };
 }
 
@@ -117,16 +200,24 @@ export function CountEntryResponseToJSON(value?: CountEntryResponse | null): any
     }
     return {
         
-        'countEntryId': value['countEntryId'],
-        'cycleCountTaskId': value['cycleCountTaskId'],
-        'auditorId': value['auditorId'],
         'actualQuantity': value['actualQuantity'],
+        'allowedToleranceAbsolute': value['allowedToleranceAbsolute'],
+        'allowedTolerancePercentage': value['allowedTolerancePercentage'],
+        'auditorId': value['auditorId'],
+        'countEntryId': value['countEntryId'],
+        'countedAt': ((value['countedAt']).toISOString()),
+        'cycleCountTaskId': value['cycleCountTaskId'],
         'expectedQuantity': value['expectedQuantity'],
-        'variance': value['variance'],
-        'recountSequenceNumber': value['recountSequenceNumber'],
-        'recountOfCountEntryId': value['recountOfCountEntryId'],
-        'countedAt': value['countedAt'] == null ? undefined : ((value['countedAt']).toISOString()),
+        'measuredQuantity': value['measuredQuantity'],
+        'measurementMethod': value['measurementMethod'],
         'recount': value['recount'],
+        'recountOfCountEntryId': value['recountOfCountEntryId'],
+        'recountSequenceNumber': value['recountSequenceNumber'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'variance': value['variance'],
+        'variancePercentage': value['variancePercentage'],
+        'varianceReason': value['varianceReason'],
+        'withinTolerance': value['withinTolerance'],
     };
 }
 

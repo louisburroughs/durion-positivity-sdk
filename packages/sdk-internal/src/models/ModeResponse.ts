@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Current tax service operating mode
  * @export
  * @interface ModeResponse
  */
 export interface ModeResponse {
     /**
-     * 
+     * Human-readable tax service mode label
      * @type {string}
      * @memberof ModeResponse
      */
-    mode?: string;
+    mode: string;
     /**
-     * 
+     * Whether the tax service is running in test mode
      * @type {boolean}
      * @memberof ModeResponse
      */
-    testMode?: boolean;
+    testMode: boolean;
 }
 
 /**
  * Check if a given object implements the ModeResponse interface.
  */
 export function instanceOfModeResponse(value: object): boolean {
+    if (!('mode' in value)) return false;
+    if (!('testMode' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function ModeResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'mode': json['mode'] == null ? undefined : json['mode'],
-        'testMode': json['testMode'] == null ? undefined : json['testMode'],
+        'mode': json['mode'],
+        'testMode': json['testMode'],
     };
 }
 

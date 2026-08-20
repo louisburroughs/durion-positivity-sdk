@@ -31,27 +31,27 @@ import {
     PromotionOfferResponseToJSON,
 } from '../models/index';
 
-export interface ActivateOfferRequest {
+export interface ActivatePromotionOfferRequest {
     id: string;
 }
 
-export interface ApplyPromotionOperationRequest {
+export interface ApplyPromotionOfferRequest {
     applyPromotionRequest: ApplyPromotionRequest;
 }
 
-export interface CreateOfferRequest {
+export interface CreatePromotionOfferOperationRequest {
     createPromotionOfferRequest: CreatePromotionOfferRequest;
 }
 
-export interface DeactivateOfferRequest {
+export interface DeactivatePromotionOfferRequest {
     id: string;
 }
 
-export interface GetOfferByCodeRequest {
+export interface GetPromotionOfferByCodeRequest {
     promoCode: string;
 }
 
-export interface GetOfferByIdRequest {
+export interface GetPromotionOfferByIdRequest {
     id: string;
 }
 
@@ -61,14 +61,14 @@ export interface GetOfferByIdRequest {
 export class PromotionOffersApi extends runtime.BaseAPI {
 
     /**
-     * Activates a promotion offer so it becomes eligible for application.
-     * Activate promotion offer
+     * Transitions a promotion offer to ACTIVE so applyPromotionOffer will accept its promo code within the validity window. Use this tool to publish a DRAFT offer or re-enable an INACTIVE one; do not use createPromotionOffer, which creates a new offer that still starts in DRAFT. Preconditions: the offer must exist, must not be EXPIRED, and its endDate must not already be in the past. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a PROMOTION_OFFER_ACTIVATE event and sets the status to ACTIVE immediately. Returns 404 when the offer does not exist, and 422 when the offer is EXPIRED or its end date has already passed. 
+     * Activate Promotion Offer
      */
-    async activateOfferRaw(requestParameters: ActivateOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
+    async activatePromotionOfferRaw(requestParameters: ActivatePromotionOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling activateOffer().'
+                'Required parameter "id" was null or undefined when calling activatePromotionOffer().'
             );
         }
 
@@ -78,7 +78,7 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+            const tokenString = await token("bearerAuth", ["pricing:promotion:manage"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -95,23 +95,23 @@ export class PromotionOffersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Activates a promotion offer so it becomes eligible for application.
-     * Activate promotion offer
+     * Transitions a promotion offer to ACTIVE so applyPromotionOffer will accept its promo code within the validity window. Use this tool to publish a DRAFT offer or re-enable an INACTIVE one; do not use createPromotionOffer, which creates a new offer that still starts in DRAFT. Preconditions: the offer must exist, must not be EXPIRED, and its endDate must not already be in the past. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a PROMOTION_OFFER_ACTIVATE event and sets the status to ACTIVE immediately. Returns 404 when the offer does not exist, and 422 when the offer is EXPIRED or its end date has already passed. 
+     * Activate Promotion Offer
      */
-    async activateOffer(requestParameters: ActivateOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
-        const response = await this.activateOfferRaw(requestParameters, initOverrides);
+    async activatePromotionOffer(requestParameters: ActivatePromotionOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
+        const response = await this.activatePromotionOfferRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Applies a promotion offer to pricing inputs and returns resulting discount and adjusted totals.
-     * Apply promotion offer during estimate pricing
+     * Applies a promotion code to an estimate\'s pricing context and returns the discount adjustment and the adjusted total. Use this tool at estimate time to price in a promotion; use evaluatePromotionEligibility instead for a dry-run check, because this operation consumes one usage against the offer\'s usageLimit. Preconditions: the offer must be ACTIVE, the current date must fall within startDate and endDate, the context must pass the offer\'s eligibility rules, the usage limit must not be exhausted, and no promo code may already be applied because only one promotion is allowed per estimate. Required inputs: promotionCode and estimateContext with estimateId, customerId, subtotal, and at least one line item; PERCENT_LABOR and PERCENT_PARTS both currently discount the full subtotal by the percentage, while FIXED_INVOICE subtracts the fixed discountValue. Emits a PROMOTION_OFFER_APPLY event and atomically increments the offer\'s usage count. Returns 400 with code PROMO_NOT_FOUND when the code is unknown, PROMO_NOT_APPLICABLE when the offer is inactive, outside its date range, ineligible for the context, or over its usage limit, and PROMO_MULTIPLE_NOT_ALLOWED when the estimate already carries an applied promo code. 
+     * Apply Promotion Offer During Estimate Pricing
      */
-    async applyPromotionRaw(requestParameters: ApplyPromotionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApplyPromotionResponse>> {
+    async applyPromotionOfferRaw(requestParameters: ApplyPromotionOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApplyPromotionResponse>> {
         if (requestParameters['applyPromotionRequest'] == null) {
             throw new runtime.RequiredError(
                 'applyPromotionRequest',
-                'Required parameter "applyPromotionRequest" was null or undefined when calling applyPromotion().'
+                'Required parameter "applyPromotionRequest" was null or undefined when calling applyPromotionOffer().'
             );
         }
 
@@ -123,7 +123,7 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:Apply"]);
+            const tokenString = await token("bearerAuth", ["pricing:promotion:apply"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -141,23 +141,23 @@ export class PromotionOffersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a promotion offer to pricing inputs and returns resulting discount and adjusted totals.
-     * Apply promotion offer during estimate pricing
+     * Applies a promotion code to an estimate\'s pricing context and returns the discount adjustment and the adjusted total. Use this tool at estimate time to price in a promotion; use evaluatePromotionEligibility instead for a dry-run check, because this operation consumes one usage against the offer\'s usageLimit. Preconditions: the offer must be ACTIVE, the current date must fall within startDate and endDate, the context must pass the offer\'s eligibility rules, the usage limit must not be exhausted, and no promo code may already be applied because only one promotion is allowed per estimate. Required inputs: promotionCode and estimateContext with estimateId, customerId, subtotal, and at least one line item; PERCENT_LABOR and PERCENT_PARTS both currently discount the full subtotal by the percentage, while FIXED_INVOICE subtracts the fixed discountValue. Emits a PROMOTION_OFFER_APPLY event and atomically increments the offer\'s usage count. Returns 400 with code PROMO_NOT_FOUND when the code is unknown, PROMO_NOT_APPLICABLE when the offer is inactive, outside its date range, ineligible for the context, or over its usage limit, and PROMO_MULTIPLE_NOT_ALLOWED when the estimate already carries an applied promo code. 
+     * Apply Promotion Offer During Estimate Pricing
      */
-    async applyPromotion(requestParameters: ApplyPromotionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApplyPromotionResponse> {
-        const response = await this.applyPromotionRaw(requestParameters, initOverrides);
+    async applyPromotionOffer(requestParameters: ApplyPromotionOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApplyPromotionResponse> {
+        const response = await this.applyPromotionOfferRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates a new promotion offer with code, lifecycle settings, and discount policy.
-     * Create promotion offer
+     * Creates a promotion offer in DRAFT status with a unique promo code, a validity window, and a discount policy. Use this tool to define a new promotion; do not use activatePromotionOffer, which only transitions an existing offer to ACTIVE, and note that a DRAFT offer cannot be applied until activated. Preconditions: no offer may already exist with the same promoCode, and startDate must not be after endDate. Required inputs: promoCode (max 64 characters), name, discountType (PERCENT_LABOR, PERCENT_PARTS, or FIXED_INVOICE), discountValue (minimum 0.01, two decimal places), startDate, and endDate; usageLimit and storeCode are optional and default to unlimited usage and no store scoping. Emits a PROMOTION_OFFER_CREATE event and persists the offer with status DRAFT and a zero usage count. Returns 409 when the promoCode already exists, and 422 when startDate is after endDate. 
+     * Create Promotion Offer
      */
-    async createOfferRaw(requestParameters: CreateOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
+    async createPromotionOfferRaw(requestParameters: CreatePromotionOfferOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
         if (requestParameters['createPromotionOfferRequest'] == null) {
             throw new runtime.RequiredError(
                 'createPromotionOfferRequest',
-                'Required parameter "createPromotionOfferRequest" was null or undefined when calling createOffer().'
+                'Required parameter "createPromotionOfferRequest" was null or undefined when calling createPromotionOffer().'
             );
         }
 
@@ -169,7 +169,7 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+            const tokenString = await token("bearerAuth", ["pricing:promotion:manage"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -187,23 +187,23 @@ export class PromotionOffersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new promotion offer with code, lifecycle settings, and discount policy.
-     * Create promotion offer
+     * Creates a promotion offer in DRAFT status with a unique promo code, a validity window, and a discount policy. Use this tool to define a new promotion; do not use activatePromotionOffer, which only transitions an existing offer to ACTIVE, and note that a DRAFT offer cannot be applied until activated. Preconditions: no offer may already exist with the same promoCode, and startDate must not be after endDate. Required inputs: promoCode (max 64 characters), name, discountType (PERCENT_LABOR, PERCENT_PARTS, or FIXED_INVOICE), discountValue (minimum 0.01, two decimal places), startDate, and endDate; usageLimit and storeCode are optional and default to unlimited usage and no store scoping. Emits a PROMOTION_OFFER_CREATE event and persists the offer with status DRAFT and a zero usage count. Returns 409 when the promoCode already exists, and 422 when startDate is after endDate. 
+     * Create Promotion Offer
      */
-    async createOffer(requestParameters: CreateOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
-        const response = await this.createOfferRaw(requestParameters, initOverrides);
+    async createPromotionOffer(requestParameters: CreatePromotionOfferOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
+        const response = await this.createPromotionOfferRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Deactivates a promotion offer so it is no longer eligible for application.
-     * Deactivate promotion offer
+     * Transitions an ACTIVE promotion offer to INACTIVE so its promo code is no longer accepted by applyPromotionOffer. Use this tool to withdraw a live offer while keeping its history and rules; do not use deletePromotionEligibilityRule, which removes a single audience rule rather than the offer. Preconditions: the offer must exist and currently be ACTIVE; DRAFT, INACTIVE, and EXPIRED offers cannot be deactivated. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a PROMOTION_OFFER_DEACTIVATE event; the offer can later be re-enabled with activatePromotionOffer. Returns 404 when the offer does not exist, and 422 when the offer is not currently ACTIVE. 
+     * Deactivate Promotion Offer
      */
-    async deactivateOfferRaw(requestParameters: DeactivateOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
+    async deactivatePromotionOfferRaw(requestParameters: DeactivatePromotionOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling deactivateOffer().'
+                'Required parameter "id" was null or undefined when calling deactivatePromotionOffer().'
             );
         }
 
@@ -213,7 +213,7 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:Manage"]);
+            const tokenString = await token("bearerAuth", ["pricing:promotion:manage"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -230,23 +230,23 @@ export class PromotionOffersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates a promotion offer so it is no longer eligible for application.
-     * Deactivate promotion offer
+     * Transitions an ACTIVE promotion offer to INACTIVE so its promo code is no longer accepted by applyPromotionOffer. Use this tool to withdraw a live offer while keeping its history and rules; do not use deletePromotionEligibilityRule, which removes a single audience rule rather than the offer. Preconditions: the offer must exist and currently be ACTIVE; DRAFT, INACTIVE, and EXPIRED offers cannot be deactivated. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a PROMOTION_OFFER_DEACTIVATE event; the offer can later be re-enabled with activatePromotionOffer. Returns 404 when the offer does not exist, and 422 when the offer is not currently ACTIVE. 
+     * Deactivate Promotion Offer
      */
-    async deactivateOffer(requestParameters: DeactivateOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
-        const response = await this.deactivateOfferRaw(requestParameters, initOverrides);
+    async deactivatePromotionOffer(requestParameters: DeactivatePromotionOfferRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
+        const response = await this.deactivatePromotionOfferRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves a promotion offer using its promotion code.
-     * Get promotion offer by code
+     * Returns the promotion offer that owns the supplied customer-facing promo code. Use this tool when only the promo code from marketing material is known; use getPromotionOfferById instead when the offer\'s UUID is available. Preconditions: an offer with exactly that promoCode must exist; the lookup is an exact match on the code. Required inputs: promoCode (max 64 characters) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no promotion offer exists for the supplied code. 
+     * Get Promotion Offer By Code
      */
-    async getOfferByCodeRaw(requestParameters: GetOfferByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
+    async getPromotionOfferByCodeRaw(requestParameters: GetPromotionOfferByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
         if (requestParameters['promoCode'] == null) {
             throw new runtime.RequiredError(
                 'promoCode',
-                'Required parameter "promoCode" was null or undefined when calling getOfferByCode().'
+                'Required parameter "promoCode" was null or undefined when calling getPromotionOfferByCode().'
             );
         }
 
@@ -256,7 +256,7 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:View"]);
+            const tokenString = await token("bearerAuth", ["pricing:promotion:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -273,23 +273,23 @@ export class PromotionOffersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a promotion offer using its promotion code.
-     * Get promotion offer by code
+     * Returns the promotion offer that owns the supplied customer-facing promo code. Use this tool when only the promo code from marketing material is known; use getPromotionOfferById instead when the offer\'s UUID is available. Preconditions: an offer with exactly that promoCode must exist; the lookup is an exact match on the code. Required inputs: promoCode (max 64 characters) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no promotion offer exists for the supplied code. 
+     * Get Promotion Offer By Code
      */
-    async getOfferByCode(requestParameters: GetOfferByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
-        const response = await this.getOfferByCodeRaw(requestParameters, initOverrides);
+    async getPromotionOfferByCode(requestParameters: GetPromotionOfferByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
+        const response = await this.getPromotionOfferByCodeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves a promotion offer using its unique identifier.
-     * Get promotion offer by ID
+     * Returns the full promotion offer, including status, discount policy, validity window, and usage counters. Use this tool when the promotion offer\'s UUID is already known; use getPromotionOfferByCode instead when only the customer-facing promo code is available. Preconditions: the promotion offer must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no promotion offer exists for the supplied id. 
+     * Get Promotion Offer By ID
      */
-    async getOfferByIdRaw(requestParameters: GetOfferByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
+    async getPromotionOfferByIdRaw(requestParameters: GetPromotionOfferByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionOfferResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling getOfferById().'
+                'Required parameter "id" was null or undefined when calling getPromotionOfferById().'
             );
         }
 
@@ -299,7 +299,7 @@ export class PromotionOffersApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:View"]);
+            const tokenString = await token("bearerAuth", ["pricing:promotion:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -316,11 +316,11 @@ export class PromotionOffersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a promotion offer using its unique identifier.
-     * Get promotion offer by ID
+     * Returns the full promotion offer, including status, discount policy, validity window, and usage counters. Use this tool when the promotion offer\'s UUID is already known; use getPromotionOfferByCode instead when only the customer-facing promo code is available. Preconditions: the promotion offer must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no promotion offer exists for the supplied id. 
+     * Get Promotion Offer By ID
      */
-    async getOfferById(requestParameters: GetOfferByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
-        const response = await this.getOfferByIdRaw(requestParameters, initOverrides);
+    async getPromotionOfferById(requestParameters: GetPromotionOfferByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionOfferResponse> {
+        const response = await this.getPromotionOfferByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

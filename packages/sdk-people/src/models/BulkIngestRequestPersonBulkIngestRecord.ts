@@ -21,35 +21,35 @@ import {
 } from './PersonBulkIngestRecord';
 
 /**
- * 
+ * Generic bulk ingest request: a batch of records for a job scoped to a location
  * @export
  * @interface BulkIngestRequestPersonBulkIngestRecord
  */
 export interface BulkIngestRequestPersonBulkIngestRecord {
     /**
-     * 
+     * Identifier of the bulk ingest job
      * @type {string}
      * @memberof BulkIngestRequestPersonBulkIngestRecord
      */
     jobId: string;
     /**
-     * 
+     * Location the records are ingested for
      * @type {string}
      * @memberof BulkIngestRequestPersonBulkIngestRecord
      */
     locationId: string;
     /**
-     * 
-     * @type {Array<PersonBulkIngestRecord>}
-     * @memberof BulkIngestRequestPersonBulkIngestRecord
-     */
-    records: Array<PersonBulkIngestRecord>;
-    /**
-     * 
+     * Identifier of the operator submitting the batch
      * @type {string}
      * @memberof BulkIngestRequestPersonBulkIngestRecord
      */
     operatorId?: string;
+    /**
+     * The records to ingest (at least one); shape depends on the target domain
+     * @type {Array<PersonBulkIngestRecord>}
+     * @memberof BulkIngestRequestPersonBulkIngestRecord
+     */
+    records: Array<PersonBulkIngestRecord>;
 }
 
 /**
@@ -74,8 +74,8 @@ export function BulkIngestRequestPersonBulkIngestRecordFromJSONTyped(json: any, 
         
         'jobId': json['jobId'],
         'locationId': json['locationId'],
-        'records': ((json['records'] as Array<any>).map(PersonBulkIngestRecordFromJSON)),
         'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
+        'records': ((json['records'] as Array<any>).map(PersonBulkIngestRecordFromJSON)),
     };
 }
 
@@ -87,8 +87,8 @@ export function BulkIngestRequestPersonBulkIngestRecordToJSON(value?: BulkIngest
         
         'jobId': value['jobId'],
         'locationId': value['locationId'],
-        'records': ((value['records'] as Array<any>).map(PersonBulkIngestRecordToJSON)),
         'operatorId': value['operatorId'],
+        'records': ((value['records'] as Array<any>).map(PersonBulkIngestRecordToJSON)),
     };
 }
 

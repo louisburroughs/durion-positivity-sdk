@@ -35,11 +35,11 @@ export interface CreateMobileUnitRequest {
     mobileUnitRequest: MobileUnitRequest;
 }
 
-export interface GetCoverageRulesRequest {
+export interface GetMobileUnitByIdRequest {
     id: string;
 }
 
-export interface GetMobileUnitByIdRequest {
+export interface ListCoverageRulesRequest {
     id: string;
 }
 
@@ -64,8 +64,8 @@ export interface ReplaceCoverageRulesRequest {
 export class MobileUnitAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create a new mobile unit.
-     * Create mobile unit
+     * Creates a mobile service unit with an optional base location, travel buffer policy, capability list and initial coverage rules. Use this tool when commissioning a van or truck that serves customers off-site; do not use patchMobileUnit, which updates an existing unit, and change coverage later with replaceCoverageRules. Preconditions: a unit created with status ACTIVE must include travelBufferPolicyId, capabilityIds and coverageRules; the travel buffer policy must exist, capability ids or codes must resolve to registered capabilities, DISTANCE_TIER coverage rules must be strictly ascending by maxDistance and end with a null catch-all tier, and the name must be unique at the base location. Required inputs: name; status defaults to INACTIVE when omitted, and baseLocationId, travelBufferPolicyId, notes, capabilityIds and coverageRules are optional for inactive units. Emits a LOCATION_MOBILE_UNIT_CREATE event and persists any supplied coverage rules in the same transaction. Returns 201 with the created unit and 409 when the name is already taken at the base location. 
+     * Create a New Mobile Service Unit
      */
     async createMobileUnitRaw(requestParameters: CreateMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MobileUnitResponse>> {
         if (requestParameters['mobileUnitRequest'] == null) {
@@ -101,8 +101,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new mobile unit.
-     * Create mobile unit
+     * Creates a mobile service unit with an optional base location, travel buffer policy, capability list and initial coverage rules. Use this tool when commissioning a van or truck that serves customers off-site; do not use patchMobileUnit, which updates an existing unit, and change coverage later with replaceCoverageRules. Preconditions: a unit created with status ACTIVE must include travelBufferPolicyId, capabilityIds and coverageRules; the travel buffer policy must exist, capability ids or codes must resolve to registered capabilities, DISTANCE_TIER coverage rules must be strictly ascending by maxDistance and end with a null catch-all tier, and the name must be unique at the base location. Required inputs: name; status defaults to INACTIVE when omitted, and baseLocationId, travelBufferPolicyId, notes, capabilityIds and coverageRules are optional for inactive units. Emits a LOCATION_MOBILE_UNIT_CREATE event and persists any supplied coverage rules in the same transaction. Returns 201 with the created unit and 409 when the name is already taken at the base location. 
+     * Create a New Mobile Service Unit
      */
     async createMobileUnit(requestParameters: CreateMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MobileUnitResponse> {
         const response = await this.createMobileUnitRaw(requestParameters, initOverrides);
@@ -110,51 +110,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get coverage rules for a mobile unit.
-     * Get coverage rules
-     */
-    async getCoverageRulesRaw(requestParameters: GetCoverageRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CoverageRuleResponse>>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling getCoverageRules().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["location:mobile-unit:read"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/mobile-units/{id}/coverage-rules`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CoverageRuleResponseFromJSON));
-    }
-
-    /**
-     * Get coverage rules for a mobile unit.
-     * Get coverage rules
-     */
-    async getCoverageRules(requestParameters: GetCoverageRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CoverageRuleResponse>> {
-        const response = await this.getCoverageRulesRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Get a mobile unit by ID.
-     * Get mobile unit
+     * Returns a single mobile unit with its status, base location, capability ids and travel buffer policy reference. Use this tool when the unit id is already known; use listMobileUnits instead to enumerate, and listCoverageRules to read the unit\'s coverage separately. Preconditions: the mobile unit must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no mobile unit exists for the supplied id. 
+     * Get a Mobile Unit by Identifier
      */
     async getMobileUnitByIdRaw(requestParameters: GetMobileUnitByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MobileUnitResponse>> {
         if (requestParameters['id'] == null) {
@@ -187,8 +144,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get a mobile unit by ID.
-     * Get mobile unit
+     * Returns a single mobile unit with its status, base location, capability ids and travel buffer policy reference. Use this tool when the unit id is already known; use listMobileUnits instead to enumerate, and listCoverageRules to read the unit\'s coverage separately. Preconditions: the mobile unit must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no mobile unit exists for the supplied id. 
+     * Get a Mobile Unit by Identifier
      */
     async getMobileUnitById(requestParameters: GetMobileUnitByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MobileUnitResponse> {
         const response = await this.getMobileUnitByIdRaw(requestParameters, initOverrides);
@@ -196,8 +153,51 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * List mobile units with pagination.
-     * List mobile units
+     * Returns the coverage rules of a mobile unit ordered by ascending priority. Use this tool to inspect where a unit currently operates; use findEligibleMobileUnits instead to answer which units cover a given postal code. Preconditions: none; an unknown unit id yields an empty list rather than an error. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the ordered rule list, empty when the unit has no rules or does not exist. 
+     * Get Coverage Rules of Mobile Unit
+     */
+    async listCoverageRulesRaw(requestParameters: ListCoverageRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CoverageRuleResponse>>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling listCoverageRules().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:mobile-unit:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/mobile-units/{id}/coverage-rules`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CoverageRuleResponseFromJSON));
+    }
+
+    /**
+     * Returns the coverage rules of a mobile unit ordered by ascending priority. Use this tool to inspect where a unit currently operates; use findEligibleMobileUnits instead to answer which units cover a given postal code. Preconditions: none; an unknown unit id yields an empty list rather than an error. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the ordered rule list, empty when the unit has no rules or does not exist. 
+     * Get Coverage Rules of Mobile Unit
+     */
+    async listCoverageRules(requestParameters: ListCoverageRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CoverageRuleResponse>> {
+        const response = await this.listCoverageRulesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists all mobile units as a page with status, base location and travel buffer policy references. Use this tool to enumerate or browse units; use getMobileUnitById instead when the unit id is known, and findEligibleMobileUnits to match units to a service address. Preconditions: none beyond the location:mobile-unit:read authority. Required inputs: none; page defaults to 0 and size to 20. No events are emitted and no state changes; this is a read-only projection. Returns 200 with a page of mobile units, empty when none exist. 
+     * List Mobile Units With Pagination
      */
     async listMobileUnitsRaw(requestParameters: ListMobileUnitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageMobileUnitResponse>> {
         const queryParameters: any = {};
@@ -231,8 +231,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * List mobile units with pagination.
-     * List mobile units
+     * Lists all mobile units as a page with status, base location and travel buffer policy references. Use this tool to enumerate or browse units; use getMobileUnitById instead when the unit id is known, and findEligibleMobileUnits to match units to a service address. Preconditions: none beyond the location:mobile-unit:read authority. Required inputs: none; page defaults to 0 and size to 20. No events are emitted and no state changes; this is a read-only projection. Returns 200 with a page of mobile units, empty when none exist. 
+     * List Mobile Units With Pagination
      */
     async listMobileUnits(requestParameters: ListMobileUnitsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageMobileUnitResponse> {
         const response = await this.listMobileUnitsRaw(requestParameters, initOverrides);
@@ -240,8 +240,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Partially update a mobile unit.
-     * Patch mobile unit
+     * Applies a partial update to a mobile unit, accepting the keys name, status, notes and travelBufferPolicyId. Use this tool for status transitions and travel-buffer-policy reassignment; use replaceCoverageRules instead to change where the unit operates. Preconditions: none are enforced; when the unit id does not exist nothing is persisted and a synthesized response built from the patch is echoed back, so callers must verify existence first with getMobileUnitById. Required inputs: id (UUID) as a path parameter and a JSON object of the fields to change; status values are upper-cased and a blank status normalizes to INACTIVE. Emits a LOCATION_MOBILE_UNIT_UPDATE event. Returns 200 even for unknown ids (with the unpersisted echo) and 409 when a name change collides with another unit at the same base location. 
+     * Patch Fields of a Mobile Unit
      */
     async patchMobileUnitRaw(requestParameters: PatchMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MobileUnitResponse>> {
         if (requestParameters['id'] == null) {
@@ -284,8 +284,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Partially update a mobile unit.
-     * Patch mobile unit
+     * Applies a partial update to a mobile unit, accepting the keys name, status, notes and travelBufferPolicyId. Use this tool for status transitions and travel-buffer-policy reassignment; use replaceCoverageRules instead to change where the unit operates. Preconditions: none are enforced; when the unit id does not exist nothing is persisted and a synthesized response built from the patch is echoed back, so callers must verify existence first with getMobileUnitById. Required inputs: id (UUID) as a path parameter and a JSON object of the fields to change; status values are upper-cased and a blank status normalizes to INACTIVE. Emits a LOCATION_MOBILE_UNIT_UPDATE event. Returns 200 even for unknown ids (with the unpersisted echo) and 409 when a name change collides with another unit at the same base location. 
+     * Patch Fields of a Mobile Unit
      */
     async patchMobileUnit(requestParameters: PatchMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MobileUnitResponse> {
         const response = await this.patchMobileUnitRaw(requestParameters, initOverrides);
@@ -293,8 +293,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Atomically replace coverage rules for a mobile unit.
-     * Replace coverage rules
+     * Atomically replaces the full set of coverage rules for a mobile unit, deleting the existing rules and inserting the supplied ones in one transaction. Use this tool whenever coverage changes, sending the complete desired rule set; do not use patchMobileUnit, which cannot modify coverage. Preconditions: the mobile unit must exist; a referenced serviceAreaId that does not resolve is stored as a rule without a service area rather than rejected. Required inputs: id (UUID) as a path parameter and a body of the form {\"rules\": [...]}, each rule carrying ruleType and optionally serviceAreaId, priority (defaults to 0), validFrom, validTo and maxDistance. Emits a LOCATION_COVERAGE_RULES_REPLACE event. Returns 404 when the mobile unit does not exist; an omitted or empty rules array clears all coverage. 
+     * Replace Coverage Rules for Mobile Unit
      */
     async replaceCoverageRulesRaw(requestParameters: ReplaceCoverageRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CoverageRuleResponse>>> {
         if (requestParameters['id'] == null) {
@@ -337,8 +337,8 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Atomically replace coverage rules for a mobile unit.
-     * Replace coverage rules
+     * Atomically replaces the full set of coverage rules for a mobile unit, deleting the existing rules and inserting the supplied ones in one transaction. Use this tool whenever coverage changes, sending the complete desired rule set; do not use patchMobileUnit, which cannot modify coverage. Preconditions: the mobile unit must exist; a referenced serviceAreaId that does not resolve is stored as a rule without a service area rather than rejected. Required inputs: id (UUID) as a path parameter and a body of the form {\"rules\": [...]}, each rule carrying ruleType and optionally serviceAreaId, priority (defaults to 0), validFrom, validTo and maxDistance. Emits a LOCATION_COVERAGE_RULES_REPLACE event. Returns 404 when the mobile unit does not exist; an omitted or empty rules array clears all coverage. 
+     * Replace Coverage Rules for Mobile Unit
      */
     async replaceCoverageRules(requestParameters: ReplaceCoverageRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CoverageRuleResponse>> {
         const response = await this.replaceCoverageRulesRaw(requestParameters, initOverrides);

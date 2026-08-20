@@ -14,61 +14,73 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single record in a catalog bulk-ingest request
  * @export
  * @interface CatalogBulkIngestRecord
  */
 export interface CatalogBulkIngestRecord {
     /**
-     * 
-     * @type {string}
-     * @memberof CatalogBulkIngestRecord
-     */
-    sku: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CatalogBulkIngestRecord
-     */
-    upc?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CatalogBulkIngestRecord
-     */
-    name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CatalogBulkIngestRecord
-     */
-    description?: string;
-    /**
-     * 
+     * Category name to associate the item with
      * @type {string}
      * @memberof CatalogBulkIngestRecord
      */
     categoryName?: string;
     /**
-     * 
+     * Long description of the item
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    description?: string;
+    /**
+     * Manufacturer part number; falls back to the SKU when absent
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    mpn?: string;
+    /**
+     * Display name of the item
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    name: string;
+    /**
+     * List price for the item
+     * @type {number}
+     * @memberof CatalogBulkIngestRecord
+     */
+    price?: number;
+    /**
+     * Stock keeping unit for the record
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    sku: string;
+    /**
+     * Subcategory name to associate the item with
      * @type {string}
      * @memberof CatalogBulkIngestRecord
      */
     subcategoryName?: string;
     /**
-     * 
-     * @type {number}
+     * Unit of measure for the item; defaults to EA when absent
+     * @type {string}
      * @memberof CatalogBulkIngestRecord
      */
-    price?: number;
+    unitOfMeasure?: string;
+    /**
+     * Universal product code
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    upc?: string;
 }
 
 /**
  * Check if a given object implements the CatalogBulkIngestRecord interface.
  */
 export function instanceOfCatalogBulkIngestRecord(value: object): boolean {
-    if (!('sku' in value)) return false;
     if (!('name' in value)) return false;
+    if (!('sku' in value)) return false;
     return true;
 }
 
@@ -82,13 +94,15 @@ export function CatalogBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'sku': json['sku'],
-        'upc': json['upc'] == null ? undefined : json['upc'],
-        'name': json['name'],
-        'description': json['description'] == null ? undefined : json['description'],
         'categoryName': json['categoryName'] == null ? undefined : json['categoryName'],
-        'subcategoryName': json['subcategoryName'] == null ? undefined : json['subcategoryName'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'mpn': json['mpn'] == null ? undefined : json['mpn'],
+        'name': json['name'],
         'price': json['price'] == null ? undefined : json['price'],
+        'sku': json['sku'],
+        'subcategoryName': json['subcategoryName'] == null ? undefined : json['subcategoryName'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'upc': json['upc'] == null ? undefined : json['upc'],
     };
 }
 
@@ -98,13 +112,15 @@ export function CatalogBulkIngestRecordToJSON(value?: CatalogBulkIngestRecord | 
     }
     return {
         
-        'sku': value['sku'],
-        'upc': value['upc'],
-        'name': value['name'],
-        'description': value['description'],
         'categoryName': value['categoryName'],
-        'subcategoryName': value['subcategoryName'],
+        'description': value['description'],
+        'mpn': value['mpn'],
+        'name': value['name'],
         'price': value['price'],
+        'sku': value['sku'],
+        'subcategoryName': value['subcategoryName'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'upc': value['upc'],
     };
 }
 

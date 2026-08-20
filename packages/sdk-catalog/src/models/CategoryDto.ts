@@ -24,19 +24,21 @@ export interface CategoryDto {
      * @type {string}
      * @memberof CategoryDto
      */
-    id?: string;
+    id: string;
     /**
      * Category name
      * @type {string}
      * @memberof CategoryDto
      */
-    name?: string;
+    name: string;
 }
 
 /**
  * Check if a given object implements the CategoryDto interface.
  */
 export function instanceOfCategoryDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function CategoryDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
+        'id': json['id'],
+        'name': json['name'],
     };
 }
 

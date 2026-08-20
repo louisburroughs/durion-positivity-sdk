@@ -28,10 +28,10 @@ import {
 export class EventSummaryApi extends runtime.BaseAPI {
 
     /**
-     * Returns event counts grouped by event type for the last 24 hours
+     * Returns emitted-event counts grouped by event type code for the trailing 24 hours, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a daily view of platform event traffic; use getEventSummaryLastHour instead for a near-real-time pulse, or getEventSummaryLastWeek for the weekly trend. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 24 hours and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_DAY event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
      * Get event summary for the last day
      */
-    async getLastDaySummaryRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventSummaryResponse>> {
+    async getEventSummaryLastDayRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventSummaryResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -47,19 +47,19 @@ export class EventSummaryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns event counts grouped by event type for the last 24 hours
+     * Returns emitted-event counts grouped by event type code for the trailing 24 hours, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a daily view of platform event traffic; use getEventSummaryLastHour instead for a near-real-time pulse, or getEventSummaryLastWeek for the weekly trend. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 24 hours and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_DAY event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
      * Get event summary for the last day
      */
-    async getLastDaySummary(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventSummaryResponse> {
-        const response = await this.getLastDaySummaryRaw(initOverrides);
+    async getEventSummaryLastDay(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventSummaryResponse> {
+        const response = await this.getEventSummaryLastDayRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns event counts grouped by event type for the last 60 minutes
+     * Returns emitted-event counts grouped by event type code for the trailing 60 minutes, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a near-real-time pulse of platform event traffic; use getEventSummaryLastDay or getEventSummaryLastWeek instead for longer trend windows. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at one hour and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_HOUR event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
      * Get event summary for the last hour
      */
-    async getLastHourSummaryRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventSummaryResponse>> {
+    async getEventSummaryLastHourRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventSummaryResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -75,19 +75,19 @@ export class EventSummaryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns event counts grouped by event type for the last 60 minutes
+     * Returns emitted-event counts grouped by event type code for the trailing 60 minutes, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a near-real-time pulse of platform event traffic; use getEventSummaryLastDay or getEventSummaryLastWeek instead for longer trend windows. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at one hour and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_HOUR event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
      * Get event summary for the last hour
      */
-    async getLastHourSummary(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventSummaryResponse> {
-        const response = await this.getLastHourSummaryRaw(initOverrides);
+    async getEventSummaryLastHour(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventSummaryResponse> {
+        const response = await this.getEventSummaryLastHourRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns event counts grouped by event type for the last 7 days
+     * Returns emitted-event counts grouped by event type code for the trailing 7 days, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a weekly trend of platform event traffic; use getEventSummaryLastHour or getEventSummaryLastDay instead when a shorter window is wanted. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 7 days and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_WEEK event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
      * Get event summary for the last week
      */
-    async getLastWeekSummaryRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventSummaryResponse>> {
+    async getEventSummaryLastWeekRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventSummaryResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -103,11 +103,11 @@ export class EventSummaryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns event counts grouped by event type for the last 7 days
+     * Returns emitted-event counts grouped by event type code for the trailing 7 days, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a weekly trend of platform event traffic; use getEventSummaryLastHour or getEventSummaryLastDay instead when a shorter window is wanted. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 7 days and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_WEEK event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
      * Get event summary for the last week
      */
-    async getLastWeekSummary(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventSummaryResponse> {
-        const response = await this.getLastWeekSummaryRaw(initOverrides);
+    async getEventSummaryLastWeek(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventSummaryResponse> {
+        const response = await this.getEventSummaryLastWeekRaw(initOverrides);
         return await response.value();
     }
 

@@ -14,47 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to resolve the reference/list price for a product in a given context (catalog reference role per ADR-0054; transactional sell prices are resolved by pos-price)
  * @export
  * @interface ResolvePriceRequestDto
  */
 export interface ResolvePriceRequestDto {
     /**
-     * 
-     * @type {string}
+     * Date for which the price should be resolved (defaults to today when omitted)
+     * @type {Date}
      * @memberof ResolvePriceRequestDto
      */
-    productId: string;
+    asOf?: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof ResolvePriceRequestDto
-     */
-    priceBookId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ResolvePriceRequestDto
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ResolvePriceRequestDto
-     */
-    customerTier?: string;
-    /**
-     * 
+     * ISO currency code for the resolved price
      * @type {string}
      * @memberof ResolvePriceRequestDto
      */
     currency?: string;
     /**
-     * 
-     * @type {Date}
+     * Customer tier label matched against rule-level CUSTOMER_TIER conditions within the selected price book
+     * @type {string}
      * @memberof ResolvePriceRequestDto
      */
-    asOf?: Date;
+    customerTier?: string;
+    /**
+     * Identifier of the customer tier used to select a CUSTOMER_TIER reference price book (matches the scopeId of the book). Selects tier list/reference prices only — transactional customer-tier discounting is owned by pos-price (ADR-0054)
+     * @type {string}
+     * @memberof ResolvePriceRequestDto
+     */
+    customerTierId?: string;
+    /**
+     * Identifier of the location used to scope price book selection
+     * @type {string}
+     * @memberof ResolvePriceRequestDto
+     */
+    locationId?: string;
+    /**
+     * Identifier of a specific price book to resolve against (optional)
+     * @type {string}
+     * @memberof ResolvePriceRequestDto
+     */
+    priceBookId?: string;
+    /**
+     * Identifier of the product to price
+     * @type {string}
+     * @memberof ResolvePriceRequestDto
+     */
+    productId: string;
 }
 
 /**
@@ -75,12 +81,13 @@ export function ResolvePriceRequestDtoFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'productId': json['productId'],
-        'priceBookId': json['priceBookId'] == null ? undefined : json['priceBookId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'customerTier': json['customerTier'] == null ? undefined : json['customerTier'],
-        'currency': json['currency'] == null ? undefined : json['currency'],
         'asOf': json['asOf'] == null ? undefined : (new Date(json['asOf'])),
+        'currency': json['currency'] == null ? undefined : json['currency'],
+        'customerTier': json['customerTier'] == null ? undefined : json['customerTier'],
+        'customerTierId': json['customerTierId'] == null ? undefined : json['customerTierId'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'priceBookId': json['priceBookId'] == null ? undefined : json['priceBookId'],
+        'productId': json['productId'],
     };
 }
 
@@ -90,12 +97,13 @@ export function ResolvePriceRequestDtoToJSON(value?: ResolvePriceRequestDto | nu
     }
     return {
         
-        'productId': value['productId'],
-        'priceBookId': value['priceBookId'],
-        'locationId': value['locationId'],
-        'customerTier': value['customerTier'],
-        'currency': value['currency'],
         'asOf': value['asOf'] == null ? undefined : ((value['asOf']).toISOString().substring(0,10)),
+        'currency': value['currency'],
+        'customerTier': value['customerTier'],
+        'customerTierId': value['customerTierId'],
+        'locationId': value['locationId'],
+        'priceBookId': value['priceBookId'],
+        'productId': value['productId'],
     };
 }
 

@@ -20,11 +20,23 @@ import { mapValues } from '../runtime';
  */
 export interface UpsertBillingRulesRequest {
     /**
-     * Payment terms string
+     * Whether auto-pay is enabled for this account
+     * @type {boolean}
+     * @memberof UpsertBillingRulesRequest
+     */
+    autoPayEnabled?: boolean;
+    /**
+     * Billing address ID
      * @type {string}
      * @memberof UpsertBillingRulesRequest
      */
-    paymentTerms?: string;
+    billingAddressId?: string;
+    /**
+     * Whether the account is on a credit hold
+     * @type {boolean}
+     * @memberof UpsertBillingRulesRequest
+     */
+    creditHold?: boolean;
     /**
      * Maximum credit limit; null means no configured limit
      * @type {number}
@@ -38,29 +50,11 @@ export interface UpsertBillingRulesRequest {
      */
     currency?: string;
     /**
-     * Whether the account is tax-exempt
-     * @type {boolean}
+     * Optional reference to a discount policy
+     * @type {string}
      * @memberof UpsertBillingRulesRequest
      */
-    taxExempt?: boolean;
-    /**
-     * Whether a PO number is required before order can be finalized
-     * @type {boolean}
-     * @memberof UpsertBillingRulesRequest
-     */
-    poRequired?: boolean;
-    /**
-     * Whether the account is on a credit hold
-     * @type {boolean}
-     * @memberof UpsertBillingRulesRequest
-     */
-    creditHold?: boolean;
-    /**
-     * Whether auto-pay is enabled for this account
-     * @type {boolean}
-     * @memberof UpsertBillingRulesRequest
-     */
-    autoPayEnabled?: boolean;
+    discountPolicyRef?: string;
     /**
      * Preferred invoice delivery method
      * @type {string}
@@ -68,17 +62,23 @@ export interface UpsertBillingRulesRequest {
      */
     invoiceDeliveryMethod?: UpsertBillingRulesRequestInvoiceDeliveryMethodEnum;
     /**
-     * Billing address ID
+     * Payment terms string
      * @type {string}
      * @memberof UpsertBillingRulesRequest
      */
-    billingAddressId?: string;
+    paymentTerms?: string;
     /**
-     * Optional reference to a discount policy
-     * @type {string}
+     * Whether a PO number is required before order can be finalized
+     * @type {boolean}
      * @memberof UpsertBillingRulesRequest
      */
-    discountPolicyRef?: string;
+    poRequired?: boolean;
+    /**
+     * Whether the account is tax-exempt
+     * @type {boolean}
+     * @memberof UpsertBillingRulesRequest
+     */
+    taxExempt?: boolean;
 }
 
 /**
@@ -110,16 +110,16 @@ export function UpsertBillingRulesRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'paymentTerms': json['paymentTerms'] == null ? undefined : json['paymentTerms'],
+        'autoPayEnabled': json['autoPayEnabled'] == null ? undefined : json['autoPayEnabled'],
+        'billingAddressId': json['billingAddressId'] == null ? undefined : json['billingAddressId'],
+        'creditHold': json['creditHold'] == null ? undefined : json['creditHold'],
         'creditLimit': json['creditLimit'] == null ? undefined : json['creditLimit'],
         'currency': json['currency'] == null ? undefined : json['currency'],
-        'taxExempt': json['taxExempt'] == null ? undefined : json['taxExempt'],
-        'poRequired': json['poRequired'] == null ? undefined : json['poRequired'],
-        'creditHold': json['creditHold'] == null ? undefined : json['creditHold'],
-        'autoPayEnabled': json['autoPayEnabled'] == null ? undefined : json['autoPayEnabled'],
-        'invoiceDeliveryMethod': json['invoiceDeliveryMethod'] == null ? undefined : json['invoiceDeliveryMethod'],
-        'billingAddressId': json['billingAddressId'] == null ? undefined : json['billingAddressId'],
         'discountPolicyRef': json['discountPolicyRef'] == null ? undefined : json['discountPolicyRef'],
+        'invoiceDeliveryMethod': json['invoiceDeliveryMethod'] == null ? undefined : json['invoiceDeliveryMethod'],
+        'paymentTerms': json['paymentTerms'] == null ? undefined : json['paymentTerms'],
+        'poRequired': json['poRequired'] == null ? undefined : json['poRequired'],
+        'taxExempt': json['taxExempt'] == null ? undefined : json['taxExempt'],
     };
 }
 
@@ -129,16 +129,16 @@ export function UpsertBillingRulesRequestToJSON(value?: UpsertBillingRulesReques
     }
     return {
         
-        'paymentTerms': value['paymentTerms'],
+        'autoPayEnabled': value['autoPayEnabled'],
+        'billingAddressId': value['billingAddressId'],
+        'creditHold': value['creditHold'],
         'creditLimit': value['creditLimit'],
         'currency': value['currency'],
-        'taxExempt': value['taxExempt'],
-        'poRequired': value['poRequired'],
-        'creditHold': value['creditHold'],
-        'autoPayEnabled': value['autoPayEnabled'],
-        'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],
-        'billingAddressId': value['billingAddressId'],
         'discountPolicyRef': value['discountPolicyRef'],
+        'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],
+        'paymentTerms': value['paymentTerms'],
+        'poRequired': value['poRequired'],
+        'taxExempt': value['taxExempt'],
     };
 }
 

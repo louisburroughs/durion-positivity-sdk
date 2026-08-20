@@ -27,53 +27,41 @@ import {
 } from './CustomerCreditInfo';
 
 /**
- * 
+ * Result of applying a payment to one or more invoices
  * @export
  * @interface PaymentApplicationResponse
  */
 export interface PaymentApplicationResponse {
     /**
-     * 
+     * Idempotency key echoed from the application request
      * @type {string}
      * @memberof PaymentApplicationResponse
      */
-    paymentId?: string;
+    applicationRequestId?: string;
     /**
-     * 
-     * @type {string}
+     * Timestamp when the payment was applied (ISO 8601)
+     * @type {Date}
      * @memberof PaymentApplicationResponse
      */
-    customerId?: string;
+    applicationTimestamp?: Date;
     /**
-     * 
-     * @type {string}
+     * Per-invoice application details
+     * @type {Array<ApplicationDetail>}
      * @memberof PaymentApplicationResponse
      */
-    currency?: string;
+    applications?: Array<ApplicationDetail>;
     /**
-     * 
-     * @type {number}
-     * @memberof PaymentApplicationResponse
-     */
-    totalAmount?: number;
-    /**
-     * 
+     * Amount of the payment applied to invoices
      * @type {number}
      * @memberof PaymentApplicationResponse
      */
     appliedAmount?: number;
     /**
-     * 
-     * @type {number}
+     * Currency code (ISO 4217)
+     * @type {string}
      * @memberof PaymentApplicationResponse
      */
-    remainingAmount?: number;
-    /**
-     * 
-     * @type {Array<ApplicationDetail>}
-     * @memberof PaymentApplicationResponse
-     */
-    applications?: Array<ApplicationDetail>;
+    currency?: string;
     /**
      * 
      * @type {CustomerCreditInfo}
@@ -81,23 +69,36 @@ export interface PaymentApplicationResponse {
      */
     customerCredit?: CustomerCreditInfo;
     /**
-     * 
-     * @type {Date}
-     * @memberof PaymentApplicationResponse
-     */
-    applicationTimestamp?: Date;
-    /**
-     * 
+     * Identifier of the customer who made the payment
      * @type {string}
      * @memberof PaymentApplicationResponse
      */
-    applicationRequestId?: string;
+    customerId?: string;
+    /**
+     * Identifier of the payment that was applied
+     * @type {string}
+     * @memberof PaymentApplicationResponse
+     */
+    paymentId: string;
+    /**
+     * Amount of the payment remaining after application
+     * @type {number}
+     * @memberof PaymentApplicationResponse
+     */
+    remainingAmount?: number;
+    /**
+     * Total payment amount
+     * @type {number}
+     * @memberof PaymentApplicationResponse
+     */
+    totalAmount?: number;
 }
 
 /**
  * Check if a given object implements the PaymentApplicationResponse interface.
  */
 export function instanceOfPaymentApplicationResponse(value: object): boolean {
+    if (!('paymentId' in value)) return false;
     return true;
 }
 
@@ -111,16 +112,16 @@ export function PaymentApplicationResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
-        'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'currency': json['currency'] == null ? undefined : json['currency'],
-        'totalAmount': json['totalAmount'] == null ? undefined : json['totalAmount'],
-        'appliedAmount': json['appliedAmount'] == null ? undefined : json['appliedAmount'],
-        'remainingAmount': json['remainingAmount'] == null ? undefined : json['remainingAmount'],
-        'applications': json['applications'] == null ? undefined : ((json['applications'] as Array<any>).map(ApplicationDetailFromJSON)),
-        'customerCredit': json['customerCredit'] == null ? undefined : CustomerCreditInfoFromJSON(json['customerCredit']),
-        'applicationTimestamp': json['applicationTimestamp'] == null ? undefined : (new Date(json['applicationTimestamp'])),
         'applicationRequestId': json['applicationRequestId'] == null ? undefined : json['applicationRequestId'],
+        'applicationTimestamp': json['applicationTimestamp'] == null ? undefined : (new Date(json['applicationTimestamp'])),
+        'applications': json['applications'] == null ? undefined : ((json['applications'] as Array<any>).map(ApplicationDetailFromJSON)),
+        'appliedAmount': json['appliedAmount'] == null ? undefined : json['appliedAmount'],
+        'currency': json['currency'] == null ? undefined : json['currency'],
+        'customerCredit': json['customerCredit'] == null ? undefined : CustomerCreditInfoFromJSON(json['customerCredit']),
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
+        'paymentId': json['paymentId'],
+        'remainingAmount': json['remainingAmount'] == null ? undefined : json['remainingAmount'],
+        'totalAmount': json['totalAmount'] == null ? undefined : json['totalAmount'],
     };
 }
 
@@ -130,16 +131,16 @@ export function PaymentApplicationResponseToJSON(value?: PaymentApplicationRespo
     }
     return {
         
-        'paymentId': value['paymentId'],
-        'customerId': value['customerId'],
-        'currency': value['currency'],
-        'totalAmount': value['totalAmount'],
-        'appliedAmount': value['appliedAmount'],
-        'remainingAmount': value['remainingAmount'],
-        'applications': value['applications'] == null ? undefined : ((value['applications'] as Array<any>).map(ApplicationDetailToJSON)),
-        'customerCredit': CustomerCreditInfoToJSON(value['customerCredit']),
-        'applicationTimestamp': value['applicationTimestamp'] == null ? undefined : ((value['applicationTimestamp']).toISOString()),
         'applicationRequestId': value['applicationRequestId'],
+        'applicationTimestamp': value['applicationTimestamp'] == null ? undefined : ((value['applicationTimestamp']).toISOString()),
+        'applications': value['applications'] == null ? undefined : ((value['applications'] as Array<any>).map(ApplicationDetailToJSON)),
+        'appliedAmount': value['appliedAmount'],
+        'currency': value['currency'],
+        'customerCredit': CustomerCreditInfoToJSON(value['customerCredit']),
+        'customerId': value['customerId'],
+        'paymentId': value['paymentId'],
+        'remainingAmount': value['remainingAmount'],
+        'totalAmount': value['totalAmount'],
     };
 }
 

@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface InvoiceLineItem {
     /**
-     * Product/SKU UUID
-     * @type {string}
-     * @memberof InvoiceLineItem
-     */
-    productId: string;
-    /**
      * Product description
      * @type {string}
      * @memberof InvoiceLineItem
      */
     description: string;
+    /**
+     * Product/SKU UUID
+     * @type {string}
+     * @memberof InvoiceLineItem
+     */
+    productId: string;
     /**
      * Invoiced quantity
      * @type {number}
@@ -49,8 +49,8 @@ export interface InvoiceLineItem {
  * Check if a given object implements the InvoiceLineItem interface.
  */
 export function instanceOfInvoiceLineItem(value: object): boolean {
-    if (!('productId' in value)) return false;
     if (!('description' in value)) return false;
+    if (!('productId' in value)) return false;
     if (!('quantity' in value)) return false;
     if (!('unitPrice' in value)) return false;
     return true;
@@ -66,8 +66,8 @@ export function InvoiceLineItemFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'productId': json['productId'],
         'description': json['description'],
+        'productId': json['productId'],
         'quantity': json['quantity'],
         'unitPrice': json['unitPrice'],
     };
@@ -79,8 +79,8 @@ export function InvoiceLineItemToJSON(value?: InvoiceLineItem | null): any {
     }
     return {
         
-        'productId': value['productId'],
         'description': value['description'],
+        'productId': value['productId'],
         'quantity': value['quantity'],
         'unitPrice': value['unitPrice'],
     };

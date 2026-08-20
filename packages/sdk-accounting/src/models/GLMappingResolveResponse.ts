@@ -14,23 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response from GL mapping resolution
  * @export
  * @interface GLMappingResolveResponse
  */
 export interface GLMappingResolveResponse {
     /**
-     * 
+     * Resolved GL account UUID for the requested external code
      * @type {string}
      * @memberof GLMappingResolveResponse
      */
-    glAccountId?: string;
+    glAccountId: string;
 }
 
 /**
  * Check if a given object implements the GLMappingResolveResponse interface.
  */
 export function instanceOfGLMappingResolveResponse(value: object): boolean {
+    if (!('glAccountId' in value)) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function GLMappingResolveResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
+        'glAccountId': json['glAccountId'],
     };
 }
 

@@ -1,6 +1,9 @@
 ﻿/* tslint:disable */
 /* eslint-disable */
 import * as GeneratedApis from './apis';
+// SupplierItemCostAPIApi is no longer part of the generated apis barrel but the
+// class file remains from the previous spec; import it directly.
+import { SupplierItemCostAPIApi } from './apis/SupplierItemCostAPIApi';
 import { Configuration } from './runtime';
 
 export interface DurionSdkConfig {
@@ -56,7 +59,7 @@ export function createCatalogClient(config: DurionSdkConfig) {
     priceBookApi: new GeneratedApis.PriceBookAPIApi(configuration),
     productMSRPApi: new GeneratedApis.ProductMSRPAPIApi(configuration),
     productsApi: new GeneratedApis.ProductsAPIApi(configuration),
-    supplierItemCostApi: new GeneratedApis.SupplierItemCostAPIApi(configuration),
+    supplierItemCostApi: new SupplierItemCostAPIApi(configuration),
     uomConversionApi: new GeneratedApis.UOMConversionAPIApi(configuration),
   };
 }

@@ -21,35 +21,35 @@ import {
 } from './CustomerBulkIngestRecord';
 
 /**
- * 
+ * Generic bulk ingest request: a batch of records for a job scoped to a location
  * @export
  * @interface BulkIngestRequestCustomerBulkIngestRecord
  */
 export interface BulkIngestRequestCustomerBulkIngestRecord {
     /**
-     * 
+     * Identifier of the bulk ingest job
      * @type {string}
      * @memberof BulkIngestRequestCustomerBulkIngestRecord
      */
     jobId: string;
     /**
-     * 
+     * Location the records are ingested for
      * @type {string}
      * @memberof BulkIngestRequestCustomerBulkIngestRecord
      */
     locationId: string;
     /**
-     * 
-     * @type {Array<CustomerBulkIngestRecord>}
-     * @memberof BulkIngestRequestCustomerBulkIngestRecord
-     */
-    records: Array<CustomerBulkIngestRecord>;
-    /**
-     * 
+     * Identifier of the operator submitting the batch
      * @type {string}
      * @memberof BulkIngestRequestCustomerBulkIngestRecord
      */
     operatorId?: string;
+    /**
+     * The records to ingest (at least one); shape depends on the target domain
+     * @type {Array<CustomerBulkIngestRecord>}
+     * @memberof BulkIngestRequestCustomerBulkIngestRecord
+     */
+    records: Array<CustomerBulkIngestRecord>;
 }
 
 /**
@@ -74,8 +74,8 @@ export function BulkIngestRequestCustomerBulkIngestRecordFromJSONTyped(json: any
         
         'jobId': json['jobId'],
         'locationId': json['locationId'],
-        'records': ((json['records'] as Array<any>).map(CustomerBulkIngestRecordFromJSON)),
         'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
+        'records': ((json['records'] as Array<any>).map(CustomerBulkIngestRecordFromJSON)),
     };
 }
 
@@ -87,8 +87,8 @@ export function BulkIngestRequestCustomerBulkIngestRecordToJSON(value?: BulkInge
         
         'jobId': value['jobId'],
         'locationId': value['locationId'],
-        'records': ((value['records'] as Array<any>).map(CustomerBulkIngestRecordToJSON)),
         'operatorId': value['operatorId'],
+        'records': ((value['records'] as Array<any>).map(CustomerBulkIngestRecordToJSON)),
     };
 }
 

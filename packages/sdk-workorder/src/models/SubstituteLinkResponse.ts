@@ -14,59 +14,11 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A substitute-part link associating a product with an approved substitute
  * @export
  * @interface SubstituteLinkResponse
  */
 export interface SubstituteLinkResponse {
-    /**
-     * 
-     * @type {string}
-     * @memberof SubstituteLinkResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SubstituteLinkResponse
-     */
-    productId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SubstituteLinkResponse
-     */
-    substitutePartId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SubstituteLinkResponse
-     */
-    substituteType?: SubstituteLinkResponseSubstituteTypeEnum;
-    /**
-     * 
-     * @type {number}
-     * @memberof SubstituteLinkResponse
-     */
-    priority?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof SubstituteLinkResponse
-     */
-    version?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof SubstituteLinkResponse
-     */
-    createdBy?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SubstituteLinkResponse
-     */
-    updatedBy?: string;
     /**
      * 
      * @type {boolean}
@@ -80,17 +32,65 @@ export interface SubstituteLinkResponse {
      */
     autoSuggest?: boolean;
     /**
-     * 
-     * @type {boolean}
+     * Identifier of the user who created the link
+     * @type {string}
      * @memberof SubstituteLinkResponse
      */
-    isAutoSuggest?: boolean;
+    createdBy?: string;
     /**
-     * 
+     * Identifier of the substitute link
+     * @type {string}
+     * @memberof SubstituteLinkResponse
+     */
+    id: string;
+    /**
+     * Whether this substitute link is currently active
      * @type {boolean}
      * @memberof SubstituteLinkResponse
      */
-    isActive?: boolean;
+    isActive: boolean;
+    /**
+     * Whether this substitute is automatically suggested during picking
+     * @type {boolean}
+     * @memberof SubstituteLinkResponse
+     */
+    isAutoSuggest: boolean;
+    /**
+     * Ordering priority of this substitute among alternatives (lower is preferred)
+     * @type {number}
+     * @memberof SubstituteLinkResponse
+     */
+    priority: number;
+    /**
+     * Identifier of the product the substitute applies to
+     * @type {string}
+     * @memberof SubstituteLinkResponse
+     */
+    productId: string;
+    /**
+     * Identifier of the substitute part
+     * @type {string}
+     * @memberof SubstituteLinkResponse
+     */
+    substitutePartId: string;
+    /**
+     * Type of substitution relationship
+     * @type {string}
+     * @memberof SubstituteLinkResponse
+     */
+    substituteType: SubstituteLinkResponseSubstituteTypeEnum;
+    /**
+     * Identifier of the user who last updated the link
+     * @type {string}
+     * @memberof SubstituteLinkResponse
+     */
+    updatedBy?: string;
+    /**
+     * Version for optimistic locking
+     * @type {number}
+     * @memberof SubstituteLinkResponse
+     */
+    version: number;
 }
 
 /**
@@ -109,6 +109,14 @@ export enum SubstituteLinkResponseSubstituteTypeEnum {
  * Check if a given object implements the SubstituteLinkResponse interface.
  */
 export function instanceOfSubstituteLinkResponse(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('isActive' in value)) return false;
+    if (!('isAutoSuggest' in value)) return false;
+    if (!('priority' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('substitutePartId' in value)) return false;
+    if (!('substituteType' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -122,18 +130,18 @@ export function SubstituteLinkResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'substitutePartId': json['substitutePartId'] == null ? undefined : json['substitutePartId'],
-        'substituteType': json['substituteType'] == null ? undefined : json['substituteType'],
-        'priority': json['priority'] == null ? undefined : json['priority'],
-        'version': json['version'] == null ? undefined : json['version'],
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
         'active': json['active'] == null ? undefined : json['active'],
         'autoSuggest': json['autoSuggest'] == null ? undefined : json['autoSuggest'],
-        'isAutoSuggest': json['isAutoSuggest'] == null ? undefined : json['isAutoSuggest'],
-        'isActive': json['isActive'] == null ? undefined : json['isActive'],
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'id': json['id'],
+        'isActive': json['isActive'],
+        'isAutoSuggest': json['isAutoSuggest'],
+        'priority': json['priority'],
+        'productId': json['productId'],
+        'substitutePartId': json['substitutePartId'],
+        'substituteType': json['substituteType'],
+        'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
+        'version': json['version'],
     };
 }
 
@@ -143,18 +151,18 @@ export function SubstituteLinkResponseToJSON(value?: SubstituteLinkResponse | nu
     }
     return {
         
+        'active': value['active'],
+        'autoSuggest': value['autoSuggest'],
+        'createdBy': value['createdBy'],
         'id': value['id'],
+        'isActive': value['isActive'],
+        'isAutoSuggest': value['isAutoSuggest'],
+        'priority': value['priority'],
         'productId': value['productId'],
         'substitutePartId': value['substitutePartId'],
         'substituteType': value['substituteType'],
-        'priority': value['priority'],
-        'version': value['version'],
-        'createdBy': value['createdBy'],
         'updatedBy': value['updatedBy'],
-        'active': value['active'],
-        'autoSuggest': value['autoSuggest'],
-        'isAutoSuggest': value['isAutoSuggest'],
-        'isActive': value['isActive'],
+        'version': value['version'],
     };
 }
 

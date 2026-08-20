@@ -20,25 +20,25 @@ import { mapValues } from '../runtime';
  */
 export interface AllocationLineRequest {
     /**
-     * Vendor bill UUID
-     * @type {string}
-     * @memberof AllocationLineRequest
-     */
-    vendorBillId: string;
-    /**
      * Amount to apply to this bill
      * @type {number}
      * @memberof AllocationLineRequest
      */
     appliedAmount: number;
+    /**
+     * Vendor bill UUID
+     * @type {string}
+     * @memberof AllocationLineRequest
+     */
+    vendorBillId: string;
 }
 
 /**
  * Check if a given object implements the AllocationLineRequest interface.
  */
 export function instanceOfAllocationLineRequest(value: object): boolean {
-    if (!('vendorBillId' in value)) return false;
     if (!('appliedAmount' in value)) return false;
+    if (!('vendorBillId' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function AllocationLineRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'vendorBillId': json['vendorBillId'],
         'appliedAmount': json['appliedAmount'],
+        'vendorBillId': json['vendorBillId'],
     };
 }
 
@@ -63,8 +63,8 @@ export function AllocationLineRequestToJSON(value?: AllocationLineRequest | null
     }
     return {
         
-        'vendorBillId': value['vendorBillId'],
         'appliedAmount': value['appliedAmount'],
+        'vendorBillId': value['vendorBillId'],
     };
 }
 

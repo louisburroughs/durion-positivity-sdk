@@ -20,29 +20,23 @@ import { mapValues } from '../runtime';
  */
 export interface BreakSegmentResponse {
     /**
-     * Unique identifier of the break segment
-     * @type {string}
-     * @memberof BreakSegmentResponse
-     */
-    breakSegmentId?: string;
-    /**
-     * ID of the parent work session
-     * @type {string}
-     * @memberof BreakSegmentResponse
-     */
-    workSessionId?: string;
-    /**
-     * Break start timestamp
-     * @type {Date}
-     * @memberof BreakSegmentResponse
-     */
-    breakStartAt?: Date;
-    /**
      * Break end timestamp
      * @type {Date}
      * @memberof BreakSegmentResponse
      */
     breakEndAt?: Date;
+    /**
+     * Unique identifier of the break segment
+     * @type {string}
+     * @memberof BreakSegmentResponse
+     */
+    breakSegmentId: string;
+    /**
+     * Break start timestamp
+     * @type {Date}
+     * @memberof BreakSegmentResponse
+     */
+    breakStartAt: Date;
     /**
      * Type of break
      * @type {string}
@@ -55,6 +49,12 @@ export interface BreakSegmentResponse {
      * @memberof BreakSegmentResponse
      */
     notes?: string;
+    /**
+     * ID of the parent work session
+     * @type {string}
+     * @memberof BreakSegmentResponse
+     */
+    workSessionId: string;
 }
 
 /**
@@ -72,6 +72,9 @@ export enum BreakSegmentResponseBreakTypeEnum {
  * Check if a given object implements the BreakSegmentResponse interface.
  */
 export function instanceOfBreakSegmentResponse(value: object): boolean {
+    if (!('breakSegmentId' in value)) return false;
+    if (!('breakStartAt' in value)) return false;
+    if (!('workSessionId' in value)) return false;
     return true;
 }
 
@@ -85,12 +88,12 @@ export function BreakSegmentResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'breakSegmentId': json['breakSegmentId'] == null ? undefined : json['breakSegmentId'],
-        'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
-        'breakStartAt': json['breakStartAt'] == null ? undefined : (new Date(json['breakStartAt'])),
         'breakEndAt': json['breakEndAt'] == null ? undefined : (new Date(json['breakEndAt'])),
+        'breakSegmentId': json['breakSegmentId'],
+        'breakStartAt': (new Date(json['breakStartAt'])),
         'breakType': json['breakType'] == null ? undefined : json['breakType'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'workSessionId': json['workSessionId'],
     };
 }
 
@@ -100,12 +103,12 @@ export function BreakSegmentResponseToJSON(value?: BreakSegmentResponse | null):
     }
     return {
         
-        'breakSegmentId': value['breakSegmentId'],
-        'workSessionId': value['workSessionId'],
-        'breakStartAt': value['breakStartAt'] == null ? undefined : ((value['breakStartAt']).toISOString()),
         'breakEndAt': value['breakEndAt'] == null ? undefined : ((value['breakEndAt']).toISOString()),
+        'breakSegmentId': value['breakSegmentId'],
+        'breakStartAt': ((value['breakStartAt']).toISOString()),
         'breakType': value['breakType'],
         'notes': value['notes'],
+        'workSessionId': value['workSessionId'],
     };
 }
 

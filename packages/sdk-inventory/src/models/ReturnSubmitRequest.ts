@@ -21,31 +21,31 @@ import {
 } from './ReturnLineDto';
 
 /**
- * 
+ * Request to submit a set of return lines against a workorder
  * @export
  * @interface ReturnSubmitRequest
  */
 export interface ReturnSubmitRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof ReturnSubmitRequest
-     */
-    workorderId: string;
-    /**
-     * 
+     * Return lines describing each item, quantity and reason
      * @type {Array<ReturnLineDto>}
      * @memberof ReturnSubmitRequest
      */
     lines: Array<ReturnLineDto>;
+    /**
+     * Identifier of the workorder the return is submitted against
+     * @type {string}
+     * @memberof ReturnSubmitRequest
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the ReturnSubmitRequest interface.
  */
 export function instanceOfReturnSubmitRequest(value: object): boolean {
-    if (!('workorderId' in value)) return false;
     if (!('lines' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -59,8 +59,8 @@ export function ReturnSubmitRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'workorderId': json['workorderId'],
         'lines': ((json['lines'] as Array<any>).map(ReturnLineDtoFromJSON)),
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -70,8 +70,8 @@ export function ReturnSubmitRequestToJSON(value?: ReturnSubmitRequest | null): a
     }
     return {
         
-        'workorderId': value['workorderId'],
         'lines': ((value['lines'] as Array<any>).map(ReturnLineDtoToJSON)),
+        'workorderId': value['workorderId'],
     };
 }
 

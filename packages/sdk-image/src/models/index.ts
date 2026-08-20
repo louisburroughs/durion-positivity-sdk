@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
-// No models generated for sdk-image (image upload/retrieval only)
-export { };
-
+export * from './ApiError';
+export * from './FieldError';
+export * from './StoreImageRequest';
+export * from './StoredImage';

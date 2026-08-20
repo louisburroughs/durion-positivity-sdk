@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to approve a pending cycle count adjustment
  * @export
  * @interface ApproveAdjustmentRequest
  */
 export interface ApproveAdjustmentRequest {
     /**
-     * 
+     * Legacy client-provided approver identifier; the authoritative actor is resolved server-side from the authenticated context
      * @type {string}
      * @memberof ApproveAdjustmentRequest
      */
     approverUserId?: string;
     /**
-     * 
+     * Optional free-text notes recorded with the approval
      * @type {string}
      * @memberof ApproveAdjustmentRequest
      */

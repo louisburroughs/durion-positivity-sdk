@@ -14,44 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to cross-dock received stock directly against a workorder line
  * @export
  * @interface CrossDockRequest
  */
 export interface CrossDockRequest {
     /**
-     * 
+     * Lot or batch number of the cross-docked stock. Required (422 LOT_NUMBER_REQUIRED) when the product is LOT-tracked (falls back to the lot number already keyed on the receiving line); the lot is found-or-created like any receipt and stamped on BOTH paired ledger entries. Ignored for untracked products
      * @type {string}
      * @memberof CrossDockRequest
      */
-    workorderId: string;
+    lotNumber?: string;
     /**
-     * 
+     * Optional free-text note describing the cross-dock action
      * @type {string}
      * @memberof CrossDockRequest
      */
-    workorderLineId: string;
+    notes?: string;
     /**
-     * 
+     * Quantity of stock to cross-dock against the workorder line
      * @type {number}
      * @memberof CrossDockRequest
      */
     quantity: number;
     /**
-     * 
+     * Identifier of the workorder the received stock is cross-docked to
      * @type {string}
      * @memberof CrossDockRequest
      */
-    notes?: string;
+    workorderId: string;
+    /**
+     * Identifier of the workorder line the received stock fulfils
+     * @type {string}
+     * @memberof CrossDockRequest
+     */
+    workorderLineId: string;
 }
 
 /**
  * Check if a given object implements the CrossDockRequest interface.
  */
 export function instanceOfCrossDockRequest(value: object): boolean {
+    if (!('quantity' in value)) return false;
     if (!('workorderId' in value)) return false;
     if (!('workorderLineId' in value)) return false;
-    if (!('quantity' in value)) return false;
     return true;
 }
 
@@ -65,10 +71,11 @@ export function CrossDockRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'quantity': json['quantity'],
         'workorderId': json['workorderId'],
         'workorderLineId': json['workorderLineId'],
-        'quantity': json['quantity'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
     };
 }
 
@@ -78,10 +85,11 @@ export function CrossDockRequestToJSON(value?: CrossDockRequest | null): any {
     }
     return {
         
+        'lotNumber': value['lotNumber'],
+        'notes': value['notes'],
+        'quantity': value['quantity'],
         'workorderId': value['workorderId'],
         'workorderLineId': value['workorderLineId'],
-        'quantity': value['quantity'],
-        'notes': value['notes'],
     };
 }
 

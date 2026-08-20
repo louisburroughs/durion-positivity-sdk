@@ -27,29 +27,32 @@ import {
  */
 export interface ApplyPromotionResponse {
     /**
+     * Adjustments applied during promotion evaluation
+     * @type {Array<PricingAdjustment>}
+     * @memberof ApplyPromotionResponse
+     */
+    appliedAdjustments: Array<PricingAdjustment>;
+    /**
      * Original estimate subtotal before promotions
      * @type {number}
      * @memberof ApplyPromotionResponse
      */
-    subtotal?: number;
+    subtotal: number;
     /**
      * Final estimate total after applying adjustments
      * @type {number}
      * @memberof ApplyPromotionResponse
      */
-    total?: number;
-    /**
-     * Adjustments applied during promotion evaluation
-     * @type {Array<PricingAdjustment>}
-     * @memberof ApplyPromotionResponse
-     */
-    appliedAdjustments?: Array<PricingAdjustment>;
+    total: number;
 }
 
 /**
  * Check if a given object implements the ApplyPromotionResponse interface.
  */
 export function instanceOfApplyPromotionResponse(value: object): boolean {
+    if (!('appliedAdjustments' in value)) return false;
+    if (!('subtotal' in value)) return false;
+    if (!('total' in value)) return false;
     return true;
 }
 
@@ -63,9 +66,9 @@ export function ApplyPromotionResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
-        'total': json['total'] == null ? undefined : json['total'],
-        'appliedAdjustments': json['appliedAdjustments'] == null ? undefined : ((json['appliedAdjustments'] as Array<any>).map(PricingAdjustmentFromJSON)),
+        'appliedAdjustments': ((json['appliedAdjustments'] as Array<any>).map(PricingAdjustmentFromJSON)),
+        'subtotal': json['subtotal'],
+        'total': json['total'],
     };
 }
 
@@ -75,9 +78,9 @@ export function ApplyPromotionResponseToJSON(value?: ApplyPromotionResponse | nu
     }
     return {
         
+        'appliedAdjustments': ((value['appliedAdjustments'] as Array<any>).map(PricingAdjustmentToJSON)),
         'subtotal': value['subtotal'],
         'total': value['total'],
-        'appliedAdjustments': value['appliedAdjustments'] == null ? undefined : ((value['appliedAdjustments'] as Array<any>).map(PricingAdjustmentToJSON)),
     };
 }
 

@@ -21,47 +21,11 @@ import {
 } from './EmployeeContactInfoDto';
 
 /**
- * 
+ * Request to create an employee record
  * @export
  * @interface CreateEmployeeRequest
  */
 export interface CreateEmployeeRequest {
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateEmployeeRequest
-     */
-    legalName: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateEmployeeRequest
-     */
-    preferredName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateEmployeeRequest
-     */
-    employeeNumber: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateEmployeeRequest
-     */
-    status: CreateEmployeeRequestStatusEnum;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CreateEmployeeRequest
-     */
-    hireDate: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CreateEmployeeRequest
-     */
-    terminationDate?: Date;
     /**
      * 
      * @type {EmployeeContactInfoDto}
@@ -69,13 +33,63 @@ export interface CreateEmployeeRequest {
      */
     contactInfo?: EmployeeContactInfoDto;
     /**
-     * 
+     * Policy controlling how potential duplicate employee records are handled during creation
      * @type {string}
      * @memberof CreateEmployeeRequest
      */
     duplicatePolicy?: CreateEmployeeRequestDuplicatePolicyEnum;
+    /**
+     * Unique employee number
+     * @type {string}
+     * @memberof CreateEmployeeRequest
+     */
+    employeeNumber: string;
+    /**
+     * First (given) name of the employee
+     * @type {string}
+     * @memberof CreateEmployeeRequest
+     */
+    firstName: string;
+    /**
+     * Date the employee was hired
+     * @type {Date}
+     * @memberof CreateEmployeeRequest
+     */
+    hireDate: Date;
+    /**
+     * Last (family) name of the employee
+     * @type {string}
+     * @memberof CreateEmployeeRequest
+     */
+    lastName: string;
+    /**
+     * Preferred name of the employee
+     * @type {string}
+     * @memberof CreateEmployeeRequest
+     */
+    preferredName?: string;
+    /**
+     * Employment status of the employee
+     * @type {string}
+     * @memberof CreateEmployeeRequest
+     */
+    status: CreateEmployeeRequestStatusEnum;
+    /**
+     * Date the employee was terminated, if applicable
+     * @type {Date}
+     * @memberof CreateEmployeeRequest
+     */
+    terminationDate?: Date;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum CreateEmployeeRequestDuplicatePolicyEnum {
+    Strict = 'STRICT',
+    Balanced = 'BALANCED'
+}
 /**
 * @export
 * @enum {string}
@@ -87,24 +101,17 @@ export enum CreateEmployeeRequestStatusEnum {
     Terminated = 'TERMINATED',
     Disabled = 'DISABLED'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum CreateEmployeeRequestDuplicatePolicyEnum {
-    Strict = 'STRICT',
-    Balanced = 'BALANCED'
-}
 
 
 /**
  * Check if a given object implements the CreateEmployeeRequest interface.
  */
 export function instanceOfCreateEmployeeRequest(value: object): boolean {
-    if (!('legalName' in value)) return false;
     if (!('employeeNumber' in value)) return false;
-    if (!('status' in value)) return false;
+    if (!('firstName' in value)) return false;
     if (!('hireDate' in value)) return false;
+    if (!('lastName' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -118,14 +125,15 @@ export function CreateEmployeeRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'legalName': json['legalName'],
-        'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
-        'employeeNumber': json['employeeNumber'],
-        'status': json['status'],
-        'hireDate': (new Date(json['hireDate'])),
-        'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
         'contactInfo': json['contactInfo'] == null ? undefined : EmployeeContactInfoDtoFromJSON(json['contactInfo']),
         'duplicatePolicy': json['duplicatePolicy'] == null ? undefined : json['duplicatePolicy'],
+        'employeeNumber': json['employeeNumber'],
+        'firstName': json['firstName'],
+        'hireDate': (new Date(json['hireDate'])),
+        'lastName': json['lastName'],
+        'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
+        'status': json['status'],
+        'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
     };
 }
 
@@ -135,14 +143,15 @@ export function CreateEmployeeRequestToJSON(value?: CreateEmployeeRequest | null
     }
     return {
         
-        'legalName': value['legalName'],
-        'preferredName': value['preferredName'],
-        'employeeNumber': value['employeeNumber'],
-        'status': value['status'],
-        'hireDate': ((value['hireDate']).toISOString().substring(0,10)),
-        'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
         'contactInfo': EmployeeContactInfoDtoToJSON(value['contactInfo']),
         'duplicatePolicy': value['duplicatePolicy'],
+        'employeeNumber': value['employeeNumber'],
+        'firstName': value['firstName'],
+        'hireDate': ((value['hireDate']).toISOString().substring(0,10)),
+        'lastName': value['lastName'],
+        'preferredName': value['preferredName'],
+        'status': value['status'],
+        'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
     };
 }
 

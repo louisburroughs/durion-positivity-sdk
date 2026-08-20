@@ -20,30 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface PricingInfo {
     /**
-     * Manufacturer's suggested retail price
-     * @type {number}
-     * @memberof PricingInfo
-     */
-    msrp?: number;
-    /**
-     * Store-specific price
-     * @type {number}
-     * @memberof PricingInfo
-     */
-    storePrice?: number;
-    /**
-     * Currency code
-     * @type {string}
-     * @memberof PricingInfo
-     */
-    currency?: string;
-    /**
-     * Pricing data status
-     * @type {string}
-     * @memberof PricingInfo
-     */
-    status?: PricingInfoStatusEnum;
-    /**
      * Timestamp of pricing data
      * @type {Date}
      * @memberof PricingInfo
@@ -54,9 +30,42 @@ export interface PricingInfo {
      * @type {string}
      * @memberof PricingInfo
      */
-    confidence?: PricingInfoConfidenceEnum;
+    confidence: PricingInfoConfidenceEnum;
+    /**
+     * Currency code
+     * @type {string}
+     * @memberof PricingInfo
+     */
+    currency?: string;
+    /**
+     * Manufacturer's suggested retail price
+     * @type {number}
+     * @memberof PricingInfo
+     */
+    msrp?: number;
+    /**
+     * Pricing data status
+     * @type {string}
+     * @memberof PricingInfo
+     */
+    status: PricingInfoStatusEnum;
+    /**
+     * Store-specific price
+     * @type {number}
+     * @memberof PricingInfo
+     */
+    storePrice?: number;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum PricingInfoConfidenceEnum {
+    Low = 'LOW',
+    Medium = 'MEDIUM',
+    High = 'HIGH'
+}
 /**
 * @export
 * @enum {string}
@@ -67,21 +76,14 @@ export enum PricingInfoStatusEnum {
     Stale = 'STALE',
     Error = 'ERROR'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum PricingInfoConfidenceEnum {
-    Low = 'LOW',
-    Medium = 'MEDIUM',
-    High = 'HIGH'
-}
 
 
 /**
  * Check if a given object implements the PricingInfo interface.
  */
 export function instanceOfPricingInfo(value: object): boolean {
+    if (!('confidence' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -95,12 +97,12 @@ export function PricingInfoFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'msrp': json['msrp'] == null ? undefined : json['msrp'],
-        'storePrice': json['storePrice'] == null ? undefined : json['storePrice'],
-        'currency': json['currency'] == null ? undefined : json['currency'],
-        'status': json['status'] == null ? undefined : json['status'],
         'asOf': json['asOf'] == null ? undefined : (new Date(json['asOf'])),
-        'confidence': json['confidence'] == null ? undefined : json['confidence'],
+        'confidence': json['confidence'],
+        'currency': json['currency'] == null ? undefined : json['currency'],
+        'msrp': json['msrp'] == null ? undefined : json['msrp'],
+        'status': json['status'],
+        'storePrice': json['storePrice'] == null ? undefined : json['storePrice'],
     };
 }
 
@@ -110,12 +112,12 @@ export function PricingInfoToJSON(value?: PricingInfo | null): any {
     }
     return {
         
-        'msrp': value['msrp'],
-        'storePrice': value['storePrice'],
-        'currency': value['currency'],
-        'status': value['status'],
         'asOf': value['asOf'] == null ? undefined : ((value['asOf']).toISOString()),
         'confidence': value['confidence'],
+        'currency': value['currency'],
+        'msrp': value['msrp'],
+        'status': value['status'],
+        'storePrice': value['storePrice'],
     };
 }
 

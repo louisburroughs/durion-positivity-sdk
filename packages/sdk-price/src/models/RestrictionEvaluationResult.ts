@@ -14,35 +14,35 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Restriction-evaluation outcome for a single product context
  * @export
  * @interface RestrictionEvaluationResult
  */
 export interface RestrictionEvaluationResult {
     /**
-     * 
+     * Restriction decision for the product context
      * @type {string}
      * @memberof RestrictionEvaluationResult
      */
-    productId?: string;
+    decision: RestrictionEvaluationResultDecisionEnum;
     /**
-     * 
+     * Product the evaluation applies to
      * @type {string}
      * @memberof RestrictionEvaluationResult
      */
-    decision?: RestrictionEvaluationResultDecisionEnum;
+    productId: string;
     /**
-     * 
+     * Reason codes explaining the decision
      * @type {Array<string>}
      * @memberof RestrictionEvaluationResult
      */
-    ruleIds?: Array<string>;
+    reasonCodes: Array<string>;
     /**
-     * 
+     * Identifiers of rules that contributed to the decision
      * @type {Array<string>}
      * @memberof RestrictionEvaluationResult
      */
-    reasonCodes?: Array<string>;
+    ruleIds: Array<string>;
 }
 
 /**
@@ -61,6 +61,10 @@ export enum RestrictionEvaluationResultDecisionEnum {
  * Check if a given object implements the RestrictionEvaluationResult interface.
  */
 export function instanceOfRestrictionEvaluationResult(value: object): boolean {
+    if (!('decision' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('reasonCodes' in value)) return false;
+    if (!('ruleIds' in value)) return false;
     return true;
 }
 
@@ -74,10 +78,10 @@ export function RestrictionEvaluationResultFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'decision': json['decision'] == null ? undefined : json['decision'],
-        'ruleIds': json['ruleIds'] == null ? undefined : json['ruleIds'],
-        'reasonCodes': json['reasonCodes'] == null ? undefined : json['reasonCodes'],
+        'decision': json['decision'],
+        'productId': json['productId'],
+        'reasonCodes': json['reasonCodes'],
+        'ruleIds': json['ruleIds'],
     };
 }
 
@@ -87,10 +91,10 @@ export function RestrictionEvaluationResultToJSON(value?: RestrictionEvaluationR
     }
     return {
         
-        'productId': value['productId'],
         'decision': value['decision'],
-        'ruleIds': value['ruleIds'],
+        'productId': value['productId'],
         'reasonCodes': value['reasonCodes'],
+        'ruleIds': value['ruleIds'],
     };
 }
 

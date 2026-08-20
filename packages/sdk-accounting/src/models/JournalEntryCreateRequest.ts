@@ -27,35 +27,23 @@ import {
  */
 export interface JournalEntryCreateRequest {
     /**
-     * Organization UUID
-     * @type {string}
-     * @memberof JournalEntryCreateRequest
-     */
-    organizationId?: string;
-    /**
-     * Journal transaction date and time
-     * @type {Date}
-     * @memberof JournalEntryCreateRequest
-     */
-    transactionDate: Date;
-    /**
      * Journal entry description
      * @type {string}
      * @memberof JournalEntryCreateRequest
      */
     description?: string;
     /**
-     * Source event UUID
-     * @type {string}
+     * Journal lines (must net to a balanced entry)
+     * @type {Array<JournalEntryLineRequest>}
      * @memberof JournalEntryCreateRequest
      */
-    sourceEventId?: string;
+    lines: Array<JournalEntryLineRequest>;
     /**
-     * Source event type
+     * Organization UUID
      * @type {string}
      * @memberof JournalEntryCreateRequest
      */
-    sourceEventType?: string;
+    organizationId?: string;
     /**
      * Posting rule set UUID used to generate this journal entry
      * @type {string}
@@ -69,19 +57,31 @@ export interface JournalEntryCreateRequest {
      */
     postingRuleVersionId?: string;
     /**
-     * Journal lines (must net to a balanced entry)
-     * @type {Array<JournalEntryLineRequest>}
+     * Source event UUID
+     * @type {string}
      * @memberof JournalEntryCreateRequest
      */
-    lines: Array<JournalEntryLineRequest>;
+    sourceEventId?: string;
+    /**
+     * Source event type
+     * @type {string}
+     * @memberof JournalEntryCreateRequest
+     */
+    sourceEventType?: string;
+    /**
+     * Journal transaction date and time
+     * @type {Date}
+     * @memberof JournalEntryCreateRequest
+     */
+    transactionDate: Date;
 }
 
 /**
  * Check if a given object implements the JournalEntryCreateRequest interface.
  */
 export function instanceOfJournalEntryCreateRequest(value: object): boolean {
-    if (!('transactionDate' in value)) return false;
     if (!('lines' in value)) return false;
+    if (!('transactionDate' in value)) return false;
     return true;
 }
 
@@ -95,14 +95,14 @@ export function JournalEntryCreateRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'organizationId': json['organizationId'] == null ? undefined : json['organizationId'],
-        'transactionDate': (new Date(json['transactionDate'])),
         'description': json['description'] == null ? undefined : json['description'],
-        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
-        'sourceEventType': json['sourceEventType'] == null ? undefined : json['sourceEventType'],
+        'lines': ((json['lines'] as Array<any>).map(JournalEntryLineRequestFromJSON)),
+        'organizationId': json['organizationId'] == null ? undefined : json['organizationId'],
         'postingRuleSetId': json['postingRuleSetId'] == null ? undefined : json['postingRuleSetId'],
         'postingRuleVersionId': json['postingRuleVersionId'] == null ? undefined : json['postingRuleVersionId'],
-        'lines': ((json['lines'] as Array<any>).map(JournalEntryLineRequestFromJSON)),
+        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
+        'sourceEventType': json['sourceEventType'] == null ? undefined : json['sourceEventType'],
+        'transactionDate': (new Date(json['transactionDate'])),
     };
 }
 
@@ -112,14 +112,14 @@ export function JournalEntryCreateRequestToJSON(value?: JournalEntryCreateReques
     }
     return {
         
-        'organizationId': value['organizationId'],
-        'transactionDate': ((value['transactionDate']).toISOString()),
         'description': value['description'],
-        'sourceEventId': value['sourceEventId'],
-        'sourceEventType': value['sourceEventType'],
+        'lines': ((value['lines'] as Array<any>).map(JournalEntryLineRequestToJSON)),
+        'organizationId': value['organizationId'],
         'postingRuleSetId': value['postingRuleSetId'],
         'postingRuleVersionId': value['postingRuleVersionId'],
-        'lines': ((value['lines'] as Array<any>).map(JournalEntryLineRequestToJSON)),
+        'sourceEventId': value['sourceEventId'],
+        'sourceEventType': value['sourceEventType'],
+        'transactionDate': ((value['transactionDate']).toISOString()),
     };
 }
 

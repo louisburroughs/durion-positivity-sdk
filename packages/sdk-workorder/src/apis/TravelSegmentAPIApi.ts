@@ -37,7 +37,7 @@ import {
     TravelSegmentResponseToJSON,
 } from '../models/index';
 
-export interface CreateAdjustmentRequest {
+export interface CreateTravelSegmentAdjustmentOperationRequest {
     travelSegmentId: string;
     createTravelSegmentAdjustmentRequest: CreateTravelSegmentAdjustmentRequest;
 }
@@ -62,21 +62,21 @@ export interface SubmitTravelSegmentsOperationRequest {
 export class TravelSegmentAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create an adjustment for a previously recorded travel segment after approval
-     * Create a post-approval adjustment for a travel segment
+     * Creates an adjustment record against an APPROVED travel segment, capturing corrected start and end times and a reason while leaving the original segment untouched. Use this tool when approved travel times need correction after the fact; do not use stopTravelSegment or submitTravelSegments, which drive the normal pre-approval lifecycle. Preconditions: the segment must exist and be in APPROVED status — adjustments cannot be created for IN_PROGRESS, COMPLETED, or SUBMITTED segments. Required inputs: travelSegmentId (UUID) as a path parameter and a body with a non-blank adjustmentReason; adjustedStartAt and adjustedEndAt (ISO instants) are optional. Emits a WORKORDER_TRAVEL_SEGMENT_ADJUSTMENT event; the adjusting user is recorded from the security context. Returns 201 with the adjustment, 404 when no segment exists for the id, and 409 when the segment is not APPROVED. 
+     * Create Post-Approval Travel Adjustment
      */
-    async createAdjustmentRaw(requestParameters: CreateAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelSegmentAdjustmentResponse>> {
+    async createTravelSegmentAdjustmentRaw(requestParameters: CreateTravelSegmentAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelSegmentAdjustmentResponse>> {
         if (requestParameters['travelSegmentId'] == null) {
             throw new runtime.RequiredError(
                 'travelSegmentId',
-                'Required parameter "travelSegmentId" was null or undefined when calling createAdjustment().'
+                'Required parameter "travelSegmentId" was null or undefined when calling createTravelSegmentAdjustment().'
             );
         }
 
         if (requestParameters['createTravelSegmentAdjustmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'createTravelSegmentAdjustmentRequest',
-                'Required parameter "createTravelSegmentAdjustmentRequest" was null or undefined when calling createAdjustment().'
+                'Required parameter "createTravelSegmentAdjustmentRequest" was null or undefined when calling createTravelSegmentAdjustment().'
             );
         }
 
@@ -106,17 +106,17 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create an adjustment for a previously recorded travel segment after approval
-     * Create a post-approval adjustment for a travel segment
+     * Creates an adjustment record against an APPROVED travel segment, capturing corrected start and end times and a reason while leaving the original segment untouched. Use this tool when approved travel times need correction after the fact; do not use stopTravelSegment or submitTravelSegments, which drive the normal pre-approval lifecycle. Preconditions: the segment must exist and be in APPROVED status — adjustments cannot be created for IN_PROGRESS, COMPLETED, or SUBMITTED segments. Required inputs: travelSegmentId (UUID) as a path parameter and a body with a non-blank adjustmentReason; adjustedStartAt and adjustedEndAt (ISO instants) are optional. Emits a WORKORDER_TRAVEL_SEGMENT_ADJUSTMENT event; the adjusting user is recorded from the security context. Returns 201 with the adjustment, 404 when no segment exists for the id, and 409 when the segment is not APPROVED. 
+     * Create Post-Approval Travel Adjustment
      */
-    async createAdjustment(requestParameters: CreateAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentAdjustmentResponse> {
-        const response = await this.createAdjustmentRaw(requestParameters, initOverrides);
+    async createTravelSegmentAdjustment(requestParameters: CreateTravelSegmentAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentAdjustmentResponse> {
+        const response = await this.createTravelSegmentAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Start a travel segment for a technician beginning travel related to work execution
-     * Start a travel segment
+     * Starts an IN_PROGRESS travel segment for a mobile technician, stamping the start time from the server clock and recording who created it. Use this tool when a technician begins travel tied to a mobile work assignment; do not use stopTravelSegment, which ends an already-running segment. Preconditions: no IN_PROGRESS travel segment may exist for the same mobile work assignment, and when actedForPersonId is set an onBehalfReasonCode is mandatory. Required inputs: mobileWorkAssignmentId (UUID), technicianId (UUID), and segmentType (DEPART_SHOP, ARRIVE_CUSTOMER_SITE, DEPART_CUSTOMER_SITE, ARRIVE_SHOP, TRAVEL_BETWEEN_SITES, or DEADHEAD); fromLocationId, toLocationId, workOrderId, actedForPersonId, and onBehalfReasonCode (TECHNICIAN_UNAVAILABLE, FORGOT_TO_CLOCK, DATA_ENTRY_ERROR) are optional. Emits a WORKORDER_TRAVEL_SEGMENT_START event. Returns 201 with the new segment, 400 when actedForPersonId is given without onBehalfReasonCode, and 409 when an active segment already exists for the assignment. 
+     * Start a Travel Segment
      */
     async startTravelSegmentRaw(requestParameters: StartTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelSegmentResponse>> {
         if (requestParameters['startTravelSegmentRequest'] == null) {
@@ -152,8 +152,8 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start a travel segment for a technician beginning travel related to work execution
-     * Start a travel segment
+     * Starts an IN_PROGRESS travel segment for a mobile technician, stamping the start time from the server clock and recording who created it. Use this tool when a technician begins travel tied to a mobile work assignment; do not use stopTravelSegment, which ends an already-running segment. Preconditions: no IN_PROGRESS travel segment may exist for the same mobile work assignment, and when actedForPersonId is set an onBehalfReasonCode is mandatory. Required inputs: mobileWorkAssignmentId (UUID), technicianId (UUID), and segmentType (DEPART_SHOP, ARRIVE_CUSTOMER_SITE, DEPART_CUSTOMER_SITE, ARRIVE_SHOP, TRAVEL_BETWEEN_SITES, or DEADHEAD); fromLocationId, toLocationId, workOrderId, actedForPersonId, and onBehalfReasonCode (TECHNICIAN_UNAVAILABLE, FORGOT_TO_CLOCK, DATA_ENTRY_ERROR) are optional. Emits a WORKORDER_TRAVEL_SEGMENT_START event. Returns 201 with the new segment, 400 when actedForPersonId is given without onBehalfReasonCode, and 409 when an active segment already exists for the assignment. 
+     * Start a Travel Segment
      */
     async startTravelSegment(requestParameters: StartTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentResponse> {
         const response = await this.startTravelSegmentRaw(requestParameters, initOverrides);
@@ -161,8 +161,8 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop an active travel segment and record the final travel details
-     * Stop a travel segment
+     * Stops an IN_PROGRESS travel segment, transitioning it to COMPLETED and computing the duration in whole minutes from the server clock. Use this tool when a technician arrives and the travel leg ends; do not use submitTravelSegments, which batches finished segments for approval. Preconditions: the segment must exist and be IN_PROGRESS; COMPLETED, SUBMITTED, or APPROVED segments cannot be stopped again. Required inputs: travelSegmentId (UUID) as a path parameter; toLocationId in the body is optional and overrides the destination recorded at start. Emits a WORKORDER_TRAVEL_SEGMENT_STOP event carrying the computed duration. Returns 404 when no segment exists for the id, and 409 when the segment is not IN_PROGRESS. 
+     * Stop an Active Travel Segment
      */
     async stopTravelSegmentRaw(requestParameters: StopTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TravelSegmentResponse>> {
         if (requestParameters['travelSegmentId'] == null) {
@@ -205,8 +205,8 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop an active travel segment and record the final travel details
-     * Stop a travel segment
+     * Stops an IN_PROGRESS travel segment, transitioning it to COMPLETED and computing the duration in whole minutes from the server clock. Use this tool when a technician arrives and the travel leg ends; do not use submitTravelSegments, which batches finished segments for approval. Preconditions: the segment must exist and be IN_PROGRESS; COMPLETED, SUBMITTED, or APPROVED segments cannot be stopped again. Required inputs: travelSegmentId (UUID) as a path parameter; toLocationId in the body is optional and overrides the destination recorded at start. Emits a WORKORDER_TRAVEL_SEGMENT_STOP event carrying the computed duration. Returns 404 when no segment exists for the id, and 409 when the segment is not IN_PROGRESS. 
+     * Stop an Active Travel Segment
      */
     async stopTravelSegment(requestParameters: StopTravelSegmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TravelSegmentResponse> {
         const response = await this.stopTravelSegmentRaw(requestParameters, initOverrides);
@@ -214,8 +214,8 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit recorded travel segments for a mobile work assignment for downstream processing
-     * Submit travel segments for a mobile work assignment
+     * Submits the calling technician\'s IN_PROGRESS and COMPLETED travel segments for a mobile work assignment, transitioning them all to SUBMITTED for downstream approval. Use this tool at end of day when travel is ready for review; do not use stopTravelSegment, which ends a single running leg without submitting it. Preconditions: the security-context username must parse as the technician\'s UUID, and at least one IN_PROGRESS or COMPLETED segment must exist for that technician on the assignment. Required inputs: mobileWorkAssignmentId (UUID) as a path parameter and a body with workDate (ISO date); the body is validated but submission is keyed entirely on the path id and the caller\'s identity. Emits a WORKORDER_TRAVEL_SEGMENT_SUBMIT event. Returns 200 with the submitted segments, 400 when the caller\'s username is not a UUID, and 404 when no submittable segments exist for the assignment. 
+     * Submit Travel Segments for Approval
      */
     async submitTravelSegmentsRaw(requestParameters: SubmitTravelSegmentsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TravelSegmentResponse>>> {
         if (requestParameters['mobileWorkAssignmentId'] == null) {
@@ -258,8 +258,8 @@ export class TravelSegmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit recorded travel segments for a mobile work assignment for downstream processing
-     * Submit travel segments for a mobile work assignment
+     * Submits the calling technician\'s IN_PROGRESS and COMPLETED travel segments for a mobile work assignment, transitioning them all to SUBMITTED for downstream approval. Use this tool at end of day when travel is ready for review; do not use stopTravelSegment, which ends a single running leg without submitting it. Preconditions: the security-context username must parse as the technician\'s UUID, and at least one IN_PROGRESS or COMPLETED segment must exist for that technician on the assignment. Required inputs: mobileWorkAssignmentId (UUID) as a path parameter and a body with workDate (ISO date); the body is validated but submission is keyed entirely on the path id and the caller\'s identity. Emits a WORKORDER_TRAVEL_SEGMENT_SUBMIT event. Returns 200 with the submitted segments, 400 when the caller\'s username is not a UUID, and 404 when no submittable segments exist for the assignment. 
+     * Submit Travel Segments for Approval
      */
     async submitTravelSegments(requestParameters: SubmitTravelSegmentsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TravelSegmentResponse>> {
         const response = await this.submitTravelSegmentsRaw(requestParameters, initOverrides);

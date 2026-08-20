@@ -27,29 +27,17 @@ import {
  */
 export interface EstimateSummaryResponse {
     /**
-     * Estimate identifier
-     * @type {string}
-     * @memberof EstimateSummaryResponse
-     */
-    id?: string;
-    /**
-     * Estimate number
-     * @type {string}
-     * @memberof EstimateSummaryResponse
-     */
-    estimateNumber?: string;
-    /**
      * Creation timestamp
      * @type {Date}
      * @memberof EstimateSummaryResponse
      */
     createdAt?: Date;
     /**
-     * Estimate expiry timestamp
-     * @type {Date}
+     * Currency code
+     * @type {string}
      * @memberof EstimateSummaryResponse
      */
-    expiresAt?: Date;
+    currencyUomId?: string;
     /**
      * Customer identifier
      * @type {string}
@@ -57,11 +45,35 @@ export interface EstimateSummaryResponse {
      */
     customerId?: string;
     /**
-     * Vehicle identifier
+     * Resolved customer display name
      * @type {string}
      * @memberof EstimateSummaryResponse
      */
-    vehicleId?: string;
+    customerName?: string;
+    /**
+     * Estimate number
+     * @type {string}
+     * @memberof EstimateSummaryResponse
+     */
+    estimateNumber: string;
+    /**
+     * Estimate expiry timestamp
+     * @type {Date}
+     * @memberof EstimateSummaryResponse
+     */
+    expiresAt?: Date;
+    /**
+     * Estimate identifier
+     * @type {string}
+     * @memberof EstimateSummaryResponse
+     */
+    id: string;
+    /**
+     * Labor line items
+     * @type {Array<EstimateItemResponse>}
+     * @memberof EstimateSummaryResponse
+     */
+    laborItems?: Array<EstimateItemResponse>;
     /**
      * Location identifier
      * @type {string}
@@ -69,23 +81,17 @@ export interface EstimateSummaryResponse {
      */
     locationId?: string;
     /**
-     * Current estimate status
-     * @type {string}
-     * @memberof EstimateSummaryResponse
-     */
-    status?: EstimateSummaryResponseStatusEnum;
-    /**
      * Part line items
      * @type {Array<EstimateItemResponse>}
      * @memberof EstimateSummaryResponse
      */
     partItems?: Array<EstimateItemResponse>;
     /**
-     * Labor line items
-     * @type {Array<EstimateItemResponse>}
+     * Current estimate status
+     * @type {string}
      * @memberof EstimateSummaryResponse
      */
-    laborItems?: Array<EstimateItemResponse>;
+    status: EstimateSummaryResponseStatusEnum;
     /**
      * Subtotal amount
      * @type {number}
@@ -105,11 +111,23 @@ export interface EstimateSummaryResponse {
      */
     total?: number;
     /**
-     * Currency code
+     * Vehicle identifier
      * @type {string}
      * @memberof EstimateSummaryResponse
      */
-    currencyUomId?: string;
+    vehicleId?: string;
+    /**
+     * Resolved vehicle label
+     * @type {string}
+     * @memberof EstimateSummaryResponse
+     */
+    vehicleLabel?: string;
+    /**
+     * Vehicle VIN (full; truncate for display)
+     * @type {string}
+     * @memberof EstimateSummaryResponse
+     */
+    vin?: string;
 }
 
 /**
@@ -135,6 +153,9 @@ export enum EstimateSummaryResponseStatusEnum {
  * Check if a given object implements the EstimateSummaryResponse interface.
  */
 export function instanceOfEstimateSummaryResponse(value: object): boolean {
+    if (!('estimateNumber' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -148,20 +169,23 @@ export function EstimateSummaryResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'estimateNumber': json['estimateNumber'] == null ? undefined : json['estimateNumber'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
+        'currencyUomId': json['currencyUomId'] == null ? undefined : json['currencyUomId'],
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'partItems': json['partItems'] == null ? undefined : ((json['partItems'] as Array<any>).map(EstimateItemResponseFromJSON)),
+        'customerName': json['customerName'] == null ? undefined : json['customerName'],
+        'estimateNumber': json['estimateNumber'],
+        'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
+        'id': json['id'],
         'laborItems': json['laborItems'] == null ? undefined : ((json['laborItems'] as Array<any>).map(EstimateItemResponseFromJSON)),
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'partItems': json['partItems'] == null ? undefined : ((json['partItems'] as Array<any>).map(EstimateItemResponseFromJSON)),
+        'status': json['status'],
         'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
         'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
         'total': json['total'] == null ? undefined : json['total'],
-        'currencyUomId': json['currencyUomId'] == null ? undefined : json['currencyUomId'],
+        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
+        'vehicleLabel': json['vehicleLabel'] == null ? undefined : json['vehicleLabel'],
+        'vin': json['vin'] == null ? undefined : json['vin'],
     };
 }
 
@@ -171,20 +195,23 @@ export function EstimateSummaryResponseToJSON(value?: EstimateSummaryResponse | 
     }
     return {
         
-        'id': value['id'],
-        'estimateNumber': value['estimateNumber'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
+        'currencyUomId': value['currencyUomId'],
         'customerId': value['customerId'],
-        'vehicleId': value['vehicleId'],
-        'locationId': value['locationId'],
-        'status': value['status'],
-        'partItems': value['partItems'] == null ? undefined : ((value['partItems'] as Array<any>).map(EstimateItemResponseToJSON)),
+        'customerName': value['customerName'],
+        'estimateNumber': value['estimateNumber'],
+        'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
+        'id': value['id'],
         'laborItems': value['laborItems'] == null ? undefined : ((value['laborItems'] as Array<any>).map(EstimateItemResponseToJSON)),
+        'locationId': value['locationId'],
+        'partItems': value['partItems'] == null ? undefined : ((value['partItems'] as Array<any>).map(EstimateItemResponseToJSON)),
+        'status': value['status'],
         'subtotal': value['subtotal'],
         'taxAmount': value['taxAmount'],
         'total': value['total'],
-        'currencyUomId': value['currencyUomId'],
+        'vehicleId': value['vehicleId'],
+        'vehicleLabel': value['vehicleLabel'],
+        'vin': value['vin'],
     };
 }
 

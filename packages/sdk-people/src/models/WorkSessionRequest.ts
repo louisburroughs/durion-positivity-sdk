@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * Work session start request body
+ * Request to start or act on a work session for a person
  * @export
  * @interface WorkSessionRequest
  */
 export interface WorkSessionRequest {
-    /**
-     * ID of the person
-     * @type {string}
-     * @memberof WorkSessionRequest
-     */
-    personId: string;
     /**
      * Actor performing the action
      * @type {string}
      * @memberof WorkSessionRequest
      */
     actor?: string;
+    /**
+     * ID of the person
+     * @type {string}
+     * @memberof WorkSessionRequest
+     */
+    personId: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function WorkSessionRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'personId': json['personId'],
         'actor': json['actor'] == null ? undefined : json['actor'],
+        'personId': json['personId'],
     };
 }
 
@@ -62,8 +62,8 @@ export function WorkSessionRequestToJSON(value?: WorkSessionRequest | null): any
     }
     return {
         
-        'personId': value['personId'],
         'actor': value['actor'],
+        'personId': value['personId'],
     };
 }
 

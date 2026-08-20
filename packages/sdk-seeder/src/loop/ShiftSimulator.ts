@@ -157,7 +157,7 @@ export class ShiftSimulator {
 
   async approveTimeEntries(): Promise<void> {
     try {
-      await this.peopleClient.timeEntryApprovalAPIApi.approveTimeEntries({
+      await this.peopleClient.timeEntryApprovalAPIApi.approveTimeEntriesBatch({
         timeEntryDecisionBatchRequest: { decisions: [] },
       });
       console.log('[Shift] Submitted empty time-entry approval batch.');

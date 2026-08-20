@@ -20,35 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface TimeEntryAdjustmentRequest {
     /**
-     * Time entry identifier to adjust
+     * User creating the adjustment request
      * @type {string}
      * @memberof TimeEntryAdjustmentRequest
      */
-    timeEntryId: string;
-    /**
-     * Reason code for the adjustment
-     * @type {string}
-     * @memberof TimeEntryAdjustmentRequest
-     */
-    reasonCode: string;
-    /**
-     * Additional notes explaining the adjustment
-     * @type {string}
-     * @memberof TimeEntryAdjustmentRequest
-     */
-    notes?: string;
-    /**
-     * Proposed new start timestamp
-     * @type {Date}
-     * @memberof TimeEntryAdjustmentRequest
-     */
-    proposedStartAt?: Date;
-    /**
-     * Proposed new end timestamp
-     * @type {Date}
-     * @memberof TimeEntryAdjustmentRequest
-     */
-    proposedEndAt?: Date;
+    createdBy?: string;
     /**
      * Adjustment in minutes (positive to add time, negative to subtract)
      * @type {number}
@@ -56,19 +32,43 @@ export interface TimeEntryAdjustmentRequest {
      */
     minutesDelta?: number;
     /**
-     * User creating the adjustment request
+     * Additional notes explaining the adjustment
      * @type {string}
      * @memberof TimeEntryAdjustmentRequest
      */
-    createdBy?: string;
+    notes?: string;
+    /**
+     * Proposed new end timestamp
+     * @type {Date}
+     * @memberof TimeEntryAdjustmentRequest
+     */
+    proposedEndAt?: Date;
+    /**
+     * Proposed new start timestamp
+     * @type {Date}
+     * @memberof TimeEntryAdjustmentRequest
+     */
+    proposedStartAt?: Date;
+    /**
+     * Reason code for the adjustment
+     * @type {string}
+     * @memberof TimeEntryAdjustmentRequest
+     */
+    reasonCode: string;
+    /**
+     * Time entry identifier to adjust
+     * @type {string}
+     * @memberof TimeEntryAdjustmentRequest
+     */
+    timeEntryId: string;
 }
 
 /**
  * Check if a given object implements the TimeEntryAdjustmentRequest interface.
  */
 export function instanceOfTimeEntryAdjustmentRequest(value: object): boolean {
-    if (!('timeEntryId' in value)) return false;
     if (!('reasonCode' in value)) return false;
+    if (!('timeEntryId' in value)) return false;
     return true;
 }
 
@@ -82,13 +82,13 @@ export function TimeEntryAdjustmentRequestFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'timeEntryId': json['timeEntryId'],
-        'reasonCode': json['reasonCode'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
-        'proposedStartAt': json['proposedStartAt'] == null ? undefined : (new Date(json['proposedStartAt'])),
-        'proposedEndAt': json['proposedEndAt'] == null ? undefined : (new Date(json['proposedEndAt'])),
-        'minutesDelta': json['minutesDelta'] == null ? undefined : json['minutesDelta'],
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'minutesDelta': json['minutesDelta'] == null ? undefined : json['minutesDelta'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'proposedEndAt': json['proposedEndAt'] == null ? undefined : (new Date(json['proposedEndAt'])),
+        'proposedStartAt': json['proposedStartAt'] == null ? undefined : (new Date(json['proposedStartAt'])),
+        'reasonCode': json['reasonCode'],
+        'timeEntryId': json['timeEntryId'],
     };
 }
 
@@ -98,13 +98,13 @@ export function TimeEntryAdjustmentRequestToJSON(value?: TimeEntryAdjustmentRequ
     }
     return {
         
-        'timeEntryId': value['timeEntryId'],
-        'reasonCode': value['reasonCode'],
-        'notes': value['notes'],
-        'proposedStartAt': value['proposedStartAt'] == null ? undefined : ((value['proposedStartAt']).toISOString()),
-        'proposedEndAt': value['proposedEndAt'] == null ? undefined : ((value['proposedEndAt']).toISOString()),
-        'minutesDelta': value['minutesDelta'],
         'createdBy': value['createdBy'],
+        'minutesDelta': value['minutesDelta'],
+        'notes': value['notes'],
+        'proposedEndAt': value['proposedEndAt'] == null ? undefined : ((value['proposedEndAt']).toISOString()),
+        'proposedStartAt': value['proposedStartAt'] == null ? undefined : ((value['proposedStartAt']).toISOString()),
+        'reasonCode': value['reasonCode'],
+        'timeEntryId': value['timeEntryId'],
     };
 }
 

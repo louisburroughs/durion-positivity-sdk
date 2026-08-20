@@ -24,25 +24,28 @@ export interface BillingTermsRef {
      * @type {string}
      * @memberof BillingTermsRef
      */
-    code?: string;
+    code: string;
     /**
      * Human-readable label
      * @type {string}
      * @memberof BillingTermsRef
      */
-    label?: string;
+    label: string;
     /**
      * Net payment days. Negative values indicate prepayment is required.
      * @type {number}
      * @memberof BillingTermsRef
      */
-    netDays?: number;
+    netDays: number;
 }
 
 /**
  * Check if a given object implements the BillingTermsRef interface.
  */
 export function instanceOfBillingTermsRef(value: object): boolean {
+    if (!('code' in value)) return false;
+    if (!('label' in value)) return false;
+    if (!('netDays' in value)) return false;
     return true;
 }
 
@@ -56,9 +59,9 @@ export function BillingTermsRefFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'code': json['code'] == null ? undefined : json['code'],
-        'label': json['label'] == null ? undefined : json['label'],
-        'netDays': json['netDays'] == null ? undefined : json['netDays'],
+        'code': json['code'],
+        'label': json['label'],
+        'netDays': json['netDays'],
     };
 }
 

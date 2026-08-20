@@ -14,71 +14,91 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A cycle count plan describing scheduled counts for a location and its current state
  * @export
  * @interface CycleCountPlanResponse
  */
 export interface CycleCountPlanResponse {
     /**
-     * 
+     * Timestamp when the plan was created
+     * @type {Date}
+     * @memberof CycleCountPlanResponse
+     */
+    createdAt: Date;
+    /**
+     * Identifier of the user who created the plan
      * @type {string}
      * @memberof CycleCountPlanResponse
      */
-    planId?: string;
+    createdBy: string;
     /**
-     * 
+     * Due date this schedule-created plan covers (null for manual plans)
+     * @type {Date}
+     * @memberof CycleCountPlanResponse
+     */
+    dueDate?: Date;
+    /**
+     * Identifier of the location the plan applies to
      * @type {string}
      * @memberof CycleCountPlanResponse
      */
-    locationId?: string;
+    locationId: string;
     /**
-     * 
+     * Unique identifier of the cycle count plan
+     * @type {string}
+     * @memberof CycleCountPlanResponse
+     */
+    planId: string;
+    /**
+     * Human-readable name of the cycle count plan
+     * @type {string}
+     * @memberof CycleCountPlanResponse
+     */
+    planName: string;
+    /**
+     * Identifier of the recurring schedule that created this plan (null for manual plans)
+     * @type {string}
+     * @memberof CycleCountPlanResponse
+     */
+    scheduleId?: string;
+    /**
+     * Date on which the cycle count is scheduled to occur
+     * @type {Date}
+     * @memberof CycleCountPlanResponse
+     */
+    scheduledDate: Date;
+    /**
+     * Current lifecycle status of the plan
+     * @type {string}
+     * @memberof CycleCountPlanResponse
+     */
+    status: string;
+    /**
+     * Timestamp when the plan was last updated
+     * @type {Date}
+     * @memberof CycleCountPlanResponse
+     */
+    updatedAt: Date;
+    /**
+     * Identifiers of the zones within the location covered by the plan
      * @type {Array<string>}
      * @memberof CycleCountPlanResponse
      */
     zoneIds?: Array<string>;
-    /**
-     * 
-     * @type {string}
-     * @memberof CycleCountPlanResponse
-     */
-    planName?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CycleCountPlanResponse
-     */
-    scheduledDate?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof CycleCountPlanResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CycleCountPlanResponse
-     */
-    createdBy?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CycleCountPlanResponse
-     */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CycleCountPlanResponse
-     */
-    updatedAt?: Date;
 }
 
 /**
  * Check if a given object implements the CycleCountPlanResponse interface.
  */
 export function instanceOfCycleCountPlanResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('createdBy' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('planId' in value)) return false;
+    if (!('planName' in value)) return false;
+    if (!('scheduledDate' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('updatedAt' in value)) return false;
     return true;
 }
 
@@ -92,15 +112,17 @@ export function CycleCountPlanResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'planId': json['planId'] == null ? undefined : json['planId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'createdAt': (new Date(json['createdAt'])),
+        'createdBy': json['createdBy'],
+        'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
+        'locationId': json['locationId'],
+        'planId': json['planId'],
+        'planName': json['planName'],
+        'scheduleId': json['scheduleId'] == null ? undefined : json['scheduleId'],
+        'scheduledDate': (new Date(json['scheduledDate'])),
+        'status': json['status'],
+        'updatedAt': (new Date(json['updatedAt'])),
         'zoneIds': json['zoneIds'] == null ? undefined : json['zoneIds'],
-        'planName': json['planName'] == null ? undefined : json['planName'],
-        'scheduledDate': json['scheduledDate'] == null ? undefined : (new Date(json['scheduledDate'])),
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
 
@@ -110,15 +132,17 @@ export function CycleCountPlanResponseToJSON(value?: CycleCountPlanResponse | nu
     }
     return {
         
-        'planId': value['planId'],
-        'locationId': value['locationId'],
-        'zoneIds': value['zoneIds'],
-        'planName': value['planName'],
-        'scheduledDate': value['scheduledDate'] == null ? undefined : ((value['scheduledDate']).toISOString().substring(0,10)),
-        'status': value['status'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString().substring(0,10)),
+        'locationId': value['locationId'],
+        'planId': value['planId'],
+        'planName': value['planName'],
+        'scheduleId': value['scheduleId'],
+        'scheduledDate': ((value['scheduledDate']).toISOString().substring(0,10)),
+        'status': value['status'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
+        'zoneIds': value['zoneIds'],
     };
 }
 

@@ -20,17 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface CreatePartyRelationshipRequest {
     /**
-     * ID of the individual person
-     * @type {string}
+     * Date when this relationship ends (null means no end date)
+     * @type {Date}
      * @memberof CreatePartyRelationshipRequest
      */
-    personId: string;
-    /**
-     * Roles for this relationship
-     * @type {Set<string>}
-     * @memberof CreatePartyRelationshipRequest
-     */
-    roles: Set<CreatePartyRelationshipRequestRolesEnum>;
+    effectiveEndDate?: Date;
     /**
      * Date when this relationship becomes effective
      * @type {Date}
@@ -38,17 +32,23 @@ export interface CreatePartyRelationshipRequest {
      */
     effectiveStartDate: Date;
     /**
-     * Date when this relationship ends (null means no end date)
-     * @type {Date}
+     * ID of the individual person
+     * @type {string}
      * @memberof CreatePartyRelationshipRequest
      */
-    effectiveEndDate?: Date;
+    personId: string;
     /**
      * 
      * @type {boolean}
      * @memberof CreatePartyRelationshipRequest
      */
     primaryBillingContact?: boolean;
+    /**
+     * Roles for this relationship
+     * @type {Set<string>}
+     * @memberof CreatePartyRelationshipRequest
+     */
+    roles: Set<CreatePartyRelationshipRequestRolesEnum>;
 }
 
 /**
@@ -68,9 +68,9 @@ export enum CreatePartyRelationshipRequestRolesEnum {
  * Check if a given object implements the CreatePartyRelationshipRequest interface.
  */
 export function instanceOfCreatePartyRelationshipRequest(value: object): boolean {
+    if (!('effectiveStartDate' in value)) return false;
     if (!('personId' in value)) return false;
     if (!('roles' in value)) return false;
-    if (!('effectiveStartDate' in value)) return false;
     return true;
 }
 
@@ -84,11 +84,11 @@ export function CreatePartyRelationshipRequestFromJSONTyped(json: any, ignoreDis
     }
     return {
         
-        'personId': json['personId'],
-        'roles': json['roles'],
-        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
+        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
+        'personId': json['personId'],
         'primaryBillingContact': json['primaryBillingContact'] == null ? undefined : json['primaryBillingContact'],
+        'roles': json['roles'],
     };
 }
 
@@ -98,11 +98,11 @@ export function CreatePartyRelationshipRequestToJSON(value?: CreatePartyRelation
     }
     return {
         
-        'personId': value['personId'],
-        'roles': Array.from(value['roles'] as Set<any>),
-        'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0,10)),
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
+        'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0,10)),
+        'personId': value['personId'],
         'primaryBillingContact': value['primaryBillingContact'],
+        'roles': Array.from(value['roles'] as Set<any>),
     };
 }
 

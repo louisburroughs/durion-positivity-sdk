@@ -20,35 +20,35 @@ import { mapValues } from '../runtime';
  */
 export interface EligibilityRuleResponse {
     /**
-     * Eligibility rule identifier
-     * @type {string}
-     * @memberof EligibilityRuleResponse
-     */
-    ruleId?: string;
-    /**
-     * Promotion identifier to which this rule belongs
-     * @type {string}
-     * @memberof EligibilityRuleResponse
-     */
-    promotionId?: string;
-    /**
      * Rule condition type
      * @type {string}
      * @memberof EligibilityRuleResponse
      */
-    conditionType?: EligibilityRuleResponseConditionTypeEnum;
+    conditionType: EligibilityRuleResponseConditionTypeEnum;
     /**
      * Comparison operator
      * @type {string}
      * @memberof EligibilityRuleResponse
      */
-    operator?: EligibilityRuleResponseOperatorEnum;
+    operator: EligibilityRuleResponseOperatorEnum;
+    /**
+     * Promotion identifier to which this rule belongs
+     * @type {string}
+     * @memberof EligibilityRuleResponse
+     */
+    promotionId: string;
+    /**
+     * Eligibility rule identifier
+     * @type {string}
+     * @memberof EligibilityRuleResponse
+     */
+    ruleId: string;
     /**
      * Rule threshold or value
      * @type {string}
      * @memberof EligibilityRuleResponse
      */
-    value?: string;
+    value: string;
 }
 
 /**
@@ -58,7 +58,9 @@ export interface EligibilityRuleResponse {
 export enum EligibilityRuleResponseConditionTypeEnum {
     AccountIdList = 'ACCOUNT_ID_LIST',
     VehicleTag = 'VEHICLE_TAG',
-    AccountFleetSize = 'ACCOUNT_FLEET_SIZE'
+    AccountFleetSize = 'ACCOUNT_FLEET_SIZE',
+    AudienceType = 'AUDIENCE_TYPE',
+    CampaignCode = 'CAMPAIGN_CODE'
 }
 /**
 * @export
@@ -76,6 +78,11 @@ export enum EligibilityRuleResponseOperatorEnum {
  * Check if a given object implements the EligibilityRuleResponse interface.
  */
 export function instanceOfEligibilityRuleResponse(value: object): boolean {
+    if (!('conditionType' in value)) return false;
+    if (!('operator' in value)) return false;
+    if (!('promotionId' in value)) return false;
+    if (!('ruleId' in value)) return false;
+    if (!('value' in value)) return false;
     return true;
 }
 
@@ -89,11 +96,11 @@ export function EligibilityRuleResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'ruleId': json['ruleId'] == null ? undefined : json['ruleId'],
-        'promotionId': json['promotionId'] == null ? undefined : json['promotionId'],
-        'conditionType': json['conditionType'] == null ? undefined : json['conditionType'],
-        'operator': json['operator'] == null ? undefined : json['operator'],
-        'value': json['value'] == null ? undefined : json['value'],
+        'conditionType': json['conditionType'],
+        'operator': json['operator'],
+        'promotionId': json['promotionId'],
+        'ruleId': json['ruleId'],
+        'value': json['value'],
     };
 }
 
@@ -103,10 +110,10 @@ export function EligibilityRuleResponseToJSON(value?: EligibilityRuleResponse | 
     }
     return {
         
-        'ruleId': value['ruleId'],
-        'promotionId': value['promotionId'],
         'conditionType': value['conditionType'],
         'operator': value['operator'],
+        'promotionId': value['promotionId'],
+        'ruleId': value['ruleId'],
         'value': value['value'],
     };
 }

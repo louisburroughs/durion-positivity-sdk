@@ -14,17 +14,11 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for adding a line item to an estimate
+ * Line item details
  * @export
  * @interface AddEstimateItemRequest
  */
 export interface AddEstimateItemRequest {
-    /**
-     * Type of estimate item
-     * @type {string}
-     * @memberof AddEstimateItemRequest
-     */
-    itemType: AddEstimateItemRequestItemTypeEnum;
     /**
      * Human-readable description when no catalog reference is provided
      * @type {string}
@@ -32,23 +26,11 @@ export interface AddEstimateItemRequest {
      */
     description?: string;
     /**
-     * Requested quantity
-     * @type {number}
-     * @memberof AddEstimateItemRequest
-     */
-    quantity: number;
-    /**
-     * Unit price for the line item
-     * @type {number}
-     * @memberof AddEstimateItemRequest
-     */
-    unitPrice: number;
-    /**
-     * Optional tax code
+     * Type of estimate item
      * @type {string}
      * @memberof AddEstimateItemRequest
      */
-    taxCode?: string;
+    itemType: AddEstimateItemRequestItemTypeEnum;
     /**
      * Referenced product identifier for PART items
      * @type {string}
@@ -56,11 +38,35 @@ export interface AddEstimateItemRequest {
      */
     productId?: string;
     /**
+     * Requested quantity
+     * @type {number}
+     * @memberof AddEstimateItemRequest
+     */
+    quantity: number;
+    /**
      * Referenced service identifier for LABOR items
      * @type {string}
      * @memberof AddEstimateItemRequest
      */
     serviceId?: string;
+    /**
+     * Optional tax code
+     * @type {string}
+     * @memberof AddEstimateItemRequest
+     */
+    taxCode?: string;
+    /**
+     * Unit price for the line item
+     * @type {number}
+     * @memberof AddEstimateItemRequest
+     */
+    unitPrice: number;
+    /**
+     * Unit quantity is expressed in, for PART items only (e.g. "QT", "CASE"). Omit for the product's base unit -- today's implicit behavior. LABOR items must omit this field; hours carry no catalog unit-of-measure conversion.
+     * @type {string}
+     * @memberof AddEstimateItemRequest
+     */
+    uomCode?: string;
 }
 
 /**
@@ -93,13 +99,14 @@ export function AddEstimateItemRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'itemType': json['itemType'],
         'description': json['description'] == null ? undefined : json['description'],
-        'quantity': json['quantity'],
-        'unitPrice': json['unitPrice'],
-        'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
+        'itemType': json['itemType'],
         'productId': json['productId'] == null ? undefined : json['productId'],
+        'quantity': json['quantity'],
         'serviceId': json['serviceId'] == null ? undefined : json['serviceId'],
+        'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
+        'unitPrice': json['unitPrice'],
+        'uomCode': json['uomCode'] == null ? undefined : json['uomCode'],
     };
 }
 
@@ -109,13 +116,14 @@ export function AddEstimateItemRequestToJSON(value?: AddEstimateItemRequest | nu
     }
     return {
         
-        'itemType': value['itemType'],
         'description': value['description'],
-        'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
-        'taxCode': value['taxCode'],
+        'itemType': value['itemType'],
         'productId': value['productId'],
+        'quantity': value['quantity'],
         'serviceId': value['serviceId'],
+        'taxCode': value['taxCode'],
+        'unitPrice': value['unitPrice'],
+        'uomCode': value['uomCode'],
     };
 }
 

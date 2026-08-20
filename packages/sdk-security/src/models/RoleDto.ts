@@ -21,65 +21,67 @@ import {
 } from './PermissionDto';
 
 /**
- * 
+ * Role definition including its granted permissions and audit metadata
  * @export
  * @interface RoleDto
  */
 export interface RoleDto {
     /**
-     * 
-     * @type {string}
-     * @memberof RoleDto
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RoleDto
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RoleDto
-     */
-    description?: string;
-    /**
-     * 
-     * @type {Set<PermissionDto>}
-     * @memberof RoleDto
-     */
-    permissions?: Set<PermissionDto>;
-    /**
-     * 
+     * Creation timestamp
      * @type {Date}
      * @memberof RoleDto
      */
     createdAt?: Date;
     /**
-     * 
+     * Actor that created the role
      * @type {string}
      * @memberof RoleDto
      */
     createdBy?: string;
     /**
-     * 
+     * Human-readable description of the role
+     * @type {string}
+     * @memberof RoleDto
+     */
+    description?: string;
+    /**
+     * Role identifier
+     * @type {string}
+     * @memberof RoleDto
+     */
+    id: string;
+    /**
+     * Last-modified timestamp
      * @type {Date}
      * @memberof RoleDto
      */
     lastModifiedAt?: Date;
     /**
-     * 
+     * Actor that last modified the role
      * @type {string}
      * @memberof RoleDto
      */
     lastModifiedBy?: string;
+    /**
+     * Role name
+     * @type {string}
+     * @memberof RoleDto
+     */
+    name: string;
+    /**
+     * Permissions granted to the role
+     * @type {Set<PermissionDto>}
+     * @memberof RoleDto
+     */
+    permissions?: Set<PermissionDto>;
 }
 
 /**
  * Check if a given object implements the RoleDto interface.
  */
 export function instanceOfRoleDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -93,14 +95,14 @@ export function RoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): R
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'permissions': json['permissions'] == null ? undefined : (new Set((json['permissions'] as Array<any>).map(PermissionDtoFromJSON))),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'id': json['id'],
         'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
+        'name': json['name'],
+        'permissions': json['permissions'] == null ? undefined : (new Set((json['permissions'] as Array<any>).map(PermissionDtoFromJSON))),
     };
 }
 
@@ -110,14 +112,14 @@ export function RoleDtoToJSON(value?: RoleDto | null): any {
     }
     return {
         
-        'id': value['id'],
-        'name': value['name'],
-        'description': value['description'],
-        'permissions': value['permissions'] == null ? undefined : (Array.from(value['permissions'] as Set<any>).map(PermissionDtoToJSON)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'description': value['description'],
+        'id': value['id'],
         'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'lastModifiedBy': value['lastModifiedBy'],
+        'name': value['name'],
+        'permissions': value['permissions'] == null ? undefined : (Array.from(value['permissions'] as Set<any>).map(PermissionDtoToJSON)),
     };
 }
 

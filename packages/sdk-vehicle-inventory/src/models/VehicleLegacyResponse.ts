@@ -14,65 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Legacy vehicle representation returned by vehicle endpoints
  * @export
  * @interface VehicleLegacyResponse
  */
 export interface VehicleLegacyResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof VehicleLegacyResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleLegacyResponse
-     */
-    make?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleLegacyResponse
-     */
-    model?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof VehicleLegacyResponse
-     */
-    year?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleLegacyResponse
-     */
-    vin?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleLegacyResponse
-     */
-    vehicleType?: string;
-    /**
-     * 
+     * Timestamp when the vehicle record was created
      * @type {Date}
      * @memberof VehicleLegacyResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Unique identifier of the vehicle
+     * @type {string}
+     * @memberof VehicleLegacyResponse
+     */
+    id: string;
+    /**
+     * Manufacturer of the vehicle
+     * @type {string}
+     * @memberof VehicleLegacyResponse
+     */
+    make: string;
+    /**
+     * Model of the vehicle
+     * @type {string}
+     * @memberof VehicleLegacyResponse
+     */
+    model: string;
+    /**
+     * Timestamp when the vehicle record was last updated
      * @type {Date}
      * @memberof VehicleLegacyResponse
      */
     updatedAt?: Date;
+    /**
+     * Vehicle type classification (CAR, VAN, COMMERCIAL_TRUCK, PASSENGER_TRUCK)
+     * @type {string}
+     * @memberof VehicleLegacyResponse
+     */
+    vehicleType: string;
+    /**
+     * 17-character Vehicle Identification Number
+     * @type {string}
+     * @memberof VehicleLegacyResponse
+     */
+    vin: string;
+    /**
+     * Model year of the vehicle
+     * @type {number}
+     * @memberof VehicleLegacyResponse
+     */
+    year: number;
 }
 
 /**
  * Check if a given object implements the VehicleLegacyResponse interface.
  */
 export function instanceOfVehicleLegacyResponse(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('make' in value)) return false;
+    if (!('model' in value)) return false;
+    if (!('vehicleType' in value)) return false;
+    if (!('vin' in value)) return false;
+    if (!('year' in value)) return false;
     return true;
 }
 
@@ -86,14 +92,14 @@ export function VehicleLegacyResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'make': json['make'] == null ? undefined : json['make'],
-        'model': json['model'] == null ? undefined : json['model'],
-        'year': json['year'] == null ? undefined : json['year'],
-        'vin': json['vin'] == null ? undefined : json['vin'],
-        'vehicleType': json['vehicleType'] == null ? undefined : json['vehicleType'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'id': json['id'],
+        'make': json['make'],
+        'model': json['model'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'vehicleType': json['vehicleType'],
+        'vin': json['vin'],
+        'year': json['year'],
     };
 }
 
@@ -103,14 +109,14 @@ export function VehicleLegacyResponseToJSON(value?: VehicleLegacyResponse | null
     }
     return {
         
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'id': value['id'],
         'make': value['make'],
         'model': value['model'],
-        'year': value['year'],
-        'vin': value['vin'],
-        'vehicleType': value['vehicleType'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'vehicleType': value['vehicleType'],
+        'vin': value['vin'],
+        'year': value['year'],
     };
 }
 

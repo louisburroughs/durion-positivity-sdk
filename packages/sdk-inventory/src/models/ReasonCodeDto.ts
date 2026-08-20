@@ -14,35 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Reference entry describing a valid reason a returned item can be assigned
  * @export
  * @interface ReasonCodeDto
  */
 export interface ReasonCodeDto {
     /**
-     * 
-     * @type {string}
-     * @memberof ReasonCodeDto
-     */
-    code?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReasonCodeDto
-     */
-    description?: string;
-    /**
-     * 
+     * Grouping category the reason code belongs to
      * @type {string}
      * @memberof ReasonCodeDto
      */
     category?: string;
+    /**
+     * Machine-readable reason code
+     * @type {string}
+     * @memberof ReasonCodeDto
+     */
+    code: string;
+    /**
+     * Human-readable explanation of the reason code
+     * @type {string}
+     * @memberof ReasonCodeDto
+     */
+    description: string;
 }
 
 /**
  * Check if a given object implements the ReasonCodeDto interface.
  */
 export function instanceOfReasonCodeDto(value: object): boolean {
+    if (!('code' in value)) return false;
+    if (!('description' in value)) return false;
     return true;
 }
 
@@ -56,9 +58,9 @@ export function ReasonCodeDtoFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'code': json['code'] == null ? undefined : json['code'],
-        'description': json['description'] == null ? undefined : json['description'],
         'category': json['category'] == null ? undefined : json['category'],
+        'code': json['code'],
+        'description': json['description'],
     };
 }
 
@@ -68,9 +70,9 @@ export function ReasonCodeDtoToJSON(value?: ReasonCodeDto | null): any {
     }
     return {
         
+        'category': value['category'],
         'code': value['code'],
         'description': value['description'],
-        'category': value['category'],
     };
 }
 

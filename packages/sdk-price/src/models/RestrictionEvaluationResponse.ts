@@ -21,23 +21,24 @@ import {
 } from './RestrictionEvaluationResult';
 
 /**
- * 
+ * Batch response containing one restriction-evaluation result per requested item
  * @export
  * @interface RestrictionEvaluationResponse
  */
 export interface RestrictionEvaluationResponse {
     /**
-     * 
+     * Per-item restriction evaluation results
      * @type {Array<RestrictionEvaluationResult>}
      * @memberof RestrictionEvaluationResponse
      */
-    results?: Array<RestrictionEvaluationResult>;
+    results: Array<RestrictionEvaluationResult>;
 }
 
 /**
  * Check if a given object implements the RestrictionEvaluationResponse interface.
  */
 export function instanceOfRestrictionEvaluationResponse(value: object): boolean {
+    if (!('results' in value)) return false;
     return true;
 }
 
@@ -51,7 +52,7 @@ export function RestrictionEvaluationResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(RestrictionEvaluationResultFromJSON)),
+        'results': ((json['results'] as Array<any>).map(RestrictionEvaluationResultFromJSON)),
     };
 }
 
@@ -61,7 +62,7 @@ export function RestrictionEvaluationResponseToJSON(value?: RestrictionEvaluatio
     }
     return {
         
-        'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(RestrictionEvaluationResultToJSON)),
+        'results': ((value['results'] as Array<any>).map(RestrictionEvaluationResultToJSON)),
     };
 }
 

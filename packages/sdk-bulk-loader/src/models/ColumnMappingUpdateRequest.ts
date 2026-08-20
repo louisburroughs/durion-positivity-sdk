@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single column mapping to create or update for a bulk load job
  * @export
  * @interface ColumnMappingUpdateRequest
  */
 export interface ColumnMappingUpdateRequest {
     /**
-     * 
+     * Identifier of the existing mapping to update; omit to create a new mapping
      * @type {string}
      * @memberof ColumnMappingUpdateRequest
      */
     mappingId?: string;
     /**
-     * 
+     * Name of the source column in the uploaded file
      * @type {string}
      * @memberof ColumnMappingUpdateRequest
      */
     sourceColumn: string;
     /**
-     * 
+     * Name of the target domain field the column maps to
      * @type {string}
      * @memberof ColumnMappingUpdateRequest
      */

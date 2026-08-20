@@ -24,25 +24,25 @@ export interface ContactPointDto {
      * @type {string}
      * @memberof ContactPointDto
      */
-    contactPointId?: string;
+    contactPointId: string;
     /**
      * Type of contact point
      * @type {string}
      * @memberof ContactPointDto
      */
-    contactType?: ContactPointDtoContactTypeEnum;
-    /**
-     * Contact value
-     * @type {string}
-     * @memberof ContactPointDto
-     */
-    value?: string;
+    contactType: ContactPointDtoContactTypeEnum;
     /**
      * 
      * @type {boolean}
      * @memberof ContactPointDto
      */
     primary?: boolean;
+    /**
+     * Contact value
+     * @type {string}
+     * @memberof ContactPointDto
+     */
+    value: string;
 }
 
 /**
@@ -62,6 +62,9 @@ export enum ContactPointDtoContactTypeEnum {
  * Check if a given object implements the ContactPointDto interface.
  */
 export function instanceOfContactPointDto(value: object): boolean {
+    if (!('contactPointId' in value)) return false;
+    if (!('contactType' in value)) return false;
+    if (!('value' in value)) return false;
     return true;
 }
 
@@ -75,10 +78,10 @@ export function ContactPointDtoFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'contactPointId': json['contactPointId'] == null ? undefined : json['contactPointId'],
-        'contactType': json['contactType'] == null ? undefined : json['contactType'],
-        'value': json['value'] == null ? undefined : json['value'],
+        'contactPointId': json['contactPointId'],
+        'contactType': json['contactType'],
         'primary': json['primary'] == null ? undefined : json['primary'],
+        'value': json['value'],
     };
 }
 
@@ -90,8 +93,8 @@ export function ContactPointDtoToJSON(value?: ContactPointDto | null): any {
         
         'contactPointId': value['contactPointId'],
         'contactType': value['contactType'],
-        'value': value['value'],
         'primary': value['primary'],
+        'value': value['value'],
     };
 }
 

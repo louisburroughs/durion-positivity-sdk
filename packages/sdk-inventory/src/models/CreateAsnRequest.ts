@@ -21,57 +21,57 @@ import {
 } from './CreateAsnLineRequest';
 
 /**
- * 
+ * Request payload to create an advance shipping notice (ASN) for an inbound vendor shipment
  * @export
  * @interface CreateAsnRequest
  */
 export interface CreateAsnRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateAsnRequest
-     */
-    vendorId: string;
-    /**
-     * 
+     * Human-readable reference number assigned to the ASN by the vendor
      * @type {string}
      * @memberof CreateAsnRequest
      */
     asnReferenceNumber: string;
     /**
-     * 
-     * @type {Array<string>}
-     * @memberof CreateAsnRequest
-     */
-    relatedPoIds: Array<string>;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CreateAsnRequest
-     */
-    shipDate?: Date;
-    /**
-     * 
+     * Expected arrival date of the shipment at the destination
      * @type {Date}
      * @memberof CreateAsnRequest
      */
     expectedArrivalDate?: Date;
     /**
-     * 
+     * Line items detailing the SKUs and quantities included in this ASN
      * @type {Array<CreateAsnLineRequest>}
      * @memberof CreateAsnRequest
      */
     lineItems: Array<CreateAsnLineRequest>;
+    /**
+     * Identifiers of the purchase orders this shipment relates to
+     * @type {Array<string>}
+     * @memberof CreateAsnRequest
+     */
+    relatedPoIds: Array<string>;
+    /**
+     * Date the shipment left the vendor
+     * @type {Date}
+     * @memberof CreateAsnRequest
+     */
+    shipDate?: Date;
+    /**
+     * Identifier of the vendor that issued the shipment
+     * @type {string}
+     * @memberof CreateAsnRequest
+     */
+    vendorId: string;
 }
 
 /**
  * Check if a given object implements the CreateAsnRequest interface.
  */
 export function instanceOfCreateAsnRequest(value: object): boolean {
-    if (!('vendorId' in value)) return false;
     if (!('asnReferenceNumber' in value)) return false;
-    if (!('relatedPoIds' in value)) return false;
     if (!('lineItems' in value)) return false;
+    if (!('relatedPoIds' in value)) return false;
+    if (!('vendorId' in value)) return false;
     return true;
 }
 
@@ -85,12 +85,12 @@ export function CreateAsnRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'vendorId': json['vendorId'],
         'asnReferenceNumber': json['asnReferenceNumber'],
-        'relatedPoIds': json['relatedPoIds'],
-        'shipDate': json['shipDate'] == null ? undefined : (new Date(json['shipDate'])),
         'expectedArrivalDate': json['expectedArrivalDate'] == null ? undefined : (new Date(json['expectedArrivalDate'])),
         'lineItems': ((json['lineItems'] as Array<any>).map(CreateAsnLineRequestFromJSON)),
+        'relatedPoIds': json['relatedPoIds'],
+        'shipDate': json['shipDate'] == null ? undefined : (new Date(json['shipDate'])),
+        'vendorId': json['vendorId'],
     };
 }
 
@@ -100,12 +100,12 @@ export function CreateAsnRequestToJSON(value?: CreateAsnRequest | null): any {
     }
     return {
         
-        'vendorId': value['vendorId'],
         'asnReferenceNumber': value['asnReferenceNumber'],
-        'relatedPoIds': value['relatedPoIds'],
-        'shipDate': value['shipDate'] == null ? undefined : ((value['shipDate']).toISOString().substring(0,10)),
         'expectedArrivalDate': value['expectedArrivalDate'] == null ? undefined : ((value['expectedArrivalDate']).toISOString().substring(0,10)),
         'lineItems': ((value['lineItems'] as Array<any>).map(CreateAsnLineRequestToJSON)),
+        'relatedPoIds': value['relatedPoIds'],
+        'shipDate': value['shipDate'] == null ? undefined : ((value['shipDate']).toISOString().substring(0,10)),
+        'vendorId': value['vendorId'],
     };
 }
 

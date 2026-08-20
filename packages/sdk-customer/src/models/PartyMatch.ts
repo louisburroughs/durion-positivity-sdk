@@ -20,29 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface PartyMatch {
     /**
-     * Party ID
-     * @type {string}
-     * @memberof PartyMatch
-     */
-    partyId?: string;
-    /**
      * Legal name of the party
      * @type {string}
      * @memberof PartyMatch
      */
-    legalName?: string;
-    /**
-     * Match confidence score (0.0-1.0)
-     * @type {number}
-     * @memberof PartyMatch
-     */
-    score?: number;
+    legalName: string;
     /**
      * Type of match
      * @type {string}
      * @memberof PartyMatch
      */
-    matchType?: PartyMatchMatchTypeEnum;
+    matchType: PartyMatchMatchTypeEnum;
+    /**
+     * Party ID
+     * @type {string}
+     * @memberof PartyMatch
+     */
+    partyId: string;
+    /**
+     * Match confidence score (0.0-1.0)
+     * @type {number}
+     * @memberof PartyMatch
+     */
+    score: number;
 }
 
 /**
@@ -59,6 +59,10 @@ export enum PartyMatchMatchTypeEnum {
  * Check if a given object implements the PartyMatch interface.
  */
 export function instanceOfPartyMatch(value: object): boolean {
+    if (!('legalName' in value)) return false;
+    if (!('matchType' in value)) return false;
+    if (!('partyId' in value)) return false;
+    if (!('score' in value)) return false;
     return true;
 }
 
@@ -72,10 +76,10 @@ export function PartyMatchFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'legalName': json['legalName'] == null ? undefined : json['legalName'],
-        'score': json['score'] == null ? undefined : json['score'],
-        'matchType': json['matchType'] == null ? undefined : json['matchType'],
+        'legalName': json['legalName'],
+        'matchType': json['matchType'],
+        'partyId': json['partyId'],
+        'score': json['score'],
     };
 }
 
@@ -85,10 +89,10 @@ export function PartyMatchToJSON(value?: PartyMatch | null): any {
     }
     return {
         
-        'partyId': value['partyId'],
         'legalName': value['legalName'],
-        'score': value['score'],
         'matchType': value['matchType'],
+        'partyId': value['partyId'],
+        'score': value['score'],
     };
 }
 

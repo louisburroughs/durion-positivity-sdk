@@ -14,143 +14,143 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Accounting event ingestion record and its processing outcome
  * @export
  * @interface AccountingEventResponse
  */
 export interface AccountingEventResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    eventId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    organizationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    eventType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    sourceSystem?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AccountingEventResponse
-     */
-    transactionDate?: Date;
-    /**
-     * 
-     * @type {object}
-     * @memberof AccountingEventResponse
-     */
-    payload?: object;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    status?: AccountingEventResponseStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    journalEntryId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    errorMessage?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AccountingEventResponse
-     */
-    receivedAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AccountingEventResponse
-     */
-    processedAt?: Date;
-    /**
-     * 
-     * @type {number}
-     * @memberof AccountingEventResponse
-     */
-    sequenceNumber?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    failureReasonCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    failureDetails?: string;
-    /**
-     * 
+     * Number of processing attempts made
      * @type {number}
      * @memberof AccountingEventResponse
      */
     attemptCount?: number;
     /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    finalPostingReferenceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    resolvedByUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    mappingVersionAttempted?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    idempotencyOutcome?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountingEventResponse
-     */
-    ingestionId?: string;
-    /**
-     * 
+     * Domain key associated with the event
      * @type {string}
      * @memberof AccountingEventResponse
      */
     domainKeyId?: string;
     /**
-     * 
+     * Error message when processing failed
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    errorMessage?: string;
+    /**
+     * Unique identifier of the accounting event
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    eventId: string;
+    /**
+     * Event type identifier
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    eventType: string;
+    /**
+     * Detailed failure description
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    failureDetails?: string;
+    /**
+     * Code categorizing the failure reason
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    failureReasonCode?: string;
+    /**
+     * Posting reference assigned on final resolution
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    finalPostingReferenceId?: string;
+    /**
+     * Idempotency outcome of ingestion
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    idempotencyOutcome?: string;
+    /**
+     * Identifier of the ingestion batch
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    ingestionId?: string;
+    /**
+     * Identifier of the related invoice, if any
      * @type {string}
      * @memberof AccountingEventResponse
      */
     invoiceId?: string;
+    /**
+     * Identifier of the journal entry produced, if any
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    journalEntryId?: string;
+    /**
+     * Mapping version attempted during processing
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    mappingVersionAttempted?: string;
+    /**
+     * Identifier of the owning organization
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    organizationId: string;
+    /**
+     * Event-specific payload content
+     * @type {object}
+     * @memberof AccountingEventResponse
+     */
+    payload?: object;
+    /**
+     * Timestamp when the event was processed (ISO 8601)
+     * @type {Date}
+     * @memberof AccountingEventResponse
+     */
+    processedAt?: Date;
+    /**
+     * Timestamp when the event was received (ISO 8601)
+     * @type {Date}
+     * @memberof AccountingEventResponse
+     */
+    receivedAt: Date;
+    /**
+     * Identifier of the user who resolved the event
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    resolvedByUserId?: string;
+    /**
+     * Monotonic sequence number assigned to the event
+     * @type {number}
+     * @memberof AccountingEventResponse
+     */
+    sequenceNumber?: number;
+    /**
+     * Source system that emitted the event
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    sourceSystem?: string;
+    /**
+     * Processing status of the event
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    status: AccountingEventResponseStatusEnum;
+    /**
+     * Business transaction timestamp
+     * @type {Date}
+     * @memberof AccountingEventResponse
+     */
+    transactionDate?: Date;
 }
 
 /**
@@ -170,6 +170,11 @@ export enum AccountingEventResponseStatusEnum {
  * Check if a given object implements the AccountingEventResponse interface.
  */
 export function instanceOfAccountingEventResponse(value: object): boolean {
+    if (!('eventId' in value)) return false;
+    if (!('eventType' in value)) return false;
+    if (!('organizationId' in value)) return false;
+    if (!('receivedAt' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -183,28 +188,28 @@ export function AccountingEventResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'eventId': json['eventId'] == null ? undefined : json['eventId'],
-        'organizationId': json['organizationId'] == null ? undefined : json['organizationId'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'sourceSystem': json['sourceSystem'] == null ? undefined : json['sourceSystem'],
-        'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
-        'payload': json['payload'] == null ? undefined : json['payload'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
-        'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
-        'receivedAt': json['receivedAt'] == null ? undefined : (new Date(json['receivedAt'])),
-        'processedAt': json['processedAt'] == null ? undefined : (new Date(json['processedAt'])),
-        'sequenceNumber': json['sequenceNumber'] == null ? undefined : json['sequenceNumber'],
-        'failureReasonCode': json['failureReasonCode'] == null ? undefined : json['failureReasonCode'],
-        'failureDetails': json['failureDetails'] == null ? undefined : json['failureDetails'],
         'attemptCount': json['attemptCount'] == null ? undefined : json['attemptCount'],
+        'domainKeyId': json['domainKeyId'] == null ? undefined : json['domainKeyId'],
+        'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
+        'eventId': json['eventId'],
+        'eventType': json['eventType'],
+        'failureDetails': json['failureDetails'] == null ? undefined : json['failureDetails'],
+        'failureReasonCode': json['failureReasonCode'] == null ? undefined : json['failureReasonCode'],
         'finalPostingReferenceId': json['finalPostingReferenceId'] == null ? undefined : json['finalPostingReferenceId'],
-        'resolvedByUserId': json['resolvedByUserId'] == null ? undefined : json['resolvedByUserId'],
-        'mappingVersionAttempted': json['mappingVersionAttempted'] == null ? undefined : json['mappingVersionAttempted'],
         'idempotencyOutcome': json['idempotencyOutcome'] == null ? undefined : json['idempotencyOutcome'],
         'ingestionId': json['ingestionId'] == null ? undefined : json['ingestionId'],
-        'domainKeyId': json['domainKeyId'] == null ? undefined : json['domainKeyId'],
         'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
+        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
+        'mappingVersionAttempted': json['mappingVersionAttempted'] == null ? undefined : json['mappingVersionAttempted'],
+        'organizationId': json['organizationId'],
+        'payload': json['payload'] == null ? undefined : json['payload'],
+        'processedAt': json['processedAt'] == null ? undefined : (new Date(json['processedAt'])),
+        'receivedAt': (new Date(json['receivedAt'])),
+        'resolvedByUserId': json['resolvedByUserId'] == null ? undefined : json['resolvedByUserId'],
+        'sequenceNumber': json['sequenceNumber'] == null ? undefined : json['sequenceNumber'],
+        'sourceSystem': json['sourceSystem'] == null ? undefined : json['sourceSystem'],
+        'status': json['status'],
+        'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
     };
 }
 
@@ -214,28 +219,28 @@ export function AccountingEventResponseToJSON(value?: AccountingEventResponse | 
     }
     return {
         
-        'eventId': value['eventId'],
-        'organizationId': value['organizationId'],
-        'eventType': value['eventType'],
-        'sourceSystem': value['sourceSystem'],
-        'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString()),
-        'payload': value['payload'],
-        'status': value['status'],
-        'journalEntryId': value['journalEntryId'],
-        'errorMessage': value['errorMessage'],
-        'receivedAt': value['receivedAt'] == null ? undefined : ((value['receivedAt']).toISOString()),
-        'processedAt': value['processedAt'] == null ? undefined : ((value['processedAt']).toISOString()),
-        'sequenceNumber': value['sequenceNumber'],
-        'failureReasonCode': value['failureReasonCode'],
-        'failureDetails': value['failureDetails'],
         'attemptCount': value['attemptCount'],
+        'domainKeyId': value['domainKeyId'],
+        'errorMessage': value['errorMessage'],
+        'eventId': value['eventId'],
+        'eventType': value['eventType'],
+        'failureDetails': value['failureDetails'],
+        'failureReasonCode': value['failureReasonCode'],
         'finalPostingReferenceId': value['finalPostingReferenceId'],
-        'resolvedByUserId': value['resolvedByUserId'],
-        'mappingVersionAttempted': value['mappingVersionAttempted'],
         'idempotencyOutcome': value['idempotencyOutcome'],
         'ingestionId': value['ingestionId'],
-        'domainKeyId': value['domainKeyId'],
         'invoiceId': value['invoiceId'],
+        'journalEntryId': value['journalEntryId'],
+        'mappingVersionAttempted': value['mappingVersionAttempted'],
+        'organizationId': value['organizationId'],
+        'payload': value['payload'],
+        'processedAt': value['processedAt'] == null ? undefined : ((value['processedAt']).toISOString()),
+        'receivedAt': ((value['receivedAt']).toISOString()),
+        'resolvedByUserId': value['resolvedByUserId'],
+        'sequenceNumber': value['sequenceNumber'],
+        'sourceSystem': value['sourceSystem'],
+        'status': value['status'],
+        'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString()),
     };
 }
 

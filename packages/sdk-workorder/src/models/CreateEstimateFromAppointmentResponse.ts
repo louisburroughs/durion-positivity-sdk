@@ -20,29 +20,32 @@ import { mapValues } from '../runtime';
  */
 export interface CreateEstimateFromAppointmentResponse {
     /**
+     * Whether a new estimate was created (false when idempotency returns existing record)
+     * @type {boolean}
+     * @memberof CreateEstimateFromAppointmentResponse
+     */
+    created: boolean;
+    /**
      * Created estimate identifier
      * @type {string}
      * @memberof CreateEstimateFromAppointmentResponse
      */
-    estimateId?: string;
+    estimateId: string;
     /**
      * Created estimate status
      * @type {string}
      * @memberof CreateEstimateFromAppointmentResponse
      */
-    status?: string;
-    /**
-     * Whether a new estimate was created (false when idempotency returns existing record)
-     * @type {boolean}
-     * @memberof CreateEstimateFromAppointmentResponse
-     */
-    created?: boolean;
+    status: string;
 }
 
 /**
  * Check if a given object implements the CreateEstimateFromAppointmentResponse interface.
  */
 export function instanceOfCreateEstimateFromAppointmentResponse(value: object): boolean {
+    if (!('created' in value)) return false;
+    if (!('estimateId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -56,9 +59,9 @@ export function CreateEstimateFromAppointmentResponseFromJSONTyped(json: any, ig
     }
     return {
         
-        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'created': json['created'] == null ? undefined : json['created'],
+        'created': json['created'],
+        'estimateId': json['estimateId'],
+        'status': json['status'],
     };
 }
 
@@ -68,9 +71,9 @@ export function CreateEstimateFromAppointmentResponseToJSON(value?: CreateEstima
     }
     return {
         
+        'created': value['created'],
         'estimateId': value['estimateId'],
         'status': value['status'],
-        'created': value['created'],
     };
 }
 

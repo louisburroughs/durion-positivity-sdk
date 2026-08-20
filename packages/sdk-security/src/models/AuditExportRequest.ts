@@ -27,6 +27,12 @@ import {
  */
 export interface AuditExportRequest {
     /**
+     * Delivery mode for the exported file
+     * @type {string}
+     * @memberof AuditExportRequest
+     */
+    deliveryMode: AuditExportRequestDeliveryModeEnum;
+    /**
      * 
      * @type {AuditEventSearchFilter}
      * @memberof AuditExportRequest
@@ -38,22 +44,8 @@ export interface AuditExportRequest {
      * @memberof AuditExportRequest
      */
     format: AuditExportRequestFormatEnum;
-    /**
-     * Delivery mode for the exported file
-     * @type {string}
-     * @memberof AuditExportRequest
-     */
-    deliveryMode: AuditExportRequestDeliveryModeEnum;
 }
 
-/**
-* @export
-* @enum {string}
-*/
-export enum AuditExportRequestFormatEnum {
-    Csv = 'CSV',
-    Json = 'JSON'
-}
 /**
 * @export
 * @enum {string}
@@ -62,14 +54,22 @@ export enum AuditExportRequestDeliveryModeEnum {
     Download = 'DOWNLOAD',
     Webhook = 'WEBHOOK'
 }
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditExportRequestFormatEnum {
+    Csv = 'CSV',
+    Json = 'JSON'
+}
 
 
 /**
  * Check if a given object implements the AuditExportRequest interface.
  */
 export function instanceOfAuditExportRequest(value: object): boolean {
-    if (!('format' in value)) return false;
     if (!('deliveryMode' in value)) return false;
+    if (!('format' in value)) return false;
     return true;
 }
 
@@ -83,9 +83,9 @@ export function AuditExportRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'deliveryMode': json['deliveryMode'],
         'filters': json['filters'] == null ? undefined : AuditEventSearchFilterFromJSON(json['filters']),
         'format': json['format'],
-        'deliveryMode': json['deliveryMode'],
     };
 }
 
@@ -95,9 +95,9 @@ export function AuditExportRequestToJSON(value?: AuditExportRequest | null): any
     }
     return {
         
+        'deliveryMode': value['deliveryMode'],
         'filters': AuditEventSearchFilterToJSON(value['filters']),
         'format': value['format'],
-        'deliveryMode': value['deliveryMode'],
     };
 }
 

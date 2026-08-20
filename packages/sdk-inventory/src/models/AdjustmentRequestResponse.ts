@@ -14,53 +14,59 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response returned when an inventory adjustment request is created
  * @export
  * @interface AdjustmentRequestResponse
  */
 export interface AdjustmentRequestResponse {
     /**
-     * 
+     * Unique identifier of the created adjustment request
      * @type {string}
      * @memberof AdjustmentRequestResponse
      */
-    adjustmentRequestId?: string;
+    adjustmentRequestId: string;
     /**
-     * 
+     * Identifier of the location where the adjustment applies
      * @type {string}
      * @memberof AdjustmentRequestResponse
      */
-    productSku?: string;
+    locationId: string;
     /**
-     * 
+     * Stock-keeping unit of the product being adjusted
      * @type {string}
      * @memberof AdjustmentRequestResponse
      */
-    locationId?: string;
+    productSku: string;
     /**
-     * 
+     * Requested adjustment quantity (positive to add, negative to remove)
      * @type {number}
      * @memberof AdjustmentRequestResponse
      */
-    quantity?: number;
+    quantity: number;
     /**
-     * 
+     * Reason code explaining why the adjustment was requested
      * @type {string}
      * @memberof AdjustmentRequestResponse
      */
-    reasonCode?: string;
+    reasonCode: string;
     /**
-     * 
+     * Current workflow status of the adjustment request
      * @type {string}
      * @memberof AdjustmentRequestResponse
      */
-    status?: string;
+    status: string;
 }
 
 /**
  * Check if a given object implements the AdjustmentRequestResponse interface.
  */
 export function instanceOfAdjustmentRequestResponse(value: object): boolean {
+    if (!('adjustmentRequestId' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('productSku' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('reasonCode' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -74,12 +80,12 @@ export function AdjustmentRequestResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'adjustmentRequestId': json['adjustmentRequestId'] == null ? undefined : json['adjustmentRequestId'],
-        'productSku': json['productSku'] == null ? undefined : json['productSku'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'adjustmentRequestId': json['adjustmentRequestId'],
+        'locationId': json['locationId'],
+        'productSku': json['productSku'],
+        'quantity': json['quantity'],
+        'reasonCode': json['reasonCode'],
+        'status': json['status'],
     };
 }
 
@@ -90,8 +96,8 @@ export function AdjustmentRequestResponseToJSON(value?: AdjustmentRequestRespons
     return {
         
         'adjustmentRequestId': value['adjustmentRequestId'],
-        'productSku': value['productSku'],
         'locationId': value['locationId'],
+        'productSku': value['productSku'],
         'quantity': value['quantity'],
         'reasonCode': value['reasonCode'],
         'status': value['status'],

@@ -24,24 +24,6 @@ export interface ProblemDetail {
      * @type {string}
      * @memberof ProblemDetail
      */
-    type?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProblemDetail
-     */
-    title?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ProblemDetail
-     */
-    status?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProblemDetail
-     */
     detail?: string;
     /**
      * 
@@ -55,6 +37,24 @@ export interface ProblemDetail {
      * @memberof ProblemDetail
      */
     properties?: object;
+    /**
+     * 
+     * @type {number}
+     * @memberof ProblemDetail
+     */
+    status?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ProblemDetail
+     */
+    title?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ProblemDetail
+     */
+    type?: string;
 }
 
 /**
@@ -74,12 +74,12 @@ export function ProblemDetailFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'type': json['type'] == null ? undefined : json['type'],
-        'title': json['title'] == null ? undefined : json['title'],
-        'status': json['status'] == null ? undefined : json['status'],
         'detail': json['detail'] == null ? undefined : json['detail'],
         'instance': json['instance'] == null ? undefined : json['instance'],
         'properties': json['properties'] == null ? undefined : json['properties'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'title': json['title'] == null ? undefined : json['title'],
+        'type': json['type'] == null ? undefined : json['type'],
     };
 }
 
@@ -89,12 +89,12 @@ export function ProblemDetailToJSON(value?: ProblemDetail | null): any {
     }
     return {
         
-        'type': value['type'],
-        'title': value['title'],
-        'status': value['status'],
         'detail': value['detail'],
         'instance': value['instance'],
         'properties': value['properties'],
+        'status': value['status'],
+        'title': value['title'],
+        'type': value['type'],
     };
 }
 

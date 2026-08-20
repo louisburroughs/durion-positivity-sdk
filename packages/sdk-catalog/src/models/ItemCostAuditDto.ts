@@ -20,67 +20,75 @@ import { mapValues } from '../runtime';
  */
 export interface ItemCostAuditDto {
     /**
-     * 
-     * @type {string}
-     * @memberof ItemCostAuditDto
-     */
-    auditId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ItemCostAuditDto
-     */
-    itemId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof ItemCostAuditDto
-     */
-    timestamp?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof ItemCostAuditDto
-     */
-    costTypeChanged?: ItemCostAuditDtoCostTypeChangedEnum;
-    /**
-     * 
-     * @type {number}
-     * @memberof ItemCostAuditDto
-     */
-    oldValue?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ItemCostAuditDto
-     */
-    newValue?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof ItemCostAuditDto
-     */
-    changeSourceType?: ItemCostAuditDtoChangeSourceTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof ItemCostAuditDto
-     */
-    changeSourceId?: string;
-    /**
-     * 
+     * Actor responsible for the change
      * @type {string}
      * @memberof ItemCostAuditDto
      */
     actor?: string;
     /**
-     * 
+     * Audit event identifier
+     * @type {string}
+     * @memberof ItemCostAuditDto
+     */
+    auditId: string;
+    /**
+     * Identifier of the change source
+     * @type {string}
+     * @memberof ItemCostAuditDto
+     */
+    changeSourceId?: string;
+    /**
+     * Source that triggered the cost change
+     * @type {string}
+     * @memberof ItemCostAuditDto
+     */
+    changeSourceType: ItemCostAuditDtoChangeSourceTypeEnum;
+    /**
+     * Type of cost that changed
+     * @type {string}
+     * @memberof ItemCostAuditDto
+     */
+    costTypeChanged: ItemCostAuditDtoCostTypeChangedEnum;
+    /**
+     * Item identifier the audit event belongs to
+     * @type {string}
+     * @memberof ItemCostAuditDto
+     */
+    itemId: string;
+    /**
+     * New cost value
+     * @type {number}
+     * @memberof ItemCostAuditDto
+     */
+    newValue?: number;
+    /**
+     * Previous cost value
+     * @type {number}
+     * @memberof ItemCostAuditDto
+     */
+    oldValue?: number;
+    /**
+     * Reason code for the change
      * @type {string}
      * @memberof ItemCostAuditDto
      */
     reasonCode?: string;
+    /**
+     * Timestamp the cost change occurred
+     * @type {Date}
+     * @memberof ItemCostAuditDto
+     */
+    timestamp: Date;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum ItemCostAuditDtoChangeSourceTypeEnum {
+    Manual = 'MANUAL',
+    PurchaseOrder = 'PURCHASE_ORDER'
+}
 /**
 * @export
 * @enum {string}
@@ -90,20 +98,17 @@ export enum ItemCostAuditDtoCostTypeChangedEnum {
     Last = 'LAST',
     Average = 'AVERAGE'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum ItemCostAuditDtoChangeSourceTypeEnum {
-    Manual = 'MANUAL',
-    PurchaseOrder = 'PURCHASE_ORDER'
-}
 
 
 /**
  * Check if a given object implements the ItemCostAuditDto interface.
  */
 export function instanceOfItemCostAuditDto(value: object): boolean {
+    if (!('auditId' in value)) return false;
+    if (!('changeSourceType' in value)) return false;
+    if (!('costTypeChanged' in value)) return false;
+    if (!('itemId' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -117,16 +122,16 @@ export function ItemCostAuditDtoFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'auditId': json['auditId'] == null ? undefined : json['auditId'],
-        'itemId': json['itemId'] == null ? undefined : json['itemId'],
-        'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
-        'costTypeChanged': json['costTypeChanged'] == null ? undefined : json['costTypeChanged'],
-        'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
-        'newValue': json['newValue'] == null ? undefined : json['newValue'],
-        'changeSourceType': json['changeSourceType'] == null ? undefined : json['changeSourceType'],
-        'changeSourceId': json['changeSourceId'] == null ? undefined : json['changeSourceId'],
         'actor': json['actor'] == null ? undefined : json['actor'],
+        'auditId': json['auditId'],
+        'changeSourceId': json['changeSourceId'] == null ? undefined : json['changeSourceId'],
+        'changeSourceType': json['changeSourceType'],
+        'costTypeChanged': json['costTypeChanged'],
+        'itemId': json['itemId'],
+        'newValue': json['newValue'] == null ? undefined : json['newValue'],
+        'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
         'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'timestamp': (new Date(json['timestamp'])),
     };
 }
 
@@ -136,16 +141,16 @@ export function ItemCostAuditDtoToJSON(value?: ItemCostAuditDto | null): any {
     }
     return {
         
-        'auditId': value['auditId'],
-        'itemId': value['itemId'],
-        'timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
-        'costTypeChanged': value['costTypeChanged'],
-        'oldValue': value['oldValue'],
-        'newValue': value['newValue'],
-        'changeSourceType': value['changeSourceType'],
-        'changeSourceId': value['changeSourceId'],
         'actor': value['actor'],
+        'auditId': value['auditId'],
+        'changeSourceId': value['changeSourceId'],
+        'changeSourceType': value['changeSourceType'],
+        'costTypeChanged': value['costTypeChanged'],
+        'itemId': value['itemId'],
+        'newValue': value['newValue'],
+        'oldValue': value['oldValue'],
         'reasonCode': value['reasonCode'],
+        'timestamp': ((value['timestamp']).toISOString()),
     };
 }
 

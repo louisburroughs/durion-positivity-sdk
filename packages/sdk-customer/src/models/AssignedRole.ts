@@ -14,35 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * An assigned role with its primary flag
  * @export
  * @interface AssignedRole
  */
 export interface AssignedRole {
     /**
-     * 
-     * @type {string}
-     * @memberof AssignedRole
-     */
-    roleCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AssignedRole
-     */
-    roleLabel?: string;
-    /**
-     * 
+     * Whether this contact is primary for this role
      * @type {boolean}
      * @memberof AssignedRole
      */
     isPrimary?: boolean;
+    /**
+     * Role code
+     * @type {string}
+     * @memberof AssignedRole
+     */
+    roleCode: AssignedRoleRoleCodeEnum;
+    /**
+     * Role display label
+     * @type {string}
+     * @memberof AssignedRole
+     */
+    roleLabel?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum AssignedRoleRoleCodeEnum {
+    Billing = 'BILLING',
+    Approver = 'APPROVER',
+    Driver = 'DRIVER'
+}
+
 
 /**
  * Check if a given object implements the AssignedRole interface.
  */
 export function instanceOfAssignedRole(value: object): boolean {
+    if (!('roleCode' in value)) return false;
     return true;
 }
 
@@ -56,9 +68,9 @@ export function AssignedRoleFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'roleCode': json['roleCode'] == null ? undefined : json['roleCode'],
-        'roleLabel': json['roleLabel'] == null ? undefined : json['roleLabel'],
         'isPrimary': json['isPrimary'] == null ? undefined : json['isPrimary'],
+        'roleCode': json['roleCode'],
+        'roleLabel': json['roleLabel'] == null ? undefined : json['roleLabel'],
     };
 }
 
@@ -68,9 +80,9 @@ export function AssignedRoleToJSON(value?: AssignedRole | null): any {
     }
     return {
         
+        'isPrimary': value['isPrimary'],
         'roleCode': value['roleCode'],
         'roleLabel': value['roleLabel'],
-        'isPrimary': value['isPrimary'],
     };
 }
 

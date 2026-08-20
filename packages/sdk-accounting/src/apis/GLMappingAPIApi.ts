@@ -15,12 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   GLMappingCreateRequest,
   GLMappingCreateResponse,
   GLMappingResolveRequest,
   GLMappingResolveResponse,
+  MappingResolutionTestRequest,
+  MappingResolutionTestResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     GLMappingCreateRequestFromJSON,
     GLMappingCreateRequestToJSON,
     GLMappingCreateResponseFromJSON,
@@ -29,6 +34,10 @@ import {
     GLMappingResolveRequestToJSON,
     GLMappingResolveResponseFromJSON,
     GLMappingResolveResponseToJSON,
+    MappingResolutionTestRequestFromJSON,
+    MappingResolutionTestRequestToJSON,
+    MappingResolutionTestResponseFromJSON,
+    MappingResolutionTestResponseToJSON,
 } from '../models/index';
 
 export interface CreateGLMappingRequest {
@@ -39,14 +48,18 @@ export interface ResolveGLMappingRequest {
     gLMappingResolveRequest: GLMappingResolveRequest;
 }
 
+export interface ResolveTestMappingRequest {
+    mappingResolutionTestRequest: MappingResolutionTestRequest;
+}
+
 /**
  * 
  */
 export class GLMappingAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a new GL mapping for source-system external code resolution
-     * Create GL mapping
+     * Creates a date-effective mapping from a source-system external code to a GL account, used when posting events that carry external codes. Use this tool to register how an upstream system\'s code lands in the ledger; do not use createDefaultMapping, which sets the fallback debit and credit pair for an event type without explicit rules. Preconditions: the target GL account must exist and be active, and the new effective date range must not overlap an existing mapping for the same sourceSystem and externalCode. Required inputs: sourceSystem, externalCode, glAccountId (UUID) and effectiveStartDate; effectiveEndDate defaults to null (open-ended) and dimensions are optional. Emits an ACCOUNTING_GL_MAPPING_CREATE event; a cash-receipt code mapped to an implausible account subtype logs a non-blocking warning. Returns 400 when the GL account is missing or inactive, or when the effective dates overlap an existing mapping. 
+     * Create GL Mapping
      */
     async createGLMappingRaw(requestParameters: CreateGLMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLMappingCreateResponse>> {
         if (requestParameters['gLMappingCreateRequest'] == null) {
@@ -82,8 +95,8 @@ export class GLMappingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new GL mapping for source-system external code resolution
-     * Create GL mapping
+     * Creates a date-effective mapping from a source-system external code to a GL account, used when posting events that carry external codes. Use this tool to register how an upstream system\'s code lands in the ledger; do not use createDefaultMapping, which sets the fallback debit and credit pair for an event type without explicit rules. Preconditions: the target GL account must exist and be active, and the new effective date range must not overlap an existing mapping for the same sourceSystem and externalCode. Required inputs: sourceSystem, externalCode, glAccountId (UUID) and effectiveStartDate; effectiveEndDate defaults to null (open-ended) and dimensions are optional. Emits an ACCOUNTING_GL_MAPPING_CREATE event; a cash-receipt code mapped to an implausible account subtype logs a non-blocking warning. Returns 400 when the GL account is missing or inactive, or when the effective dates overlap an existing mapping. 
+     * Create GL Mapping
      */
     async createGLMapping(requestParameters: CreateGLMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLMappingCreateResponse> {
         const response = await this.createGLMappingRaw(requestParameters, initOverrides);
@@ -91,8 +104,8 @@ export class GLMappingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves source-system external code to a GL account using effective-date rules
-     * Resolve GL mapping
+     * Resolves a source-system external code to the GL account whose mapping is effective on the supplied transaction date. Use this tool to look up where a coded transaction will post; do not use resolveTestMapping, which dry-runs full posting-rule evaluation for an event payload rather than a single code lookup. Preconditions: a mapping must exist for the sourceSystem and externalCode whose effective date range covers the transaction date. Required inputs: sourceSystem, externalCode and transactionDate (ISO date-time); there are no optional fields. Emits an ACCOUNTING_GL_MAPPING_RESOLVE audit event; no mappings or entries are created. Returns 400 when no mapping is effective for the code on that date. 
+     * Resolve GL Mapping
      */
     async resolveGLMappingRaw(requestParameters: ResolveGLMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLMappingResolveResponse>> {
         if (requestParameters['gLMappingResolveRequest'] == null) {
@@ -128,11 +141,57 @@ export class GLMappingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves source-system external code to a GL account using effective-date rules
-     * Resolve GL mapping
+     * Resolves a source-system external code to the GL account whose mapping is effective on the supplied transaction date. Use this tool to look up where a coded transaction will post; do not use resolveTestMapping, which dry-runs full posting-rule evaluation for an event payload rather than a single code lookup. Preconditions: a mapping must exist for the sourceSystem and externalCode whose effective date range covers the transaction date. Required inputs: sourceSystem, externalCode and transactionDate (ISO date-time); there are no optional fields. Emits an ACCOUNTING_GL_MAPPING_RESOLVE audit event; no mappings or entries are created. Returns 400 when no mapping is effective for the code on that date. 
+     * Resolve GL Mapping
      */
     async resolveGLMapping(requestParameters: ResolveGLMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLMappingResolveResponse> {
         const response = await this.resolveGLMappingRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Resolves a hypothetical accounting event against the published posting rules and GL mappings, returning the matched rule (id, name, version), the exact journal entry lines the evaluator would post including proportional split-line shares and residual distribution, and per-predicate evaluation outcomes. Use this tool to inspect what a rule set would do before real events arrive; do not use resolveGLMapping, which only resolves a single external code to one account. Preconditions: a PUBLISHED posting rule set should exist, though a no-match outcome is a normal 200 response with matched=false rather than an error. Required inputs: eventType and transactionDate (ISO date); samplePayload is an optional JSON object evaluated by the rule predicates. Emits an ACCOUNTING_MAPPING_RESOLVE_TEST audit event only; nothing is persisted, and no accounting event, journal entry or outbox record is created. Returns 400 when the sample payload cannot be interpreted by the rules. 
+     * Dry-Run Mapping Rule Resolution
+     */
+    async resolveTestMappingRaw(requestParameters: ResolveTestMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MappingResolutionTestResponse>> {
+        if (requestParameters['mappingResolutionTestRequest'] == null) {
+            throw new runtime.RequiredError(
+                'mappingResolutionTestRequest',
+                'Required parameter "mappingResolutionTestRequest" was null or undefined when calling resolveTestMapping().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:posting_rules:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/mappings/resolve-test`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: MappingResolutionTestRequestToJSON(requestParameters['mappingResolutionTestRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MappingResolutionTestResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Resolves a hypothetical accounting event against the published posting rules and GL mappings, returning the matched rule (id, name, version), the exact journal entry lines the evaluator would post including proportional split-line shares and residual distribution, and per-predicate evaluation outcomes. Use this tool to inspect what a rule set would do before real events arrive; do not use resolveGLMapping, which only resolves a single external code to one account. Preconditions: a PUBLISHED posting rule set should exist, though a no-match outcome is a normal 200 response with matched=false rather than an error. Required inputs: eventType and transactionDate (ISO date); samplePayload is an optional JSON object evaluated by the rule predicates. Emits an ACCOUNTING_MAPPING_RESOLVE_TEST audit event only; nothing is persisted, and no accounting event, journal entry or outbox record is created. Returns 400 when the sample payload cannot be interpreted by the rules. 
+     * Dry-Run Mapping Rule Resolution
+     */
+    async resolveTestMapping(requestParameters: ResolveTestMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MappingResolutionTestResponse> {
+        const response = await this.resolveTestMappingRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

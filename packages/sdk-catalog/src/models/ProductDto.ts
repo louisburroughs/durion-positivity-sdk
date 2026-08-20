@@ -39,125 +39,11 @@ import {
  */
 export interface ProductDto {
     /**
-     * Product identifier
-     * @type {string}
-     * @memberof ProductDto
-     */
-    id?: string;
-    /**
-     * Product name
-     * @type {string}
-     * @memberof ProductDto
-     */
-    name?: string;
-    /**
-     * Short product description
-     * @type {string}
-     * @memberof ProductDto
-     */
-    shortDescription?: string;
-    /**
-     * Long product description
-     * @type {string}
-     * @memberof ProductDto
-     */
-    longDescription?: string;
-    /**
-     * Product description
-     * @type {string}
-     * @memberof ProductDto
-     */
-    description?: string;
-    /**
-     * Product image URLs
-     * @type {Array<string>}
-     * @memberof ProductDto
-     */
-    images?: Array<string>;
-    /**
-     * Manufacturer part number
-     * @type {string}
-     * @memberof ProductDto
-     */
-    manufacturerPartNumber?: string;
-    /**
-     * Manufacturer identifier
-     * @type {string}
-     * @memberof ProductDto
-     */
-    manufacturerId?: string;
-    /**
-     * Manufacturer name
-     * @type {string}
-     * @memberof ProductDto
-     */
-    manufacturerName?: string;
-    /**
-     * Manufacturer warranty
-     * @type {string}
-     * @memberof ProductDto
-     */
-    manufacturerWarranty?: string;
-    /**
-     * Manufacturer brand
-     * @type {string}
-     * @memberof ProductDto
-     */
-    manufacturerBrand?: string;
-    /**
-     * Country of origin
-     * @type {string}
-     * @memberof ProductDto
-     */
-    countryOfOrigin?: string;
-    /**
-     * SKU
-     * @type {string}
-     * @memberof ProductDto
-     */
-    sku?: string;
-    /**
-     * Manufacturer part number
-     * @type {string}
-     * @memberof ProductDto
-     */
-    mpn?: string;
-    /**
-     * UPC
-     * @type {string}
-     * @memberof ProductDto
-     */
-    upc?: string;
-    /**
      * Attributes JSON
      * @type {string}
      * @memberof ProductDto
      */
     attributes?: string;
-    /**
-     * Unit of measure
-     * @type {string}
-     * @memberof ProductDto
-     */
-    unitOfMeasure?: string;
-    /**
-     * Operational status
-     * @type {string}
-     * @memberof ProductDto
-     */
-    status?: ProductDtoStatusEnum;
-    /**
-     * Product code
-     * @type {string}
-     * @memberof ProductDto
-     */
-    productCode?: string;
-    /**
-     * Product code type
-     * @type {string}
-     * @memberof ProductDto
-     */
-    productCodeType?: ProductDtoProductCodeTypeEnum;
     /**
      * 
      * @type {CategoryDto}
@@ -165,17 +51,29 @@ export interface ProductDto {
      */
     category?: CategoryDto;
     /**
-     * 
-     * @type {SubcategoryDto}
-     * @memberof ProductDto
-     */
-    subcategory?: SubcategoryDto;
-    /**
-     * Product type
+     * Color
      * @type {string}
      * @memberof ProductDto
      */
-    type?: string;
+    color?: string;
+    /**
+     * Country of origin
+     * @type {string}
+     * @memberof ProductDto
+     */
+    countryOfOrigin?: string;
+    /**
+     * Created timestamp
+     * @type {Date}
+     * @memberof ProductDto
+     */
+    createdAt?: Date;
+    /**
+     * Product description
+     * @type {string}
+     * @memberof ProductDto
+     */
+    description?: string;
     /**
      * Product dimensions
      * @type {Array<DimensionDto>}
@@ -183,29 +81,35 @@ export interface ProductDto {
      */
     dimensions?: Array<DimensionDto>;
     /**
-     * Material
+     * Product identifier
      * @type {string}
      * @memberof ProductDto
      */
-    material?: string;
+    id: string;
     /**
-     * Color
-     * @type {string}
+     * Product image URLs
+     * @type {Array<string>}
      * @memberof ProductDto
      */
-    color?: string;
+    images?: Array<string>;
     /**
-     * Warranty
-     * @type {string}
+     * Last lifecycle state change instant
+     * @type {Date}
      * @memberof ProductDto
      */
-    warranty?: string;
+    lastStateChangedAt?: Date;
     /**
-     * Detailed specifications JSON
+     * User that last changed lifecycle state
      * @type {string}
      * @memberof ProductDto
      */
-    specifications?: string;
+    lastStateChangedBy?: string;
+    /**
+     * Lifecycle override reason
+     * @type {string}
+     * @memberof ProductDto
+     */
+    lifecycleOverrideReason?: string;
     /**
      * Lifecycle state
      * @type {string}
@@ -219,44 +123,147 @@ export interface ProductDto {
      */
     lifecycleStateEffectiveAt?: Date;
     /**
-     * User that last changed lifecycle state
+     * Long product description
      * @type {string}
      * @memberof ProductDto
      */
-    lastStateChangedBy?: string;
+    longDescription?: string;
     /**
-     * Last lifecycle state change instant
-     * @type {Date}
-     * @memberof ProductDto
-     */
-    lastStateChangedAt?: Date;
-    /**
-     * Lifecycle override reason
+     * Manufacturer brand
      * @type {string}
      * @memberof ProductDto
      */
-    lifecycleOverrideReason?: string;
+    manufacturerBrand?: string;
     /**
-     * Created timestamp
-     * @type {Date}
+     * Manufacturer identifier
+     * @type {string}
      * @memberof ProductDto
      */
-    createdAt?: Date;
+    manufacturerId?: string;
+    /**
+     * Manufacturer name
+     * @type {string}
+     * @memberof ProductDto
+     */
+    manufacturerName?: string;
+    /**
+     * Manufacturer part number
+     * @type {string}
+     * @memberof ProductDto
+     */
+    manufacturerPartNumber?: string;
+    /**
+     * Manufacturer warranty
+     * @type {string}
+     * @memberof ProductDto
+     */
+    manufacturerWarranty?: string;
+    /**
+     * Material
+     * @type {string}
+     * @memberof ProductDto
+     */
+    material?: string;
+    /**
+     * Manufacturer part number
+     * @type {string}
+     * @memberof ProductDto
+     */
+    mpn?: string;
+    /**
+     * Product name
+     * @type {string}
+     * @memberof ProductDto
+     */
+    name: string;
+    /**
+     * Product code
+     * @type {string}
+     * @memberof ProductDto
+     */
+    productCode?: string;
+    /**
+     * Product code type
+     * @type {string}
+     * @memberof ProductDto
+     */
+    productCodeType?: ProductDtoProductCodeTypeEnum;
+    /**
+     * Short product description
+     * @type {string}
+     * @memberof ProductDto
+     */
+    shortDescription?: string;
+    /**
+     * SKU
+     * @type {string}
+     * @memberof ProductDto
+     */
+    sku?: string;
+    /**
+     * Detailed specifications JSON
+     * @type {string}
+     * @memberof ProductDto
+     */
+    specifications?: string;
+    /**
+     * Operational status
+     * @type {string}
+     * @memberof ProductDto
+     */
+    status?: ProductDtoStatusEnum;
+    /**
+     * 
+     * @type {SubcategoryDto}
+     * @memberof ProductDto
+     */
+    subcategory?: SubcategoryDto;
+    /**
+     * Stock tracking level
+     * @type {string}
+     * @memberof ProductDto
+     */
+    trackingLevel?: ProductDtoTrackingLevelEnum;
+    /**
+     * Product type
+     * @type {string}
+     * @memberof ProductDto
+     */
+    type?: string;
+    /**
+     * Unit of measure
+     * @type {string}
+     * @memberof ProductDto
+     */
+    unitOfMeasure?: string;
+    /**
+     * UPC
+     * @type {string}
+     * @memberof ProductDto
+     */
+    upc?: string;
     /**
      * Updated timestamp
      * @type {Date}
      * @memberof ProductDto
      */
     updatedAt?: Date;
+    /**
+     * Warranty
+     * @type {string}
+     * @memberof ProductDto
+     */
+    warranty?: string;
 }
 
 /**
 * @export
 * @enum {string}
 */
-export enum ProductDtoStatusEnum {
+export enum ProductDtoLifecycleStateEnum {
     Active = 'ACTIVE',
-    Inactive = 'INACTIVE'
+    Inactive = 'INACTIVE',
+    Discontinued = 'DISCONTINUED'
 }
 /**
 * @export
@@ -270,10 +277,18 @@ export enum ProductDtoProductCodeTypeEnum {
 * @export
 * @enum {string}
 */
-export enum ProductDtoLifecycleStateEnum {
+export enum ProductDtoStatusEnum {
     Active = 'ACTIVE',
-    Inactive = 'INACTIVE',
-    Discontinued = 'DISCONTINUED'
+    Inactive = 'INACTIVE'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum ProductDtoTrackingLevelEnum {
+    None = 'NONE',
+    Lot = 'LOT',
+    Serial = 'SERIAL'
 }
 
 
@@ -281,6 +296,8 @@ export enum ProductDtoLifecycleStateEnum {
  * Check if a given object implements the ProductDto interface.
  */
 export function instanceOfProductDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -294,41 +311,42 @@ export function ProductDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
-        'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'images': json['images'] == null ? undefined : json['images'],
-        'manufacturerPartNumber': json['manufacturerPartNumber'] == null ? undefined : json['manufacturerPartNumber'],
-        'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
-        'manufacturerName': json['manufacturerName'] == null ? undefined : json['manufacturerName'],
-        'manufacturerWarranty': json['manufacturerWarranty'] == null ? undefined : json['manufacturerWarranty'],
-        'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
-        'countryOfOrigin': json['countryOfOrigin'] == null ? undefined : json['countryOfOrigin'],
-        'sku': json['sku'] == null ? undefined : json['sku'],
-        'mpn': json['mpn'] == null ? undefined : json['mpn'],
-        'upc': json['upc'] == null ? undefined : json['upc'],
         'attributes': json['attributes'] == null ? undefined : json['attributes'],
-        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'productCode': json['productCode'] == null ? undefined : json['productCode'],
-        'productCodeType': json['productCodeType'] == null ? undefined : json['productCodeType'],
         'category': json['category'] == null ? undefined : CategoryDtoFromJSON(json['category']),
-        'subcategory': json['subcategory'] == null ? undefined : SubcategoryDtoFromJSON(json['subcategory']),
-        'type': json['type'] == null ? undefined : json['type'],
-        'dimensions': json['dimensions'] == null ? undefined : ((json['dimensions'] as Array<any>).map(DimensionDtoFromJSON)),
-        'material': json['material'] == null ? undefined : json['material'],
         'color': json['color'] == null ? undefined : json['color'],
-        'warranty': json['warranty'] == null ? undefined : json['warranty'],
-        'specifications': json['specifications'] == null ? undefined : json['specifications'],
+        'countryOfOrigin': json['countryOfOrigin'] == null ? undefined : json['countryOfOrigin'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'description': json['description'] == null ? undefined : json['description'],
+        'dimensions': json['dimensions'] == null ? undefined : ((json['dimensions'] as Array<any>).map(DimensionDtoFromJSON)),
+        'id': json['id'],
+        'images': json['images'] == null ? undefined : json['images'],
+        'lastStateChangedAt': json['lastStateChangedAt'] == null ? undefined : (new Date(json['lastStateChangedAt'])),
+        'lastStateChangedBy': json['lastStateChangedBy'] == null ? undefined : json['lastStateChangedBy'],
+        'lifecycleOverrideReason': json['lifecycleOverrideReason'] == null ? undefined : json['lifecycleOverrideReason'],
         'lifecycleState': json['lifecycleState'] == null ? undefined : json['lifecycleState'],
         'lifecycleStateEffectiveAt': json['lifecycleStateEffectiveAt'] == null ? undefined : (new Date(json['lifecycleStateEffectiveAt'])),
-        'lastStateChangedBy': json['lastStateChangedBy'] == null ? undefined : json['lastStateChangedBy'],
-        'lastStateChangedAt': json['lastStateChangedAt'] == null ? undefined : (new Date(json['lastStateChangedAt'])),
-        'lifecycleOverrideReason': json['lifecycleOverrideReason'] == null ? undefined : json['lifecycleOverrideReason'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
+        'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
+        'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
+        'manufacturerName': json['manufacturerName'] == null ? undefined : json['manufacturerName'],
+        'manufacturerPartNumber': json['manufacturerPartNumber'] == null ? undefined : json['manufacturerPartNumber'],
+        'manufacturerWarranty': json['manufacturerWarranty'] == null ? undefined : json['manufacturerWarranty'],
+        'material': json['material'] == null ? undefined : json['material'],
+        'mpn': json['mpn'] == null ? undefined : json['mpn'],
+        'name': json['name'],
+        'productCode': json['productCode'] == null ? undefined : json['productCode'],
+        'productCodeType': json['productCodeType'] == null ? undefined : json['productCodeType'],
+        'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
+        'sku': json['sku'] == null ? undefined : json['sku'],
+        'specifications': json['specifications'] == null ? undefined : json['specifications'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'subcategory': json['subcategory'] == null ? undefined : SubcategoryDtoFromJSON(json['subcategory']),
+        'trackingLevel': json['trackingLevel'] == null ? undefined : json['trackingLevel'],
+        'type': json['type'] == null ? undefined : json['type'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'upc': json['upc'] == null ? undefined : json['upc'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'warranty': json['warranty'] == null ? undefined : json['warranty'],
     };
 }
 
@@ -338,41 +356,42 @@ export function ProductDtoToJSON(value?: ProductDto | null): any {
     }
     return {
         
-        'id': value['id'],
-        'name': value['name'],
-        'shortDescription': value['shortDescription'],
-        'longDescription': value['longDescription'],
-        'description': value['description'],
-        'images': value['images'],
-        'manufacturerPartNumber': value['manufacturerPartNumber'],
-        'manufacturerId': value['manufacturerId'],
-        'manufacturerName': value['manufacturerName'],
-        'manufacturerWarranty': value['manufacturerWarranty'],
-        'manufacturerBrand': value['manufacturerBrand'],
-        'countryOfOrigin': value['countryOfOrigin'],
-        'sku': value['sku'],
-        'mpn': value['mpn'],
-        'upc': value['upc'],
         'attributes': value['attributes'],
-        'unitOfMeasure': value['unitOfMeasure'],
-        'status': value['status'],
-        'productCode': value['productCode'],
-        'productCodeType': value['productCodeType'],
         'category': CategoryDtoToJSON(value['category']),
-        'subcategory': SubcategoryDtoToJSON(value['subcategory']),
-        'type': value['type'],
-        'dimensions': value['dimensions'] == null ? undefined : ((value['dimensions'] as Array<any>).map(DimensionDtoToJSON)),
-        'material': value['material'],
         'color': value['color'],
-        'warranty': value['warranty'],
-        'specifications': value['specifications'],
+        'countryOfOrigin': value['countryOfOrigin'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'description': value['description'],
+        'dimensions': value['dimensions'] == null ? undefined : ((value['dimensions'] as Array<any>).map(DimensionDtoToJSON)),
+        'id': value['id'],
+        'images': value['images'],
+        'lastStateChangedAt': value['lastStateChangedAt'] == null ? undefined : ((value['lastStateChangedAt']).toISOString()),
+        'lastStateChangedBy': value['lastStateChangedBy'],
+        'lifecycleOverrideReason': value['lifecycleOverrideReason'],
         'lifecycleState': value['lifecycleState'],
         'lifecycleStateEffectiveAt': value['lifecycleStateEffectiveAt'] == null ? undefined : ((value['lifecycleStateEffectiveAt']).toISOString()),
-        'lastStateChangedBy': value['lastStateChangedBy'],
-        'lastStateChangedAt': value['lastStateChangedAt'] == null ? undefined : ((value['lastStateChangedAt']).toISOString()),
-        'lifecycleOverrideReason': value['lifecycleOverrideReason'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'longDescription': value['longDescription'],
+        'manufacturerBrand': value['manufacturerBrand'],
+        'manufacturerId': value['manufacturerId'],
+        'manufacturerName': value['manufacturerName'],
+        'manufacturerPartNumber': value['manufacturerPartNumber'],
+        'manufacturerWarranty': value['manufacturerWarranty'],
+        'material': value['material'],
+        'mpn': value['mpn'],
+        'name': value['name'],
+        'productCode': value['productCode'],
+        'productCodeType': value['productCodeType'],
+        'shortDescription': value['shortDescription'],
+        'sku': value['sku'],
+        'specifications': value['specifications'],
+        'status': value['status'],
+        'subcategory': SubcategoryDtoToJSON(value['subcategory']),
+        'trackingLevel': value['trackingLevel'],
+        'type': value['type'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'upc': value['upc'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'warranty': value['warranty'],
     };
 }
 

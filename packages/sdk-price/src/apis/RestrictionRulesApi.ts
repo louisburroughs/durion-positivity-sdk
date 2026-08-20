@@ -25,15 +25,15 @@ import {
     RestrictionRuleResponseToJSON,
 } from '../models/index';
 
-export interface CreateRuleRequest {
+export interface CreateRestrictionRuleOperationRequest {
     createRestrictionRuleRequest: CreateRestrictionRuleRequest;
 }
 
-export interface DeactivateRuleRequest {
+export interface DeactivateRestrictionRuleRequest {
     ruleId: string;
 }
 
-export interface GetRuleByIdRequest {
+export interface GetRestrictionRuleByIdRequest {
     ruleId: string;
 }
 
@@ -43,14 +43,14 @@ export interface GetRuleByIdRequest {
 export class RestrictionRulesApi extends runtime.BaseAPI {
 
     /**
-     * Creates a price restriction rule for a product, location tag, and service tag combination.
-     * Create a restriction rule
+     * Creates an active sale-restriction rule that blocks or gates a product for a location tag and service tag combination. Use this tool to configure a standing restriction policy; do not use overridePriceRestriction, which grants a one-time transaction exemption from an existing rule. Preconditions: none are checked beyond authorization; duplicate rules for the same product and tag combination are not rejected, so each call appends a new rule. Required inputs: productId (UUID), locationTag (ALL_LOCATIONS, RETAIL_STORE, WAREHOUSE, MOBILE_SERVICE, FRANCHISE, or TEST_LOCATION), serviceTag (POS_SALE, WORKORDER, ESTIMATE, INVOICE, or DELIVERY), effectiveFrom (date), and overrideable; effectiveTo is optional, and policyVersion defaults to 1 when omitted. Emits a PRICE_RESTRICTION_RULE_CREATE event and the rule participates in evaluation immediately; a rule with overrideable false forces a BLOCK decision that cannot be overridden. Returns 201 with the stored rule, and 400 when a required field is missing or a tag is not a valid enum value. 
+     * Create A Restriction Rule
      */
-    async createRuleRaw(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
+    async createRestrictionRuleRaw(requestParameters: CreateRestrictionRuleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
         if (requestParameters['createRestrictionRuleRequest'] == null) {
             throw new runtime.RequiredError(
                 'createRestrictionRuleRequest',
-                'Required parameter "createRestrictionRuleRequest" was null or undefined when calling createRule().'
+                'Required parameter "createRestrictionRuleRequest" was null or undefined when calling createRestrictionRule().'
             );
         }
 
@@ -80,23 +80,23 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a price restriction rule for a product, location tag, and service tag combination.
-     * Create a restriction rule
+     * Creates an active sale-restriction rule that blocks or gates a product for a location tag and service tag combination. Use this tool to configure a standing restriction policy; do not use overridePriceRestriction, which grants a one-time transaction exemption from an existing rule. Preconditions: none are checked beyond authorization; duplicate rules for the same product and tag combination are not rejected, so each call appends a new rule. Required inputs: productId (UUID), locationTag (ALL_LOCATIONS, RETAIL_STORE, WAREHOUSE, MOBILE_SERVICE, FRANCHISE, or TEST_LOCATION), serviceTag (POS_SALE, WORKORDER, ESTIMATE, INVOICE, or DELIVERY), effectiveFrom (date), and overrideable; effectiveTo is optional, and policyVersion defaults to 1 when omitted. Emits a PRICE_RESTRICTION_RULE_CREATE event and the rule participates in evaluation immediately; a rule with overrideable false forces a BLOCK decision that cannot be overridden. Returns 201 with the stored rule, and 400 when a required field is missing or a tag is not a valid enum value. 
+     * Create A Restriction Rule
      */
-    async createRule(requestParameters: CreateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
-        const response = await this.createRuleRaw(requestParameters, initOverrides);
+    async createRestrictionRule(requestParameters: CreateRestrictionRuleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
+        const response = await this.createRestrictionRuleRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Deactivates the specified restriction rule so it no longer participates in price restriction evaluation.
-     * Deactivate a restriction rule
+     * Deactivates a sale-restriction rule so it no longer participates in restriction evaluation. Use this tool to retire a standing restriction for everyone; do not use overridePriceRestriction, which leaves the rule active and exempts only a single transaction. Preconditions: the rule must exist and still be active; deactivation is not idempotent, so repeating it fails. Required inputs: ruleId (UUID) as a path parameter; there is no request body. Emits a PRICE_RESTRICTION_RULE_DEACTIVATE event, sets active to false, and stamps effectiveTo with the current date. Returns 404 when no restriction rule exists for the supplied id; calling it on an already inactive rule produces a server error rather than a no-op. 
+     * Deactivate A Restriction Rule
      */
-    async deactivateRuleRaw(requestParameters: DeactivateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
+    async deactivateRestrictionRuleRaw(requestParameters: DeactivateRestrictionRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
         if (requestParameters['ruleId'] == null) {
             throw new runtime.RequiredError(
                 'ruleId',
-                'Required parameter "ruleId" was null or undefined when calling deactivateRule().'
+                'Required parameter "ruleId" was null or undefined when calling deactivateRestrictionRule().'
             );
         }
 
@@ -123,23 +123,23 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates the specified restriction rule so it no longer participates in price restriction evaluation.
-     * Deactivate a restriction rule
+     * Deactivates a sale-restriction rule so it no longer participates in restriction evaluation. Use this tool to retire a standing restriction for everyone; do not use overridePriceRestriction, which leaves the rule active and exempts only a single transaction. Preconditions: the rule must exist and still be active; deactivation is not idempotent, so repeating it fails. Required inputs: ruleId (UUID) as a path parameter; there is no request body. Emits a PRICE_RESTRICTION_RULE_DEACTIVATE event, sets active to false, and stamps effectiveTo with the current date. Returns 404 when no restriction rule exists for the supplied id; calling it on an already inactive rule produces a server error rather than a no-op. 
+     * Deactivate A Restriction Rule
      */
-    async deactivateRule(requestParameters: DeactivateRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
-        const response = await this.deactivateRuleRaw(requestParameters, initOverrides);
+    async deactivateRestrictionRule(requestParameters: DeactivateRestrictionRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
+        const response = await this.deactivateRestrictionRuleRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns the active or inactive restriction rule identified by the supplied rule ID.
-     * Get a restriction rule by ID
+     * Returns a single sale-restriction rule, active or inactive, identified by its rule id. Use this tool when the rule id is already known, typically from an evaluation result\'s ruleIds; use listRestrictionRules instead to browse the active rule set. Preconditions: the rule must exist; inactive rules remain readable through this operation. Required inputs: ruleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no restriction rule exists for the supplied id. 
+     * Get A Restriction Rule By ID
      */
-    async getRuleByIdRaw(requestParameters: GetRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
+    async getRestrictionRuleByIdRaw(requestParameters: GetRestrictionRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
         if (requestParameters['ruleId'] == null) {
             throw new runtime.RequiredError(
                 'ruleId',
-                'Required parameter "ruleId" was null or undefined when calling getRuleById().'
+                'Required parameter "ruleId" was null or undefined when calling getRestrictionRuleById().'
             );
         }
 
@@ -166,19 +166,19 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the active or inactive restriction rule identified by the supplied rule ID.
-     * Get a restriction rule by ID
+     * Returns a single sale-restriction rule, active or inactive, identified by its rule id. Use this tool when the rule id is already known, typically from an evaluation result\'s ruleIds; use listRestrictionRules instead to browse the active rule set. Preconditions: the rule must exist; inactive rules remain readable through this operation. Required inputs: ruleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no restriction rule exists for the supplied id. 
+     * Get A Restriction Rule By ID
      */
-    async getRuleById(requestParameters: GetRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
-        const response = await this.getRuleByIdRaw(requestParameters, initOverrides);
+    async getRestrictionRuleById(requestParameters: GetRestrictionRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
+        const response = await this.getRestrictionRuleByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns all currently active price restriction rules that can affect pricing decisions.
-     * List all active restriction rules
+     * Lists every currently active sale-restriction rule that can affect pricing and sale decisions. Use this tool to review the standing restriction policy; use getRestrictionRuleById instead to fetch one rule, including deactivated rules, which this listing omits. Preconditions: none beyond an authenticated caller. Required inputs: none; there is no request body, filtering, or paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active restriction rules exist. 
+     * List All Active Restriction Rules
      */
-    async listRulesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RestrictionRuleResponse>>> {
+    async listRestrictionRulesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RestrictionRuleResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -202,11 +202,11 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all currently active price restriction rules that can affect pricing decisions.
-     * List all active restriction rules
+     * Lists every currently active sale-restriction rule that can affect pricing and sale decisions. Use this tool to review the standing restriction policy; use getRestrictionRuleById instead to fetch one rule, including deactivated rules, which this listing omits. Preconditions: none beyond an authenticated caller. Required inputs: none; there is no request body, filtering, or paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active restriction rules exist. 
+     * List All Active Restriction Rules
      */
-    async listRules(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RestrictionRuleResponse>> {
-        const response = await this.listRulesRaw(initOverrides);
+    async listRestrictionRules(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RestrictionRuleResponse>> {
+        const response = await this.listRestrictionRulesRaw(initOverrides);
         return await response.value();
     }
 

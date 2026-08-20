@@ -14,71 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Availability of a person at a location for a given date based on staffing assignments
  * @export
  * @interface PeopleAvailabilityResponse
  */
 export interface PeopleAvailabilityResponse {
     /**
-     * 
+     * Lifecycle status of the assignment
      * @type {string}
      * @memberof PeopleAvailabilityResponse
      */
-    personId?: string;
+    assignmentStatus: PeopleAvailabilityResponseAssignmentStatusEnum;
     /**
-     * 
-     * @type {string}
+     * Date the availability was evaluated for
+     * @type {Date}
      * @memberof PeopleAvailabilityResponse
      */
-    firstName?: string;
+    availableOn?: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof PeopleAvailabilityResponse
-     */
-    lastName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PeopleAvailabilityResponse
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PeopleAvailabilityResponse
-     */
-    role?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PeopleAvailabilityResponse
-     */
-    primary?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof PeopleAvailabilityResponse
-     */
-    assignmentStatus?: PeopleAvailabilityResponseAssignmentStatusEnum;
-    /**
-     * 
+     * Date the assignment becomes effective
      * @type {Date}
      * @memberof PeopleAvailabilityResponse
      */
     effectiveFrom?: Date;
     /**
-     * 
+     * Date the assignment ends
      * @type {Date}
      * @memberof PeopleAvailabilityResponse
      */
     effectiveTo?: Date;
     /**
-     * 
-     * @type {Date}
+     * First name of the person
+     * @type {string}
      * @memberof PeopleAvailabilityResponse
      */
-    availableOn?: Date;
+    firstName?: string;
+    /**
+     * Last name of the person
+     * @type {string}
+     * @memberof PeopleAvailabilityResponse
+     */
+    lastName?: string;
+    /**
+     * Location identifier
+     * @type {string}
+     * @memberof PeopleAvailabilityResponse
+     */
+    locationId: string;
+    /**
+     * Person identifier
+     * @type {string}
+     * @memberof PeopleAvailabilityResponse
+     */
+    personId: string;
+    /**
+     * Whether this is the person's primary assignment
+     * @type {boolean}
+     * @memberof PeopleAvailabilityResponse
+     */
+    primary: boolean;
+    /**
+     * Assignment role at the location
+     * @type {string}
+     * @memberof PeopleAvailabilityResponse
+     */
+    role?: string;
 }
 
 /**
@@ -95,6 +95,10 @@ export enum PeopleAvailabilityResponseAssignmentStatusEnum {
  * Check if a given object implements the PeopleAvailabilityResponse interface.
  */
 export function instanceOfPeopleAvailabilityResponse(value: object): boolean {
+    if (!('assignmentStatus' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('personId' in value)) return false;
+    if (!('primary' in value)) return false;
     return true;
 }
 
@@ -108,16 +112,16 @@ export function PeopleAvailabilityResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'firstName': json['firstName'] == null ? undefined : json['firstName'],
-        'lastName': json['lastName'] == null ? undefined : json['lastName'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'role': json['role'] == null ? undefined : json['role'],
-        'primary': json['primary'] == null ? undefined : json['primary'],
-        'assignmentStatus': json['assignmentStatus'] == null ? undefined : json['assignmentStatus'],
+        'assignmentStatus': json['assignmentStatus'],
+        'availableOn': json['availableOn'] == null ? undefined : (new Date(json['availableOn'])),
         'effectiveFrom': json['effectiveFrom'] == null ? undefined : (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
-        'availableOn': json['availableOn'] == null ? undefined : (new Date(json['availableOn'])),
+        'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'lastName': json['lastName'] == null ? undefined : json['lastName'],
+        'locationId': json['locationId'],
+        'personId': json['personId'],
+        'primary': json['primary'],
+        'role': json['role'] == null ? undefined : json['role'],
     };
 }
 
@@ -127,16 +131,16 @@ export function PeopleAvailabilityResponseToJSON(value?: PeopleAvailabilityRespo
     }
     return {
         
-        'personId': value['personId'],
+        'assignmentStatus': value['assignmentStatus'],
+        'availableOn': value['availableOn'] == null ? undefined : ((value['availableOn']).toISOString().substring(0,10)),
+        'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
+        'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'firstName': value['firstName'],
         'lastName': value['lastName'],
         'locationId': value['locationId'],
-        'role': value['role'],
+        'personId': value['personId'],
         'primary': value['primary'],
-        'assignmentStatus': value['assignmentStatus'],
-        'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
-        'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
-        'availableOn': value['availableOn'] == null ? undefined : ((value['availableOn']).toISOString().substring(0,10)),
+        'role': value['role'],
     };
 }
 

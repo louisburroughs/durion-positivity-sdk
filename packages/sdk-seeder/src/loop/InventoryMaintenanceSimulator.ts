@@ -75,7 +75,7 @@ export class InventoryMaintenanceSimulator {
         const variance = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? -1 : 1);
         const countedQuantity = Math.max(0, quantityOnHandBefore + variance);
 
-        const adjustment = await this.inventoryClient.cycleCountAdjustmentsApi.createAdjustment({
+        const adjustment = await this.inventoryClient.cycleCountAdjustmentsApi.createCycleCountAdjustment({
           createAdjustmentRequest: {
             stockItemId,
             reasonCode: 'CYCLE_COUNT',
@@ -92,7 +92,7 @@ export class InventoryMaintenanceSimulator {
         }
 
         const managerName = this.refs.employeeNameById.get(this.refs.employees.manager) ?? 'Manager';
-        await this.inventoryClient.cycleCountAdjustmentsApi.approveAdjustment({
+        await this.inventoryClient.cycleCountAdjustmentsApi.approveCycleCountAdjustment({
           adjustmentId: adjustment.adjustmentId,
           approveAdjustmentRequest: {
             approverUserId: this.refs.employees.manager,

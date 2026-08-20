@@ -20,18 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface OperationalContextOverrideRequest {
     /**
-     * Location identifier to set on the workorder
-     * @type {string}
-     * @memberof OperationalContextOverrideRequest
-     */
-    locationId: string;
-    /**
-     * Optional bay identifier
-     * @type {string}
-     * @memberof OperationalContextOverrideRequest
-     */
-    bayId?: string;
-    /**
      * Assigned mechanic identifiers
      * @type {Array<string>}
      * @memberof OperationalContextOverrideRequest
@@ -44,11 +32,23 @@ export interface OperationalContextOverrideRequest {
      */
     assignedResources?: Array<string>;
     /**
+     * Optional bay identifier
+     * @type {string}
+     * @memberof OperationalContextOverrideRequest
+     */
+    bayId?: string;
+    /**
      * Optional execution constraints
      * @type {Array<string>}
      * @memberof OperationalContextOverrideRequest
      */
     constraints?: Array<string>;
+    /**
+     * Location identifier to set on the workorder
+     * @type {string}
+     * @memberof OperationalContextOverrideRequest
+     */
+    locationId: string;
 }
 
 /**
@@ -69,11 +69,11 @@ export function OperationalContextOverrideRequestFromJSONTyped(json: any, ignore
     }
     return {
         
-        'locationId': json['locationId'],
-        'bayId': json['bayId'] == null ? undefined : json['bayId'],
         'assignedMechanics': json['assignedMechanics'] == null ? undefined : json['assignedMechanics'],
         'assignedResources': json['assignedResources'] == null ? undefined : json['assignedResources'],
+        'bayId': json['bayId'] == null ? undefined : json['bayId'],
         'constraints': json['constraints'] == null ? undefined : json['constraints'],
+        'locationId': json['locationId'],
     };
 }
 
@@ -83,11 +83,11 @@ export function OperationalContextOverrideRequestToJSON(value?: OperationalConte
     }
     return {
         
-        'locationId': value['locationId'],
-        'bayId': value['bayId'],
         'assignedMechanics': value['assignedMechanics'],
         'assignedResources': value['assignedResources'],
+        'bayId': value['bayId'],
         'constraints': value['constraints'],
+        'locationId': value['locationId'],
     };
 }
 

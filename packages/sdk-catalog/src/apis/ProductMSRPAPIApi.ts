@@ -28,21 +28,21 @@ import {
     UpdateMsrpRequestDtoToJSON,
 } from '../models/index';
 
-export interface CreateMsrpRequest {
+export interface CreateProductMsrpRequest {
     productId: string;
     createMsrpRequestDto: CreateMsrpRequestDto;
 }
 
-export interface GetActiveMsrpRequest {
+export interface GetActiveProductMsrpRequest {
     productId: string;
     asOf?: Date;
 }
 
-export interface ListMsrpRequest {
+export interface ListProductMsrpHistoryRequest {
     productId: string;
 }
 
-export interface UpdateMsrpRequest {
+export interface UpdateProductMsrpRequest {
     productId: string;
     msrpId: string;
     updateMsrpRequestDto: UpdateMsrpRequestDto;
@@ -54,21 +54,21 @@ export interface UpdateMsrpRequest {
 export class ProductMSRPAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a product MSRP record with effective date constraints.
-     * Create MSRP
+     * Creates an MSRP record for a product with an effective date window; amounts are stored at four decimal places and the currency is normalised to upper case. Use this tool to schedule a new list price period; do not use updateProductMsrp, which edits an existing record, and note that only one open-ended record (no effectiveEndDate) may exist per product. Preconditions: the product must exist, the new window must not overlap any existing MSRP window, and no other open-ended record may exist when effectiveEndDate is omitted. Required inputs: productId (UUID) path parameter plus a positive amount, a 3-letter ISO currency and effectiveStartDate; effectiveEndDate and createdByUserId are optional. Emits a CATALOG_MSRP_CREATE event; the record participates in active-MSRP resolution and resolveProductPrice fallback from its start date. Returns 404 when the product does not exist, 409 when the dates overlap an existing record, and 400 when the amount is not positive, the currency is not a 3-letter code, the window is inverted, or a second open-ended record is attempted. 
+     * Create Product MSRP
      */
-    async createMsrpRaw(requestParameters: CreateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
+    async createProductMsrpRaw(requestParameters: CreateProductMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling createMsrp().'
+                'Required parameter "productId" was null or undefined when calling createProductMsrp().'
             );
         }
 
         if (requestParameters['createMsrpRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'createMsrpRequestDto',
-                'Required parameter "createMsrpRequestDto" was null or undefined when calling createMsrp().'
+                'Required parameter "createMsrpRequestDto" was null or undefined when calling createProductMsrp().'
             );
         }
 
@@ -98,23 +98,23 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a product MSRP record with effective date constraints.
-     * Create MSRP
+     * Creates an MSRP record for a product with an effective date window; amounts are stored at four decimal places and the currency is normalised to upper case. Use this tool to schedule a new list price period; do not use updateProductMsrp, which edits an existing record, and note that only one open-ended record (no effectiveEndDate) may exist per product. Preconditions: the product must exist, the new window must not overlap any existing MSRP window, and no other open-ended record may exist when effectiveEndDate is omitted. Required inputs: productId (UUID) path parameter plus a positive amount, a 3-letter ISO currency and effectiveStartDate; effectiveEndDate and createdByUserId are optional. Emits a CATALOG_MSRP_CREATE event; the record participates in active-MSRP resolution and resolveProductPrice fallback from its start date. Returns 404 when the product does not exist, 409 when the dates overlap an existing record, and 400 when the amount is not positive, the currency is not a 3-letter code, the window is inverted, or a second open-ended record is attempted. 
+     * Create Product MSRP
      */
-    async createMsrp(requestParameters: CreateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
-        const response = await this.createMsrpRaw(requestParameters, initOverrides);
+    async createProductMsrp(requestParameters: CreateProductMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
+        const response = await this.createProductMsrpRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns MSRP active for the provided asOf date (or today).
-     * Get active MSRP
+     * Returns the single MSRP record whose effective window covers the requested date. Use this tool to read the list price in force on a date; use listProductMsrpHistory instead to see every past and scheduled record. Preconditions: the product must exist and an MSRP window must cover the date. Required inputs: productId (UUID) path parameter; asOf is an optional ISO date defaulting to today. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist or no MSRP window covers the requested date. 
+     * Get Active Product MSRP
      */
-    async getActiveMsrpRaw(requestParameters: GetActiveMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
+    async getActiveProductMsrpRaw(requestParameters: GetActiveProductMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling getActiveMsrp().'
+                'Required parameter "productId" was null or undefined when calling getActiveProductMsrp().'
             );
         }
 
@@ -145,23 +145,23 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns MSRP active for the provided asOf date (or today).
-     * Get active MSRP
+     * Returns the single MSRP record whose effective window covers the requested date. Use this tool to read the list price in force on a date; use listProductMsrpHistory instead to see every past and scheduled record. Preconditions: the product must exist and an MSRP window must cover the date. Required inputs: productId (UUID) path parameter; asOf is an optional ISO date defaulting to today. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist or no MSRP window covers the requested date. 
+     * Get Active Product MSRP
      */
-    async getActiveMsrp(requestParameters: GetActiveMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
-        const response = await this.getActiveMsrpRaw(requestParameters, initOverrides);
+    async getActiveProductMsrp(requestParameters: GetActiveProductMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
+        const response = await this.getActiveProductMsrpRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns all MSRP records for a product.
-     * List MSRP history
+     * Returns every MSRP record for a product — past, current and scheduled — ordered by effective start date, newest first. Use this tool to audit price history or find an msrpId to edit; use getActiveProductMsrp instead for just the record in force on a date. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no filtering or paging. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist, and 200 with an empty array when it has no MSRP records. 
+     * List Product MSRP History
      */
-    async listMsrpRaw(requestParameters: ListMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
+    async listProductMsrpHistoryRaw(requestParameters: ListProductMsrpHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling listMsrp().'
+                'Required parameter "productId" was null or undefined when calling listProductMsrpHistory().'
             );
         }
 
@@ -188,37 +188,37 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all MSRP records for a product.
-     * List MSRP history
+     * Returns every MSRP record for a product — past, current and scheduled — ordered by effective start date, newest first. Use this tool to audit price history or find an msrpId to edit; use getActiveProductMsrp instead for just the record in force on a date. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no filtering or paging. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist, and 200 with an empty array when it has no MSRP records. 
+     * List Product MSRP History
      */
-    async listMsrp(requestParameters: ListMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
-        const response = await this.listMsrpRaw(requestParameters, initOverrides);
+    async listProductMsrpHistory(requestParameters: ListProductMsrpHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
+        const response = await this.listProductMsrpHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Updates a non-historical MSRP record.
-     * Update MSRP
+     * Rewrites a current or future MSRP record\'s amount, currency and effective window; records whose window already ended are immutable history. Use this tool to correct or reschedule an existing record; do not use createProductMsrp, which adds a new window alongside the existing ones. Preconditions: the record must exist, belong to the given product, and not have an effectiveEndDate in the past; a version in the body must match the record\'s current version, and the new window must not overlap other records. Required inputs: productId and msrpId (UUIDs) path parameters plus a positive amount, a 3-letter ISO currency and effectiveStartDate; version is optional but recommended. Emits a CATALOG_MSRP_UPDATE event; active-MSRP resolution reflects the change immediately. Returns 404 when the record does not exist under that product, 409 when the version mismatches or the dates overlap another record, and 400 when the record is historical or the amount, currency or window is invalid. 
+     * Update Product MSRP
      */
-    async updateMsrpRaw(requestParameters: UpdateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
+    async updateProductMsrpRaw(requestParameters: UpdateProductMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling updateMsrp().'
+                'Required parameter "productId" was null or undefined when calling updateProductMsrp().'
             );
         }
 
         if (requestParameters['msrpId'] == null) {
             throw new runtime.RequiredError(
                 'msrpId',
-                'Required parameter "msrpId" was null or undefined when calling updateMsrp().'
+                'Required parameter "msrpId" was null or undefined when calling updateProductMsrp().'
             );
         }
 
         if (requestParameters['updateMsrpRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'updateMsrpRequestDto',
-                'Required parameter "updateMsrpRequestDto" was null or undefined when calling updateMsrp().'
+                'Required parameter "updateMsrpRequestDto" was null or undefined when calling updateProductMsrp().'
             );
         }
 
@@ -248,11 +248,11 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates a non-historical MSRP record.
-     * Update MSRP
+     * Rewrites a current or future MSRP record\'s amount, currency and effective window; records whose window already ended are immutable history. Use this tool to correct or reschedule an existing record; do not use createProductMsrp, which adds a new window alongside the existing ones. Preconditions: the record must exist, belong to the given product, and not have an effectiveEndDate in the past; a version in the body must match the record\'s current version, and the new window must not overlap other records. Required inputs: productId and msrpId (UUIDs) path parameters plus a positive amount, a 3-letter ISO currency and effectiveStartDate; version is optional but recommended. Emits a CATALOG_MSRP_UPDATE event; active-MSRP resolution reflects the change immediately. Returns 404 when the record does not exist under that product, 409 when the version mismatches or the dates overlap another record, and 400 when the record is historical or the amount, currency or window is invalid. 
+     * Update Product MSRP
      */
-    async updateMsrp(requestParameters: UpdateMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
-        const response = await this.updateMsrpRaw(requestParameters, initOverrides);
+    async updateProductMsrp(requestParameters: UpdateProductMsrpRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
+        const response = await this.updateProductMsrpRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

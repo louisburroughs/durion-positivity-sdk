@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to disable an employee and govern handling of their staffing assignments
  * @export
  * @interface DisableEmployeeRequestDto
  */
 export interface DisableEmployeeRequestDto {
     /**
-     * 
-     * @type {string}
+     * End date to apply to assignments when the policy is GRACE_PERIOD
+     * @type {Date}
      * @memberof DisableEmployeeRequestDto
      */
-    disableReason?: string;
+    assignmentEndDate?: Date;
     /**
-     * 
+     * Policy controlling how active staffing assignments are terminated
      * @type {string}
      * @memberof DisableEmployeeRequestDto
      */
     assignmentPolicy?: DisableEmployeeRequestDtoAssignmentPolicyEnum;
     /**
-     * 
-     * @type {Date}
+     * Reason the employee is being disabled
+     * @type {string}
      * @memberof DisableEmployeeRequestDto
      */
-    assignmentEndDate?: Date;
+    disableReason?: string;
 }
 
 /**
@@ -66,9 +66,9 @@ export function DisableEmployeeRequestDtoFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'disableReason': json['disableReason'] == null ? undefined : json['disableReason'],
-        'assignmentPolicy': json['assignmentPolicy'] == null ? undefined : json['assignmentPolicy'],
         'assignmentEndDate': json['assignmentEndDate'] == null ? undefined : (new Date(json['assignmentEndDate'])),
+        'assignmentPolicy': json['assignmentPolicy'] == null ? undefined : json['assignmentPolicy'],
+        'disableReason': json['disableReason'] == null ? undefined : json['disableReason'],
     };
 }
 
@@ -78,9 +78,9 @@ export function DisableEmployeeRequestDtoToJSON(value?: DisableEmployeeRequestDt
     }
     return {
         
-        'disableReason': value['disableReason'],
-        'assignmentPolicy': value['assignmentPolicy'],
         'assignmentEndDate': value['assignmentEndDate'] == null ? undefined : ((value['assignmentEndDate']).toISOString().substring(0,10)),
+        'assignmentPolicy': value['assignmentPolicy'],
+        'disableReason': value['disableReason'],
     };
 }
 

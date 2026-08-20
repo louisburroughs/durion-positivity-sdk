@@ -33,133 +33,133 @@ import {
 } from './OperatingHoursRequest';
 
 /**
- * Location object to be created
+ * Request payload for creating or updating a location
  * @export
  * @interface LocationRequestDTO
  */
 export interface LocationRequestDTO {
     /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    code: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    geographicalLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    addressLine1?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    addressLine2?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    city?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    state?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    postalCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    country?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationRequestDTO
-     */
-    mailingAddress?: string;
-    /**
-     * 
+     * Whether the location is active
      * @type {boolean}
      * @memberof LocationRequestDTO
      */
     active?: boolean;
     /**
-     * 
+     * First line of the street address
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    addressLine1?: string;
+    /**
+     * Second line of the street address
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    addressLine2?: string;
+    /**
+     * Buffer minutes reserved before appointments for check-in
      * @type {number}
      * @memberof LocationRequestDTO
      */
-    responsiblePersonId?: number;
+    checkInBufferMinutes?: number;
     /**
-     * 
+     * City of the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    city?: string;
+    /**
+     * Buffer minutes reserved after appointments for cleanup
+     * @type {number}
+     * @memberof LocationRequestDTO
+     */
+    cleanupBufferMinutes?: number;
+    /**
+     * Unique business code of the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    code: string;
+    /**
+     * Country of the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    country?: string;
+    /**
+     * Identifier of the associated geographical location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    geographicalLocationId?: string;
+    /**
+     * Holiday closures for the location
+     * @type {Array<HolidayClosureRequest>}
+     * @memberof LocationRequestDTO
+     */
+    holidayClosures?: Array<HolidayClosureRequest>;
+    /**
+     * Mailing address of the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    mailingAddress?: string;
+    /**
+     * Display name of the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    name: string;
+    /**
+     * Weekly operating hours for the location
+     * @type {Array<OperatingHoursRequest>}
+     * @memberof LocationRequestDTO
+     */
+    operatingHours?: Array<OperatingHoursRequest>;
+    /**
+     * Map of parent relationships keyed by relationship type
+     * @type {object}
+     * @memberof LocationRequestDTO
+     */
+    parents?: object;
+    /**
+     * Postal or ZIP code of the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    postalCode?: string;
+    /**
+     * People-contact person identifier of the person responsible for the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    responsiblePersonId?: string;
+    /**
+     * State or province of the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    state?: string;
+    /**
+     * IANA timezone identifier for the location
      * @type {string}
      * @memberof LocationRequestDTO
      */
     timezone?: string;
     /**
      * 
-     * @type {Array<OperatingHoursRequest>}
-     * @memberof LocationRequestDTO
-     */
-    operatingHours?: Array<OperatingHoursRequest>;
-    /**
-     * 
-     * @type {Array<HolidayClosureRequest>}
-     * @memberof LocationRequestDTO
-     */
-    holidayClosures?: Array<HolidayClosureRequest>;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationRequestDTO
-     */
-    checkInBufferMinutes?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationRequestDTO
-     */
-    cleanupBufferMinutes?: number;
-    /**
-     * 
      * @type {LocationTypeDTO}
      * @memberof LocationRequestDTO
      */
     type: LocationTypeDTO;
-    /**
-     * 
-     * @type {object}
-     * @memberof LocationRequestDTO
-     */
-    parents?: object;
 }
 
 /**
  * Check if a given object implements the LocationRequestDTO interface.
  */
 export function instanceOfLocationRequestDTO(value: object): boolean {
-    if (!('name' in value)) return false;
     if (!('code' in value)) return false;
+    if (!('name' in value)) return false;
     if (!('type' in value)) return false;
     return true;
 }
@@ -174,25 +174,25 @@ export function LocationRequestDTOFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'name': json['name'],
-        'code': json['code'],
-        'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
+        'active': json['active'] == null ? undefined : json['active'],
         'addressLine1': json['addressLine1'] == null ? undefined : json['addressLine1'],
         'addressLine2': json['addressLine2'] == null ? undefined : json['addressLine2'],
-        'city': json['city'] == null ? undefined : json['city'],
-        'state': json['state'] == null ? undefined : json['state'],
-        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
-        'country': json['country'] == null ? undefined : json['country'],
-        'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
-        'active': json['active'] == null ? undefined : json['active'],
-        'responsiblePersonId': json['responsiblePersonId'] == null ? undefined : json['responsiblePersonId'],
-        'timezone': json['timezone'] == null ? undefined : json['timezone'],
-        'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
-        'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
         'checkInBufferMinutes': json['checkInBufferMinutes'] == null ? undefined : json['checkInBufferMinutes'],
+        'city': json['city'] == null ? undefined : json['city'],
         'cleanupBufferMinutes': json['cleanupBufferMinutes'] == null ? undefined : json['cleanupBufferMinutes'],
-        'type': LocationTypeDTOFromJSON(json['type']),
+        'code': json['code'],
+        'country': json['country'] == null ? undefined : json['country'],
+        'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
+        'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
+        'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
+        'name': json['name'],
+        'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
         'parents': json['parents'] == null ? undefined : json['parents'],
+        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
+        'responsiblePersonId': json['responsiblePersonId'] == null ? undefined : json['responsiblePersonId'],
+        'state': json['state'] == null ? undefined : json['state'],
+        'timezone': json['timezone'] == null ? undefined : json['timezone'],
+        'type': LocationTypeDTOFromJSON(json['type']),
     };
 }
 
@@ -202,25 +202,25 @@ export function LocationRequestDTOToJSON(value?: LocationRequestDTO | null): any
     }
     return {
         
-        'name': value['name'],
-        'code': value['code'],
-        'geographicalLocationId': value['geographicalLocationId'],
+        'active': value['active'],
         'addressLine1': value['addressLine1'],
         'addressLine2': value['addressLine2'],
-        'city': value['city'],
-        'state': value['state'],
-        'postalCode': value['postalCode'],
-        'country': value['country'],
-        'mailingAddress': value['mailingAddress'],
-        'active': value['active'],
-        'responsiblePersonId': value['responsiblePersonId'],
-        'timezone': value['timezone'],
-        'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),
-        'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
         'checkInBufferMinutes': value['checkInBufferMinutes'],
+        'city': value['city'],
         'cleanupBufferMinutes': value['cleanupBufferMinutes'],
-        'type': LocationTypeDTOToJSON(value['type']),
+        'code': value['code'],
+        'country': value['country'],
+        'geographicalLocationId': value['geographicalLocationId'],
+        'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
+        'mailingAddress': value['mailingAddress'],
+        'name': value['name'],
+        'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),
         'parents': value['parents'],
+        'postalCode': value['postalCode'],
+        'responsiblePersonId': value['responsiblePersonId'],
+        'state': value['state'],
+        'timezone': value['timezone'],
+        'type': LocationTypeDTOToJSON(value['type']),
     };
 }
 

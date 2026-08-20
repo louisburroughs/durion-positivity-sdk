@@ -20,70 +20,70 @@ import { mapValues } from '../runtime';
  */
 export interface ProductCreateRequestDto {
     /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    description: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    unitOfMeasure: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    manufacturerId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    categoryId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    sku: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    mpn: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductCreateRequestDto
-     */
-    upc?: string;
-    /**
      * JSON object represented as string
      * @type {string}
      * @memberof ProductCreateRequestDto
      */
     attributes?: string;
+    /**
+     * Category identifier
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    categoryId?: string;
+    /**
+     * Product description
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    description: string;
+    /**
+     * Manufacturer identifier
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    manufacturerId?: string;
+    /**
+     * Manufacturer part number
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    mpn: string;
+    /**
+     * Product name
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    name: string;
+    /**
+     * Stock keeping unit
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    sku: string;
+    /**
+     * Unit of measure
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    unitOfMeasure: string;
+    /**
+     * Universal product code
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    upc?: string;
 }
 
 /**
  * Check if a given object implements the ProductCreateRequestDto interface.
  */
 export function instanceOfProductCreateRequestDto(value: object): boolean {
-    if (!('name' in value)) return false;
     if (!('description' in value)) return false;
-    if (!('unitOfMeasure' in value)) return false;
-    if (!('sku' in value)) return false;
     if (!('mpn' in value)) return false;
+    if (!('name' in value)) return false;
+    if (!('sku' in value)) return false;
+    if (!('unitOfMeasure' in value)) return false;
     return true;
 }
 
@@ -97,15 +97,15 @@ export function ProductCreateRequestDtoFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'name': json['name'],
-        'description': json['description'],
-        'unitOfMeasure': json['unitOfMeasure'],
-        'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
-        'categoryId': json['categoryId'] == null ? undefined : json['categoryId'],
-        'sku': json['sku'],
-        'mpn': json['mpn'],
-        'upc': json['upc'] == null ? undefined : json['upc'],
         'attributes': json['attributes'] == null ? undefined : json['attributes'],
+        'categoryId': json['categoryId'] == null ? undefined : json['categoryId'],
+        'description': json['description'],
+        'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
+        'mpn': json['mpn'],
+        'name': json['name'],
+        'sku': json['sku'],
+        'unitOfMeasure': json['unitOfMeasure'],
+        'upc': json['upc'] == null ? undefined : json['upc'],
     };
 }
 
@@ -115,15 +115,15 @@ export function ProductCreateRequestDtoToJSON(value?: ProductCreateRequestDto | 
     }
     return {
         
-        'name': value['name'],
-        'description': value['description'],
-        'unitOfMeasure': value['unitOfMeasure'],
-        'manufacturerId': value['manufacturerId'],
-        'categoryId': value['categoryId'],
-        'sku': value['sku'],
-        'mpn': value['mpn'],
-        'upc': value['upc'],
         'attributes': value['attributes'],
+        'categoryId': value['categoryId'],
+        'description': value['description'],
+        'manufacturerId': value['manufacturerId'],
+        'mpn': value['mpn'],
+        'name': value['name'],
+        'sku': value['sku'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'upc': value['upc'],
     };
 }
 

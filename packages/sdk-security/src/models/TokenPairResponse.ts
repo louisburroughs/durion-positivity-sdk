@@ -24,19 +24,21 @@ export interface TokenPairResponse {
      * @type {string}
      * @memberof TokenPairResponse
      */
-    accessToken?: string;
+    accessToken: string;
     /**
      * Long-lived JWT refresh token (7 days expiration)
      * @type {string}
      * @memberof TokenPairResponse
      */
-    refreshToken?: string;
+    refreshToken: string;
 }
 
 /**
  * Check if a given object implements the TokenPairResponse interface.
  */
 export function instanceOfTokenPairResponse(value: object): boolean {
+    if (!('accessToken' in value)) return false;
+    if (!('refreshToken' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function TokenPairResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'accessToken': json['accessToken'] == null ? undefined : json['accessToken'],
-        'refreshToken': json['refreshToken'] == null ? undefined : json['refreshToken'],
+        'accessToken': json['accessToken'],
+        'refreshToken': json['refreshToken'],
     };
 }
 

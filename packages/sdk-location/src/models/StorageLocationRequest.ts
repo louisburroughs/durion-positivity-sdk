@@ -14,47 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a storage location
  * @export
  * @interface StorageLocationRequest
  */
 export interface StorageLocationRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationRequest
-     */
-    name?: string;
-    /**
-     * 
+     * Barcode identifying the storage location
      * @type {string}
      * @memberof StorageLocationRequest
      */
     barcode?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationRequest
-     */
-    type?: StorageLocationRequestTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationRequest
-     */
-    parentStorageLocationId?: string;
-    /**
-     * 
+     * Capacity attributes of the storage location
      * @type {object}
      * @memberof StorageLocationRequest
      */
     capacity?: object;
     /**
-     * 
+     * Display name of the storage location
+     * @type {string}
+     * @memberof StorageLocationRequest
+     */
+    name: string;
+    /**
+     * Identifier of the parent storage location
+     * @type {string}
+     * @memberof StorageLocationRequest
+     */
+    parentStorageLocationId?: string;
+    /**
+     * Temperature attributes of the storage location
      * @type {object}
      * @memberof StorageLocationRequest
      */
     temperature?: object;
+    /**
+     * Type classification of the storage location
+     * @type {string}
+     * @memberof StorageLocationRequest
+     */
+    type: StorageLocationRequestTypeEnum;
 }
 
 /**
@@ -74,6 +74,8 @@ export enum StorageLocationRequestTypeEnum {
  * Check if a given object implements the StorageLocationRequest interface.
  */
 export function instanceOfStorageLocationRequest(value: object): boolean {
+    if (!('name' in value)) return false;
+    if (!('type' in value)) return false;
     return true;
 }
 
@@ -87,12 +89,12 @@ export function StorageLocationRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
         'barcode': json['barcode'] == null ? undefined : json['barcode'],
-        'type': json['type'] == null ? undefined : json['type'],
-        'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
         'capacity': json['capacity'] == null ? undefined : json['capacity'],
+        'name': json['name'],
+        'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
         'temperature': json['temperature'] == null ? undefined : json['temperature'],
+        'type': json['type'],
     };
 }
 
@@ -102,12 +104,12 @@ export function StorageLocationRequestToJSON(value?: StorageLocationRequest | nu
     }
     return {
         
-        'name': value['name'],
         'barcode': value['barcode'],
-        'type': value['type'],
-        'parentStorageLocationId': value['parentStorageLocationId'],
         'capacity': value['capacity'],
+        'name': value['name'],
+        'parentStorageLocationId': value['parentStorageLocationId'],
         'temperature': value['temperature'],
+        'type': value['type'],
     };
 }
 

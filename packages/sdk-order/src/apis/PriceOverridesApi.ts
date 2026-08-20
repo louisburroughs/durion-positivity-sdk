@@ -43,20 +43,20 @@ export interface ApprovePriceOverrideOperationRequest {
     approvePriceOverrideRequest: ApprovePriceOverrideRequest;
 }
 
-export interface GetOverrideRequest {
+export interface GetPriceOverrideRequest {
     overrideId: string;
-}
-
-export interface GetOverridesByOrderRequest {
-    orderId?: string;
-    status?: string;
-    startDate?: string;
-    endDate?: string;
 }
 
 export interface RejectPriceOverrideOperationRequest {
     overrideId: string;
     rejectPriceOverrideRequest: RejectPriceOverrideRequest;
+}
+
+export interface SearchPriceOverridesRequest {
+    orderId?: string;
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
 }
 
 /**
@@ -65,8 +65,8 @@ export interface RejectPriceOverrideOperationRequest {
 export class PriceOverridesApi extends runtime.BaseAPI {
 
     /**
-     * Apply a price override to an order line. May require approval based on override amount.
-     * Apply price override
+     * Applies a price override to a single DRAFT order line, auto-approving and repricing the line immediately when the discount is below the approval thresholds (10 percent and 50.00), and otherwise parking it at PENDING_APPROVAL for a manager. Use this tool for a one-line price concession; do not use applyOrderDiscount, which spreads a discount pro-rata across the whole order, and do not use approvePriceOverride, which resolves an override that already exists. Preconditions: the order must exist and be DRAFT, the order line must exist, and overridePrice must be between zero and originalPrice inclusive. Required inputs: orderId, orderLineId, and productId as UUID strings, originalPrice, overridePrice, and reasonCode (for example PRICE_MATCH or GOODWILL_ADJUSTMENT); justification and idempotencyKey are optional, and a replayed key returns the existing override. Emits an ORDER_PRICE_OVERRIDE_APPLY event; an auto-approved override immediately rewrites the line\'s unit price, recomputes the order subtotal, and publishes a commission-impact fact. Returns 201 with status APPROVED or PENDING_APPROVAL, 400 when an id or reasonCode cannot be parsed, 409 when the idempotency key was used with a different payload, and 422 when the order or line cannot be found, the order is not DRAFT, or the override price is negative or above the original. 
+     * Apply a Price Override
      */
     async applyPriceOverrideRaw(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideResult>> {
         if (requestParameters['applyPriceOverrideRequest'] == null) {
@@ -102,8 +102,8 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Apply a price override to an order line. May require approval based on override amount.
-     * Apply price override
+     * Applies a price override to a single DRAFT order line, auto-approving and repricing the line immediately when the discount is below the approval thresholds (10 percent and 50.00), and otherwise parking it at PENDING_APPROVAL for a manager. Use this tool for a one-line price concession; do not use applyOrderDiscount, which spreads a discount pro-rata across the whole order, and do not use approvePriceOverride, which resolves an override that already exists. Preconditions: the order must exist and be DRAFT, the order line must exist, and overridePrice must be between zero and originalPrice inclusive. Required inputs: orderId, orderLineId, and productId as UUID strings, originalPrice, overridePrice, and reasonCode (for example PRICE_MATCH or GOODWILL_ADJUSTMENT); justification and idempotencyKey are optional, and a replayed key returns the existing override. Emits an ORDER_PRICE_OVERRIDE_APPLY event; an auto-approved override immediately rewrites the line\'s unit price, recomputes the order subtotal, and publishes a commission-impact fact. Returns 201 with status APPROVED or PENDING_APPROVAL, 400 when an id or reasonCode cannot be parsed, 409 when the idempotency key was used with a different payload, and 422 when the order or line cannot be found, the order is not DRAFT, or the override price is negative or above the original. 
+     * Apply a Price Override
      */
     async applyPriceOverride(requestParameters: ApplyPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideResult> {
         const response = await this.applyPriceOverrideRaw(requestParameters, initOverrides);
@@ -111,8 +111,8 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approve a pending price override. Validates approver permission level.
-     * Approve price override
+     * Approves a PENDING_APPROVAL price override, marking it APPROVED and recording an approval audit row with the reviewer\'s role resolved from the caller\'s granted roles. Use this tool to grant a pending override; do not use rejectPriceOverride, which declines it, and do not use applyPriceOverride, which creates a new override. Preconditions: the override must exist and be in PENDING_APPROVAL. Required inputs: overrideId (UUID) as a path parameter; the body carries only optional reviewer comments — the approver identity and role come from the security context, not the body. Emits an ORDER_PRICE_OVERRIDE_APPROVE event and publishes a commission-impact fact; note that the approval itself does not rewrite the order line\'s unit price — the line reprice happens only on the auto-approved apply path. Returns 404 when the override does not exist, and 422 when the override is not in PENDING_APPROVAL. 
+     * Approve a Price Override
      */
     async approvePriceOverrideRaw(requestParameters: ApprovePriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideDetail>> {
         if (requestParameters['overrideId'] == null) {
@@ -155,8 +155,8 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approve a pending price override. Validates approver permission level.
-     * Approve price override
+     * Approves a PENDING_APPROVAL price override, marking it APPROVED and recording an approval audit row with the reviewer\'s role resolved from the caller\'s granted roles. Use this tool to grant a pending override; do not use rejectPriceOverride, which declines it, and do not use applyPriceOverride, which creates a new override. Preconditions: the override must exist and be in PENDING_APPROVAL. Required inputs: overrideId (UUID) as a path parameter; the body carries only optional reviewer comments — the approver identity and role come from the security context, not the body. Emits an ORDER_PRICE_OVERRIDE_APPROVE event and publishes a commission-impact fact; note that the approval itself does not rewrite the order line\'s unit price — the line reprice happens only on the auto-approved apply path. Returns 404 when the override does not exist, and 422 when the override is not in PENDING_APPROVAL. 
+     * Approve a Price Override
      */
     async approvePriceOverride(requestParameters: ApprovePriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideDetail> {
         const response = await this.approvePriceOverrideRaw(requestParameters, initOverrides);
@@ -164,14 +164,14 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a specific price override by ID.
-     * Get price override
+     * Returns one price override with its prices, discount figures, status, audit actors, and lifecycle timestamps. Use this tool when the override id is already known; use searchPriceOverrides instead to find overrides by order, status, or date range. Preconditions: the override must exist. Required inputs: overrideId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no price override exists for the supplied id. 
+     * Get a Price Override
      */
-    async getOverrideRaw(requestParameters: GetOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideDetail>> {
+    async getPriceOverrideRaw(requestParameters: GetPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideDetail>> {
         if (requestParameters['overrideId'] == null) {
             throw new runtime.RequiredError(
                 'overrideId',
-                'Required parameter "overrideId" was null or undefined when calling getOverride().'
+                'Required parameter "overrideId" was null or undefined when calling getPriceOverride().'
             );
         }
 
@@ -198,71 +198,19 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a specific price override by ID.
-     * Get price override
+     * Returns one price override with its prices, discount figures, status, audit actors, and lifecycle timestamps. Use this tool when the override id is already known; use searchPriceOverrides instead to find overrides by order, status, or date range. Preconditions: the override must exist. Required inputs: overrideId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no price override exists for the supplied id. 
+     * Get a Price Override
      */
-    async getOverride(requestParameters: GetOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideDetail> {
-        const response = await this.getOverrideRaw(requestParameters, initOverrides);
+    async getPriceOverride(requestParameters: GetPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideDetail> {
+        const response = await this.getPriceOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve price overrides by order ID, status, or date range. At least one filter parameter is required.
-     * Get price overrides
+     * Lists every price override sitting in PENDING_APPROVAL — the manager approval work queue. Use this tool to fetch what needs a decision; use approvePriceOverride or rejectPriceOverride to act on an entry, and searchPriceOverrides instead for historical or filtered queries. Preconditions: none beyond the order:price_override:approve permission. Required inputs: none; there are no parameters and no request body. Emits an ORDER_PRICE_OVERRIDE_LIST_PENDING audit event; no state changes. Returns 200 with a possibly empty list; there are no business error conditions beyond authorization. 
+     * List Pending Price Override Approvals
      */
-    async getOverridesByOrderRaw(requestParameters: GetOverridesByOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PriceOverrideDetail>>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['orderId'] != null) {
-            queryParameters['orderId'] = requestParameters['orderId'];
-        }
-
-        if (requestParameters['status'] != null) {
-            queryParameters['status'] = requestParameters['status'];
-        }
-
-        if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = requestParameters['startDate'];
-        }
-
-        if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["order:price_override:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/orders/price-overrides`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PriceOverrideDetailFromJSON));
-    }
-
-    /**
-     * Retrieve price overrides by order ID, status, or date range. At least one filter parameter is required.
-     * Get price overrides
-     */
-    async getOverridesByOrder(requestParameters: GetOverridesByOrderRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PriceOverrideDetail>> {
-        const response = await this.getOverridesByOrderRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve all price overrides awaiting approval.
-     * Get pending approvals
-     */
-    async getPendingApprovalsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PriceOverrideDetail>>> {
+    async listPendingPriceOverridesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PriceOverrideDetail>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -286,17 +234,17 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all price overrides awaiting approval.
-     * Get pending approvals
+     * Lists every price override sitting in PENDING_APPROVAL — the manager approval work queue. Use this tool to fetch what needs a decision; use approvePriceOverride or rejectPriceOverride to act on an entry, and searchPriceOverrides instead for historical or filtered queries. Preconditions: none beyond the order:price_override:approve permission. Required inputs: none; there are no parameters and no request body. Emits an ORDER_PRICE_OVERRIDE_LIST_PENDING audit event; no state changes. Returns 200 with a possibly empty list; there are no business error conditions beyond authorization. 
+     * List Pending Price Override Approvals
      */
-    async getPendingApprovals(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PriceOverrideDetail>> {
-        const response = await this.getPendingApprovalsRaw(initOverrides);
+    async listPendingPriceOverrides(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PriceOverrideDetail>> {
+        const response = await this.listPendingPriceOverridesRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Reject a pending price override with a reason.
-     * Reject price override
+     * Rejects a PENDING_APPROVAL price override, marking it REJECTED with the supplied reason and recording a rejection audit row with the reviewer\'s resolved role. Use this tool to decline a pending override; do not use approvePriceOverride, which grants it instead. Preconditions: the override must exist and be in PENDING_APPROVAL; a rejected override is terminal and never touches the order line\'s price. Required inputs: overrideId (UUID) as a path parameter and reason in the body; comments are optional, and the reviewer identity and role come from the security context. Emits an ORDER_PRICE_OVERRIDE_REJECT event; no commission-impact fact is published for a rejection. Returns 404 when the override does not exist, and 422 when the override is not in PENDING_APPROVAL. 
+     * Reject a Price Override
      */
     async rejectPriceOverrideRaw(requestParameters: RejectPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceOverrideDetail>> {
         if (requestParameters['overrideId'] == null) {
@@ -339,11 +287,63 @@ export class PriceOverridesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reject a pending price override with a reason.
-     * Reject price override
+     * Rejects a PENDING_APPROVAL price override, marking it REJECTED with the supplied reason and recording a rejection audit row with the reviewer\'s resolved role. Use this tool to decline a pending override; do not use approvePriceOverride, which grants it instead. Preconditions: the override must exist and be in PENDING_APPROVAL; a rejected override is terminal and never touches the order line\'s price. Required inputs: overrideId (UUID) as a path parameter and reason in the body; comments are optional, and the reviewer identity and role come from the security context. Emits an ORDER_PRICE_OVERRIDE_REJECT event; no commission-impact fact is published for a rejection. Returns 404 when the override does not exist, and 422 when the override is not in PENDING_APPROVAL. 
+     * Reject a Price Override
      */
     async rejectPriceOverride(requestParameters: RejectPriceOverrideOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceOverrideDetail> {
         const response = await this.rejectPriceOverrideRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Searches price overrides by order id, status, or creation-date range; exactly one filter dimension is applied, with orderId taking precedence over status, which takes precedence over the date range. Use this tool to find overrides matching a filter; use getPriceOverride instead when the override id is known, or listPendingPriceOverrides for the approval work queue. Preconditions: at least one filter must be supplied, and a date-range search requires both startDate and endDate. Required inputs: one of orderId (UUID string), status (an override status such as PENDING_APPROVAL, APPROVED or REJECTED), or startDate plus endDate as ISO-8601 date-times. Emits an ORDER_PRICE_OVERRIDE_SEARCH audit event; no state changes. Returns 200 with a possibly empty list, 400 when no filter is supplied or orderId is not a UUID, and 422 when status is not a valid override status name. 
+     * Search Price Overrides
+     */
+    async searchPriceOverridesRaw(requestParameters: SearchPriceOverridesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PriceOverrideDetail>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['orderId'] != null) {
+            queryParameters['orderId'] = requestParameters['orderId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString();
+        }
+
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString();
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:price_override:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/price-overrides`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PriceOverrideDetailFromJSON));
+    }
+
+    /**
+     * Searches price overrides by order id, status, or creation-date range; exactly one filter dimension is applied, with orderId taking precedence over status, which takes precedence over the date range. Use this tool to find overrides matching a filter; use getPriceOverride instead when the override id is known, or listPendingPriceOverrides for the approval work queue. Preconditions: at least one filter must be supplied, and a date-range search requires both startDate and endDate. Required inputs: one of orderId (UUID string), status (an override status such as PENDING_APPROVAL, APPROVED or REJECTED), or startDate plus endDate as ISO-8601 date-times. Emits an ORDER_PRICE_OVERRIDE_SEARCH audit event; no state changes. Returns 200 with a possibly empty list, 400 when no filter is supplied or orderId is not a UUID, and 422 when status is not a valid override status name. 
+     * Search Price Overrides
+     */
+    async searchPriceOverrides(requestParameters: SearchPriceOverridesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PriceOverrideDetail>> {
+        const response = await this.searchPriceOverridesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

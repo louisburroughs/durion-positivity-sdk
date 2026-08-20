@@ -20,24 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface JournalEntryLineResponse {
     /**
-     * Line UUID
-     * @type {string}
-     * @memberof JournalEntryLineResponse
-     */
-    lineId?: string;
-    /**
-     * Line sequence number
-     * @type {number}
-     * @memberof JournalEntryLineResponse
-     */
-    lineNumber?: number;
-    /**
-     * GL account UUID
-     * @type {string}
-     * @memberof JournalEntryLineResponse
-     */
-    glAccountId?: string;
-    /**
      * GL account code
      * @type {string}
      * @memberof JournalEntryLineResponse
@@ -50,17 +32,17 @@ export interface JournalEntryLineResponse {
      */
     accountName?: string;
     /**
-     * Debit amount
-     * @type {number}
-     * @memberof JournalEntryLineResponse
-     */
-    debitAmount?: number;
-    /**
      * Credit amount
      * @type {number}
      * @memberof JournalEntryLineResponse
      */
     creditAmount?: number;
+    /**
+     * Debit amount
+     * @type {number}
+     * @memberof JournalEntryLineResponse
+     */
+    debitAmount?: number;
     /**
      * Line description
      * @type {string}
@@ -73,6 +55,24 @@ export interface JournalEntryLineResponse {
      * @memberof JournalEntryLineResponse
      */
     dimensions?: { [key: string]: string; };
+    /**
+     * GL account UUID
+     * @type {string}
+     * @memberof JournalEntryLineResponse
+     */
+    glAccountId?: string;
+    /**
+     * Line UUID
+     * @type {string}
+     * @memberof JournalEntryLineResponse
+     */
+    lineId?: string;
+    /**
+     * Line sequence number
+     * @type {number}
+     * @memberof JournalEntryLineResponse
+     */
+    lineNumber?: number;
 }
 
 /**
@@ -92,15 +92,15 @@ export function JournalEntryLineResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'lineId': json['lineId'] == null ? undefined : json['lineId'],
-        'lineNumber': json['lineNumber'] == null ? undefined : json['lineNumber'],
-        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
         'accountCode': json['accountCode'] == null ? undefined : json['accountCode'],
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
-        'debitAmount': json['debitAmount'] == null ? undefined : json['debitAmount'],
         'creditAmount': json['creditAmount'] == null ? undefined : json['creditAmount'],
+        'debitAmount': json['debitAmount'] == null ? undefined : json['debitAmount'],
         'description': json['description'] == null ? undefined : json['description'],
         'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
+        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
+        'lineId': json['lineId'] == null ? undefined : json['lineId'],
+        'lineNumber': json['lineNumber'] == null ? undefined : json['lineNumber'],
     };
 }
 
@@ -110,15 +110,15 @@ export function JournalEntryLineResponseToJSON(value?: JournalEntryLineResponse 
     }
     return {
         
-        'lineId': value['lineId'],
-        'lineNumber': value['lineNumber'],
-        'glAccountId': value['glAccountId'],
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
-        'debitAmount': value['debitAmount'],
         'creditAmount': value['creditAmount'],
+        'debitAmount': value['debitAmount'],
         'description': value['description'],
         'dimensions': value['dimensions'],
+        'glAccountId': value['glAccountId'],
+        'lineId': value['lineId'],
+        'lineNumber': value['lineNumber'],
     };
 }
 

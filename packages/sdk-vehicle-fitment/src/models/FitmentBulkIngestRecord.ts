@@ -14,65 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single fitment record consumed during bulk part fitment ingest
  * @export
  * @interface FitmentBulkIngestRecord
  */
 export interface FitmentBulkIngestRecord {
     /**
-     * 
-     * @type {number}
-     * @memberof FitmentBulkIngestRecord
-     */
-    partNumberId: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof FitmentBulkIngestRecord
-     */
-    manufacturerName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof FitmentBulkIngestRecord
-     */
-    makeName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof FitmentBulkIngestRecord
-     */
-    modelName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof FitmentBulkIngestRecord
-     */
-    vehicleTypeName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof FitmentBulkIngestRecord
-     */
-    vehicleYear?: string;
-    /**
-     * 
+     * Engine type for the vehicle
      * @type {string}
      * @memberof FitmentBulkIngestRecord
      */
     engineType?: string;
     /**
-     * 
+     * Make name for the vehicle
+     * @type {string}
+     * @memberof FitmentBulkIngestRecord
+     */
+    makeName?: string;
+    /**
+     * Manufacturer name for the vehicle
+     * @type {string}
+     * @memberof FitmentBulkIngestRecord
+     */
+    manufacturerName?: string;
+    /**
+     * Model name for the vehicle
+     * @type {string}
+     * @memberof FitmentBulkIngestRecord
+     */
+    modelName?: string;
+    /**
+     * Free-form notes about the fitment
+     * @type {string}
+     * @memberof FitmentBulkIngestRecord
+     */
+    notes?: string;
+    /**
+     * Part number identifier the fitment record applies to
+     * @type {number}
+     * @memberof FitmentBulkIngestRecord
+     */
+    partNumberId: number;
+    /**
+     * Vehicle submodel or trim
      * @type {string}
      * @memberof FitmentBulkIngestRecord
      */
     submodel?: string;
     /**
-     * 
+     * Vehicle type name
      * @type {string}
      * @memberof FitmentBulkIngestRecord
      */
-    notes?: string;
+    vehicleTypeName?: string;
+    /**
+     * Vehicle year or year range
+     * @type {string}
+     * @memberof FitmentBulkIngestRecord
+     */
+    vehicleYear?: string;
 }
 
 /**
@@ -93,15 +93,15 @@ export function FitmentBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'partNumberId': json['partNumberId'],
-        'manufacturerName': json['manufacturerName'] == null ? undefined : json['manufacturerName'],
+        'engineType': json['engineType'] == null ? undefined : json['engineType'],
         'makeName': json['makeName'] == null ? undefined : json['makeName'],
+        'manufacturerName': json['manufacturerName'] == null ? undefined : json['manufacturerName'],
         'modelName': json['modelName'] == null ? undefined : json['modelName'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'partNumberId': json['partNumberId'],
+        'submodel': json['submodel'] == null ? undefined : json['submodel'],
         'vehicleTypeName': json['vehicleTypeName'] == null ? undefined : json['vehicleTypeName'],
         'vehicleYear': json['vehicleYear'] == null ? undefined : json['vehicleYear'],
-        'engineType': json['engineType'] == null ? undefined : json['engineType'],
-        'submodel': json['submodel'] == null ? undefined : json['submodel'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
     };
 }
 
@@ -111,15 +111,15 @@ export function FitmentBulkIngestRecordToJSON(value?: FitmentBulkIngestRecord | 
     }
     return {
         
-        'partNumberId': value['partNumberId'],
-        'manufacturerName': value['manufacturerName'],
+        'engineType': value['engineType'],
         'makeName': value['makeName'],
+        'manufacturerName': value['manufacturerName'],
         'modelName': value['modelName'],
+        'notes': value['notes'],
+        'partNumberId': value['partNumberId'],
+        'submodel': value['submodel'],
         'vehicleTypeName': value['vehicleTypeName'],
         'vehicleYear': value['vehicleYear'],
-        'engineType': value['engineType'],
-        'submodel': value['submodel'],
-        'notes': value['notes'],
     };
 }
 

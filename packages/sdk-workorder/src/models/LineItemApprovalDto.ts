@@ -20,37 +20,37 @@ import { mapValues } from '../runtime';
  */
 export interface LineItemApprovalDto {
     /**
-     * ID of the line item (service/product) being approved or rejected
-     * @type {string}
-     * @memberof LineItemApprovalDto
-     */
-    lineItemId: string;
-    /**
      * Whether this line item is approved (true) or rejected (false)
      * @type {boolean}
      * @memberof LineItemApprovalDto
      */
     approved: boolean;
     /**
-     * Reason for rejection (required if approved=false)
+     * ID of the line item (service/product) being approved or rejected
      * @type {string}
      * @memberof LineItemApprovalDto
      */
-    rejectionReason?: string;
+    lineItemId: string;
     /**
      * Additional notes about this line item decision
      * @type {string}
      * @memberof LineItemApprovalDto
      */
     notes?: string;
+    /**
+     * Reason for rejection (required if approved=false)
+     * @type {string}
+     * @memberof LineItemApprovalDto
+     */
+    rejectionReason?: string;
 }
 
 /**
  * Check if a given object implements the LineItemApprovalDto interface.
  */
 export function instanceOfLineItemApprovalDto(value: object): boolean {
-    if (!('lineItemId' in value)) return false;
     if (!('approved' in value)) return false;
+    if (!('lineItemId' in value)) return false;
     return true;
 }
 
@@ -64,10 +64,10 @@ export function LineItemApprovalDtoFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'lineItemId': json['lineItemId'],
         'approved': json['approved'],
-        'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
+        'lineItemId': json['lineItemId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
     };
 }
 
@@ -77,10 +77,10 @@ export function LineItemApprovalDtoToJSON(value?: LineItemApprovalDto | null): a
     }
     return {
         
-        'lineItemId': value['lineItemId'],
         'approved': value['approved'],
-        'rejectionReason': value['rejectionReason'],
+        'lineItemId': value['lineItemId'],
         'notes': value['notes'],
+        'rejectionReason': value['rejectionReason'],
     };
 }
 

@@ -31,15 +31,15 @@ import {
     VehicleTypeResponseToJSON,
 } from '../models/index';
 
-export interface GetMakesByManufacturerRequest {
+export interface ListMakesByManufacturerRequest {
     manufacturerId: string;
 }
 
-export interface GetModelsByMakeRequest {
+export interface ListModelsByMakeRequest {
     makeId: string;
 }
 
-export interface GetVehicleTypesForMakeRequest {
+export interface ListVehicleTypesByMakeRequest {
     makeId: string;
 }
 
@@ -49,14 +49,14 @@ export interface GetVehicleTypesForMakeRequest {
 export class VehicleFitmentAPIApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve all makes for a given manufacturer.
-     * Get makes by manufacturer
+     * Returns all vehicle makes recorded for one manufacturer, served from a local cache of the NHTSA vPIC registry. Use this tool after picking a manufacturer from listManufacturers; do not use listModelsByMake, which descends one level further and needs a makeId taken from this response. Preconditions: the manufacturer must already exist in the local cache under the supplied id; ids are the UUIDs returned by listManufacturers, not raw NHTSA numeric ids. Required inputs: manufacturerId (UUID) as a path parameter. No events are emitted; a cache refresh may rewrite the local make rows for the manufacturer, but nothing else changes. Returns 200 with the make list, and 500 when the manufacturer id cannot be resolved or the NHTSA refresh fails, because the not-found case is not currently mapped to 404. 
+     * List Makes for a Manufacturer
      */
-    async getMakesByManufacturerRaw(requestParameters: GetMakesByManufacturerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<MakeResponse>>> {
+    async listMakesByManufacturerRaw(requestParameters: ListMakesByManufacturerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<MakeResponse>>> {
         if (requestParameters['manufacturerId'] == null) {
             throw new runtime.RequiredError(
                 'manufacturerId',
-                'Required parameter "manufacturerId" was null or undefined when calling getMakesByManufacturer().'
+                'Required parameter "manufacturerId" was null or undefined when calling listMakesByManufacturer().'
             );
         }
 
@@ -83,19 +83,19 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all makes for a given manufacturer.
-     * Get makes by manufacturer
+     * Returns all vehicle makes recorded for one manufacturer, served from a local cache of the NHTSA vPIC registry. Use this tool after picking a manufacturer from listManufacturers; do not use listModelsByMake, which descends one level further and needs a makeId taken from this response. Preconditions: the manufacturer must already exist in the local cache under the supplied id; ids are the UUIDs returned by listManufacturers, not raw NHTSA numeric ids. Required inputs: manufacturerId (UUID) as a path parameter. No events are emitted; a cache refresh may rewrite the local make rows for the manufacturer, but nothing else changes. Returns 200 with the make list, and 500 when the manufacturer id cannot be resolved or the NHTSA refresh fails, because the not-found case is not currently mapped to 404. 
+     * List Makes for a Manufacturer
      */
-    async getMakesByManufacturer(requestParameters: GetMakesByManufacturerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<MakeResponse>> {
-        const response = await this.getMakesByManufacturerRaw(requestParameters, initOverrides);
+    async listMakesByManufacturer(requestParameters: ListMakesByManufacturerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<MakeResponse>> {
+        const response = await this.listMakesByManufacturerRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve a list of all vehicle manufacturers.
-     * Get all manufacturers
+     * Returns the list of vehicle manufacturers known to the fitment service, served from a local cache of the NHTSA vPIC registry. Use this tool to start the manufacturer-make-model selection chain; do not use listMakesByManufacturer, which requires a manufacturerId taken from this response. Preconditions: none beyond authentication; when the local cache is empty or stale the list is re-fetched from the public NHTSA vPIC service, so outbound connectivity is required for a refresh. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted; a refresh rewrites the local manufacturer cache rows, but the response is otherwise a read-only projection. Returns 200 with the manufacturer list, which may be empty, and 500 when the NHTSA refresh cannot be fetched or parsed. 
+     * List Vehicle Manufacturers
      */
-    async getManufacturersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ManufacturerResponse>>> {
+    async listManufacturersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ManufacturerResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -119,23 +119,23 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a list of all vehicle manufacturers.
-     * Get all manufacturers
+     * Returns the list of vehicle manufacturers known to the fitment service, served from a local cache of the NHTSA vPIC registry. Use this tool to start the manufacturer-make-model selection chain; do not use listMakesByManufacturer, which requires a manufacturerId taken from this response. Preconditions: none beyond authentication; when the local cache is empty or stale the list is re-fetched from the public NHTSA vPIC service, so outbound connectivity is required for a refresh. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted; a refresh rewrites the local manufacturer cache rows, but the response is otherwise a read-only projection. Returns 200 with the manufacturer list, which may be empty, and 500 when the NHTSA refresh cannot be fetched or parsed. 
+     * List Vehicle Manufacturers
      */
-    async getManufacturers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ManufacturerResponse>> {
-        const response = await this.getManufacturersRaw(initOverrides);
+    async listManufacturers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ManufacturerResponse>> {
+        const response = await this.listManufacturersRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all models for a given make.
-     * Get models by make
+     * Returns all vehicle models recorded for one make, served from a local cache of the NHTSA vPIC registry. Use this tool after picking a make from listMakesByManufacturer; do not use listVehicleTypesByMake, which returns body classes such as Passenger Car rather than named models. Preconditions: the make must already exist in the local cache under the supplied id. Required inputs: makeId (UUID) as a path parameter. No events are emitted; a cache refresh may rewrite the local model rows for the make, but nothing else changes. Returns 200 with the model list, and 500 when the make id cannot be resolved or the NHTSA refresh fails, because the not-found case is not currently mapped to 404. 
+     * List Models for a Make
      */
-    async getModelsByMakeRaw(requestParameters: GetModelsByMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ModelResponse>>> {
+    async listModelsByMakeRaw(requestParameters: ListModelsByMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ModelResponse>>> {
         if (requestParameters['makeId'] == null) {
             throw new runtime.RequiredError(
                 'makeId',
-                'Required parameter "makeId" was null or undefined when calling getModelsByMake().'
+                'Required parameter "makeId" was null or undefined when calling listModelsByMake().'
             );
         }
 
@@ -162,23 +162,23 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all models for a given make.
-     * Get models by make
+     * Returns all vehicle models recorded for one make, served from a local cache of the NHTSA vPIC registry. Use this tool after picking a make from listMakesByManufacturer; do not use listVehicleTypesByMake, which returns body classes such as Passenger Car rather than named models. Preconditions: the make must already exist in the local cache under the supplied id. Required inputs: makeId (UUID) as a path parameter. No events are emitted; a cache refresh may rewrite the local model rows for the make, but nothing else changes. Returns 200 with the model list, and 500 when the make id cannot be resolved or the NHTSA refresh fails, because the not-found case is not currently mapped to 404. 
+     * List Models for a Make
      */
-    async getModelsByMake(requestParameters: GetModelsByMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ModelResponse>> {
-        const response = await this.getModelsByMakeRaw(requestParameters, initOverrides);
+    async listModelsByMake(requestParameters: ListModelsByMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ModelResponse>> {
+        const response = await this.listModelsByMakeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all vehicle types for a given make.
-     * Get vehicle types for make
+     * Returns the vehicle types, meaning body classes such as Passenger Car or Truck, recorded for one make, served from a local cache of the NHTSA vPIC registry. Use this tool when a make\'s body classes are needed; do not use listModelsByMake, which returns the make\'s named models instead. Preconditions: the make must already exist in the local cache under the supplied id. Required inputs: makeId (UUID) as a path parameter. No events are emitted; a cache refresh may rewrite the local vehicle-type rows for the make, but nothing else changes. Returns 200 with the vehicle-type list, and 500 when the make id cannot be resolved or the NHTSA refresh fails, because the not-found case is not currently mapped to 404. 
+     * List Vehicle Types for a Make
      */
-    async getVehicleTypesForMakeRaw(requestParameters: GetVehicleTypesForMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VehicleTypeResponse>>> {
+    async listVehicleTypesByMakeRaw(requestParameters: ListVehicleTypesByMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VehicleTypeResponse>>> {
         if (requestParameters['makeId'] == null) {
             throw new runtime.RequiredError(
                 'makeId',
-                'Required parameter "makeId" was null or undefined when calling getVehicleTypesForMake().'
+                'Required parameter "makeId" was null or undefined when calling listVehicleTypesByMake().'
             );
         }
 
@@ -205,11 +205,11 @@ export class VehicleFitmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all vehicle types for a given make.
-     * Get vehicle types for make
+     * Returns the vehicle types, meaning body classes such as Passenger Car or Truck, recorded for one make, served from a local cache of the NHTSA vPIC registry. Use this tool when a make\'s body classes are needed; do not use listModelsByMake, which returns the make\'s named models instead. Preconditions: the make must already exist in the local cache under the supplied id. Required inputs: makeId (UUID) as a path parameter. No events are emitted; a cache refresh may rewrite the local vehicle-type rows for the make, but nothing else changes. Returns 200 with the vehicle-type list, and 500 when the make id cannot be resolved or the NHTSA refresh fails, because the not-found case is not currently mapped to 404. 
+     * List Vehicle Types for a Make
      */
-    async getVehicleTypesForMake(requestParameters: GetVehicleTypesForMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VehicleTypeResponse>> {
-        const response = await this.getVehicleTypesForMakeRaw(requestParameters, initOverrides);
+    async listVehicleTypesByMake(requestParameters: ListVehicleTypesByMakeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VehicleTypeResponse>> {
+        const response = await this.listVehicleTypesByMakeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

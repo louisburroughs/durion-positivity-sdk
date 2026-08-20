@@ -14,31 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a replenishment policy defining min/max stock thresholds for an item at a location
  * @export
  * @interface CreateReplenishmentPolicyRequest
  */
 export interface CreateReplenishmentPolicyRequest {
     /**
-     * 
-     * @type {string}
+     * Whether the policy participates in replenishment evaluation; defaults to true
+     * @type {boolean}
      * @memberof CreateReplenishmentPolicyRequest
      */
-    locationId: string;
+    active?: boolean;
     /**
-     * 
+     * SKU of the item the replenishment policy applies to
      * @type {string}
      * @memberof CreateReplenishmentPolicyRequest
      */
     itemSKU: string;
     /**
-     * 
+     * Per-policy lead-time override in days; takes precedence over vendor-feed lead-time estimates and the configured default
      * @type {number}
      * @memberof CreateReplenishmentPolicyRequest
      */
-    minimumQuantity: number;
+    leadTimeDaysOverride?: number;
     /**
-     * 
+     * Identifier of the location the replenishment policy applies to
+     * @type {string}
+     * @memberof CreateReplenishmentPolicyRequest
+     */
+    locationId: string;
+    /**
+     * Maximum on-hand quantity replenishment aims to restock up to
      * @type {number}
      * @memberof CreateReplenishmentPolicyRequest
      */
@@ -49,16 +55,45 @@ export interface CreateReplenishmentPolicyRequest {
      * @memberof CreateReplenishmentPolicyRequest
      */
     minimumLessThanMaximum?: boolean;
+    /**
+     * Minimum on-hand quantity that triggers replenishment when reached
+     * @type {number}
+     * @memberof CreateReplenishmentPolicyRequest
+     */
+    minimumQuantity: number;
+    /**
+     * Round the computed replenishment quantity up to the nearest multiple of this value. When omitted, defaults to the vendor-feed pack size for the SKU when one is known (greater than 1); otherwise no rounding is applied.
+     * @type {number}
+     * @memberof CreateReplenishmentPolicyRequest
+     */
+    orderMultiple?: number;
+    /**
+     * Preferred sourcing channel for replenishing this policy's pick face; defaults to EITHER
+     * @type {string}
+     * @memberof CreateReplenishmentPolicyRequest
+     */
+    preferredSourceType?: CreateReplenishmentPolicyRequestPreferredSourceTypeEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CreateReplenishmentPolicyRequestPreferredSourceTypeEnum {
+    InternalTransfer = 'INTERNAL_TRANSFER',
+    Purchase = 'PURCHASE',
+    Either = 'EITHER'
+}
+
 
 /**
  * Check if a given object implements the CreateReplenishmentPolicyRequest interface.
  */
 export function instanceOfCreateReplenishmentPolicyRequest(value: object): boolean {
-    if (!('locationId' in value)) return false;
     if (!('itemSKU' in value)) return false;
-    if (!('minimumQuantity' in value)) return false;
+    if (!('locationId' in value)) return false;
     if (!('maximumQuantity' in value)) return false;
+    if (!('minimumQuantity' in value)) return false;
     return true;
 }
 
@@ -72,11 +107,15 @@ export function CreateReplenishmentPolicyRequestFromJSONTyped(json: any, ignoreD
     }
     return {
         
-        'locationId': json['locationId'],
+        'active': json['active'] == null ? undefined : json['active'],
         'itemSKU': json['itemSKU'],
-        'minimumQuantity': json['minimumQuantity'],
+        'leadTimeDaysOverride': json['leadTimeDaysOverride'] == null ? undefined : json['leadTimeDaysOverride'],
+        'locationId': json['locationId'],
         'maximumQuantity': json['maximumQuantity'],
         'minimumLessThanMaximum': json['minimumLessThanMaximum'] == null ? undefined : json['minimumLessThanMaximum'],
+        'minimumQuantity': json['minimumQuantity'],
+        'orderMultiple': json['orderMultiple'] == null ? undefined : json['orderMultiple'],
+        'preferredSourceType': json['preferredSourceType'] == null ? undefined : json['preferredSourceType'],
     };
 }
 
@@ -86,11 +125,15 @@ export function CreateReplenishmentPolicyRequestToJSON(value?: CreateReplenishme
     }
     return {
         
-        'locationId': value['locationId'],
+        'active': value['active'],
         'itemSKU': value['itemSKU'],
-        'minimumQuantity': value['minimumQuantity'],
+        'leadTimeDaysOverride': value['leadTimeDaysOverride'],
+        'locationId': value['locationId'],
         'maximumQuantity': value['maximumQuantity'],
         'minimumLessThanMaximum': value['minimumLessThanMaximum'],
+        'minimumQuantity': value['minimumQuantity'],
+        'orderMultiple': value['orderMultiple'],
+        'preferredSourceType': value['preferredSourceType'],
     };
 }
 

@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Current permission catalog version and size
  * @export
  * @interface CatalogVersionResponse
  */
 export interface CatalogVersionResponse {
     /**
-     * 
+     * Total number of permissions in the catalog
      * @type {number}
      * @memberof CatalogVersionResponse
      */
-    version?: number;
+    permissionCount: number;
     /**
-     * 
+     * Current catalog version integer
      * @type {number}
      * @memberof CatalogVersionResponse
      */
-    permissionCount?: number;
+    version: number;
 }
 
 /**
  * Check if a given object implements the CatalogVersionResponse interface.
  */
 export function instanceOfCatalogVersionResponse(value: object): boolean {
+    if (!('permissionCount' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function CatalogVersionResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'permissionCount': json['permissionCount'] == null ? undefined : json['permissionCount'],
+        'permissionCount': json['permissionCount'],
+        'version': json['version'],
     };
 }
 
@@ -61,8 +63,8 @@ export function CatalogVersionResponseToJSON(value?: CatalogVersionResponse | nu
     }
     return {
         
-        'version': value['version'],
         'permissionCount': value['permissionCount'],
+        'version': value['version'],
     };
 }
 

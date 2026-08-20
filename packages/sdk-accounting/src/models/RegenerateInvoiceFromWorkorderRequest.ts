@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to regenerate an invoice from a completed workorder
  * @export
  * @interface RegenerateInvoiceFromWorkorderRequest
  */
 export interface RegenerateInvoiceFromWorkorderRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof RegenerateInvoiceFromWorkorderRequest
-     */
-    workorderId: string;
-    /**
-     * 
+     * Optional idempotency key to safely retry regeneration
      * @type {string}
      * @memberof RegenerateInvoiceFromWorkorderRequest
      */
     idempotencyKey?: string;
+    /**
+     * Identifier of the workorder to regenerate the invoice from
+     * @type {string}
+     * @memberof RegenerateInvoiceFromWorkorderRequest
+     */
+    workorderId: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function RegenerateInvoiceFromWorkorderRequestFromJSONTyped(json: any, ig
     }
     return {
         
-        'workorderId': json['workorderId'],
         'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -62,8 +62,8 @@ export function RegenerateInvoiceFromWorkorderRequestToJSON(value?: RegenerateIn
     }
     return {
         
-        'workorderId': value['workorderId'],
         'idempotencyKey': value['idempotencyKey'],
+        'workorderId': value['workorderId'],
     };
 }
 

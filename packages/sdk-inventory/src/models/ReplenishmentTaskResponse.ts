@@ -14,83 +14,95 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A replenishment task describing a recommended or in-progress stock movement between locations
  * @export
  * @interface ReplenishmentTaskResponse
  */
 export interface ReplenishmentTaskResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    taskId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    itemSKU?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ReplenishmentTaskResponse
-     */
-    quantity?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    sourceLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    destinationLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    triggerType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    decisionReason?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentTaskResponse
-     */
-    sourcingReason?: string;
-    /**
-     * 
+     * Identifier or name of the user the replenishment task is assigned to
      * @type {string}
      * @memberof ReplenishmentTaskResponse
      */
     assignedTo?: string;
     /**
-     * 
+     * Timestamp at which the replenishment task was created
      * @type {string}
      * @memberof ReplenishmentTaskResponse
      */
-    createdAt?: string;
+    createdAt: string;
+    /**
+     * Earliest date at which the projected available quantity goes below zero (stock-out deadline used for prioritization); absent when no stock-out is projected within the lead-time horizon
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    deadlineDate?: string;
+    /**
+     * Explanation of why this replenishment was decided
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    decisionReason?: string;
+    /**
+     * Identifier of the location stock is moved to
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    destinationLocationId: string;
+    /**
+     * SKU of the item to be replenished
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    itemSKU: string;
+    /**
+     * Quantity of the item to be moved by this replenishment task
+     * @type {number}
+     * @memberof ReplenishmentTaskResponse
+     */
+    quantity: number;
+    /**
+     * Identifier of the location stock is sourced from
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    sourceLocationId?: string;
+    /**
+     * Explanation of why the chosen source location was selected to supply the stock
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    sourcingReason?: string;
+    /**
+     * Current status of the replenishment task
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    status: string;
+    /**
+     * Unique identifier of the replenishment task
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    taskId: string;
+    /**
+     * Mechanism that triggered the task, such as a manual request or automatic threshold breach
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    triggerType?: string;
 }
 
 /**
  * Check if a given object implements the ReplenishmentTaskResponse interface.
  */
 export function instanceOfReplenishmentTaskResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('destinationLocationId' in value)) return false;
+    if (!('itemSKU' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('taskId' in value)) return false;
     return true;
 }
 
@@ -104,17 +116,18 @@ export function ReplenishmentTaskResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'taskId': json['taskId'] == null ? undefined : json['taskId'],
-        'itemSKU': json['itemSKU'] == null ? undefined : json['itemSKU'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
-        'destinationLocationId': json['destinationLocationId'] == null ? undefined : json['destinationLocationId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'triggerType': json['triggerType'] == null ? undefined : json['triggerType'],
-        'decisionReason': json['decisionReason'] == null ? undefined : json['decisionReason'],
-        'sourcingReason': json['sourcingReason'] == null ? undefined : json['sourcingReason'],
         'assignedTo': json['assignedTo'] == null ? undefined : json['assignedTo'],
-        'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
+        'createdAt': json['createdAt'],
+        'deadlineDate': json['deadlineDate'] == null ? undefined : json['deadlineDate'],
+        'decisionReason': json['decisionReason'] == null ? undefined : json['decisionReason'],
+        'destinationLocationId': json['destinationLocationId'],
+        'itemSKU': json['itemSKU'],
+        'quantity': json['quantity'],
+        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
+        'sourcingReason': json['sourcingReason'] == null ? undefined : json['sourcingReason'],
+        'status': json['status'],
+        'taskId': json['taskId'],
+        'triggerType': json['triggerType'] == null ? undefined : json['triggerType'],
     };
 }
 
@@ -124,17 +137,18 @@ export function ReplenishmentTaskResponseToJSON(value?: ReplenishmentTaskRespons
     }
     return {
         
-        'taskId': value['taskId'],
+        'assignedTo': value['assignedTo'],
+        'createdAt': value['createdAt'],
+        'deadlineDate': value['deadlineDate'],
+        'decisionReason': value['decisionReason'],
+        'destinationLocationId': value['destinationLocationId'],
         'itemSKU': value['itemSKU'],
         'quantity': value['quantity'],
         'sourceLocationId': value['sourceLocationId'],
-        'destinationLocationId': value['destinationLocationId'],
-        'status': value['status'],
-        'triggerType': value['triggerType'],
-        'decisionReason': value['decisionReason'],
         'sourcingReason': value['sourcingReason'],
-        'assignedTo': value['assignedTo'],
-        'createdAt': value['createdAt'],
+        'status': value['status'],
+        'taskId': value['taskId'],
+        'triggerType': value['triggerType'],
     };
 }
 

@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface BulkIngestCatalogProductsRequest {
     bulkIngestRequestCatalogBulkIngestRecord: BulkIngestRequestCatalogBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class CatalogBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of catalog products in one call, creating each record through the same governed path as createProduct and reporting a per-row success or failure verdict. Use this tool to load many products at once; do not use createProduct, which registers a single product and surfaces its errors as HTTP statuses rather than row results. Preconditions: each row\'s SKU must not already exist (case-insensitive), or that row fails with CATALOG_INGEST_FAILED while the rest of the batch proceeds. Required inputs: jobId (UUID), locationId (UUID) and a non-empty records array; per record, unitOfMeasure defaults to EA, description defaults to the name, and mpn falls back to the sku then the name, while price, categoryName and subcategoryName are accepted but ignored in this wave. Emits a CATALOG_BULK_INGEST event; each successful row also publishes a product fact and invalidates the product-detail cache. Returns 200 even when rows fail, so callers must inspect successCount, failureCount and the per-row results rather than the HTTP status. 
+     * Bulk Import Catalog Products
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async bulkIngestCatalogProductsRaw(requestParameters: BulkIngestCatalogProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestCatalogBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestCatalogBulkIngestRecord',
-                'Required parameter "bulkIngestRequestCatalogBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestCatalogBulkIngestRecord" was null or undefined when calling bulkIngestCatalogProducts().'
             );
         }
 
@@ -72,11 +72,11 @@ export class CatalogBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of catalog products in one call, creating each record through the same governed path as createProduct and reporting a per-row success or failure verdict. Use this tool to load many products at once; do not use createProduct, which registers a single product and surfaces its errors as HTTP statuses rather than row results. Preconditions: each row\'s SKU must not already exist (case-insensitive), or that row fails with CATALOG_INGEST_FAILED while the rest of the batch proceeds. Required inputs: jobId (UUID), locationId (UUID) and a non-empty records array; per record, unitOfMeasure defaults to EA, description defaults to the name, and mpn falls back to the sku then the name, while price, categoryName and subcategoryName are accepted but ignored in this wave. Emits a CATALOG_BULK_INGEST event; each successful row also publishes a product fact and invalidates the product-detail cache. Returns 200 even when rows fail, so callers must inspect successCount, failureCount and the per-row results rather than the HTTP status. 
+     * Bulk Import Catalog Products
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async bulkIngestCatalogProducts(requestParameters: BulkIngestCatalogProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.bulkIngestCatalogProductsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

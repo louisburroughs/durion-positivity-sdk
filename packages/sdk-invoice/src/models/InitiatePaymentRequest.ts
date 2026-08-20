@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface InitiatePaymentRequest {
     /**
-     * Payment flow: SALE_CAPTURE (default one-step) or AUTH_ONLY (two-step)
-     * @type {string}
-     * @memberof InitiatePaymentRequest
-     */
-    paymentFlow: InitiatePaymentRequestPaymentFlowEnum;
-    /**
      * Payment amount (must be positive)
      * @type {number}
      * @memberof InitiatePaymentRequest
@@ -37,6 +31,12 @@ export interface InitiatePaymentRequest {
      * @memberof InitiatePaymentRequest
      */
     idempotencyKey: string;
+    /**
+     * Payment flow: SALE_CAPTURE (default one-step) or AUTH_ONLY (two-step)
+     * @type {string}
+     * @memberof InitiatePaymentRequest
+     */
+    paymentFlow: InitiatePaymentRequestPaymentFlowEnum;
     /**
      * Tokenised card reference (no PAN)
      * @type {string}
@@ -59,9 +59,9 @@ export enum InitiatePaymentRequestPaymentFlowEnum {
  * Check if a given object implements the InitiatePaymentRequest interface.
  */
 export function instanceOfInitiatePaymentRequest(value: object): boolean {
-    if (!('paymentFlow' in value)) return false;
     if (!('amount' in value)) return false;
     if (!('idempotencyKey' in value)) return false;
+    if (!('paymentFlow' in value)) return false;
     if (!('paymentToken' in value)) return false;
     return true;
 }
@@ -76,9 +76,9 @@ export function InitiatePaymentRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'paymentFlow': json['paymentFlow'],
         'amount': json['amount'],
         'idempotencyKey': json['idempotencyKey'],
+        'paymentFlow': json['paymentFlow'],
         'paymentToken': json['paymentToken'],
     };
 }
@@ -89,9 +89,9 @@ export function InitiatePaymentRequestToJSON(value?: InitiatePaymentRequest | nu
     }
     return {
         
-        'paymentFlow': value['paymentFlow'],
         'amount': value['amount'],
         'idempotencyKey': value['idempotencyKey'],
+        'paymentFlow': value['paymentFlow'],
         'paymentToken': value['paymentToken'],
     };
 }

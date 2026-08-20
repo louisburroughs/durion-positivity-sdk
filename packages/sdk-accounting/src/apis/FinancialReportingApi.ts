@@ -16,19 +16,36 @@
 import * as runtime from '../runtime';
 import type {
   AccountDrilldownResponse,
+  AgedPayablesReport,
+  AgedReceivablesReport,
+  ApiError,
   BalanceSheetReport,
+  GeneralLedgerReport,
   IncomeStatementReport,
   JournalLineDrilldownResponse,
   PageReportExportResponse,
   Pageable,
   ReportExportRequest,
   ReportExportResponse,
+  TaxLiabilityReport,
+  TaxLiabilitySnapshotResponse,
+  TaxLiabilitySnapshotSummary,
+  TaxLiabilitySnapshotVerification,
+  TrialBalanceReport,
 } from '../models/index';
 import {
     AccountDrilldownResponseFromJSON,
     AccountDrilldownResponseToJSON,
+    AgedPayablesReportFromJSON,
+    AgedPayablesReportToJSON,
+    AgedReceivablesReportFromJSON,
+    AgedReceivablesReportToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BalanceSheetReportFromJSON,
     BalanceSheetReportToJSON,
+    GeneralLedgerReportFromJSON,
+    GeneralLedgerReportToJSON,
     IncomeStatementReportFromJSON,
     IncomeStatementReportToJSON,
     JournalLineDrilldownResponseFromJSON,
@@ -41,7 +58,21 @@ import {
     ReportExportRequestToJSON,
     ReportExportResponseFromJSON,
     ReportExportResponseToJSON,
+    TaxLiabilityReportFromJSON,
+    TaxLiabilityReportToJSON,
+    TaxLiabilitySnapshotResponseFromJSON,
+    TaxLiabilitySnapshotResponseToJSON,
+    TaxLiabilitySnapshotSummaryFromJSON,
+    TaxLiabilitySnapshotSummaryToJSON,
+    TaxLiabilitySnapshotVerificationFromJSON,
+    TaxLiabilitySnapshotVerificationToJSON,
+    TrialBalanceReportFromJSON,
+    TrialBalanceReportToJSON,
 } from '../models/index';
+
+export interface DownloadReportExportRequest {
+    exportId: string;
+}
 
 export interface DrilldownToAccountsRequest {
     statementLineCode: string;
@@ -55,8 +86,27 @@ export interface DrilldownToJournalLinesRequest {
     endDate: Date;
 }
 
+export interface FreezeTaxLiabilitySnapshotRequest {
+    periodCode: string;
+    supersede?: boolean;
+}
+
+export interface GenerateAgedPayablesRequest {
+    asOfDate: Date;
+}
+
+export interface GenerateAgedReceivablesRequest {
+    asOfDate: Date;
+}
+
 export interface GenerateBalanceSheetRequest {
     asOfDate: Date;
+}
+
+export interface GenerateGeneralLedgerRequest {
+    startDate: Date;
+    endDate: Date;
+    accountId?: string;
 }
 
 export interface GenerateIncomeStatementRequest {
@@ -64,16 +114,37 @@ export interface GenerateIncomeStatementRequest {
     endDate: Date;
 }
 
-export interface GetExportHistoryRequest {
-    pageable: Pageable;
+export interface GenerateTaxLiabilityReportRequest {
+    startDate: Date;
+    endDate: Date;
 }
 
-export interface GetExportStatusRequest {
+export interface GenerateTrialBalanceRequest {
+    asOf: Date;
+}
+
+export interface GetReportExportStatusRequest {
     exportId: string;
 }
 
-export interface RequestExportRequest {
+export interface GetTaxLiabilitySnapshotRequest {
+    snapshotId: string;
+}
+
+export interface ListReportExportsRequest {
+    pageable: Pageable;
+}
+
+export interface ListTaxLiabilitySnapshotsRequest {
+    periodCode?: string;
+}
+
+export interface RequestReportExportRequest {
     reportExportRequest: ReportExportRequest;
+}
+
+export interface VerifyTaxLiabilitySnapshotRequest {
+    snapshotId: string;
 }
 
 /**
@@ -82,8 +153,51 @@ export interface RequestExportRequest {
 export class FinancialReportingApi extends runtime.BaseAPI {
 
     /**
-     * Show which GL accounts contribute to a specific statement line
-     * Drilldown to Accounts
+     * Downloads the rendered artifact of a COMPLETED export job as an attachment whose content type matches the requested format, for example text/csv or application/pdf. Use this tool after getReportExportStatus reports COMPLETED; do not use it earlier, and note it requires reporting:view:financial-statements because the artifact carries actual financial figures. Preconditions: the export job must exist, be COMPLETED and still have its artifact. Required inputs: exportId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_REPORT_EXPORT_DOWNLOAD audit event; no state changes. Returns 404 when the job or its artifact is missing, and 409 when the job is not COMPLETED. 
+     * Download Report Export Artifact
+     */
+    async downloadReportExportRaw(requestParameters: DownloadReportExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters['exportId'] == null) {
+            throw new runtime.RequiredError(
+                'exportId',
+                'Required parameter "exportId" was null or undefined when calling downloadReportExport().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/export/{exportId}/download`.replace(`{${"exportId"}}`, encodeURIComponent(String(requestParameters['exportId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.BlobApiResponse(response);
+    }
+
+    /**
+     * Downloads the rendered artifact of a COMPLETED export job as an attachment whose content type matches the requested format, for example text/csv or application/pdf. Use this tool after getReportExportStatus reports COMPLETED; do not use it earlier, and note it requires reporting:view:financial-statements because the artifact carries actual financial figures. Preconditions: the export job must exist, be COMPLETED and still have its artifact. Required inputs: exportId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_REPORT_EXPORT_DOWNLOAD audit event; no state changes. Returns 404 when the job or its artifact is missing, and 409 when the job is not COMPLETED. 
+     * Download Report Export Artifact
+     */
+    async downloadReportExport(requestParameters: DownloadReportExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.downloadReportExportRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Shows which GL accounts contribute to a specific financial-statement line over a date range, with each account\'s contribution amount. Use this tool to expand one line of an income statement or balance sheet; do not use drilldownToJournalLines, which is the next level down from an account to its source entries. Preconditions: the statementLineCode must follow the uppercase-and-underscores format (e.g. REVENUE_SALES). Required inputs: statementLineCode as a path parameter plus startDate and endDate (ISO dates), with endDate on or after startDate. Emits a REPORT_DRILLDOWN_ACCOUNTS audit event; no state changes. Returns 400 when the code format is invalid or the end date precedes the start date. 
+     * Drilldown To Accounts
      */
     async drilldownToAccountsRaw(requestParameters: DrilldownToAccountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AccountDrilldownResponse>>> {
         if (requestParameters['statementLineCode'] == null) {
@@ -138,8 +252,8 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Show which GL accounts contribute to a specific statement line
-     * Drilldown to Accounts
+     * Shows which GL accounts contribute to a specific financial-statement line over a date range, with each account\'s contribution amount. Use this tool to expand one line of an income statement or balance sheet; do not use drilldownToJournalLines, which is the next level down from an account to its source entries. Preconditions: the statementLineCode must follow the uppercase-and-underscores format (e.g. REVENUE_SALES). Required inputs: statementLineCode as a path parameter plus startDate and endDate (ISO dates), with endDate on or after startDate. Emits a REPORT_DRILLDOWN_ACCOUNTS audit event; no state changes. Returns 400 when the code format is invalid or the end date precedes the start date. 
+     * Drilldown To Accounts
      */
     async drilldownToAccounts(requestParameters: DrilldownToAccountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AccountDrilldownResponse>> {
         const response = await this.drilldownToAccountsRaw(requestParameters, initOverrides);
@@ -147,8 +261,8 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Show source journal entries contributing to a GL account balance
-     * Drilldown to Journal Lines
+     * Shows the source journal lines contributing to a GL account\'s balance over a date range, completing the statement-to-transaction audit path. Use this tool after drilldownToAccounts has identified the account of interest; use getJournalEntry instead to open a full entry from a returned line. Preconditions: the accountId path parameter must be a UUID. Required inputs: accountId (UUID) as a path parameter plus startDate and endDate (ISO dates), with endDate on or after startDate. Emits a REPORT_DRILLDOWN_JOURNAL_LINES audit event; no state changes. Returns 400 when the account id is not a UUID or the end date precedes the start date. 
+     * Drilldown To Journal Lines
      */
     async drilldownToJournalLinesRaw(requestParameters: DrilldownToJournalLinesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<JournalLineDrilldownResponse>>> {
         if (requestParameters['accountId'] == null) {
@@ -203,8 +317,8 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Show source journal entries contributing to a GL account balance
-     * Drilldown to Journal Lines
+     * Shows the source journal lines contributing to a GL account\'s balance over a date range, completing the statement-to-transaction audit path. Use this tool after drilldownToAccounts has identified the account of interest; use getJournalEntry instead to open a full entry from a returned line. Preconditions: the accountId path parameter must be a UUID. Required inputs: accountId (UUID) as a path parameter plus startDate and endDate (ISO dates), with endDate on or after startDate. Emits a REPORT_DRILLDOWN_JOURNAL_LINES audit event; no state changes. Returns 400 when the account id is not a UUID or the end date precedes the start date. 
+     * Drilldown To Journal Lines
      */
     async drilldownToJournalLines(requestParameters: DrilldownToJournalLinesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<JournalLineDrilldownResponse>> {
         const response = await this.drilldownToJournalLinesRaw(requestParameters, initOverrides);
@@ -212,7 +326,152 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generate Balance Sheet as of a specific date with assets, liabilities, and equity
+     * Generates the Sales-Tax Liability report over a closed accounting period\'s exact date range and persists it as an immutable snapshot with a canonical SHA-256 content hash; snapshots are provider-neutral and carry no filing-provider identifiers. Use this tool at period close to fix filing figures; do not use generateTaxLiabilityReport, which computes the live report without freezing anything. Preconditions: the accounting period must exist and be CLOSED, and no ACTIVE snapshot may exist for the period unless supersede is set. Required inputs: periodCode (YYYY-MM) as a query parameter; supersede defaults to false and, when true, demotes the prior ACTIVE snapshot to SUPERSEDED while preserving history. Emits a TAX_LIABILITY_SNAPSHOT_FREEZE event. Returns 404 when the period does not exist, 409 when the period is not CLOSED or an ACTIVE snapshot exists without supersede, and 400 when the period code is malformed. 
+     * Freeze Sales-Tax Liability Snapshot
+     */
+    async freezeTaxLiabilitySnapshotRaw(requestParameters: FreezeTaxLiabilitySnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxLiabilitySnapshotResponse>> {
+        if (requestParameters['periodCode'] == null) {
+            throw new runtime.RequiredError(
+                'periodCode',
+                'Required parameter "periodCode" was null or undefined when calling freezeTaxLiabilitySnapshot().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['periodCode'] != null) {
+            queryParameters['periodCode'] = requestParameters['periodCode'];
+        }
+
+        if (requestParameters['supersede'] != null) {
+            queryParameters['supersede'] = requestParameters['supersede'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:tax-snapshot:freeze"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/tax-liability/snapshots`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxLiabilitySnapshotResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Generates the Sales-Tax Liability report over a closed accounting period\'s exact date range and persists it as an immutable snapshot with a canonical SHA-256 content hash; snapshots are provider-neutral and carry no filing-provider identifiers. Use this tool at period close to fix filing figures; do not use generateTaxLiabilityReport, which computes the live report without freezing anything. Preconditions: the accounting period must exist and be CLOSED, and no ACTIVE snapshot may exist for the period unless supersede is set. Required inputs: periodCode (YYYY-MM) as a query parameter; supersede defaults to false and, when true, demotes the prior ACTIVE snapshot to SUPERSEDED while preserving history. Emits a TAX_LIABILITY_SNAPSHOT_FREEZE event. Returns 404 when the period does not exist, 409 when the period is not CLOSED or an ACTIVE snapshot exists without supersede, and 400 when the period code is malformed. 
+     * Freeze Sales-Tax Liability Snapshot
+     */
+    async freezeTaxLiabilitySnapshot(requestParameters: FreezeTaxLiabilitySnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxLiabilitySnapshotResponse> {
+        const response = await this.freezeTaxLiabilitySnapshotRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Generates the Aged Payables report as of a date: per-vendor open vendor-bill balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals. Use this tool to review what is owed to vendors and how overdue it is; do not use generateAgedReceivables, which is the customer-side mirror, and use listApBills to pick individual bills for payment. Preconditions: none; rows are empty when no open payables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_PAYABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generate Aged Payables
+     */
+    async generateAgedPayablesRaw(requestParameters: GenerateAgedPayablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AgedPayablesReport>> {
+        if (requestParameters['asOfDate'] == null) {
+            throw new runtime.RequiredError(
+                'asOfDate',
+                'Required parameter "asOfDate" was null or undefined when calling generateAgedPayables().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['asOfDate'] != null) {
+            queryParameters['asOfDate'] = (requestParameters['asOfDate'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/aged-payables`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AgedPayablesReportFromJSON(jsonValue));
+    }
+
+    /**
+     * Generates the Aged Payables report as of a date: per-vendor open vendor-bill balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals. Use this tool to review what is owed to vendors and how overdue it is; do not use generateAgedReceivables, which is the customer-side mirror, and use listApBills to pick individual bills for payment. Preconditions: none; rows are empty when no open payables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_PAYABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generate Aged Payables
+     */
+    async generateAgedPayables(requestParameters: GenerateAgedPayablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AgedPayablesReport> {
+        const response = await this.generateAgedPayablesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Generates the Aged Receivables report as of a date: per-customer open invoice balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals. Use this tool to review customer collection exposure; do not use generateAgedPayables, which is the vendor-side mirror of this report. Preconditions: none; rows are empty when no open receivables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_RECEIVABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generate Aged Receivables
+     */
+    async generateAgedReceivablesRaw(requestParameters: GenerateAgedReceivablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AgedReceivablesReport>> {
+        if (requestParameters['asOfDate'] == null) {
+            throw new runtime.RequiredError(
+                'asOfDate',
+                'Required parameter "asOfDate" was null or undefined when calling generateAgedReceivables().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['asOfDate'] != null) {
+            queryParameters['asOfDate'] = (requestParameters['asOfDate'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/aged-receivables`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AgedReceivablesReportFromJSON(jsonValue));
+    }
+
+    /**
+     * Generates the Aged Receivables report as of a date: per-customer open invoice balances bucketed by days past due (0-30, 31-60, 61-90, 90+) with grand totals. Use this tool to review customer collection exposure; do not use generateAgedPayables, which is the vendor-side mirror of this report. Preconditions: none; rows are empty when no open receivables exist. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_AGED_RECEIVABLES_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
+     * Generate Aged Receivables
+     */
+    async generateAgedReceivables(requestParameters: GenerateAgedReceivablesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AgedReceivablesReport> {
+        const response = await this.generateAgedReceivablesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Generates the Balance Sheet as of a specific date, presenting assets, liabilities and equity from POSTED journal activity. Use this tool for financial position at a point in time; do not use generateIncomeStatement, which covers activity over a period, and use generateTrialBalance for the raw per-account debit and credit proof. Preconditions: none; a date with no POSTED activity yields zeroed sections. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_BALANCE_SHEET_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
      * Generate Balance Sheet
      */
     async generateBalanceSheetRaw(requestParameters: GenerateBalanceSheetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BalanceSheetReport>> {
@@ -250,7 +509,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generate Balance Sheet as of a specific date with assets, liabilities, and equity
+     * Generates the Balance Sheet as of a specific date, presenting assets, liabilities and equity from POSTED journal activity. Use this tool for financial position at a point in time; do not use generateIncomeStatement, which covers activity over a period, and use generateTrialBalance for the raw per-account debit and credit proof. Preconditions: none; a date with no POSTED activity yields zeroed sections. Required inputs: asOfDate (ISO date) as a query parameter. Emits a REPORT_BALANCE_SHEET_GENERATE audit event; no state changes. Returns 400 when the asOfDate is missing or malformed. 
      * Generate Balance Sheet
      */
     async generateBalanceSheet(requestParameters: GenerateBalanceSheetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BalanceSheetReport> {
@@ -259,7 +518,69 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generate Profit & Loss report for a date range with revenue, expenses, and net income
+     * Generates the General Ledger report for a date range: per-account chronological POSTED journal lines with a running balance, opening and closing balances, and grand totals. Use this tool for full ledger detail over a period; do not use generateTrialBalance, which shows only closing balances per account, and use drilldownToJournalLines for a single account slice. Preconditions: none; sections are empty when no POSTED activity exists. Required inputs: startDate and endDate (ISO dates), with endDate on or after startDate; accountId (UUID) is optional and restricts the report to one account. Emits a REPORT_GENERAL_LEDGER_GENERATE audit event; no state changes. Returns 400 when the account id is not a UUID or the end date precedes the start date. 
+     * Generate General Ledger
+     */
+    async generateGeneralLedgerRaw(requestParameters: GenerateGeneralLedgerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GeneralLedgerReport>> {
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError(
+                'startDate',
+                'Required parameter "startDate" was null or undefined when calling generateGeneralLedger().'
+            );
+        }
+
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError(
+                'endDate',
+                'Required parameter "endDate" was null or undefined when calling generateGeneralLedger().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['accountId'] != null) {
+            queryParameters['accountId'] = requestParameters['accountId'];
+        }
+
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/general-ledger`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GeneralLedgerReportFromJSON(jsonValue));
+    }
+
+    /**
+     * Generates the General Ledger report for a date range: per-account chronological POSTED journal lines with a running balance, opening and closing balances, and grand totals. Use this tool for full ledger detail over a period; do not use generateTrialBalance, which shows only closing balances per account, and use drilldownToJournalLines for a single account slice. Preconditions: none; sections are empty when no POSTED activity exists. Required inputs: startDate and endDate (ISO dates), with endDate on or after startDate; accountId (UUID) is optional and restricts the report to one account. Emits a REPORT_GENERAL_LEDGER_GENERATE audit event; no state changes. Returns 400 when the account id is not a UUID or the end date precedes the start date. 
+     * Generate General Ledger
+     */
+    async generateGeneralLedger(requestParameters: GenerateGeneralLedgerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GeneralLedgerReport> {
+        const response = await this.generateGeneralLedgerRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Generates the Profit and Loss statement for a date range, aggregating POSTED journal activity into revenue, expense and net-income lines. Use this tool for period profitability; do not use generateBalanceSheet, which is the point-in-time financial position, and use drilldownToAccounts to expand a statement line. Preconditions: none; a period with no POSTED activity yields zeroed lines. Required inputs: startDate and endDate (ISO dates) as query parameters, with endDate on or after startDate. Emits a REPORT_INCOME_STATEMENT_GENERATE audit event; no state changes. Returns 400 when the end date is before the start date. 
      * Generate Income Statement
      */
     async generateIncomeStatementRaw(requestParameters: GenerateIncomeStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<IncomeStatementReport>> {
@@ -308,7 +629,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generate Profit & Loss report for a date range with revenue, expenses, and net income
+     * Generates the Profit and Loss statement for a date range, aggregating POSTED journal activity into revenue, expense and net-income lines. Use this tool for period profitability; do not use generateBalanceSheet, which is the point-in-time financial position, and use drilldownToAccounts to expand a statement line. Preconditions: none; a period with no POSTED activity yields zeroed lines. Required inputs: startDate and endDate (ISO dates) as query parameters, with endDate on or after startDate. Emits a REPORT_INCOME_STATEMENT_GENERATE audit event; no state changes. Returns 400 when the end date is before the start date. 
      * Generate Income Statement
      */
     async generateIncomeStatement(requestParameters: GenerateIncomeStatementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<IncomeStatementReport> {
@@ -317,14 +638,205 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * List all async report export jobs, paginated and sorted by most-recent first.
-     * List export history
+     * Generates the reconciliation-grade sales-tax liability report for a date range: per-jurisdiction (state, county, city, special) taxable base, exempt base with reasons, gross tax collected, POSTED credit-memo reversals netted pro-rata, and net tax, plus a GL-drift column reconciling total net tax against Sales-Tax Payable (2200) activity. Use this tool for filing-period review on the accrual basis, where invoice tax buckets by finalization period and credits by posting period; do not use createTaxLiabilitySnapshot, which freezes a closed period\'s figures for filing. Preconditions: none; rows are empty when no in-period tax exists. Required inputs: startDate and endDate (ISO dates), with endDate on or after startDate. Emits a REPORT_TAX_LIABILITY_GENERATE audit event; no state changes. Returns 400 when the end date is before the start date. 
+     * Generate Sales-Tax Liability Report
      */
-    async getExportHistoryRaw(requestParameters: GetExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageReportExportResponse>> {
+    async generateTaxLiabilityReportRaw(requestParameters: GenerateTaxLiabilityReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxLiabilityReport>> {
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError(
+                'startDate',
+                'Required parameter "startDate" was null or undefined when calling generateTaxLiabilityReport().'
+            );
+        }
+
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError(
+                'endDate',
+                'Required parameter "endDate" was null or undefined when calling generateTaxLiabilityReport().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/tax-liability`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxLiabilityReportFromJSON(jsonValue));
+    }
+
+    /**
+     * Generates the reconciliation-grade sales-tax liability report for a date range: per-jurisdiction (state, county, city, special) taxable base, exempt base with reasons, gross tax collected, POSTED credit-memo reversals netted pro-rata, and net tax, plus a GL-drift column reconciling total net tax against Sales-Tax Payable (2200) activity. Use this tool for filing-period review on the accrual basis, where invoice tax buckets by finalization period and credits by posting period; do not use createTaxLiabilitySnapshot, which freezes a closed period\'s figures for filing. Preconditions: none; rows are empty when no in-period tax exists. Required inputs: startDate and endDate (ISO dates), with endDate on or after startDate. Emits a REPORT_TAX_LIABILITY_GENERATE audit event; no state changes. Returns 400 when the end date is before the start date. 
+     * Generate Sales-Tax Liability Report
+     */
+    async generateTaxLiabilityReport(requestParameters: GenerateTaxLiabilityReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxLiabilityReport> {
+        const response = await this.generateTaxLiabilityReportRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Generates the Trial Balance as of a specific date: per-account debit, credit and balance rows from POSTED journal lines, grand totals proving total debits equal total credits, and an entry-number gap-check footnote per monthly sequence scope. Use this tool to prove ledger integrity before period close; do not use generateBalanceSheet, which classifies balances into statement sections. Preconditions: none; rows are empty when no POSTED data exists as of the date. Required inputs: asOf (ISO date) as a query parameter. Emits a REPORT_TRIAL_BALANCE_GENERATE audit event; no state changes. Returns 400 when the asOf date is missing or malformed. 
+     * Generate Trial Balance
+     */
+    async generateTrialBalanceRaw(requestParameters: GenerateTrialBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TrialBalanceReport>> {
+        if (requestParameters['asOf'] == null) {
+            throw new runtime.RequiredError(
+                'asOf',
+                'Required parameter "asOf" was null or undefined when calling generateTrialBalance().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['asOf'] != null) {
+            queryParameters['asOf'] = (requestParameters['asOf'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/trial-balance`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TrialBalanceReportFromJSON(jsonValue));
+    }
+
+    /**
+     * Generates the Trial Balance as of a specific date: per-account debit, credit and balance rows from POSTED journal lines, grand totals proving total debits equal total credits, and an entry-number gap-check footnote per monthly sequence scope. Use this tool to prove ledger integrity before period close; do not use generateBalanceSheet, which classifies balances into statement sections. Preconditions: none; rows are empty when no POSTED data exists as of the date. Required inputs: asOf (ISO date) as a query parameter. Emits a REPORT_TRIAL_BALANCE_GENERATE audit event; no state changes. Returns 400 when the asOf date is missing or malformed. 
+     * Generate Trial Balance
+     */
+    async generateTrialBalance(requestParameters: GenerateTrialBalanceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TrialBalanceReport> {
+        const response = await this.generateTrialBalanceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the current status of an asynchronous report export job: PENDING, IN_PROGRESS, COMPLETED or FAILED. Use this tool to poll a job created by requestReportExport; do not use downloadReportExport until the status is COMPLETED. Preconditions: the export job must exist. Required inputs: exportId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_REPORT_EXPORT_STATUS audit event; no state changes. Returns 404 EXPORT_JOB_NOT_FOUND when no export job exists for the supplied id. 
+     * Get Report Export Status
+     */
+    async getReportExportStatusRaw(requestParameters: GetReportExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReportExportResponse>> {
+        if (requestParameters['exportId'] == null) {
+            throw new runtime.RequiredError(
+                'exportId',
+                'Required parameter "exportId" was null or undefined when calling getReportExportStatus().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/export/{exportId}`.replace(`{${"exportId"}}`, encodeURIComponent(String(requestParameters['exportId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReportExportResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the current status of an asynchronous report export job: PENDING, IN_PROGRESS, COMPLETED or FAILED. Use this tool to poll a job created by requestReportExport; do not use downloadReportExport until the status is COMPLETED. Preconditions: the export job must exist. Required inputs: exportId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_REPORT_EXPORT_STATUS audit event; no state changes. Returns 404 EXPORT_JOB_NOT_FOUND when no export job exists for the supplied id. 
+     * Get Report Export Status
+     */
+    async getReportExportStatus(requestParameters: GetReportExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReportExportResponse> {
+        const response = await this.getReportExportStatusRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns one frozen Sales-Tax Liability snapshot in full: per-jurisdiction rows, totals, reconciliation and the canonical content hash. Use this tool to read filing figures exactly as frozen; use listTaxLiabilitySnapshots instead when hunting for the right snapshot, and verifyTaxLiabilitySnapshot to check it against live data. Preconditions: the snapshot must exist. Required inputs: snapshotId (UUID) as a path parameter; there is no request body. Emits a TAX_LIABILITY_SNAPSHOT_GET audit event; the snapshot is immutable and never changed by reads. Returns 404 TAX_SNAPSHOT_NOT_FOUND when no snapshot exists for the supplied id. 
+     * Get Sales-Tax Liability Snapshot
+     */
+    async getTaxLiabilitySnapshotRaw(requestParameters: GetTaxLiabilitySnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxLiabilitySnapshotResponse>> {
+        if (requestParameters['snapshotId'] == null) {
+            throw new runtime.RequiredError(
+                'snapshotId',
+                'Required parameter "snapshotId" was null or undefined when calling getTaxLiabilitySnapshot().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/tax-liability/snapshots/{snapshotId}`.replace(`{${"snapshotId"}}`, encodeURIComponent(String(requestParameters['snapshotId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxLiabilitySnapshotResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one frozen Sales-Tax Liability snapshot in full: per-jurisdiction rows, totals, reconciliation and the canonical content hash. Use this tool to read filing figures exactly as frozen; use listTaxLiabilitySnapshots instead when hunting for the right snapshot, and verifyTaxLiabilitySnapshot to check it against live data. Preconditions: the snapshot must exist. Required inputs: snapshotId (UUID) as a path parameter; there is no request body. Emits a TAX_LIABILITY_SNAPSHOT_GET audit event; the snapshot is immutable and never changed by reads. Returns 404 TAX_SNAPSHOT_NOT_FOUND when no snapshot exists for the supplied id. 
+     * Get Sales-Tax Liability Snapshot
+     */
+    async getTaxLiabilitySnapshot(requestParameters: GetTaxLiabilitySnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxLiabilitySnapshotResponse> {
+        const response = await this.getTaxLiabilitySnapshotRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists all asynchronous report export jobs as a paginated projection, most recent first. Use this tool to review past exports and their statuses; do not use getReportExportStatus, which polls a single job by id. Preconditions: none beyond the caller holding accounting:report:export. Required inputs: none; the page defaults to 20 items and only requestedAt is a supported sort property. Emits an ACCOUNTING_REPORT_EXPORT_LIST audit event; no state changes. Returns 400 when an unsupported sort property is requested. 
+     * List Report Export History
+     */
+    async listReportExportsRaw(requestParameters: ListReportExportsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageReportExportResponse>> {
         if (requestParameters['pageable'] == null) {
             throw new runtime.RequiredError(
                 'pageable',
-                'Required parameter "pageable" was null or undefined when calling getExportHistory().'
+                'Required parameter "pageable" was null or undefined when calling listReportExports().'
             );
         }
 
@@ -355,66 +867,63 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * List all async report export jobs, paginated and sorted by most-recent first.
-     * List export history
+     * Lists all asynchronous report export jobs as a paginated projection, most recent first. Use this tool to review past exports and their statuses; do not use getReportExportStatus, which polls a single job by id. Preconditions: none beyond the caller holding accounting:report:export. Required inputs: none; the page defaults to 20 items and only requestedAt is a supported sort property. Emits an ACCOUNTING_REPORT_EXPORT_LIST audit event; no state changes. Returns 400 when an unsupported sort property is requested. 
+     * List Report Export History
      */
-    async getExportHistory(requestParameters: GetExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageReportExportResponse> {
-        const response = await this.getExportHistoryRaw(requestParameters, initOverrides);
+    async listReportExports(requestParameters: ListReportExportsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageReportExportResponse> {
+        const response = await this.listReportExportsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Poll the current status of an async report export job.
-     * Get export status
+     * Lists Sales-Tax Liability snapshot summaries without their row detail, newest freeze first, optionally filtered by period code. Use this tool to find which periods are frozen and which snapshot is ACTIVE; use getTaxLiabilitySnapshot instead for a snapshot\'s full frozen content. Preconditions: none. Required inputs: none; periodCode (YYYY-MM) is an optional filter. Emits a TAX_LIABILITY_SNAPSHOT_LIST audit event; no state changes. Returns 200 with an empty list when no snapshots exist. 
+     * List Sales-Tax Liability Snapshots
      */
-    async getExportStatusRaw(requestParameters: GetExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReportExportResponse>> {
-        if (requestParameters['exportId'] == null) {
-            throw new runtime.RequiredError(
-                'exportId',
-                'Required parameter "exportId" was null or undefined when calling getExportStatus().'
-            );
-        }
-
+    async listTaxLiabilitySnapshotsRaw(requestParameters: ListTaxLiabilitySnapshotsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TaxLiabilitySnapshotSummary>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['periodCode'] != null) {
+            queryParameters['periodCode'] = requestParameters['periodCode'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["accounting:report:export"]);
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
         const response = await this.request({
-            path: `/v1/accounting/reports/export/{exportId}`.replace(`{${"exportId"}}`, encodeURIComponent(String(requestParameters['exportId']))),
+            path: `/v1/accounting/reports/financial/tax-liability/snapshots`,
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ReportExportResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TaxLiabilitySnapshotSummaryFromJSON));
     }
 
     /**
-     * Poll the current status of an async report export job.
-     * Get export status
+     * Lists Sales-Tax Liability snapshot summaries without their row detail, newest freeze first, optionally filtered by period code. Use this tool to find which periods are frozen and which snapshot is ACTIVE; use getTaxLiabilitySnapshot instead for a snapshot\'s full frozen content. Preconditions: none. Required inputs: none; periodCode (YYYY-MM) is an optional filter. Emits a TAX_LIABILITY_SNAPSHOT_LIST audit event; no state changes. Returns 200 with an empty list when no snapshots exist. 
+     * List Sales-Tax Liability Snapshots
      */
-    async getExportStatus(requestParameters: GetExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReportExportResponse> {
-        const response = await this.getExportStatusRaw(requestParameters, initOverrides);
+    async listTaxLiabilitySnapshots(requestParameters: ListTaxLiabilitySnapshotsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TaxLiabilitySnapshotSummary>> {
+        const response = await this.listTaxLiabilitySnapshotsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Submit an asynchronous report export job. Returns immediately with PENDING status.
-     * Request async report export
+     * Submits an asynchronous export job that renders a financial report to a downloadable artifact, returning immediately with status PENDING. Use this tool to produce a file for one of the reporting endpoints\' outputs; do not use the synchronous generate operations such as generateIncomeStatement when a file artifact is what is needed, and poll getReportExportStatus for completion. Preconditions: none; as-of report types use the request\'s endDate as the as-of date. Required inputs: format (PDF, CSV, XLSX or JSON), reportType (TAX_LIABILITY, INCOME_STATEMENT, BALANCE_SHEET, TRIAL_BALANCE, GENERAL_LEDGER, AGED_RECEIVABLES or AGED_PAYABLES), startDate and endDate (endDate on or after startDate); accountId and filename are optional. Emits an ACCOUNTING_REPORT_EXPORT_REQUEST event and records the requesting operator. Returns 400 when the payload is invalid or the end date precedes the start date. 
+     * Request Async Report Export
      */
-    async requestExportRaw(requestParameters: RequestExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReportExportResponse>> {
+    async requestReportExportRaw(requestParameters: RequestReportExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReportExportResponse>> {
         if (requestParameters['reportExportRequest'] == null) {
             throw new runtime.RequiredError(
                 'reportExportRequest',
-                'Required parameter "reportExportRequest" was null or undefined when calling requestExport().'
+                'Required parameter "reportExportRequest" was null or undefined when calling requestReportExport().'
             );
         }
 
@@ -444,11 +953,54 @@ export class FinancialReportingApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit an asynchronous report export job. Returns immediately with PENDING status.
-     * Request async report export
+     * Submits an asynchronous export job that renders a financial report to a downloadable artifact, returning immediately with status PENDING. Use this tool to produce a file for one of the reporting endpoints\' outputs; do not use the synchronous generate operations such as generateIncomeStatement when a file artifact is what is needed, and poll getReportExportStatus for completion. Preconditions: none; as-of report types use the request\'s endDate as the as-of date. Required inputs: format (PDF, CSV, XLSX or JSON), reportType (TAX_LIABILITY, INCOME_STATEMENT, BALANCE_SHEET, TRIAL_BALANCE, GENERAL_LEDGER, AGED_RECEIVABLES or AGED_PAYABLES), startDate and endDate (endDate on or after startDate); accountId and filename are optional. Emits an ACCOUNTING_REPORT_EXPORT_REQUEST event and records the requesting operator. Returns 400 when the payload is invalid or the end date precedes the start date. 
+     * Request Async Report Export
      */
-    async requestExport(requestParameters: RequestExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReportExportResponse> {
-        const response = await this.requestExportRaw(requestParameters, initOverrides);
+    async requestReportExport(requestParameters: RequestReportExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReportExportResponse> {
+        const response = await this.requestReportExportRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Re-derives the Sales-Tax Liability report for a snapshot\'s period from the live replicas and compares canonical hashes, reporting consistent=true when they match. Use this tool to detect drift after a freeze; do not use freezeTaxLiabilitySnapshot to check consistency, since freezing creates state. Preconditions: the snapshot must exist; inconsistency means underlying data moved after the freeze, for example postings into a reopened period, and the remedy is re-freezing with supersede=true once the period is closed again. Required inputs: snapshotId (UUID) as a path parameter; there is no request body. Emits a TAX_LIABILITY_SNAPSHOT_VERIFY audit event; the snapshot itself is never mutated. Returns 404 TAX_SNAPSHOT_NOT_FOUND when no snapshot exists for the supplied id. 
+     * Verify Sales-Tax Liability Snapshot
+     */
+    async verifyTaxLiabilitySnapshotRaw(requestParameters: VerifyTaxLiabilitySnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxLiabilitySnapshotVerification>> {
+        if (requestParameters['snapshotId'] == null) {
+            throw new runtime.RequiredError(
+                'snapshotId',
+                'Required parameter "snapshotId" was null or undefined when calling verifyTaxLiabilitySnapshot().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["reporting:view:financial-statements"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reports/financial/tax-liability/snapshots/{snapshotId}/verify`.replace(`{${"snapshotId"}}`, encodeURIComponent(String(requestParameters['snapshotId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxLiabilitySnapshotVerificationFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-derives the Sales-Tax Liability report for a snapshot\'s period from the live replicas and compares canonical hashes, reporting consistent=true when they match. Use this tool to detect drift after a freeze; do not use freezeTaxLiabilitySnapshot to check consistency, since freezing creates state. Preconditions: the snapshot must exist; inconsistency means underlying data moved after the freeze, for example postings into a reopened period, and the remedy is re-freezing with supersede=true once the period is closed again. Required inputs: snapshotId (UUID) as a path parameter; there is no request body. Emits a TAX_LIABILITY_SNAPSHOT_VERIFY audit event; the snapshot itself is never mutated. Returns 404 TAX_SNAPSHOT_NOT_FOUND when no snapshot exists for the supplied id. 
+     * Verify Sales-Tax Liability Snapshot
+     */
+    async verifyTaxLiabilitySnapshot(requestParameters: VerifyTaxLiabilitySnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxLiabilitySnapshotVerification> {
+        const response = await this.verifyTaxLiabilitySnapshotRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

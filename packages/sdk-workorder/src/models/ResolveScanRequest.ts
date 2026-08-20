@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to resolve a scanned SKU and location against a pick task
  * @export
  * @interface ResolveScanRequest
  */
 export interface ResolveScanRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof ResolveScanRequest
-     */
-    scannedSkuId: string;
-    /**
-     * 
+     * Identifier of the location where the scan occurred
      * @type {string}
      * @memberof ResolveScanRequest
      */
     scannedLocationId: string;
+    /**
+     * Identifier of the SKU that was scanned
+     * @type {string}
+     * @memberof ResolveScanRequest
+     */
+    scannedSkuId: string;
 }
 
 /**
  * Check if a given object implements the ResolveScanRequest interface.
  */
 export function instanceOfResolveScanRequest(value: object): boolean {
-    if (!('scannedSkuId' in value)) return false;
     if (!('scannedLocationId' in value)) return false;
+    if (!('scannedSkuId' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function ResolveScanRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'scannedSkuId': json['scannedSkuId'],
         'scannedLocationId': json['scannedLocationId'],
+        'scannedSkuId': json['scannedSkuId'],
     };
 }
 
@@ -63,8 +63,8 @@ export function ResolveScanRequestToJSON(value?: ResolveScanRequest | null): any
     }
     return {
         
-        'scannedSkuId': value['scannedSkuId'],
         'scannedLocationId': value['scannedLocationId'],
+        'scannedSkuId': value['scannedSkuId'],
     };
 }
 

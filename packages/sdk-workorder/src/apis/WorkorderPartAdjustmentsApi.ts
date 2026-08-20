@@ -37,12 +37,12 @@ export interface CorrectPartQuantityOperationRequest {
     idempotencyKey?: string;
 }
 
-export interface GetAdjustmentHistoryRequest {
+export interface GetPartAdjustmentHistoryRequest {
     workorderId: string;
     partId?: string;
 }
 
-export interface ReturnUnusedQuantityRequest {
+export interface ReturnUnusedPartQuantityRequest {
     workorderId: string;
     returnPartQuantityRequest: ReturnPartQuantityRequest;
     idempotencyKey?: string;
@@ -60,8 +60,8 @@ export interface SubstitutePartOperationRequest {
 export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
 
     /**
-     * Administrative correction for data entry errors
-     * Correct part quantity
+     * Applies an administrative correction to a part line\'s quantity, recording the correction and its reason as an adjustment event for data-entry fixes. Use this tool only to repair mistaken quantities; do not use consumeParts or returnParts, which record real physical movement of stock. Preconditions: the workorder and part must exist and the part must belong to the workorder. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID), a positive newQuantity, and a reason in the body; notes and uomCode are optional (uomCode is the unit newQuantity is expressed in; omit to leave the part\'s existing unit unchanged) and an Idempotency-Key header deduplicates retries. Emits a WORKORDER_PART_CORRECT event. Returns 201 with the adjustment event, 404 when the workorder or part cannot be found, 400 when newQuantity is not positive or the part does not belong to the workorder, and 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale. 
+     * Correct Part Quantity
      */
     async correctPartQuantityRaw(requestParameters: CorrectPartQuantityOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -108,8 +108,8 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Administrative correction for data entry errors
-     * Correct part quantity
+     * Applies an administrative correction to a part line\'s quantity, recording the correction and its reason as an adjustment event for data-entry fixes. Use this tool only to repair mistaken quantities; do not use consumeParts or returnParts, which record real physical movement of stock. Preconditions: the workorder and part must exist and the part must belong to the workorder. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID), a positive newQuantity, and a reason in the body; notes and uomCode are optional (uomCode is the unit newQuantity is expressed in; omit to leave the part\'s existing unit unchanged) and an Idempotency-Key header deduplicates retries. Emits a WORKORDER_PART_CORRECT event. Returns 201 with the adjustment event, 404 when the workorder or part cannot be found, 400 when newQuantity is not positive or the part does not belong to the workorder, and 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale. 
+     * Correct Part Quantity
      */
     async correctPartQuantity(requestParameters: CorrectPartQuantityOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
         const response = await this.correctPartQuantityRaw(requestParameters, initOverrides);
@@ -117,14 +117,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve adjustment history (substitutions, returns, corrections) for parts on the workorder
-     * Get part adjustment history
+     * Returns the substitution, reasoned-return, and correction adjustment events for a workorder\'s parts, newest first, either for the whole workorder or filtered to one part. Use this tool when auditing part swaps and corrections; use getPartsUsageHistory instead for the plain issue, consume, and return quantity movements. Preconditions: none — an unknown workorder or part simply yields an empty list, and the partId filter is not validated against the workorder in the path. Required inputs: workorderId (UUID) as a path parameter; partId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the adjustment events, possibly empty. 
+     * Get Part Adjustment History
      */
-    async getAdjustmentHistoryRaw(requestParameters: GetAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
+    async getPartAdjustmentHistoryRaw(requestParameters: GetPartAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling getAdjustmentHistory().'
+                'Required parameter "workorderId" was null or undefined when calling getPartAdjustmentHistory().'
             );
         }
 
@@ -155,30 +155,30 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve adjustment history (substitutions, returns, corrections) for parts on the workorder
-     * Get part adjustment history
+     * Returns the substitution, reasoned-return, and correction adjustment events for a workorder\'s parts, newest first, either for the whole workorder or filtered to one part. Use this tool when auditing part swaps and corrections; use getPartsUsageHistory instead for the plain issue, consume, and return quantity movements. Preconditions: none — an unknown workorder or part simply yields an empty list, and the partId filter is not validated against the workorder in the path. Required inputs: workorderId (UUID) as a path parameter; partId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the adjustment events, possibly empty. 
+     * Get Part Adjustment History
      */
-    async getAdjustmentHistory(requestParameters: GetAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
-        const response = await this.getAdjustmentHistoryRaw(requestParameters, initOverrides);
+    async getPartAdjustmentHistory(requestParameters: GetPartAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
+        const response = await this.getPartAdjustmentHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Return unused part quantity beyond normal return flow
-     * Return unused quantity
+     * Returns unused part quantity through the adjustment flow, recording a reasoned return adjustment event alongside the quantity change. Use this tool when a return needs an explicit reason and audit trail; use returnParts instead for the plain usage-flow return without a reason. Preconditions: the workorder and part must exist, the part must belong to the workorder, and the return cannot exceed the quantity still available on the line. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID), a positive quantity, and a reason in the body; notes are optional and an Idempotency-Key header deduplicates retries. Emits a WORKORDER_PART_RETURN_UNUSED event. Returns 201 with the adjustment event, 404 when the workorder or part cannot be found, and 400 when the quantity is not positive, exceeds the available quantity, or the part does not belong to the workorder. 
+     * Return Unused Part Quantity
      */
-    async returnUnusedQuantityRaw(requestParameters: ReturnUnusedQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
+    async returnUnusedPartQuantityRaw(requestParameters: ReturnUnusedPartQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling returnUnusedQuantity().'
+                'Required parameter "workorderId" was null or undefined when calling returnUnusedPartQuantity().'
             );
         }
 
         if (requestParameters['returnPartQuantityRequest'] == null) {
             throw new runtime.RequiredError(
                 'returnPartQuantityRequest',
-                'Required parameter "returnPartQuantityRequest" was null or undefined when calling returnUnusedQuantity().'
+                'Required parameter "returnPartQuantityRequest" was null or undefined when calling returnUnusedPartQuantity().'
             );
         }
 
@@ -212,17 +212,17 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Return unused part quantity beyond normal return flow
-     * Return unused quantity
+     * Returns unused part quantity through the adjustment flow, recording a reasoned return adjustment event alongside the quantity change. Use this tool when a return needs an explicit reason and audit trail; use returnParts instead for the plain usage-flow return without a reason. Preconditions: the workorder and part must exist, the part must belong to the workorder, and the return cannot exceed the quantity still available on the line. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID), a positive quantity, and a reason in the body; notes are optional and an Idempotency-Key header deduplicates retries. Emits a WORKORDER_PART_RETURN_UNUSED event. Returns 201 with the adjustment event, 404 when the workorder or part cannot be found, and 400 when the quantity is not positive, exceeds the available quantity, or the part does not belong to the workorder. 
+     * Return Unused Part Quantity
      */
-    async returnUnusedQuantity(requestParameters: ReturnUnusedQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
-        const response = await this.returnUnusedQuantityRaw(requestParameters, initOverrides);
+    async returnUnusedPartQuantity(requestParameters: ReturnUnusedPartQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
+        const response = await this.returnUnusedPartQuantityRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Replace one part with another. Original part preserved for history.
-     * Substitute part
+     * Substitutes one part line with a different part, preserving the original line for audit history, capturing a pricing snapshot, and recording a substitution adjustment event. Use this tool when the planned part is replaced by an alternative; use suggestWorkorderSubstitutes first to find candidate parts, and do not use correctPartQuantity, which fixes quantities rather than parts. Preconditions: the workorder and original part must exist, the original part must belong to the workorder and must not have any consumed quantity, and the substitute must differ from the original. Required inputs: workorderId (UUID) as a path parameter, plus originalPartId and substitutePartId (UUIDs) and a reason in the body; notes are optional and an Idempotency-Key header deduplicates retries. Emits a WORKORDER_PART_SUBSTITUTE event. Returns 201 with the adjustment event, 404 when the workorder or part cannot be found, and 400 when the part is already consumed, does not belong to the workorder, or the substitute equals the original. 
+     * Substitute Part on Workorder
      */
     async substitutePartRaw(requestParameters: SubstitutePartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -269,8 +269,8 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replace one part with another. Original part preserved for history.
-     * Substitute part
+     * Substitutes one part line with a different part, preserving the original line for audit history, capturing a pricing snapshot, and recording a substitution adjustment event. Use this tool when the planned part is replaced by an alternative; use suggestWorkorderSubstitutes first to find candidate parts, and do not use correctPartQuantity, which fixes quantities rather than parts. Preconditions: the workorder and original part must exist, the original part must belong to the workorder and must not have any consumed quantity, and the substitute must differ from the original. Required inputs: workorderId (UUID) as a path parameter, plus originalPartId and substitutePartId (UUIDs) and a reason in the body; notes are optional and an Idempotency-Key header deduplicates retries. Emits a WORKORDER_PART_SUBSTITUTE event. Returns 201 with the adjustment event, 404 when the workorder or part cannot be found, and 400 when the part is already consumed, does not belong to the workorder, or the substitute equals the original. 
+     * Substitute Part on Workorder
      */
     async substitutePart(requestParameters: SubstitutePartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
         const response = await this.substitutePartRaw(requestParameters, initOverrides);

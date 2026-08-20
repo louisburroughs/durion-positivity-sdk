@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface IssuePartRequest {
     /**
-     * Workorder part identifier
+     * Optional issue notes
      * @type {string}
      * @memberof IssuePartRequest
      */
-    workorderPartId: string;
+    notes?: string;
     /**
      * Quantity to issue
      * @type {number}
@@ -32,19 +32,25 @@ export interface IssuePartRequest {
      */
     quantity: number;
     /**
-     * Optional issue notes
+     * Unit quantity is expressed in. Omit for the product's base unit -- today's implicit behavior. Converted to base and validated against the product's catalog divisibility before the part is issued and before the reservation request is sent.
      * @type {string}
      * @memberof IssuePartRequest
      */
-    notes?: string;
+    uomCode?: string;
+    /**
+     * Workorder part identifier
+     * @type {string}
+     * @memberof IssuePartRequest
+     */
+    workorderPartId: string;
 }
 
 /**
  * Check if a given object implements the IssuePartRequest interface.
  */
 export function instanceOfIssuePartRequest(value: object): boolean {
-    if (!('workorderPartId' in value)) return false;
     if (!('quantity' in value)) return false;
+    if (!('workorderPartId' in value)) return false;
     return true;
 }
 
@@ -58,9 +64,10 @@ export function IssuePartRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workorderPartId': json['workorderPartId'],
-        'quantity': json['quantity'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'quantity': json['quantity'],
+        'uomCode': json['uomCode'] == null ? undefined : json['uomCode'],
+        'workorderPartId': json['workorderPartId'],
     };
 }
 
@@ -70,9 +77,10 @@ export function IssuePartRequestToJSON(value?: IssuePartRequest | null): any {
     }
     return {
         
-        'workorderPartId': value['workorderPartId'],
-        'quantity': value['quantity'],
         'notes': value['notes'],
+        'quantity': value['quantity'],
+        'uomCode': value['uomCode'],
+        'workorderPartId': value['workorderPartId'],
     };
 }
 

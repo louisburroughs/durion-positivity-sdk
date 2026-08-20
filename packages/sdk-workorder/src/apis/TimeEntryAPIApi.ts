@@ -40,8 +40,8 @@ export interface RejectTimeEntryOperationRequest {
 export class TimeEntryAPIApi extends runtime.BaseAPI {
 
     /**
-     * Approve a submitted time entry so it can move forward in the workorder timekeeping workflow
-     * Approve a time entry in SUBMITTED state
+     * Approves a SUBMITTED time entry, stamping the approving user and decision timestamp so the hours can flow onward in the workorder timekeeping workflow. Use this tool when a supervisor accepts a technician\'s submitted hours; do not use rejectTimeEntry, which marks the entry REJECTED with a reason instead. Preconditions: the time entry must exist and be in SUBMITTED status; entries already APPROVED or REJECTED cannot be re-decided. Required inputs: timeEntryId (UUID) as a path parameter; there is no request body, and the approver identity is taken from the security context. Emits a WORKORDER_TIME_ENTRY_APPROVED event recording the decision. Returns 404 when no time entry exists for the id, and 409 when the entry is not in SUBMITTED status. 
+     * Approve a Submitted Time Entry
      */
     async approveTimeEntryRaw(requestParameters: ApproveTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryResponse>> {
         if (requestParameters['timeEntryId'] == null) {
@@ -57,7 +57,7 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["TimeEntry:Approve"]);
+            const tokenString = await token("bearerAuth", ["workorder:timeEntry:approve"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -74,8 +74,8 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approve a submitted time entry so it can move forward in the workorder timekeeping workflow
-     * Approve a time entry in SUBMITTED state
+     * Approves a SUBMITTED time entry, stamping the approving user and decision timestamp so the hours can flow onward in the workorder timekeeping workflow. Use this tool when a supervisor accepts a technician\'s submitted hours; do not use rejectTimeEntry, which marks the entry REJECTED with a reason instead. Preconditions: the time entry must exist and be in SUBMITTED status; entries already APPROVED or REJECTED cannot be re-decided. Required inputs: timeEntryId (UUID) as a path parameter; there is no request body, and the approver identity is taken from the security context. Emits a WORKORDER_TIME_ENTRY_APPROVED event recording the decision. Returns 404 when no time entry exists for the id, and 409 when the entry is not in SUBMITTED status. 
+     * Approve a Submitted Time Entry
      */
     async approveTimeEntry(requestParameters: ApproveTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryResponse> {
         const response = await this.approveTimeEntryRaw(requestParameters, initOverrides);
@@ -83,8 +83,8 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reject a submitted time entry and record the rejection details for follow-up
-     * Reject a time entry in SUBMITTED state
+     * Rejects a SUBMITTED time entry, recording the rejection reason, the deciding user, and the decision timestamp for technician follow-up. Use this tool when submitted hours are wrong and must be sent back; do not use approveTimeEntry, which accepts the entry as-is. Preconditions: the time entry must exist and be in SUBMITTED status; entries already APPROVED or REJECTED cannot be re-decided. Required inputs: timeEntryId (UUID) as a path parameter and a body with a non-blank rejectionReason; the deciding identity is taken from the security context. Emits a WORKORDER_TIME_ENTRY_REJECTED event carrying the rejection reason. Returns 404 when no time entry exists for the id, and 409 when the entry is not in SUBMITTED status. 
+     * Reject a Submitted Time Entry
      */
     async rejectTimeEntryRaw(requestParameters: RejectTimeEntryOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryResponse>> {
         if (requestParameters['timeEntryId'] == null) {
@@ -109,7 +109,7 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["TimeEntry:Reject"]);
+            const tokenString = await token("bearerAuth", ["workorder:timeEntry:reject"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -127,8 +127,8 @@ export class TimeEntryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reject a submitted time entry and record the rejection details for follow-up
-     * Reject a time entry in SUBMITTED state
+     * Rejects a SUBMITTED time entry, recording the rejection reason, the deciding user, and the decision timestamp for technician follow-up. Use this tool when submitted hours are wrong and must be sent back; do not use approveTimeEntry, which accepts the entry as-is. Preconditions: the time entry must exist and be in SUBMITTED status; entries already APPROVED or REJECTED cannot be re-decided. Required inputs: timeEntryId (UUID) as a path parameter and a body with a non-blank rejectionReason; the deciding identity is taken from the security context. Emits a WORKORDER_TIME_ENTRY_REJECTED event carrying the rejection reason. Returns 404 when no time entry exists for the id, and 409 when the entry is not in SUBMITTED status. 
+     * Reject a Submitted Time Entry
      */
     async rejectTimeEntry(requestParameters: RejectTimeEntryOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryResponse> {
         const response = await this.rejectTimeEntryRaw(requestParameters, initOverrides);

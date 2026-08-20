@@ -31,19 +31,21 @@ export interface GetCommercialAccountContactsResponse {
      * @type {string}
      * @memberof GetCommercialAccountContactsResponse
      */
-    commercialAccountId?: string;
+    commercialAccountId: string;
     /**
      * List of contacts with their roles
      * @type {Array<ContactWithRole>}
      * @memberof GetCommercialAccountContactsResponse
      */
-    contacts?: Array<ContactWithRole>;
+    contacts: Array<ContactWithRole>;
 }
 
 /**
  * Check if a given object implements the GetCommercialAccountContactsResponse interface.
  */
 export function instanceOfGetCommercialAccountContactsResponse(value: object): boolean {
+    if (!('commercialAccountId' in value)) return false;
+    if (!('contacts' in value)) return false;
     return true;
 }
 
@@ -57,8 +59,8 @@ export function GetCommercialAccountContactsResponseFromJSONTyped(json: any, ign
     }
     return {
         
-        'commercialAccountId': json['commercialAccountId'] == null ? undefined : json['commercialAccountId'],
-        'contacts': json['contacts'] == null ? undefined : ((json['contacts'] as Array<any>).map(ContactWithRoleFromJSON)),
+        'commercialAccountId': json['commercialAccountId'],
+        'contacts': ((json['contacts'] as Array<any>).map(ContactWithRoleFromJSON)),
     };
 }
 
@@ -69,7 +71,7 @@ export function GetCommercialAccountContactsResponseToJSON(value?: GetCommercial
     return {
         
         'commercialAccountId': value['commercialAccountId'],
-        'contacts': value['contacts'] == null ? undefined : ((value['contacts'] as Array<any>).map(ContactWithRoleToJSON)),
+        'contacts': ((value['contacts'] as Array<any>).map(ContactWithRoleToJSON)),
     };
 }
 

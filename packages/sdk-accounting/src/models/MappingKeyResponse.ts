@@ -14,77 +14,80 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Mapping key details
  * @export
  * @interface MappingKeyResponse
  */
 export interface MappingKeyResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof MappingKeyResponse
-     */
-    mappingKeyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MappingKeyResponse
-     */
-    postingCategoryId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MappingKeyResponse
-     */
-    postingCategoryName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MappingKeyResponse
-     */
-    keyName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MappingKeyResponse
-     */
-    description?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof MappingKeyResponse
-     */
-    isActive?: boolean;
-    /**
-     * 
+     * Timestamp when the mapping key was created (ISO 8601)
      * @type {Date}
      * @memberof MappingKeyResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Identifier of the user who created the mapping key
      * @type {string}
      * @memberof MappingKeyResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Description of the mapping key
+     * @type {string}
+     * @memberof MappingKeyResponse
+     */
+    description?: string;
+    /**
+     * Whether the mapping key is active
+     * @type {boolean}
+     * @memberof MappingKeyResponse
+     */
+    isActive?: boolean;
+    /**
+     * Name of the mapping key
+     * @type {string}
+     * @memberof MappingKeyResponse
+     */
+    keyName: string;
+    /**
+     * Unique identifier of the mapping key
+     * @type {string}
+     * @memberof MappingKeyResponse
+     */
+    mappingKeyId: string;
+    /**
+     * Timestamp when the mapping key was last modified (ISO 8601)
      * @type {Date}
      * @memberof MappingKeyResponse
      */
     modifiedAt?: Date;
     /**
-     * 
+     * Identifier of the user who last modified the mapping key
      * @type {string}
      * @memberof MappingKeyResponse
      */
     modifiedBy?: string;
+    /**
+     * Identifier of the posting category this mapping key belongs to
+     * @type {string}
+     * @memberof MappingKeyResponse
+     */
+    postingCategoryId: string;
+    /**
+     * Name of the posting category this mapping key belongs to
+     * @type {string}
+     * @memberof MappingKeyResponse
+     */
+    postingCategoryName?: string;
 }
 
 /**
  * Check if a given object implements the MappingKeyResponse interface.
  */
 export function instanceOfMappingKeyResponse(value: object): boolean {
+    if (!('keyName' in value)) return false;
+    if (!('mappingKeyId' in value)) return false;
+    if (!('postingCategoryId' in value)) return false;
     return true;
 }
 
@@ -98,16 +101,16 @@ export function MappingKeyResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'mappingKeyId': json['mappingKeyId'] == null ? undefined : json['mappingKeyId'],
-        'postingCategoryId': json['postingCategoryId'] == null ? undefined : json['postingCategoryId'],
-        'postingCategoryName': json['postingCategoryName'] == null ? undefined : json['postingCategoryName'],
-        'keyName': json['keyName'] == null ? undefined : json['keyName'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'isActive': json['isActive'] == null ? undefined : json['isActive'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'isActive': json['isActive'] == null ? undefined : json['isActive'],
+        'keyName': json['keyName'],
+        'mappingKeyId': json['mappingKeyId'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
         'modifiedBy': json['modifiedBy'] == null ? undefined : json['modifiedBy'],
+        'postingCategoryId': json['postingCategoryId'],
+        'postingCategoryName': json['postingCategoryName'] == null ? undefined : json['postingCategoryName'],
     };
 }
 
@@ -117,16 +120,16 @@ export function MappingKeyResponseToJSON(value?: MappingKeyResponse | null): any
     }
     return {
         
-        'mappingKeyId': value['mappingKeyId'],
-        'postingCategoryId': value['postingCategoryId'],
-        'postingCategoryName': value['postingCategoryName'],
-        'keyName': value['keyName'],
-        'description': value['description'],
-        'isActive': value['isActive'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'description': value['description'],
+        'isActive': value['isActive'],
+        'keyName': value['keyName'],
+        'mappingKeyId': value['mappingKeyId'],
         'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
         'modifiedBy': value['modifiedBy'],
+        'postingCategoryId': value['postingCategoryId'],
+        'postingCategoryName': value['postingCategoryName'],
     };
 }
 

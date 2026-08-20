@@ -14,35 +14,35 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a pick list for a workorder, optionally linked to a parts reservation
  * @export
  * @interface CreatePickListRequest
  */
 export interface CreatePickListRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreatePickListRequest
-     */
-    workorderId: string;
-    /**
-     * 
+     * Timestamp by which the pick list should be completed
      * @type {Date}
      * @memberof CreatePickListRequest
      */
     dueAt?: Date;
     /**
-     * 
+     * Relative priority of the pick list; higher values are picked sooner
      * @type {number}
      * @memberof CreatePickListRequest
      */
     priority?: number;
     /**
-     * 
+     * Identifier of the reservation backing the pick list, when applicable
      * @type {string}
      * @memberof CreatePickListRequest
      */
     reservationId?: string;
+    /**
+     * Identifier of the workorder the pick list fulfills
+     * @type {string}
+     * @memberof CreatePickListRequest
+     */
+    workorderId: string;
 }
 
 /**
@@ -63,10 +63,10 @@ export function CreatePickListRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'workorderId': json['workorderId'],
         'dueAt': json['dueAt'] == null ? undefined : (new Date(json['dueAt'])),
         'priority': json['priority'] == null ? undefined : json['priority'],
         'reservationId': json['reservationId'] == null ? undefined : json['reservationId'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -76,10 +76,10 @@ export function CreatePickListRequestToJSON(value?: CreatePickListRequest | null
     }
     return {
         
-        'workorderId': value['workorderId'],
         'dueAt': value['dueAt'] == null ? undefined : ((value['dueAt']).toISOString()),
         'priority': value['priority'],
         'reservationId': value['reservationId'],
+        'workorderId': value['workorderId'],
     };
 }
 

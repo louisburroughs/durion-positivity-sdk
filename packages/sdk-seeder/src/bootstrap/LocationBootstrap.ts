@@ -39,7 +39,7 @@ export class LocationBootstrap {
     let createdCount = 0;
     let skippedCount = 0;
 
-    const roster = await locationApi.getAllLocations();
+    const roster = await locationApi.listLocations();
 
     const existingLocation = roster.find(
       (location: LocationResponseDTO) => location.code === LOCATION_CODE,

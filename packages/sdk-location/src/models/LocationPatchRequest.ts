@@ -27,53 +27,53 @@ import {
 } from './OperatingHoursRequest';
 
 /**
- * Partial location payload
+ * Partial update payload for a location; null fields are left unchanged
  * @export
  * @interface LocationPatchRequest
  */
 export interface LocationPatchRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof LocationPatchRequest
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPatchRequest
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPatchRequest
-     */
-    timezone?: string;
-    /**
-     * 
-     * @type {Array<OperatingHoursRequest>}
-     * @memberof LocationPatchRequest
-     */
-    operatingHours?: Array<OperatingHoursRequest>;
-    /**
-     * 
-     * @type {Array<HolidayClosureRequest>}
-     * @memberof LocationPatchRequest
-     */
-    holidayClosures?: Array<HolidayClosureRequest>;
-    /**
-     * 
+     * Buffer minutes reserved before appointments for check-in
      * @type {number}
      * @memberof LocationPatchRequest
      */
     checkInBufferMinutes?: number;
     /**
-     * 
+     * Buffer minutes reserved after appointments for cleanup
      * @type {number}
      * @memberof LocationPatchRequest
      */
     cleanupBufferMinutes?: number;
+    /**
+     * Holiday closures for the location
+     * @type {Array<HolidayClosureRequest>}
+     * @memberof LocationPatchRequest
+     */
+    holidayClosures?: Array<HolidayClosureRequest>;
+    /**
+     * Display name of the location
+     * @type {string}
+     * @memberof LocationPatchRequest
+     */
+    name?: string;
+    /**
+     * Weekly operating hours for the location
+     * @type {Array<OperatingHoursRequest>}
+     * @memberof LocationPatchRequest
+     */
+    operatingHours?: Array<OperatingHoursRequest>;
+    /**
+     * Operational status of the location
+     * @type {string}
+     * @memberof LocationPatchRequest
+     */
+    status?: string;
+    /**
+     * IANA timezone identifier for the location
+     * @type {string}
+     * @memberof LocationPatchRequest
+     */
+    timezone?: string;
 }
 
 /**
@@ -93,13 +93,13 @@ export function LocationPatchRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'timezone': json['timezone'] == null ? undefined : json['timezone'],
-        'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
-        'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
         'checkInBufferMinutes': json['checkInBufferMinutes'] == null ? undefined : json['checkInBufferMinutes'],
         'cleanupBufferMinutes': json['cleanupBufferMinutes'] == null ? undefined : json['cleanupBufferMinutes'],
+        'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
+        'name': json['name'] == null ? undefined : json['name'],
+        'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
+        'status': json['status'] == null ? undefined : json['status'],
+        'timezone': json['timezone'] == null ? undefined : json['timezone'],
     };
 }
 
@@ -109,13 +109,13 @@ export function LocationPatchRequestToJSON(value?: LocationPatchRequest | null):
     }
     return {
         
-        'name': value['name'],
-        'status': value['status'],
-        'timezone': value['timezone'],
-        'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),
-        'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
         'checkInBufferMinutes': value['checkInBufferMinutes'],
         'cleanupBufferMinutes': value['cleanupBufferMinutes'],
+        'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
+        'name': value['name'],
+        'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),
+        'status': value['status'],
+        'timezone': value['timezone'],
     };
 }
 

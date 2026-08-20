@@ -14,37 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request body for creating a draft inventory adjustment request
  * @export
  * @interface CreateAdjustmentRequestDto
  */
 export interface CreateAdjustmentRequestDto {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateAdjustmentRequestDto
-     */
-    productSku: string;
-    /**
-     * 
+     * Identifier of the location where the adjustment applies
      * @type {string}
      * @memberof CreateAdjustmentRequestDto
      */
     locationId: string;
     /**
-     * 
+     * Stock-keeping unit of the product to adjust
+     * @type {string}
+     * @memberof CreateAdjustmentRequestDto
+     */
+    productSku: string;
+    /**
+     * Adjustment quantity (positive to add stock, negative to remove)
      * @type {number}
      * @memberof CreateAdjustmentRequestDto
      */
     quantity: number;
     /**
-     * 
+     * Mandatory reason code explaining the adjustment
      * @type {string}
      * @memberof CreateAdjustmentRequestDto
      */
     reasonCode: string;
     /**
-     * 
+     * Optional unit of measure code for the quantity (e.g. EACH, KG)
      * @type {string}
      * @memberof CreateAdjustmentRequestDto
      */
@@ -55,8 +55,8 @@ export interface CreateAdjustmentRequestDto {
  * Check if a given object implements the CreateAdjustmentRequestDto interface.
  */
 export function instanceOfCreateAdjustmentRequestDto(value: object): boolean {
-    if (!('productSku' in value)) return false;
     if (!('locationId' in value)) return false;
+    if (!('productSku' in value)) return false;
     if (!('quantity' in value)) return false;
     if (!('reasonCode' in value)) return false;
     return true;
@@ -72,8 +72,8 @@ export function CreateAdjustmentRequestDtoFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'productSku': json['productSku'],
         'locationId': json['locationId'],
+        'productSku': json['productSku'],
         'quantity': json['quantity'],
         'reasonCode': json['reasonCode'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
@@ -86,8 +86,8 @@ export function CreateAdjustmentRequestDtoToJSON(value?: CreateAdjustmentRequest
     }
     return {
         
-        'productSku': value['productSku'],
         'locationId': value['locationId'],
+        'productSku': value['productSku'],
         'quantity': value['quantity'],
         'reasonCode': value['reasonCode'],
         'unitOfMeasure': value['unitOfMeasure'],

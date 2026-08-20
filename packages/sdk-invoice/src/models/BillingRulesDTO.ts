@@ -14,71 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Billing rules and invoicing preferences for a billing party
  * @export
  * @interface BillingRulesDTO
  */
 export interface BillingRulesDTO {
     /**
-     * 
+     * Timestamp when the record was created
+     * @type {Date}
+     * @memberof BillingRulesDTO
+     */
+    createdAt: Date;
+    /**
+     * Unique identifier of the billing rules record
      * @type {string}
      * @memberof BillingRulesDTO
      */
     id?: string;
     /**
-     * 
+     * Preferred method for delivering invoices
      * @type {string}
      * @memberof BillingRulesDTO
      */
-    partyId?: string;
+    invoiceDeliveryMethod: BillingRulesDTOInvoiceDeliveryMethodEnum;
     /**
-     * 
+     * Strategy for grouping line items into invoices
+     * @type {string}
+     * @memberof BillingRulesDTO
+     */
+    invoiceGroupingStrategy: BillingRulesDTOInvoiceGroupingStrategyEnum;
+    /**
+     * Identifier of the party these billing rules apply to
+     * @type {string}
+     * @memberof BillingRulesDTO
+     */
+    partyId: string;
+    /**
+     * Payment terms code governing due dates
+     * @type {string}
+     * @memberof BillingRulesDTO
+     */
+    paymentTermsCode: string;
+    /**
+     * Whether a purchase order is required before invoicing
      * @type {boolean}
      * @memberof BillingRulesDTO
      */
-    purchaseOrderRequired?: boolean;
+    purchaseOrderRequired: boolean;
     /**
-     * 
+     * Timestamp when the record was last updated
+     * @type {Date}
+     * @memberof BillingRulesDTO
+     */
+    updatedAt: Date;
+    /**
+     * Identifier of the actor who last updated the record
      * @type {string}
      * @memberof BillingRulesDTO
      */
-    paymentTermsCode?: string;
+    updatedBy: string;
     /**
-     * 
-     * @type {string}
-     * @memberof BillingRulesDTO
-     */
-    invoiceDeliveryMethod?: BillingRulesDTOInvoiceDeliveryMethodEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof BillingRulesDTO
-     */
-    invoiceGroupingStrategy?: BillingRulesDTOInvoiceGroupingStrategyEnum;
-    /**
-     * 
+     * Optimistic-locking version of the record
      * @type {number}
      * @memberof BillingRulesDTO
      */
-    version?: number;
-    /**
-     * 
-     * @type {Date}
-     * @memberof BillingRulesDTO
-     */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof BillingRulesDTO
-     */
-    updatedAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof BillingRulesDTO
-     */
-    updatedBy?: string;
+    version: number;
 }
 
 /**
@@ -105,6 +105,15 @@ export enum BillingRulesDTOInvoiceGroupingStrategyEnum {
  * Check if a given object implements the BillingRulesDTO interface.
  */
 export function instanceOfBillingRulesDTO(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('invoiceDeliveryMethod' in value)) return false;
+    if (!('invoiceGroupingStrategy' in value)) return false;
+    if (!('partyId' in value)) return false;
+    if (!('paymentTermsCode' in value)) return false;
+    if (!('purchaseOrderRequired' in value)) return false;
+    if (!('updatedAt' in value)) return false;
+    if (!('updatedBy' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -118,16 +127,16 @@ export function BillingRulesDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
+        'createdAt': (new Date(json['createdAt'])),
         'id': json['id'] == null ? undefined : json['id'],
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'purchaseOrderRequired': json['purchaseOrderRequired'] == null ? undefined : json['purchaseOrderRequired'],
-        'paymentTermsCode': json['paymentTermsCode'] == null ? undefined : json['paymentTermsCode'],
-        'invoiceDeliveryMethod': json['invoiceDeliveryMethod'] == null ? undefined : json['invoiceDeliveryMethod'],
-        'invoiceGroupingStrategy': json['invoiceGroupingStrategy'] == null ? undefined : json['invoiceGroupingStrategy'],
-        'version': json['version'] == null ? undefined : json['version'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
+        'invoiceDeliveryMethod': json['invoiceDeliveryMethod'],
+        'invoiceGroupingStrategy': json['invoiceGroupingStrategy'],
+        'partyId': json['partyId'],
+        'paymentTermsCode': json['paymentTermsCode'],
+        'purchaseOrderRequired': json['purchaseOrderRequired'],
+        'updatedAt': (new Date(json['updatedAt'])),
+        'updatedBy': json['updatedBy'],
+        'version': json['version'],
     };
 }
 
@@ -137,16 +146,16 @@ export function BillingRulesDTOToJSON(value?: BillingRulesDTO | null): any {
     }
     return {
         
+        'createdAt': ((value['createdAt']).toISOString()),
         'id': value['id'],
-        'partyId': value['partyId'],
-        'purchaseOrderRequired': value['purchaseOrderRequired'],
-        'paymentTermsCode': value['paymentTermsCode'],
         'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],
         'invoiceGroupingStrategy': value['invoiceGroupingStrategy'],
-        'version': value['version'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'partyId': value['partyId'],
+        'paymentTermsCode': value['paymentTermsCode'],
+        'purchaseOrderRequired': value['purchaseOrderRequired'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
         'updatedBy': value['updatedBy'],
+        'version': value['version'],
     };
 }
 

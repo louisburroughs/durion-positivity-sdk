@@ -24,19 +24,19 @@ export interface NonInventoryProductDto {
      * @type {string}
      * @memberof NonInventoryProductDto
      */
-    id?: string;
-    /**
-     * Name
-     * @type {string}
-     * @memberof NonInventoryProductDto
-     */
-    name?: string;
+    id: string;
     /**
      * Long description
      * @type {string}
      * @memberof NonInventoryProductDto
      */
     longDescription?: string;
+    /**
+     * Name
+     * @type {string}
+     * @memberof NonInventoryProductDto
+     */
+    name: string;
     /**
      * Short description
      * @type {string}
@@ -49,6 +49,8 @@ export interface NonInventoryProductDto {
  * Check if a given object implements the NonInventoryProductDto interface.
  */
 export function instanceOfNonInventoryProductDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -62,9 +64,9 @@ export function NonInventoryProductDtoFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
+        'id': json['id'],
         'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
+        'name': json['name'],
         'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
     };
 }
@@ -76,8 +78,8 @@ export function NonInventoryProductDtoToJSON(value?: NonInventoryProductDto | nu
     return {
         
         'id': value['id'],
-        'name': value['name'],
         'longDescription': value['longDescription'],
+        'name': value['name'],
         'shortDescription': value['shortDescription'],
     };
 }

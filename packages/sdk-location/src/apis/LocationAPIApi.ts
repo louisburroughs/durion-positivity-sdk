@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  LocationDescendantResponseDTO,
   LocationParentResponseDTO,
   LocationPatchRequest,
   LocationRequestDTO,
@@ -25,6 +26,8 @@ import type {
   PersonDTO,
 } from '../models/index';
 import {
+    LocationDescendantResponseDTOFromJSON,
+    LocationDescendantResponseDTOToJSON,
     LocationParentResponseDTOFromJSON,
     LocationParentResponseDTOToJSON,
     LocationPatchRequestFromJSON,
@@ -43,7 +46,7 @@ import {
     PersonDTOToJSON,
 } from '../models/index';
 
-export interface AddParentRequest {
+export interface AddLocationParentRequest {
     childId: string;
     parentId: string;
     parentType: string;
@@ -57,23 +60,28 @@ export interface DeleteLocationRequest {
     locationId: string;
 }
 
-export interface GetAllChildrenRequest {
-    locationId: string;
-    parentType?: string;
-}
-
 export interface GetLocationByIdRequest {
     locationId: string;
 }
 
-export interface GetResponsiblePersonRequest {
+export interface GetLocationResponsiblePersonRequest {
     locationId: string;
 }
 
-export interface GetRosterRequest {
+export interface GetLocationRosterRequest {
     pageable: Pageable;
     status?: string;
     sinceUpdatedAt?: Date;
+}
+
+export interface ListLocationChildrenRequest {
+    locationId: string;
+    parentType?: string;
+}
+
+export interface ListLocationDescendantsRequest {
+    locationId: string;
+    parentType?: string;
 }
 
 export interface PatchLocationRequest {
@@ -96,28 +104,28 @@ export interface ValidateLocationRequest {
 export class LocationAPIApi extends runtime.BaseAPI {
 
     /**
-     * Add a parent relationship to a location.
-     * Add a parent to a location
+     * Creates a typed parent-child edge between two existing locations, giving the child at most one parent per relationship type. Use this tool when building the location hierarchy; do not use listLocationChildren or listLocationDescendants, which only read the hierarchy. Preconditions: both locations must exist, the child must not already have a parent of that type, the pair must not already be linked in either direction, and the parent must not be a descendant of the child because cycles are forbidden by ADR-0016. Required inputs: childId and parentId (UUIDs) as path parameters and a parentType query parameter, one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_ADD event and republishes the child\'s location fact, which carries the new edge to replica consumers. Returns 400 when parentType is not a recognized value; self-parenting, duplicate, inverse or circular relationships are rejected before the edge is written. 
+     * Add Typed Parent Relationship to Location
      */
-    async addParentRaw(requestParameters: AddParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationParentResponseDTO>> {
+    async addLocationParentRaw(requestParameters: AddLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationParentResponseDTO>> {
         if (requestParameters['childId'] == null) {
             throw new runtime.RequiredError(
                 'childId',
-                'Required parameter "childId" was null or undefined when calling addParent().'
+                'Required parameter "childId" was null or undefined when calling addLocationParent().'
             );
         }
 
         if (requestParameters['parentId'] == null) {
             throw new runtime.RequiredError(
                 'parentId',
-                'Required parameter "parentId" was null or undefined when calling addParent().'
+                'Required parameter "parentId" was null or undefined when calling addLocationParent().'
             );
         }
 
         if (requestParameters['parentType'] == null) {
             throw new runtime.RequiredError(
                 'parentType',
-                'Required parameter "parentType" was null or undefined when calling addParent().'
+                'Required parameter "parentType" was null or undefined when calling addLocationParent().'
             );
         }
 
@@ -148,17 +156,17 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Add a parent relationship to a location.
-     * Add a parent to a location
+     * Creates a typed parent-child edge between two existing locations, giving the child at most one parent per relationship type. Use this tool when building the location hierarchy; do not use listLocationChildren or listLocationDescendants, which only read the hierarchy. Preconditions: both locations must exist, the child must not already have a parent of that type, the pair must not already be linked in either direction, and the parent must not be a descendant of the child because cycles are forbidden by ADR-0016. Required inputs: childId and parentId (UUIDs) as path parameters and a parentType query parameter, one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_ADD event and republishes the child\'s location fact, which carries the new edge to replica consumers. Returns 400 when parentType is not a recognized value; self-parenting, duplicate, inverse or circular relationships are rejected before the edge is written. 
+     * Add Typed Parent Relationship to Location
      */
-    async addParent(requestParameters: AddParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationParentResponseDTO> {
-        const response = await this.addParentRaw(requestParameters, initOverrides);
+    async addLocationParent(requestParameters: AddLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationParentResponseDTO> {
+        const response = await this.addLocationParentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Add a new location to the system.
-     * Create a new location
+     * Creates a location with address, timezone, operating hours, scheduling buffers and type classification, defaulting status to ACTIVE. Use this tool when registering a new physical or logical site; do not use updateLocation, which replaces an existing location, and use bulkIngestLocations for batch imports. Preconditions: no existing location may share the same name (case-insensitive) or code, and a type referenced by id must already exist; a type given only by name is created on the fly. Required inputs: name, code and type (id or name); timezone must be a valid IANA zone id, operatingHours entries must have unique dayOfWeek values with openTime before closeTime, and active defaults to true. Emits a LOCATION_LOCATION_CREATE event and publishes a location fact for replica consumers. Returns 409 when the name or code is already taken, 422 when the timezone or operating hours are invalid, and 400 when a referenced location type id is unknown. 
+     * Create a New Location Record
      */
     async createLocationRaw(requestParameters: CreateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
         if (requestParameters['locationRequestDTO'] == null) {
@@ -194,8 +202,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Add a new location to the system.
-     * Create a new location
+     * Creates a location with address, timezone, operating hours, scheduling buffers and type classification, defaulting status to ACTIVE. Use this tool when registering a new physical or logical site; do not use updateLocation, which replaces an existing location, and use bulkIngestLocations for batch imports. Preconditions: no existing location may share the same name (case-insensitive) or code, and a type referenced by id must already exist; a type given only by name is created on the fly. Required inputs: name, code and type (id or name); timezone must be a valid IANA zone id, operatingHours entries must have unique dayOfWeek values with openTime before closeTime, and active defaults to true. Emits a LOCATION_LOCATION_CREATE event and publishes a location fact for replica consumers. Returns 409 when the name or code is already taken, 422 when the timezone or operating hours are invalid, and 400 when a referenced location type id is unknown. 
+     * Create a New Location Record
      */
     async createLocation(requestParameters: CreateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
         const response = await this.createLocationRaw(requestParameters, initOverrides);
@@ -203,8 +211,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a location by its unique ID.
-     * Delete a location
+     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location does not exist. 
+     * Delete a Location by Identifier
      */
     async deleteLocationRaw(requestParameters: DeleteLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['locationId'] == null) {
@@ -237,135 +245,16 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a location by its unique ID.
-     * Delete a location
+     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location does not exist. 
+     * Delete a Location by Identifier
      */
     async deleteLocation(requestParameters: DeleteLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteLocationRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve all child locations for a given parent location.
-     * Get all children for a location
-     */
-    async getAllChildrenRaw(requestParameters: GetAllChildrenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationResponseDTO>>> {
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError(
-                'locationId',
-                'Required parameter "locationId" was null or undefined when calling getAllChildren().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['parentType'] != null) {
-            queryParameters['parentType'] = requestParameters['parentType'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["location:read"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/locations/{locationId}/children`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationResponseDTOFromJSON));
-    }
-
-    /**
-     * Retrieve all child locations for a given parent location.
-     * Get all children for a location
-     */
-    async getAllChildren(requestParameters: GetAllChildrenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationResponseDTO>> {
-        const response = await this.getAllChildrenRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve a list of all locations.
-     * Get all locations
-     */
-    async getAllLocationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationResponseDTO>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["location:read"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/locations`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationResponseDTOFromJSON));
-    }
-
-    /**
-     * Retrieve a list of all locations.
-     * Get all locations
-     */
-    async getAllLocations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationResponseDTO>> {
-        const response = await this.getAllLocationsRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve all parent relationships for locations.
-     * Get all location parents
-     */
-    async getAllParentsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationParentResponseDTO>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["location:read"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/locations/parents`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationParentResponseDTOFromJSON));
-    }
-
-    /**
-     * Retrieve all parent relationships for locations.
-     * Get all location parents
-     */
-    async getAllParents(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationParentResponseDTO>> {
-        const response = await this.getAllParentsRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve a location by its unique ID.
-     * Get location by ID
+     * Returns the full location record, including address fields, active flag, responsible person id and type classification, for a known id. Use this tool when the location id is already known; use listLocations instead to enumerate, and use validateLocation when only existence and active state are needed. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no location exists for the supplied id. 
+     * Get Location by Unique Identifier
      */
     async getLocationByIdRaw(requestParameters: GetLocationByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
         if (requestParameters['locationId'] == null) {
@@ -398,8 +287,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a location by its unique ID.
-     * Get location by ID
+     * Returns the full location record, including address fields, active flag, responsible person id and type classification, for a known id. Use this tool when the location id is already known; use listLocations instead to enumerate, and use validateLocation when only existence and active state are needed. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no location exists for the supplied id. 
+     * Get Location by Unique Identifier
      */
     async getLocationById(requestParameters: GetLocationByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
         const response = await this.getLocationByIdRaw(requestParameters, initOverrides);
@@ -407,14 +296,14 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the person responsible for a given location.
-     * Get responsible person for a location
+     * Returns the person responsible for a location, resolved from the people-contact replica with name, email and phone details. Use this tool to find who owns a site operationally; do not use getLocationById, which returns only the responsiblePersonId without contact details. Preconditions: the location must exist and have a responsiblePersonId assigned. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_RESPONSIBLE_PERSON_GET event; no state changes. Returns 404 when the location does not exist or no responsible person is assigned; when the replica row has not yet arrived, a 200 with only the person id is returned and names follow with the feed. 
+     * Get Responsible Person for a Location
      */
-    async getResponsiblePersonRaw(requestParameters: GetResponsiblePersonRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PersonDTO>> {
+    async getLocationResponsiblePersonRaw(requestParameters: GetLocationResponsiblePersonRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PersonDTO>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling getResponsiblePerson().'
+                'Required parameter "locationId" was null or undefined when calling getLocationResponsiblePerson().'
             );
         }
 
@@ -441,23 +330,23 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the person responsible for a given location.
-     * Get responsible person for a location
+     * Returns the person responsible for a location, resolved from the people-contact replica with name, email and phone details. Use this tool to find who owns a site operationally; do not use getLocationById, which returns only the responsiblePersonId without contact details. Preconditions: the location must exist and have a responsiblePersonId assigned. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_RESPONSIBLE_PERSON_GET event; no state changes. Returns 404 when the location does not exist or no responsible person is assigned; when the replica row has not yet arrived, a 200 with only the person id is returned and names follow with the feed. 
+     * Get Responsible Person for a Location
      */
-    async getResponsiblePerson(requestParameters: GetResponsiblePersonRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PersonDTO> {
-        const response = await this.getResponsiblePersonRaw(requestParameters, initOverrides);
+    async getLocationResponsiblePerson(requestParameters: GetLocationResponsiblePersonRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PersonDTO> {
+        const response = await this.getLocationResponsiblePersonRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve paginated location refs for sync consumers.
-     * Get location roster
+     * Returns a paginated roster of lightweight location references (id, name, code, status, hrLocationId, timezone, updatedAt) for sync consumers. Use this tool when incrementally synchronising locations into another system; do not use listLocations, which returns full unpaginated location payloads. Preconditions: none beyond the location:read authority. Required inputs: none are mandatory; status filters exactly on the stored status value such as ACTIVE, sinceUpdatedAt is an ISO-8601 instant returning only rows updated after it, and standard page, size and sort parameters control paging. Emits a LOCATION_ROSTER_GET event; no location state changes. Returns 200 with a page of location refs; an unknown status value yields an empty page rather than an error. 
+     * Get Paginated Location Roster for Sync
      */
-    async getRosterRaw(requestParameters: GetRosterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageLocationRef>> {
+    async getLocationRosterRaw(requestParameters: GetLocationRosterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageLocationRef>> {
         if (requestParameters['pageable'] == null) {
             throw new runtime.RequiredError(
                 'pageable',
-                'Required parameter "pageable" was null or undefined when calling getRoster().'
+                'Required parameter "pageable" was null or undefined when calling getLocationRoster().'
             );
         }
 
@@ -496,17 +385,183 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated location refs for sync consumers.
-     * Get location roster
+     * Returns a paginated roster of lightweight location references (id, name, code, status, hrLocationId, timezone, updatedAt) for sync consumers. Use this tool when incrementally synchronising locations into another system; do not use listLocations, which returns full unpaginated location payloads. Preconditions: none beyond the location:read authority. Required inputs: none are mandatory; status filters exactly on the stored status value such as ACTIVE, sinceUpdatedAt is an ISO-8601 instant returning only rows updated after it, and standard page, size and sort parameters control paging. Emits a LOCATION_ROSTER_GET event; no location state changes. Returns 200 with a page of location refs; an unknown status value yields an empty page rather than an error. 
+     * Get Paginated Location Roster for Sync
      */
-    async getRoster(requestParameters: GetRosterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageLocationRef> {
-        const response = await this.getRosterRaw(requestParameters, initOverrides);
+    async getLocationRoster(requestParameters: GetLocationRosterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageLocationRef> {
+        const response = await this.getLocationRosterRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Patch selected fields for a location.
-     * Patch a location
+     * Returns the direct child locations of a parent location, optionally restricted to one relationship type. Use this tool for one level of hierarchy; use listLocationDescendants instead when the whole subtree with depth information is needed. Preconditions: none; an unknown or childless parent id yields an empty list rather than an error. Required inputs: locationId (UUID) as a path parameter; parentType is optional and, when omitted, edges of every relationship type are returned. No events are emitted and no state changes; this is a read-only projection. Returns 400 when parentType is supplied but is not a recognized ParentType value. 
+     * List Direct Children of a Location
+     */
+    async listLocationChildrenRaw(requestParameters: ListLocationChildrenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationResponseDTO>>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling listLocationChildren().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['parentType'] != null) {
+            queryParameters['parentType'] = requestParameters['parentType'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/{locationId}/children`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationResponseDTOFromJSON));
+    }
+
+    /**
+     * Returns the direct child locations of a parent location, optionally restricted to one relationship type. Use this tool for one level of hierarchy; use listLocationDescendants instead when the whole subtree with depth information is needed. Preconditions: none; an unknown or childless parent id yields an empty list rather than an error. Required inputs: locationId (UUID) as a path parameter; parentType is optional and, when omitted, edges of every relationship type are returned. No events are emitted and no state changes; this is a read-only projection. Returns 400 when parentType is supplied but is not a recognized ParentType value. 
+     * List Direct Children of a Location
+     */
+    async listLocationChildren(requestParameters: ListLocationChildrenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationResponseDTO>> {
+        const response = await this.listLocationChildrenRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Walks typed parent-child edges downward from a location and returns every descendant as a flat list with its immediate parent id and depth, where depth 1 is a direct child. Use this tool when a whole subtree is needed in one call; use listLocationChildren instead for only the direct children of one location. Preconditions: the root location must exist; traversal is cycle-safe and silently truncates at depth 20. Required inputs: locationId (UUID) as a path parameter; parentType defaults to PHYSICAL when omitted. Emits a LOCATION_DESCENDANTS_GET event; no state changes. Returns 404 when the root location does not exist and 400 when parentType is not a recognized ParentType value. 
+     * List All Descendants of a Location
+     */
+    async listLocationDescendantsRaw(requestParameters: ListLocationDescendantsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationDescendantResponseDTO>>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling listLocationDescendants().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['parentType'] != null) {
+            queryParameters['parentType'] = requestParameters['parentType'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/{locationId}/descendants`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationDescendantResponseDTOFromJSON));
+    }
+
+    /**
+     * Walks typed parent-child edges downward from a location and returns every descendant as a flat list with its immediate parent id and depth, where depth 1 is a direct child. Use this tool when a whole subtree is needed in one call; use listLocationChildren instead for only the direct children of one location. Preconditions: the root location must exist; traversal is cycle-safe and silently truncates at depth 20. Required inputs: locationId (UUID) as a path parameter; parentType defaults to PHYSICAL when omitted. Emits a LOCATION_DESCENDANTS_GET event; no state changes. Returns 404 when the root location does not exist and 400 when parentType is not a recognized ParentType value. 
+     * List All Descendants of a Location
+     */
+    async listLocationDescendants(requestParameters: ListLocationDescendantsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationDescendantResponseDTO>> {
+        const response = await this.listLocationDescendantsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists every parent-child relationship edge across all locations, with parentId, childId and parentType. Use this tool when a full hierarchy dump is needed; use listLocationChildren instead to read the children of one location, or listLocationDescendants for a deep traversal. Preconditions: none beyond the location:read authority. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full unpaginated edge list. 
+     * List All Location Parent Relationships
+     */
+    async listLocationParentsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationParentResponseDTO>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/parents`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationParentResponseDTOFromJSON));
+    }
+
+    /**
+     * Lists every parent-child relationship edge across all locations, with parentId, childId and parentType. Use this tool when a full hierarchy dump is needed; use listLocationChildren instead to read the children of one location, or listLocationDescendants for a deep traversal. Preconditions: none beyond the location:read authority. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full unpaginated edge list. 
+     * List All Location Parent Relationships
+     */
+    async listLocationParents(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationParentResponseDTO>> {
+        const response = await this.listLocationParentsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists every location in the system as a flat, unpaginated collection with address, status and type details. Use this tool when a complete location inventory is needed at once; use getLocationRoster instead for a paginated sync feed with status and updated-since filtering, and do not use it to fetch a single known id, which is getLocationById. Preconditions: none beyond the location:read authority; an empty system returns an empty list. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full list; there are no business error conditions for this operation. 
+     * List All Locations Without Pagination
+     */
+    async listLocationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<LocationResponseDTO>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LocationResponseDTOFromJSON));
+    }
+
+    /**
+     * Lists every location in the system as a flat, unpaginated collection with address, status and type details. Use this tool when a complete location inventory is needed at once; use getLocationRoster instead for a paginated sync feed with status and updated-since filtering, and do not use it to fetch a single known id, which is getLocationById. Preconditions: none beyond the location:read authority; an empty system returns an empty list. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full list; there are no business error conditions for this operation. 
+     * List All Locations Without Pagination
+     */
+    async listLocations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<LocationResponseDTO>> {
+        const response = await this.listLocationsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes and cleanupBufferMinutes. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, and reactivation is not supported through this operation. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid. 
+     * Patch Selected Fields of a Location
      */
     async patchLocationRaw(requestParameters: PatchLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
         if (requestParameters['locationId'] == null) {
@@ -549,8 +604,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Patch selected fields for a location.
-     * Patch a location
+     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes and cleanupBufferMinutes. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, and reactivation is not supported through this operation. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid. 
+     * Patch Selected Fields of a Location
      */
     async patchLocation(requestParameters: PatchLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
         const response = await this.patchLocationRaw(requestParameters, initOverrides);
@@ -558,8 +613,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the details of an existing location.
-     * Update an existing location
+     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the name or code collides with another location, and 422 when the timezone or operating hours are invalid. 
+     * Update an Existing Location Fully
      */
     async updateLocationRaw(requestParameters: UpdateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
         if (requestParameters['locationId'] == null) {
@@ -602,8 +657,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the details of an existing location.
-     * Update an existing location
+     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the name or code collides with another location, and 422 when the timezone or operating hours are invalid. 
+     * Update an Existing Location Fully
      */
     async updateLocation(requestParameters: UpdateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
         const response = await this.updateLocationRaw(requestParameters, initOverrides);
@@ -611,8 +666,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Return existence and active state for a location ID.
-     * Validate location reference
+     * Returns an existence-and-active-state check for a location id without transferring the full record. Use this tool for inter-service reference validation before storing a locationId; do not use getLocationById, which returns the full payload and answers 404 for unknown ids. Preconditions: none; unknown ids are a valid input. Required inputs: locationId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 always, with exists=false and active=false when the id is unknown, so callers must inspect the flags rather than the status code. 
+     * Validate Location Existence and Active State
      */
     async validateLocationRaw(requestParameters: ValidateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationValidationResponseDTO>> {
         if (requestParameters['locationId'] == null) {
@@ -645,8 +700,8 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Return existence and active state for a location ID.
-     * Validate location reference
+     * Returns an existence-and-active-state check for a location id without transferring the full record. Use this tool for inter-service reference validation before storing a locationId; do not use getLocationById, which returns the full payload and answers 404 for unknown ids. Preconditions: none; unknown ids are a valid input. Required inputs: locationId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 always, with exists=false and active=false when the id is unknown, so callers must inspect the flags rather than the status code. 
+     * Validate Location Existence and Active State
      */
     async validateLocation(requestParameters: ValidateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationValidationResponseDTO> {
         const response = await this.validateLocationRaw(requestParameters, initOverrides);

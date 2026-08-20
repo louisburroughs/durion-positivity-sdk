@@ -21,23 +21,11 @@ import {
 } from './JournalEntryResponse';
 
 /**
- * 
+ * Traceability response linking a journal entry to its source and related entries
  * @export
  * @interface JournalEntryTraceabilityResponse
  */
 export interface JournalEntryTraceabilityResponse {
-    /**
-     * 
-     * @type {string}
-     * @memberof JournalEntryTraceabilityResponse
-     */
-    journalEntryId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof JournalEntryTraceabilityResponse
-     */
-    sourceEventId?: string;
     /**
      * 
      * @type {JournalEntryResponse}
@@ -45,11 +33,23 @@ export interface JournalEntryTraceabilityResponse {
      */
     journalEntry?: JournalEntryResponse;
     /**
+     * Journal entry UUID
+     * @type {string}
+     * @memberof JournalEntryTraceabilityResponse
+     */
+    journalEntryId: string;
+    /**
      * 
      * @type {JournalEntryResponse}
      * @memberof JournalEntryTraceabilityResponse
      */
     originalJournalEntry?: JournalEntryResponse;
+    /**
+     * Other journal entries related to the same source event
+     * @type {Array<JournalEntryResponse>}
+     * @memberof JournalEntryTraceabilityResponse
+     */
+    relatedJournalEntries?: Array<JournalEntryResponse>;
     /**
      * 
      * @type {JournalEntryResponse}
@@ -57,17 +57,18 @@ export interface JournalEntryTraceabilityResponse {
      */
     reversalJournalEntry?: JournalEntryResponse;
     /**
-     * 
-     * @type {Array<JournalEntryResponse>}
+     * Source event UUID that triggered the journal entry
+     * @type {string}
      * @memberof JournalEntryTraceabilityResponse
      */
-    relatedJournalEntries?: Array<JournalEntryResponse>;
+    sourceEventId?: string;
 }
 
 /**
  * Check if a given object implements the JournalEntryTraceabilityResponse interface.
  */
 export function instanceOfJournalEntryTraceabilityResponse(value: object): boolean {
+    if (!('journalEntryId' in value)) return false;
     return true;
 }
 
@@ -81,12 +82,12 @@ export function JournalEntryTraceabilityResponseFromJSONTyped(json: any, ignoreD
     }
     return {
         
-        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
-        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
         'journalEntry': json['journalEntry'] == null ? undefined : JournalEntryResponseFromJSON(json['journalEntry']),
+        'journalEntryId': json['journalEntryId'],
         'originalJournalEntry': json['originalJournalEntry'] == null ? undefined : JournalEntryResponseFromJSON(json['originalJournalEntry']),
-        'reversalJournalEntry': json['reversalJournalEntry'] == null ? undefined : JournalEntryResponseFromJSON(json['reversalJournalEntry']),
         'relatedJournalEntries': json['relatedJournalEntries'] == null ? undefined : ((json['relatedJournalEntries'] as Array<any>).map(JournalEntryResponseFromJSON)),
+        'reversalJournalEntry': json['reversalJournalEntry'] == null ? undefined : JournalEntryResponseFromJSON(json['reversalJournalEntry']),
+        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
     };
 }
 
@@ -96,12 +97,12 @@ export function JournalEntryTraceabilityResponseToJSON(value?: JournalEntryTrace
     }
     return {
         
-        'journalEntryId': value['journalEntryId'],
-        'sourceEventId': value['sourceEventId'],
         'journalEntry': JournalEntryResponseToJSON(value['journalEntry']),
+        'journalEntryId': value['journalEntryId'],
         'originalJournalEntry': JournalEntryResponseToJSON(value['originalJournalEntry']),
-        'reversalJournalEntry': JournalEntryResponseToJSON(value['reversalJournalEntry']),
         'relatedJournalEntries': value['relatedJournalEntries'] == null ? undefined : ((value['relatedJournalEntries'] as Array<any>).map(JournalEntryResponseToJSON)),
+        'reversalJournalEntry': JournalEntryResponseToJSON(value['reversalJournalEntry']),
+        'sourceEventId': value['sourceEventId'],
     };
 }
 

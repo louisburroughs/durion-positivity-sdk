@@ -14,64 +14,64 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to record a price override audit event
  * @export
  * @interface PriceOverrideRequest
  */
 export interface PriceOverrideRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideRequest
-     */
-    orderId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideRequest
-     */
-    lineItemId: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideRequest
-     */
-    originalPrice: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideRequest
-     */
-    adjustedPrice: number;
-    /**
-     * 
+     * Role of the actor performing the override
      * @type {string}
      * @memberof PriceOverrideRequest
      */
     actorRole: string;
     /**
-     * 
-     * @type {string}
+     * Adjusted price after the override
+     * @type {number}
      * @memberof PriceOverrideRequest
      */
-    reason: string;
+    adjustedPrice: number;
     /**
-     * 
+     * Optional forbidden category code (e.g., BELOW_COST, STACKING_VIOLATION)
      * @type {string}
      * @memberof PriceOverrideRequest
      */
     categoryCode?: string;
+    /**
+     * Identifier of the line item being overridden
+     * @type {string}
+     * @memberof PriceOverrideRequest
+     */
+    lineItemId: string;
+    /**
+     * Identifier of the order containing the line item
+     * @type {string}
+     * @memberof PriceOverrideRequest
+     */
+    orderId: string;
+    /**
+     * Original price before the override
+     * @type {number}
+     * @memberof PriceOverrideRequest
+     */
+    originalPrice: number;
+    /**
+     * Reason for the price override
+     * @type {string}
+     * @memberof PriceOverrideRequest
+     */
+    reason: string;
 }
 
 /**
  * Check if a given object implements the PriceOverrideRequest interface.
  */
 export function instanceOfPriceOverrideRequest(value: object): boolean {
-    if (!('orderId' in value)) return false;
-    if (!('lineItemId' in value)) return false;
-    if (!('originalPrice' in value)) return false;
-    if (!('adjustedPrice' in value)) return false;
     if (!('actorRole' in value)) return false;
+    if (!('adjustedPrice' in value)) return false;
+    if (!('lineItemId' in value)) return false;
+    if (!('orderId' in value)) return false;
+    if (!('originalPrice' in value)) return false;
     if (!('reason' in value)) return false;
     return true;
 }
@@ -86,13 +86,13 @@ export function PriceOverrideRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'orderId': json['orderId'],
-        'lineItemId': json['lineItemId'],
-        'originalPrice': json['originalPrice'],
-        'adjustedPrice': json['adjustedPrice'],
         'actorRole': json['actorRole'],
-        'reason': json['reason'],
+        'adjustedPrice': json['adjustedPrice'],
         'categoryCode': json['categoryCode'] == null ? undefined : json['categoryCode'],
+        'lineItemId': json['lineItemId'],
+        'orderId': json['orderId'],
+        'originalPrice': json['originalPrice'],
+        'reason': json['reason'],
     };
 }
 
@@ -102,13 +102,13 @@ export function PriceOverrideRequestToJSON(value?: PriceOverrideRequest | null):
     }
     return {
         
-        'orderId': value['orderId'],
-        'lineItemId': value['lineItemId'],
-        'originalPrice': value['originalPrice'],
-        'adjustedPrice': value['adjustedPrice'],
         'actorRole': value['actorRole'],
-        'reason': value['reason'],
+        'adjustedPrice': value['adjustedPrice'],
         'categoryCode': value['categoryCode'],
+        'lineItemId': value['lineItemId'],
+        'orderId': value['orderId'],
+        'originalPrice': value['originalPrice'],
+        'reason': value['reason'],
     };
 }
 

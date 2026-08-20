@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request DTO for workorder creation
+ * Work order creation request
  * @export
  * @interface CreateWorkorderRequest
  */
 export interface CreateWorkorderRequest {
-    /**
-     * Estimate ID
-     * @type {string}
-     * @memberof CreateWorkorderRequest
-     */
-    estimateId: string;
     /**
      * Customer ID
      * @type {string}
      * @memberof CreateWorkorderRequest
      */
     customerId: string;
+    /**
+     * Estimate ID
+     * @type {string}
+     * @memberof CreateWorkorderRequest
+     */
+    estimateId: string;
 }
 
 /**
  * Check if a given object implements the CreateWorkorderRequest interface.
  */
 export function instanceOfCreateWorkorderRequest(value: object): boolean {
-    if (!('estimateId' in value)) return false;
     if (!('customerId' in value)) return false;
+    if (!('estimateId' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function CreateWorkorderRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'estimateId': json['estimateId'],
         'customerId': json['customerId'],
+        'estimateId': json['estimateId'],
     };
 }
 
@@ -63,8 +63,8 @@ export function CreateWorkorderRequestToJSON(value?: CreateWorkorderRequest | nu
     }
     return {
         
-        'estimateId': value['estimateId'],
         'customerId': value['customerId'],
+        'estimateId': value['estimateId'],
     };
 }
 

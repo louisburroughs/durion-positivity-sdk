@@ -14,59 +14,64 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Inferred or user-overridden mapping from a source column to a target field
  * @export
  * @interface ColumnMappingResponse
  */
 export interface ColumnMappingResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof ColumnMappingResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ColumnMappingResponse
-     */
-    jobId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ColumnMappingResponse
-     */
-    sourceColumn?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ColumnMappingResponse
-     */
-    targetField?: string;
-    /**
-     * 
+     * Confidence score of the inferred mapping, between 0 and 1
      * @type {number}
      * @memberof ColumnMappingResponse
      */
     confidence?: number;
     /**
-     * 
+     * Timestamp when the mapping was created (ISO 8601)
+     * @type {Date}
+     * @memberof ColumnMappingResponse
+     */
+    createdAt: Date;
+    /**
+     * Unique identifier of the column mapping
+     * @type {string}
+     * @memberof ColumnMappingResponse
+     */
+    id: string;
+    /**
+     * Identifier of the bulk load job this mapping belongs to
+     * @type {string}
+     * @memberof ColumnMappingResponse
+     */
+    jobId: string;
+    /**
+     * Whether the mapping was overridden by a user
      * @type {boolean}
      * @memberof ColumnMappingResponse
      */
     overriddenByUser?: boolean;
     /**
-     * 
-     * @type {Date}
+     * Name of the column in the source file
+     * @type {string}
      * @memberof ColumnMappingResponse
      */
-    createdAt?: Date;
+    sourceColumn: string;
+    /**
+     * Name of the target domain field the column maps to
+     * @type {string}
+     * @memberof ColumnMappingResponse
+     */
+    targetField: string;
 }
 
 /**
  * Check if a given object implements the ColumnMappingResponse interface.
  */
 export function instanceOfColumnMappingResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('jobId' in value)) return false;
+    if (!('sourceColumn' in value)) return false;
+    if (!('targetField' in value)) return false;
     return true;
 }
 
@@ -80,13 +85,13 @@ export function ColumnMappingResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'jobId': json['jobId'] == null ? undefined : json['jobId'],
-        'sourceColumn': json['sourceColumn'] == null ? undefined : json['sourceColumn'],
-        'targetField': json['targetField'] == null ? undefined : json['targetField'],
         'confidence': json['confidence'] == null ? undefined : json['confidence'],
+        'createdAt': (new Date(json['createdAt'])),
+        'id': json['id'],
+        'jobId': json['jobId'],
         'overriddenByUser': json['overriddenByUser'] == null ? undefined : json['overriddenByUser'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'sourceColumn': json['sourceColumn'],
+        'targetField': json['targetField'],
     };
 }
 
@@ -96,13 +101,13 @@ export function ColumnMappingResponseToJSON(value?: ColumnMappingResponse | null
     }
     return {
         
+        'confidence': value['confidence'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'id': value['id'],
         'jobId': value['jobId'],
+        'overriddenByUser': value['overriddenByUser'],
         'sourceColumn': value['sourceColumn'],
         'targetField': value['targetField'],
-        'confidence': value['confidence'],
-        'overriddenByUser': value['overriddenByUser'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
     };
 }
 

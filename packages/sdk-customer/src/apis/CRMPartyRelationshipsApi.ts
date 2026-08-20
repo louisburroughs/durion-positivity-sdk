@@ -28,12 +28,12 @@ import {
     GetCommercialAccountContactsResponseToJSON,
 } from '../models/index';
 
-export interface CreateRelationshipRequest {
+export interface CreatePartyRelationshipOperationRequest {
     partyId: string;
     createPartyRelationshipRequest: CreatePartyRelationshipRequest;
 }
 
-export interface DeactivateRelationshipRequest {
+export interface DeactivatePartyRelationshipRequest {
     partyId: string;
     relationshipId: string;
 }
@@ -43,9 +43,9 @@ export interface DesignatePrimaryBillingContactRequest {
     relationshipId: string;
 }
 
-export interface GetContactsRequest {
+export interface GetCommercialAccountContactsRequest {
     partyId: string;
-    roles?: Array<GetContactsRolesEnum>;
+    roles?: Array<GetCommercialAccountContactsRolesEnum>;
     status?: string;
 }
 
@@ -55,21 +55,21 @@ export interface GetContactsRequest {
 export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
 
     /**
-     * Creates a relationship between a commercial account and an individual person
-     * Create a party relationship
+     * Creates a dated relationship that links an individual person to a commercial account in one or more roles, optionally marking the person as the primary billing contact. Use this tool when associating a known person with a commercial account; do not use updateContactRoles, which manages the separate contact-role assignment model, and do not use createCrmPerson, which creates the person record itself. Preconditions: the commercial party and the person must both exist, and no active relationship may already cover the same party, person, and role for today\'s date; isPrimaryBillingContact requires the BILLING role in the same request. Required inputs: partyId (UUID) as a path parameter, plus personId (UUID), roles (one or more of APPROVER, BILLING, PRIMARY_CONTACT, DRIVER, TECHNICAL), and effectiveStartDate; effectiveEndDate and isPrimaryBillingContact (default false) are optional. Emits a CRM_RELATIONSHIP_CREATE event, atomically demotes any existing primary billing contact when one is designated, and re-emits the person\'s identity fact. Returns 404 when the party or person cannot be found, 409 when an overlapping active relationship already exists for a requested role, and 400 when isPrimaryBillingContact is set without the BILLING role. 
+     * Create Party Relationship
      */
-    async createRelationshipRaw(requestParameters: CreateRelationshipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreatePartyRelationshipResponse>> {
+    async createPartyRelationshipRaw(requestParameters: CreatePartyRelationshipOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreatePartyRelationshipResponse>> {
         if (requestParameters['partyId'] == null) {
             throw new runtime.RequiredError(
                 'partyId',
-                'Required parameter "partyId" was null or undefined when calling createRelationship().'
+                'Required parameter "partyId" was null or undefined when calling createPartyRelationship().'
             );
         }
 
         if (requestParameters['createPartyRelationshipRequest'] == null) {
             throw new runtime.RequiredError(
                 'createPartyRelationshipRequest',
-                'Required parameter "createPartyRelationshipRequest" was null or undefined when calling createRelationship().'
+                'Required parameter "createPartyRelationshipRequest" was null or undefined when calling createPartyRelationship().'
             );
         }
 
@@ -99,30 +99,30 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a relationship between a commercial account and an individual person
-     * Create a party relationship
+     * Creates a dated relationship that links an individual person to a commercial account in one or more roles, optionally marking the person as the primary billing contact. Use this tool when associating a known person with a commercial account; do not use updateContactRoles, which manages the separate contact-role assignment model, and do not use createCrmPerson, which creates the person record itself. Preconditions: the commercial party and the person must both exist, and no active relationship may already cover the same party, person, and role for today\'s date; isPrimaryBillingContact requires the BILLING role in the same request. Required inputs: partyId (UUID) as a path parameter, plus personId (UUID), roles (one or more of APPROVER, BILLING, PRIMARY_CONTACT, DRIVER, TECHNICAL), and effectiveStartDate; effectiveEndDate and isPrimaryBillingContact (default false) are optional. Emits a CRM_RELATIONSHIP_CREATE event, atomically demotes any existing primary billing contact when one is designated, and re-emits the person\'s identity fact. Returns 404 when the party or person cannot be found, 409 when an overlapping active relationship already exists for a requested role, and 400 when isPrimaryBillingContact is set without the BILLING role. 
+     * Create Party Relationship
      */
-    async createRelationship(requestParameters: CreateRelationshipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreatePartyRelationshipResponse> {
-        const response = await this.createRelationshipRaw(requestParameters, initOverrides);
+    async createPartyRelationship(requestParameters: CreatePartyRelationshipOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreatePartyRelationshipResponse> {
+        const response = await this.createPartyRelationshipRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Soft-deletes a relationship by setting its effective end date
-     * Deactivate a party relationship
+     * Soft-deletes a relationship between a person and a commercial account by setting its effective end date to today; the historical record is retained. Use this tool when a person no longer represents the account; do not use createPartyRelationship to fix a wrong assignment without first deactivating the old one, since overlapping active roles are rejected. Preconditions: the relationship must exist; the partyId in the path is not validated against the relationship on this operation. Required inputs: partyId and relationshipId (UUIDs) as path parameters; there is no request body. Emits a CRM_RELATIONSHIP_DEACTIVATE event and re-emits the person\'s identity fact because their account linkage changed. Returns 404 when no relationship exists for the supplied relationshipId. 
+     * Deactivate Party Relationship
      */
-    async deactivateRelationshipRaw(requestParameters: DeactivateRelationshipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deactivatePartyRelationshipRaw(requestParameters: DeactivatePartyRelationshipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['partyId'] == null) {
             throw new runtime.RequiredError(
                 'partyId',
-                'Required parameter "partyId" was null or undefined when calling deactivateRelationship().'
+                'Required parameter "partyId" was null or undefined when calling deactivatePartyRelationship().'
             );
         }
 
         if (requestParameters['relationshipId'] == null) {
             throw new runtime.RequiredError(
                 'relationshipId',
-                'Required parameter "relationshipId" was null or undefined when calling deactivateRelationship().'
+                'Required parameter "relationshipId" was null or undefined when calling deactivatePartyRelationship().'
             );
         }
 
@@ -149,16 +149,16 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Soft-deletes a relationship by setting its effective end date
-     * Deactivate a party relationship
+     * Soft-deletes a relationship between a person and a commercial account by setting its effective end date to today; the historical record is retained. Use this tool when a person no longer represents the account; do not use createPartyRelationship to fix a wrong assignment without first deactivating the old one, since overlapping active roles are rejected. Preconditions: the relationship must exist; the partyId in the path is not validated against the relationship on this operation. Required inputs: partyId and relationshipId (UUIDs) as path parameters; there is no request body. Emits a CRM_RELATIONSHIP_DEACTIVATE event and re-emits the person\'s identity fact because their account linkage changed. Returns 404 when no relationship exists for the supplied relationshipId. 
+     * Deactivate Party Relationship
      */
-    async deactivateRelationship(requestParameters: DeactivateRelationshipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deactivateRelationshipRaw(requestParameters, initOverrides);
+    async deactivatePartyRelationship(requestParameters: DeactivatePartyRelationshipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deactivatePartyRelationshipRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Sets a relationship as the primary billing contact, demoting any existing primary
-     * Designate primary billing contact
+     * Promotes an existing relationship to be the account\'s primary billing contact, atomically demoting any current primary. Use this tool when the billing contact changes on an account; do not use createPartyRelationship, which is for a person not yet related to the account and can set the flag at creation time. Preconditions: the relationship must exist, must belong to the account in the path, must carry the BILLING role, and must be active as of today. Required inputs: partyId and relationshipId (UUIDs) as path parameters; there is no request body. Emits a CRM_RELATIONSHIP_PRIMARY_BILLING_UPDATE event; the previous primary, if any, is demoted in the same transaction. Returns 404 when the relationship does not exist, and 400 when it belongs to a different party, lacks the BILLING role, or is no longer active. 
+     * Designate Primary Billing Contact
      */
     async designatePrimaryBillingContactRaw(requestParameters: DesignatePrimaryBillingContactRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['partyId'] == null) {
@@ -198,22 +198,22 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sets a relationship as the primary billing contact, demoting any existing primary
-     * Designate primary billing contact
+     * Promotes an existing relationship to be the account\'s primary billing contact, atomically demoting any current primary. Use this tool when the billing contact changes on an account; do not use createPartyRelationship, which is for a person not yet related to the account and can set the flag at creation time. Preconditions: the relationship must exist, must belong to the account in the path, must carry the BILLING role, and must be active as of today. Required inputs: partyId and relationshipId (UUIDs) as path parameters; there is no request body. Emits a CRM_RELATIONSHIP_PRIMARY_BILLING_UPDATE event; the previous primary, if any, is demoted in the same transaction. Returns 404 when the relationship does not exist, and 400 when it belongs to a different party, lacks the BILLING role, or is no longer active. 
+     * Designate Primary Billing Contact
      */
     async designatePrimaryBillingContact(requestParameters: DesignatePrimaryBillingContactRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.designatePrimaryBillingContactRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieves all individuals associated with a commercial account with their roles
-     * Get contacts for a commercial account
+     * Returns the individuals related to a commercial account through party relationships, with their roles, primary-billing flag, effective dates, and status. Use this tool when listing who is associated with an account through the relationship model; use getContactsWithRoles instead for the contact-role assignment view of the same account. Preconditions: the commercial party must exist. Required inputs: partyId (UUID) as a path parameter; roles optionally filters on APPROVER, BILLING, PRIMARY_CONTACT, DRIVER, or TECHNICAL, and status optionally filters on ACTIVE or INACTIVE. Emits a CRM_ACCOUNT_CONTACTS_GET audit event; no state changes occur. Returns 404 when no commercial party exists for the supplied partyId. 
+     * Get Commercial Account Contacts
      */
-    async getContactsRaw(requestParameters: GetContactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetCommercialAccountContactsResponse>> {
+    async getCommercialAccountContactsRaw(requestParameters: GetCommercialAccountContactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetCommercialAccountContactsResponse>> {
         if (requestParameters['partyId'] == null) {
             throw new runtime.RequiredError(
                 'partyId',
-                'Required parameter "partyId" was null or undefined when calling getContacts().'
+                'Required parameter "partyId" was null or undefined when calling getCommercialAccountContacts().'
             );
         }
 
@@ -248,11 +248,11 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves all individuals associated with a commercial account with their roles
-     * Get contacts for a commercial account
+     * Returns the individuals related to a commercial account through party relationships, with their roles, primary-billing flag, effective dates, and status. Use this tool when listing who is associated with an account through the relationship model; use getContactsWithRoles instead for the contact-role assignment view of the same account. Preconditions: the commercial party must exist. Required inputs: partyId (UUID) as a path parameter; roles optionally filters on APPROVER, BILLING, PRIMARY_CONTACT, DRIVER, or TECHNICAL, and status optionally filters on ACTIVE or INACTIVE. Emits a CRM_ACCOUNT_CONTACTS_GET audit event; no state changes occur. Returns 404 when no commercial party exists for the supplied partyId. 
+     * Get Commercial Account Contacts
      */
-    async getContacts(requestParameters: GetContactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetCommercialAccountContactsResponse> {
-        const response = await this.getContactsRaw(requestParameters, initOverrides);
+    async getCommercialAccountContacts(requestParameters: GetCommercialAccountContactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetCommercialAccountContactsResponse> {
+        const response = await this.getCommercialAccountContactsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -262,7 +262,7 @@ export class CRMPartyRelationshipsApi extends runtime.BaseAPI {
   * @export
   * @enum {string}
   */
-export enum GetContactsRolesEnum {
+export enum GetCommercialAccountContactsRolesEnum {
     Approver = 'APPROVER',
     Billing = 'BILLING',
     PrimaryContact = 'PRIMARY_CONTACT',

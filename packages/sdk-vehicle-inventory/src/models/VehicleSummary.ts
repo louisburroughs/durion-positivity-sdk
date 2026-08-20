@@ -14,65 +14,67 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Condensed vehicle representation returned in search results
  * @export
  * @interface VehicleSummary
  */
 export interface VehicleSummary {
     /**
-     * 
-     * @type {string}
-     * @memberof VehicleSummary
-     */
-    vehicleId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleSummary
-     */
-    vin?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleSummary
-     */
-    unitNumber?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleSummary
-     */
-    licensePlate?: string;
-    /**
-     * 
+     * Human-readable description of the vehicle
      * @type {string}
      * @memberof VehicleSummary
      */
     description?: string;
     /**
-     * 
-     * @type {number}
+     * License plate number
+     * @type {string}
      * @memberof VehicleSummary
      */
-    year?: number;
+    licensePlate?: string;
     /**
-     * 
+     * Manufacturer of the vehicle
      * @type {string}
      * @memberof VehicleSummary
      */
     make?: string;
     /**
-     * 
+     * Model of the vehicle
      * @type {string}
      * @memberof VehicleSummary
      */
     model?: string;
+    /**
+     * Fleet unit number assigned to the vehicle
+     * @type {string}
+     * @memberof VehicleSummary
+     */
+    unitNumber?: string;
+    /**
+     * Unique identifier of the vehicle
+     * @type {string}
+     * @memberof VehicleSummary
+     */
+    vehicleId: string;
+    /**
+     * 17-character Vehicle Identification Number
+     * @type {string}
+     * @memberof VehicleSummary
+     */
+    vin: string;
+    /**
+     * Model year of the vehicle
+     * @type {number}
+     * @memberof VehicleSummary
+     */
+    year?: number;
 }
 
 /**
  * Check if a given object implements the VehicleSummary interface.
  */
 export function instanceOfVehicleSummary(value: object): boolean {
+    if (!('vehicleId' in value)) return false;
+    if (!('vin' in value)) return false;
     return true;
 }
 
@@ -86,14 +88,14 @@ export function VehicleSummaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'vin': json['vin'] == null ? undefined : json['vin'],
-        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
-        'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'description': json['description'] == null ? undefined : json['description'],
-        'year': json['year'] == null ? undefined : json['year'],
+        'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
+        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'vehicleId': json['vehicleId'],
+        'vin': json['vin'],
+        'year': json['year'] == null ? undefined : json['year'],
     };
 }
 
@@ -103,14 +105,14 @@ export function VehicleSummaryToJSON(value?: VehicleSummary | null): any {
     }
     return {
         
-        'vehicleId': value['vehicleId'],
-        'vin': value['vin'],
-        'unitNumber': value['unitNumber'],
-        'licensePlate': value['licensePlate'],
         'description': value['description'],
-        'year': value['year'],
+        'licensePlate': value['licensePlate'],
         'make': value['make'],
         'model': value['model'],
+        'unitNumber': value['unitNumber'],
+        'vehicleId': value['vehicleId'],
+        'vin': value['vin'],
+        'year': value['year'],
     };
 }
 

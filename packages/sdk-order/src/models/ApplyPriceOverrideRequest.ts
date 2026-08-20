@@ -14,59 +14,59 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for applying a price override to an order line
  * @export
  * @interface ApplyPriceOverrideRequest
  */
 export interface ApplyPriceOverrideRequest {
-    /**
-     * 
-     * @type {string}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    orderId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    orderLineId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    productId: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    originalPrice: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    overridePrice: number;
-    /**
-     * Reason code for the price override
-     * @type {string}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    reasonCode: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ApplyPriceOverrideRequest
-     */
-    justification?: string;
     /**
      * Optional idempotency key for duplicate prevention
      * @type {string}
      * @memberof ApplyPriceOverrideRequest
      */
     idempotencyKey?: string;
+    /**
+     * Free-text justification supporting the price override
+     * @type {string}
+     * @memberof ApplyPriceOverrideRequest
+     */
+    justification?: string;
+    /**
+     * Identifier of the order whose line is being overridden
+     * @type {string}
+     * @memberof ApplyPriceOverrideRequest
+     */
+    orderId: string;
+    /**
+     * Identifier of the order line receiving the price override
+     * @type {string}
+     * @memberof ApplyPriceOverrideRequest
+     */
+    orderLineId: string;
+    /**
+     * Original price of the line before the override
+     * @type {number}
+     * @memberof ApplyPriceOverrideRequest
+     */
+    originalPrice: number;
+    /**
+     * Overridden price to apply to the line
+     * @type {number}
+     * @memberof ApplyPriceOverrideRequest
+     */
+    overridePrice: number;
+    /**
+     * Identifier of the product on the order line
+     * @type {string}
+     * @memberof ApplyPriceOverrideRequest
+     */
+    productId: string;
+    /**
+     * Reason code for the price override
+     * @type {string}
+     * @memberof ApplyPriceOverrideRequest
+     */
+    reasonCode: string;
 }
 
 /**
@@ -75,9 +75,9 @@ export interface ApplyPriceOverrideRequest {
 export function instanceOfApplyPriceOverrideRequest(value: object): boolean {
     if (!('orderId' in value)) return false;
     if (!('orderLineId' in value)) return false;
-    if (!('productId' in value)) return false;
     if (!('originalPrice' in value)) return false;
     if (!('overridePrice' in value)) return false;
+    if (!('productId' in value)) return false;
     if (!('reasonCode' in value)) return false;
     return true;
 }
@@ -92,14 +92,14 @@ export function ApplyPriceOverrideRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
+        'justification': json['justification'] == null ? undefined : json['justification'],
         'orderId': json['orderId'],
         'orderLineId': json['orderLineId'],
-        'productId': json['productId'],
         'originalPrice': json['originalPrice'],
         'overridePrice': json['overridePrice'],
+        'productId': json['productId'],
         'reasonCode': json['reasonCode'],
-        'justification': json['justification'] == null ? undefined : json['justification'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -109,14 +109,14 @@ export function ApplyPriceOverrideRequestToJSON(value?: ApplyPriceOverrideReques
     }
     return {
         
+        'idempotencyKey': value['idempotencyKey'],
+        'justification': value['justification'],
         'orderId': value['orderId'],
         'orderLineId': value['orderLineId'],
-        'productId': value['productId'],
         'originalPrice': value['originalPrice'],
         'overridePrice': value['overridePrice'],
+        'productId': value['productId'],
         'reasonCode': value['reasonCode'],
-        'justification': value['justification'],
-        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface BulkIngestLocationsRequest {
     bulkIngestRequestLocationBulkIngestRecord: BulkIngestRequestLocationBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class LocationBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of location records in one call, creating each row independently and reporting per-record success or failure. Use this tool for initial data loads or migrations; do not use createLocation, which creates a single location per call. Preconditions: names and codes must be unique against existing locations; each record is validated independently, so one failure does not abort the batch. Required inputs: jobId, locationId and a non-empty records array, each record with name and code; active defaults to true and locationTypeName defaults to STORE when omitted. Emits a LOCATION_BULK_INGEST event, and every successfully created location also publishes a location fact for replica consumers. Returns 200 with per-record results even when some records fail (failed rows carry errorCode LOCATION_INGEST_FAILED), and 400 when the batch envelope itself is invalid. 
+     * Bulk Import a Batch of Locations
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async bulkIngestLocationsRaw(requestParameters: BulkIngestLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestLocationBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestLocationBulkIngestRecord',
-                'Required parameter "bulkIngestRequestLocationBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestLocationBulkIngestRecord" was null or undefined when calling bulkIngestLocations().'
             );
         }
 
@@ -72,11 +72,11 @@ export class LocationBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of location records in one call, creating each row independently and reporting per-record success or failure. Use this tool for initial data loads or migrations; do not use createLocation, which creates a single location per call. Preconditions: names and codes must be unique against existing locations; each record is validated independently, so one failure does not abort the batch. Required inputs: jobId, locationId and a non-empty records array, each record with name and code; active defaults to true and locationTypeName defaults to STORE when omitted. Emits a LOCATION_BULK_INGEST event, and every successfully created location also publishes a location fact for replica consumers. Returns 200 with per-record results even when some records fail (failed rows carry errorCode LOCATION_INGEST_FAILED), and 400 when the batch envelope itself is invalid. 
+     * Bulk Import a Batch of Locations
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async bulkIngestLocations(requestParameters: BulkIngestLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.bulkIngestLocationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

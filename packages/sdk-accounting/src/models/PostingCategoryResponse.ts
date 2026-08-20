@@ -14,65 +14,67 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Posting category details
  * @export
  * @interface PostingCategoryResponse
  */
 export interface PostingCategoryResponse {
     /**
-     * 
+     * Name of the posting category
      * @type {string}
      * @memberof PostingCategoryResponse
      */
-    postingCategoryId?: string;
+    categoryName: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PostingCategoryResponse
-     */
-    categoryName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingCategoryResponse
-     */
-    description?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PostingCategoryResponse
-     */
-    isActive?: boolean;
-    /**
-     * 
+     * Timestamp when the posting category was created (ISO 8601)
      * @type {Date}
      * @memberof PostingCategoryResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Identifier of the user who created the posting category
      * @type {string}
      * @memberof PostingCategoryResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Description of the posting category
+     * @type {string}
+     * @memberof PostingCategoryResponse
+     */
+    description?: string;
+    /**
+     * Whether the posting category is active
+     * @type {boolean}
+     * @memberof PostingCategoryResponse
+     */
+    isActive?: boolean;
+    /**
+     * Timestamp when the posting category was last modified (ISO 8601)
      * @type {Date}
      * @memberof PostingCategoryResponse
      */
     modifiedAt?: Date;
     /**
-     * 
+     * Identifier of the user who last modified the posting category
      * @type {string}
      * @memberof PostingCategoryResponse
      */
     modifiedBy?: string;
+    /**
+     * Unique identifier of the posting category
+     * @type {string}
+     * @memberof PostingCategoryResponse
+     */
+    postingCategoryId: string;
 }
 
 /**
  * Check if a given object implements the PostingCategoryResponse interface.
  */
 export function instanceOfPostingCategoryResponse(value: object): boolean {
+    if (!('categoryName' in value)) return false;
+    if (!('postingCategoryId' in value)) return false;
     return true;
 }
 
@@ -86,14 +88,14 @@ export function PostingCategoryResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'postingCategoryId': json['postingCategoryId'] == null ? undefined : json['postingCategoryId'],
-        'categoryName': json['categoryName'] == null ? undefined : json['categoryName'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'isActive': json['isActive'] == null ? undefined : json['isActive'],
+        'categoryName': json['categoryName'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'isActive': json['isActive'] == null ? undefined : json['isActive'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
         'modifiedBy': json['modifiedBy'] == null ? undefined : json['modifiedBy'],
+        'postingCategoryId': json['postingCategoryId'],
     };
 }
 
@@ -103,14 +105,14 @@ export function PostingCategoryResponseToJSON(value?: PostingCategoryResponse | 
     }
     return {
         
-        'postingCategoryId': value['postingCategoryId'],
         'categoryName': value['categoryName'],
-        'description': value['description'],
-        'isActive': value['isActive'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'description': value['description'],
+        'isActive': value['isActive'],
         'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
         'modifiedBy': value['modifiedBy'],
+        'postingCategoryId': value['postingCategoryId'],
     };
 }
 

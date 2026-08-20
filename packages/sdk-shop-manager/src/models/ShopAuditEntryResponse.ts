@@ -14,83 +14,83 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Read-only shop audit trail entry recording a schedule or assignment change
  * @export
  * @interface ShopAuditEntryResponse
  */
 export interface ShopAuditEntryResponse {
     /**
-     * 
+     * User identifier of the actor who made the change
      * @type {string}
      * @memberof ShopAuditEntryResponse
      */
-    id?: string;
+    actorUserId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ShopAuditEntryResponse
-     */
-    eventType?: ShopAuditEntryResponseEventTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof ShopAuditEntryResponse
-     */
-    workorderId?: string;
-    /**
-     * 
+     * Associated appointment identifier
      * @type {string}
      * @memberof ShopAuditEntryResponse
      */
     appointmentId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ShopAuditEntryResponse
-     */
-    mechanicId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ShopAuditEntryResponse
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ShopAuditEntryResponse
-     */
-    actorUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ShopAuditEntryResponse
-     */
-    changeSummaryText?: string;
-    /**
-     * 
+     * Machine-readable patch describing the change (JSON)
      * @type {string}
      * @memberof ShopAuditEntryResponse
      */
     changePatch?: string;
     /**
-     * 
+     * Human-readable summary of the change
+     * @type {string}
+     * @memberof ShopAuditEntryResponse
+     */
+    changeSummaryText?: string;
+    /**
+     * Type of audit event recorded
+     * @type {string}
+     * @memberof ShopAuditEntryResponse
+     */
+    eventType: ShopAuditEntryResponseEventTypeEnum;
+    /**
+     * Unique audit entry identifier
+     * @type {string}
+     * @memberof ShopAuditEntryResponse
+     */
+    id: string;
+    /**
+     * Location identifier the change applies to
+     * @type {string}
+     * @memberof ShopAuditEntryResponse
+     */
+    locationId?: string;
+    /**
+     * Mechanic identifier involved in the change
+     * @type {string}
+     * @memberof ShopAuditEntryResponse
+     */
+    mechanicId?: string;
+    /**
+     * Reason code associated with the change
      * @type {string}
      * @memberof ShopAuditEntryResponse
      */
     reasonCode?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof ShopAuditEntryResponse
-     */
-    retentionYears?: number;
-    /**
-     * 
+     * Instant the audit entry was recorded in UTC (ISO-8601)
      * @type {Date}
      * @memberof ShopAuditEntryResponse
      */
-    recordedAt?: Date;
+    recordedAt: Date;
+    /**
+     * Number of years the entry is retained
+     * @type {number}
+     * @memberof ShopAuditEntryResponse
+     */
+    retentionYears: number;
+    /**
+     * Associated workorder identifier
+     * @type {string}
+     * @memberof ShopAuditEntryResponse
+     */
+    workorderId?: string;
 }
 
 /**
@@ -110,6 +110,11 @@ export enum ShopAuditEntryResponseEventTypeEnum {
  * Check if a given object implements the ShopAuditEntryResponse interface.
  */
 export function instanceOfShopAuditEntryResponse(value: object): boolean {
+    if (!('actorUserId' in value)) return false;
+    if (!('eventType' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('recordedAt' in value)) return false;
+    if (!('retentionYears' in value)) return false;
     return true;
 }
 
@@ -123,18 +128,18 @@ export function ShopAuditEntryResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
+        'actorUserId': json['actorUserId'],
         'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
-        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'actorUserId': json['actorUserId'] == null ? undefined : json['actorUserId'],
-        'changeSummaryText': json['changeSummaryText'] == null ? undefined : json['changeSummaryText'],
         'changePatch': json['changePatch'] == null ? undefined : json['changePatch'],
+        'changeSummaryText': json['changeSummaryText'] == null ? undefined : json['changeSummaryText'],
+        'eventType': json['eventType'],
+        'id': json['id'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
         'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'retentionYears': json['retentionYears'] == null ? undefined : json['retentionYears'],
-        'recordedAt': json['recordedAt'] == null ? undefined : (new Date(json['recordedAt'])),
+        'recordedAt': (new Date(json['recordedAt'])),
+        'retentionYears': json['retentionYears'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -144,18 +149,18 @@ export function ShopAuditEntryResponseToJSON(value?: ShopAuditEntryResponse | nu
     }
     return {
         
-        'id': value['id'],
-        'eventType': value['eventType'],
-        'workorderId': value['workorderId'],
-        'appointmentId': value['appointmentId'],
-        'mechanicId': value['mechanicId'],
-        'locationId': value['locationId'],
         'actorUserId': value['actorUserId'],
-        'changeSummaryText': value['changeSummaryText'],
+        'appointmentId': value['appointmentId'],
         'changePatch': value['changePatch'],
+        'changeSummaryText': value['changeSummaryText'],
+        'eventType': value['eventType'],
+        'id': value['id'],
+        'locationId': value['locationId'],
+        'mechanicId': value['mechanicId'],
         'reasonCode': value['reasonCode'],
+        'recordedAt': ((value['recordedAt']).toISOString()),
         'retentionYears': value['retentionYears'],
-        'recordedAt': value['recordedAt'] == null ? undefined : ((value['recordedAt']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

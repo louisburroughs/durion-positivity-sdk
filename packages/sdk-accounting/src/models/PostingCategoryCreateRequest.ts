@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a new posting category
  * @export
  * @interface PostingCategoryCreateRequest
  */
 export interface PostingCategoryCreateRequest {
     /**
-     * 
+     * Name of the posting category
      * @type {string}
      * @memberof PostingCategoryCreateRequest
      */
     categoryName: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PostingCategoryCreateRequest
-     */
-    description?: string;
-    /**
-     * 
+     * Identifier of the user creating the posting category
      * @type {string}
      * @memberof PostingCategoryCreateRequest
      */
     createdBy: string;
+    /**
+     * Optional description of the posting category
+     * @type {string}
+     * @memberof PostingCategoryCreateRequest
+     */
+    description?: string;
 }
 
 /**
@@ -59,8 +59,8 @@ export function PostingCategoryCreateRequestFromJSONTyped(json: any, ignoreDiscr
     return {
         
         'categoryName': json['categoryName'],
-        'description': json['description'] == null ? undefined : json['description'],
         'createdBy': json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
     };
 }
 
@@ -71,8 +71,8 @@ export function PostingCategoryCreateRequestToJSON(value?: PostingCategoryCreate
     return {
         
         'categoryName': value['categoryName'],
-        'description': value['description'],
         'createdBy': value['createdBy'],
+        'description': value['description'],
     };
 }
 

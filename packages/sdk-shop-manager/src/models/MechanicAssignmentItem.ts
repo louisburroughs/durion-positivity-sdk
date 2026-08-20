@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single mechanic entry within an assignment request
  * @export
  * @interface MechanicAssignmentItem
  */
 export interface MechanicAssignmentItem {
     /**
-     * 
+     * Person identifier of the mechanic being assigned
      * @type {string}
      * @memberof MechanicAssignmentItem
      */
-    mechanicPersonId?: string;
+    mechanicPersonId: string;
     /**
-     * 
+     * Role of the mechanic; defaults to LEAD for single-mechanic assignments when null
      * @type {string}
      * @memberof MechanicAssignmentItem
      */
@@ -47,6 +47,7 @@ export enum MechanicAssignmentItemRoleEnum {
  * Check if a given object implements the MechanicAssignmentItem interface.
  */
 export function instanceOfMechanicAssignmentItem(value: object): boolean {
+    if (!('mechanicPersonId' in value)) return false;
     return true;
 }
 
@@ -60,7 +61,7 @@ export function MechanicAssignmentItemFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'mechanicPersonId': json['mechanicPersonId'] == null ? undefined : json['mechanicPersonId'],
+        'mechanicPersonId': json['mechanicPersonId'],
         'role': json['role'] == null ? undefined : json['role'],
     };
 }

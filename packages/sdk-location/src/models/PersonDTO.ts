@@ -14,53 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Person reference associated with a location
  * @export
  * @interface PersonDTO
  */
 export interface PersonDTO {
     /**
-     * 
-     * @type {number}
-     * @memberof PersonDTO
-     */
-    id?: number;
-    /**
-     * 
+     * First name of the person
      * @type {string}
      * @memberof PersonDTO
      */
     firstName?: string;
     /**
-     * 
+     * People-contact person identifier
+     * @type {string}
+     * @memberof PersonDTO
+     */
+    id?: string;
+    /**
+     * Last name of the person
      * @type {string}
      * @memberof PersonDTO
      */
     lastName?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PersonDTO
-     */
-    primaryEmail?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PersonDTO
-     */
-    secondaryEmail?: string;
-    /**
-     * 
+     * Phone numbers associated with the person
      * @type {Array<string>}
      * @memberof PersonDTO
      */
     phoneNumbers?: Array<string>;
     /**
-     * 
+     * Primary email address of the person
      * @type {string}
      * @memberof PersonDTO
      */
-    username?: string;
+    primaryEmail?: string;
+    /**
+     * Secondary email address of the person
+     * @type {string}
+     * @memberof PersonDTO
+     */
+    secondaryEmail?: string;
 }
 
 /**
@@ -80,13 +74,12 @@ export function PersonDTOFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'id': json['id'] == null ? undefined : json['id'],
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
+        'phoneNumbers': json['phoneNumbers'] == null ? undefined : json['phoneNumbers'],
         'primaryEmail': json['primaryEmail'] == null ? undefined : json['primaryEmail'],
         'secondaryEmail': json['secondaryEmail'] == null ? undefined : json['secondaryEmail'],
-        'phoneNumbers': json['phoneNumbers'] == null ? undefined : json['phoneNumbers'],
-        'username': json['username'] == null ? undefined : json['username'],
     };
 }
 
@@ -96,13 +89,12 @@ export function PersonDTOToJSON(value?: PersonDTO | null): any {
     }
     return {
         
-        'id': value['id'],
         'firstName': value['firstName'],
+        'id': value['id'],
         'lastName': value['lastName'],
+        'phoneNumbers': value['phoneNumbers'],
         'primaryEmail': value['primaryEmail'],
         'secondaryEmail': value['secondaryEmail'],
-        'phoneNumbers': value['phoneNumbers'],
-        'username': value['username'],
     };
 }
 

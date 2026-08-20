@@ -14,61 +14,61 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing a mobile unit
  * @export
  * @interface MobileUnitResponse
  */
 export interface MobileUnitResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitResponse
-     */
-    name?: string;
-    /**
-     * 
+     * Identifier of the base location the mobile unit operates from
      * @type {string}
      * @memberof MobileUnitResponse
      */
     baseLocationId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitResponse
-     */
-    travelBufferPolicyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MobileUnitResponse
-     */
-    notes?: string;
-    /**
-     * 
+     * Identifiers of capabilities the mobile unit can perform
      * @type {Array<string>}
      * @memberof MobileUnitResponse
      */
     capabilityIds?: Array<string>;
     /**
-     * 
+     * Timestamp when the mobile unit was created (ISO 8601)
      * @type {Date}
      * @memberof MobileUnitResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Unique identifier of the mobile unit
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    id: string;
+    /**
+     * Display name of the mobile unit
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    name?: string;
+    /**
+     * Free-text notes about the mobile unit
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    notes?: string;
+    /**
+     * Operational status of the mobile unit
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    status?: string;
+    /**
+     * Identifier of the travel buffer policy applied to the mobile unit
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    travelBufferPolicyId?: string;
+    /**
+     * Timestamp when the mobile unit was last updated (ISO 8601)
      * @type {Date}
      * @memberof MobileUnitResponse
      */
@@ -79,6 +79,7 @@ export interface MobileUnitResponse {
  * Check if a given object implements the MobileUnitResponse interface.
  */
 export function instanceOfMobileUnitResponse(value: object): boolean {
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -92,14 +93,14 @@ export function MobileUnitResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
         'capabilityIds': json['capabilityIds'] == null ? undefined : json['capabilityIds'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'id': json['id'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -110,14 +111,14 @@ export function MobileUnitResponseToJSON(value?: MobileUnitResponse | null): any
     }
     return {
         
-        'id': value['id'],
-        'name': value['name'],
         'baseLocationId': value['baseLocationId'],
-        'status': value['status'],
-        'travelBufferPolicyId': value['travelBufferPolicyId'],
-        'notes': value['notes'],
         'capabilityIds': value['capabilityIds'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'id': value['id'],
+        'name': value['name'],
+        'notes': value['notes'],
+        'status': value['status'],
+        'travelBufferPolicyId': value['travelBufferPolicyId'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

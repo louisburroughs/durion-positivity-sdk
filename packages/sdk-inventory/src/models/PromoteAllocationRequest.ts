@@ -14,23 +14,30 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to promote a soft allocation to a hardened, location-pinned allocation
  * @export
  * @interface PromoteAllocationRequest
  */
 export interface PromoteAllocationRequest {
     /**
-     * 
+     * Reason the allocation is being hardened
      * @type {string}
      * @memberof PromoteAllocationRequest
      */
     hardenedReason?: string;
+    /**
+     * Storage location identifier where the hardened allocation pins stock
+     * @type {string}
+     * @memberof PromoteAllocationRequest
+     */
+    storageLocationId: string;
 }
 
 /**
  * Check if a given object implements the PromoteAllocationRequest interface.
  */
 export function instanceOfPromoteAllocationRequest(value: object): boolean {
+    if (!('storageLocationId' in value)) return false;
     return true;
 }
 
@@ -45,6 +52,7 @@ export function PromoteAllocationRequestFromJSONTyped(json: any, ignoreDiscrimin
     return {
         
         'hardenedReason': json['hardenedReason'] == null ? undefined : json['hardenedReason'],
+        'storageLocationId': json['storageLocationId'],
     };
 }
 
@@ -55,6 +63,7 @@ export function PromoteAllocationRequestToJSON(value?: PromoteAllocationRequest 
     return {
         
         'hardenedReason': value['hardenedReason'],
+        'storageLocationId': value['storageLocationId'],
     };
 }
 

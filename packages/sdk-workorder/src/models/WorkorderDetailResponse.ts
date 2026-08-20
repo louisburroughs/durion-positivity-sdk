@@ -39,47 +39,17 @@ import {
  */
 export interface WorkorderDetailResponse {
     /**
-     * Workorder ID
+     * Assigned technician ID
      * @type {string}
      * @memberof WorkorderDetailResponse
      */
-    workorderId: string;
+    assignedTechnicianId?: string;
     /**
-     * Workorder number (from sequence)
-     * @type {string}
+     * 
+     * @type {WorkorderCapabilities}
      * @memberof WorkorderDetailResponse
      */
-    workorderNumber?: string;
-    /**
-     * Workorder status
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    status: WorkorderDetailResponseStatusEnum;
-    /**
-     * Customer ID
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    customerId: string;
-    /**
-     * Customer name
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    customerName?: string;
-    /**
-     * Vehicle ID
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    vehicleId: string;
-    /**
-     * Vehicle description
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    vehicleDescription?: string;
+    capabilities: WorkorderCapabilities;
     /**
      * Creation timestamp
      * @type {Date}
@@ -93,53 +63,17 @@ export interface WorkorderDetailResponse {
      */
     createdBy: string;
     /**
-     * Is workorder started (derived from status)
+     * Customer ID
      * @type {string}
      * @memberof WorkorderDetailResponse
      */
-    isStarted?: string;
+    customerId: string;
     /**
-     * Is workorder in progress (derived from status)
+     * Customer name
      * @type {string}
      * @memberof WorkorderDetailResponse
      */
-    isInProgress?: string;
-    /**
-     * Is workorder completed (derived from status)
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    isCompleted?: string;
-    /**
-     * Start timestamp
-     * @type {Date}
-     * @memberof WorkorderDetailResponse
-     */
-    startedAt?: Date;
-    /**
-     * Assigned technician ID
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    assignedTechnicianId?: string;
-    /**
-     * Assigned technician name
-     * @type {string}
-     * @memberof WorkorderDetailResponse
-     */
-    assignedTechnicianName?: string;
-    /**
-     * Service line items with labor totals
-     * @type {Array<WorkorderServiceResponse>}
-     * @memberof WorkorderDetailResponse
-     */
-    services?: Array<WorkorderServiceResponse>;
-    /**
-     * Part line items with usage totals
-     * @type {Array<WorkorderPartResponse>}
-     * @memberof WorkorderDetailResponse
-     */
-    parts?: Array<WorkorderPartResponse>;
+    customerName?: string;
     /**
      * Estimated total (conditionally included based on canViewFinancials)
      * @type {number}
@@ -147,11 +81,35 @@ export interface WorkorderDetailResponse {
      */
     estimatedTotal?: number;
     /**
+     * Is workorder completed (derived from status)
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    isCompleted?: string;
+    /**
+     * Is workorder in progress (derived from status)
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    isInProgress?: string;
+    /**
+     * Is workorder started (derived from status)
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    isStarted?: string;
+    /**
      * Total labor cost (conditionally included)
      * @type {number}
      * @memberof WorkorderDetailResponse
      */
     laborTotal?: number;
+    /**
+     * Part line items with usage totals
+     * @type {Array<WorkorderPartResponse>}
+     * @memberof WorkorderDetailResponse
+     */
+    parts?: Array<WorkorderPartResponse>;
     /**
      * Total parts cost (conditionally included)
      * @type {number}
@@ -159,17 +117,53 @@ export interface WorkorderDetailResponse {
      */
     partsTotal?: number;
     /**
+     * Service line items with labor totals
+     * @type {Array<WorkorderServiceResponse>}
+     * @memberof WorkorderDetailResponse
+     */
+    services?: Array<WorkorderServiceResponse>;
+    /**
+     * Start timestamp
+     * @type {Date}
+     * @memberof WorkorderDetailResponse
+     */
+    startedAt?: Date;
+    /**
+     * Workorder status
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    status: WorkorderDetailResponseStatusEnum;
+    /**
      * Total tax (conditionally included)
      * @type {number}
      * @memberof WorkorderDetailResponse
      */
     taxTotal?: number;
     /**
-     * 
-     * @type {WorkorderCapabilities}
+     * Vehicle description
+     * @type {string}
      * @memberof WorkorderDetailResponse
      */
-    capabilities: WorkorderCapabilities;
+    vehicleDescription?: string;
+    /**
+     * Vehicle ID
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    vehicleId: string;
+    /**
+     * Workorder ID
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    workorderId: string;
+    /**
+     * Workorder number (from sequence)
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    workorderNumber?: string;
 }
 
 /**
@@ -193,13 +187,13 @@ export enum WorkorderDetailResponseStatusEnum {
  * Check if a given object implements the WorkorderDetailResponse interface.
  */
 export function instanceOfWorkorderDetailResponse(value: object): boolean {
-    if (!('workorderId' in value)) return false;
-    if (!('status' in value)) return false;
-    if (!('customerId' in value)) return false;
-    if (!('vehicleId' in value)) return false;
+    if (!('capabilities' in value)) return false;
     if (!('createdAt' in value)) return false;
     if (!('createdBy' in value)) return false;
-    if (!('capabilities' in value)) return false;
+    if (!('customerId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('vehicleId' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -213,28 +207,27 @@ export function WorkorderDetailResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'workorderId': json['workorderId'],
-        'workorderNumber': json['workorderNumber'] == null ? undefined : json['workorderNumber'],
-        'status': json['status'],
-        'customerId': json['customerId'],
-        'customerName': json['customerName'] == null ? undefined : json['customerName'],
-        'vehicleId': json['vehicleId'],
-        'vehicleDescription': json['vehicleDescription'] == null ? undefined : json['vehicleDescription'],
+        'assignedTechnicianId': json['assignedTechnicianId'] == null ? undefined : json['assignedTechnicianId'],
+        'capabilities': WorkorderCapabilitiesFromJSON(json['capabilities']),
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'],
-        'isStarted': json['isStarted'] == null ? undefined : json['isStarted'],
-        'isInProgress': json['isInProgress'] == null ? undefined : json['isInProgress'],
-        'isCompleted': json['isCompleted'] == null ? undefined : json['isCompleted'],
-        'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
-        'assignedTechnicianId': json['assignedTechnicianId'] == null ? undefined : json['assignedTechnicianId'],
-        'assignedTechnicianName': json['assignedTechnicianName'] == null ? undefined : json['assignedTechnicianName'],
-        'services': json['services'] == null ? undefined : ((json['services'] as Array<any>).map(WorkorderServiceResponseFromJSON)),
-        'parts': json['parts'] == null ? undefined : ((json['parts'] as Array<any>).map(WorkorderPartResponseFromJSON)),
+        'customerId': json['customerId'],
+        'customerName': json['customerName'] == null ? undefined : json['customerName'],
         'estimatedTotal': json['estimatedTotal'] == null ? undefined : json['estimatedTotal'],
+        'isCompleted': json['isCompleted'] == null ? undefined : json['isCompleted'],
+        'isInProgress': json['isInProgress'] == null ? undefined : json['isInProgress'],
+        'isStarted': json['isStarted'] == null ? undefined : json['isStarted'],
         'laborTotal': json['laborTotal'] == null ? undefined : json['laborTotal'],
+        'parts': json['parts'] == null ? undefined : ((json['parts'] as Array<any>).map(WorkorderPartResponseFromJSON)),
         'partsTotal': json['partsTotal'] == null ? undefined : json['partsTotal'],
+        'services': json['services'] == null ? undefined : ((json['services'] as Array<any>).map(WorkorderServiceResponseFromJSON)),
+        'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
+        'status': json['status'],
         'taxTotal': json['taxTotal'] == null ? undefined : json['taxTotal'],
-        'capabilities': WorkorderCapabilitiesFromJSON(json['capabilities']),
+        'vehicleDescription': json['vehicleDescription'] == null ? undefined : json['vehicleDescription'],
+        'vehicleId': json['vehicleId'],
+        'workorderId': json['workorderId'],
+        'workorderNumber': json['workorderNumber'] == null ? undefined : json['workorderNumber'],
     };
 }
 
@@ -244,28 +237,27 @@ export function WorkorderDetailResponseToJSON(value?: WorkorderDetailResponse | 
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'workorderNumber': value['workorderNumber'],
-        'status': value['status'],
-        'customerId': value['customerId'],
-        'customerName': value['customerName'],
-        'vehicleId': value['vehicleId'],
-        'vehicleDescription': value['vehicleDescription'],
+        'assignedTechnicianId': value['assignedTechnicianId'],
+        'capabilities': WorkorderCapabilitiesToJSON(value['capabilities']),
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
-        'isStarted': value['isStarted'],
-        'isInProgress': value['isInProgress'],
-        'isCompleted': value['isCompleted'],
-        'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
-        'assignedTechnicianId': value['assignedTechnicianId'],
-        'assignedTechnicianName': value['assignedTechnicianName'],
-        'services': value['services'] == null ? undefined : ((value['services'] as Array<any>).map(WorkorderServiceResponseToJSON)),
-        'parts': value['parts'] == null ? undefined : ((value['parts'] as Array<any>).map(WorkorderPartResponseToJSON)),
+        'customerId': value['customerId'],
+        'customerName': value['customerName'],
         'estimatedTotal': value['estimatedTotal'],
+        'isCompleted': value['isCompleted'],
+        'isInProgress': value['isInProgress'],
+        'isStarted': value['isStarted'],
         'laborTotal': value['laborTotal'],
+        'parts': value['parts'] == null ? undefined : ((value['parts'] as Array<any>).map(WorkorderPartResponseToJSON)),
         'partsTotal': value['partsTotal'],
+        'services': value['services'] == null ? undefined : ((value['services'] as Array<any>).map(WorkorderServiceResponseToJSON)),
+        'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
+        'status': value['status'],
         'taxTotal': value['taxTotal'],
-        'capabilities': WorkorderCapabilitiesToJSON(value['capabilities']),
+        'vehicleDescription': value['vehicleDescription'],
+        'vehicleId': value['vehicleId'],
+        'workorderId': value['workorderId'],
+        'workorderNumber': value['workorderNumber'],
     };
 }
 

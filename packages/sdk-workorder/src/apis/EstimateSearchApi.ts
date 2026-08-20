@@ -27,6 +27,7 @@ import {
 
 export interface SearchEstimatesRequest {
     pageable: Pageable;
+    q?: string;
     customerId?: string;
     vehicleId?: string;
 }
@@ -37,8 +38,8 @@ export interface SearchEstimatesRequest {
 export class EstimateSearchApi extends runtime.BaseAPI {
 
     /**
-     * Paginated search for estimates filtered by optional customerId and/or vehicleId.
-     * Search estimates
+     * Searches estimates and returns a page of estimate summaries, either by free-text query or by exact customer and vehicle filters. Use this tool when locating estimates by estimate number, customer name, estimate id, customer, or vehicle; use listEstimates instead for an unfiltered listing of every estimate. Preconditions: none beyond the caller holding workorder:estimate:view; unmatched queries return an empty page rather than an error. Required inputs: none are mandatory — a non-blank q takes precedence and causes customerId and vehicleId to be ignored; page size defaults to 25. Emits a WORKORDER_ESTIMATE_SEARCH audit event; no estimate state changes — this is a read-only projection. Returns 200 with an empty page when nothing matches; no 404 is produced for empty results. 
+     * Search Estimates With Filters
      */
     async searchEstimatesRaw(requestParameters: SearchEstimatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageEstimateSummaryResponse>> {
         if (requestParameters['pageable'] == null) {
@@ -49,6 +50,10 @@ export class EstimateSearchApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
 
         if (requestParameters['customerId'] != null) {
             queryParameters['customerId'] = requestParameters['customerId'];
@@ -83,8 +88,8 @@ export class EstimateSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Paginated search for estimates filtered by optional customerId and/or vehicleId.
-     * Search estimates
+     * Searches estimates and returns a page of estimate summaries, either by free-text query or by exact customer and vehicle filters. Use this tool when locating estimates by estimate number, customer name, estimate id, customer, or vehicle; use listEstimates instead for an unfiltered listing of every estimate. Preconditions: none beyond the caller holding workorder:estimate:view; unmatched queries return an empty page rather than an error. Required inputs: none are mandatory — a non-blank q takes precedence and causes customerId and vehicleId to be ignored; page size defaults to 25. Emits a WORKORDER_ESTIMATE_SEARCH audit event; no estimate state changes — this is a read-only projection. Returns 200 with an empty page when nothing matches; no 404 is produced for empty results. 
+     * Search Estimates With Filters
      */
     async searchEstimates(requestParameters: SearchEstimatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageEstimateSummaryResponse> {
         const response = await this.searchEstimatesRaw(requestParameters, initOverrides);

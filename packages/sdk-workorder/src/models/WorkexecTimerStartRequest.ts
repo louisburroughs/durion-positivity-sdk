@@ -20,6 +20,24 @@ import { mapValues } from '../runtime';
  */
 export interface WorkexecTimerStartRequest {
     /**
+     * Optional labor code associated with timer
+     * @type {string}
+     * @memberof WorkexecTimerStartRequest
+     */
+    laborCode?: string;
+    /**
+     * Required when starting a timer on behalf of a technician other than yourself or the current assignee.
+     * @type {string}
+     * @memberof WorkexecTimerStartRequest
+     */
+    reason?: string;
+    /**
+     * Optional technician whose labor this timer tracks. Omit to use the workorder's current assignment, or yourself if the workorder is unassigned. Supplying a technician other than yourself or the current assignee requires the 'workorder:labor:add_on_behalf' authority and a reason.
+     * @type {string}
+     * @memberof WorkexecTimerStartRequest
+     */
+    technicianId?: string;
+    /**
      * Workorder identifier
      * @type {string}
      * @memberof WorkexecTimerStartRequest
@@ -31,12 +49,6 @@ export interface WorkexecTimerStartRequest {
      * @memberof WorkexecTimerStartRequest
      */
     workorderItemId?: string;
-    /**
-     * Optional labor code associated with timer
-     * @type {string}
-     * @memberof WorkexecTimerStartRequest
-     */
-    laborCode?: string;
 }
 
 /**
@@ -57,9 +69,11 @@ export function WorkexecTimerStartRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'laborCode': json['laborCode'] == null ? undefined : json['laborCode'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
         'workorderId': json['workorderId'],
         'workorderItemId': json['workorderItemId'] == null ? undefined : json['workorderItemId'],
-        'laborCode': json['laborCode'] == null ? undefined : json['laborCode'],
     };
 }
 
@@ -69,9 +83,11 @@ export function WorkexecTimerStartRequestToJSON(value?: WorkexecTimerStartReques
     }
     return {
         
+        'laborCode': value['laborCode'],
+        'reason': value['reason'],
+        'technicianId': value['technicianId'],
         'workorderId': value['workorderId'],
         'workorderItemId': value['workorderItemId'],
-        'laborCode': value['laborCode'],
     };
 }
 

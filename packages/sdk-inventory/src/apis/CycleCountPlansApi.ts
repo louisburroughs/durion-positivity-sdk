@@ -17,20 +17,35 @@ import * as runtime from '../runtime';
 import type {
   CreateCycleCountPlanRequest,
   CycleCountPlanResponse,
+  UpdateCycleCountPlanStatusRequest,
 } from '../models/index';
 import {
     CreateCycleCountPlanRequestFromJSON,
     CreateCycleCountPlanRequestToJSON,
     CycleCountPlanResponseFromJSON,
     CycleCountPlanResponseToJSON,
+    UpdateCycleCountPlanStatusRequestFromJSON,
+    UpdateCycleCountPlanStatusRequestToJSON,
 } from '../models/index';
 
-export interface CreatePlanRequest {
+export interface CreateCycleCountPlanOperationRequest {
     createCycleCountPlanRequest: CreateCycleCountPlanRequest;
 }
 
-export interface GetPlanRequest {
+export interface GetCycleCountPlanRequest {
     planId: string;
+}
+
+export interface ListCycleCountPlansRequest {
+    locationId?: string;
+    status?: ListCycleCountPlansStatusEnum;
+    page?: number;
+    size?: number;
+}
+
+export interface UpdateCycleCountPlanStatusOperationRequest {
+    planId: string;
+    updateCycleCountPlanStatusRequest: UpdateCycleCountPlanStatusRequest;
 }
 
 /**
@@ -39,14 +54,14 @@ export interface GetPlanRequest {
 export class CycleCountPlansApi extends runtime.BaseAPI {
 
     /**
-     * Creates a cycle count plan and returns its configuration details.
+     * Creates a cycle count plan in PLANNED status for one location, covering one or more zones on a future scheduled date. Use this tool for a one-off, manually initiated count; do not use createCycleCountSchedule, which sets up a recurring schedule that generates plans automatically. Preconditions: the caller must be an authenticated user (recorded as the plan creator), and scheduledDate must be strictly after today. Required inputs: locationId (UUID), at least one zone in zoneIds, planName, and scheduledDate (ISO date, future). Emits an INVENTORY_CYCLE_COUNT_PLAN_CREATE event; no tasks or ledger entries are created by this call. Returns 400 when locationId is missing, zoneIds is empty, or scheduledDate is not in the future. 
      * Create cycle count plan
      */
-    async createPlanRaw(requestParameters: CreatePlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountPlanResponse>> {
+    async createCycleCountPlanRaw(requestParameters: CreateCycleCountPlanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountPlanResponse>> {
         if (requestParameters['createCycleCountPlanRequest'] == null) {
             throw new runtime.RequiredError(
                 'createCycleCountPlanRequest',
-                'Required parameter "createCycleCountPlanRequest" was null or undefined when calling createPlan().'
+                'Required parameter "createCycleCountPlanRequest" was null or undefined when calling createCycleCountPlan().'
             );
         }
 
@@ -76,23 +91,23 @@ export class CycleCountPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a cycle count plan and returns its configuration details.
+     * Creates a cycle count plan in PLANNED status for one location, covering one or more zones on a future scheduled date. Use this tool for a one-off, manually initiated count; do not use createCycleCountSchedule, which sets up a recurring schedule that generates plans automatically. Preconditions: the caller must be an authenticated user (recorded as the plan creator), and scheduledDate must be strictly after today. Required inputs: locationId (UUID), at least one zone in zoneIds, planName, and scheduledDate (ISO date, future). Emits an INVENTORY_CYCLE_COUNT_PLAN_CREATE event; no tasks or ledger entries are created by this call. Returns 400 when locationId is missing, zoneIds is empty, or scheduledDate is not in the future. 
      * Create cycle count plan
      */
-    async createPlan(requestParameters: CreatePlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountPlanResponse> {
-        const response = await this.createPlanRaw(requestParameters, initOverrides);
+    async createCycleCountPlan(requestParameters: CreateCycleCountPlanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountPlanResponse> {
+        const response = await this.createCycleCountPlanRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns a cycle count plan by identifier.
+     * Returns one cycle count plan with its zones, scheduled date, lifecycle status, and originating schedule linkage. Use this tool when the planId is already known; use listCycleCountPlans instead to search by location or status. Preconditions: the plan must exist. Required inputs: planId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no cycle count plan exists for the supplied id. 
      * Get cycle count plan
      */
-    async getPlanRaw(requestParameters: GetPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountPlanResponse>> {
+    async getCycleCountPlanRaw(requestParameters: GetCycleCountPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountPlanResponse>> {
         if (requestParameters['planId'] == null) {
             throw new runtime.RequiredError(
                 'planId',
-                'Required parameter "planId" was null or undefined when calling getPlan().'
+                'Required parameter "planId" was null or undefined when calling getCycleCountPlan().'
             );
         }
 
@@ -119,12 +134,130 @@ export class CycleCountPlansApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a cycle count plan by identifier.
+     * Returns one cycle count plan with its zones, scheduled date, lifecycle status, and originating schedule linkage. Use this tool when the planId is already known; use listCycleCountPlans instead to search by location or status. Preconditions: the plan must exist. Required inputs: planId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no cycle count plan exists for the supplied id. 
      * Get cycle count plan
      */
-    async getPlan(requestParameters: GetPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountPlanResponse> {
-        const response = await this.getPlanRaw(requestParameters, initOverrides);
+    async getCycleCountPlan(requestParameters: GetCycleCountPlanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountPlanResponse> {
+        const response = await this.getCycleCountPlanRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
+    /**
+     * Returns one page of cycle count plans, newest first, optionally filtered by location and/or lifecycle status. Use this tool to discover planIds or review upcoming and completed counts; use getCycleCountPlan instead when the planId is already known. Preconditions: none. Required inputs: all query parameters are optional — locationId (UUID), status (PLANNED, STARTED, COMPLETED_PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED), page (0-based, default 0) and size (default 50). Emits an INVENTORY_CYCLE_COUNT_PLAN_LIST audit event; no plan state changes. Returns 200 with an empty array when no plans match, so an empty result is not an error condition. 
+     * List cycle count plans
+     */
+    async listCycleCountPlansRaw(requestParameters: ListCycleCountPlansRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CycleCountPlanResponse>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/cycleCountPlans`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CycleCountPlanResponseFromJSON));
+    }
+
+    /**
+     * Returns one page of cycle count plans, newest first, optionally filtered by location and/or lifecycle status. Use this tool to discover planIds or review upcoming and completed counts; use getCycleCountPlan instead when the planId is already known. Preconditions: none. Required inputs: all query parameters are optional — locationId (UUID), status (PLANNED, STARTED, COMPLETED_PENDING_APPROVAL, APPROVED, REJECTED, CANCELLED), page (0-based, default 0) and size (default 50). Emits an INVENTORY_CYCLE_COUNT_PLAN_LIST audit event; no plan state changes. Returns 200 with an empty array when no plans match, so an empty result is not an error condition. 
+     * List cycle count plans
+     */
+    async listCycleCountPlans(requestParameters: ListCycleCountPlansRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CycleCountPlanResponse>> {
+        const response = await this.listCycleCountPlansRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Moves a cycle count plan one step through its lifecycle: PLANNED to STARTED or CANCELLED, STARTED to COMPLETED_PENDING_APPROVAL or CANCELLED, and COMPLETED_PENDING_APPROVAL to APPROVED or REJECTED; APPROVED, REJECTED and CANCELLED are terminal. Use this tool for plan lifecycle transitions only; do not use updateCycleCountSchedule, which edits a recurring schedule\'s configuration. Preconditions: the plan must exist and the requested status must be a legal transition from its current status. Required inputs: planId (UUID) path parameter and status (the target lifecycle value) in the body. Emits an INVENTORY_CYCLE_COUNT_PLAN_STATUS_UPDATE event; approving a schedule-created plan also restamps the originating schedule\'s nextDueDate to today plus its frequencyDays, so a late count does not immediately come due again. Returns 404 when the plan does not exist, and 409 when the transition is not allowed from the current status. 
+     * Transition cycle count plan status
+     */
+    async updateCycleCountPlanStatusRaw(requestParameters: UpdateCycleCountPlanStatusOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountPlanResponse>> {
+        if (requestParameters['planId'] == null) {
+            throw new runtime.RequiredError(
+                'planId',
+                'Required parameter "planId" was null or undefined when calling updateCycleCountPlanStatus().'
+            );
+        }
+
+        if (requestParameters['updateCycleCountPlanStatusRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateCycleCountPlanStatusRequest',
+                'Required parameter "updateCycleCountPlanStatusRequest" was null or undefined when calling updateCycleCountPlanStatus().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:complete"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/cycleCountPlans/{planId}/status`.replace(`{${"planId"}}`, encodeURIComponent(String(requestParameters['planId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateCycleCountPlanStatusRequestToJSON(requestParameters['updateCycleCountPlanStatusRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CycleCountPlanResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Moves a cycle count plan one step through its lifecycle: PLANNED to STARTED or CANCELLED, STARTED to COMPLETED_PENDING_APPROVAL or CANCELLED, and COMPLETED_PENDING_APPROVAL to APPROVED or REJECTED; APPROVED, REJECTED and CANCELLED are terminal. Use this tool for plan lifecycle transitions only; do not use updateCycleCountSchedule, which edits a recurring schedule\'s configuration. Preconditions: the plan must exist and the requested status must be a legal transition from its current status. Required inputs: planId (UUID) path parameter and status (the target lifecycle value) in the body. Emits an INVENTORY_CYCLE_COUNT_PLAN_STATUS_UPDATE event; approving a schedule-created plan also restamps the originating schedule\'s nextDueDate to today plus its frequencyDays, so a late count does not immediately come due again. Returns 404 when the plan does not exist, and 409 when the transition is not allowed from the current status. 
+     * Transition cycle count plan status
+     */
+    async updateCycleCountPlanStatus(requestParameters: UpdateCycleCountPlanStatusOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountPlanResponse> {
+        const response = await this.updateCycleCountPlanStatusRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListCycleCountPlansStatusEnum {
+    Planned = 'PLANNED',
+    Started = 'STARTED',
+    CompletedPendingApproval = 'COMPLETED_PENDING_APPROVAL',
+    Approved = 'APPROVED',
+    Rejected = 'REJECTED',
+    Cancelled = 'CANCELLED'
 }

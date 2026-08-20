@@ -72,7 +72,7 @@ export class CatalogBootstrap {
 
     for (const service of SERVICE_SEEDS) {
       const existingId = await this.findCatalogEntityIdByName(
-        () => productsApi.getServiceByName({ name: service.name }),
+        () => productsApi.listServicesByName({ name: service.name }),
       );
 
       if (existingId) {
@@ -95,7 +95,7 @@ export class CatalogBootstrap {
       };
 
       try {
-        const created = await catalogItemsApi.addCatalogItem({
+        const created = await catalogItemsApi.createCatalogItem({
           type: 'SERVICE',
           catalogItemRequestDto: request,
         });
@@ -113,7 +113,7 @@ export class CatalogBootstrap {
         }
 
         const duplicateId = await this.findCatalogEntityIdByName(
-          () => productsApi.getServiceByName({ name: service.name }),
+          () => productsApi.listServicesByName({ name: service.name }),
         );
         if (!duplicateId) {
           throw error;
@@ -128,7 +128,7 @@ export class CatalogBootstrap {
     for (const product of PRODUCT_SEEDS) {
       const existingId = await this.findCatalogEntityIdByName(
         async () => {
-          const raw = await productsApi.getProductByNameRaw({ name: product.name });
+          const raw = await productsApi.listProductsByNameRaw({ name: product.name });
           return raw.raw.json();
         },
       );
@@ -173,7 +173,7 @@ export class CatalogBootstrap {
 
         const duplicateId = await this.findCatalogEntityIdByName(
           async () => {
-            const raw = await productsApi.getProductByNameRaw({ name: product.name });
+            const raw = await productsApi.listProductsByNameRaw({ name: product.name });
             return raw.raw.json();
           },
         );

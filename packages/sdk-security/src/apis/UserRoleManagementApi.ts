@@ -25,7 +25,7 @@ import {
     PermissionDtoToJSON,
 } from '../models/index';
 
-export interface AssignRoleToUserRequest {
+export interface AssignUserRoleRequest {
     userId: string;
     roleId: string;
 }
@@ -34,7 +34,7 @@ export interface GetUserPermissionsRequest {
     userId: string;
 }
 
-export interface RevokeRoleFromUserRequest {
+export interface RevokeUserRoleRequest {
     userId: string;
     roleId: string;
 }
@@ -45,21 +45,21 @@ export interface RevokeRoleFromUserRequest {
 export class UserRoleManagementApi extends runtime.BaseAPI {
 
     /**
-     * Creates an effective role assignment linking the specified user to the specified role.
-     * Assign a role to a user
+     * Creates a GLOBAL-scoped role assignment linking a user to a role, effective immediately with no end date. Use this tool for the common unscoped grant; do not use createRoleAssignment, which supports LOCATION scope and effective date windows, and do not use assignPrincipalRole, which targets the string-keyed RBAC principal matrix. Preconditions: the caller must hold security:role:assign and both the user and role must exist; no overlap check is performed here, so repeated calls create duplicate assignments. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_ASSIGN event and writes a RoleAssignedToUser audit record. Returns 404 when the user or role does not exist. 
+     * Assign a Role to a User
      */
-    async assignRoleToUserRaw(requestParameters: AssignRoleToUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async assignUserRoleRaw(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
-                'Required parameter "userId" was null or undefined when calling assignRoleToUser().'
+                'Required parameter "userId" was null or undefined when calling assignUserRole().'
             );
         }
 
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
-                'Required parameter "roleId" was null or undefined when calling assignRoleToUser().'
+                'Required parameter "roleId" was null or undefined when calling assignUserRole().'
             );
         }
 
@@ -86,16 +86,16 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an effective role assignment linking the specified user to the specified role.
-     * Assign a role to a user
+     * Creates a GLOBAL-scoped role assignment linking a user to a role, effective immediately with no end date. Use this tool for the common unscoped grant; do not use createRoleAssignment, which supports LOCATION scope and effective date windows, and do not use assignPrincipalRole, which targets the string-keyed RBAC principal matrix. Preconditions: the caller must hold security:role:assign and both the user and role must exist; no overlap check is performed here, so repeated calls create duplicate assignments. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_ASSIGN event and writes a RoleAssignedToUser audit record. Returns 404 when the user or role does not exist. 
+     * Assign a Role to a User
      */
-    async assignRoleToUser(requestParameters: AssignRoleToUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.assignRoleToUserRaw(requestParameters, initOverrides);
+    async assignUserRole(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.assignUserRoleRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Returns all effective permissions for a user
-     * Get user permissions
+     * Returns the union of permissions granted through a user\'s currently effective role assignments. Use this tool for a user\'s flattened effective permission set; use listUserRoleAssignments instead to see the assignments and scopes behind it. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Get a User\'s Effective Permissions
      */
     async getUserPermissionsRaw(requestParameters: GetUserPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<PermissionDto>>> {
         if (requestParameters['userId'] == null) {
@@ -128,8 +128,8 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all effective permissions for a user
-     * Get user permissions
+     * Returns the union of permissions granted through a user\'s currently effective role assignments. Use this tool for a user\'s flattened effective permission set; use listUserRoleAssignments instead to see the assignments and scopes behind it. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Get a User\'s Effective Permissions
      */
     async getUserPermissions(requestParameters: GetUserPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<PermissionDto>> {
         const response = await this.getUserPermissionsRaw(requestParameters, initOverrides);
@@ -137,21 +137,21 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes the effective assignment of the specified role from the specified user.
-     * Revoke a role from a user
+     * Ends the first currently effective assignment of a role for a user by setting its end date to now, preserving the row for history. Use this tool for the common immediate revocation; do not use revokeRoleAssignment, which targets a specific assignment id and supports past or future end dates. Preconditions: the caller must hold security:role:assign, the user and role must exist, and at least one effective assignment must link them. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_REVOKE event and writes a RoleRevokedFromUser audit record. Returns 404 when the user or role does not exist, or when no active assignment links them. 
+     * Revoke a Role From a User
      */
-    async revokeRoleFromUserRaw(requestParameters: RevokeRoleFromUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async revokeUserRoleRaw(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['userId'] == null) {
             throw new runtime.RequiredError(
                 'userId',
-                'Required parameter "userId" was null or undefined when calling revokeRoleFromUser().'
+                'Required parameter "userId" was null or undefined when calling revokeUserRole().'
             );
         }
 
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
-                'Required parameter "roleId" was null or undefined when calling revokeRoleFromUser().'
+                'Required parameter "roleId" was null or undefined when calling revokeUserRole().'
             );
         }
 
@@ -178,11 +178,11 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes the effective assignment of the specified role from the specified user.
-     * Revoke a role from a user
+     * Ends the first currently effective assignment of a role for a user by setting its end date to now, preserving the row for history. Use this tool for the common immediate revocation; do not use revokeRoleAssignment, which targets a specific assignment id and supports past or future end dates. Preconditions: the caller must hold security:role:assign, the user and role must exist, and at least one effective assignment must link them. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_REVOKE event and writes a RoleRevokedFromUser audit record. Returns 404 when the user or role does not exist, or when no active assignment links them. 
+     * Revoke a Role From a User
      */
-    async revokeRoleFromUser(requestParameters: RevokeRoleFromUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.revokeRoleFromUserRaw(requestParameters, initOverrides);
+    async revokeUserRole(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.revokeUserRoleRaw(requestParameters, initOverrides);
     }
 
 }

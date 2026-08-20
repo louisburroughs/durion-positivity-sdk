@@ -14,35 +14,35 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Emergency contact details for an employee
  * @export
  * @interface EmployeeEmergencyContactDto
  */
 export interface EmployeeEmergencyContactDto {
     /**
-     * 
+     * Email address of the emergency contact
+     * @type {string}
+     * @memberof EmployeeEmergencyContactDto
+     */
+    email?: string;
+    /**
+     * Name of the emergency contact
      * @type {string}
      * @memberof EmployeeEmergencyContactDto
      */
     name?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof EmployeeEmergencyContactDto
-     */
-    relationship?: string;
-    /**
-     * 
+     * Phone number of the emergency contact
      * @type {string}
      * @memberof EmployeeEmergencyContactDto
      */
     phone?: string;
     /**
-     * 
+     * Relationship to the employee
      * @type {string}
      * @memberof EmployeeEmergencyContactDto
      */
-    email?: string;
+    relationship?: string;
 }
 
 /**
@@ -62,10 +62,10 @@ export function EmployeeEmergencyContactDtoFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
-        'relationship': json['relationship'] == null ? undefined : json['relationship'],
-        'phone': json['phone'] == null ? undefined : json['phone'],
         'email': json['email'] == null ? undefined : json['email'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'phone': json['phone'] == null ? undefined : json['phone'],
+        'relationship': json['relationship'] == null ? undefined : json['relationship'],
     };
 }
 
@@ -75,10 +75,10 @@ export function EmployeeEmergencyContactDtoToJSON(value?: EmployeeEmergencyConta
     }
     return {
         
-        'name': value['name'],
-        'relationship': value['relationship'],
-        'phone': value['phone'],
         'email': value['email'],
+        'name': value['name'],
+        'phone': value['phone'],
+        'relationship': value['relationship'],
     };
 }
 

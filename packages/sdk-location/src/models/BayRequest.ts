@@ -21,19 +21,13 @@ import {
 } from './BayCapacityRequest';
 
 /**
- * Bay creation request body
+ * Request payload for creating a service bay
  * @export
  * @interface BayRequest
  */
 export interface BayRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof BayRequest
-     */
-    name: string;
-    /**
-     * 
+     * Type classification of the bay; must be a BayType value
      * @type {string}
      * @memberof BayRequest
      */
@@ -45,25 +39,31 @@ export interface BayRequest {
      */
     capacity: BayCapacityRequest;
     /**
-     * 
+     * Maximum number of vehicles that can be serviced concurrently in the bay
      * @type {number}
      * @memberof BayRequest
      */
     maxConcurrentVehicles?: number;
     /**
-     * 
+     * Display name of the bay
+     * @type {string}
+     * @memberof BayRequest
+     */
+    name: string;
+    /**
+     * Identifiers of service capabilities supported by the bay
      * @type {Array<string>}
      * @memberof BayRequest
      */
     serviceCapabilityIds?: Array<string>;
     /**
-     * 
+     * Identifiers of skills required to operate the bay
      * @type {Array<string>}
      * @memberof BayRequest
      */
     skillRequirementIds?: Array<string>;
     /**
-     * 
+     * Operational status of the bay
      * @type {string}
      * @memberof BayRequest
      */
@@ -74,9 +74,9 @@ export interface BayRequest {
  * Check if a given object implements the BayRequest interface.
  */
 export function instanceOfBayRequest(value: object): boolean {
-    if (!('name' in value)) return false;
     if (!('bayType' in value)) return false;
     if (!('capacity' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -90,10 +90,10 @@ export function BayRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'name': json['name'],
         'bayType': json['bayType'],
         'capacity': BayCapacityRequestFromJSON(json['capacity']),
         'maxConcurrentVehicles': json['maxConcurrentVehicles'] == null ? undefined : json['maxConcurrentVehicles'],
+        'name': json['name'],
         'serviceCapabilityIds': json['serviceCapabilityIds'] == null ? undefined : json['serviceCapabilityIds'],
         'skillRequirementIds': json['skillRequirementIds'] == null ? undefined : json['skillRequirementIds'],
         'status': json['status'] == null ? undefined : json['status'],
@@ -106,10 +106,10 @@ export function BayRequestToJSON(value?: BayRequest | null): any {
     }
     return {
         
-        'name': value['name'],
         'bayType': value['bayType'],
         'capacity': BayCapacityRequestToJSON(value['capacity']),
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
+        'name': value['name'],
         'serviceCapabilityIds': value['serviceCapabilityIds'],
         'skillRequirementIds': value['skillRequirementIds'],
         'status': value['status'],

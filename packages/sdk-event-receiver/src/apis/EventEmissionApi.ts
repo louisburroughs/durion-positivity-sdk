@@ -32,8 +32,8 @@ export interface ReceiveEventRequest {
 export class EventEmissionApi extends runtime.BaseAPI {
 
     /**
-     * Stores a preregistered emitted event payload
-     * Receive emitted event
+     * Receives one event occurrence emitted by another pos service and queues it for storage in the emitted_event time-series table. Use this tool when a service needs to record that a registered event happened; do not use upsertEventType, which registers or edits event-type metadata rather than recording occurrences. Preconditions: the event id must already exist in the preregistered_event allowlist, and the call must carry a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured; this service is internal-network only and is not exposed through the API gateway. Required inputs: id (uppercase letters, digits and underscores), numeric apiVersion, timestamp as positive epoch milliseconds, elapsedMs of zero or more, and publishedAt as a UTC instant. No events are emitted by this operation itself, by design, to prevent infinite recursion; the submitted event is queued in memory and a batch flush persists the queue every 5 seconds, so a 200 response means accepted, not yet durably stored. Returns 400 when the id is not preregistered or a field fails validation, and 401 when the shared secret is missing or invalid. 
+     * Receive and store an emitted event
      */
     async receiveEventRaw(requestParameters: ReceiveEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
         if (requestParameters['emitEventRequest'] == null) {
@@ -65,8 +65,8 @@ export class EventEmissionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stores a preregistered emitted event payload
-     * Receive emitted event
+     * Receives one event occurrence emitted by another pos service and queues it for storage in the emitted_event time-series table. Use this tool when a service needs to record that a registered event happened; do not use upsertEventType, which registers or edits event-type metadata rather than recording occurrences. Preconditions: the event id must already exist in the preregistered_event allowlist, and the call must carry a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured; this service is internal-network only and is not exposed through the API gateway. Required inputs: id (uppercase letters, digits and underscores), numeric apiVersion, timestamp as positive epoch milliseconds, elapsedMs of zero or more, and publishedAt as a UTC instant. No events are emitted by this operation itself, by design, to prevent infinite recursion; the submitted event is queued in memory and a batch flush persists the queue every 5 seconds, so a 200 response means accepted, not yet durably stored. Returns 400 when the id is not preregistered or a field fails validation, and 401 when the shared secret is missing or invalid. 
+     * Receive and store an emitted event
      */
     async receiveEvent(requestParameters: ReceiveEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.receiveEventRaw(requestParameters, initOverrides);

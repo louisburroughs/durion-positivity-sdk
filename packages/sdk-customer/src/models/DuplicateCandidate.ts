@@ -14,35 +14,38 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Duplicate candidate summary returned on 409 or as advisory in 201
  * @export
  * @interface DuplicateCandidate
  */
 export interface DuplicateCandidate {
     /**
-     * 
+     * Candidate legal name
      * @type {string}
      * @memberof DuplicateCandidate
      */
-    partyId?: string;
+    legalName: string;
     /**
-     * 
+     * Reason this candidate matched
      * @type {string}
      * @memberof DuplicateCandidate
      */
-    legalName?: string;
+    matchReason: string;
     /**
-     * 
+     * Candidate party ID
      * @type {string}
      * @memberof DuplicateCandidate
      */
-    matchReason?: string;
+    partyId: string;
 }
 
 /**
  * Check if a given object implements the DuplicateCandidate interface.
  */
 export function instanceOfDuplicateCandidate(value: object): boolean {
+    if (!('legalName' in value)) return false;
+    if (!('matchReason' in value)) return false;
+    if (!('partyId' in value)) return false;
     return true;
 }
 
@@ -56,9 +59,9 @@ export function DuplicateCandidateFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'legalName': json['legalName'] == null ? undefined : json['legalName'],
-        'matchReason': json['matchReason'] == null ? undefined : json['matchReason'],
+        'legalName': json['legalName'],
+        'matchReason': json['matchReason'],
+        'partyId': json['partyId'],
     };
 }
 
@@ -68,9 +71,9 @@ export function DuplicateCandidateToJSON(value?: DuplicateCandidate | null): any
     }
     return {
         
-        'partyId': value['partyId'],
         'legalName': value['legalName'],
         'matchReason': value['matchReason'],
+        'partyId': value['partyId'],
     };
 }
 

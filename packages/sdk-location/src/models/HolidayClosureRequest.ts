@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single holiday closure entry for a location
  * @export
  * @interface HolidayClosureRequest
  */
 export interface HolidayClosureRequest {
     /**
-     * 
+     * Date on which the location is closed
      * @type {Date}
      * @memberof HolidayClosureRequest
      */
-    date?: Date;
+    date: Date;
     /**
-     * 
+     * Human-readable reason for the closure
      * @type {string}
      * @memberof HolidayClosureRequest
      */
@@ -37,6 +37,7 @@ export interface HolidayClosureRequest {
  * Check if a given object implements the HolidayClosureRequest interface.
  */
 export function instanceOfHolidayClosureRequest(value: object): boolean {
+    if (!('date' in value)) return false;
     return true;
 }
 
@@ -50,7 +51,7 @@ export function HolidayClosureRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'date': json['date'] == null ? undefined : (new Date(json['date'])),
+        'date': (new Date(json['date'])),
         'reason': json['reason'] == null ? undefined : json['reason'],
     };
 }
@@ -61,7 +62,7 @@ export function HolidayClosureRequestToJSON(value?: HolidayClosureRequest | null
     }
     return {
         
-        'date': value['date'] == null ? undefined : ((value['date']).toISOString().substring(0,10)),
+        'date': ((value['date']).toISOString().substring(0,10)),
         'reason': value['reason'],
     };
 }

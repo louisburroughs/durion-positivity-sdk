@@ -26,17 +26,17 @@ export interface ModelResponse {
      */
     id: string;
     /**
-     * Model name
-     * @type {string}
-     * @memberof ModelResponse
-     */
-    name: string;
-    /**
      * Make identifier for this model
      * @type {string}
      * @memberof ModelResponse
      */
     makeId?: string;
+    /**
+     * Model name
+     * @type {string}
+     * @memberof ModelResponse
+     */
+    name: string;
 }
 
 /**
@@ -59,8 +59,8 @@ export function ModelResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
     return {
         
         'id': json['id'],
-        'name': json['name'],
         'makeId': json['makeId'] == null ? undefined : json['makeId'],
+        'name': json['name'],
     };
 }
 
@@ -71,8 +71,8 @@ export function ModelResponseToJSON(value?: ModelResponse | null): any {
     return {
         
         'id': value['id'],
-        'name': value['name'],
         'makeId': value['makeId'],
+        'name': value['name'],
     };
 }
 

@@ -40,46 +40,16 @@ import {
 export interface PageVendorBillSummaryResponse {
     /**
      * 
-     * @type {number}
-     * @memberof PageVendorBillSummaryResponse
-     */
-    totalElements?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PageVendorBillSummaryResponse
-     */
-    totalPages?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PageVendorBillSummaryResponse
-     */
-    size?: number;
-    /**
-     * 
      * @type {Array<VendorBillSummaryResponse>}
      * @memberof PageVendorBillSummaryResponse
      */
     content?: Array<VendorBillSummaryResponse>;
     /**
      * 
-     * @type {number}
+     * @type {boolean}
      * @memberof PageVendorBillSummaryResponse
      */
-    number?: number;
-    /**
-     * 
-     * @type {PageableObject}
-     * @memberof PageVendorBillSummaryResponse
-     */
-    pageable?: PageableObject;
-    /**
-     * 
-     * @type {SortObject}
-     * @memberof PageVendorBillSummaryResponse
-     */
-    sort?: SortObject;
+    empty?: boolean;
     /**
      * 
      * @type {boolean}
@@ -97,13 +67,43 @@ export interface PageVendorBillSummaryResponse {
      * @type {number}
      * @memberof PageVendorBillSummaryResponse
      */
+    number?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageVendorBillSummaryResponse
+     */
     numberOfElements?: number;
     /**
      * 
-     * @type {boolean}
+     * @type {PageableObject}
      * @memberof PageVendorBillSummaryResponse
      */
-    empty?: boolean;
+    pageable?: PageableObject;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageVendorBillSummaryResponse
+     */
+    size?: number;
+    /**
+     * 
+     * @type {SortObject}
+     * @memberof PageVendorBillSummaryResponse
+     */
+    sort?: SortObject;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageVendorBillSummaryResponse
+     */
+    totalElements?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageVendorBillSummaryResponse
+     */
+    totalPages?: number;
 }
 
 /**
@@ -123,17 +123,17 @@ export function PageVendorBillSummaryResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(VendorBillSummaryResponseFromJSON)),
-        'number': json['number'] == null ? undefined : json['number'],
-        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
-        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'empty': json['empty'] == null ? undefined : json['empty'],
         'first': json['first'] == null ? undefined : json['first'],
         'last': json['last'] == null ? undefined : json['last'],
+        'number': json['number'] == null ? undefined : json['number'],
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
-        'empty': json['empty'] == null ? undefined : json['empty'],
+        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
+        'size': json['size'] == null ? undefined : json['size'],
+        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
+        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
     };
 }
 
@@ -143,17 +143,17 @@ export function PageVendorBillSummaryResponseToJSON(value?: PageVendorBillSummar
     }
     return {
         
-        'totalElements': value['totalElements'],
-        'totalPages': value['totalPages'],
-        'size': value['size'],
         'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(VendorBillSummaryResponseToJSON)),
-        'number': value['number'],
-        'pageable': PageableObjectToJSON(value['pageable']),
-        'sort': SortObjectToJSON(value['sort']),
+        'empty': value['empty'],
         'first': value['first'],
         'last': value['last'],
+        'number': value['number'],
         'numberOfElements': value['numberOfElements'],
-        'empty': value['empty'],
+        'pageable': PageableObjectToJSON(value['pageable']),
+        'size': value['size'],
+        'sort': SortObjectToJSON(value['sort']),
+        'totalElements': value['totalElements'],
+        'totalPages': value['totalPages'],
     };
 }
 

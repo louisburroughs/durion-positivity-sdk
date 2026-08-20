@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating or updating a travel buffer policy
  * @export
  * @interface TravelBufferPolicyRequest
  */
 export interface TravelBufferPolicyRequest {
     /**
-     * 
+     * Type of buffer the policy applies; one of FLAT_MINUTES, PERCENTAGE_OF_TRAVEL or DISTANCE_MULTIPLIER
      * @type {string}
      * @memberof TravelBufferPolicyRequest
      */
-    name?: string;
+    bufferType: string;
     /**
-     * 
-     * @type {string}
-     * @memberof TravelBufferPolicyRequest
-     */
-    bufferType?: string;
-    /**
-     * 
+     * Numeric value of the buffer (interpretation depends on buffer type)
      * @type {number}
      * @memberof TravelBufferPolicyRequest
      */
     bufferValue?: number;
     /**
-     * 
+     * Display name of the travel buffer policy
+     * @type {string}
+     * @memberof TravelBufferPolicyRequest
+     */
+    name: string;
+    /**
+     * Free-text notes about the policy
      * @type {string}
      * @memberof TravelBufferPolicyRequest
      */
@@ -49,6 +49,8 @@ export interface TravelBufferPolicyRequest {
  * Check if a given object implements the TravelBufferPolicyRequest interface.
  */
 export function instanceOfTravelBufferPolicyRequest(value: object): boolean {
+    if (!('bufferType' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -62,9 +64,9 @@ export function TravelBufferPolicyRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
-        'bufferType': json['bufferType'] == null ? undefined : json['bufferType'],
+        'bufferType': json['bufferType'],
         'bufferValue': json['bufferValue'] == null ? undefined : json['bufferValue'],
+        'name': json['name'],
         'notes': json['notes'] == null ? undefined : json['notes'],
     };
 }
@@ -75,9 +77,9 @@ export function TravelBufferPolicyRequestToJSON(value?: TravelBufferPolicyReques
     }
     return {
         
-        'name': value['name'],
         'bufferType': value['bufferType'],
         'bufferValue': value['bufferValue'],
+        'name': value['name'],
         'notes': value['notes'],
     };
 }

@@ -14,77 +14,77 @@
 
 import { mapValues } from '../runtime';
 /**
- * Search criteria
+ * Request to search parties with optional filters and pagination
  * @export
  * @interface SearchPartiesRequest
  */
 export interface SearchPartiesRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof SearchPartiesRequest
-     */
-    name?: string;
-    /**
-     * 
+     * Search by email address
      * @type {string}
      * @memberof SearchPartiesRequest
      */
     email?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof SearchPartiesRequest
-     */
-    phone?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SearchPartiesRequest
-     */
-    taxId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SearchPartiesRequest
-     */
-    partyType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SearchPartiesRequest
-     */
-    status?: string;
-    /**
-     * 
+     * Include merged parties in results (default false); admin-only troubleshooting toggle
      * @type {boolean}
      * @memberof SearchPartiesRequest
      */
     includeMerged?: boolean;
     /**
-     * 
+     * Party name search term (matches legalName or displayName)
+     * @type {string}
+     * @memberof SearchPartiesRequest
+     */
+    name?: string;
+    /**
+     * Pagination: page number (1-indexed, default 1)
      * @type {number}
      * @memberof SearchPartiesRequest
      */
     pageNumber?: number;
     /**
-     * 
+     * Pagination: items per page (default 20, max 100)
      * @type {number}
      * @memberof SearchPartiesRequest
      */
     pageSize?: number;
     /**
-     * 
+     * Filter by party type (ORGANIZATION|INDIVIDUAL)
+     * @type {string}
+     * @memberof SearchPartiesRequest
+     */
+    partyType?: string;
+    /**
+     * Search by phone number
+     * @type {string}
+     * @memberof SearchPartiesRequest
+     */
+    phone?: string;
+    /**
+     * Sort field (legalName|createdAt|modifiedAt)
      * @type {string}
      * @memberof SearchPartiesRequest
      */
     sortField?: string;
     /**
-     * 
+     * Sort order (ASC|DESC)
      * @type {string}
      * @memberof SearchPartiesRequest
      */
     sortOrder?: string;
+    /**
+     * Filter by status (ACTIVE|PENDING|SUSPENDED|INACTIVE)
+     * @type {string}
+     * @memberof SearchPartiesRequest
+     */
+    status?: string;
+    /**
+     * Search by tax ID
+     * @type {string}
+     * @memberof SearchPartiesRequest
+     */
+    taxId?: string;
 }
 
 /**
@@ -104,17 +104,17 @@ export function SearchPartiesRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
         'email': json['email'] == null ? undefined : json['email'],
-        'phone': json['phone'] == null ? undefined : json['phone'],
-        'taxId': json['taxId'] == null ? undefined : json['taxId'],
-        'partyType': json['partyType'] == null ? undefined : json['partyType'],
-        'status': json['status'] == null ? undefined : json['status'],
         'includeMerged': json['includeMerged'] == null ? undefined : json['includeMerged'],
+        'name': json['name'] == null ? undefined : json['name'],
         'pageNumber': json['pageNumber'] == null ? undefined : json['pageNumber'],
         'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
+        'partyType': json['partyType'] == null ? undefined : json['partyType'],
+        'phone': json['phone'] == null ? undefined : json['phone'],
         'sortField': json['sortField'] == null ? undefined : json['sortField'],
         'sortOrder': json['sortOrder'] == null ? undefined : json['sortOrder'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'taxId': json['taxId'] == null ? undefined : json['taxId'],
     };
 }
 
@@ -124,17 +124,17 @@ export function SearchPartiesRequestToJSON(value?: SearchPartiesRequest | null):
     }
     return {
         
-        'name': value['name'],
         'email': value['email'],
-        'phone': value['phone'],
-        'taxId': value['taxId'],
-        'partyType': value['partyType'],
-        'status': value['status'],
         'includeMerged': value['includeMerged'],
+        'name': value['name'],
         'pageNumber': value['pageNumber'],
         'pageSize': value['pageSize'],
+        'partyType': value['partyType'],
+        'phone': value['phone'],
         'sortField': value['sortField'],
         'sortOrder': value['sortOrder'],
+        'status': value['status'],
+        'taxId': value['taxId'],
     };
 }
 

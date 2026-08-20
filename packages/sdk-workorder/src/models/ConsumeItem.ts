@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single picked item to consume
  * @export
  * @interface ConsumeItem
  */
 export interface ConsumeItem {
     /**
-     * 
+     * Identifier of the pick task to consume from
      * @type {string}
      * @memberof ConsumeItem
      */
     pickTaskId: string;
     /**
-     * 
+     * Quantity to consume
      * @type {number}
      * @memberof ConsumeItem
      */

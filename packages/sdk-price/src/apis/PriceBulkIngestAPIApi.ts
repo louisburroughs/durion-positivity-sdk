@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface BulkIngestBasePricesRequest {
     bulkIngestRequestBasePriceBulkIngestRecord: BulkIngestRequestBasePriceBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class PriceBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Bulk-imports base price (MSRP) records, appending an effective-dated price window per product and currency. Use this tool for batch price loads from an upstream catalog; use calculatePriceQuote instead to read the price effective at a pricing instant, since quoting resolves these windows. Preconditions: each record\'s effectiveFrom must start after the product\'s current window begins; re-submitting the current open window\'s unchanged price is idempotent and returns the existing id. Required inputs: jobId and locationId (UUIDs) and records (at least one), each record carrying productId (UUID string), msrp (decimal string), currency (ISO 4217 code), and effectiveFrom as an ISO-8601 instant such as 2026-03-01T00:00:00Z; operatorId is optional. Emits a PRICE_BULK_INGEST event; a new window closes the previous open window at its effectiveFrom and rows are processed independently, so one bad row does not abort the batch. Returns 200 with per-row results even when rows fail, marking failed rows with errorCode PRICE_INGEST_FAILED (including overlapping-window conflicts and unparseable values), and 400 when the batch envelope itself is invalid. 
+     * Bulk Import Base Price Records
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async bulkIngestBasePricesRaw(requestParameters: BulkIngestBasePricesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestBasePriceBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestBasePriceBulkIngestRecord',
-                'Required parameter "bulkIngestRequestBasePriceBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestBasePriceBulkIngestRecord" was null or undefined when calling bulkIngestBasePrices().'
             );
         }
 
@@ -72,11 +72,11 @@ export class PriceBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Bulk-imports base price (MSRP) records, appending an effective-dated price window per product and currency. Use this tool for batch price loads from an upstream catalog; use calculatePriceQuote instead to read the price effective at a pricing instant, since quoting resolves these windows. Preconditions: each record\'s effectiveFrom must start after the product\'s current window begins; re-submitting the current open window\'s unchanged price is idempotent and returns the existing id. Required inputs: jobId and locationId (UUIDs) and records (at least one), each record carrying productId (UUID string), msrp (decimal string), currency (ISO 4217 code), and effectiveFrom as an ISO-8601 instant such as 2026-03-01T00:00:00Z; operatorId is optional. Emits a PRICE_BULK_INGEST event; a new window closes the previous open window at its effectiveFrom and rows are processed independently, so one bad row does not abort the batch. Returns 200 with per-row results even when rows fail, marking failed rows with errorCode PRICE_INGEST_FAILED (including overlapping-window conflicts and unparseable values), and 400 when the batch envelope itself is invalid. 
+     * Bulk Import Base Price Records
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async bulkIngestBasePrices(requestParameters: BulkIngestBasePricesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.bulkIngestBasePricesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

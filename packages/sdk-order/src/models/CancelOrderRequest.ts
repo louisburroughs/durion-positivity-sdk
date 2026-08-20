@@ -14,35 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for cancelling an order
  * @export
  * @interface CancelOrderRequest
  */
 export interface CancelOrderRequest {
     /**
-     * 
+     * Reason explaining why the order is being cancelled
      * @type {string}
      * @memberof CancelOrderRequest
      */
     cancellationReason: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CancelOrderRequest
-     */
-    workOrderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CancelOrderRequest
-     */
-    paymentId?: string;
-    /**
-     * 
+     * Optional idempotency key for duplicate cancellation prevention
      * @type {string}
      * @memberof CancelOrderRequest
      */
     idempotencyKey?: string;
+    /**
+     * Identifier of the associated workorder, when applicable
+     * @type {string}
+     * @memberof CancelOrderRequest
+     */
+    workOrderId?: string;
 }
 
 /**
@@ -64,9 +58,8 @@ export function CancelOrderRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'cancellationReason': json['cancellationReason'],
-        'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
-        'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
         'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
+        'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
     };
 }
 
@@ -77,9 +70,8 @@ export function CancelOrderRequestToJSON(value?: CancelOrderRequest | null): any
     return {
         
         'cancellationReason': value['cancellationReason'],
-        'workOrderId': value['workOrderId'],
-        'paymentId': value['paymentId'],
         'idempotencyKey': value['idempotencyKey'],
+        'workOrderId': value['workOrderId'],
     };
 }
 

@@ -27,23 +27,23 @@ import {
  */
 export interface InvoiceCreationRequest {
     /**
-     * Workorder identifier backing the invoice draft.
+     * Approval identifier used for billing authorization.
      * @type {string}
      * @memberof InvoiceCreationRequest
      */
-    workorderId?: string;
+    approvalId?: string;
+    /**
+     * Customer party owning the workorder; stored on the invoice for party-scoped lookups (e.g. warranty origin-line search).
+     * @type {string}
+     * @memberof InvoiceCreationRequest
+     */
+    customerId?: string;
     /**
      * Source estimate identifier, when generated from estimate.
      * @type {string}
      * @memberof InvoiceCreationRequest
      */
     estimateId?: string;
-    /**
-     * Approval identifier used for billing authorization.
-     * @type {string}
-     * @memberof InvoiceCreationRequest
-     */
-    approvalId?: string;
     /**
      * Idempotency key to prevent duplicate invoice creation.
      * @type {string}
@@ -56,6 +56,18 @@ export interface InvoiceCreationRequest {
      * @memberof InvoiceCreationRequest
      */
     lineItems?: Array<InvoiceLineItem>;
+    /**
+     * Shop location where the sale is made; used to resolve the tax jurisdiction address.
+     * @type {string}
+     * @memberof InvoiceCreationRequest
+     */
+    locationId?: string;
+    /**
+     * Workorder identifier backing the invoice draft.
+     * @type {string}
+     * @memberof InvoiceCreationRequest
+     */
+    workorderId?: string;
 }
 
 /**
@@ -75,11 +87,13 @@ export function InvoiceCreationRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
         'approvalId': json['approvalId'] == null ? undefined : json['approvalId'],
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
+        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
         'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'lineItems': json['lineItems'] == null ? undefined : ((json['lineItems'] as Array<any>).map(InvoiceLineItemFromJSON)),
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -89,11 +103,13 @@ export function InvoiceCreationRequestToJSON(value?: InvoiceCreationRequest | nu
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'estimateId': value['estimateId'],
         'approvalId': value['approvalId'],
+        'customerId': value['customerId'],
+        'estimateId': value['estimateId'],
         'idempotencyKey': value['idempotencyKey'],
         'lineItems': value['lineItems'] == null ? undefined : ((value['lineItems'] as Array<any>).map(InvoiceLineItemToJSON)),
+        'locationId': value['locationId'],
+        'workorderId': value['workorderId'],
     };
 }
 

@@ -14,77 +14,84 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Product MSRP detail
  * @export
  * @interface ProductMsrpDto
  */
 export interface ProductMsrpDto {
     /**
-     * 
+     * MSRP amount
      * @type {string}
      * @memberof ProductMsrpDto
      */
-    msrpId?: string;
+    amount: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ProductMsrpDto
-     */
-    productId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductMsrpDto
-     */
-    amount?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ProductMsrpDto
-     */
-    currency?: string;
-    /**
-     * 
+     * Timestamp the MSRP was created
      * @type {Date}
      * @memberof ProductMsrpDto
      */
-    effectiveStartDate?: Date;
+    createdAt: Date;
     /**
-     * 
+     * ISO 4217 currency code
+     * @type {string}
+     * @memberof ProductMsrpDto
+     */
+    currency: string;
+    /**
+     * Date the MSRP stops being effective
      * @type {Date}
      * @memberof ProductMsrpDto
      */
     effectiveEndDate?: Date;
     /**
-     * 
+     * Date the MSRP becomes effective
      * @type {Date}
      * @memberof ProductMsrpDto
      */
-    createdAt?: Date;
+    effectiveStartDate: Date;
     /**
-     * 
+     * MSRP identifier
+     * @type {string}
+     * @memberof ProductMsrpDto
+     */
+    msrpId: string;
+    /**
+     * Product identifier the MSRP applies to
+     * @type {string}
+     * @memberof ProductMsrpDto
+     */
+    productId: string;
+    /**
+     * Timestamp the MSRP was last updated
      * @type {Date}
      * @memberof ProductMsrpDto
      */
     updatedAt?: Date;
     /**
-     * 
+     * Identifier of the user that last updated the MSRP
      * @type {string}
      * @memberof ProductMsrpDto
      */
     updatedBy?: string;
     /**
-     * 
+     * Version for optimistic locking
      * @type {number}
      * @memberof ProductMsrpDto
      */
-    version?: number;
+    version: number;
 }
 
 /**
  * Check if a given object implements the ProductMsrpDto interface.
  */
 export function instanceOfProductMsrpDto(value: object): boolean {
+    if (!('amount' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('currency' in value)) return false;
+    if (!('effectiveStartDate' in value)) return false;
+    if (!('msrpId' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -98,16 +105,16 @@ export function ProductMsrpDtoFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'msrpId': json['msrpId'] == null ? undefined : json['msrpId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'amount': json['amount'] == null ? undefined : json['amount'],
-        'currency': json['currency'] == null ? undefined : json['currency'],
-        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
+        'amount': json['amount'],
+        'createdAt': (new Date(json['createdAt'])),
+        'currency': json['currency'],
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
+        'msrpId': json['msrpId'],
+        'productId': json['productId'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
-        'version': json['version'] == null ? undefined : json['version'],
+        'version': json['version'],
     };
 }
 
@@ -117,13 +124,13 @@ export function ProductMsrpDtoToJSON(value?: ProductMsrpDto | null): any {
     }
     return {
         
+        'amount': value['amount'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'currency': value['currency'],
+        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
+        'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0,10)),
         'msrpId': value['msrpId'],
         'productId': value['productId'],
-        'amount': value['amount'],
-        'currency': value['currency'],
-        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString().substring(0,10)),
-        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
         'updatedBy': value['updatedBy'],
         'version': value['version'],

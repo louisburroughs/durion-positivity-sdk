@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to cancel an existing appointment with a mandatory reason code
  * @export
  * @interface CancelAppointmentRequest
  */
 export interface CancelAppointmentRequest {
     /**
-     * 
+     * Mandatory cancellation reason code
      * @type {string}
      * @memberof CancelAppointmentRequest
      */
     cancellationReason: CancelAppointmentRequestCancellationReasonEnum;
     /**
-     * 
+     * Optional free-text notes explaining the cancellation
      * @type {string}
      * @memberof CancelAppointmentRequest
      */

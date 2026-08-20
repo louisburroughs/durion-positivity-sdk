@@ -27,25 +27,25 @@ import {
  */
 export interface CreateHintRequest {
     /**
-     * Product identifier for the hint
-     * @type {string}
-     * @memberof CreateHintRequest
-     */
-    productId: string;
-    /**
      * Fitment tags used to determine product applicability
      * @type {Array<FitmentTagDto>}
      * @memberof CreateHintRequest
      */
     fitmentTags: Array<FitmentTagDto>;
+    /**
+     * Product identifier for the hint
+     * @type {string}
+     * @memberof CreateHintRequest
+     */
+    productId: string;
 }
 
 /**
  * Check if a given object implements the CreateHintRequest interface.
  */
 export function instanceOfCreateHintRequest(value: object): boolean {
-    if (!('productId' in value)) return false;
     if (!('fitmentTags' in value)) return false;
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -59,8 +59,8 @@ export function CreateHintRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'productId': json['productId'],
         'fitmentTags': ((json['fitmentTags'] as Array<any>).map(FitmentTagDtoFromJSON)),
+        'productId': json['productId'],
     };
 }
 
@@ -70,8 +70,8 @@ export function CreateHintRequestToJSON(value?: CreateHintRequest | null): any {
     }
     return {
         
-        'productId': value['productId'],
         'fitmentTags': ((value['fitmentTags'] as Array<any>).map(FitmentTagDtoToJSON)),
+        'productId': value['productId'],
     };
 }
 

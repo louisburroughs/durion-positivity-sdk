@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface BulkIngestVehiclesRequest {
     bulkIngestRequestVehicleBulkIngestRecord: BulkIngestRequestVehicleBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class VehicleBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Ingests a batch of vehicle records into the registry, creating each row independently through the same validation as createVehicle and reporting a per-row outcome. Use this tool for bulk loads such as fleet imports; do not use createVehicle, which registers one vehicle per call, and do not retry a whole batch blindly, because rows that already succeeded would then fail as duplicate VINs. Preconditions: the caller must hold the vehicle-inventory:registry:create authority, and each row\'s VIN must be valid and not already held by an active vehicle for that row to succeed. Required inputs: jobId (UUID), locationId (UUID) and a non-empty records array whose entries require accountId (UUID), vin (17 characters), unitNumber and description; licensePlate, licensePlateJurisdiction, year, make, model and trim are optional per record, and operatorId is optional on the envelope. Emits a VEHICLE_BULK_INGEST event, and every successfully created row also queues a vehicle.vehicle.updated fact on the vehicle.events.v1 outbox for downstream replicas. Returns 200 with per-row results even when some rows fail, since row failures carry the VEHICLE_INGEST_FAILED error code instead of an error status, and 400 with a VALIDATION_FAILED ApiError when the envelope is missing jobId or locationId or the records array is empty. 
+     * Bulk ingest vehicle records
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async bulkIngestVehiclesRaw(requestParameters: BulkIngestVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestVehicleBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestVehicleBulkIngestRecord',
-                'Required parameter "bulkIngestRequestVehicleBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestVehicleBulkIngestRecord" was null or undefined when calling bulkIngestVehicles().'
             );
         }
 
@@ -72,11 +72,11 @@ export class VehicleBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Ingests a batch of vehicle records into the registry, creating each row independently through the same validation as createVehicle and reporting a per-row outcome. Use this tool for bulk loads such as fleet imports; do not use createVehicle, which registers one vehicle per call, and do not retry a whole batch blindly, because rows that already succeeded would then fail as duplicate VINs. Preconditions: the caller must hold the vehicle-inventory:registry:create authority, and each row\'s VIN must be valid and not already held by an active vehicle for that row to succeed. Required inputs: jobId (UUID), locationId (UUID) and a non-empty records array whose entries require accountId (UUID), vin (17 characters), unitNumber and description; licensePlate, licensePlateJurisdiction, year, make, model and trim are optional per record, and operatorId is optional on the envelope. Emits a VEHICLE_BULK_INGEST event, and every successfully created row also queues a vehicle.vehicle.updated fact on the vehicle.events.v1 outbox for downstream replicas. Returns 200 with per-row results even when some rows fail, since row failures carry the VEHICLE_INGEST_FAILED error code instead of an error status, and 400 with a VALIDATION_FAILED ApiError when the envelope is missing jobId or locationId or the records array is empty. 
+     * Bulk ingest vehicle records
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async bulkIngestVehicles(requestParameters: BulkIngestVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.bulkIngestVehiclesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

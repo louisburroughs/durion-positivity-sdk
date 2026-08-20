@@ -26,17 +26,17 @@ export interface MakeResponse {
      */
     id: string;
     /**
-     * Make name
-     * @type {string}
-     * @memberof MakeResponse
-     */
-    name: string;
-    /**
      * Manufacturer identifier for this make
      * @type {string}
      * @memberof MakeResponse
      */
     manufacturerId?: string;
+    /**
+     * Make name
+     * @type {string}
+     * @memberof MakeResponse
+     */
+    name: string;
 }
 
 /**
@@ -59,8 +59,8 @@ export function MakeResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'id': json['id'],
-        'name': json['name'],
         'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
+        'name': json['name'],
     };
 }
 
@@ -71,8 +71,8 @@ export function MakeResponseToJSON(value?: MakeResponse | null): any {
     return {
         
         'id': value['id'],
-        'name': value['name'],
         'manufacturerId': value['manufacturerId'],
+        'name': value['name'],
     };
 }
 

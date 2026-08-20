@@ -45,30 +45,6 @@ import {
  */
 export interface DashboardResponse {
     /**
-     * The date this dashboard is for
-     * @type {Date}
-     * @memberof DashboardResponse
-     */
-    date?: Date;
-    /**
-     * Location identifier
-     * @type {string}
-     * @memberof DashboardResponse
-     */
-    locationId?: string;
-    /**
-     * Workorder summaries for the day
-     * @type {Array<WorkorderSummary>}
-     * @memberof DashboardResponse
-     */
-    workorders?: Array<WorkorderSummary>;
-    /**
-     * Mechanic statuses
-     * @type {Array<MechanicStatus>}
-     * @memberof DashboardResponse
-     */
-    mechanics?: Array<MechanicStatus>;
-    /**
      * Service bay statuses
      * @type {Array<BayStatus>}
      * @memberof DashboardResponse
@@ -81,23 +57,51 @@ export interface DashboardResponse {
      */
     conflicts?: Array<ConflictEntry>;
     /**
-     * Timestamp when data was last refreshed
-     * @type {Date}
-     * @memberof DashboardResponse
-     */
-    lastRefreshed?: Date;
-    /**
      * True when one or more upstream data sources were unavailable during aggregation; data may be incomplete
      * @type {boolean}
      * @memberof DashboardResponse
      */
     dataQualityWarning?: boolean;
+    /**
+     * The date this dashboard is for
+     * @type {Date}
+     * @memberof DashboardResponse
+     */
+    date: Date;
+    /**
+     * Timestamp when data was last refreshed
+     * @type {Date}
+     * @memberof DashboardResponse
+     */
+    lastRefreshed: Date;
+    /**
+     * Location identifier
+     * @type {string}
+     * @memberof DashboardResponse
+     */
+    locationId: string;
+    /**
+     * Mechanic statuses
+     * @type {Array<MechanicStatus>}
+     * @memberof DashboardResponse
+     */
+    mechanics?: Array<MechanicStatus>;
+    /**
+     * Workorder summaries for the day
+     * @type {Array<WorkorderSummary>}
+     * @memberof DashboardResponse
+     */
+    workorders: Array<WorkorderSummary>;
 }
 
 /**
  * Check if a given object implements the DashboardResponse interface.
  */
 export function instanceOfDashboardResponse(value: object): boolean {
+    if (!('date' in value)) return false;
+    if (!('lastRefreshed' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('workorders' in value)) return false;
     return true;
 }
 
@@ -111,14 +115,14 @@ export function DashboardResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'date': json['date'] == null ? undefined : (new Date(json['date'])),
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'workorders': json['workorders'] == null ? undefined : ((json['workorders'] as Array<any>).map(WorkorderSummaryFromJSON)),
-        'mechanics': json['mechanics'] == null ? undefined : ((json['mechanics'] as Array<any>).map(MechanicStatusFromJSON)),
         'bays': json['bays'] == null ? undefined : ((json['bays'] as Array<any>).map(BayStatusFromJSON)),
         'conflicts': json['conflicts'] == null ? undefined : ((json['conflicts'] as Array<any>).map(ConflictEntryFromJSON)),
-        'lastRefreshed': json['lastRefreshed'] == null ? undefined : (new Date(json['lastRefreshed'])),
         'dataQualityWarning': json['dataQualityWarning'] == null ? undefined : json['dataQualityWarning'],
+        'date': (new Date(json['date'])),
+        'lastRefreshed': (new Date(json['lastRefreshed'])),
+        'locationId': json['locationId'],
+        'mechanics': json['mechanics'] == null ? undefined : ((json['mechanics'] as Array<any>).map(MechanicStatusFromJSON)),
+        'workorders': ((json['workorders'] as Array<any>).map(WorkorderSummaryFromJSON)),
     };
 }
 
@@ -128,14 +132,14 @@ export function DashboardResponseToJSON(value?: DashboardResponse | null): any {
     }
     return {
         
-        'date': value['date'] == null ? undefined : ((value['date']).toISOString().substring(0,10)),
-        'locationId': value['locationId'],
-        'workorders': value['workorders'] == null ? undefined : ((value['workorders'] as Array<any>).map(WorkorderSummaryToJSON)),
-        'mechanics': value['mechanics'] == null ? undefined : ((value['mechanics'] as Array<any>).map(MechanicStatusToJSON)),
         'bays': value['bays'] == null ? undefined : ((value['bays'] as Array<any>).map(BayStatusToJSON)),
         'conflicts': value['conflicts'] == null ? undefined : ((value['conflicts'] as Array<any>).map(ConflictEntryToJSON)),
-        'lastRefreshed': value['lastRefreshed'] == null ? undefined : ((value['lastRefreshed']).toISOString()),
         'dataQualityWarning': value['dataQualityWarning'],
+        'date': ((value['date']).toISOString().substring(0,10)),
+        'lastRefreshed': ((value['lastRefreshed']).toISOString()),
+        'locationId': value['locationId'],
+        'mechanics': value['mechanics'] == null ? undefined : ((value['mechanics'] as Array<any>).map(MechanicStatusToJSON)),
+        'workorders': ((value['workorders'] as Array<any>).map(WorkorderSummaryToJSON)),
     };
 }
 

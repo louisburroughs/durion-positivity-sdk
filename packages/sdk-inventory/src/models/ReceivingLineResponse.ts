@@ -14,49 +14,73 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single line within a receiving session, with expected and received quantities
  * @export
  * @interface ReceivingLineResponse
  */
 export interface ReceivingLineResponse {
     /**
-     * 
+     * Effective base-per-document-unit conversion factor applied at posting time
+     * @type {number}
+     * @memberof ReceivingLineResponse
+     */
+    conversionFactor?: number;
+    /**
+     * Quantity as keyed in documentUom; receivedQuantity holds the derived base quantity
+     * @type {number}
+     * @memberof ReceivingLineResponse
+     */
+    documentQuantity?: number;
+    /**
+     * UoM the line was keyed in when it differed from the product's base UoM
      * @type {string}
      * @memberof ReceivingLineResponse
      */
-    lineId?: string;
+    documentUom?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ReceivingLineResponse
-     */
-    productId?: string;
-    /**
-     * 
+     * Quantity expected to be received on the line
      * @type {number}
      * @memberof ReceivingLineResponse
      */
     expectedQuantity?: number;
     /**
-     * 
+     * Identifier of the receiving line
+     * @type {string}
+     * @memberof ReceivingLineResponse
+     */
+    lineId: string;
+    /**
+     * Lot or batch number recorded on receipt; linked to the lot master for LOT-tracked products
+     * @type {string}
+     * @memberof ReceivingLineResponse
+     */
+    lotNumber?: string;
+    /**
+     * Identifier of the product on the receiving line
+     * @type {string}
+     * @memberof ReceivingLineResponse
+     */
+    productId: string;
+    /**
+     * Quantity received so far on the line
      * @type {number}
      * @memberof ReceivingLineResponse
      */
     receivedQuantity?: number;
     /**
-     * 
+     * Status of the receiving line, such as PENDING or RECEIVED
      * @type {string}
      * @memberof ReceivingLineResponse
      */
-    status?: string;
+    status: string;
     /**
-     * 
+     * Identifier of the workorder the line is associated with, when applicable
      * @type {string}
      * @memberof ReceivingLineResponse
      */
     workorderId?: string;
     /**
-     * 
+     * Identifier of the workorder line the receiving line fulfils, when applicable
      * @type {string}
      * @memberof ReceivingLineResponse
      */
@@ -67,6 +91,9 @@ export interface ReceivingLineResponse {
  * Check if a given object implements the ReceivingLineResponse interface.
  */
 export function instanceOfReceivingLineResponse(value: object): boolean {
+    if (!('lineId' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -80,11 +107,15 @@ export function ReceivingLineResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'lineId': json['lineId'] == null ? undefined : json['lineId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
+        'conversionFactor': json['conversionFactor'] == null ? undefined : json['conversionFactor'],
+        'documentQuantity': json['documentQuantity'] == null ? undefined : json['documentQuantity'],
+        'documentUom': json['documentUom'] == null ? undefined : json['documentUom'],
         'expectedQuantity': json['expectedQuantity'] == null ? undefined : json['expectedQuantity'],
+        'lineId': json['lineId'],
+        'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
+        'productId': json['productId'],
         'receivedQuantity': json['receivedQuantity'] == null ? undefined : json['receivedQuantity'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'status': json['status'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
         'workorderLineId': json['workorderLineId'] == null ? undefined : json['workorderLineId'],
     };
@@ -96,9 +127,13 @@ export function ReceivingLineResponseToJSON(value?: ReceivingLineResponse | null
     }
     return {
         
-        'lineId': value['lineId'],
-        'productId': value['productId'],
+        'conversionFactor': value['conversionFactor'],
+        'documentQuantity': value['documentQuantity'],
+        'documentUom': value['documentUom'],
         'expectedQuantity': value['expectedQuantity'],
+        'lineId': value['lineId'],
+        'lotNumber': value['lotNumber'],
+        'productId': value['productId'],
         'receivedQuantity': value['receivedQuantity'],
         'status': value['status'],
         'workorderId': value['workorderId'],

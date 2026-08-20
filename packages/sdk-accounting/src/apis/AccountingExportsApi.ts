@@ -31,7 +31,7 @@ import {
     PageableToJSON,
 } from '../models/index';
 
-export interface GetExportStatus1Request {
+export interface GetExportStatusRequest {
     jobId: string;
 }
 
@@ -39,7 +39,7 @@ export interface ListExportHistoryRequest {
     pageable: Pageable;
 }
 
-export interface RequestExport1Request {
+export interface RequestExportRequest {
     exportJobRequest: ExportJobRequest;
 }
 
@@ -49,14 +49,14 @@ export interface RequestExport1Request {
 export class AccountingExportsApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve the current status of an export job.
-     * Get export job status
+     * Returns the current status of one timekeeping or generic export job. Use this tool to poll a job created by requestExport; use listExportHistory instead to browse all past jobs. Preconditions: the export job must exist. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 EXPORT_JOB_NOT_FOUND when no export job exists for the supplied id. 
+     * Get Export Job Status
      */
-    async getExportStatus1Raw(requestParameters: GetExportStatus1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExportJobResponse>> {
+    async getExportStatusRaw(requestParameters: GetExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExportJobResponse>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling getExportStatus1().'
+                'Required parameter "jobId" was null or undefined when calling getExportStatus().'
             );
         }
 
@@ -83,17 +83,17 @@ export class AccountingExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the current status of an export job.
-     * Get export job status
+     * Returns the current status of one timekeeping or generic export job. Use this tool to poll a job created by requestExport; use listExportHistory instead to browse all past jobs. Preconditions: the export job must exist. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 EXPORT_JOB_NOT_FOUND when no export job exists for the supplied id. 
+     * Get Export Job Status
      */
-    async getExportStatus1(requestParameters: GetExportStatus1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExportJobResponse> {
-        const response = await this.getExportStatus1Raw(requestParameters, initOverrides);
+    async getExportStatus(requestParameters: GetExportStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExportJobResponse> {
+        const response = await this.getExportStatusRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve paginated export job history.
-     * List export history
+     * Lists timekeeping and generic export jobs as a paginated projection, most recent first. Use this tool to review past export jobs; do not use getExportStatus, which polls one job by its id. Preconditions: none beyond the caller holding accounting:export:view. Required inputs: none; the page defaults to 20 items and only requestedAt is a supported sort property. No events are emitted and no state changes; this is a read-only projection. Returns 400 UNSUPPORTED_SORT_PROPERTY when an unsupported sort property is requested. 
+     * List Export Job History
      */
     async listExportHistoryRaw(requestParameters: ListExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageExportJobResponse>> {
         if (requestParameters['pageable'] == null) {
@@ -130,8 +130,8 @@ export class AccountingExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated export job history.
-     * List export history
+     * Lists timekeeping and generic export jobs as a paginated projection, most recent first. Use this tool to review past export jobs; do not use getExportStatus, which polls one job by its id. Preconditions: none beyond the caller holding accounting:export:view. Required inputs: none; the page defaults to 20 items and only requestedAt is a supported sort property. No events are emitted and no state changes; this is a read-only projection. Returns 400 UNSUPPORTED_SORT_PROPERTY when an unsupported sort property is requested. 
+     * List Export Job History
      */
     async listExportHistory(requestParameters: ListExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageExportJobResponse> {
         const response = await this.listExportHistoryRaw(requestParameters, initOverrides);
@@ -139,14 +139,14 @@ export class AccountingExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit an export job request.
-     * Request timekeeping export
+     * Submits an asynchronous timekeeping or generic data export job and returns it in its initial accepted state. Use this tool to export timekeeping data; do not use requestReportExport, which renders financial-statement reports, and poll getExportStatus for completion. Preconditions: none; the job is queued for asynchronous processing. Required inputs: exportType and format (both non-blank strings); filters (JSON object) and deliveryMode are optional. Emits an ACCOUNTING_EXPORT_REQUEST event and returns 202 while the job runs asynchronously. Returns 400 when exportType or format is missing or blank. 
+     * Request Timekeeping Export
      */
-    async requestExport1Raw(requestParameters: RequestExport1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExportJobResponse>> {
+    async requestExportRaw(requestParameters: RequestExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExportJobResponse>> {
         if (requestParameters['exportJobRequest'] == null) {
             throw new runtime.RequiredError(
                 'exportJobRequest',
-                'Required parameter "exportJobRequest" was null or undefined when calling requestExport1().'
+                'Required parameter "exportJobRequest" was null or undefined when calling requestExport().'
             );
         }
 
@@ -176,11 +176,11 @@ export class AccountingExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit an export job request.
-     * Request timekeeping export
+     * Submits an asynchronous timekeeping or generic data export job and returns it in its initial accepted state. Use this tool to export timekeeping data; do not use requestReportExport, which renders financial-statement reports, and poll getExportStatus for completion. Preconditions: none; the job is queued for asynchronous processing. Required inputs: exportType and format (both non-blank strings); filters (JSON object) and deliveryMode are optional. Emits an ACCOUNTING_EXPORT_REQUEST event and returns 202 while the job runs asynchronously. Returns 400 when exportType or format is missing or blank. 
+     * Request Timekeeping Export
      */
-    async requestExport1(requestParameters: RequestExport1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExportJobResponse> {
-        const response = await this.requestExport1Raw(requestParameters, initOverrides);
+    async requestExport(requestParameters: RequestExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExportJobResponse> {
+        const response = await this.requestExportRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

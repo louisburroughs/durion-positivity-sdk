@@ -20,13 +20,37 @@ import { mapValues } from '../runtime';
  */
 export interface ReportExportRequest {
     /**
+     * Optional GL account UUID filter, honored by GENERAL_LEDGER exports only; null spans all accounts
+     * @type {string}
+     * @memberof ReportExportRequest
+     */
+    accountId?: string;
+    /**
+     * Period end date (inclusive, YYYY-MM-DD). For the as-of reports (BALANCE_SHEET, TRIAL_BALANCE, AGED_RECEIVABLES, AGED_PAYABLES) this date is used as the as-of date.
+     * @type {Date}
+     * @memberof ReportExportRequest
+     */
+    endDate: Date;
+    /**
+     * Optional output filename without extension
+     * @type {string}
+     * @memberof ReportExportRequest
+     */
+    filename?: string;
+    /**
      * Export format
      * @type {string}
      * @memberof ReportExportRequest
      */
     format: ReportExportRequestFormatEnum;
     /**
-     * Report type key
+     * Organization UUID to scope the export
+     * @type {string}
+     * @memberof ReportExportRequest
+     */
+    organizationId: string;
+    /**
+     * Report type key. Renderable types: TAX_LIABILITY, INCOME_STATEMENT, BALANCE_SHEET, TRIAL_BALANCE, GENERAL_LEDGER, AGED_RECEIVABLES, AGED_PAYABLES.
      * @type {string}
      * @memberof ReportExportRequest
      */
@@ -37,24 +61,6 @@ export interface ReportExportRequest {
      * @memberof ReportExportRequest
      */
     startDate: Date;
-    /**
-     * Period end date (inclusive, YYYY-MM-DD)
-     * @type {Date}
-     * @memberof ReportExportRequest
-     */
-    endDate: Date;
-    /**
-     * Organization UUID to scope the export
-     * @type {string}
-     * @memberof ReportExportRequest
-     */
-    organizationId: string;
-    /**
-     * Optional output filename without extension
-     * @type {string}
-     * @memberof ReportExportRequest
-     */
-    filename?: string;
 }
 
 /**
@@ -73,11 +79,11 @@ export enum ReportExportRequestFormatEnum {
  * Check if a given object implements the ReportExportRequest interface.
  */
 export function instanceOfReportExportRequest(value: object): boolean {
+    if (!('endDate' in value)) return false;
     if (!('format' in value)) return false;
+    if (!('organizationId' in value)) return false;
     if (!('reportType' in value)) return false;
     if (!('startDate' in value)) return false;
-    if (!('endDate' in value)) return false;
-    if (!('organizationId' in value)) return false;
     return true;
 }
 
@@ -91,12 +97,13 @@ export function ReportExportRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'accountId': json['accountId'] == null ? undefined : json['accountId'],
+        'endDate': (new Date(json['endDate'])),
+        'filename': json['filename'] == null ? undefined : json['filename'],
         'format': json['format'],
+        'organizationId': json['organizationId'],
         'reportType': json['reportType'],
         'startDate': (new Date(json['startDate'])),
-        'endDate': (new Date(json['endDate'])),
-        'organizationId': json['organizationId'],
-        'filename': json['filename'] == null ? undefined : json['filename'],
     };
 }
 
@@ -106,12 +113,13 @@ export function ReportExportRequestToJSON(value?: ReportExportRequest | null): a
     }
     return {
         
+        'accountId': value['accountId'],
+        'endDate': ((value['endDate']).toISOString().substring(0,10)),
+        'filename': value['filename'],
         'format': value['format'],
+        'organizationId': value['organizationId'],
         'reportType': value['reportType'],
         'startDate': ((value['startDate']).toISOString().substring(0,10)),
-        'endDate': ((value['endDate']).toISOString().substring(0,10)),
-        'organizationId': value['organizationId'],
-        'filename': value['filename'],
     };
 }
 

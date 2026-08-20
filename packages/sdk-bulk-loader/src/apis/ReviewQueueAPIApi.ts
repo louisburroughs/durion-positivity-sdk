@@ -20,6 +20,7 @@ import type {
   BulkCorrectionRequest,
   BulkCorrectionResponse,
   CorrectionResultDto,
+  ProblemDetail,
 } from '../models/index';
 import {
     AuditRecordResponseFromJSON,
@@ -32,13 +33,15 @@ import {
     BulkCorrectionResponseToJSON,
     CorrectionResultDtoFromJSON,
     CorrectionResultDtoToJSON,
+    ProblemDetailFromJSON,
+    ProblemDetailToJSON,
 } from '../models/index';
 
 export interface DownloadErrorReportRequest {
     jobId: string;
 }
 
-export interface GetAuditRecordsRequest {
+export interface ListAuditRecordsRequest {
     jobId: string;
 }
 
@@ -58,8 +61,8 @@ export interface SubmitSingleCorrectionRequest {
 export class ReviewQueueAPIApi extends runtime.BaseAPI {
 
     /**
-     * Generates and downloads a CSV file containing all error records for the specified bulk load job.
-     * Download error report as CSV for a bulk load job
+     * Generates a CSV export of the audit records for a bulk load job and returns it as a text/csv attachment. Use this tool to hand failed rows to a spreadsheet for offline correction; use listAuditRecords instead when the records are needed as JSON for programmatic handling. Preconditions: the job must exist and belong to the authenticated operator. Required inputs: jobId (UUID) as a path parameter; the response is a CSV with header columns row_number, entity_type, review_status, reason_codes and original_values, covering every audit record for the job rather than only errored rows. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no job exists with the supplied id for the authenticated operator. 
+     * Download Error Report as CSV
      */
     async downloadErrorReportRaw(requestParameters: DownloadErrorReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
         if (requestParameters['jobId'] == null) {
@@ -92,8 +95,8 @@ export class ReviewQueueAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates and downloads a CSV file containing all error records for the specified bulk load job.
-     * Download error report as CSV for a bulk load job
+     * Generates a CSV export of the audit records for a bulk load job and returns it as a text/csv attachment. Use this tool to hand failed rows to a spreadsheet for offline correction; use listAuditRecords instead when the records are needed as JSON for programmatic handling. Preconditions: the job must exist and belong to the authenticated operator. Required inputs: jobId (UUID) as a path parameter; the response is a CSV with header columns row_number, entity_type, review_status, reason_codes and original_values, covering every audit record for the job rather than only errored rows. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no job exists with the supplied id for the authenticated operator. 
+     * Download Error Report as CSV
      */
     async downloadErrorReport(requestParameters: DownloadErrorReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
         const response = await this.downloadErrorReportRaw(requestParameters, initOverrides);
@@ -101,14 +104,14 @@ export class ReviewQueueAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a list of audit records for the specified bulk load job, including review status and details for each record.
-     * Get audit records for a bulk load job
+     * Returns every row-level audit record captured for a bulk load job, including review status, reason codes and the original source values. Use this tool to inspect which rows failed and why after processing; use downloadErrorReport instead when a CSV export of the same records is needed. Preconditions: the job must exist and belong to the authenticated operator; audit records exist only after processing has run. Required inputs: jobId (UUID) as a path parameter; there is no request body and no pagination, so the full list is returned in one response. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no job exists with the supplied id for the authenticated operator. 
+     * Get Audit Records for Job
      */
-    async getAuditRecordsRaw(requestParameters: GetAuditRecordsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AuditRecordResponse>>> {
+    async listAuditRecordsRaw(requestParameters: ListAuditRecordsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AuditRecordResponse>>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling getAuditRecords().'
+                'Required parameter "jobId" was null or undefined when calling listAuditRecords().'
             );
         }
 
@@ -135,17 +138,17 @@ export class ReviewQueueAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a list of audit records for the specified bulk load job, including review status and details for each record.
-     * Get audit records for a bulk load job
+     * Returns every row-level audit record captured for a bulk load job, including review status, reason codes and the original source values. Use this tool to inspect which rows failed and why after processing; use downloadErrorReport instead when a CSV export of the same records is needed. Preconditions: the job must exist and belong to the authenticated operator; audit records exist only after processing has run. Required inputs: jobId (UUID) as a path parameter; there is no request body and no pagination, so the full list is returned in one response. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no job exists with the supplied id for the authenticated operator. 
+     * Get Audit Records for Job
      */
-    async getAuditRecords(requestParameters: GetAuditRecordsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AuditRecordResponse>> {
-        const response = await this.getAuditRecordsRaw(requestParameters, initOverrides);
+    async listAuditRecords(requestParameters: ListAuditRecordsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AuditRecordResponse>> {
+        const response = await this.listAuditRecordsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Submits corrected data for one or more error records from a bulk import audit. The job must be in FAILED state to accept corrections. Returns 409 if the job is not in a correctable state.
-     * Submit corrected records for a bulk load job
+     * Submits corrected field values for one or more audit records of a FAILED bulk load job, marking each accepted record CORRECTED. Use this tool to fix several failed rows in one call; use submitSingleCorrection instead when correcting exactly one record and a per-record accept or reject status is wanted. Preconditions: the job must belong to the authenticated operator and be in FAILED state; each auditRecordId must belong to that job. Required inputs: corrections, a non-empty list where each item carries auditRecordId (UUID) and correctedData, a map of field names to corrected string values. Emits a BULK_LOADER_CORRECTION_SUBMIT event and stores the corrected values on each audit record; items whose audit record is missing or belongs to another job are rejected individually and reported in the response\'s rejections list without failing the call. Correcting records does not re-run the import; call retryBulkLoadJob and then startJobProcessing to process the job again. Returns 201 with accepted and rejected counts, 409 when the job is not in FAILED state, 404 when the job does not exist, and 403 when it belongs to another operator. 
+     * Submit Corrected Records for Job
      */
     async submitCorrectionsRaw(requestParameters: SubmitCorrectionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkCorrectionResponse>> {
         if (requestParameters['jobId'] == null) {
@@ -188,8 +191,8 @@ export class ReviewQueueAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits corrected data for one or more error records from a bulk import audit. The job must be in FAILED state to accept corrections. Returns 409 if the job is not in a correctable state.
-     * Submit corrected records for a bulk load job
+     * Submits corrected field values for one or more audit records of a FAILED bulk load job, marking each accepted record CORRECTED. Use this tool to fix several failed rows in one call; use submitSingleCorrection instead when correcting exactly one record and a per-record accept or reject status is wanted. Preconditions: the job must belong to the authenticated operator and be in FAILED state; each auditRecordId must belong to that job. Required inputs: corrections, a non-empty list where each item carries auditRecordId (UUID) and correctedData, a map of field names to corrected string values. Emits a BULK_LOADER_CORRECTION_SUBMIT event and stores the corrected values on each audit record; items whose audit record is missing or belongs to another job are rejected individually and reported in the response\'s rejections list without failing the call. Correcting records does not re-run the import; call retryBulkLoadJob and then startJobProcessing to process the job again. Returns 201 with accepted and rejected counts, 409 when the job is not in FAILED state, 404 when the job does not exist, and 403 when it belongs to another operator. 
+     * Submit Corrected Records for Job
      */
     async submitCorrections(requestParameters: SubmitCorrectionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkCorrectionResponse> {
         const response = await this.submitCorrectionsRaw(requestParameters, initOverrides);
@@ -197,8 +200,8 @@ export class ReviewQueueAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits a corrected data record for a single failed audit entry from a bulk import job. The job must be in FAILED state. Returns the acceptance or rejection status for the submitted record.
-     * Submit a single correction record
+     * Submits corrected field values for exactly one audit record of a FAILED bulk load job and reports whether the correction was accepted. Use this tool for interactive row-by-row fixing; use submitCorrections instead to correct a batch of records in one call. Preconditions: the job must belong to the authenticated operator and be in FAILED state; the auditRecordId must belong to that job. Required inputs: auditRecordId (UUID) and correctedData, a map of field names to corrected string values. Emits a BULK_LOADER_CORRECTION_SUBMIT_SINGLE event and stores the corrected values on the audit record, setting its review status to CORRECTED when accepted; correcting a record does not re-run the import. Returns 201 with status ACCEPTED or REJECTED plus a rejectionReason when rejected, 409 when the job is not in FAILED state, 404 when the job does not exist, and 403 when it belongs to another operator. 
+     * Submit a Single Correction Record
      */
     async submitSingleCorrectionRaw(requestParameters: SubmitSingleCorrectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CorrectionResultDto>> {
         if (requestParameters['jobId'] == null) {
@@ -241,8 +244,8 @@ export class ReviewQueueAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits a corrected data record for a single failed audit entry from a bulk import job. The job must be in FAILED state. Returns the acceptance or rejection status for the submitted record.
-     * Submit a single correction record
+     * Submits corrected field values for exactly one audit record of a FAILED bulk load job and reports whether the correction was accepted. Use this tool for interactive row-by-row fixing; use submitCorrections instead to correct a batch of records in one call. Preconditions: the job must belong to the authenticated operator and be in FAILED state; the auditRecordId must belong to that job. Required inputs: auditRecordId (UUID) and correctedData, a map of field names to corrected string values. Emits a BULK_LOADER_CORRECTION_SUBMIT_SINGLE event and stores the corrected values on the audit record, setting its review status to CORRECTED when accepted; correcting a record does not re-run the import. Returns 201 with status ACCEPTED or REJECTED plus a rejectionReason when rejected, 409 when the job is not in FAILED state, 404 when the job does not exist, and 403 when it belongs to another operator. 
+     * Submit a Single Correction Record
      */
     async submitSingleCorrection(requestParameters: SubmitSingleCorrectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CorrectionResultDto> {
         const response = await this.submitSingleCorrectionRaw(requestParameters, initOverrides);

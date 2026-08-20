@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for approving a pending price override
  * @export
  * @interface ApprovePriceOverrideRequest
  */
 export interface ApprovePriceOverrideRequest {
     /**
-     * 
+     * Optional approver comments recorded with the approval
      * @type {string}
      * @memberof ApprovePriceOverrideRequest
      */

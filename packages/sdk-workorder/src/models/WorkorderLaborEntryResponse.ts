@@ -20,35 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderLaborEntryResponse {
     /**
-     * Unique ID of the labor entry
+     * Whether this session is still active (not stopped)
+     * @type {boolean}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    active: boolean;
+    /**
+     * Adjustment reason (if hours were manually adjusted)
      * @type {string}
      * @memberof WorkorderLaborEntryResponse
      */
-    id?: string;
+    adjustmentReason?: string;
     /**
-     * Workorder ID
-     * @type {string}
-     * @memberof WorkorderLaborEntryResponse
-     */
-    workorderId?: string;
-    /**
-     * Service line item ID
-     * @type {string}
-     * @memberof WorkorderLaborEntryResponse
-     */
-    workorderServiceId?: string;
-    /**
-     * Technician ID who performed the work
-     * @type {string}
-     * @memberof WorkorderLaborEntryResponse
-     */
-    technicianId?: string;
-    /**
-     * Labor session start time
+     * Creation timestamp
      * @type {Date}
      * @memberof WorkorderLaborEntryResponse
      */
-    startTime?: Date;
+    createdAt?: Date;
+    /**
+     * User who created this entry
+     * @type {string}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    createdBy?: string;
     /**
      * Labor session end time (null if still active)
      * @type {Date}
@@ -62,41 +56,50 @@ export interface WorkorderLaborEntryResponse {
      */
     hoursWorked?: number;
     /**
+     * Unique ID of the labor entry
+     * @type {string}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    id: string;
+    /**
      * Session notes
      * @type {string}
      * @memberof WorkorderLaborEntryResponse
      */
     notes?: string;
     /**
-     * Adjustment reason (if hours were manually adjusted)
-     * @type {string}
-     * @memberof WorkorderLaborEntryResponse
-     */
-    adjustmentReason?: string;
-    /**
-     * Whether this session is still active (not stopped)
-     * @type {boolean}
-     * @memberof WorkorderLaborEntryResponse
-     */
-    active?: boolean;
-    /**
-     * User who created this entry
-     * @type {string}
-     * @memberof WorkorderLaborEntryResponse
-     */
-    createdBy?: string;
-    /**
-     * Creation timestamp
+     * Labor session start time
      * @type {Date}
      * @memberof WorkorderLaborEntryResponse
      */
-    createdAt?: Date;
+    startTime?: Date;
+    /**
+     * Technician ID who performed the work
+     * @type {string}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    technicianId?: string;
+    /**
+     * Workorder ID
+     * @type {string}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    workorderId: string;
+    /**
+     * Service line item ID
+     * @type {string}
+     * @memberof WorkorderLaborEntryResponse
+     */
+    workorderServiceId?: string;
 }
 
 /**
  * Check if a given object implements the WorkorderLaborEntryResponse interface.
  */
 export function instanceOfWorkorderLaborEntryResponse(value: object): boolean {
+    if (!('active' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -110,18 +113,18 @@ export function WorkorderLaborEntryResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'workorderServiceId': json['workorderServiceId'] == null ? undefined : json['workorderServiceId'],
-        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
-        'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
+        'active': json['active'],
+        'adjustmentReason': json['adjustmentReason'] == null ? undefined : json['adjustmentReason'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'endTime': json['endTime'] == null ? undefined : (new Date(json['endTime'])),
         'hoursWorked': json['hoursWorked'] == null ? undefined : json['hoursWorked'],
+        'id': json['id'],
         'notes': json['notes'] == null ? undefined : json['notes'],
-        'adjustmentReason': json['adjustmentReason'] == null ? undefined : json['adjustmentReason'],
-        'active': json['active'] == null ? undefined : json['active'],
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
+        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
+        'workorderId': json['workorderId'],
+        'workorderServiceId': json['workorderServiceId'] == null ? undefined : json['workorderServiceId'],
     };
 }
 
@@ -131,18 +134,18 @@ export function WorkorderLaborEntryResponseToJSON(value?: WorkorderLaborEntryRes
     }
     return {
         
-        'id': value['id'],
-        'workorderId': value['workorderId'],
-        'workorderServiceId': value['workorderServiceId'],
-        'technicianId': value['technicianId'],
-        'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
+        'active': value['active'],
+        'adjustmentReason': value['adjustmentReason'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
         'endTime': value['endTime'] == null ? undefined : ((value['endTime']).toISOString()),
         'hoursWorked': value['hoursWorked'],
+        'id': value['id'],
         'notes': value['notes'],
-        'adjustmentReason': value['adjustmentReason'],
-        'active': value['active'],
-        'createdBy': value['createdBy'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
+        'technicianId': value['technicianId'],
+        'workorderId': value['workorderId'],
+        'workorderServiceId': value['workorderServiceId'],
     };
 }
 

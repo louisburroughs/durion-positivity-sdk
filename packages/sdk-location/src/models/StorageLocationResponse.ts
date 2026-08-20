@@ -14,71 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing a storage location
  * @export
  * @interface StorageLocationResponse
  */
 export interface StorageLocationResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationResponse
-     */
-    name?: string;
-    /**
-     * 
+     * Barcode identifying the storage location
      * @type {string}
      * @memberof StorageLocationResponse
      */
     barcode?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationResponse
-     */
-    type?: StorageLocationResponseTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationResponse
-     */
-    siteId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationResponse
-     */
-    parentStorageLocationId?: string;
-    /**
-     * 
+     * Capacity attributes of the storage location
      * @type {object}
      * @memberof StorageLocationResponse
      */
     capacity?: object;
     /**
-     * 
+     * Unique identifier of the storage location
+     * @type {string}
+     * @memberof StorageLocationResponse
+     */
+    id: string;
+    /**
+     * Count of inventory items stored at the location
+     * @type {number}
+     * @memberof StorageLocationResponse
+     */
+    inventoryCount: number;
+    /**
+     * Display name of the storage location
+     * @type {string}
+     * @memberof StorageLocationResponse
+     */
+    name?: string;
+    /**
+     * Identifier of the parent storage location
+     * @type {string}
+     * @memberof StorageLocationResponse
+     */
+    parentStorageLocationId?: string;
+    /**
+     * Identifier of the site that owns the storage location
+     * @type {string}
+     * @memberof StorageLocationResponse
+     */
+    siteId?: string;
+    /**
+     * Operational status of the storage location
+     * @type {string}
+     * @memberof StorageLocationResponse
+     */
+    status?: string;
+    /**
+     * Temperature attributes of the storage location
      * @type {object}
      * @memberof StorageLocationResponse
      */
     temperature?: object;
     /**
-     * 
-     * @type {number}
+     * Type classification of the storage location
+     * @type {string}
      * @memberof StorageLocationResponse
      */
-    inventoryCount?: number;
+    type?: StorageLocationResponseTypeEnum;
 }
 
 /**
@@ -98,6 +98,8 @@ export enum StorageLocationResponseTypeEnum {
  * Check if a given object implements the StorageLocationResponse interface.
  */
 export function instanceOfStorageLocationResponse(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('inventoryCount' in value)) return false;
     return true;
 }
 
@@ -111,16 +113,16 @@ export function StorageLocationResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
         'barcode': json['barcode'] == null ? undefined : json['barcode'],
-        'type': json['type'] == null ? undefined : json['type'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'siteId': json['siteId'] == null ? undefined : json['siteId'],
-        'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
         'capacity': json['capacity'] == null ? undefined : json['capacity'],
+        'id': json['id'],
+        'inventoryCount': json['inventoryCount'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
+        'siteId': json['siteId'] == null ? undefined : json['siteId'],
+        'status': json['status'] == null ? undefined : json['status'],
         'temperature': json['temperature'] == null ? undefined : json['temperature'],
-        'inventoryCount': json['inventoryCount'] == null ? undefined : json['inventoryCount'],
+        'type': json['type'] == null ? undefined : json['type'],
     };
 }
 
@@ -130,16 +132,16 @@ export function StorageLocationResponseToJSON(value?: StorageLocationResponse | 
     }
     return {
         
-        'id': value['id'],
-        'name': value['name'],
         'barcode': value['barcode'],
-        'type': value['type'],
-        'status': value['status'],
-        'siteId': value['siteId'],
-        'parentStorageLocationId': value['parentStorageLocationId'],
         'capacity': value['capacity'],
-        'temperature': value['temperature'],
+        'id': value['id'],
         'inventoryCount': value['inventoryCount'],
+        'name': value['name'],
+        'parentStorageLocationId': value['parentStorageLocationId'],
+        'siteId': value['siteId'],
+        'status': value['status'],
+        'temperature': value['temperature'],
+        'type': value['type'],
     };
 }
 

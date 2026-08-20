@@ -14,53 +14,91 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Representation of a replenishment policy defining min/max stock thresholds for an item at a location
  * @export
  * @interface ReplenishmentPolicyResponse
  */
 export interface ReplenishmentPolicyResponse {
     /**
-     * 
+     * Whether the policy participates in replenishment evaluation
+     * @type {boolean}
+     * @memberof ReplenishmentPolicyResponse
+     */
+    active: boolean;
+    /**
+     * Timestamp at which the replenishment policy was created
      * @type {string}
      * @memberof ReplenishmentPolicyResponse
      */
-    policyId?: string;
+    createdAt: string;
     /**
-     * 
+     * SKU of the item the replenishment policy applies to
      * @type {string}
      * @memberof ReplenishmentPolicyResponse
      */
-    locationId?: string;
+    itemSKU: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ReplenishmentPolicyResponse
-     */
-    itemSKU?: string;
-    /**
-     * 
+     * Per-policy lead-time override in days; absent means vendor-feed/default lead time applies
      * @type {number}
      * @memberof ReplenishmentPolicyResponse
      */
-    minimumQuantity?: number;
+    leadTimeDaysOverride?: number;
     /**
-     * 
-     * @type {number}
-     * @memberof ReplenishmentPolicyResponse
-     */
-    maximumQuantity?: number;
-    /**
-     * 
+     * Identifier of the location the replenishment policy applies to
      * @type {string}
      * @memberof ReplenishmentPolicyResponse
      */
-    createdAt?: string;
+    locationId: string;
+    /**
+     * Maximum on-hand quantity replenishment aims to restock up to
+     * @type {number}
+     * @memberof ReplenishmentPolicyResponse
+     */
+    maximumQuantity: number;
+    /**
+     * Minimum on-hand quantity that triggers replenishment when reached
+     * @type {number}
+     * @memberof ReplenishmentPolicyResponse
+     */
+    minimumQuantity: number;
+    /**
+     * Round the computed replenishment quantity up to the nearest multiple of this value; absent means no rounding
+     * @type {number}
+     * @memberof ReplenishmentPolicyResponse
+     */
+    orderMultiple?: number;
+    /**
+     * Unique identifier of the replenishment policy
+     * @type {string}
+     * @memberof ReplenishmentPolicyResponse
+     */
+    policyId: string;
+    /**
+     * Preferred sourcing channel for replenishing this policy's pick face
+     * @type {string}
+     * @memberof ReplenishmentPolicyResponse
+     */
+    preferredSourceType: string;
+    /**
+     * Instant until which the policy is snoozed (excluded from replenishment evaluation); absent or past means the policy is evaluated normally
+     * @type {string}
+     * @memberof ReplenishmentPolicyResponse
+     */
+    snoozedUntil?: string;
 }
 
 /**
  * Check if a given object implements the ReplenishmentPolicyResponse interface.
  */
 export function instanceOfReplenishmentPolicyResponse(value: object): boolean {
+    if (!('active' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('itemSKU' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('maximumQuantity' in value)) return false;
+    if (!('minimumQuantity' in value)) return false;
+    if (!('policyId' in value)) return false;
+    if (!('preferredSourceType' in value)) return false;
     return true;
 }
 
@@ -74,12 +112,17 @@ export function ReplenishmentPolicyResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'policyId': json['policyId'] == null ? undefined : json['policyId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'itemSKU': json['itemSKU'] == null ? undefined : json['itemSKU'],
-        'minimumQuantity': json['minimumQuantity'] == null ? undefined : json['minimumQuantity'],
-        'maximumQuantity': json['maximumQuantity'] == null ? undefined : json['maximumQuantity'],
-        'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
+        'active': json['active'],
+        'createdAt': json['createdAt'],
+        'itemSKU': json['itemSKU'],
+        'leadTimeDaysOverride': json['leadTimeDaysOverride'] == null ? undefined : json['leadTimeDaysOverride'],
+        'locationId': json['locationId'],
+        'maximumQuantity': json['maximumQuantity'],
+        'minimumQuantity': json['minimumQuantity'],
+        'orderMultiple': json['orderMultiple'] == null ? undefined : json['orderMultiple'],
+        'policyId': json['policyId'],
+        'preferredSourceType': json['preferredSourceType'],
+        'snoozedUntil': json['snoozedUntil'] == null ? undefined : json['snoozedUntil'],
     };
 }
 
@@ -89,12 +132,17 @@ export function ReplenishmentPolicyResponseToJSON(value?: ReplenishmentPolicyRes
     }
     return {
         
-        'policyId': value['policyId'],
-        'locationId': value['locationId'],
-        'itemSKU': value['itemSKU'],
-        'minimumQuantity': value['minimumQuantity'],
-        'maximumQuantity': value['maximumQuantity'],
+        'active': value['active'],
         'createdAt': value['createdAt'],
+        'itemSKU': value['itemSKU'],
+        'leadTimeDaysOverride': value['leadTimeDaysOverride'],
+        'locationId': value['locationId'],
+        'maximumQuantity': value['maximumQuantity'],
+        'minimumQuantity': value['minimumQuantity'],
+        'orderMultiple': value['orderMultiple'],
+        'policyId': value['policyId'],
+        'preferredSourceType': value['preferredSourceType'],
+        'snoozedUntil': value['snoozedUntil'],
     };
 }
 

@@ -26,12 +26,44 @@ export interface GLAccountUpdateRequest {
      */
     accountName?: string;
     /**
+     * Updated account subtype refining the immutable accountType for report grouping and posting-config plausibility checks. Left unchanged when omitted.
+     * @type {string}
+     * @memberof GLAccountUpdateRequest
+     */
+    accountSubtype?: GLAccountUpdateRequestAccountSubtypeEnum;
+    /**
      * Updated account description
      * @type {string}
      * @memberof GLAccountUpdateRequest
      */
     description?: string;
+    /**
+     * Whether journal entry lines on this account participate in reconciliation (e.g. settlement/bank reconciliation). Left unchanged when omitted.
+     * @type {boolean}
+     * @memberof GLAccountUpdateRequest
+     */
+    reconcilable?: boolean;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum GLAccountUpdateRequestAccountSubtypeEnum {
+    Receivable = 'RECEIVABLE',
+    Payable = 'PAYABLE',
+    BankCash = 'BANK_CASH',
+    UndepositedFunds = 'UNDEPOSITED_FUNDS',
+    TaxPayable = 'TAX_PAYABLE',
+    CurrentAsset = 'CURRENT_ASSET',
+    FixedAsset = 'FIXED_ASSET',
+    CurrentLiability = 'CURRENT_LIABILITY',
+    Sales = 'SALES',
+    CostOfSales = 'COST_OF_SALES',
+    OperatingExpense = 'OPERATING_EXPENSE',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the GLAccountUpdateRequest interface.
@@ -51,7 +83,9 @@ export function GLAccountUpdateRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
+        'accountSubtype': json['accountSubtype'] == null ? undefined : json['accountSubtype'],
         'description': json['description'] == null ? undefined : json['description'],
+        'reconcilable': json['reconcilable'] == null ? undefined : json['reconcilable'],
     };
 }
 
@@ -62,7 +96,9 @@ export function GLAccountUpdateRequestToJSON(value?: GLAccountUpdateRequest | nu
     return {
         
         'accountName': value['accountName'],
+        'accountSubtype': value['accountSubtype'],
         'description': value['description'],
+        'reconcilable': value['reconcilable'],
     };
 }
 

@@ -21,29 +21,29 @@ import {
 } from './Transfer';
 
 /**
- * 
+ * Response describing the outcome of deactivating a location and any inventory transfer performed
  * @export
  * @interface DeactivateLocationResponse
  */
 export interface DeactivateLocationResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof DeactivateLocationResponse
-     */
-    sourceLocationId?: string;
-    /**
-     * 
+     * Identifier of the destination location inventory was moved to, if any
      * @type {string}
      * @memberof DeactivateLocationResponse
      */
     destinationLocationId?: string;
     /**
-     * 
+     * Identifier of the location that was deactivated
      * @type {string}
      * @memberof DeactivateLocationResponse
      */
-    status?: string;
+    sourceLocationId: string;
+    /**
+     * Resulting status of the source location after deactivation
+     * @type {string}
+     * @memberof DeactivateLocationResponse
+     */
+    status: string;
     /**
      * 
      * @type {Transfer}
@@ -56,6 +56,8 @@ export interface DeactivateLocationResponse {
  * Check if a given object implements the DeactivateLocationResponse interface.
  */
 export function instanceOfDeactivateLocationResponse(value: object): boolean {
+    if (!('sourceLocationId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -69,9 +71,9 @@ export function DeactivateLocationResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
         'destinationLocationId': json['destinationLocationId'] == null ? undefined : json['destinationLocationId'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'sourceLocationId': json['sourceLocationId'],
+        'status': json['status'],
         'transfer': json['transfer'] == null ? undefined : TransferFromJSON(json['transfer']),
     };
 }
@@ -82,8 +84,8 @@ export function DeactivateLocationResponseToJSON(value?: DeactivateLocationRespo
     }
     return {
         
-        'sourceLocationId': value['sourceLocationId'],
         'destinationLocationId': value['destinationLocationId'],
+        'sourceLocationId': value['sourceLocationId'],
         'status': value['status'],
         'transfer': TransferToJSON(value['transfer']),
     };

@@ -20,23 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface JournalEntryLineRequest {
     /**
-     * GL account UUID
-     * @type {string}
+     * Credit amount for this line
+     * @type {number}
      * @memberof JournalEntryLineRequest
      */
-    glAccountId: string;
+    creditAmount?: number;
     /**
      * Debit amount for this line
      * @type {number}
      * @memberof JournalEntryLineRequest
      */
     debitAmount?: number;
-    /**
-     * Credit amount for this line
-     * @type {number}
-     * @memberof JournalEntryLineRequest
-     */
-    creditAmount?: number;
     /**
      * Line description
      * @type {string}
@@ -49,6 +43,12 @@ export interface JournalEntryLineRequest {
      * @memberof JournalEntryLineRequest
      */
     dimensions?: { [key: string]: string; };
+    /**
+     * GL account UUID
+     * @type {string}
+     * @memberof JournalEntryLineRequest
+     */
+    glAccountId: string;
     /**
      * 
      * @type {boolean}
@@ -75,11 +75,11 @@ export function JournalEntryLineRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'glAccountId': json['glAccountId'],
-        'debitAmount': json['debitAmount'] == null ? undefined : json['debitAmount'],
         'creditAmount': json['creditAmount'] == null ? undefined : json['creditAmount'],
+        'debitAmount': json['debitAmount'] == null ? undefined : json['debitAmount'],
         'description': json['description'] == null ? undefined : json['description'],
         'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
+        'glAccountId': json['glAccountId'],
         'singleSidedAmount': json['singleSidedAmount'] == null ? undefined : json['singleSidedAmount'],
     };
 }
@@ -90,11 +90,11 @@ export function JournalEntryLineRequestToJSON(value?: JournalEntryLineRequest | 
     }
     return {
         
-        'glAccountId': value['glAccountId'],
-        'debitAmount': value['debitAmount'],
         'creditAmount': value['creditAmount'],
+        'debitAmount': value['debitAmount'],
         'description': value['description'],
         'dimensions': value['dimensions'],
+        'glAccountId': value['glAccountId'],
         'singleSidedAmount': value['singleSidedAmount'],
     };
 }

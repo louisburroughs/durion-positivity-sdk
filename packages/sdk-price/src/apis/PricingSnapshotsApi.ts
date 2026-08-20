@@ -22,7 +22,7 @@ import {
     PricingSnapshotResponseToJSON,
 } from '../models/index';
 
-export interface GetSnapshotRequest {
+export interface GetPricingSnapshotByIdRequest {
     snapshotId: string;
 }
 
@@ -32,14 +32,14 @@ export interface GetSnapshotRequest {
 export class PricingSnapshotsApi extends runtime.BaseAPI {
 
     /**
-     * Retrieves an immutable pricing snapshot using its snapshot identifier.
-     * Get pricing snapshot by ID
+     * Returns an immutable pricing snapshot that captured the prices, applied rules, and policy version of a past pricing decision. Use this tool to audit or re-display exactly what was priced at capture time; do not use calculatePriceQuote, which computes a fresh price that may differ from the recorded one. Preconditions: a snapshot with the supplied id must have been persisted by an earlier pricing flow. Required inputs: snapshotId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; snapshots are immutable and this is a read-only projection. Returns 404 with code SNAPSHOT_NOT_FOUND when no snapshot exists for the supplied id. 
+     * Get Pricing Snapshot By ID
      */
-    async getSnapshotRaw(requestParameters: GetSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PricingSnapshotResponse>> {
+    async getPricingSnapshotByIdRaw(requestParameters: GetPricingSnapshotByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PricingSnapshotResponse>> {
         if (requestParameters['snapshotId'] == null) {
             throw new runtime.RequiredError(
                 'snapshotId',
-                'Required parameter "snapshotId" was null or undefined when calling getSnapshot().'
+                'Required parameter "snapshotId" was null or undefined when calling getPricingSnapshotById().'
             );
         }
 
@@ -66,11 +66,11 @@ export class PricingSnapshotsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves an immutable pricing snapshot using its snapshot identifier.
-     * Get pricing snapshot by ID
+     * Returns an immutable pricing snapshot that captured the prices, applied rules, and policy version of a past pricing decision. Use this tool to audit or re-display exactly what was priced at capture time; do not use calculatePriceQuote, which computes a fresh price that may differ from the recorded one. Preconditions: a snapshot with the supplied id must have been persisted by an earlier pricing flow. Required inputs: snapshotId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; snapshots are immutable and this is a read-only projection. Returns 404 with code SNAPSHOT_NOT_FOUND when no snapshot exists for the supplied id. 
+     * Get Pricing Snapshot By ID
      */
-    async getSnapshot(requestParameters: GetSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PricingSnapshotResponse> {
-        const response = await this.getSnapshotRaw(requestParameters, initOverrides);
+    async getPricingSnapshotById(requestParameters: GetPricingSnapshotByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PricingSnapshotResponse> {
+        const response = await this.getPricingSnapshotByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

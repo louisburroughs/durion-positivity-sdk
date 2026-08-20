@@ -14,53 +14,56 @@
 
 import { mapValues } from '../runtime';
 /**
- * Vehicle object to be created
+ * Legacy request payload for creating or updating a vehicle
  * @export
  * @interface VehicleLegacyRequest
  */
 export interface VehicleLegacyRequest {
     /**
-     * 
+     * Identifier of the vehicle to update; omit to create a new vehicle
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
     id?: string;
     /**
-     * 
+     * Manufacturer of the vehicle
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
-    make?: string;
+    make: string;
     /**
-     * 
+     * Model of the vehicle
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
-    model?: string;
+    model: string;
     /**
-     * 
-     * @type {number}
-     * @memberof VehicleLegacyRequest
-     */
-    year?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleLegacyRequest
-     */
-    vin?: string;
-    /**
-     * 
+     * Vehicle type classification (CAR, VAN, COMMERCIAL_TRUCK, PASSENGER_TRUCK)
      * @type {string}
      * @memberof VehicleLegacyRequest
      */
     vehicleType?: string;
+    /**
+     * 17-character Vehicle Identification Number
+     * @type {string}
+     * @memberof VehicleLegacyRequest
+     */
+    vin: string;
+    /**
+     * Model year of the vehicle
+     * @type {number}
+     * @memberof VehicleLegacyRequest
+     */
+    year?: number;
 }
 
 /**
  * Check if a given object implements the VehicleLegacyRequest interface.
  */
 export function instanceOfVehicleLegacyRequest(value: object): boolean {
+    if (!('make' in value)) return false;
+    if (!('model' in value)) return false;
+    if (!('vin' in value)) return false;
     return true;
 }
 
@@ -75,11 +78,11 @@ export function VehicleLegacyRequestFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
-        'make': json['make'] == null ? undefined : json['make'],
-        'model': json['model'] == null ? undefined : json['model'],
-        'year': json['year'] == null ? undefined : json['year'],
-        'vin': json['vin'] == null ? undefined : json['vin'],
+        'make': json['make'],
+        'model': json['model'],
         'vehicleType': json['vehicleType'] == null ? undefined : json['vehicleType'],
+        'vin': json['vin'],
+        'year': json['year'] == null ? undefined : json['year'],
     };
 }
 
@@ -92,9 +95,9 @@ export function VehicleLegacyRequestToJSON(value?: VehicleLegacyRequest | null):
         'id': value['id'],
         'make': value['make'],
         'model': value['model'],
-        'year': value['year'],
-        'vin': value['vin'],
         'vehicleType': value['vehicleType'],
+        'vin': value['vin'],
+        'year': value['year'],
     };
 }
 

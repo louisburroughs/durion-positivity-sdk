@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * An email address for a contact
  * @export
  * @interface EmailAddressDTO
  */
 export interface EmailAddressDTO {
     /**
-     * 
+     * Email address value
      * @type {string}
      * @memberof EmailAddressDTO
      */
-    type?: string;
+    address: string;
     /**
-     * 
+     * Email address type
      * @type {string}
      * @memberof EmailAddressDTO
      */
-    address?: string;
+    type: string;
 }
 
 /**
  * Check if a given object implements the EmailAddressDTO interface.
  */
 export function instanceOfEmailAddressDTO(value: object): boolean {
+    if (!('address' in value)) return false;
+    if (!('type' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function EmailAddressDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'type': json['type'] == null ? undefined : json['type'],
-        'address': json['address'] == null ? undefined : json['address'],
+        'address': json['address'],
+        'type': json['type'],
     };
 }
 
@@ -61,8 +63,8 @@ export function EmailAddressDTOToJSON(value?: EmailAddressDTO | null): any {
     }
     return {
         
-        'type': value['type'],
         'address': value['address'],
+        'type': value['type'],
     };
 }
 

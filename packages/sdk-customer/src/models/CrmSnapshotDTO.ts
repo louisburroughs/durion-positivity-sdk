@@ -37,6 +37,18 @@ import {
     ContactSummaryFromJSONTyped,
     ContactSummaryToJSON,
 } from './ContactSummary';
+import type { CustomerInteractionResponse } from './CustomerInteractionResponse';
+import {
+    CustomerInteractionResponseFromJSON,
+    CustomerInteractionResponseFromJSONTyped,
+    CustomerInteractionResponseToJSON,
+} from './CustomerInteractionResponse';
+import type { MarketingConsentSummaryResponse } from './MarketingConsentSummaryResponse';
+import {
+    MarketingConsentSummaryResponseFromJSON,
+    MarketingConsentSummaryResponseFromJSONTyped,
+    MarketingConsentSummaryResponseToJSON,
+} from './MarketingConsentSummaryResponse';
 import type { SnapshotMetadata } from './SnapshotMetadata';
 import {
     SnapshotMetadataFromJSON,
@@ -51,35 +63,35 @@ import {
 } from './VehicleSummary';
 
 /**
- * 
+ * Read-only CRM snapshot of an account, its contacts, vehicles, and billing configuration
  * @export
  * @interface CrmSnapshotDTO
  */
 export interface CrmSnapshotDTO {
     /**
      * 
-     * @type {SnapshotMetadata}
-     * @memberof CrmSnapshotDTO
-     */
-    snapshotMetadata?: SnapshotMetadata;
-    /**
-     * 
      * @type {AccountSummary}
      * @memberof CrmSnapshotDTO
      */
-    account?: AccountSummary;
+    account: AccountSummary;
     /**
      * 
+     * @type {BillingRuleRef}
+     * @memberof CrmSnapshotDTO
+     */
+    billingRules?: BillingRuleRef;
+    /**
+     * Contacts associated with the account
      * @type {Array<ContactSummary>}
      * @memberof CrmSnapshotDTO
      */
-    contacts?: Array<ContactSummary>;
+    contacts: Array<ContactSummary>;
     /**
      * 
-     * @type {Array<VehicleSummary>}
+     * @type {MarketingConsentSummaryResponse}
      * @memberof CrmSnapshotDTO
      */
-    vehicles?: Array<VehicleSummary>;
+    marketingConsent?: MarketingConsentSummaryResponse;
     /**
      * 
      * @type {BillingPreferences}
@@ -87,17 +99,33 @@ export interface CrmSnapshotDTO {
      */
     preferences?: BillingPreferences;
     /**
-     * 
-     * @type {BillingRuleRef}
+     * Most recent touches on the party's interaction timeline
+     * @type {Array<CustomerInteractionResponse>}
      * @memberof CrmSnapshotDTO
      */
-    billingRules?: BillingRuleRef;
+    recentInteractions?: Array<CustomerInteractionResponse>;
+    /**
+     * 
+     * @type {SnapshotMetadata}
+     * @memberof CrmSnapshotDTO
+     */
+    snapshotMetadata: SnapshotMetadata;
+    /**
+     * Vehicles associated with the account
+     * @type {Array<VehicleSummary>}
+     * @memberof CrmSnapshotDTO
+     */
+    vehicles: Array<VehicleSummary>;
 }
 
 /**
  * Check if a given object implements the CrmSnapshotDTO interface.
  */
 export function instanceOfCrmSnapshotDTO(value: object): boolean {
+    if (!('account' in value)) return false;
+    if (!('contacts' in value)) return false;
+    if (!('snapshotMetadata' in value)) return false;
+    if (!('vehicles' in value)) return false;
     return true;
 }
 
@@ -111,12 +139,14 @@ export function CrmSnapshotDTOFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'snapshotMetadata': json['snapshotMetadata'] == null ? undefined : SnapshotMetadataFromJSON(json['snapshotMetadata']),
-        'account': json['account'] == null ? undefined : AccountSummaryFromJSON(json['account']),
-        'contacts': json['contacts'] == null ? undefined : ((json['contacts'] as Array<any>).map(ContactSummaryFromJSON)),
-        'vehicles': json['vehicles'] == null ? undefined : ((json['vehicles'] as Array<any>).map(VehicleSummaryFromJSON)),
-        'preferences': json['preferences'] == null ? undefined : BillingPreferencesFromJSON(json['preferences']),
+        'account': AccountSummaryFromJSON(json['account']),
         'billingRules': json['billingRules'] == null ? undefined : BillingRuleRefFromJSON(json['billingRules']),
+        'contacts': ((json['contacts'] as Array<any>).map(ContactSummaryFromJSON)),
+        'marketingConsent': json['marketingConsent'] == null ? undefined : MarketingConsentSummaryResponseFromJSON(json['marketingConsent']),
+        'preferences': json['preferences'] == null ? undefined : BillingPreferencesFromJSON(json['preferences']),
+        'recentInteractions': json['recentInteractions'] == null ? undefined : ((json['recentInteractions'] as Array<any>).map(CustomerInteractionResponseFromJSON)),
+        'snapshotMetadata': SnapshotMetadataFromJSON(json['snapshotMetadata']),
+        'vehicles': ((json['vehicles'] as Array<any>).map(VehicleSummaryFromJSON)),
     };
 }
 
@@ -126,12 +156,14 @@ export function CrmSnapshotDTOToJSON(value?: CrmSnapshotDTO | null): any {
     }
     return {
         
-        'snapshotMetadata': SnapshotMetadataToJSON(value['snapshotMetadata']),
         'account': AccountSummaryToJSON(value['account']),
-        'contacts': value['contacts'] == null ? undefined : ((value['contacts'] as Array<any>).map(ContactSummaryToJSON)),
-        'vehicles': value['vehicles'] == null ? undefined : ((value['vehicles'] as Array<any>).map(VehicleSummaryToJSON)),
-        'preferences': BillingPreferencesToJSON(value['preferences']),
         'billingRules': BillingRuleRefToJSON(value['billingRules']),
+        'contacts': ((value['contacts'] as Array<any>).map(ContactSummaryToJSON)),
+        'marketingConsent': MarketingConsentSummaryResponseToJSON(value['marketingConsent']),
+        'preferences': BillingPreferencesToJSON(value['preferences']),
+        'recentInteractions': value['recentInteractions'] == null ? undefined : ((value['recentInteractions'] as Array<any>).map(CustomerInteractionResponseToJSON)),
+        'snapshotMetadata': SnapshotMetadataToJSON(value['snapshotMetadata']),
+        'vehicles': ((value['vehicles'] as Array<any>).map(VehicleSummaryToJSON)),
     };
 }
 

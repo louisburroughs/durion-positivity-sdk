@@ -14,41 +14,45 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of a stock reallocation, summarizing reallocated quantities and resulting availability
  * @export
  * @interface ReallocateResponse
  */
 export interface ReallocateResponse {
     /**
-     * 
+     * Available-to-promise quantity for the stock item after reallocation
+     * @type {number}
+     * @memberof ReallocateResponse
+     */
+    atpAfterReallocation: number;
+    /**
+     * Number of audit records created during the reallocation
+     * @type {number}
+     * @memberof ReallocateResponse
+     */
+    auditRecordsCreated: number;
+    /**
+     * Identifier of the stock item that was reallocated
      * @type {string}
      * @memberof ReallocateResponse
      */
-    stockItemId?: string;
+    stockItemId: string;
     /**
-     * 
+     * Total quantity reallocated across all affected reservations
      * @type {number}
      * @memberof ReallocateResponse
      */
-    totalReallocated?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ReallocateResponse
-     */
-    auditRecordsCreated?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ReallocateResponse
-     */
-    atpAfterReallocation?: number;
+    totalReallocated: number;
 }
 
 /**
  * Check if a given object implements the ReallocateResponse interface.
  */
 export function instanceOfReallocateResponse(value: object): boolean {
+    if (!('atpAfterReallocation' in value)) return false;
+    if (!('auditRecordsCreated' in value)) return false;
+    if (!('stockItemId' in value)) return false;
+    if (!('totalReallocated' in value)) return false;
     return true;
 }
 
@@ -62,10 +66,10 @@ export function ReallocateResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'stockItemId': json['stockItemId'] == null ? undefined : json['stockItemId'],
-        'totalReallocated': json['totalReallocated'] == null ? undefined : json['totalReallocated'],
-        'auditRecordsCreated': json['auditRecordsCreated'] == null ? undefined : json['auditRecordsCreated'],
-        'atpAfterReallocation': json['atpAfterReallocation'] == null ? undefined : json['atpAfterReallocation'],
+        'atpAfterReallocation': json['atpAfterReallocation'],
+        'auditRecordsCreated': json['auditRecordsCreated'],
+        'stockItemId': json['stockItemId'],
+        'totalReallocated': json['totalReallocated'],
     };
 }
 
@@ -75,10 +79,10 @@ export function ReallocateResponseToJSON(value?: ReallocateResponse | null): any
     }
     return {
         
+        'atpAfterReallocation': value['atpAfterReallocation'],
+        'auditRecordsCreated': value['auditRecordsCreated'],
         'stockItemId': value['stockItemId'],
         'totalReallocated': value['totalReallocated'],
-        'auditRecordsCreated': value['auditRecordsCreated'],
-        'atpAfterReallocation': value['atpAfterReallocation'],
     };
 }
 

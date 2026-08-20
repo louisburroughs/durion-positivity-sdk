@@ -14,36 +14,77 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a new cart
  * @export
  * @interface CreateCartRequest
  */
 export interface CreateCartRequest {
     /**
-     * 
+     * Identifier of the clerk creating the cart
      * @type {string}
      * @memberof CreateCartRequest
      */
     clerkId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CreateCartRequest
-     */
-    terminalId: string;
-    /**
-     * 
+     * Identifier of the customer associated with the cart, when known
      * @type {string}
      * @memberof CreateCartRequest
      */
     customerId?: string;
     /**
-     * 
+     * Source document id the deposit is held against (required with depositSourceType).
+     * @type {string}
+     * @memberof CreateCartRequest
+     */
+    depositSourceId?: string;
+    /**
+     * When this cart takes a deposit / down payment (odoo-parity story E4), the source document type it is held against; pos-invoice registers a deposit credit at checkout.
+     * @type {string}
+     * @memberof CreateCartRequest
+     */
+    depositSourceType?: CreateCartRequestDepositSourceTypeEnum;
+    /**
+     * Optional order-level note
+     * @type {string}
+     * @memberof CreateCartRequest
+     */
+    generalNote?: string;
+    /**
+     * Optional parking label for resumable drafts
+     * @type {string}
+     * @memberof CreateCartRequest
+     */
+    label?: string;
+    /**
+     * Shop location the cart is created at; drives order-number assignment. Optional when the terminal has an open register session (the session supplies the location); required otherwise.
+     * @type {string}
+     * @memberof CreateCartRequest
+     */
+    locationId?: string;
+    /**
+     * Identifier of the terminal where the cart is created
+     * @type {string}
+     * @memberof CreateCartRequest
+     */
+    terminalId: string;
+    /**
+     * Identifier of the vehicle associated with the cart, when applicable
      * @type {string}
      * @memberof CreateCartRequest
      */
     vehicleId?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CreateCartRequestDepositSourceTypeEnum {
+    Estimate = 'ESTIMATE',
+    Workorder = 'WORKORDER',
+    Order = 'ORDER'
+}
+
 
 /**
  * Check if a given object implements the CreateCartRequest interface.
@@ -65,8 +106,13 @@ export function CreateCartRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'clerkId': json['clerkId'],
-        'terminalId': json['terminalId'],
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
+        'depositSourceId': json['depositSourceId'] == null ? undefined : json['depositSourceId'],
+        'depositSourceType': json['depositSourceType'] == null ? undefined : json['depositSourceType'],
+        'generalNote': json['generalNote'] == null ? undefined : json['generalNote'],
+        'label': json['label'] == null ? undefined : json['label'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'terminalId': json['terminalId'],
         'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
     };
 }
@@ -78,8 +124,13 @@ export function CreateCartRequestToJSON(value?: CreateCartRequest | null): any {
     return {
         
         'clerkId': value['clerkId'],
-        'terminalId': value['terminalId'],
         'customerId': value['customerId'],
+        'depositSourceId': value['depositSourceId'],
+        'depositSourceType': value['depositSourceType'],
+        'generalNote': value['generalNote'],
+        'label': value['label'],
+        'locationId': value['locationId'],
+        'terminalId': value['terminalId'],
         'vehicleId': value['vehicleId'],
     };
 }

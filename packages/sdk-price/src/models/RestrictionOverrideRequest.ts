@@ -14,53 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload to override a sale-restriction rule for a transaction
  * @export
  * @interface RestrictionOverrideRequest
  */
 export interface RestrictionOverrideRequest {
     /**
-     * 
+     * Optional identifier of the approver who authorized the override
      * @type {string}
      * @memberof RestrictionOverrideRequest
      */
-    ruleId: string;
+    approvedBy?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof RestrictionOverrideRequest
-     */
-    transactionId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RestrictionOverrideRequest
-     */
-    productId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RestrictionOverrideRequest
-     */
-    overrideContext: RestrictionOverrideRequestOverrideContextEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof RestrictionOverrideRequest
-     */
-    reasonCode: string;
-    /**
-     * 
+     * Optional free-text notes for the override
      * @type {string}
      * @memberof RestrictionOverrideRequest
      */
     notes?: string;
     /**
-     * 
+     * Transaction lifecycle context for the override
      * @type {string}
      * @memberof RestrictionOverrideRequest
      */
-    approvedBy?: string;
+    overrideContext: RestrictionOverrideRequestOverrideContextEnum;
+    /**
+     * Product the override applies to
+     * @type {string}
+     * @memberof RestrictionOverrideRequest
+     */
+    productId: string;
+    /**
+     * Reason code justifying the override
+     * @type {string}
+     * @memberof RestrictionOverrideRequest
+     */
+    reasonCode: string;
+    /**
+     * Restriction rule being overridden
+     * @type {string}
+     * @memberof RestrictionOverrideRequest
+     */
+    ruleId: string;
+    /**
+     * Transaction the override applies to
+     * @type {string}
+     * @memberof RestrictionOverrideRequest
+     */
+    transactionId: string;
 }
 
 /**
@@ -80,11 +80,11 @@ export enum RestrictionOverrideRequestOverrideContextEnum {
  * Check if a given object implements the RestrictionOverrideRequest interface.
  */
 export function instanceOfRestrictionOverrideRequest(value: object): boolean {
+    if (!('overrideContext' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('reasonCode' in value)) return false;
     if (!('ruleId' in value)) return false;
     if (!('transactionId' in value)) return false;
-    if (!('productId' in value)) return false;
-    if (!('overrideContext' in value)) return false;
-    if (!('reasonCode' in value)) return false;
     return true;
 }
 
@@ -98,13 +98,13 @@ export function RestrictionOverrideRequestFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
+        'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'overrideContext': json['overrideContext'],
+        'productId': json['productId'],
+        'reasonCode': json['reasonCode'],
         'ruleId': json['ruleId'],
         'transactionId': json['transactionId'],
-        'productId': json['productId'],
-        'overrideContext': json['overrideContext'],
-        'reasonCode': json['reasonCode'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
-        'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
     };
 }
 
@@ -114,13 +114,13 @@ export function RestrictionOverrideRequestToJSON(value?: RestrictionOverrideRequ
     }
     return {
         
+        'approvedBy': value['approvedBy'],
+        'notes': value['notes'],
+        'overrideContext': value['overrideContext'],
+        'productId': value['productId'],
+        'reasonCode': value['reasonCode'],
         'ruleId': value['ruleId'],
         'transactionId': value['transactionId'],
-        'productId': value['productId'],
-        'overrideContext': value['overrideContext'],
-        'reasonCode': value['reasonCode'],
-        'notes': value['notes'],
-        'approvedBy': value['approvedBy'],
     };
 }
 

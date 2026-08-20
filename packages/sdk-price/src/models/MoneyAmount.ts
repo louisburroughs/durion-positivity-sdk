@@ -24,19 +24,21 @@ export interface MoneyAmount {
      * @type {number}
      * @memberof MoneyAmount
      */
-    amount?: number;
+    amount: number;
     /**
      * ISO-4217 currency code
      * @type {string}
      * @memberof MoneyAmount
      */
-    currency?: string;
+    currency: string;
 }
 
 /**
  * Check if a given object implements the MoneyAmount interface.
  */
 export function instanceOfMoneyAmount(value: object): boolean {
+    if (!('amount' in value)) return false;
+    if (!('currency' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function MoneyAmountFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'amount': json['amount'] == null ? undefined : json['amount'],
-        'currency': json['currency'] == null ? undefined : json['currency'],
+        'amount': json['amount'],
+        'currency': json['currency'],
     };
 }
 

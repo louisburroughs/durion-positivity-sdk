@@ -14,37 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a price book
  * @export
  * @interface PriceBookCreateRequestDto
  */
 export interface PriceBookCreateRequestDto {
     /**
-     * 
-     * @type {string}
-     * @memberof PriceBookCreateRequestDto
-     */
-    name: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookCreateRequestDto
-     */
-    scope: PriceBookCreateRequestDtoScopeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookCreateRequestDto
-     */
-    scopeId?: string;
-    /**
-     * 
+     * Whether this is the default price book for the scope
      * @type {boolean}
      * @memberof PriceBookCreateRequestDto
      */
     isDefault?: boolean;
     /**
-     * 
+     * Price book name
+     * @type {string}
+     * @memberof PriceBookCreateRequestDto
+     */
+    name: string;
+    /**
+     * Scope the price book applies to
+     * @type {string}
+     * @memberof PriceBookCreateRequestDto
+     */
+    scope: PriceBookCreateRequestDtoScopeEnum;
+    /**
+     * Identifier of the scoped entity (location or customer tier)
+     * @type {string}
+     * @memberof PriceBookCreateRequestDto
+     */
+    scopeId?: string;
+    /**
+     * Initial status of the price book
      * @type {string}
      * @memberof PriceBookCreateRequestDto
      */
@@ -89,10 +89,10 @@ export function PriceBookCreateRequestDtoFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'isDefault': json['isDefault'] == null ? undefined : json['isDefault'],
         'name': json['name'],
         'scope': json['scope'],
         'scopeId': json['scopeId'] == null ? undefined : json['scopeId'],
-        'isDefault': json['isDefault'] == null ? undefined : json['isDefault'],
         'status': json['status'] == null ? undefined : json['status'],
     };
 }
@@ -103,10 +103,10 @@ export function PriceBookCreateRequestDtoToJSON(value?: PriceBookCreateRequestDt
     }
     return {
         
+        'isDefault': value['isDefault'],
         'name': value['name'],
         'scope': value['scope'],
         'scopeId': value['scopeId'],
-        'isDefault': value['isDefault'],
         'status': value['status'],
     };
 }

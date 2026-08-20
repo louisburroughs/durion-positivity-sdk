@@ -14,47 +14,51 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * An item eligible to be returned, with the quantity still returnable
  * @export
  * @interface ReturnableItemDto
  */
 export interface ReturnableItemDto {
     /**
-     * 
-     * @type {string}
-     * @memberof ReturnableItemDto
-     */
-    itemId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReturnableItemDto
-     */
-    sku?: string;
-    /**
-     * 
+     * Human-readable description of the item
      * @type {string}
      * @memberof ReturnableItemDto
      */
     description?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof ReturnableItemDto
-     */
-    quantityReturnable?: number;
-    /**
-     * 
+     * Identifier of the returnable item
      * @type {string}
      * @memberof ReturnableItemDto
      */
-    workorderId?: string;
+    itemId: string;
+    /**
+     * Quantity of the item that can still be returned
+     * @type {number}
+     * @memberof ReturnableItemDto
+     */
+    quantityReturnable: number;
+    /**
+     * Stock keeping unit of the item
+     * @type {string}
+     * @memberof ReturnableItemDto
+     */
+    sku: string;
+    /**
+     * Identifier of the workorder the item was issued against
+     * @type {string}
+     * @memberof ReturnableItemDto
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the ReturnableItemDto interface.
  */
 export function instanceOfReturnableItemDto(value: object): boolean {
+    if (!('itemId' in value)) return false;
+    if (!('quantityReturnable' in value)) return false;
+    if (!('sku' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -68,11 +72,11 @@ export function ReturnableItemDtoFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'itemId': json['itemId'] == null ? undefined : json['itemId'],
-        'sku': json['sku'] == null ? undefined : json['sku'],
         'description': json['description'] == null ? undefined : json['description'],
-        'quantityReturnable': json['quantityReturnable'] == null ? undefined : json['quantityReturnable'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
+        'itemId': json['itemId'],
+        'quantityReturnable': json['quantityReturnable'],
+        'sku': json['sku'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -82,10 +86,10 @@ export function ReturnableItemDtoToJSON(value?: ReturnableItemDto | null): any {
     }
     return {
         
-        'itemId': value['itemId'],
-        'sku': value['sku'],
         'description': value['description'],
+        'itemId': value['itemId'],
         'quantityReturnable': value['quantityReturnable'],
+        'sku': value['sku'],
         'workorderId': value['workorderId'],
     };
 }

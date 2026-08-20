@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to record the delivery status of a printed receipt
  * @export
  * @interface PrintDeliveryRequest
  */
 export interface PrintDeliveryRequest {
     /**
-     * 
+     * Print delivery outcome status
      * @type {string}
      * @memberof PrintDeliveryRequest
      */

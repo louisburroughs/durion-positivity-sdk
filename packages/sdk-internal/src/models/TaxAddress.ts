@@ -20,29 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface TaxAddress {
     /**
-     * Country code in ISO 3166-1 alpha-2 format
-     * @type {string}
-     * @memberof TaxAddress
-     */
-    countryCode: string;
-    /**
-     * Region/subdivision code (typically ISO 3166-2 subdivision part)
-     * @type {string}
-     * @memberof TaxAddress
-     */
-    regionCode?: string;
-    /**
      * Locality/city/municipality name
      * @type {string}
      * @memberof TaxAddress
      */
     city?: string;
     /**
-     * Postal/ZIP code
+     * Country code in ISO 3166-1 alpha-2 format
      * @type {string}
      * @memberof TaxAddress
      */
-    postalCode: string;
+    countryCode: string;
     /**
      * Primary street address line
      * @type {string}
@@ -55,6 +43,18 @@ export interface TaxAddress {
      * @memberof TaxAddress
      */
     line2?: string;
+    /**
+     * Postal/ZIP code
+     * @type {string}
+     * @memberof TaxAddress
+     */
+    postalCode: string;
+    /**
+     * Region/subdivision code (typically ISO 3166-2 subdivision part)
+     * @type {string}
+     * @memberof TaxAddress
+     */
+    regionCode?: string;
 }
 
 /**
@@ -76,12 +76,12 @@ export function TaxAddressFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'countryCode': json['countryCode'],
-        'regionCode': json['regionCode'] == null ? undefined : json['regionCode'],
         'city': json['city'] == null ? undefined : json['city'],
-        'postalCode': json['postalCode'],
+        'countryCode': json['countryCode'],
         'line1': json['line1'] == null ? undefined : json['line1'],
         'line2': json['line2'] == null ? undefined : json['line2'],
+        'postalCode': json['postalCode'],
+        'regionCode': json['regionCode'] == null ? undefined : json['regionCode'],
     };
 }
 
@@ -91,12 +91,12 @@ export function TaxAddressToJSON(value?: TaxAddress | null): any {
     }
     return {
         
-        'countryCode': value['countryCode'],
-        'regionCode': value['regionCode'],
         'city': value['city'],
-        'postalCode': value['postalCode'],
+        'countryCode': value['countryCode'],
         'line1': value['line1'],
         'line2': value['line2'],
+        'postalCode': value['postalCode'],
+        'regionCode': value['regionCode'],
     };
 }
 

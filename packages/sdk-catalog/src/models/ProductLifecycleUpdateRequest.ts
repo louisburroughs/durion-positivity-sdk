@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ProductLifecycleUpdateRequest {
     /**
-     * Target lifecycle state
+     * Username performing the lifecycle change
      * @type {string}
      * @memberof ProductLifecycleUpdateRequest
      */
-    lifecycleState?: ProductLifecycleUpdateRequestLifecycleStateEnum;
+    changedBy?: string;
     /**
      * Effective instant for lifecycle change
      * @type {Date}
@@ -38,11 +38,11 @@ export interface ProductLifecycleUpdateRequest {
      */
     effectiveDate?: Date;
     /**
-     * Username performing the lifecycle change
+     * Target lifecycle state
      * @type {string}
      * @memberof ProductLifecycleUpdateRequest
      */
-    changedBy?: string;
+    lifecycleState: ProductLifecycleUpdateRequestLifecycleStateEnum;
     /**
      * Reason for lifecycle override
      * @type {string}
@@ -66,6 +66,7 @@ export enum ProductLifecycleUpdateRequestLifecycleStateEnum {
  * Check if a given object implements the ProductLifecycleUpdateRequest interface.
  */
 export function instanceOfProductLifecycleUpdateRequest(value: object): boolean {
+    if (!('lifecycleState' in value)) return false;
     return true;
 }
 
@@ -79,10 +80,10 @@ export function ProductLifecycleUpdateRequestFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'lifecycleState': json['lifecycleState'] == null ? undefined : json['lifecycleState'],
+        'changedBy': json['changedBy'] == null ? undefined : json['changedBy'],
         'effectiveAt': json['effectiveAt'] == null ? undefined : (new Date(json['effectiveAt'])),
         'effectiveDate': json['effectiveDate'] == null ? undefined : (new Date(json['effectiveDate'])),
-        'changedBy': json['changedBy'] == null ? undefined : json['changedBy'],
+        'lifecycleState': json['lifecycleState'],
         'overrideReason': json['overrideReason'] == null ? undefined : json['overrideReason'],
     };
 }
@@ -93,10 +94,10 @@ export function ProductLifecycleUpdateRequestToJSON(value?: ProductLifecycleUpda
     }
     return {
         
-        'lifecycleState': value['lifecycleState'],
+        'changedBy': value['changedBy'],
         'effectiveAt': value['effectiveAt'] == null ? undefined : ((value['effectiveAt']).toISOString()),
         'effectiveDate': value['effectiveDate'] == null ? undefined : ((value['effectiveDate']).toISOString().substring(0,10)),
-        'changedBy': value['changedBy'],
+        'lifecycleState': value['lifecycleState'],
         'overrideReason': value['overrideReason'],
     };
 }

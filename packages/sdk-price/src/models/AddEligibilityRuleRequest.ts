@@ -32,17 +32,17 @@ export interface AddEligibilityRuleRequest {
      */
     operator: AddEligibilityRuleRequestOperatorEnum;
     /**
-     * Rule threshold or comparison value
-     * @type {string}
-     * @memberof AddEligibilityRuleRequest
-     */
-    value: string;
-    /**
      * Logical combinator when multiple rules exist
      * @type {string}
      * @memberof AddEligibilityRuleRequest
      */
     ruleCombination?: AddEligibilityRuleRequestRuleCombinationEnum;
+    /**
+     * Rule threshold or comparison value
+     * @type {string}
+     * @memberof AddEligibilityRuleRequest
+     */
+    value: string;
 }
 
 /**
@@ -52,7 +52,9 @@ export interface AddEligibilityRuleRequest {
 export enum AddEligibilityRuleRequestConditionTypeEnum {
     AccountIdList = 'ACCOUNT_ID_LIST',
     VehicleTag = 'VEHICLE_TAG',
-    AccountFleetSize = 'ACCOUNT_FLEET_SIZE'
+    AccountFleetSize = 'ACCOUNT_FLEET_SIZE',
+    AudienceType = 'AUDIENCE_TYPE',
+    CampaignCode = 'CAMPAIGN_CODE'
 }
 /**
 * @export
@@ -96,8 +98,8 @@ export function AddEligibilityRuleRequestFromJSONTyped(json: any, ignoreDiscrimi
         
         'conditionType': json['conditionType'],
         'operator': json['operator'],
-        'value': json['value'],
         'ruleCombination': json['ruleCombination'] == null ? undefined : json['ruleCombination'],
+        'value': json['value'],
     };
 }
 
@@ -109,8 +111,8 @@ export function AddEligibilityRuleRequestToJSON(value?: AddEligibilityRuleReques
         
         'conditionType': value['conditionType'],
         'operator': value['operator'],
-        'value': value['value'],
         'ruleCombination': value['ruleCombination'],
+        'value': value['value'],
     };
 }
 

@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface TimeEntryExceptionRequest {
     /**
+     * Timestamp when the exception was detected
+     * @type {Date}
+     * @memberof TimeEntryExceptionRequest
+     */
+    detectedAt?: Date;
+    /**
      * Employee identifier associated with the exception
      * @type {string}
      * @memberof TimeEntryExceptionRequest
@@ -32,6 +38,12 @@ export interface TimeEntryExceptionRequest {
      */
     exceptionCode: string;
     /**
+     * Notes describing the exception or initial resolution steps
+     * @type {string}
+     * @memberof TimeEntryExceptionRequest
+     */
+    resolutionNotes?: string;
+    /**
      * Severity level of the exception
      * @type {string}
      * @memberof TimeEntryExceptionRequest
@@ -43,18 +55,6 @@ export interface TimeEntryExceptionRequest {
      * @memberof TimeEntryExceptionRequest
      */
     timeEntryId?: string;
-    /**
-     * Notes describing the exception or initial resolution steps
-     * @type {string}
-     * @memberof TimeEntryExceptionRequest
-     */
-    resolutionNotes?: string;
-    /**
-     * Timestamp when the exception was detected
-     * @type {Date}
-     * @memberof TimeEntryExceptionRequest
-     */
-    detectedAt?: Date;
 }
 
 /**
@@ -62,10 +62,8 @@ export interface TimeEntryExceptionRequest {
 * @enum {string}
 */
 export enum TimeEntryExceptionRequestSeverityEnum {
-    Low = 'LOW',
-    Medium = 'MEDIUM',
-    High = 'HIGH',
-    Critical = 'CRITICAL'
+    Warning = 'WARNING',
+    Blocking = 'BLOCKING'
 }
 
 
@@ -88,12 +86,12 @@ export function TimeEntryExceptionRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'detectedAt': json['detectedAt'] == null ? undefined : (new Date(json['detectedAt'])),
         'employeeId': json['employeeId'],
         'exceptionCode': json['exceptionCode'],
+        'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
         'severity': json['severity'] == null ? undefined : json['severity'],
         'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
-        'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
-        'detectedAt': json['detectedAt'] == null ? undefined : (new Date(json['detectedAt'])),
     };
 }
 
@@ -103,12 +101,12 @@ export function TimeEntryExceptionRequestToJSON(value?: TimeEntryExceptionReques
     }
     return {
         
+        'detectedAt': value['detectedAt'] == null ? undefined : ((value['detectedAt']).toISOString()),
         'employeeId': value['employeeId'],
         'exceptionCode': value['exceptionCode'],
+        'resolutionNotes': value['resolutionNotes'],
         'severity': value['severity'],
         'timeEntryId': value['timeEntryId'],
-        'resolutionNotes': value['resolutionNotes'],
-        'detectedAt': value['detectedAt'] == null ? undefined : ((value['detectedAt']).toISOString()),
     };
 }
 

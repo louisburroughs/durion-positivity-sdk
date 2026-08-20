@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to reject a pending cycle count adjustment
  * @export
  * @interface RejectAdjustmentRequest
  */
 export interface RejectAdjustmentRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof RejectAdjustmentRequest
-     */
-    rejectorUserId: string;
-    /**
-     * 
+     * Reason explaining why the adjustment is being rejected
      * @type {string}
      * @memberof RejectAdjustmentRequest
      */
     rejectionReason: string;
+    /**
+     * Identifier of the user rejecting the adjustment
+     * @type {string}
+     * @memberof RejectAdjustmentRequest
+     */
+    rejectorUserId: string;
 }
 
 /**
  * Check if a given object implements the RejectAdjustmentRequest interface.
  */
 export function instanceOfRejectAdjustmentRequest(value: object): boolean {
-    if (!('rejectorUserId' in value)) return false;
     if (!('rejectionReason' in value)) return false;
+    if (!('rejectorUserId' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function RejectAdjustmentRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'rejectorUserId': json['rejectorUserId'],
         'rejectionReason': json['rejectionReason'],
+        'rejectorUserId': json['rejectorUserId'],
     };
 }
 
@@ -63,8 +63,8 @@ export function RejectAdjustmentRequestToJSON(value?: RejectAdjustmentRequest | 
     }
     return {
         
-        'rejectorUserId': value['rejectorUserId'],
         'rejectionReason': value['rejectionReason'],
+        'rejectorUserId': value['rejectorUserId'],
     };
 }
 

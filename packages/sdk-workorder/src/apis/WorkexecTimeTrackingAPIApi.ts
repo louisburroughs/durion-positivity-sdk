@@ -41,11 +41,11 @@ export interface CreateLaborPerformedRequest {
 }
 
 export interface GetJobTimeTotalsRequest {
-    startDate: string;
-    endDate: string;
+    startDate: Date;
+    endDate: Date;
     timezone: string;
     locationId?: string;
-    technicianIds?: string;
+    technicianIds?: Array<string>;
 }
 
 export interface StartTimerRequest {
@@ -59,8 +59,8 @@ export interface StartTimerRequest {
 export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create a labor-performed record with idempotency support
-     * Create labor performed entry
+     * Records a completed quantity of labor hours against a workorder as a closed labor entry, back-dating the start time from performedAt by the reported quantity. Use this tool when labor arrives as a finished quantity from another system; do not use startTimer and stopTimers, which capture live elapsed time instead of reported hours. Preconditions: the workorder must exist and not be in a state blocked for labor posting, such as CANCELLED. Required inputs: workorderId, technicianId, performedAt (ISO instant), labor.quantity (positive decimal), labor.unit (must be HOURS), source.system, and source.sourceReferenceId; the Idempotency-Key header is mandatory and a repeated key replays the original entry with 200 and an Idempotency-Replayed header. Emits a WORKEXEC_LABOR_PERFORMED_CREATE event. Returns 201 on creation (200 on replay), 404 when the workorder cannot be found, 409 with code WORKEXEC_CONFLICT_WORKORDER_STATE when the workorder state blocks posting, and 400 when the Idempotency-Key is missing, the unit is not HOURS, or the quantity is not positive. 
+     * Record Labor Performed Quantity
      */
     async createLaborPerformedRaw(requestParameters: CreateLaborPerformedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecLaborPerformedResponse>> {
         if (requestParameters['idempotencyKey'] == null) {
@@ -111,8 +111,8 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a labor-performed record with idempotency support
-     * Create labor performed entry
+     * Records a completed quantity of labor hours against a workorder as a closed labor entry, back-dating the start time from performedAt by the reported quantity. Use this tool when labor arrives as a finished quantity from another system; do not use startTimer and stopTimers, which capture live elapsed time instead of reported hours. Preconditions: the workorder must exist and not be in a state blocked for labor posting, such as CANCELLED. Required inputs: workorderId, technicianId, performedAt (ISO instant), labor.quantity (positive decimal), labor.unit (must be HOURS), source.system, and source.sourceReferenceId; the Idempotency-Key header is mandatory and a repeated key replays the original entry with 200 and an Idempotency-Replayed header. Emits a WORKEXEC_LABOR_PERFORMED_CREATE event. Returns 201 on creation (200 on replay), 404 when the workorder cannot be found, 409 with code WORKEXEC_CONFLICT_WORKORDER_STATE when the workorder state blocks posting, and 400 when the Idempotency-Key is missing, the unit is not HOURS, or the quantity is not positive. 
+     * Record Labor Performed Quantity
      */
     async createLaborPerformed(requestParameters: CreateLaborPerformedRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecLaborPerformedResponse> {
         const response = await this.createLaborPerformedRaw(requestParameters, initOverrides);
@@ -120,10 +120,10 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve active timer entries for the authenticated mechanic
-     * Get active timers
+     * Returns the authenticated mechanic\'s currently running timer entries, each with its workorder, workorder item, labor code, and start time. Use this tool to check whether a timer is already running before startTimer; do not use getJobTimeTotals, which aggregates completed time rather than live timers. Preconditions: the authenticated user id in the security context must be a UUID — the mechanic is always the caller, never a parameter. Required inputs: none; identity comes entirely from the security context. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the authenticated user id is missing or not a UUID, and 200 with an empty list when no timer is running. 
+     * Get Authenticated Mechanic Active Timers
      */
-    async getActiveTimerEntriesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerEntryResponse>> {
+    async getActiveTimersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerEntryResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -147,17 +147,17 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve active timer entries for the authenticated mechanic
-     * Get active timers
+     * Returns the authenticated mechanic\'s currently running timer entries, each with its workorder, workorder item, labor code, and start time. Use this tool to check whether a timer is already running before startTimer; do not use getJobTimeTotals, which aggregates completed time rather than live timers. Preconditions: the authenticated user id in the security context must be a UUID — the mechanic is always the caller, never a parameter. Required inputs: none; identity comes entirely from the security context. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the authenticated user id is missing or not a UUID, and 200 with an empty list when no timer is running. 
+     * Get Authenticated Mechanic Active Timers
      */
-    async getActiveTimerEntries(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerEntryResponse> {
-        const response = await this.getActiveTimerEntriesRaw(initOverrides);
+    async getActiveTimers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerEntryResponse> {
+        const response = await this.getActiveTimersRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve aggregated tracked hours for a date range, timezone, and optional location/technicians
-     * Get job time totals
+     * Returns tracked job minutes aggregated per technician, location, and local calendar day over an inclusive date range interpreted in the supplied timezone. Use this tool for payroll or utilization reporting across days; do not use getLaborHistory, which lists individual labor entries for one workorder. Preconditions: none beyond the caller holding workorder:labor:view; totals derive from recorded labor entries. Required inputs: startDate and endDate (ISO dates, endDate on or after startDate) and timezone (IANA name); locationId and technicianIds are optional filters. No events are emitted and no state changes; this is a read-only aggregation. Returns 400 when the timezone is invalid or endDate precedes startDate, and 200 with an empty list when no time was tracked in the range. 
+     * Get Aggregated Job Time Totals
      */
     async getJobTimeTotalsRaw(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['startDate'] == null) {
@@ -184,11 +184,11 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
         const queryParameters: any = {};
 
         if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = requestParameters['startDate'];
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
         }
 
         if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = requestParameters['endDate'];
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
         }
 
         if (requestParameters['timezone'] != null) {
@@ -224,8 +224,8 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve aggregated tracked hours for a date range, timezone, and optional location/technicians
-     * Get job time totals
+     * Returns tracked job minutes aggregated per technician, location, and local calendar day over an inclusive date range interpreted in the supplied timezone. Use this tool for payroll or utilization reporting across days; do not use getLaborHistory, which lists individual labor entries for one workorder. Preconditions: none beyond the caller holding workorder:labor:view; totals derive from recorded labor entries. Required inputs: startDate and endDate (ISO dates, endDate on or after startDate) and timezone (IANA name); locationId and technicianIds are optional filters. No events are emitted and no state changes; this is a read-only aggregation. Returns 400 when the timezone is invalid or endDate precedes startDate, and 200 with an empty list when no time was tracked in the range. 
+     * Get Aggregated Job Time Totals
      */
     async getJobTimeTotals(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
         const response = await this.getJobTimeTotalsRaw(requestParameters, initOverrides);
@@ -233,8 +233,8 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start a workexec timer entry for the authenticated mechanic
-     * Start timer
+     * Starts a live labor timer on a workorder, attributing the tracked time to the requested technician, the current assignment, or the caller, and creating a service line when the workorder has none. Use this tool for live time capture; do not use createLaborPerformed, which records an already-completed quantity of hours. Preconditions: the workorder must be in APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, and the tracked technician must have no timer already running; attributing to someone who is neither the caller nor the current assignee requires workorder:labor:add_on_behalf plus a reason. Required inputs: workorderId (UUID); workorderItemId, laborCode, technicianId, and reason are optional, and an Idempotency-Key header replays the original timer with 200. Emits a WORKEXEC_TIMER_START event. Returns 201 on start (200 on replay), 404 when the workorder or workorder item is missing, 409 with TIMER_ALREADY_ACTIVE or INVALID_STATE on conflicts, 403 for unauthorized on-behalf attribution, and 400 when the caller\'s user id is not a UUID or an on-behalf reason is missing. 
+     * Start Workexec Labor Timer
      */
     async startTimerRaw(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerEntryResponse>> {
         if (requestParameters['workexecTimerStartRequest'] == null) {
@@ -256,7 +256,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["workorder:labor:add"]);
+            const tokenString = await token("bearerAuth", ["workorder:labor:add", "workorder:labor:add_on_behalf"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -274,8 +274,8 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start a workexec timer entry for the authenticated mechanic
-     * Start timer
+     * Starts a live labor timer on a workorder, attributing the tracked time to the requested technician, the current assignment, or the caller, and creating a service line when the workorder has none. Use this tool for live time capture; do not use createLaborPerformed, which records an already-completed quantity of hours. Preconditions: the workorder must be in APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, and the tracked technician must have no timer already running; attributing to someone who is neither the caller nor the current assignee requires workorder:labor:add_on_behalf plus a reason. Required inputs: workorderId (UUID); workorderItemId, laborCode, technicianId, and reason are optional, and an Idempotency-Key header replays the original timer with 200. Emits a WORKEXEC_TIMER_START event. Returns 201 on start (200 on replay), 404 when the workorder or workorder item is missing, 409 with TIMER_ALREADY_ACTIVE or INVALID_STATE on conflicts, 403 for unauthorized on-behalf attribution, and 400 when the caller\'s user id is not a UUID or an on-behalf reason is missing. 
+     * Start Workexec Labor Timer
      */
     async startTimer(requestParameters: StartTimerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerEntryResponse> {
         const response = await this.startTimerRaw(requestParameters, initOverrides);
@@ -283,8 +283,8 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop active timer entries for the authenticated mechanic
-     * Stop timers
+     * Stops every active timer the authenticated mechanic is tracked on or initiated, stamping the stop time and returning the closed entries with their durations. Use this tool when a technician finishes timed work; do not use adjustLaborHours, which corrects hours on an entry after the fact. Preconditions: at least one active timer must exist for the caller, either as the tracked technician or as the initiator of an on-behalf timer. Required inputs: none — there is no request body, and identity comes from the security context. Emits a WORKEXEC_TIMER_STOP event. Returns 200 with the stopped entries, 409 with code NO_ACTIVE_TIMER when nothing is running, and 400 when the authenticated user id is missing or not a UUID. 
+     * Stop Authenticated Mechanic Timers
      */
     async stopTimersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerStopResponse>> {
         const queryParameters: any = {};
@@ -310,8 +310,8 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop active timer entries for the authenticated mechanic
-     * Stop timers
+     * Stops every active timer the authenticated mechanic is tracked on or initiated, stamping the stop time and returning the closed entries with their durations. Use this tool when a technician finishes timed work; do not use adjustLaborHours, which corrects hours on an entry after the fact. Preconditions: at least one active timer must exist for the caller, either as the tracked technician or as the initiator of an on-behalf timer. Required inputs: none — there is no request body, and identity comes from the security context. Emits a WORKEXEC_TIMER_STOP event. Returns 200 with the stopped entries, 409 with code NO_ACTIVE_TIMER when nothing is running, and 400 when the authenticated user id is missing or not a UUID. 
+     * Stop Authenticated Mechanic Timers
      */
     async stopTimers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerStopResponse> {
         const response = await this.stopTimersRaw(initOverrides);

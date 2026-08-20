@@ -14,43 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for approving or rejecting a location price override
  * @export
  * @interface LocationPriceOverrideDecisionRequestDto
  */
 export interface LocationPriceOverrideDecisionRequestDto {
     /**
-     * 
-     * @type {number}
-     * @memberof LocationPriceOverrideDecisionRequestDto
-     */
-    version: number;
-    /**
-     * 
+     * Identifier of the user making the decision
      * @type {string}
      * @memberof LocationPriceOverrideDecisionRequestDto
      */
     actorUserId: string;
     /**
-     * 
+     * Free-text notes when rejecting the override
+     * @type {string}
+     * @memberof LocationPriceOverrideDecisionRequestDto
+     */
+    rejectionNotes?: string;
+    /**
+     * Reason code when rejecting the override
      * @type {string}
      * @memberof LocationPriceOverrideDecisionRequestDto
      */
     rejectionReasonCode?: string;
     /**
-     * 
-     * @type {string}
+     * Expected version for optimistic locking
+     * @type {number}
      * @memberof LocationPriceOverrideDecisionRequestDto
      */
-    rejectionNotes?: string;
+    version: number;
 }
 
 /**
  * Check if a given object implements the LocationPriceOverrideDecisionRequestDto interface.
  */
 export function instanceOfLocationPriceOverrideDecisionRequestDto(value: object): boolean {
-    if (!('version' in value)) return false;
     if (!('actorUserId' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -64,10 +64,10 @@ export function LocationPriceOverrideDecisionRequestDtoFromJSONTyped(json: any, 
     }
     return {
         
-        'version': json['version'],
         'actorUserId': json['actorUserId'],
-        'rejectionReasonCode': json['rejectionReasonCode'] == null ? undefined : json['rejectionReasonCode'],
         'rejectionNotes': json['rejectionNotes'] == null ? undefined : json['rejectionNotes'],
+        'rejectionReasonCode': json['rejectionReasonCode'] == null ? undefined : json['rejectionReasonCode'],
+        'version': json['version'],
     };
 }
 
@@ -77,10 +77,10 @@ export function LocationPriceOverrideDecisionRequestDtoToJSON(value?: LocationPr
     }
     return {
         
-        'version': value['version'],
         'actorUserId': value['actorUserId'],
-        'rejectionReasonCode': value['rejectionReasonCode'],
         'rejectionNotes': value['rejectionNotes'],
+        'rejectionReasonCode': value['rejectionReasonCode'],
+        'version': value['version'],
     };
 }
 

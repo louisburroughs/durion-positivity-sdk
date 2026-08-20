@@ -21,41 +21,44 @@ import {
 } from './ScheduleEventView';
 
 /**
- * 
+ * A single resource lane within the schedule view
  * @export
  * @interface ScheduleResourceView
  */
 export interface ScheduleResourceView {
     /**
-     * 
+     * Events scheduled for this resource
+     * @type {Array<ScheduleEventView>}
+     * @memberof ScheduleResourceView
+     */
+    events: Array<ScheduleEventView>;
+    /**
+     * Resource identifier
      * @type {string}
      * @memberof ScheduleResourceView
      */
-    resourceId?: string;
+    resourceId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ScheduleResourceView
-     */
-    resourceType?: string;
-    /**
-     * 
+     * Display name of the resource
      * @type {string}
      * @memberof ScheduleResourceView
      */
     resourceName?: string;
     /**
-     * 
-     * @type {Array<ScheduleEventView>}
+     * Resource type (e.g. MECHANIC or BAY)
+     * @type {string}
      * @memberof ScheduleResourceView
      */
-    events?: Array<ScheduleEventView>;
+    resourceType: string;
 }
 
 /**
  * Check if a given object implements the ScheduleResourceView interface.
  */
 export function instanceOfScheduleResourceView(value: object): boolean {
+    if (!('events' in value)) return false;
+    if (!('resourceId' in value)) return false;
+    if (!('resourceType' in value)) return false;
     return true;
 }
 
@@ -69,10 +72,10 @@ export function ScheduleResourceViewFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
-        'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
+        'events': ((json['events'] as Array<any>).map(ScheduleEventViewFromJSON)),
+        'resourceId': json['resourceId'],
         'resourceName': json['resourceName'] == null ? undefined : json['resourceName'],
-        'events': json['events'] == null ? undefined : ((json['events'] as Array<any>).map(ScheduleEventViewFromJSON)),
+        'resourceType': json['resourceType'],
     };
 }
 
@@ -82,10 +85,10 @@ export function ScheduleResourceViewToJSON(value?: ScheduleResourceView | null):
     }
     return {
         
+        'events': ((value['events'] as Array<any>).map(ScheduleEventViewToJSON)),
         'resourceId': value['resourceId'],
-        'resourceType': value['resourceType'],
         'resourceName': value['resourceName'],
-        'events': value['events'] == null ? undefined : ((value['events'] as Array<any>).map(ScheduleEventViewToJSON)),
+        'resourceType': value['resourceType'],
     };
 }
 

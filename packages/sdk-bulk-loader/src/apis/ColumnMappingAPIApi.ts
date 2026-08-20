@@ -17,20 +17,23 @@ import * as runtime from '../runtime';
 import type {
   ColumnMappingApproveRequest,
   ColumnMappingResponse,
+  ProblemDetail,
 } from '../models/index';
 import {
     ColumnMappingApproveRequestFromJSON,
     ColumnMappingApproveRequestToJSON,
     ColumnMappingResponseFromJSON,
     ColumnMappingResponseToJSON,
+    ProblemDetailFromJSON,
+    ProblemDetailToJSON,
 } from '../models/index';
 
-export interface ApproveMappingsRequest {
+export interface ApproveColumnMappingsRequest {
     jobId: string;
     columnMappingApproveRequest: ColumnMappingApproveRequest;
 }
 
-export interface GetMappingsRequest {
+export interface GetColumnMappingsRequest {
     jobId: string;
 }
 
@@ -40,21 +43,21 @@ export interface GetMappingsRequest {
 export class ColumnMappingAPIApi extends runtime.BaseAPI {
 
     /**
-     * Approves and finalizes the proposed column mappings for the specified bulk load job. The operator can only approve mappings for their own jobs. Once approved, the mappings are locked and used for processing the bulk load job.
-     * Approve and finalize column mappings for a job
+     * Replaces all stored column mappings for a bulk load job with the submitted set, marking every mapping operator-approved with confidence 1.0. Use this tool after reviewing the suggestions from getColumnMappings; do not use getColumnMappings, which only reads mappings, and note that the submitted list fully replaces prior mappings rather than merging with them. Preconditions: the job must exist and belong to the authenticated operator; the job state is not checked, but approved mappings only affect processing started afterwards. Required inputs: mappings, a non-empty list where each entry names a sourceColumn from the uploaded file and the targetField it maps to; mappingId is accepted but ignored because the set is replaced wholesale. Emits a BULK_LOADER_MAPPING_APPROVE event and deletes previously stored mappings, including auto-suggested ones, before saving the new set. Returns 404 when the job does not exist, and 403 when the job belongs to another operator. 
+     * Approve and Finalize Column Mappings
      */
-    async approveMappingsRaw(requestParameters: ApproveMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ColumnMappingResponse>>> {
+    async approveColumnMappingsRaw(requestParameters: ApproveColumnMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ColumnMappingResponse>>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling approveMappings().'
+                'Required parameter "jobId" was null or undefined when calling approveColumnMappings().'
             );
         }
 
         if (requestParameters['columnMappingApproveRequest'] == null) {
             throw new runtime.RequiredError(
                 'columnMappingApproveRequest',
-                'Required parameter "columnMappingApproveRequest" was null or undefined when calling approveMappings().'
+                'Required parameter "columnMappingApproveRequest" was null or undefined when calling approveColumnMappings().'
             );
         }
 
@@ -84,23 +87,23 @@ export class ColumnMappingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves and finalizes the proposed column mappings for the specified bulk load job. The operator can only approve mappings for their own jobs. Once approved, the mappings are locked and used for processing the bulk load job.
-     * Approve and finalize column mappings for a job
+     * Replaces all stored column mappings for a bulk load job with the submitted set, marking every mapping operator-approved with confidence 1.0. Use this tool after reviewing the suggestions from getColumnMappings; do not use getColumnMappings, which only reads mappings, and note that the submitted list fully replaces prior mappings rather than merging with them. Preconditions: the job must exist and belong to the authenticated operator; the job state is not checked, but approved mappings only affect processing started afterwards. Required inputs: mappings, a non-empty list where each entry names a sourceColumn from the uploaded file and the targetField it maps to; mappingId is accepted but ignored because the set is replaced wholesale. Emits a BULK_LOADER_MAPPING_APPROVE event and deletes previously stored mappings, including auto-suggested ones, before saving the new set. Returns 404 when the job does not exist, and 403 when the job belongs to another operator. 
+     * Approve and Finalize Column Mappings
      */
-    async approveMappings(requestParameters: ApproveMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ColumnMappingResponse>> {
-        const response = await this.approveMappingsRaw(requestParameters, initOverrides);
+    async approveColumnMappings(requestParameters: ApproveColumnMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ColumnMappingResponse>> {
+        const response = await this.approveColumnMappingsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves the proposed column mappings for the specified bulk load job. The operator can only access mappings for their own jobs. This endpoint is typically used to review the detected column mappings before approving them for processing.
-     * Get proposed column mappings for a job
+     * Returns the column mappings currently stored for a bulk load job, covering both auto-suggested mappings from content detection and operator-approved overrides. Use this tool to review detected source-column to target-field mappings, their confidence and origin; use approveColumnMappings instead to finalize the set. Preconditions: the job must exist and belong to the authenticated operator; mappings are typically present only after a file upload has triggered content detection. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the job does not exist, and 403 when the job belongs to another operator. 
+     * Get Proposed Column Mappings for Job
      */
-    async getMappingsRaw(requestParameters: GetMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ColumnMappingResponse>>> {
+    async getColumnMappingsRaw(requestParameters: GetColumnMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ColumnMappingResponse>>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
-                'Required parameter "jobId" was null or undefined when calling getMappings().'
+                'Required parameter "jobId" was null or undefined when calling getColumnMappings().'
             );
         }
 
@@ -127,11 +130,11 @@ export class ColumnMappingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves the proposed column mappings for the specified bulk load job. The operator can only access mappings for their own jobs. This endpoint is typically used to review the detected column mappings before approving them for processing.
-     * Get proposed column mappings for a job
+     * Returns the column mappings currently stored for a bulk load job, covering both auto-suggested mappings from content detection and operator-approved overrides. Use this tool to review detected source-column to target-field mappings, their confidence and origin; use approveColumnMappings instead to finalize the set. Preconditions: the job must exist and belong to the authenticated operator; mappings are typically present only after a file upload has triggered content detection. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the job does not exist, and 403 when the job belongs to another operator. 
+     * Get Proposed Column Mappings for Job
      */
-    async getMappings(requestParameters: GetMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ColumnMappingResponse>> {
-        const response = await this.getMappingsRaw(requestParameters, initOverrides);
+    async getColumnMappings(requestParameters: GetColumnMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ColumnMappingResponse>> {
+        const response = await this.getColumnMappingsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

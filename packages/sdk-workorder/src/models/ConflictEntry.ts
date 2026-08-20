@@ -14,47 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A detected scheduling or resource conflict on the dispatch board
  * @export
  * @interface ConflictEntry
  */
 export interface ConflictEntry {
     /**
-     * 
-     * @type {string}
-     * @memberof ConflictEntry
-     */
-    conflictType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ConflictEntry
-     */
-    severity?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ConflictEntry
-     */
-    message?: string;
-    /**
-     * 
+     * Identifier of the affected resource (mechanic or bay)
      * @type {string}
      * @memberof ConflictEntry
      */
     affectedResourceId?: string;
     /**
-     * 
+     * Identifier of the affected workorder
      * @type {string}
      * @memberof ConflictEntry
      */
     affectedWorkorderId?: string;
+    /**
+     * Type of conflict detected
+     * @type {string}
+     * @memberof ConflictEntry
+     */
+    conflictType: string;
+    /**
+     * Human-readable conflict message
+     * @type {string}
+     * @memberof ConflictEntry
+     */
+    message: string;
+    /**
+     * Severity of the conflict
+     * @type {string}
+     * @memberof ConflictEntry
+     */
+    severity: string;
 }
 
 /**
  * Check if a given object implements the ConflictEntry interface.
  */
 export function instanceOfConflictEntry(value: object): boolean {
+    if (!('conflictType' in value)) return false;
+    if (!('message' in value)) return false;
+    if (!('severity' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function ConflictEntryFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'conflictType': json['conflictType'] == null ? undefined : json['conflictType'],
-        'severity': json['severity'] == null ? undefined : json['severity'],
-        'message': json['message'] == null ? undefined : json['message'],
         'affectedResourceId': json['affectedResourceId'] == null ? undefined : json['affectedResourceId'],
         'affectedWorkorderId': json['affectedWorkorderId'] == null ? undefined : json['affectedWorkorderId'],
+        'conflictType': json['conflictType'],
+        'message': json['message'],
+        'severity': json['severity'],
     };
 }
 
@@ -82,11 +85,11 @@ export function ConflictEntryToJSON(value?: ConflictEntry | null): any {
     }
     return {
         
-        'conflictType': value['conflictType'],
-        'severity': value['severity'],
-        'message': value['message'],
         'affectedResourceId': value['affectedResourceId'],
         'affectedWorkorderId': value['affectedWorkorderId'],
+        'conflictType': value['conflictType'],
+        'message': value['message'],
+        'severity': value['severity'],
     };
 }
 

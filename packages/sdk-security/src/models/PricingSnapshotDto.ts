@@ -21,47 +21,50 @@ import {
 } from './PricingRuleTraceEntryDto';
 
 /**
- * 
+ * Pricing snapshot including its rule-evaluation trace
  * @export
  * @interface PricingSnapshotDto
  */
 export interface PricingSnapshotDto {
     /**
-     * 
-     * @type {string}
+     * Ordered rule-evaluation steps that produced the price
+     * @type {Array<PricingRuleTraceEntryDto>}
      * @memberof PricingSnapshotDto
      */
-    snapshotId?: string;
+    evaluationSteps?: Array<PricingRuleTraceEntryDto>;
     /**
-     * 
-     * @type {Date}
+     * Final computed price
+     * @type {number}
      * @memberof PricingSnapshotDto
      */
-    timestamp?: Date;
+    finalPrice: number;
     /**
-     * 
+     * Serialized quote context evaluated
      * @type {string}
      * @memberof PricingSnapshotDto
      */
     quoteContext?: string;
     /**
-     * 
-     * @type {number}
+     * Snapshot identifier
+     * @type {string}
      * @memberof PricingSnapshotDto
      */
-    finalPrice?: number;
+    snapshotId: string;
     /**
-     * 
-     * @type {Array<PricingRuleTraceEntryDto>}
+     * Timestamp the snapshot was captured
+     * @type {Date}
      * @memberof PricingSnapshotDto
      */
-    evaluationSteps?: Array<PricingRuleTraceEntryDto>;
+    timestamp: Date;
 }
 
 /**
  * Check if a given object implements the PricingSnapshotDto interface.
  */
 export function instanceOfPricingSnapshotDto(value: object): boolean {
+    if (!('finalPrice' in value)) return false;
+    if (!('snapshotId' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -75,11 +78,11 @@ export function PricingSnapshotDtoFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'snapshotId': json['snapshotId'] == null ? undefined : json['snapshotId'],
-        'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
-        'quoteContext': json['quoteContext'] == null ? undefined : json['quoteContext'],
-        'finalPrice': json['finalPrice'] == null ? undefined : json['finalPrice'],
         'evaluationSteps': json['evaluationSteps'] == null ? undefined : ((json['evaluationSteps'] as Array<any>).map(PricingRuleTraceEntryDtoFromJSON)),
+        'finalPrice': json['finalPrice'],
+        'quoteContext': json['quoteContext'] == null ? undefined : json['quoteContext'],
+        'snapshotId': json['snapshotId'],
+        'timestamp': (new Date(json['timestamp'])),
     };
 }
 
@@ -89,11 +92,11 @@ export function PricingSnapshotDtoToJSON(value?: PricingSnapshotDto | null): any
     }
     return {
         
-        'snapshotId': value['snapshotId'],
-        'timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
-        'quoteContext': value['quoteContext'],
-        'finalPrice': value['finalPrice'],
         'evaluationSteps': value['evaluationSteps'] == null ? undefined : ((value['evaluationSteps'] as Array<any>).map(PricingRuleTraceEntryDtoToJSON)),
+        'finalPrice': value['finalPrice'],
+        'quoteContext': value['quoteContext'],
+        'snapshotId': value['snapshotId'],
+        'timestamp': ((value['timestamp']).toISOString()),
     };
 }
 

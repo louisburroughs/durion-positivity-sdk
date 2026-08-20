@@ -14,115 +14,115 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Inventory ledger entry record capturing a single stock movement or allocation event
  * @export
  * @interface InventoryLedgerEntryDto
  */
 export interface InventoryLedgerEntryDto {
     /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    ledgerEntryId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    stockItemId?: string;
-    /**
-     * 
+     * Identifier of the adjustment that produced this entry, if any
      * @type {string}
      * @memberof InventoryLedgerEntryDto
      */
     adjustmentId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    eventType?: InventoryLedgerEntryDtoEventTypeEnum;
-    /**
-     * 
+     * Signed change in quantity applied by this entry (positive inbound, negative outbound)
      * @type {number}
      * @memberof InventoryLedgerEntryDto
      */
-    changeInQuantity?: number;
+    changeInQuantity: number;
     /**
-     * 
-     * @type {number}
-     * @memberof InventoryLedgerEntryDto
-     */
-    quantityAfter?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof InventoryLedgerEntryDto
-     */
-    unitCost?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    transactionUserId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof InventoryLedgerEntryDto
-     */
-    timestamp?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    fromLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    toLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    reasonCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    sourceTransactionId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    unitOfMeasure?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InventoryLedgerEntryDto
-     */
-    notes?: string;
-    /**
-     * 
+     * Timestamp when the entry record was created
      * @type {Date}
      * @memberof InventoryLedgerEntryDto
      */
     createdAt?: Date;
     /**
-     * 
+     * Type of inventory ledger event recorded
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    eventType: InventoryLedgerEntryDtoEventTypeEnum;
+    /**
+     * Source location for transfer events
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    fromLocationId?: string;
+    /**
+     * Unique identifier of the ledger entry
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    ledgerEntryId: string;
+    /**
+     * Location the entry applies to
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    locationId?: string;
+    /**
+     * Free-text notes attached to the entry
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    notes?: string;
+    /**
+     * Running quantity after this entry was applied
+     * @type {number}
+     * @memberof InventoryLedgerEntryDto
+     */
+    quantityAfter: number;
+    /**
+     * Reason code explaining the entry
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    reasonCode?: string;
+    /**
+     * Identifier of the originating source transaction
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    sourceTransactionId?: string;
+    /**
+     * Identifier of the stock item the entry applies to
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    stockItemId: string;
+    /**
+     * Business timestamp of the inventory event
+     * @type {Date}
+     * @memberof InventoryLedgerEntryDto
+     */
+    timestamp: Date;
+    /**
+     * Destination location for transfer events
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    toLocationId?: string;
+    /**
+     * Identifier of the user who initiated the transaction
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    transactionUserId?: string;
+    /**
+     * Unit cost associated with this movement, if recorded
+     * @type {number}
+     * @memberof InventoryLedgerEntryDto
+     */
+    unitCost?: number;
+    /**
+     * Unit of measure code for the quantities (e.g. EACH, KG)
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    unitOfMeasure?: string;
+    /**
+     * Timestamp when the entry record was last updated
      * @type {Date}
      * @memberof InventoryLedgerEntryDto
      */
@@ -162,6 +162,12 @@ export enum InventoryLedgerEntryDtoEventTypeEnum {
  * Check if a given object implements the InventoryLedgerEntryDto interface.
  */
 export function instanceOfInventoryLedgerEntryDto(value: object): boolean {
+    if (!('changeInQuantity' in value)) return false;
+    if (!('eventType' in value)) return false;
+    if (!('ledgerEntryId' in value)) return false;
+    if (!('quantityAfter' in value)) return false;
+    if (!('stockItemId' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -175,23 +181,23 @@ export function InventoryLedgerEntryDtoFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'ledgerEntryId': json['ledgerEntryId'] == null ? undefined : json['ledgerEntryId'],
-        'stockItemId': json['stockItemId'] == null ? undefined : json['stockItemId'],
         'adjustmentId': json['adjustmentId'] == null ? undefined : json['adjustmentId'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'changeInQuantity': json['changeInQuantity'] == null ? undefined : json['changeInQuantity'],
-        'quantityAfter': json['quantityAfter'] == null ? undefined : json['quantityAfter'],
-        'unitCost': json['unitCost'] == null ? undefined : json['unitCost'],
-        'transactionUserId': json['transactionUserId'] == null ? undefined : json['transactionUserId'],
-        'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'changeInQuantity': json['changeInQuantity'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'eventType': json['eventType'],
         'fromLocationId': json['fromLocationId'] == null ? undefined : json['fromLocationId'],
-        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
+        'ledgerEntryId': json['ledgerEntryId'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'quantityAfter': json['quantityAfter'],
         'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
         'sourceTransactionId': json['sourceTransactionId'] == null ? undefined : json['sourceTransactionId'],
+        'stockItemId': json['stockItemId'],
+        'timestamp': (new Date(json['timestamp'])),
+        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
+        'transactionUserId': json['transactionUserId'] == null ? undefined : json['transactionUserId'],
+        'unitCost': json['unitCost'] == null ? undefined : json['unitCost'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -202,23 +208,23 @@ export function InventoryLedgerEntryDtoToJSON(value?: InventoryLedgerEntryDto | 
     }
     return {
         
-        'ledgerEntryId': value['ledgerEntryId'],
-        'stockItemId': value['stockItemId'],
         'adjustmentId': value['adjustmentId'],
-        'eventType': value['eventType'],
         'changeInQuantity': value['changeInQuantity'],
-        'quantityAfter': value['quantityAfter'],
-        'unitCost': value['unitCost'],
-        'transactionUserId': value['transactionUserId'],
-        'timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
-        'locationId': value['locationId'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'eventType': value['eventType'],
         'fromLocationId': value['fromLocationId'],
-        'toLocationId': value['toLocationId'],
+        'ledgerEntryId': value['ledgerEntryId'],
+        'locationId': value['locationId'],
+        'notes': value['notes'],
+        'quantityAfter': value['quantityAfter'],
         'reasonCode': value['reasonCode'],
         'sourceTransactionId': value['sourceTransactionId'],
+        'stockItemId': value['stockItemId'],
+        'timestamp': ((value['timestamp']).toISOString()),
+        'toLocationId': value['toLocationId'],
+        'transactionUserId': value['transactionUserId'],
+        'unitCost': value['unitCost'],
         'unitOfMeasure': value['unitOfMeasure'],
-        'notes': value['notes'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

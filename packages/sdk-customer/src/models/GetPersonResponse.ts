@@ -27,35 +27,17 @@ import {
  */
 export interface GetPersonResponse {
     /**
-     * Unique identifier of the person
-     * @type {string}
+     * Number of active commercial accounts where this person is a contact
+     * @type {number}
      * @memberof GetPersonResponse
      */
-    personId?: string;
+    commercialAccountCount: number;
     /**
-     * First name
-     * @type {string}
+     * Whether this person is an active contact on one or more commercial accounts
+     * @type {boolean}
      * @memberof GetPersonResponse
      */
-    firstName?: string;
-    /**
-     * Last name
-     * @type {string}
-     * @memberof GetPersonResponse
-     */
-    lastName?: string;
-    /**
-     * Display name
-     * @type {string}
-     * @memberof GetPersonResponse
-     */
-    displayName?: string;
-    /**
-     * Preferred contact method
-     * @type {string}
-     * @memberof GetPersonResponse
-     */
-    preferredContactMethod?: GetPersonResponsePreferredContactMethodEnum;
+    commercialContact: boolean;
     /**
      * Contact points (emails, phones)
      * @type {Array<ContactPointDto>}
@@ -63,29 +45,47 @@ export interface GetPersonResponse {
      */
     contactPoints?: Array<ContactPointDto>;
     /**
-     * Whether this CRM record represents an individual customer
-     * @type {boolean}
-     * @memberof GetPersonResponse
-     */
-    individualCustomer?: boolean;
-    /**
-     * Whether this person is an active contact on one or more commercial accounts
-     * @type {boolean}
-     * @memberof GetPersonResponse
-     */
-    commercialContact?: boolean;
-    /**
-     * Number of active commercial accounts where this person is a contact
-     * @type {number}
-     * @memberof GetPersonResponse
-     */
-    commercialAccountCount?: number;
-    /**
      * Timestamp when the person was created
      * @type {Date}
      * @memberof GetPersonResponse
      */
-    createdAt?: Date;
+    createdAt: Date;
+    /**
+     * Display name
+     * @type {string}
+     * @memberof GetPersonResponse
+     */
+    displayName?: string;
+    /**
+     * First name
+     * @type {string}
+     * @memberof GetPersonResponse
+     */
+    firstName: string;
+    /**
+     * Whether this CRM record represents an individual customer
+     * @type {boolean}
+     * @memberof GetPersonResponse
+     */
+    individualCustomer: boolean;
+    /**
+     * Last name
+     * @type {string}
+     * @memberof GetPersonResponse
+     */
+    lastName: string;
+    /**
+     * Unique identifier of the person
+     * @type {string}
+     * @memberof GetPersonResponse
+     */
+    personId: string;
+    /**
+     * Preferred contact method
+     * @type {string}
+     * @memberof GetPersonResponse
+     */
+    preferredContactMethod?: GetPersonResponsePreferredContactMethodEnum;
     /**
      * Timestamp when the person was last updated
      * @type {Date}
@@ -110,6 +110,13 @@ export enum GetPersonResponsePreferredContactMethodEnum {
  * Check if a given object implements the GetPersonResponse interface.
  */
 export function instanceOfGetPersonResponse(value: object): boolean {
+    if (!('commercialAccountCount' in value)) return false;
+    if (!('commercialContact' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('firstName' in value)) return false;
+    if (!('individualCustomer' in value)) return false;
+    if (!('lastName' in value)) return false;
+    if (!('personId' in value)) return false;
     return true;
 }
 
@@ -123,16 +130,16 @@ export function GetPersonResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'firstName': json['firstName'] == null ? undefined : json['firstName'],
-        'lastName': json['lastName'] == null ? undefined : json['lastName'],
-        'displayName': json['displayName'] == null ? undefined : json['displayName'],
-        'preferredContactMethod': json['preferredContactMethod'] == null ? undefined : json['preferredContactMethod'],
+        'commercialAccountCount': json['commercialAccountCount'],
+        'commercialContact': json['commercialContact'],
         'contactPoints': json['contactPoints'] == null ? undefined : ((json['contactPoints'] as Array<any>).map(ContactPointDtoFromJSON)),
-        'individualCustomer': json['individualCustomer'] == null ? undefined : json['individualCustomer'],
-        'commercialContact': json['commercialContact'] == null ? undefined : json['commercialContact'],
-        'commercialAccountCount': json['commercialAccountCount'] == null ? undefined : json['commercialAccountCount'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'createdAt': (new Date(json['createdAt'])),
+        'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'firstName': json['firstName'],
+        'individualCustomer': json['individualCustomer'],
+        'lastName': json['lastName'],
+        'personId': json['personId'],
+        'preferredContactMethod': json['preferredContactMethod'] == null ? undefined : json['preferredContactMethod'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -143,16 +150,16 @@ export function GetPersonResponseToJSON(value?: GetPersonResponse | null): any {
     }
     return {
         
-        'personId': value['personId'],
-        'firstName': value['firstName'],
-        'lastName': value['lastName'],
-        'displayName': value['displayName'],
-        'preferredContactMethod': value['preferredContactMethod'],
-        'contactPoints': value['contactPoints'] == null ? undefined : ((value['contactPoints'] as Array<any>).map(ContactPointDtoToJSON)),
-        'individualCustomer': value['individualCustomer'],
-        'commercialContact': value['commercialContact'],
         'commercialAccountCount': value['commercialAccountCount'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'commercialContact': value['commercialContact'],
+        'contactPoints': value['contactPoints'] == null ? undefined : ((value['contactPoints'] as Array<any>).map(ContactPointDtoToJSON)),
+        'createdAt': ((value['createdAt']).toISOString()),
+        'displayName': value['displayName'],
+        'firstName': value['firstName'],
+        'individualCustomer': value['individualCustomer'],
+        'lastName': value['lastName'],
+        'personId': value['personId'],
+        'preferredContactMethod': value['preferredContactMethod'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

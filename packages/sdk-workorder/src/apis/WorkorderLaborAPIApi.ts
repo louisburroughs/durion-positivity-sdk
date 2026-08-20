@@ -58,8 +58,8 @@ export interface StopLaborSessionRequest {
 export class WorkorderLaborAPIApi extends runtime.BaseAPI {
 
     /**
-     * Manually adjust hours worked on a labor entry with a reason for audit trail.
-     * Adjust labor hours
+     * Manually overrides the hours worked on a labor entry, recording the adjustment reason and the adjusting user for the audit trail. Use this tool to correct recorded hours after a timesheet review; do not use stopLaborSession, which computes hours from elapsed time when a session ends. Preconditions: the labor entry must exist; the entry retains its original times, with the adjusted hours and reason stored alongside them. Required inputs: workorderId and entryId (UUIDs) as path parameters, plus hoursWorked (decimal) and adjustmentReason in the body; an Idempotency-Key header makes retries return the already-adjusted entry. Emits a WORKORDER_LABOR_ADJUST event. Returns 404 when no labor entry exists for the id, and 400 when the hours value is rejected as invalid. 
+     * Adjust Labor Entry Hours
      */
     async adjustLaborHoursRaw(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -113,8 +113,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Manually adjust hours worked on a labor entry with a reason for audit trail.
-     * Adjust labor hours
+     * Manually overrides the hours worked on a labor entry, recording the adjustment reason and the adjusting user for the audit trail. Use this tool to correct recorded hours after a timesheet review; do not use stopLaborSession, which computes hours from elapsed time when a session ends. Preconditions: the labor entry must exist; the entry retains its original times, with the adjusted hours and reason stored alongside them. Required inputs: workorderId and entryId (UUIDs) as path parameters, plus hoursWorked (decimal) and adjustmentReason in the body; an Idempotency-Key header makes retries return the already-adjusted entry. Emits a WORKORDER_LABOR_ADJUST event. Returns 404 when no labor entry exists for the id, and 400 when the hours value is rejected as invalid. 
+     * Adjust Labor Entry Hours
      */
     async adjustLaborHours(requestParameters: AdjustLaborHoursRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
         const response = await this.adjustLaborHoursRaw(requestParameters, initOverrides);
@@ -122,8 +122,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all labor entries for a workorder, ordered newest first.
-     * Get labor history
+     * Returns every labor entry recorded against a workorder, ordered newest first, including open sessions, stopped sessions with computed hours, and manual adjustments. Use this tool when reviewing time spent on a workorder; do not use getWorkorderDetail, which aggregates labor into per-service totals instead of listing entries. Preconditions: none — an unknown workorderId simply yields an empty list. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the entries, possibly empty; no 404 is produced for unknown workorders. 
+     * Get Workorder Labor History
      */
     async getLaborHistoryRaw(requestParameters: GetLaborHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderLaborEntryResponse>>> {
         if (requestParameters['workorderId'] == null) {
@@ -156,8 +156,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all labor entries for a workorder, ordered newest first.
-     * Get labor history
+     * Returns every labor entry recorded against a workorder, ordered newest first, including open sessions, stopped sessions with computed hours, and manual adjustments. Use this tool when reviewing time spent on a workorder; do not use getWorkorderDetail, which aggregates labor into per-service totals instead of listing entries. Preconditions: none — an unknown workorderId simply yields an empty list. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the entries, possibly empty; no 404 is produced for unknown workorders. 
+     * Get Workorder Labor History
      */
     async getLaborHistory(requestParameters: GetLaborHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderLaborEntryResponse>> {
         const response = await this.getLaborHistoryRaw(requestParameters, initOverrides);
@@ -165,8 +165,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start tracking labor on a specific service item. Only one active session allowed per service.
-     * Start labor session
+     * Starts a labor entry tracking a technician\'s time against one workorder service line, stamping the start time and zero hours worked. Use this tool when a technician begins billable labor on a specific service; do not use startWorkexecWorkSession, which is the payroll timekeeping clock rather than per-service labor tracking. Preconditions: the workorder must be in ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, the service must belong to that workorder, and the service must have no labor session still open. Required inputs: workorderId and serviceId (UUIDs) as path parameters and technicianId (UUID) in the body; notes are optional, and an Idempotency-Key header makes retries return the original entry with 200 instead of 201. Emits a WORKORDER_LABOR_START event. Returns 201 with the new entry (200 on an idempotent replay), 404 when the workorder or service cannot be found, and 400 when a session is already active or the status disallows labor. 
+     * Start Labor Session on Service
      */
     async startLaborSessionRaw(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -220,8 +220,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start tracking labor on a specific service item. Only one active session allowed per service.
-     * Start labor session
+     * Starts a labor entry tracking a technician\'s time against one workorder service line, stamping the start time and zero hours worked. Use this tool when a technician begins billable labor on a specific service; do not use startWorkexecWorkSession, which is the payroll timekeeping clock rather than per-service labor tracking. Preconditions: the workorder must be in ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, or AWAITING_APPROVAL status, the service must belong to that workorder, and the service must have no labor session still open. Required inputs: workorderId and serviceId (UUIDs) as path parameters and technicianId (UUID) in the body; notes are optional, and an Idempotency-Key header makes retries return the original entry with 200 instead of 201. Emits a WORKORDER_LABOR_START event. Returns 201 with the new entry (200 on an idempotent replay), 404 when the workorder or service cannot be found, and 400 when a session is already active or the status disallows labor. 
+     * Start Labor Session on Service
      */
     async startLaborSession(requestParameters: StartLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
         const response = await this.startLaborSessionRaw(requestParameters, initOverrides);
@@ -229,8 +229,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop an active labor session and calculate hours worked.
-     * Stop labor session
+     * Stops an open labor entry, stamping the end time and computing hours worked from the elapsed session time. Use this tool when a technician finishes labor on a service; do not use adjustLaborHours, which corrects the hours on an already-stopped entry. Preconditions: the labor entry must exist and still be open — an entry with an end time cannot be stopped again. Required inputs: workorderId and entryId (UUIDs) as path parameters; there is no request body, and an Idempotency-Key header makes retried stops return the already-stopped entry. Emits a WORKORDER_LABOR_STOP event. Returns 404 when no labor entry exists for the id, and 400 when the session is already stopped. 
+     * Stop Active Labor Session
      */
     async stopLaborSessionRaw(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderLaborEntryResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -274,8 +274,8 @@ export class WorkorderLaborAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop an active labor session and calculate hours worked.
-     * Stop labor session
+     * Stops an open labor entry, stamping the end time and computing hours worked from the elapsed session time. Use this tool when a technician finishes labor on a service; do not use adjustLaborHours, which corrects the hours on an already-stopped entry. Preconditions: the labor entry must exist and still be open — an entry with an end time cannot be stopped again. Required inputs: workorderId and entryId (UUIDs) as path parameters; there is no request body, and an Idempotency-Key header makes retried stops return the already-stopped entry. Emits a WORKORDER_LABOR_STOP event. Returns 404 when no labor entry exists for the id, and 400 when the session is already stopped. 
+     * Stop Active Labor Session
      */
     async stopLaborSession(requestParameters: StopLaborSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderLaborEntryResponse> {
         const response = await this.stopLaborSessionRaw(requestParameters, initOverrides);

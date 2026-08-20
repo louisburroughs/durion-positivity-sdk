@@ -25,7 +25,7 @@ import {
     CatalogItemResponseDtoToJSON,
 } from '../models/index';
 
-export interface AddCatalogItemRequest {
+export interface CreateCatalogItemRequest {
     type: string;
     catalogItemRequestDto: CatalogItemRequestDto;
 }
@@ -47,21 +47,21 @@ export interface UpdateCatalogItemRequest {
 export class CatalogItemsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Adds a new product, service, or non-inventory product to the catalog.
-     * Add a new catalog item
+     * Creates a catalog item of the given type: a product, a service, or a non-inventory product. Use this tool for quick item entry across the three item types; do not use createProduct, which is the richer product-master path that enforces SKU and manufacturer-part uniqueness — this endpoint performs no duplicate checks. Preconditions: none; for type service and noninventory only name, shortDescription and longDescription are persisted, while type product also stores manufacturer, SKU, productCode, material, color, warranty and specifications fields. Required inputs: type path parameter, one of product, service or noninventory (case-insensitive), plus a body with at least name. Emits a CATALOG_ITEM_CREATE event; no catalog groupings are touched. Returns 400 when the type path parameter is not one of the three supported values. 
+     * Add a New Catalog Item
      */
-    async addCatalogItemRaw(requestParameters: AddCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogItemResponseDto>> {
+    async createCatalogItemRaw(requestParameters: CreateCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogItemResponseDto>> {
         if (requestParameters['type'] == null) {
             throw new runtime.RequiredError(
                 'type',
-                'Required parameter "type" was null or undefined when calling addCatalogItem().'
+                'Required parameter "type" was null or undefined when calling createCatalogItem().'
             );
         }
 
         if (requestParameters['catalogItemRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'catalogItemRequestDto',
-                'Required parameter "catalogItemRequestDto" was null or undefined when calling addCatalogItem().'
+                'Required parameter "catalogItemRequestDto" was null or undefined when calling createCatalogItem().'
             );
         }
 
@@ -91,17 +91,17 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a new product, service, or non-inventory product to the catalog.
-     * Add a new catalog item
+     * Creates a catalog item of the given type: a product, a service, or a non-inventory product. Use this tool for quick item entry across the three item types; do not use createProduct, which is the richer product-master path that enforces SKU and manufacturer-part uniqueness — this endpoint performs no duplicate checks. Preconditions: none; for type service and noninventory only name, shortDescription and longDescription are persisted, while type product also stores manufacturer, SKU, productCode, material, color, warranty and specifications fields. Required inputs: type path parameter, one of product, service or noninventory (case-insensitive), plus a body with at least name. Emits a CATALOG_ITEM_CREATE event; no catalog groupings are touched. Returns 400 when the type path parameter is not one of the three supported values. 
+     * Add a New Catalog Item
      */
-    async addCatalogItem(requestParameters: AddCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogItemResponseDto> {
-        const response = await this.addCatalogItemRaw(requestParameters, initOverrides);
+    async createCatalogItem(requestParameters: CreateCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogItemResponseDto> {
+        const response = await this.createCatalogItemRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Deletes a product, service, or non-inventory product from the catalog by its ID.
-     * Delete a catalog item
+     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. 
+     * Delete a Catalog Item
      */
     async deleteCatalogItemRaw(requestParameters: DeleteCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['type'] == null) {
@@ -141,16 +141,16 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a product, service, or non-inventory product from the catalog by its ID.
-     * Delete a catalog item
+     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. 
+     * Delete a Catalog Item
      */
     async deleteCatalogItem(requestParameters: DeleteCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteCatalogItemRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Updates an existing product, service, or non-inventory product in the catalog.
-     * Update an existing catalog item
+     * Replaces a catalog item of the given type with the supplied state; fields omitted from the body are overwritten with null, so this is a full replacement, not a patch. Use this tool to edit an item created through createCatalogItem; do not use updateProduct, which is the product-master path that protects SKU immutability — this endpoint applies no such guard. Preconditions: an item of the given type must exist under the supplied id; the type determines which repository is consulted, so a product id passed with type service resolves to 404. Required inputs: type (product, service or noninventory, case-insensitive), catalogId (UUID) and the complete replacement body. Emits a CATALOG_ITEM_UPDATE event; no catalog groupings are touched. Returns 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. 
+     * Update an Existing Catalog Item
      */
     async updateCatalogItemRaw(requestParameters: UpdateCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogItemResponseDto>> {
         if (requestParameters['type'] == null) {
@@ -200,8 +200,8 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates an existing product, service, or non-inventory product in the catalog.
-     * Update an existing catalog item
+     * Replaces a catalog item of the given type with the supplied state; fields omitted from the body are overwritten with null, so this is a full replacement, not a patch. Use this tool to edit an item created through createCatalogItem; do not use updateProduct, which is the product-master path that protects SKU immutability — this endpoint applies no such guard. Preconditions: an item of the given type must exist under the supplied id; the type determines which repository is consulted, so a product id passed with type service resolves to 404. Required inputs: type (product, service or noninventory, case-insensitive), catalogId (UUID) and the complete replacement body. Emits a CATALOG_ITEM_UPDATE event; no catalog groupings are touched. Returns 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. 
+     * Update an Existing Catalog Item
      */
     async updateCatalogItem(requestParameters: UpdateCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogItemResponseDto> {
         const response = await this.updateCatalogItemRaw(requestParameters, initOverrides);

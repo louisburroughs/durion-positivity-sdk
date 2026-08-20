@@ -1,6 +1,11 @@
 ﻿/* tslint:disable */
 /* eslint-disable */
 import * as GeneratedApis from './apis';
+// These API classes are no longer part of the generated apis barrel but their
+// class files remain from the previous spec; import them directly.
+import { PeopleAPIApi } from './apis/PeopleAPIApi';
+import { PeopleAccessControlApi } from './apis/PeopleAccessControlApi';
+import { UserPersonLinkingAPIApi } from './apis/UserPersonLinkingAPIApi';
 import { Configuration } from './runtime';
 
 export interface DurionSdkConfig {
@@ -51,15 +56,15 @@ export function createPeopleClient(config: DurionSdkConfig) {
   });
   return {
     employeeApi: new GeneratedApis.EmployeeAPIApi(configuration),
-    peopleApi: new GeneratedApis.PeopleAPIApi(configuration),
+    peopleApi: new PeopleAPIApi(configuration),
     peopleAvailabilityApi: new GeneratedApis.PeopleAvailabilityAPIApi(configuration),
-    peopleAccessControlApi: new GeneratedApis.PeopleAccessControlApi(configuration),
+    peopleAccessControlApi: new PeopleAccessControlApi(configuration),
     peopleExceptionsApi: new GeneratedApis.PeopleExceptionsApi(configuration),
     peopleReportsAPIApi: new GeneratedApis.PeopleReportsAPIApi(configuration),
     peopleStaffingAssignmentsApi: new GeneratedApis.PeopleStaffingAssignmentsApi(configuration),
     peopleTimeEntriesApi: new GeneratedApis.PeopleTimeEntriesApi(configuration),
     timeEntryApprovalAPIApi: new GeneratedApis.TimeEntryApprovalAPIApi(configuration),
-    userPersonLinkingAPIApi: new GeneratedApis.UserPersonLinkingAPIApi(configuration),
+    userPersonLinkingAPIApi: new UserPersonLinkingAPIApi(configuration),
     workSessionsAPIApi: new GeneratedApis.WorkSessionsAPIApi(configuration),
   };
 }

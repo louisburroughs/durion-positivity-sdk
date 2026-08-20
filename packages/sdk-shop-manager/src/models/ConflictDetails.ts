@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Details about a conflict associated with a schedule event
  * @export
  * @interface ConflictDetails
  */
 export interface ConflictDetails {
     /**
-     * 
+     * Identifiers of events that conflict with this event
      * @type {Array<string>}
      * @memberof ConflictDetails
      */

@@ -14,71 +14,80 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Summary of CRM person-search candidates evaluated during registration
  * @export
  * @interface CrmMatchSummaryDto
  */
 export interface CrmMatchSummaryDto {
     /**
-     * 
+     * True when any candidate matched
+     * @type {boolean}
+     * @memberof CrmMatchSummaryDto
+     */
+    anyMatches: boolean;
+    /**
+     * Total number of candidate persons returned
      * @type {number}
      * @memberof CrmMatchSummaryDto
      */
-    candidateCount?: number;
+    candidateCount: number;
     /**
-     * 
-     * @type {boolean}
-     * @memberof CrmMatchSummaryDto
-     */
-    anyMatches?: boolean;
-    /**
-     * 
+     * Number of commercial-contact candidates
      * @type {number}
      * @memberof CrmMatchSummaryDto
      */
-    individualCustomerCandidateCount?: number;
+    commercialContactCandidateCount: number;
     /**
-     * 
+     * True when a candidate exactly matched the email
+     * @type {boolean}
+     * @memberof CrmMatchSummaryDto
+     */
+    exactEmailMatch: boolean;
+    /**
+     * True when a candidate exactly matched the name
+     * @type {boolean}
+     * @memberof CrmMatchSummaryDto
+     */
+    exactNameMatch: boolean;
+    /**
+     * True when a candidate exactly matched the phone
+     * @type {boolean}
+     * @memberof CrmMatchSummaryDto
+     */
+    exactPhoneMatch: boolean;
+    /**
+     * Number of individual-customer candidates
      * @type {number}
      * @memberof CrmMatchSummaryDto
      */
-    commercialContactCandidateCount?: number;
+    individualCustomerCandidateCount: number;
     /**
-     * 
+     * True when manual review is required before completing registration
+     * @type {boolean}
+     * @memberof CrmMatchSummaryDto
+     */
+    reviewRequired: boolean;
+    /**
+     * Number of shared-identity candidates
      * @type {number}
      * @memberof CrmMatchSummaryDto
      */
-    sharedIdentityCandidateCount?: number;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CrmMatchSummaryDto
-     */
-    exactEmailMatch?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CrmMatchSummaryDto
-     */
-    exactPhoneMatch?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CrmMatchSummaryDto
-     */
-    exactNameMatch?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CrmMatchSummaryDto
-     */
-    reviewRequired?: boolean;
+    sharedIdentityCandidateCount: number;
 }
 
 /**
  * Check if a given object implements the CrmMatchSummaryDto interface.
  */
 export function instanceOfCrmMatchSummaryDto(value: object): boolean {
+    if (!('anyMatches' in value)) return false;
+    if (!('candidateCount' in value)) return false;
+    if (!('commercialContactCandidateCount' in value)) return false;
+    if (!('exactEmailMatch' in value)) return false;
+    if (!('exactNameMatch' in value)) return false;
+    if (!('exactPhoneMatch' in value)) return false;
+    if (!('individualCustomerCandidateCount' in value)) return false;
+    if (!('reviewRequired' in value)) return false;
+    if (!('sharedIdentityCandidateCount' in value)) return false;
     return true;
 }
 
@@ -92,15 +101,15 @@ export function CrmMatchSummaryDtoFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'candidateCount': json['candidateCount'] == null ? undefined : json['candidateCount'],
-        'anyMatches': json['anyMatches'] == null ? undefined : json['anyMatches'],
-        'individualCustomerCandidateCount': json['individualCustomerCandidateCount'] == null ? undefined : json['individualCustomerCandidateCount'],
-        'commercialContactCandidateCount': json['commercialContactCandidateCount'] == null ? undefined : json['commercialContactCandidateCount'],
-        'sharedIdentityCandidateCount': json['sharedIdentityCandidateCount'] == null ? undefined : json['sharedIdentityCandidateCount'],
-        'exactEmailMatch': json['exactEmailMatch'] == null ? undefined : json['exactEmailMatch'],
-        'exactPhoneMatch': json['exactPhoneMatch'] == null ? undefined : json['exactPhoneMatch'],
-        'exactNameMatch': json['exactNameMatch'] == null ? undefined : json['exactNameMatch'],
-        'reviewRequired': json['reviewRequired'] == null ? undefined : json['reviewRequired'],
+        'anyMatches': json['anyMatches'],
+        'candidateCount': json['candidateCount'],
+        'commercialContactCandidateCount': json['commercialContactCandidateCount'],
+        'exactEmailMatch': json['exactEmailMatch'],
+        'exactNameMatch': json['exactNameMatch'],
+        'exactPhoneMatch': json['exactPhoneMatch'],
+        'individualCustomerCandidateCount': json['individualCustomerCandidateCount'],
+        'reviewRequired': json['reviewRequired'],
+        'sharedIdentityCandidateCount': json['sharedIdentityCandidateCount'],
     };
 }
 
@@ -110,15 +119,15 @@ export function CrmMatchSummaryDtoToJSON(value?: CrmMatchSummaryDto | null): any
     }
     return {
         
-        'candidateCount': value['candidateCount'],
         'anyMatches': value['anyMatches'],
-        'individualCustomerCandidateCount': value['individualCustomerCandidateCount'],
+        'candidateCount': value['candidateCount'],
         'commercialContactCandidateCount': value['commercialContactCandidateCount'],
-        'sharedIdentityCandidateCount': value['sharedIdentityCandidateCount'],
         'exactEmailMatch': value['exactEmailMatch'],
-        'exactPhoneMatch': value['exactPhoneMatch'],
         'exactNameMatch': value['exactNameMatch'],
+        'exactPhoneMatch': value['exactPhoneMatch'],
+        'individualCustomerCandidateCount': value['individualCustomerCandidateCount'],
         'reviewRequired': value['reviewRequired'],
+        'sharedIdentityCandidateCount': value['sharedIdentityCandidateCount'],
     };
 }
 

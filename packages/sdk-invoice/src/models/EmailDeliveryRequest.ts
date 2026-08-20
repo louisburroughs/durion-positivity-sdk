@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to email a receipt and record the delivery status
  * @export
  * @interface EmailDeliveryRequest
  */
 export interface EmailDeliveryRequest {
     /**
-     * 
+     * Recipient email address for the receipt
      * @type {string}
      * @memberof EmailDeliveryRequest
      */
     emailAddress: string;
     /**
-     * 
+     * Email delivery outcome status
      * @type {string}
      * @memberof EmailDeliveryRequest
      */

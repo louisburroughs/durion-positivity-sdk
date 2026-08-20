@@ -28,7 +28,7 @@ import {
     UpdateStandardCostRequestDtoToJSON,
 } from '../models/index';
 
-export interface GetAuditHistoryRequest {
+export interface GetItemCostAuditHistoryRequest {
     itemId: string;
 }
 
@@ -36,7 +36,7 @@ export interface GetItemCostsRequest {
     itemId: string;
 }
 
-export interface UpdateStandardCostRequest {
+export interface UpdateStandardItemCostRequest {
     itemId: string;
     updateStandardCostRequestDto: UpdateStandardCostRequestDto;
 }
@@ -47,14 +47,14 @@ export interface UpdateStandardCostRequest {
 export class ItemCostAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns the recorded audit history entries for item cost changes on the specified item.
-     * Get item cost audit history
+     * Returns every recorded cost change for an item, newest first, each entry naming the cost type changed, old and new value, the actor, the change source and any reason code. Use this tool to trace how a cost reached its current value; use getItemCosts instead for just the current numbers. Preconditions: none; entries exist only after manual standard-cost updates or purchase-order receipt events have touched the item. Required inputs: itemId (UUID) as a path parameter; there is no request body and no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the item has no cost history, so an empty result is not an error condition. 
+     * Get Item Cost Audit History
      */
-    async getAuditHistoryRaw(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostAuditDto>> {
+    async getItemCostAuditHistoryRaw(requestParameters: GetItemCostAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostAuditDto>> {
         if (requestParameters['itemId'] == null) {
             throw new runtime.RequiredError(
                 'itemId',
-                'Required parameter "itemId" was null or undefined when calling getAuditHistory().'
+                'Required parameter "itemId" was null or undefined when calling getItemCostAuditHistory().'
             );
         }
 
@@ -81,17 +81,17 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the recorded audit history entries for item cost changes on the specified item.
-     * Get item cost audit history
+     * Returns every recorded cost change for an item, newest first, each entry naming the cost type changed, old and new value, the actor, the change source and any reason code. Use this tool to trace how a cost reached its current value; use getItemCosts instead for just the current numbers. Preconditions: none; entries exist only after manual standard-cost updates or purchase-order receipt events have touched the item. Required inputs: itemId (UUID) as a path parameter; there is no request body and no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the item has no cost history, so an empty result is not an error condition. 
+     * Get Item Cost Audit History
      */
-    async getAuditHistory(requestParameters: GetAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostAuditDto> {
-        const response = await this.getAuditHistoryRaw(requestParameters, initOverrides);
+    async getItemCostAuditHistory(requestParameters: GetItemCostAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostAuditDto> {
+        const response = await this.getItemCostAuditHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns the current standard, average, and last known cost values for the specified item.
-     * Get current item costs
+     * Returns the item\'s current standard, average and last known costs in one record. Use this tool to read cost values; do not use updateStandardItemCost, which changes the standard cost, and use getItemCostAuditHistory for who changed what and when. Preconditions: none; an item with no cost record yet returns the itemId with all three cost fields null rather than an error. Required inputs: itemId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 in all cases, so callers must treat null cost fields as absence of cost data rather than relying on a 404. 
+     * Get Current Item Costs
      */
     async getItemCostsRaw(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostsDto>> {
         if (requestParameters['itemId'] == null) {
@@ -124,8 +124,8 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current standard, average, and last known cost values for the specified item.
-     * Get current item costs
+     * Returns the item\'s current standard, average and last known costs in one record. Use this tool to read cost values; do not use updateStandardItemCost, which changes the standard cost, and use getItemCostAuditHistory for who changed what and when. Preconditions: none; an item with no cost record yet returns the itemId with all three cost fields null rather than an error. Required inputs: itemId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 in all cases, so callers must treat null cost fields as absence of cost data rather than relying on a 404. 
+     * Get Current Item Costs
      */
     async getItemCosts(requestParameters: GetItemCostsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostsDto> {
         const response = await this.getItemCostsRaw(requestParameters, initOverrides);
@@ -133,21 +133,21 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates the standard cost for the specified item and returns the refreshed item cost values.
-     * Update standard item cost
+     * Sets the standard cost of an item to a new value, rounding it to four decimal places, and writes an audit entry recording the old value, new value, actor and reason. Use this tool for a deliberate manual cost change; do not use getItemCosts, which only reads the current values — last and average cost cannot be set here, they move only from purchase-order receipt events. Preconditions: none; an item with no cost record yet gets one initialised with zero quantity on hand, so this call never fails on a missing item. Required inputs: itemId (UUID) path parameter plus a positive newCost and a non-blank reasonCode in the body. Emits a CATALOG_ITEM_COST_STANDARD_UPDATE event and appends a MANUAL audit row. Returns 400 when newCost is missing or not positive, or when reasonCode is blank. 
+     * Update Standard Item Cost
      */
-    async updateStandardCostRaw(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostsDto>> {
+    async updateStandardItemCostRaw(requestParameters: UpdateStandardItemCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostsDto>> {
         if (requestParameters['itemId'] == null) {
             throw new runtime.RequiredError(
                 'itemId',
-                'Required parameter "itemId" was null or undefined when calling updateStandardCost().'
+                'Required parameter "itemId" was null or undefined when calling updateStandardItemCost().'
             );
         }
 
         if (requestParameters['updateStandardCostRequestDto'] == null) {
             throw new runtime.RequiredError(
                 'updateStandardCostRequestDto',
-                'Required parameter "updateStandardCostRequestDto" was null or undefined when calling updateStandardCost().'
+                'Required parameter "updateStandardCostRequestDto" was null or undefined when calling updateStandardItemCost().'
             );
         }
 
@@ -159,7 +159,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_MANAGER", "inventory.cost.standard.update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_MANAGER", "catalog:item_cost:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -177,11 +177,11 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates the standard cost for the specified item and returns the refreshed item cost values.
-     * Update standard item cost
+     * Sets the standard cost of an item to a new value, rounding it to four decimal places, and writes an audit entry recording the old value, new value, actor and reason. Use this tool for a deliberate manual cost change; do not use getItemCosts, which only reads the current values — last and average cost cannot be set here, they move only from purchase-order receipt events. Preconditions: none; an item with no cost record yet gets one initialised with zero quantity on hand, so this call never fails on a missing item. Required inputs: itemId (UUID) path parameter plus a positive newCost and a non-blank reasonCode in the body. Emits a CATALOG_ITEM_COST_STANDARD_UPDATE event and appends a MANUAL audit row. Returns 400 when newCost is missing or not positive, or when reasonCode is blank. 
+     * Update Standard Item Cost
      */
-    async updateStandardCost(requestParameters: UpdateStandardCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostsDto> {
-        const response = await this.updateStandardCostRaw(requestParameters, initOverrides);
+    async updateStandardItemCost(requestParameters: UpdateStandardItemCostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostsDto> {
+        const response = await this.updateStandardItemCostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -39,7 +39,7 @@ export interface CreateAdjustmentRequestRequest {
     createAdjustmentRequestDto: CreateAdjustmentRequestDto;
 }
 
-export interface RecordMovementOperationRequest {
+export interface CreateStockMovementRequest {
     recordMovementRequest: RecordMovementRequest;
 }
 
@@ -49,7 +49,7 @@ export interface RecordMovementOperationRequest {
 export class StockMovementsApi extends runtime.BaseAPI {
 
     /**
-     * Approves a pending adjustment request and posts the resulting movement to the inventory ledger.
+     * Approves a PENDING adjustment request and posts the resulting ADJUSTMENT_IN or ADJUSTMENT_OUT entry to the inventory ledger. Use this tool as the second step of the adjustment workflow, after createAdjustmentRequest; do not use createStockMovement to post corrections, and note approval needs the separate inventory:adjustment:approve authority. Preconditions: the adjustment request must exist and still be PENDING. Required inputs: adjustmentRequestId (UUID) path parameter; there is no request body. Emits an INVENTORY_ADJUSTMENT_REQUEST_APPROVE event; the request is stamped APPROVED with approver and timestamp, and the ledger posting updates the stock summary that availability reads. Returns 400 when the adjustment request id is unknown (the lookup failure maps to a validation error rather than 404), and 409 when the request is no longer PENDING. 
      * Approve adjustment request
      */
     async approveAdjustmentRequestRaw(requestParameters: ApproveAdjustmentRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -83,7 +83,7 @@ export class StockMovementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves a pending adjustment request and posts the resulting movement to the inventory ledger.
+     * Approves a PENDING adjustment request and posts the resulting ADJUSTMENT_IN or ADJUSTMENT_OUT entry to the inventory ledger. Use this tool as the second step of the adjustment workflow, after createAdjustmentRequest; do not use createStockMovement to post corrections, and note approval needs the separate inventory:adjustment:approve authority. Preconditions: the adjustment request must exist and still be PENDING. Required inputs: adjustmentRequestId (UUID) path parameter; there is no request body. Emits an INVENTORY_ADJUSTMENT_REQUEST_APPROVE event; the request is stamped APPROVED with approver and timestamp, and the ledger posting updates the stock summary that availability reads. Returns 400 when the adjustment request id is unknown (the lookup failure maps to a validation error rather than 404), and 409 when the request is no longer PENDING. 
      * Approve adjustment request
      */
     async approveAdjustmentRequest(requestParameters: ApproveAdjustmentRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -91,7 +91,7 @@ export class StockMovementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a pending adjustment request for approval before posting to the inventory ledger.
+     * Creates a PENDING inventory adjustment request that must be approved before any stock change posts. Use this tool to propose a quantity correction, then post it with approveAdjustmentRequest; do not use createStockMovement, whose ADJUST type is rejected — this two-step workflow is the only correction path. Preconditions: none are checked at creation; the SKU, location and quantity are validated for shape only, not against on-hand. Required inputs: productSku, locationId (UUID), quantity (integer — positive adds stock, negative removes it) and reasonCode; unitOfMeasure is optional. Emits an INVENTORY_ADJUSTMENT_REQUEST_CREATE event; no ledger entry is written and availability is unchanged until approval. Returns 201 with the PENDING request, and 400 when productSku, locationId, quantity or reasonCode is missing. 
      * Create adjustment request
      */
     async createAdjustmentRequestRaw(requestParameters: CreateAdjustmentRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentRequestResponse>> {
@@ -128,7 +128,7 @@ export class StockMovementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a pending adjustment request for approval before posting to the inventory ledger.
+     * Creates a PENDING inventory adjustment request that must be approved before any stock change posts. Use this tool to propose a quantity correction, then post it with approveAdjustmentRequest; do not use createStockMovement, whose ADJUST type is rejected — this two-step workflow is the only correction path. Preconditions: none are checked at creation; the SKU, location and quantity are validated for shape only, not against on-hand. Required inputs: productSku, locationId (UUID), quantity (integer — positive adds stock, negative removes it) and reasonCode; unitOfMeasure is optional. Emits an INVENTORY_ADJUSTMENT_REQUEST_CREATE event; no ledger entry is written and availability is unchanged until approval. Returns 201 with the PENDING request, and 400 when productSku, locationId, quantity or reasonCode is missing. 
      * Create adjustment request
      */
     async createAdjustmentRequest(requestParameters: CreateAdjustmentRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentRequestResponse> {
@@ -137,14 +137,14 @@ export class StockMovementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a RECEIVE, PUT_AWAY, PICK, ISSUE, RETURN, or TRANSFER movement in the inventory ledger.
+     * Records a directional stock movement in the inventory ledger: RECEIVE posts GOODS_RECEIPT, PUT_AWAY posts PUTAWAY, PICK and ISSUE post GOODS_ISSUE, RETURN posts RETURN_TO_STOCK, and TRANSFER posts a paired TRANSFER_OUT and TRANSFER_IN. Use this tool for ledger-backed inventory changes; do not use updateInventoryAvailability, which always returns 501, and do not send movementType ADJUST here — quantity corrections go through createAdjustmentRequest and approveAdjustmentRequest. Preconditions: PICK and ISSUE require on-hand at fromLocationId to cover the quantity; TRANSFER is intra-site only — when both ends resolve to different sites the movement must go through a transfer order so in-transit stock is represented. Required inputs: productSku, fromLocationId (UUID), movementType and a positive quantity; toLocationId is required for TRANSFER, while unitOfMeasure and sourceTransactionId are optional. Emits an INVENTORY_STOCK_MOVEMENT_CREATE event and posts the entries through the ledger funnel, which updates the stock summary that availability reads. Returns 201 with no body, 422 with INSUFFICIENT_STOCK when a PICK or ISSUE exceeds on-hand at the source, 422 with CROSS_SITE_TRANSFER_REQUIRES_ORDER for a cross-site TRANSFER, and 400 when toLocationId is missing for TRANSFER or movementType is ADJUST. 
      * Record a stock movement
      */
-    async recordMovementRaw(requestParameters: RecordMovementOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async createStockMovementRaw(requestParameters: CreateStockMovementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['recordMovementRequest'] == null) {
             throw new runtime.RequiredError(
                 'recordMovementRequest',
-                'Required parameter "recordMovementRequest" was null or undefined when calling recordMovement().'
+                'Required parameter "recordMovementRequest" was null or undefined when calling createStockMovement().'
             );
         }
 
@@ -174,11 +174,11 @@ export class StockMovementsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a RECEIVE, PUT_AWAY, PICK, ISSUE, RETURN, or TRANSFER movement in the inventory ledger.
+     * Records a directional stock movement in the inventory ledger: RECEIVE posts GOODS_RECEIPT, PUT_AWAY posts PUTAWAY, PICK and ISSUE post GOODS_ISSUE, RETURN posts RETURN_TO_STOCK, and TRANSFER posts a paired TRANSFER_OUT and TRANSFER_IN. Use this tool for ledger-backed inventory changes; do not use updateInventoryAvailability, which always returns 501, and do not send movementType ADJUST here — quantity corrections go through createAdjustmentRequest and approveAdjustmentRequest. Preconditions: PICK and ISSUE require on-hand at fromLocationId to cover the quantity; TRANSFER is intra-site only — when both ends resolve to different sites the movement must go through a transfer order so in-transit stock is represented. Required inputs: productSku, fromLocationId (UUID), movementType and a positive quantity; toLocationId is required for TRANSFER, while unitOfMeasure and sourceTransactionId are optional. Emits an INVENTORY_STOCK_MOVEMENT_CREATE event and posts the entries through the ledger funnel, which updates the stock summary that availability reads. Returns 201 with no body, 422 with INSUFFICIENT_STOCK when a PICK or ISSUE exceeds on-hand at the source, 422 with CROSS_SITE_TRANSFER_REQUIRES_ORDER for a cross-site TRANSFER, and 400 when toLocationId is missing for TRANSFER or movementType is ADJUST. 
      * Record a stock movement
      */
-    async recordMovement(requestParameters: RecordMovementOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.recordMovementRaw(requestParameters, initOverrides);
+    async createStockMovement(requestParameters: CreateStockMovementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.createStockMovementRaw(requestParameters, initOverrides);
     }
 
 }

@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to update a unit-of-measure conversion factor
  * @export
  * @interface UomConversionUpdateRequestDto
  */
 export interface UomConversionUpdateRequestDto {
     /**
-     * 
+     * Multiplier to convert one unit of the source UOM into the target UOM
      * @type {number}
      * @memberof UomConversionUpdateRequestDto
      */

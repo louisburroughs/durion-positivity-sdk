@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing a mobile unit eligible to cover a request
  * @export
  * @interface EligibleMobileUnitResponse
  */
 export interface EligibleMobileUnitResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof EligibleMobileUnitResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EligibleMobileUnitResponse
-     */
-    name?: string;
-    /**
-     * 
+     * Identifier of the base location the mobile unit operates from
      * @type {string}
      * @memberof EligibleMobileUnitResponse
      */
     baseLocationId?: string;
     /**
-     * 
+     * Unique identifier of the mobile unit
+     * @type {string}
+     * @memberof EligibleMobileUnitResponse
+     */
+    id: string;
+    /**
+     * Display name of the mobile unit
+     * @type {string}
+     * @memberof EligibleMobileUnitResponse
+     */
+    name?: string;
+    /**
+     * Coverage priority of the mobile unit for the requested area (lower is preferred)
      * @type {number}
      * @memberof EligibleMobileUnitResponse
      */
@@ -49,6 +49,7 @@ export interface EligibleMobileUnitResponse {
  * Check if a given object implements the EligibleMobileUnitResponse interface.
  */
 export function instanceOfEligibleMobileUnitResponse(value: object): boolean {
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -62,9 +63,9 @@ export function EligibleMobileUnitResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
+        'id': json['id'],
+        'name': json['name'] == null ? undefined : json['name'],
         'priority': json['priority'] == null ? undefined : json['priority'],
     };
 }
@@ -75,9 +76,9 @@ export function EligibleMobileUnitResponseToJSON(value?: EligibleMobileUnitRespo
     }
     return {
         
+        'baseLocationId': value['baseLocationId'],
         'id': value['id'],
         'name': value['name'],
-        'baseLocationId': value['baseLocationId'],
         'priority': value['priority'],
     };
 }

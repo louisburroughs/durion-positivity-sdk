@@ -20,59 +20,23 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderPartResponse {
     /**
-     * Part line item ID
-     * @type {string}
-     * @memberof WorkorderPartResponse
-     */
-    id?: string;
-    /**
-     * Product entity ID from catalog
-     * @type {string}
-     * @memberof WorkorderPartResponse
-     */
-    productEntityId?: string;
-    /**
      * Part description
      * @type {string}
      * @memberof WorkorderPartResponse
      */
     description?: string;
     /**
-     * Part line status
+     * Part line item ID
      * @type {string}
      * @memberof WorkorderPartResponse
      */
-    status?: WorkorderPartResponseStatusEnum;
+    id: string;
     /**
-     * Authorized quantity from estimate
+     * Line total from estimate
      * @type {number}
      * @memberof WorkorderPartResponse
      */
-    quantity?: number;
-    /**
-     * Unit price per part
-     * @type {number}
-     * @memberof WorkorderPartResponse
-     */
-    unitPrice?: number;
-    /**
-     * Quantity issued from inventory
-     * @type {number}
-     * @memberof WorkorderPartResponse
-     */
-    quantityIssued?: number;
-    /**
-     * Quantity consumed (cannot be returned)
-     * @type {number}
-     * @memberof WorkorderPartResponse
-     */
-    quantityConsumed?: number;
-    /**
-     * Quantity returned to inventory
-     * @type {number}
-     * @memberof WorkorderPartResponse
-     */
-    quantityReturned?: number;
+    lineTotal?: number;
     /**
      * Total part cost (authorized quantity * unit price)
      * @type {number}
@@ -80,11 +44,59 @@ export interface WorkorderPartResponse {
      */
     partCost?: number;
     /**
-     * Line total from estimate
+     * URL of photo evidence attached to the part line
+     * @type {string}
+     * @memberof WorkorderPartResponse
+     */
+    photoEvidenceUrl?: string;
+    /**
+     * Product entity ID from catalog
+     * @type {string}
+     * @memberof WorkorderPartResponse
+     */
+    productEntityId?: string;
+    /**
+     * Authorized quantity from estimate
      * @type {number}
      * @memberof WorkorderPartResponse
      */
-    lineTotal?: number;
+    quantity?: number;
+    /**
+     * Quantity consumed (cannot be returned)
+     * @type {number}
+     * @memberof WorkorderPartResponse
+     */
+    quantityConsumed?: number;
+    /**
+     * Quantity issued from inventory
+     * @type {number}
+     * @memberof WorkorderPartResponse
+     */
+    quantityIssued?: number;
+    /**
+     * Quantity returned to inventory
+     * @type {number}
+     * @memberof WorkorderPartResponse
+     */
+    quantityReturned?: number;
+    /**
+     * Part line status
+     * @type {string}
+     * @memberof WorkorderPartResponse
+     */
+    status?: WorkorderPartResponseStatusEnum;
+    /**
+     * Unit the line's quantities are expressed in; null means the product's base UoM (ADR-0055 stage 3)
+     * @type {string}
+     * @memberof WorkorderPartResponse
+     */
+    unitOfMeasure?: string;
+    /**
+     * Unit price per part
+     * @type {number}
+     * @memberof WorkorderPartResponse
+     */
+    unitPrice?: number;
 }
 
 /**
@@ -105,6 +117,7 @@ export enum WorkorderPartResponseStatusEnum {
  * Check if a given object implements the WorkorderPartResponse interface.
  */
 export function instanceOfWorkorderPartResponse(value: object): boolean {
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -118,17 +131,19 @@ export function WorkorderPartResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'productEntityId': json['productEntityId'] == null ? undefined : json['productEntityId'],
         'description': json['description'] == null ? undefined : json['description'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
-        'quantityIssued': json['quantityIssued'] == null ? undefined : json['quantityIssued'],
-        'quantityConsumed': json['quantityConsumed'] == null ? undefined : json['quantityConsumed'],
-        'quantityReturned': json['quantityReturned'] == null ? undefined : json['quantityReturned'],
-        'partCost': json['partCost'] == null ? undefined : json['partCost'],
+        'id': json['id'],
         'lineTotal': json['lineTotal'] == null ? undefined : json['lineTotal'],
+        'partCost': json['partCost'] == null ? undefined : json['partCost'],
+        'photoEvidenceUrl': json['photoEvidenceUrl'] == null ? undefined : json['photoEvidenceUrl'],
+        'productEntityId': json['productEntityId'] == null ? undefined : json['productEntityId'],
+        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'quantityConsumed': json['quantityConsumed'] == null ? undefined : json['quantityConsumed'],
+        'quantityIssued': json['quantityIssued'] == null ? undefined : json['quantityIssued'],
+        'quantityReturned': json['quantityReturned'] == null ? undefined : json['quantityReturned'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
     };
 }
 
@@ -138,17 +153,19 @@ export function WorkorderPartResponseToJSON(value?: WorkorderPartResponse | null
     }
     return {
         
-        'id': value['id'],
-        'productEntityId': value['productEntityId'],
         'description': value['description'],
-        'status': value['status'],
-        'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
-        'quantityIssued': value['quantityIssued'],
-        'quantityConsumed': value['quantityConsumed'],
-        'quantityReturned': value['quantityReturned'],
-        'partCost': value['partCost'],
+        'id': value['id'],
         'lineTotal': value['lineTotal'],
+        'partCost': value['partCost'],
+        'photoEvidenceUrl': value['photoEvidenceUrl'],
+        'productEntityId': value['productEntityId'],
+        'quantity': value['quantity'],
+        'quantityConsumed': value['quantityConsumed'],
+        'quantityIssued': value['quantityIssued'],
+        'quantityReturned': value['quantityReturned'],
+        'status': value['status'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'unitPrice': value['unitPrice'],
     };
 }
 

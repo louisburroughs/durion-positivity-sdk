@@ -19,7 +19,7 @@ export interface GetSiteDefaultLocationsRequest {
     siteId: string;
 }
 
-export interface PutSiteDefaultLocationsRequest {
+export interface UpdateSiteDefaultLocationsRequest {
     siteId: string;
     requestBody?: Array<string>;
 }
@@ -30,7 +30,7 @@ export interface PutSiteDefaultLocationsRequest {
 export class InventorySitesApi extends runtime.BaseAPI {
 
     /**
-     * Returns configured default locations for a site. Stub implementation.
+     * Returns the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteInventoryRollup instead for actual site inventory data, and do not expect updateSiteDefaultLocations to have stored anything readable here. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the stub performs no lookup. Returns 501 unconditionally until the configuration store is implemented. 
      * Get site default locations
      */
     async getSiteDefaultLocationsRaw(requestParameters: GetSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
@@ -64,7 +64,7 @@ export class InventorySitesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns configured default locations for a site. Stub implementation.
+     * Returns the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteInventoryRollup instead for actual site inventory data, and do not expect updateSiteDefaultLocations to have stored anything readable here. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the stub performs no lookup. Returns 501 unconditionally until the configuration store is implemented. 
      * Get site default locations
      */
     async getSiteDefaultLocations(requestParameters: GetSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
@@ -73,14 +73,14 @@ export class InventorySitesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the configured default locations for a site. Stub implementation.
+     * Replaces the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteDefaultLocations instead to read the configuration once implemented. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) path parameter and an optional JSON array of storage-location UUIDs as the body. Emits an INVENTORY_SITE_DEFAULT_LOCATIONS_UPDATE event when invoked; no configuration is stored. Returns 501 unconditionally until the configuration store is implemented. 
      * Replace site default locations
      */
-    async putSiteDefaultLocationsRaw(requestParameters: PutSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async updateSiteDefaultLocationsRaw(requestParameters: UpdateSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['siteId'] == null) {
             throw new runtime.RequiredError(
                 'siteId',
-                'Required parameter "siteId" was null or undefined when calling putSiteDefaultLocations().'
+                'Required parameter "siteId" was null or undefined when calling updateSiteDefaultLocations().'
             );
         }
 
@@ -110,11 +110,11 @@ export class InventorySitesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the configured default locations for a site. Stub implementation.
+     * Replaces the configured default storage locations for a site; this endpoint is a stub that currently always answers 501 Not Implemented. Use this tool only to probe the future site-defaults contract; use getSiteDefaultLocations instead to read the configuration once implemented. Preconditions: none are evaluated; no configuration store exists yet. Required inputs: siteId (UUID) path parameter and an optional JSON array of storage-location UUIDs as the body. Emits an INVENTORY_SITE_DEFAULT_LOCATIONS_UPDATE event when invoked; no configuration is stored. Returns 501 unconditionally until the configuration store is implemented. 
      * Replace site default locations
      */
-    async putSiteDefaultLocations(requestParameters: PutSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.putSiteDefaultLocationsRaw(requestParameters, initOverrides);
+    async updateSiteDefaultLocations(requestParameters: UpdateSiteDefaultLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.updateSiteDefaultLocationsRaw(requestParameters, initOverrides);
     }
 
 }

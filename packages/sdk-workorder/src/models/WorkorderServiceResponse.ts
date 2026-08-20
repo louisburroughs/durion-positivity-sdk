@@ -20,47 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderServiceResponse {
     /**
-     * Service line item ID
-     * @type {string}
-     * @memberof WorkorderServiceResponse
-     */
-    id?: string;
-    /**
-     * Service entity ID from catalog
-     * @type {string}
-     * @memberof WorkorderServiceResponse
-     */
-    serviceEntityId?: string;
-    /**
      * Service description
      * @type {string}
      * @memberof WorkorderServiceResponse
      */
     description?: string;
     /**
-     * Service line status
+     * Service line item ID
      * @type {string}
      * @memberof WorkorderServiceResponse
      */
-    status?: WorkorderServiceResponseStatusEnum;
-    /**
-     * Authorized quantity (hours for labor)
-     * @type {number}
-     * @memberof WorkorderServiceResponse
-     */
-    quantity?: number;
-    /**
-     * Unit price (hourly rate)
-     * @type {number}
-     * @memberof WorkorderServiceResponse
-     */
-    unitPrice?: number;
-    /**
-     * Total labor hours recorded
-     * @type {number}
-     * @memberof WorkorderServiceResponse
-     */
-    totalLaborHours?: number;
+    id?: string;
     /**
      * Total labor cost
      * @type {number}
@@ -73,6 +43,36 @@ export interface WorkorderServiceResponse {
      * @memberof WorkorderServiceResponse
      */
     lineTotal?: number;
+    /**
+     * Authorized quantity (hours for labor)
+     * @type {number}
+     * @memberof WorkorderServiceResponse
+     */
+    quantity?: number;
+    /**
+     * Service entity ID from catalog
+     * @type {string}
+     * @memberof WorkorderServiceResponse
+     */
+    serviceEntityId?: string;
+    /**
+     * Service line status
+     * @type {string}
+     * @memberof WorkorderServiceResponse
+     */
+    status?: WorkorderServiceResponseStatusEnum;
+    /**
+     * Total labor hours recorded
+     * @type {number}
+     * @memberof WorkorderServiceResponse
+     */
+    totalLaborHours?: number;
+    /**
+     * Unit price (hourly rate)
+     * @type {number}
+     * @memberof WorkorderServiceResponse
+     */
+    unitPrice?: number;
 }
 
 /**
@@ -106,15 +106,15 @@ export function WorkorderServiceResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'serviceEntityId': json['serviceEntityId'] == null ? undefined : json['serviceEntityId'],
         'description': json['description'] == null ? undefined : json['description'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
-        'totalLaborHours': json['totalLaborHours'] == null ? undefined : json['totalLaborHours'],
+        'id': json['id'] == null ? undefined : json['id'],
         'laborCost': json['laborCost'] == null ? undefined : json['laborCost'],
         'lineTotal': json['lineTotal'] == null ? undefined : json['lineTotal'],
+        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'serviceEntityId': json['serviceEntityId'] == null ? undefined : json['serviceEntityId'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'totalLaborHours': json['totalLaborHours'] == null ? undefined : json['totalLaborHours'],
+        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
     };
 }
 
@@ -124,15 +124,15 @@ export function WorkorderServiceResponseToJSON(value?: WorkorderServiceResponse 
     }
     return {
         
-        'id': value['id'],
-        'serviceEntityId': value['serviceEntityId'],
         'description': value['description'],
-        'status': value['status'],
-        'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
-        'totalLaborHours': value['totalLaborHours'],
+        'id': value['id'],
         'laborCost': value['laborCost'],
         'lineTotal': value['lineTotal'],
+        'quantity': value['quantity'],
+        'serviceEntityId': value['serviceEntityId'],
+        'status': value['status'],
+        'totalLaborHours': value['totalLaborHours'],
+        'unitPrice': value['unitPrice'],
     };
 }
 

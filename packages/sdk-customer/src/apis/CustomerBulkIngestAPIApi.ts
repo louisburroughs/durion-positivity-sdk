@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface BulkIngestCustomersRequest {
     bulkIngestRequestCustomerBulkIngestRecord: BulkIngestRequestCustomerBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class CustomerBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of individual customer records, creating each one through the same path as createCrmPerson so canonical identities land in pos-people, and reports a per-row success or failure result without aborting the batch. Use this tool for migrations and file imports of individuals; do not use createCrmPerson row by row for large loads, and note this path cannot create commercial accounts. Preconditions: none beyond authorization; rows that fail validation are reported with errorCode CUSTOMER_INGEST_FAILED while the rest of the batch proceeds. Required inputs: jobId (UUID), locationId (UUID), and a non-empty records list where each record has firstName and lastName (each max 100) and optionally email, phoneNumber, primaryAddress, and customerNumber; preferredContactMethod is derived as EMAIL when an email is present and PHONE_CALL otherwise, and operatorId falls back to the security context when absent or not a UUID. Emits a CUSTOMER_BULK_INGEST event, and each successful row publishes a party-changed customer fact and writes contact points to pos-people. Returns 200 with per-row results including failures, and 400 when jobId, locationId, or the records list is missing or empty. 
+     * Bulk Ingest Customer Records
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async bulkIngestCustomersRaw(requestParameters: BulkIngestCustomersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestCustomerBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestCustomerBulkIngestRecord',
-                'Required parameter "bulkIngestRequestCustomerBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestCustomerBulkIngestRecord" was null or undefined when calling bulkIngestCustomers().'
             );
         }
 
@@ -72,11 +72,11 @@ export class CustomerBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Imports a batch of individual customer records, creating each one through the same path as createCrmPerson so canonical identities land in pos-people, and reports a per-row success or failure result without aborting the batch. Use this tool for migrations and file imports of individuals; do not use createCrmPerson row by row for large loads, and note this path cannot create commercial accounts. Preconditions: none beyond authorization; rows that fail validation are reported with errorCode CUSTOMER_INGEST_FAILED while the rest of the batch proceeds. Required inputs: jobId (UUID), locationId (UUID), and a non-empty records list where each record has firstName and lastName (each max 100) and optionally email, phoneNumber, primaryAddress, and customerNumber; preferredContactMethod is derived as EMAIL when an email is present and PHONE_CALL otherwise, and operatorId falls back to the security context when absent or not a UUID. Emits a CUSTOMER_BULK_INGEST event, and each successful row publishes a party-changed customer fact and writes contact points to pos-people. Returns 200 with per-row results including failures, and 400 when jobId, locationId, or the records list is missing or empty. 
+     * Bulk Ingest Customer Records
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async bulkIngestCustomers(requestParameters: BulkIngestCustomersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.bulkIngestCustomersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

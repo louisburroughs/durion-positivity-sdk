@@ -14,59 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * Filter criteria for audit event search
+ * Filter criteria for audit event search; all fields are optional
  * @export
  * @interface AuditEventSearchFilter
  */
 export interface AuditEventSearchFilter {
-    /**
-     * Inclusive start timestamp (ISO-8601)
-     * @type {Date}
-     * @memberof AuditEventSearchFilter
-     */
-    fromDate?: Date;
-    /**
-     * Exclusive end timestamp (ISO-8601)
-     * @type {Date}
-     * @memberof AuditEventSearchFilter
-     */
-    toDate?: Date;
     /**
      * Actor username/service principal
      * @type {string}
      * @memberof AuditEventSearchFilter
      */
     actorId?: string;
-    /**
-     * Workorder UUID - one word per workspace naming policy
-     * @type {string}
-     * @memberof AuditEventSearchFilter
-     */
-    workorderId?: string;
-    /**
-     * Movement UUID
-     * @type {string}
-     * @memberof AuditEventSearchFilter
-     */
-    movementId?: string;
-    /**
-     * Product UUID
-     * @type {string}
-     * @memberof AuditEventSearchFilter
-     */
-    productId?: string;
-    /**
-     * SKU code
-     * @type {string}
-     * @memberof AuditEventSearchFilter
-     */
-    sku?: string;
-    /**
-     * Event type code
-     * @type {string}
-     * @memberof AuditEventSearchFilter
-     */
-    eventType?: string;
     /**
      * Aggregate identifier (string)
      * @type {string}
@@ -80,11 +38,29 @@ export interface AuditEventSearchFilter {
      */
     correlationId?: string;
     /**
-     * Reason code string
+     * Event type code
      * @type {string}
      * @memberof AuditEventSearchFilter
      */
-    reasonCode?: string;
+    eventType?: string;
+    /**
+     * Inclusive start timestamp (ISO-8601)
+     * @type {Date}
+     * @memberof AuditEventSearchFilter
+     */
+    fromDate?: Date;
+    /**
+     * Location UUID list filter
+     * @type {Array<string>}
+     * @memberof AuditEventSearchFilter
+     */
+    locationIds?: Array<string>;
+    /**
+     * Movement UUID
+     * @type {string}
+     * @memberof AuditEventSearchFilter
+     */
+    movementId?: string;
     /**
      * Cursor token for page-based navigation
      * @type {string}
@@ -92,11 +68,35 @@ export interface AuditEventSearchFilter {
      */
     pageToken?: string;
     /**
-     * Location UUID list filter
-     * @type {Array<string>}
+     * Product UUID
+     * @type {string}
      * @memberof AuditEventSearchFilter
      */
-    locationIds?: Array<string>;
+    productId?: string;
+    /**
+     * Reason code string
+     * @type {string}
+     * @memberof AuditEventSearchFilter
+     */
+    reasonCode?: string;
+    /**
+     * SKU code
+     * @type {string}
+     * @memberof AuditEventSearchFilter
+     */
+    sku?: string;
+    /**
+     * Exclusive end timestamp (ISO-8601)
+     * @type {Date}
+     * @memberof AuditEventSearchFilter
+     */
+    toDate?: Date;
+    /**
+     * Workorder UUID - one word per workspace naming policy
+     * @type {string}
+     * @memberof AuditEventSearchFilter
+     */
+    workorderId?: string;
 }
 
 /**
@@ -116,19 +116,19 @@ export function AuditEventSearchFilterFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'fromDate': json['fromDate'] == null ? undefined : (new Date(json['fromDate'])),
-        'toDate': json['toDate'] == null ? undefined : (new Date(json['toDate'])),
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'movementId': json['movementId'] == null ? undefined : json['movementId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'sku': json['sku'] == null ? undefined : json['sku'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
         'aggregateId': json['aggregateId'] == null ? undefined : json['aggregateId'],
         'correlationId': json['correlationId'] == null ? undefined : json['correlationId'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'pageToken': json['pageToken'] == null ? undefined : json['pageToken'],
+        'eventType': json['eventType'] == null ? undefined : json['eventType'],
+        'fromDate': json['fromDate'] == null ? undefined : (new Date(json['fromDate'])),
         'locationIds': json['locationIds'] == null ? undefined : json['locationIds'],
+        'movementId': json['movementId'] == null ? undefined : json['movementId'],
+        'pageToken': json['pageToken'] == null ? undefined : json['pageToken'],
+        'productId': json['productId'] == null ? undefined : json['productId'],
+        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'sku': json['sku'] == null ? undefined : json['sku'],
+        'toDate': json['toDate'] == null ? undefined : (new Date(json['toDate'])),
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -138,19 +138,19 @@ export function AuditEventSearchFilterToJSON(value?: AuditEventSearchFilter | nu
     }
     return {
         
-        'fromDate': value['fromDate'] == null ? undefined : ((value['fromDate']).toISOString()),
-        'toDate': value['toDate'] == null ? undefined : ((value['toDate']).toISOString()),
         'actorId': value['actorId'],
-        'workorderId': value['workorderId'],
-        'movementId': value['movementId'],
-        'productId': value['productId'],
-        'sku': value['sku'],
-        'eventType': value['eventType'],
         'aggregateId': value['aggregateId'],
         'correlationId': value['correlationId'],
-        'reasonCode': value['reasonCode'],
-        'pageToken': value['pageToken'],
+        'eventType': value['eventType'],
+        'fromDate': value['fromDate'] == null ? undefined : ((value['fromDate']).toISOString()),
         'locationIds': value['locationIds'],
+        'movementId': value['movementId'],
+        'pageToken': value['pageToken'],
+        'productId': value['productId'],
+        'reasonCode': value['reasonCode'],
+        'sku': value['sku'],
+        'toDate': value['toDate'] == null ? undefined : ((value['toDate']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

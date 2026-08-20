@@ -14,41 +14,59 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload describing a single received line item when recording a goods receipt against a purchase order
  * @export
  * @interface CreateGoodsReceiptLineRequest
  */
 export interface CreateGoodsReceiptLineRequest {
     /**
-     * 
+     * Quantity received expressed in documentUom; must be supplied together with documentUom
+     * @type {number}
+     * @memberof CreateGoodsReceiptLineRequest
+     */
+    documentQuantity?: number;
+    /**
+     * Optional UoM the receipt line is keyed in (e.g. CASE). When present, documentQuantity is converted to the product's base UoM at posting time and the ledger posts the base quantity; unitCostMinor then refers to one documentUom unit. A UoM with no conversion path is rejected with 422 UOM_CONVERSION_UNDEFINED
+     * @type {string}
+     * @memberof CreateGoodsReceiptLineRequest
+     */
+    documentUom?: string;
+    /**
+     * Lot or batch number associated with the received product
+     * @type {string}
+     * @memberof CreateGoodsReceiptLineRequest
+     */
+    lotNumber?: string;
+    /**
+     * Identifier of the specific purchase order line this receipt line fulfills
      * @type {string}
      * @memberof CreateGoodsReceiptLineRequest
      */
     poLineId?: string;
     /**
-     * 
+     * Whole-unit quantity of the SKU received, in the product's base UoM. Required unless documentUom/documentQuantity are supplied, in which case the base quantity is derived and this field is ignored
+     * @type {number}
+     * @memberof CreateGoodsReceiptLineRequest
+     */
+    quantityReceived?: number;
+    /**
+     * Serial numbers of the received units (odoo-parity E4). Required for SERIAL-tracked products: the list size must equal the received base quantity (422 SERIAL_COUNT_MISMATCH otherwise), and each serial is enumerated as an in-stock unit. Ignored for untracked and LOT-tracked products
+     * @type {Array<string>}
+     * @memberof CreateGoodsReceiptLineRequest
+     */
+    serialNumbers?: Array<string>;
+    /**
+     * Stock keeping unit identifier for the received product
      * @type {string}
      * @memberof CreateGoodsReceiptLineRequest
      */
     sku: string;
     /**
-     * 
-     * @type {number}
-     * @memberof CreateGoodsReceiptLineRequest
-     */
-    quantityReceived: number;
-    /**
-     * 
+     * Unit cost of the received product expressed in minor currency units (e.g. cents)
      * @type {number}
      * @memberof CreateGoodsReceiptLineRequest
      */
     unitCostMinor: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateGoodsReceiptLineRequest
-     */
-    lotNumber?: string;
 }
 
 /**
@@ -56,7 +74,6 @@ export interface CreateGoodsReceiptLineRequest {
  */
 export function instanceOfCreateGoodsReceiptLineRequest(value: object): boolean {
     if (!('sku' in value)) return false;
-    if (!('quantityReceived' in value)) return false;
     if (!('unitCostMinor' in value)) return false;
     return true;
 }
@@ -71,11 +88,14 @@ export function CreateGoodsReceiptLineRequestFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'poLineId': json['poLineId'] == null ? undefined : json['poLineId'],
-        'sku': json['sku'],
-        'quantityReceived': json['quantityReceived'],
-        'unitCostMinor': json['unitCostMinor'],
+        'documentQuantity': json['documentQuantity'] == null ? undefined : json['documentQuantity'],
+        'documentUom': json['documentUom'] == null ? undefined : json['documentUom'],
         'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
+        'poLineId': json['poLineId'] == null ? undefined : json['poLineId'],
+        'quantityReceived': json['quantityReceived'] == null ? undefined : json['quantityReceived'],
+        'serialNumbers': json['serialNumbers'] == null ? undefined : json['serialNumbers'],
+        'sku': json['sku'],
+        'unitCostMinor': json['unitCostMinor'],
     };
 }
 
@@ -85,11 +105,14 @@ export function CreateGoodsReceiptLineRequestToJSON(value?: CreateGoodsReceiptLi
     }
     return {
         
-        'poLineId': value['poLineId'],
-        'sku': value['sku'],
-        'quantityReceived': value['quantityReceived'],
-        'unitCostMinor': value['unitCostMinor'],
+        'documentQuantity': value['documentQuantity'],
+        'documentUom': value['documentUom'],
         'lotNumber': value['lotNumber'],
+        'poLineId': value['poLineId'],
+        'quantityReceived': value['quantityReceived'],
+        'serialNumbers': value['serialNumbers'],
+        'sku': value['sku'],
+        'unitCostMinor': value['unitCostMinor'],
     };
 }
 

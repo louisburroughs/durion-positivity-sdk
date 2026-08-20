@@ -14,41 +14,41 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Resolved reference/list price for a product in a given context. This is catalog reference data (list/MSRP role per ADR-0054), never a transactional sell price — transactional quoting is owned by pos-price
  * @export
  * @interface ResolvePriceResponseDto
  */
 export interface ResolvePriceResponseDto {
     /**
-     * 
-     * @type {string}
-     * @memberof ResolvePriceResponseDto
-     */
-    resolvedAmount?: string;
-    /**
-     * 
+     * ISO currency code of the resolved amount (null when source is UNAVAILABLE)
      * @type {string}
      * @memberof ResolvePriceResponseDto
      */
     currency?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ResolvePriceResponseDto
-     */
-    source?: ResolvePriceResponseDtoSourceEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof ResolvePriceResponseDto
-     */
-    sourceRuleId?: string;
-    /**
-     * 
+     * Explanation for a fallback or unavailable result
      * @type {string}
      * @memberof ResolvePriceResponseDto
      */
     fallbackReason?: string;
+    /**
+     * Resolved price amount (null when source is UNAVAILABLE)
+     * @type {string}
+     * @memberof ResolvePriceResponseDto
+     */
+    resolvedAmount?: string;
+    /**
+     * Origin of the resolved price
+     * @type {string}
+     * @memberof ResolvePriceResponseDto
+     */
+    source: ResolvePriceResponseDtoSourceEnum;
+    /**
+     * Identifier of the price book rule that produced the amount, when sourced from a price book
+     * @type {string}
+     * @memberof ResolvePriceResponseDto
+     */
+    sourceRuleId?: string;
 }
 
 /**
@@ -66,6 +66,7 @@ export enum ResolvePriceResponseDtoSourceEnum {
  * Check if a given object implements the ResolvePriceResponseDto interface.
  */
 export function instanceOfResolvePriceResponseDto(value: object): boolean {
+    if (!('source' in value)) return false;
     return true;
 }
 
@@ -79,11 +80,11 @@ export function ResolvePriceResponseDtoFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'resolvedAmount': json['resolvedAmount'] == null ? undefined : json['resolvedAmount'],
         'currency': json['currency'] == null ? undefined : json['currency'],
-        'source': json['source'] == null ? undefined : json['source'],
-        'sourceRuleId': json['sourceRuleId'] == null ? undefined : json['sourceRuleId'],
         'fallbackReason': json['fallbackReason'] == null ? undefined : json['fallbackReason'],
+        'resolvedAmount': json['resolvedAmount'] == null ? undefined : json['resolvedAmount'],
+        'source': json['source'],
+        'sourceRuleId': json['sourceRuleId'] == null ? undefined : json['sourceRuleId'],
     };
 }
 
@@ -93,11 +94,11 @@ export function ResolvePriceResponseDtoToJSON(value?: ResolvePriceResponseDto | 
     }
     return {
         
-        'resolvedAmount': value['resolvedAmount'],
         'currency': value['currency'],
+        'fallbackReason': value['fallbackReason'],
+        'resolvedAmount': value['resolvedAmount'],
         'source': value['source'],
         'sourceRuleId': value['sourceRuleId'],
-        'fallbackReason': value['fallbackReason'],
     };
 }
 

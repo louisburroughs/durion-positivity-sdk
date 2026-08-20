@@ -20,71 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface WorkSessionResponse {
     /**
-     * Unique identifier of the work session
+     * Notes provided at approval
      * @type {string}
      * @memberof WorkSessionResponse
      */
-    workSessionId?: string;
-    /**
-     * ID of the mechanic
-     * @type {string}
-     * @memberof WorkSessionResponse
-     */
-    mechanicId?: string;
-    /**
-     * ID of the work order
-     * @type {string}
-     * @memberof WorkSessionResponse
-     */
-    workOrderId?: string;
-    /**
-     * ID of the work order task
-     * @type {string}
-     * @memberof WorkSessionResponse
-     */
-    workOrderTaskId?: string;
-    /**
-     * ID of the work location
-     * @type {string}
-     * @memberof WorkSessionResponse
-     */
-    locationId?: string;
-    /**
-     * Optional resource/bay ID
-     * @type {string}
-     * @memberof WorkSessionResponse
-     */
-    resourceId?: string;
-    /**
-     * Session start timestamp
-     * @type {Date}
-     * @memberof WorkSessionResponse
-     */
-    startAt?: Date;
-    /**
-     * Session end timestamp
-     * @type {Date}
-     * @memberof WorkSessionResponse
-     */
-    endAt?: Date;
-    /**
-     * Current status of the work session
-     * @type {string}
-     * @memberof WorkSessionResponse
-     */
-    status?: WorkSessionResponseStatusEnum;
-    /**
-     * Whether the session is locked
-     * @type {boolean}
-     * @memberof WorkSessionResponse
-     */
-    locked?: boolean;
-    /**
-     * Total session duration in seconds
-     * @type {number}
-     * @memberof WorkSessionResponse
-     */
-    totalDurationSeconds?: number;
+    approvalNotes?: string;
     /**
      * Timestamp when the session was approved
      * @type {Date}
@@ -98,17 +38,35 @@ export interface WorkSessionResponse {
      */
     approvedByUserId?: string;
     /**
-     * Notes provided at approval
+     * Session end timestamp
+     * @type {Date}
+     * @memberof WorkSessionResponse
+     */
+    endAt?: Date;
+    /**
+     * ID of the work location
      * @type {string}
      * @memberof WorkSessionResponse
      */
-    approvalNotes?: string;
+    locationId?: string;
+    /**
+     * Whether the session is locked
+     * @type {boolean}
+     * @memberof WorkSessionResponse
+     */
+    locked?: boolean;
     /**
      * Timestamp when the session was locked
      * @type {Date}
      * @memberof WorkSessionResponse
      */
     lockedAt?: Date;
+    /**
+     * ID of the mechanic
+     * @type {string}
+     * @memberof WorkSessionResponse
+     */
+    mechanicId?: string;
     /**
      * Whether an overlap override was used
      * @type {boolean}
@@ -121,6 +79,48 @@ export interface WorkSessionResponse {
      * @memberof WorkSessionResponse
      */
     overrideReason?: string;
+    /**
+     * Optional resource/bay ID
+     * @type {string}
+     * @memberof WorkSessionResponse
+     */
+    resourceId?: string;
+    /**
+     * Session start timestamp
+     * @type {Date}
+     * @memberof WorkSessionResponse
+     */
+    startAt?: Date;
+    /**
+     * Current status of the work session
+     * @type {string}
+     * @memberof WorkSessionResponse
+     */
+    status?: WorkSessionResponseStatusEnum;
+    /**
+     * Total session duration in seconds
+     * @type {number}
+     * @memberof WorkSessionResponse
+     */
+    totalDurationSeconds?: number;
+    /**
+     * ID of the work order
+     * @type {string}
+     * @memberof WorkSessionResponse
+     */
+    workOrderId?: string;
+    /**
+     * ID of the work order task
+     * @type {string}
+     * @memberof WorkSessionResponse
+     */
+    workOrderTaskId?: string;
+    /**
+     * Unique identifier of the work session
+     * @type {string}
+     * @memberof WorkSessionResponse
+     */
+    workSessionId?: string;
 }
 
 /**
@@ -152,23 +152,23 @@ export function WorkSessionResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
-        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
-        'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
-        'workOrderTaskId': json['workOrderTaskId'] == null ? undefined : json['workOrderTaskId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
-        'startAt': json['startAt'] == null ? undefined : (new Date(json['startAt'])),
-        'endAt': json['endAt'] == null ? undefined : (new Date(json['endAt'])),
-        'status': json['status'] == null ? undefined : json['status'],
-        'locked': json['locked'] == null ? undefined : json['locked'],
-        'totalDurationSeconds': json['totalDurationSeconds'] == null ? undefined : json['totalDurationSeconds'],
+        'approvalNotes': json['approvalNotes'] == null ? undefined : json['approvalNotes'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedByUserId': json['approvedByUserId'] == null ? undefined : json['approvedByUserId'],
-        'approvalNotes': json['approvalNotes'] == null ? undefined : json['approvalNotes'],
+        'endAt': json['endAt'] == null ? undefined : (new Date(json['endAt'])),
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'locked': json['locked'] == null ? undefined : json['locked'],
         'lockedAt': json['lockedAt'] == null ? undefined : (new Date(json['lockedAt'])),
+        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
         'overlapOverrideUsed': json['overlapOverrideUsed'] == null ? undefined : json['overlapOverrideUsed'],
         'overrideReason': json['overrideReason'] == null ? undefined : json['overrideReason'],
+        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
+        'startAt': json['startAt'] == null ? undefined : (new Date(json['startAt'])),
+        'status': json['status'] == null ? undefined : json['status'],
+        'totalDurationSeconds': json['totalDurationSeconds'] == null ? undefined : json['totalDurationSeconds'],
+        'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
+        'workOrderTaskId': json['workOrderTaskId'] == null ? undefined : json['workOrderTaskId'],
+        'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
     };
 }
 
@@ -178,23 +178,23 @@ export function WorkSessionResponseToJSON(value?: WorkSessionResponse | null): a
     }
     return {
         
-        'workSessionId': value['workSessionId'],
-        'mechanicId': value['mechanicId'],
-        'workOrderId': value['workOrderId'],
-        'workOrderTaskId': value['workOrderTaskId'],
-        'locationId': value['locationId'],
-        'resourceId': value['resourceId'],
-        'startAt': value['startAt'] == null ? undefined : ((value['startAt']).toISOString()),
-        'endAt': value['endAt'] == null ? undefined : ((value['endAt']).toISOString()),
-        'status': value['status'],
-        'locked': value['locked'],
-        'totalDurationSeconds': value['totalDurationSeconds'],
+        'approvalNotes': value['approvalNotes'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedByUserId': value['approvedByUserId'],
-        'approvalNotes': value['approvalNotes'],
+        'endAt': value['endAt'] == null ? undefined : ((value['endAt']).toISOString()),
+        'locationId': value['locationId'],
+        'locked': value['locked'],
         'lockedAt': value['lockedAt'] == null ? undefined : ((value['lockedAt']).toISOString()),
+        'mechanicId': value['mechanicId'],
         'overlapOverrideUsed': value['overlapOverrideUsed'],
         'overrideReason': value['overrideReason'],
+        'resourceId': value['resourceId'],
+        'startAt': value['startAt'] == null ? undefined : ((value['startAt']).toISOString()),
+        'status': value['status'],
+        'totalDurationSeconds': value['totalDurationSeconds'],
+        'workOrderId': value['workOrderId'],
+        'workOrderTaskId': value['workOrderTaskId'],
+        'workSessionId': value['workSessionId'],
     };
 }
 

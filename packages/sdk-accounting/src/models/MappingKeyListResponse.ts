@@ -21,37 +21,37 @@ import {
 } from './MappingKeyResponse';
 
 /**
- * 
+ * Paginated list of mapping keys
  * @export
  * @interface MappingKeyListResponse
  */
 export interface MappingKeyListResponse {
     /**
-     * 
-     * @type {Array<MappingKeyResponse>}
-     * @memberof MappingKeyListResponse
-     */
-    results?: Array<MappingKeyResponse>;
-    /**
-     * 
-     * @type {number}
-     * @memberof MappingKeyListResponse
-     */
-    totalCount?: number;
-    /**
-     * 
+     * Zero-based index of the current page
      * @type {number}
      * @memberof MappingKeyListResponse
      */
     pageNumber?: number;
     /**
-     * 
+     * Number of items per page
      * @type {number}
      * @memberof MappingKeyListResponse
      */
     pageSize?: number;
     /**
-     * 
+     * Mapping keys on the current page
+     * @type {Array<MappingKeyResponse>}
+     * @memberof MappingKeyListResponse
+     */
+    results: Array<MappingKeyResponse>;
+    /**
+     * Total number of mapping keys matching the query
+     * @type {number}
+     * @memberof MappingKeyListResponse
+     */
+    totalCount?: number;
+    /**
+     * Total number of pages available
      * @type {number}
      * @memberof MappingKeyListResponse
      */
@@ -62,6 +62,7 @@ export interface MappingKeyListResponse {
  * Check if a given object implements the MappingKeyListResponse interface.
  */
 export function instanceOfMappingKeyListResponse(value: object): boolean {
+    if (!('results' in value)) return false;
     return true;
 }
 
@@ -75,10 +76,10 @@ export function MappingKeyListResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(MappingKeyResponseFromJSON)),
-        'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
         'pageNumber': json['pageNumber'] == null ? undefined : json['pageNumber'],
         'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
+        'results': ((json['results'] as Array<any>).map(MappingKeyResponseFromJSON)),
+        'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
         'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
     };
 }
@@ -89,10 +90,10 @@ export function MappingKeyListResponseToJSON(value?: MappingKeyListResponse | nu
     }
     return {
         
-        'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(MappingKeyResponseToJSON)),
-        'totalCount': value['totalCount'],
         'pageNumber': value['pageNumber'],
         'pageSize': value['pageSize'],
+        'results': ((value['results'] as Array<any>).map(MappingKeyResponseToJSON)),
+        'totalCount': value['totalCount'],
         'totalPages': value['totalPages'],
     };
 }

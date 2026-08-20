@@ -14,47 +14,52 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response returned after a successful scheduling conflict override
  * @export
  * @interface ConflictOverrideResponse
  */
 export interface ConflictOverrideResponse {
     /**
-     * 
+     * Appointment identifier whose conflict was overridden
      * @type {string}
      * @memberof ConflictOverrideResponse
      */
-    overrideId?: string;
+    appointmentId: string;
     /**
-     * 
+     * User identifier of the manager who performed the override
      * @type {string}
      * @memberof ConflictOverrideResponse
      */
-    appointmentId?: string;
+    overriddenByUserId: string;
     /**
-     * 
+     * Unique override record identifier
      * @type {string}
      * @memberof ConflictOverrideResponse
      */
-    overriddenByUserId?: string;
+    overrideId: string;
     /**
-     * 
+     * Reason recorded for the override
+     * @type {string}
+     * @memberof ConflictOverrideResponse
+     */
+    overrideReason: string;
+    /**
+     * Instant the override was performed in UTC (ISO-8601)
      * @type {Date}
      * @memberof ConflictOverrideResponse
      */
-    overrideTimestamp?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof ConflictOverrideResponse
-     */
-    overrideReason?: string;
+    overrideTimestamp: Date;
 }
 
 /**
  * Check if a given object implements the ConflictOverrideResponse interface.
  */
 export function instanceOfConflictOverrideResponse(value: object): boolean {
+    if (!('appointmentId' in value)) return false;
+    if (!('overriddenByUserId' in value)) return false;
+    if (!('overrideId' in value)) return false;
+    if (!('overrideReason' in value)) return false;
+    if (!('overrideTimestamp' in value)) return false;
     return true;
 }
 
@@ -68,11 +73,11 @@ export function ConflictOverrideResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'overrideId': json['overrideId'] == null ? undefined : json['overrideId'],
-        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
-        'overriddenByUserId': json['overriddenByUserId'] == null ? undefined : json['overriddenByUserId'],
-        'overrideTimestamp': json['overrideTimestamp'] == null ? undefined : (new Date(json['overrideTimestamp'])),
-        'overrideReason': json['overrideReason'] == null ? undefined : json['overrideReason'],
+        'appointmentId': json['appointmentId'],
+        'overriddenByUserId': json['overriddenByUserId'],
+        'overrideId': json['overrideId'],
+        'overrideReason': json['overrideReason'],
+        'overrideTimestamp': (new Date(json['overrideTimestamp'])),
     };
 }
 
@@ -82,11 +87,11 @@ export function ConflictOverrideResponseToJSON(value?: ConflictOverrideResponse 
     }
     return {
         
-        'overrideId': value['overrideId'],
         'appointmentId': value['appointmentId'],
         'overriddenByUserId': value['overriddenByUserId'],
-        'overrideTimestamp': value['overrideTimestamp'] == null ? undefined : ((value['overrideTimestamp']).toISOString()),
+        'overrideId': value['overrideId'],
         'overrideReason': value['overrideReason'],
+        'overrideTimestamp': ((value['overrideTimestamp']).toISOString()),
     };
 }
 

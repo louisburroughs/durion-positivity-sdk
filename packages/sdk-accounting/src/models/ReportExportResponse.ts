@@ -20,24 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface ReportExportResponse {
     /**
-     * Unique export job identifier
-     * @type {string}
-     * @memberof ReportExportResponse
-     */
-    exportId?: string;
-    /**
-     * Current export status
-     * @type {string}
-     * @memberof ReportExportResponse
-     */
-    status?: ReportExportResponseStatusEnum;
-    /**
-     * ISO-8601 timestamp when the export was requested
-     * @type {Date}
-     * @memberof ReportExportResponse
-     */
-    requestedAt?: Date;
-    /**
      * ISO-8601 timestamp when export completed (null if not finished)
      * @type {Date}
      * @memberof ReportExportResponse
@@ -50,6 +32,18 @@ export interface ReportExportResponse {
      */
     downloadUrl?: string;
     /**
+     * Unique export job identifier
+     * @type {string}
+     * @memberof ReportExportResponse
+     */
+    exportId: string;
+    /**
+     * Failure reason (only present when status is FAILED)
+     * @type {string}
+     * @memberof ReportExportResponse
+     */
+    failureReason?: string;
+    /**
      * Export format
      * @type {string}
      * @memberof ReportExportResponse
@@ -61,18 +55,20 @@ export interface ReportExportResponse {
      * @memberof ReportExportResponse
      */
     reportType?: string;
+    /**
+     * ISO-8601 timestamp when the export was requested
+     * @type {Date}
+     * @memberof ReportExportResponse
+     */
+    requestedAt?: Date;
+    /**
+     * Current export status
+     * @type {string}
+     * @memberof ReportExportResponse
+     */
+    status: ReportExportResponseStatusEnum;
 }
 
-/**
-* @export
-* @enum {string}
-*/
-export enum ReportExportResponseStatusEnum {
-    Pending = 'PENDING',
-    InProgress = 'IN_PROGRESS',
-    Completed = 'COMPLETED',
-    Failed = 'FAILED'
-}
 /**
 * @export
 * @enum {string}
@@ -83,12 +79,24 @@ export enum ReportExportResponseFormatEnum {
     Xlsx = 'XLSX',
     Json = 'JSON'
 }
+/**
+* @export
+* @enum {string}
+*/
+export enum ReportExportResponseStatusEnum {
+    Pending = 'PENDING',
+    InProgress = 'IN_PROGRESS',
+    Completed = 'COMPLETED',
+    Failed = 'FAILED'
+}
 
 
 /**
  * Check if a given object implements the ReportExportResponse interface.
  */
 export function instanceOfReportExportResponse(value: object): boolean {
+    if (!('exportId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -102,13 +110,14 @@ export function ReportExportResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'exportId': json['exportId'] == null ? undefined : json['exportId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
         'downloadUrl': json['downloadUrl'] == null ? undefined : json['downloadUrl'],
+        'exportId': json['exportId'],
+        'failureReason': json['failureReason'] == null ? undefined : json['failureReason'],
         'format': json['format'] == null ? undefined : json['format'],
         'reportType': json['reportType'] == null ? undefined : json['reportType'],
+        'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
+        'status': json['status'],
     };
 }
 
@@ -118,13 +127,14 @@ export function ReportExportResponseToJSON(value?: ReportExportResponse | null):
     }
     return {
         
-        'exportId': value['exportId'],
-        'status': value['status'],
-        'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
         'downloadUrl': value['downloadUrl'],
+        'exportId': value['exportId'],
+        'failureReason': value['failureReason'],
         'format': value['format'],
         'reportType': value['reportType'],
+        'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
+        'status': value['status'],
     };
 }
 

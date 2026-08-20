@@ -14,101 +14,108 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Putaway task describing a product to move from staging to a suggested storage location
  * @export
  * @interface PutawayTaskResponse
  */
 export interface PutawayTaskResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    taskId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    sourceReceiptId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    productId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof PutawayTaskResponse
-     */
-    quantity?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    sourceLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    suggestedDestinationLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    originalSuggestedLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    finalSuggestedLocationId?: string;
-    /**
-     * 
+     * Actual destination location where the goods were placed
      * @type {string}
      * @memberof PutawayTaskResponse
      */
     actualDestinationLocationId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    fallbackReason?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PutawayTaskResponse
-     */
-    status?: string;
-    /**
-     * 
+     * Identifier of the worker assigned to the task, when assigned
      * @type {string}
      * @memberof PutawayTaskResponse
      */
     assigneeId?: string;
     /**
-     * 
+     * Timestamp when the putaway task was created
      * @type {Date}
      * @memberof PutawayTaskResponse
      */
-    createdAt?: Date;
+    createdAt: Date;
     /**
-     * 
+     * Reason the suggested location fell back to an alternate, when applicable
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    fallbackReason?: string;
+    /**
+     * Final suggested destination location after fallback resolution
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    finalSuggestedLocationId?: string;
+    /**
+     * Originally suggested destination location before any fallback
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    originalSuggestedLocationId?: string;
+    /**
+     * Identifier of the product to be put away
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    productId: string;
+    /**
+     * Quantity of the product to be put away
+     * @type {number}
+     * @memberof PutawayTaskResponse
+     */
+    quantity: number;
+    /**
+     * Identifier of the staging location the goods are moved from
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    sourceLocationId?: string;
+    /**
+     * Identifier of the receipt the goods were received against
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    sourceReceiptId: string;
+    /**
+     * Current status of the putaway task
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    status: string;
+    /**
+     * Currently suggested destination location for the goods
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    suggestedDestinationLocationId?: string;
+    /**
+     * Unique identifier of the putaway task
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    taskId: string;
+    /**
+     * Timestamp when the putaway task was last updated
      * @type {Date}
      * @memberof PutawayTaskResponse
      */
-    updatedAt?: Date;
+    updatedAt: Date;
 }
 
 /**
  * Check if a given object implements the PutawayTaskResponse interface.
  */
 export function instanceOfPutawayTaskResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('sourceReceiptId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('taskId' in value)) return false;
+    if (!('updatedAt' in value)) return false;
     return true;
 }
 
@@ -122,20 +129,20 @@ export function PutawayTaskResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'taskId': json['taskId'] == null ? undefined : json['taskId'],
-        'sourceReceiptId': json['sourceReceiptId'] == null ? undefined : json['sourceReceiptId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
-        'suggestedDestinationLocationId': json['suggestedDestinationLocationId'] == null ? undefined : json['suggestedDestinationLocationId'],
-        'originalSuggestedLocationId': json['originalSuggestedLocationId'] == null ? undefined : json['originalSuggestedLocationId'],
-        'finalSuggestedLocationId': json['finalSuggestedLocationId'] == null ? undefined : json['finalSuggestedLocationId'],
         'actualDestinationLocationId': json['actualDestinationLocationId'] == null ? undefined : json['actualDestinationLocationId'],
-        'fallbackReason': json['fallbackReason'] == null ? undefined : json['fallbackReason'],
-        'status': json['status'] == null ? undefined : json['status'],
         'assigneeId': json['assigneeId'] == null ? undefined : json['assigneeId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': (new Date(json['createdAt'])),
+        'fallbackReason': json['fallbackReason'] == null ? undefined : json['fallbackReason'],
+        'finalSuggestedLocationId': json['finalSuggestedLocationId'] == null ? undefined : json['finalSuggestedLocationId'],
+        'originalSuggestedLocationId': json['originalSuggestedLocationId'] == null ? undefined : json['originalSuggestedLocationId'],
+        'productId': json['productId'],
+        'quantity': json['quantity'],
+        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
+        'sourceReceiptId': json['sourceReceiptId'],
+        'status': json['status'],
+        'suggestedDestinationLocationId': json['suggestedDestinationLocationId'] == null ? undefined : json['suggestedDestinationLocationId'],
+        'taskId': json['taskId'],
+        'updatedAt': (new Date(json['updatedAt'])),
     };
 }
 
@@ -145,20 +152,20 @@ export function PutawayTaskResponseToJSON(value?: PutawayTaskResponse | null): a
     }
     return {
         
-        'taskId': value['taskId'],
-        'sourceReceiptId': value['sourceReceiptId'],
+        'actualDestinationLocationId': value['actualDestinationLocationId'],
+        'assigneeId': value['assigneeId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'fallbackReason': value['fallbackReason'],
+        'finalSuggestedLocationId': value['finalSuggestedLocationId'],
+        'originalSuggestedLocationId': value['originalSuggestedLocationId'],
         'productId': value['productId'],
         'quantity': value['quantity'],
         'sourceLocationId': value['sourceLocationId'],
-        'suggestedDestinationLocationId': value['suggestedDestinationLocationId'],
-        'originalSuggestedLocationId': value['originalSuggestedLocationId'],
-        'finalSuggestedLocationId': value['finalSuggestedLocationId'],
-        'actualDestinationLocationId': value['actualDestinationLocationId'],
-        'fallbackReason': value['fallbackReason'],
+        'sourceReceiptId': value['sourceReceiptId'],
         'status': value['status'],
-        'assigneeId': value['assigneeId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'suggestedDestinationLocationId': value['suggestedDestinationLocationId'],
+        'taskId': value['taskId'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
     };
 }
 

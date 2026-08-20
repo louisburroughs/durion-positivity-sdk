@@ -14,91 +14,91 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response describing a created or retrieved appointment
  * @export
  * @interface AppointmentResponse
  */
 export interface AppointmentResponse {
     /**
-     * 
+     * Unique appointment identifier
      * @type {string}
      * @memberof AppointmentResponse
      */
-    appointmentId?: string;
+    appointmentId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof AppointmentResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AppointmentResponse
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AppointmentResponse
-     */
-    resourceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AppointmentResponse
-     */
-    crmCustomerId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AppointmentResponse
-     */
-    crmVehicleId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AppointmentResponse
-     */
-    startAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AppointmentResponse
-     */
-    endAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AppointmentResponse
-     */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof AppointmentResponse
-     */
-    cancellationReason?: string;
-    /**
-     * 
+     * Free-text cancellation notes when the appointment has been cancelled
      * @type {string}
      * @memberof AppointmentResponse
      */
     cancellationNotes?: string;
     /**
-     * 
-     * @type {Array<string>}
+     * Cancellation reason code when the appointment has been cancelled
+     * @type {string}
      * @memberof AppointmentResponse
      */
-    serviceRequestIds?: Array<string>;
+    cancellationReason?: string;
     /**
-     * 
+     * Timestamp the appointment was created in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof AppointmentResponse
+     */
+    createdAt: Date;
+    /**
+     * CRM customer identifier the appointment is booked for
+     * @type {string}
+     * @memberof AppointmentResponse
+     */
+    crmCustomerId: string;
+    /**
+     * CRM vehicle identifier the appointment services
+     * @type {string}
+     * @memberof AppointmentResponse
+     */
+    crmVehicleId: string;
+    /**
+     * Snapshot of customer attributes captured at booking time
      * @type {object}
      * @memberof AppointmentResponse
      */
     customerSnapshot?: object;
     /**
-     * 
+     * Appointment end instant in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof AppointmentResponse
+     */
+    endAt: Date;
+    /**
+     * Facility/location identifier of the appointment
+     * @type {string}
+     * @memberof AppointmentResponse
+     */
+    locationId: string;
+    /**
+     * Resource (bay or mobile unit) reserved, if any
+     * @type {string}
+     * @memberof AppointmentResponse
+     */
+    resourceId?: string;
+    /**
+     * Service request identifiers included in this appointment
+     * @type {Array<string>}
+     * @memberof AppointmentResponse
+     */
+    serviceRequestIds?: Array<string>;
+    /**
+     * Appointment start instant in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof AppointmentResponse
+     */
+    startAt: Date;
+    /**
+     * Current appointment status
+     * @type {string}
+     * @memberof AppointmentResponse
+     */
+    status: string;
+    /**
+     * Snapshot of vehicle attributes captured at booking time
      * @type {object}
      * @memberof AppointmentResponse
      */
@@ -109,6 +109,14 @@ export interface AppointmentResponse {
  * Check if a given object implements the AppointmentResponse interface.
  */
 export function instanceOfAppointmentResponse(value: object): boolean {
+    if (!('appointmentId' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('crmCustomerId' in value)) return false;
+    if (!('crmVehicleId' in value)) return false;
+    if (!('endAt' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('startAt' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -122,19 +130,19 @@ export function AppointmentResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
-        'crmCustomerId': json['crmCustomerId'] == null ? undefined : json['crmCustomerId'],
-        'crmVehicleId': json['crmVehicleId'] == null ? undefined : json['crmVehicleId'],
-        'startAt': json['startAt'] == null ? undefined : (new Date(json['startAt'])),
-        'endAt': json['endAt'] == null ? undefined : (new Date(json['endAt'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'cancellationReason': json['cancellationReason'] == null ? undefined : json['cancellationReason'],
+        'appointmentId': json['appointmentId'],
         'cancellationNotes': json['cancellationNotes'] == null ? undefined : json['cancellationNotes'],
-        'serviceRequestIds': json['serviceRequestIds'] == null ? undefined : json['serviceRequestIds'],
+        'cancellationReason': json['cancellationReason'] == null ? undefined : json['cancellationReason'],
+        'createdAt': (new Date(json['createdAt'])),
+        'crmCustomerId': json['crmCustomerId'],
+        'crmVehicleId': json['crmVehicleId'],
         'customerSnapshot': json['customerSnapshot'] == null ? undefined : json['customerSnapshot'],
+        'endAt': (new Date(json['endAt'])),
+        'locationId': json['locationId'],
+        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
+        'serviceRequestIds': json['serviceRequestIds'] == null ? undefined : json['serviceRequestIds'],
+        'startAt': (new Date(json['startAt'])),
+        'status': json['status'],
         'vehicleSnapshot': json['vehicleSnapshot'] == null ? undefined : json['vehicleSnapshot'],
     };
 }
@@ -146,18 +154,18 @@ export function AppointmentResponseToJSON(value?: AppointmentResponse | null): a
     return {
         
         'appointmentId': value['appointmentId'],
-        'status': value['status'],
-        'locationId': value['locationId'],
-        'resourceId': value['resourceId'],
+        'cancellationNotes': value['cancellationNotes'],
+        'cancellationReason': value['cancellationReason'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'crmCustomerId': value['crmCustomerId'],
         'crmVehicleId': value['crmVehicleId'],
-        'startAt': value['startAt'] == null ? undefined : ((value['startAt']).toISOString()),
-        'endAt': value['endAt'] == null ? undefined : ((value['endAt']).toISOString()),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'cancellationReason': value['cancellationReason'],
-        'cancellationNotes': value['cancellationNotes'],
-        'serviceRequestIds': value['serviceRequestIds'],
         'customerSnapshot': value['customerSnapshot'],
+        'endAt': ((value['endAt']).toISOString()),
+        'locationId': value['locationId'],
+        'resourceId': value['resourceId'],
+        'serviceRequestIds': value['serviceRequestIds'],
+        'startAt': ((value['startAt']).toISOString()),
+        'status': value['status'],
         'vehicleSnapshot': value['vehicleSnapshot'],
     };
 }

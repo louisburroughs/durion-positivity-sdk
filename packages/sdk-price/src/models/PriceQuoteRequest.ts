@@ -20,23 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface PriceQuoteRequest {
     /**
-     * Product identifier
+     * Optional ISO 4217 currency code for the quote; defaults to the company default currency (pos.price.default-currency) when omitted. Base price and location override selection are filtered to this currency
      * @type {string}
      * @memberof PriceQuoteRequest
      */
-    productId: string;
-    /**
-     * Requested quantity
-     * @type {number}
-     * @memberof PriceQuoteRequest
-     */
-    quantity: number;
-    /**
-     * Location identifier where quote applies
-     * @type {string}
-     * @memberof PriceQuoteRequest
-     */
-    locationId: string;
+    currency?: string;
     /**
      * Customer tier identifier used for tier pricing rules
      * @type {string}
@@ -49,16 +37,34 @@ export interface PriceQuoteRequest {
      * @memberof PriceQuoteRequest
      */
     effectiveTimestamp?: Date;
+    /**
+     * Location identifier where quote applies
+     * @type {string}
+     * @memberof PriceQuoteRequest
+     */
+    locationId: string;
+    /**
+     * Product identifier
+     * @type {string}
+     * @memberof PriceQuoteRequest
+     */
+    productId: string;
+    /**
+     * Requested quantity
+     * @type {number}
+     * @memberof PriceQuoteRequest
+     */
+    quantity: number;
 }
 
 /**
  * Check if a given object implements the PriceQuoteRequest interface.
  */
 export function instanceOfPriceQuoteRequest(value: object): boolean {
+    if (!('customerTierId' in value)) return false;
+    if (!('locationId' in value)) return false;
     if (!('productId' in value)) return false;
     if (!('quantity' in value)) return false;
-    if (!('locationId' in value)) return false;
-    if (!('customerTierId' in value)) return false;
     return true;
 }
 
@@ -72,11 +78,12 @@ export function PriceQuoteRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'productId': json['productId'],
-        'quantity': json['quantity'],
-        'locationId': json['locationId'],
+        'currency': json['currency'] == null ? undefined : json['currency'],
         'customerTierId': json['customerTierId'],
         'effectiveTimestamp': json['effectiveTimestamp'] == null ? undefined : (new Date(json['effectiveTimestamp'])),
+        'locationId': json['locationId'],
+        'productId': json['productId'],
+        'quantity': json['quantity'],
     };
 }
 
@@ -86,11 +93,12 @@ export function PriceQuoteRequestToJSON(value?: PriceQuoteRequest | null): any {
     }
     return {
         
-        'productId': value['productId'],
-        'quantity': value['quantity'],
-        'locationId': value['locationId'],
+        'currency': value['currency'],
         'customerTierId': value['customerTierId'],
         'effectiveTimestamp': value['effectiveTimestamp'] == null ? undefined : ((value['effectiveTimestamp'] as any).toISOString()),
+        'locationId': value['locationId'],
+        'productId': value['productId'],
+        'quantity': value['quantity'],
     };
 }
 

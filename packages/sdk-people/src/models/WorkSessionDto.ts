@@ -14,47 +14,68 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Work session representing a tracked period of work for a person
  * @export
  * @interface WorkSessionDto
  */
 export interface WorkSessionDto {
     /**
-     * 
+     * Total billable minutes for the session
+     * @type {number}
+     * @memberof WorkSessionDto
+     */
+    billableMinutes?: number;
+    /**
+     * Total break minutes for the session
+     * @type {number}
+     * @memberof WorkSessionDto
+     */
+    breakMinutes?: number;
+    /**
+     * Timestamp the session ended
+     * @type {Date}
+     * @memberof WorkSessionDto
+     */
+    endedAt?: Date;
+    /**
+     * Person the session belongs to
      * @type {string}
      * @memberof WorkSessionDto
      */
-    sessionId?: string;
+    personId: string;
     /**
-     * 
+     * Work session identifier
      * @type {string}
      * @memberof WorkSessionDto
      */
-    personId?: string;
+    sessionId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof WorkSessionDto
-     */
-    status?: string;
-    /**
-     * 
+     * Timestamp the session started
      * @type {Date}
      * @memberof WorkSessionDto
      */
     startedAt?: Date;
     /**
-     * 
+     * Lifecycle status of the session
+     * @type {string}
+     * @memberof WorkSessionDto
+     */
+    status: string;
+    /**
+     * Timestamp the session was submitted
      * @type {Date}
      * @memberof WorkSessionDto
      */
-    endedAt?: Date;
+    submittedAt?: Date;
 }
 
 /**
  * Check if a given object implements the WorkSessionDto interface.
  */
 export function instanceOfWorkSessionDto(value: object): boolean {
+    if (!('personId' in value)) return false;
+    if (!('sessionId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -68,11 +89,14 @@ export function WorkSessionDtoFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
+        'billableMinutes': json['billableMinutes'] == null ? undefined : json['billableMinutes'],
+        'breakMinutes': json['breakMinutes'] == null ? undefined : json['breakMinutes'],
         'endedAt': json['endedAt'] == null ? undefined : (new Date(json['endedAt'])),
+        'personId': json['personId'],
+        'sessionId': json['sessionId'],
+        'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
+        'status': json['status'],
+        'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
     };
 }
 
@@ -82,11 +106,14 @@ export function WorkSessionDtoToJSON(value?: WorkSessionDto | null): any {
     }
     return {
         
-        'sessionId': value['sessionId'],
-        'personId': value['personId'],
-        'status': value['status'],
-        'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
+        'billableMinutes': value['billableMinutes'],
+        'breakMinutes': value['breakMinutes'],
         'endedAt': value['endedAt'] == null ? undefined : ((value['endedAt']).toISOString()),
+        'personId': value['personId'],
+        'sessionId': value['sessionId'],
+        'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
+        'status': value['status'],
+        'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
     };
 }
 

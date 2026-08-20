@@ -14,47 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Validation result for a storage location lookup
  * @export
  * @interface StorageLocationValidationResponseDTO
  */
 export interface StorageLocationValidationResponseDTO {
     /**
-     * 
-     * @type {string}
+     * Whether the storage location is active
+     * @type {boolean}
      * @memberof StorageLocationValidationResponseDTO
      */
-    storageLocationId?: string;
+    active: boolean;
     /**
-     * 
+     * Whether the storage location exists
+     * @type {boolean}
+     * @memberof StorageLocationValidationResponseDTO
+     */
+    _exists: boolean;
+    /**
+     * Maximum unit capacity of the storage location
+     * @type {number}
+     * @memberof StorageLocationValidationResponseDTO
+     */
+    maxUnitCapacity?: number;
+    /**
+     * Identifier of the site that owns the storage location
      * @type {string}
      * @memberof StorageLocationValidationResponseDTO
      */
     siteId?: string;
     /**
-     * 
-     * @type {boolean}
+     * Identifier of the storage location that was validated
+     * @type {string}
      * @memberof StorageLocationValidationResponseDTO
      */
-    _exists?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof StorageLocationValidationResponseDTO
-     */
-    active?: boolean;
-    /**
-     * 
-     * @type {number}
-     * @memberof StorageLocationValidationResponseDTO
-     */
-    maxUnitCapacity?: number;
+    storageLocationId: string;
 }
 
 /**
  * Check if a given object implements the StorageLocationValidationResponseDTO interface.
  */
 export function instanceOfStorageLocationValidationResponseDTO(value: object): boolean {
+    if (!('active' in value)) return false;
+    if (!('_exists' in value)) return false;
+    if (!('storageLocationId' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function StorageLocationValidationResponseDTOFromJSONTyped(json: any, ign
     }
     return {
         
-        'storageLocationId': json['storageLocationId'] == null ? undefined : json['storageLocationId'],
-        'siteId': json['siteId'] == null ? undefined : json['siteId'],
-        '_exists': json['exists'] == null ? undefined : json['exists'],
-        'active': json['active'] == null ? undefined : json['active'],
+        'active': json['active'],
+        '_exists': json['exists'],
         'maxUnitCapacity': json['maxUnitCapacity'] == null ? undefined : json['maxUnitCapacity'],
+        'siteId': json['siteId'] == null ? undefined : json['siteId'],
+        'storageLocationId': json['storageLocationId'],
     };
 }
 
@@ -82,11 +85,11 @@ export function StorageLocationValidationResponseDTOToJSON(value?: StorageLocati
     }
     return {
         
-        'storageLocationId': value['storageLocationId'],
-        'siteId': value['siteId'],
-        'exists': value['_exists'],
         'active': value['active'],
+        'exists': value['_exists'],
         'maxUnitCapacity': value['maxUnitCapacity'],
+        'siteId': value['siteId'],
+        'storageLocationId': value['storageLocationId'],
     };
 }
 

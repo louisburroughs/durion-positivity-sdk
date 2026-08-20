@@ -26,29 +26,17 @@ export interface StaffingAssignmentResponse {
      */
     assignmentId: string;
     /**
-     * Person identifier
-     * @type {string}
+     * Creation timestamp in UTC
+     * @type {Date}
      * @memberof StaffingAssignmentResponse
      */
-    personId: string;
+    createdAt?: Date;
     /**
-     * Location identifier
+     * Username that created the assignment
      * @type {string}
      * @memberof StaffingAssignmentResponse
      */
-    locationId: string;
-    /**
-     * Assignment role
-     * @type {string}
-     * @memberof StaffingAssignmentResponse
-     */
-    role: string;
-    /**
-     * Assignment lifecycle status
-     * @type {string}
-     * @memberof StaffingAssignmentResponse
-     */
-    status: StaffingAssignmentResponseStatusEnum;
+    createdBy?: string;
     /**
      * Assignment effective start date
      * @type {Date}
@@ -62,29 +50,41 @@ export interface StaffingAssignmentResponse {
      */
     effectiveTo?: Date;
     /**
-     * Creation timestamp in UTC
-     * @type {Date}
+     * Whether this assignment is primary
+     * @type {boolean}
      * @memberof StaffingAssignmentResponse
      */
-    createdAt?: Date;
+    isPrimary: boolean;
+    /**
+     * Location identifier
+     * @type {string}
+     * @memberof StaffingAssignmentResponse
+     */
+    locationId: string;
+    /**
+     * Person identifier
+     * @type {string}
+     * @memberof StaffingAssignmentResponse
+     */
+    personId: string;
+    /**
+     * Assignment role
+     * @type {string}
+     * @memberof StaffingAssignmentResponse
+     */
+    role: string;
+    /**
+     * Assignment lifecycle status
+     * @type {string}
+     * @memberof StaffingAssignmentResponse
+     */
+    status: StaffingAssignmentResponseStatusEnum;
     /**
      * Last update timestamp in UTC
      * @type {Date}
      * @memberof StaffingAssignmentResponse
      */
     updatedAt?: Date;
-    /**
-     * Username that created the assignment
-     * @type {string}
-     * @memberof StaffingAssignmentResponse
-     */
-    createdBy?: string;
-    /**
-     * Whether this assignment is primary
-     * @type {boolean}
-     * @memberof StaffingAssignmentResponse
-     */
-    isPrimary: boolean;
 }
 
 /**
@@ -102,12 +102,12 @@ export enum StaffingAssignmentResponseStatusEnum {
  */
 export function instanceOfStaffingAssignmentResponse(value: object): boolean {
     if (!('assignmentId' in value)) return false;
-    if (!('personId' in value)) return false;
-    if (!('locationId' in value)) return false;
-    if (!('role' in value)) return false;
-    if (!('status' in value)) return false;
     if (!('effectiveFrom' in value)) return false;
     if (!('isPrimary' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('personId' in value)) return false;
+    if (!('role' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -122,16 +122,16 @@ export function StaffingAssignmentResponseFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'assignmentId': json['assignmentId'],
-        'personId': json['personId'],
-        'locationId': json['locationId'],
-        'role': json['role'],
-        'status': json['status'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'isPrimary': json['isPrimary'],
+        'locationId': json['locationId'],
+        'personId': json['personId'],
+        'role': json['role'],
+        'status': json['status'],
+        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
 
@@ -142,16 +142,16 @@ export function StaffingAssignmentResponseToJSON(value?: StaffingAssignmentRespo
     return {
         
         'assignmentId': value['assignmentId'],
-        'personId': value['personId'],
-        'locationId': value['locationId'],
-        'role': value['role'],
-        'status': value['status'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
         'effectiveFrom': ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
-        'createdBy': value['createdBy'],
         'isPrimary': value['isPrimary'],
+        'locationId': value['locationId'],
+        'personId': value['personId'],
+        'role': value['role'],
+        'status': value['status'],
+        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }
 

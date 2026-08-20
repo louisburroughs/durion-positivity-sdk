@@ -21,41 +21,45 @@ import {
 } from './VehicleSummary';
 
 /**
- * 
+ * Paginated vehicle search results
  * @export
  * @interface SearchVehiclesResponse
  */
 export interface SearchVehiclesResponse {
     /**
-     * 
-     * @type {Array<VehicleSummary>}
-     * @memberof SearchVehiclesResponse
-     */
-    results?: Array<VehicleSummary>;
-    /**
-     * 
-     * @type {number}
-     * @memberof SearchVehiclesResponse
-     */
-    totalCount?: number;
-    /**
-     * 
+     * Whether additional result pages are available beyond the current page
      * @type {boolean}
      * @memberof SearchVehiclesResponse
      */
-    hasMore?: boolean;
+    hasMore: boolean;
     /**
-     * 
+     * Echo of the originating search query
      * @type {string}
      * @memberof SearchVehiclesResponse
      */
-    query?: string;
+    query: string;
+    /**
+     * Vehicle summaries matching the search query
+     * @type {Array<VehicleSummary>}
+     * @memberof SearchVehiclesResponse
+     */
+    results: Array<VehicleSummary>;
+    /**
+     * Total number of vehicles matching the query
+     * @type {number}
+     * @memberof SearchVehiclesResponse
+     */
+    totalCount: number;
 }
 
 /**
  * Check if a given object implements the SearchVehiclesResponse interface.
  */
 export function instanceOfSearchVehiclesResponse(value: object): boolean {
+    if (!('hasMore' in value)) return false;
+    if (!('query' in value)) return false;
+    if (!('results' in value)) return false;
+    if (!('totalCount' in value)) return false;
     return true;
 }
 
@@ -69,10 +73,10 @@ export function SearchVehiclesResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(VehicleSummaryFromJSON)),
-        'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
-        'hasMore': json['hasMore'] == null ? undefined : json['hasMore'],
-        'query': json['query'] == null ? undefined : json['query'],
+        'hasMore': json['hasMore'],
+        'query': json['query'],
+        'results': ((json['results'] as Array<any>).map(VehicleSummaryFromJSON)),
+        'totalCount': json['totalCount'],
     };
 }
 
@@ -82,10 +86,10 @@ export function SearchVehiclesResponseToJSON(value?: SearchVehiclesResponse | nu
     }
     return {
         
-        'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(VehicleSummaryToJSON)),
-        'totalCount': value['totalCount'],
         'hasMore': value['hasMore'],
         'query': value['query'],
+        'results': ((value['results'] as Array<any>).map(VehicleSummaryToJSON)),
+        'totalCount': value['totalCount'],
     };
 }
 

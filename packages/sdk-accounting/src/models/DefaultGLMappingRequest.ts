@@ -14,56 +14,56 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create or update a default GL account mapping
  * @export
  * @interface DefaultGLMappingRequest
  */
 export interface DefaultGLMappingRequest {
     /**
-     * 
-     * @type {string}
+     * Whether the mapping is active
+     * @type {boolean}
      * @memberof DefaultGLMappingRequest
      */
-    eventType: string;
+    active?: boolean;
     /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingRequest
-     */
-    organizationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingRequest
-     */
-    debitAccountId: string;
-    /**
-     * 
+     * Identifier of the GL account to credit
      * @type {string}
      * @memberof DefaultGLMappingRequest
      */
     creditAccountId: string;
     /**
-     * 
+     * Identifier of the GL account to debit
+     * @type {string}
+     * @memberof DefaultGLMappingRequest
+     */
+    debitAccountId: string;
+    /**
+     * Optional description of the mapping
      * @type {string}
      * @memberof DefaultGLMappingRequest
      */
     description?: string;
     /**
-     * 
-     * @type {boolean}
+     * Accounting event type the mapping applies to
+     * @type {string}
      * @memberof DefaultGLMappingRequest
      */
-    active?: boolean;
+    eventType: string;
+    /**
+     * Organization scope for the mapping; null for the global default
+     * @type {string}
+     * @memberof DefaultGLMappingRequest
+     */
+    organizationId?: string;
 }
 
 /**
  * Check if a given object implements the DefaultGLMappingRequest interface.
  */
 export function instanceOfDefaultGLMappingRequest(value: object): boolean {
-    if (!('eventType' in value)) return false;
-    if (!('debitAccountId' in value)) return false;
     if (!('creditAccountId' in value)) return false;
+    if (!('debitAccountId' in value)) return false;
+    if (!('eventType' in value)) return false;
     return true;
 }
 
@@ -77,12 +77,12 @@ export function DefaultGLMappingRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'active': json['active'] == null ? undefined : json['active'],
+        'creditAccountId': json['creditAccountId'],
+        'debitAccountId': json['debitAccountId'],
+        'description': json['description'] == null ? undefined : json['description'],
         'eventType': json['eventType'],
         'organizationId': json['organizationId'] == null ? undefined : json['organizationId'],
-        'debitAccountId': json['debitAccountId'],
-        'creditAccountId': json['creditAccountId'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'active': json['active'] == null ? undefined : json['active'],
     };
 }
 
@@ -92,12 +92,12 @@ export function DefaultGLMappingRequestToJSON(value?: DefaultGLMappingRequest | 
     }
     return {
         
+        'active': value['active'],
+        'creditAccountId': value['creditAccountId'],
+        'debitAccountId': value['debitAccountId'],
+        'description': value['description'],
         'eventType': value['eventType'],
         'organizationId': value['organizationId'],
-        'debitAccountId': value['debitAccountId'],
-        'creditAccountId': value['creditAccountId'],
-        'description': value['description'],
-        'active': value['active'],
     };
 }
 

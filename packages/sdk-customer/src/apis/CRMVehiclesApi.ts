@@ -15,44 +15,23 @@
 
 import * as runtime from '../runtime';
 import type {
-  CreateVehicleForPartyRequest,
   VehicleResponse,
-  VehicleTransferRequest,
+  VehicleSummary,
 } from '../models/index';
 import {
-    CreateVehicleForPartyRequestFromJSON,
-    CreateVehicleForPartyRequestToJSON,
     VehicleResponseFromJSON,
     VehicleResponseToJSON,
-    VehicleTransferRequestFromJSON,
-    VehicleTransferRequestToJSON,
+    VehicleSummaryFromJSON,
+    VehicleSummaryToJSON,
 } from '../models/index';
 
-export interface CreateVehiclesRequest {
-    customerId: string;
-    createVehicleForPartyRequest: CreateVehicleForPartyRequest;
-}
-
-export interface DeleteVehicleRequest {
+export interface GetVehicleForCustomerRequest {
     customerId: string;
     vehicleId: string;
 }
 
-export interface GetVehiclesForCustomerRequest {
+export interface ListVehiclesForCustomerRequest {
     customerId: string;
-    vehicleId: string;
-}
-
-export interface TransferVehiclesRequest {
-    customerId: string;
-    vehicleId: string;
-    vehicleTransferRequest: VehicleTransferRequest;
-}
-
-export interface UpdateVehiclesRequest {
-    customerId: string;
-    vehicleId: string;
-    createVehicleForPartyRequest: CreateVehicleForPartyRequest;
 }
 
 /**
@@ -61,123 +40,21 @@ export interface UpdateVehiclesRequest {
 export class CRMVehiclesApi extends runtime.BaseAPI {
 
     /**
-     * Create a new vehicle for a customer
-     * Create vehicle
+     * Returns one vehicle\'s record from the local ext_vehicle replica, verified to belong to the named customer through the party\'s VIN association. Use this tool when both the customer and vehicle ids are known; use listVehiclesForCustomer instead to discover which vehicles a customer owns. Preconditions: the customer must exist, the vehicle must exist in the replica, and the vehicle must be associated with that customer. Required inputs: customerId and vehicleId (UUIDs) as path parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the customer, the vehicle, or the ownership association cannot be resolved. 
+     * Get Customer Vehicle
      */
-    async createVehiclesRaw(requestParameters: CreateVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+    async getVehicleForCustomerRaw(requestParameters: GetVehicleForCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
         if (requestParameters['customerId'] == null) {
             throw new runtime.RequiredError(
                 'customerId',
-                'Required parameter "customerId" was null or undefined when calling createVehicles().'
-            );
-        }
-
-        if (requestParameters['createVehicleForPartyRequest'] == null) {
-            throw new runtime.RequiredError(
-                'createVehicleForPartyRequest',
-                'Required parameter "createVehicleForPartyRequest" was null or undefined when calling createVehicles().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:vehicle:create"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: CreateVehicleForPartyRequestToJSON(requestParameters['createVehicleForPartyRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Create a new vehicle for a customer
-     * Create vehicle
-     */
-    async createVehicles(requestParameters: CreateVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
-        const response = await this.createVehiclesRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Delete or deactivate a vehicle for a customer
-     * Delete vehicle
-     */
-    async deleteVehicleRaw(requestParameters: DeleteVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError(
-                'customerId',
-                'Required parameter "customerId" was null or undefined when calling deleteVehicle().'
+                'Required parameter "customerId" was null or undefined when calling getVehicleForCustomer().'
             );
         }
 
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling deleteVehicle().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:vehicle:deactivate"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Delete or deactivate a vehicle for a customer
-     * Delete vehicle
-     */
-    async deleteVehicle(requestParameters: DeleteVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteVehicleRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Retrieve a specific vehicle for a given customer
-     * Get vehicle for customer
-     */
-    async getVehiclesForCustomerRaw(requestParameters: GetVehiclesForCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError(
-                'customerId',
-                'Required parameter "customerId" was null or undefined when calling getVehiclesForCustomer().'
-            );
-        }
-
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError(
-                'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling getVehiclesForCustomer().'
+                'Required parameter "vehicleId" was null or undefined when calling getVehicleForCustomer().'
             );
         }
 
@@ -204,37 +81,23 @@ export class CRMVehiclesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a specific vehicle for a given customer
-     * Get vehicle for customer
+     * Returns one vehicle\'s record from the local ext_vehicle replica, verified to belong to the named customer through the party\'s VIN association. Use this tool when both the customer and vehicle ids are known; use listVehiclesForCustomer instead to discover which vehicles a customer owns. Preconditions: the customer must exist, the vehicle must exist in the replica, and the vehicle must be associated with that customer. Required inputs: customerId and vehicleId (UUIDs) as path parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the customer, the vehicle, or the ownership association cannot be resolved. 
+     * Get Customer Vehicle
      */
-    async getVehiclesForCustomer(requestParameters: GetVehiclesForCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
-        const response = await this.getVehiclesForCustomerRaw(requestParameters, initOverrides);
+    async getVehicleForCustomer(requestParameters: GetVehicleForCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
+        const response = await this.getVehicleForCustomerRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Transfer vehicle ownership between customers
-     * Transfer vehicle
+     * Returns the vehicle summaries (vehicleId, VIN, make, model, year) associated with a customer, resolved from the party\'s VIN set against the local ext_vehicle replica of pos-vehicle-inventory. Use this tool when the vehicle UUIDs for a known customer are needed, for example to build an estimate; use getVehicleForCustomer instead for one vehicle\'s full record, and note vehicle writes go to pos-vehicle-inventory, not this module. Preconditions: the customer must exist as a person or commercial party; VINs whose vehicle events have not yet been replicated are silently dropped from the list. Required inputs: customerId (UUID, the party id) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no party exists for the supplied customerId, and 200 with an empty list when the customer owns no resolvable vehicles. 
+     * List Customer Vehicles
      */
-    async transferVehiclesRaw(requestParameters: TransferVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
+    async listVehiclesForCustomerRaw(requestParameters: ListVehiclesForCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VehicleSummary>>> {
         if (requestParameters['customerId'] == null) {
             throw new runtime.RequiredError(
                 'customerId',
-                'Required parameter "customerId" was null or undefined when calling transferVehicles().'
-            );
-        }
-
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError(
-                'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling transferVehicles().'
-            );
-        }
-
-        if (requestParameters['vehicleTransferRequest'] == null) {
-            throw new runtime.RequiredError(
-                'vehicleTransferRequest',
-                'Required parameter "vehicleTransferRequest" was null or undefined when calling transferVehicles().'
+                'Required parameter "customerId" was null or undefined when calling listVehiclesForCustomer().'
             );
         }
 
@@ -242,93 +105,30 @@ export class CRMVehiclesApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        headerParameters['Content-Type'] = 'application/json';
-
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:vehicle_party_association:edit"]);
+            const tokenString = await token("bearerAuth", ["crm:vehicle:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
         const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles/{vehicleId}/transfer`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'PUT',
+            path: `/v1/crm/{customerId}/vehicles`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
+            method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-            body: VehicleTransferRequestToJSON(requestParameters['vehicleTransferRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(VehicleSummaryFromJSON));
     }
 
     /**
-     * Transfer vehicle ownership between customers
-     * Transfer vehicle
+     * Returns the vehicle summaries (vehicleId, VIN, make, model, year) associated with a customer, resolved from the party\'s VIN set against the local ext_vehicle replica of pos-vehicle-inventory. Use this tool when the vehicle UUIDs for a known customer are needed, for example to build an estimate; use getVehicleForCustomer instead for one vehicle\'s full record, and note vehicle writes go to pos-vehicle-inventory, not this module. Preconditions: the customer must exist as a person or commercial party; VINs whose vehicle events have not yet been replicated are silently dropped from the list. Required inputs: customerId (UUID, the party id) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no party exists for the supplied customerId, and 200 with an empty list when the customer owns no resolvable vehicles. 
+     * List Customer Vehicles
      */
-    async transferVehicles(requestParameters: TransferVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
-        const response = await this.transferVehiclesRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Update vehicle information for a customer
-     * Update vehicle
-     */
-    async updateVehiclesRaw(requestParameters: UpdateVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
-        if (requestParameters['customerId'] == null) {
-            throw new runtime.RequiredError(
-                'customerId',
-                'Required parameter "customerId" was null or undefined when calling updateVehicles().'
-            );
-        }
-
-        if (requestParameters['vehicleId'] == null) {
-            throw new runtime.RequiredError(
-                'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling updateVehicles().'
-            );
-        }
-
-        if (requestParameters['createVehicleForPartyRequest'] == null) {
-            throw new runtime.RequiredError(
-                'createVehicleForPartyRequest',
-                'Required parameter "createVehicleForPartyRequest" was null or undefined when calling updateVehicles().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:vehicle:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/crm/{customerId}/vehicles/{vehicleId}`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))).replace(`{${"vehicleId"}}`, encodeURIComponent(String(requestParameters['vehicleId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: CreateVehicleForPartyRequestToJSON(requestParameters['createVehicleForPartyRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Update vehicle information for a customer
-     * Update vehicle
-     */
-    async updateVehicles(requestParameters: UpdateVehiclesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
-        const response = await this.updateVehiclesRaw(requestParameters, initOverrides);
+    async listVehiclesForCustomer(requestParameters: ListVehiclesForCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VehicleSummary>> {
+        const response = await this.listVehiclesForCustomerRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

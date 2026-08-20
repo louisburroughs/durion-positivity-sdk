@@ -25,24 +25,24 @@ import {
     ApprovalConfigurationResponseToJSON,
 } from '../models/index';
 
-export interface CreateConfigurationRequest {
+export interface CreateApprovalConfigurationRequest {
     approvalConfigurationRequest: ApprovalConfigurationRequest;
 }
 
-export interface DeleteConfigurationRequest {
+export interface DeleteApprovalConfigurationRequest {
     approvalId: string;
 }
 
-export interface GetApplicableConfigurationRequest {
+export interface GetApplicableApprovalConfigurationRequest {
     locationId?: string;
     customerId?: string;
 }
 
-export interface GetConfigurationByIdRequest {
+export interface GetApprovalConfigurationRequest {
     approvalId: string;
 }
 
-export interface UpdateConfigurationRequest {
+export interface UpdateApprovalConfigurationRequest {
     approvalId: string;
     approvalConfigurationRequest: ApprovalConfigurationRequest;
 }
@@ -53,14 +53,14 @@ export interface UpdateConfigurationRequest {
 export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
 
     /**
-     * Add a new approval configuration.
-     * Create a new approval configuration
+     * Creates an approval configuration defining how approvals are captured for a location, a location-customer pair, or globally when both scoping ids are omitted. Use this tool when introducing a new approval rule; do not use updateApprovalConfiguration, which modifies an existing configuration by id. Preconditions: none — duplicates for the same scope are not rejected, and the most specific row wins at resolution time. Required inputs: approvalMethod, one of CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_CREATE event. Returns 200 with the persisted configuration, and 400 when approvalMethod is not one of the accepted values. 
+     * Create Approval Configuration
      */
-    async createConfigurationRaw(requestParameters: CreateConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
+    async createApprovalConfigurationRaw(requestParameters: CreateApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
         if (requestParameters['approvalConfigurationRequest'] == null) {
             throw new runtime.RequiredError(
                 'approvalConfigurationRequest',
-                'Required parameter "approvalConfigurationRequest" was null or undefined when calling createConfiguration().'
+                'Required parameter "approvalConfigurationRequest" was null or undefined when calling createApprovalConfiguration().'
             );
         }
 
@@ -90,23 +90,23 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Add a new approval configuration.
-     * Create a new approval configuration
+     * Creates an approval configuration defining how approvals are captured for a location, a location-customer pair, or globally when both scoping ids are omitted. Use this tool when introducing a new approval rule; do not use updateApprovalConfiguration, which modifies an existing configuration by id. Preconditions: none — duplicates for the same scope are not rejected, and the most specific row wins at resolution time. Required inputs: approvalMethod, one of CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_CREATE event. Returns 200 with the persisted configuration, and 400 when approvalMethod is not one of the accepted values. 
+     * Create Approval Configuration
      */
-    async createConfiguration(requestParameters: CreateConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
-        const response = await this.createConfigurationRaw(requestParameters, initOverrides);
+    async createApprovalConfiguration(requestParameters: CreateApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
+        const response = await this.createApprovalConfigurationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Delete a configuration by its unique ID.
-     * Delete an approval configuration
+     * Deletes an approval configuration by id, after which resolution falls through to broader scopes or the global default. Use this tool when retiring an approval rule; do not use updateApprovalConfiguration, which keeps the rule and changes its values. Preconditions: none — deletion is idempotent, and deleting an id that does not exist is a silent no-op. Required inputs: approvalId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_APPROVAL_CONFIG_DELETE event. Returns 204 regardless of whether the configuration previously existed. 
+     * Delete Approval Configuration
      */
-    async deleteConfigurationRaw(requestParameters: DeleteConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteApprovalConfigurationRaw(requestParameters: DeleteApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['approvalId'] == null) {
             throw new runtime.RequiredError(
                 'approvalId',
-                'Required parameter "approvalId" was null or undefined when calling deleteConfiguration().'
+                'Required parameter "approvalId" was null or undefined when calling deleteApprovalConfiguration().'
             );
         }
 
@@ -133,54 +133,18 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a configuration by its unique ID.
-     * Delete an approval configuration
+     * Deletes an approval configuration by id, after which resolution falls through to broader scopes or the global default. Use this tool when retiring an approval rule; do not use updateApprovalConfiguration, which keeps the rule and changes its values. Preconditions: none — deletion is idempotent, and deleting an id that does not exist is a silent no-op. Required inputs: approvalId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_APPROVAL_CONFIG_DELETE event. Returns 204 regardless of whether the configuration previously existed. 
+     * Delete Approval Configuration
      */
-    async deleteConfiguration(requestParameters: DeleteConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteConfigurationRaw(requestParameters, initOverrides);
+    async deleteApprovalConfiguration(requestParameters: DeleteApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteApprovalConfigurationRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve a list of all approval configurations.
-     * Get all approval configurations
+     * Resolves the most specific approval configuration for a location and customer, trying the location-plus-customer row first, then the location-wide row, then the global default with no location or customer. Use this tool when deciding how an approval must be captured for a specific job; use getApprovalConfiguration instead when the configuration id is already known. Preconditions: none — both filters are optional and narrower matches win. Required inputs: locationId (UUID) and customerId (UUID) as optional query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no configuration matches at any specificity, in which case callers fall back to built-in defaults. 
+     * Resolve Applicable Approval Configuration
      */
-    async getAllConfigurationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ApprovalConfigurationResponse>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["workorder:approval_config:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/workexec`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ApprovalConfigurationResponseFromJSON));
-    }
-
-    /**
-     * Retrieve a list of all approval configurations.
-     * Get all approval configurations
-     */
-    async getAllConfigurations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ApprovalConfigurationResponse>> {
-        const response = await this.getAllConfigurationsRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Get the most specific configuration for a location and customer.
-     * Get applicable configuration
-     */
-    async getApplicableConfigurationRaw(requestParameters: GetApplicableConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
+    async getApplicableApprovalConfigurationRaw(requestParameters: GetApplicableApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
         const queryParameters: any = {};
 
         if (requestParameters['locationId'] != null) {
@@ -212,23 +176,23 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get the most specific configuration for a location and customer.
-     * Get applicable configuration
+     * Resolves the most specific approval configuration for a location and customer, trying the location-plus-customer row first, then the location-wide row, then the global default with no location or customer. Use this tool when deciding how an approval must be captured for a specific job; use getApprovalConfiguration instead when the configuration id is already known. Preconditions: none — both filters are optional and narrower matches win. Required inputs: locationId (UUID) and customerId (UUID) as optional query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no configuration matches at any specificity, in which case callers fall back to built-in defaults. 
+     * Resolve Applicable Approval Configuration
      */
-    async getApplicableConfiguration(requestParameters: GetApplicableConfigurationRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
-        const response = await this.getApplicableConfigurationRaw(requestParameters, initOverrides);
+    async getApplicableApprovalConfiguration(requestParameters: GetApplicableApprovalConfigurationRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
+        const response = await this.getApplicableApprovalConfigurationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve an approval configuration by its unique ID.
-     * Get configuration by ID
+     * Returns a single approval configuration by its unique id. Use this tool when the configuration id is already known; use getApplicableApprovalConfiguration instead to resolve which configuration governs a given location and customer. Preconditions: the configuration must exist. Required inputs: approvalId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no configuration exists for the id. 
+     * Get Approval Configuration by Id
      */
-    async getConfigurationByIdRaw(requestParameters: GetConfigurationByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
+    async getApprovalConfigurationRaw(requestParameters: GetApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
         if (requestParameters['approvalId'] == null) {
             throw new runtime.RequiredError(
                 'approvalId',
-                'Required parameter "approvalId" was null or undefined when calling getConfigurationById().'
+                'Required parameter "approvalId" was null or undefined when calling getApprovalConfiguration().'
             );
         }
 
@@ -255,30 +219,66 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve an approval configuration by its unique ID.
-     * Get configuration by ID
+     * Returns a single approval configuration by its unique id. Use this tool when the configuration id is already known; use getApplicableApprovalConfiguration instead to resolve which configuration governs a given location and customer. Preconditions: the configuration must exist. Required inputs: approvalId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no configuration exists for the id. 
+     * Get Approval Configuration by Id
      */
-    async getConfigurationById(requestParameters: GetConfigurationByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
-        const response = await this.getConfigurationByIdRaw(requestParameters, initOverrides);
+    async getApprovalConfiguration(requestParameters: GetApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
+        const response = await this.getApprovalConfigurationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Update an existing approval configuration.
-     * Update an approval configuration
+     * Returns every approval configuration, covering location-specific, customer-specific, and global default rows that govern how estimate and workorder approvals are captured. Use this tool when administering approval rules; use getApplicableApprovalConfiguration instead to resolve the single configuration that applies to one location and customer. Preconditions: none beyond the caller holding workorder:approval_config:view. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_APPROVAL_CONFIG_LIST audit event; no configuration state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
+     * List All Approval Configurations
      */
-    async updateConfigurationRaw(requestParameters: UpdateConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
+    async listApprovalConfigurationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ApprovalConfigurationResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:approval_config:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workexec`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ApprovalConfigurationResponseFromJSON));
+    }
+
+    /**
+     * Returns every approval configuration, covering location-specific, customer-specific, and global default rows that govern how estimate and workorder approvals are captured. Use this tool when administering approval rules; use getApplicableApprovalConfiguration instead to resolve the single configuration that applies to one location and customer. Preconditions: none beyond the caller holding workorder:approval_config:view. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_APPROVAL_CONFIG_LIST audit event; no configuration state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
+     * List All Approval Configurations
+     */
+    async listApprovalConfigurations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ApprovalConfigurationResponse>> {
+        const response = await this.listApprovalConfigurationsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces every field of an existing approval configuration with the values in the request, including nulling fields that are omitted. Use this tool when changing an existing approval rule; do not use createApprovalConfiguration, which adds a new rule rather than replacing one. Preconditions: the configuration must exist; this is a full replacement, so send all fields that should remain set. Required inputs: approvalId (UUID) as a path parameter and approvalMethod (CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION) in the body; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_UPDATE event. Returns 404 when the configuration does not exist and also when approvalMethod is not a valid value, because both surface as the same IllegalArgumentException in this operation. 
+     * Update Approval Configuration
+     */
+    async updateApprovalConfigurationRaw(requestParameters: UpdateApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
         if (requestParameters['approvalId'] == null) {
             throw new runtime.RequiredError(
                 'approvalId',
-                'Required parameter "approvalId" was null or undefined when calling updateConfiguration().'
+                'Required parameter "approvalId" was null or undefined when calling updateApprovalConfiguration().'
             );
         }
 
         if (requestParameters['approvalConfigurationRequest'] == null) {
             throw new runtime.RequiredError(
                 'approvalConfigurationRequest',
-                'Required parameter "approvalConfigurationRequest" was null or undefined when calling updateConfiguration().'
+                'Required parameter "approvalConfigurationRequest" was null or undefined when calling updateApprovalConfiguration().'
             );
         }
 
@@ -308,11 +308,11 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing approval configuration.
-     * Update an approval configuration
+     * Replaces every field of an existing approval configuration with the values in the request, including nulling fields that are omitted. Use this tool when changing an existing approval rule; do not use createApprovalConfiguration, which adds a new rule rather than replacing one. Preconditions: the configuration must exist; this is a full replacement, so send all fields that should remain set. Required inputs: approvalId (UUID) as a path parameter and approvalMethod (CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION) in the body; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_UPDATE event. Returns 404 when the configuration does not exist and also when approvalMethod is not a valid value, because both surface as the same IllegalArgumentException in this operation. 
+     * Update Approval Configuration
      */
-    async updateConfiguration(requestParameters: UpdateConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
-        const response = await this.updateConfigurationRaw(requestParameters, initOverrides);
+    async updateApprovalConfiguration(requestParameters: UpdateApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {
+        const response = await this.updateApprovalConfigurationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -17,18 +17,30 @@ import * as runtime from '../runtime';
 import type {
   CreateReplenishmentPolicyRequest,
   Pageable,
+  ReplenishmentNeedResponse,
   ReplenishmentPolicyResponse,
+  ReplenishmentScanResultResponse,
   ReplenishmentTaskResponse,
+  SnoozeReplenishmentPolicyRequest,
+  UpdateReplenishmentPolicyRequest,
 } from '../models/index';
 import {
     CreateReplenishmentPolicyRequestFromJSON,
     CreateReplenishmentPolicyRequestToJSON,
     PageableFromJSON,
     PageableToJSON,
+    ReplenishmentNeedResponseFromJSON,
+    ReplenishmentNeedResponseToJSON,
     ReplenishmentPolicyResponseFromJSON,
     ReplenishmentPolicyResponseToJSON,
+    ReplenishmentScanResultResponseFromJSON,
+    ReplenishmentScanResultResponseToJSON,
     ReplenishmentTaskResponseFromJSON,
     ReplenishmentTaskResponseToJSON,
+    SnoozeReplenishmentPolicyRequestFromJSON,
+    SnoozeReplenishmentPolicyRequestToJSON,
+    UpdateReplenishmentPolicyRequestFromJSON,
+    UpdateReplenishmentPolicyRequestToJSON,
 } from '../models/index';
 
 export interface CreateReplenishmentPolicyOperationRequest {
@@ -40,13 +52,23 @@ export interface ListReplenishmentPoliciesRequest {
     locationId?: string;
 }
 
+export interface SnoozeReplenishmentPolicyOperationRequest {
+    policyId: string;
+    snoozeReplenishmentPolicyRequest: SnoozeReplenishmentPolicyRequest;
+}
+
+export interface UpdateReplenishmentPolicyOperationRequest {
+    policyId: string;
+    updateReplenishmentPolicyRequest: UpdateReplenishmentPolicyRequest;
+}
+
 /**
  * 
  */
 export class ReplenishmentApi extends runtime.BaseAPI {
 
     /**
-     * Creates a replenishment policy used to generate replenishment tasks.
+     * Creates a min/max replenishment policy that drives orderpoint evaluation for one SKU at one location. Use this tool to define when a pick face should be restocked; do not use updateReplenishmentPolicy, which retunes a policy that already exists. Preconditions: none checked against existing state; a duplicate policy for the same SKU and location is not rejected here. Required inputs: locationId (UUID), itemSKU, and minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); orderMultiple defaults to the vendor-feed pack size when one greater than 1 is known for a product-UUID SKU, preferredSourceType defaults to EITHER and active defaults to true. Emits an INVENTORY_REPLENISHMENT_POLICY_CREATE event; no task is created until a scan or stock event triggers the policy. Returns 400 when minimumQuantity is not less than maximumQuantity or a required field is missing. 
      * Create replenishment policy
      */
     async createReplenishmentPolicyRaw(requestParameters: CreateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentPolicyResponse>> {
@@ -65,7 +87,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+            const tokenString = await token("bearerAuth", ["inventory:replenishment:manage"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -83,7 +105,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a replenishment policy used to generate replenishment tasks.
+     * Creates a min/max replenishment policy that drives orderpoint evaluation for one SKU at one location. Use this tool to define when a pick face should be restocked; do not use updateReplenishmentPolicy, which retunes a policy that already exists. Preconditions: none checked against existing state; a duplicate policy for the same SKU and location is not rejected here. Required inputs: locationId (UUID), itemSKU, and minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); orderMultiple defaults to the vendor-feed pack size when one greater than 1 is known for a product-UUID SKU, preferredSourceType defaults to EITHER and active defaults to true. Emits an INVENTORY_REPLENISHMENT_POLICY_CREATE event; no task is created until a scan or stock event triggers the policy. Returns 400 when minimumQuantity is not less than maximumQuantity or a required field is missing. 
      * Create replenishment policy
      */
     async createReplenishmentPolicy(requestParameters: CreateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentPolicyResponse> {
@@ -92,7 +114,43 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns configured replenishment policies.
+     * Reports, for every active non-snoozed replenishment policy, the projected availability at its lead-time horizon, whether a scan would trigger, the multiple-rounded suggested quantity and the projected stock-out deadline. Use this tool for ops review before materialising work; do not use runReplenishmentScan, which actually creates or refreshes tasks, and use listReplenishmentTasks instead to see tasks that already exist. Preconditions: none; snoozed and inactive policies are silently excluded. Required inputs: none; there is no request body or filtering. Emits an INVENTORY_REPLENISHMENT_NEEDS_LIST event; the report itself never creates or refreshes tasks, and it shares the batch scan\'s math so it matches what a scan run at the same instant would do. Returns 200 with an empty array when no policies qualify, so an empty result is not an error condition. 
+     * Replenishment needs report
+     */
+    async listReplenishmentNeedsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReplenishmentNeedResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/replenishment/needs`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReplenishmentNeedResponseFromJSON));
+    }
+
+    /**
+     * Reports, for every active non-snoozed replenishment policy, the projected availability at its lead-time horizon, whether a scan would trigger, the multiple-rounded suggested quantity and the projected stock-out deadline. Use this tool for ops review before materialising work; do not use runReplenishmentScan, which actually creates or refreshes tasks, and use listReplenishmentTasks instead to see tasks that already exist. Preconditions: none; snoozed and inactive policies are silently excluded. Required inputs: none; there is no request body or filtering. Emits an INVENTORY_REPLENISHMENT_NEEDS_LIST event; the report itself never creates or refreshes tasks, and it shares the batch scan\'s math so it matches what a scan run at the same instant would do. Returns 200 with an empty array when no policies qualify, so an empty result is not an error condition. 
+     * Replenishment needs report
+     */
+    async listReplenishmentNeeds(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReplenishmentNeedResponse>> {
+        const response = await this.listReplenishmentNeedsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists configured replenishment policies as a page, optionally filtered to one location. Use this tool to discover a policyId before updating or snoozing a policy; use listReplenishmentNeeds instead to see which policies would currently trigger. Preconditions: none. Required inputs: none; locationId is an optional query filter and the standard page/size parameters default to a page size of 20. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when nothing is configured, so an empty result is not an error condition. 
      * List replenishment policies
      */
     async listReplenishmentPoliciesRaw(requestParameters: ListReplenishmentPoliciesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
@@ -138,7 +196,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns configured replenishment policies.
+     * Lists configured replenishment policies as a page, optionally filtered to one location. Use this tool to discover a policyId before updating or snoozing a policy; use listReplenishmentNeeds instead to see which policies would currently trigger. Preconditions: none. Required inputs: none; locationId is an optional query filter and the standard page/size parameters default to a page size of 20. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when nothing is configured, so an empty result is not an error condition. 
      * List replenishment policies
      */
     async listReplenishmentPolicies(requestParameters: ListReplenishmentPoliciesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
@@ -147,7 +205,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns replenishment tasks that should be fulfilled.
+     * Returns every open replenishment task — the pick-face restock work generated by the batch scan or the event-path evaluation. Use this tool to see outstanding restock work; use listReplenishmentNeeds instead for a what-would-trigger report that also covers policies without tasks. Preconditions: none; only tasks in open statuses are returned. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no tasks are open, so an empty result is not an error condition. 
      * List replenishment tasks
      */
     async listReplenishmentTasksRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReplenishmentTaskResponse>>> {
@@ -174,11 +232,153 @@ export class ReplenishmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns replenishment tasks that should be fulfilled.
+     * Returns every open replenishment task — the pick-face restock work generated by the batch scan or the event-path evaluation. Use this tool to see outstanding restock work; use listReplenishmentNeeds instead for a what-would-trigger report that also covers policies without tasks. Preconditions: none; only tasks in open statuses are returned. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no tasks are open, so an empty result is not an error condition. 
      * List replenishment tasks
      */
     async listReplenishmentTasks(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReplenishmentTaskResponse>> {
         const response = await this.listReplenishmentTasksRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Runs the batch replenishment scan, evaluating every active non-snoozed policy against its lead-time forecast and creating or refreshing replenishment tasks for triggered pick faces. Use this tool to materialise restock work; use listReplenishmentNeeds instead for a side-effect-free preview of what the scan would do. Preconditions: none; policies preferring PURCHASE produce purchase suggestions instead of tasks, and a need already covered by an open source transfer order or an open task is not duplicated. Required inputs: none; there is no request body. Emits an INVENTORY_REPLENISHMENT_SCAN_RUN event and creates or refreshes tasks and purchase suggestions; the run is idempotent per policy and UTC day, and a triggered policy whose computed quantity is zero creates nothing. Returns 200 with a summary of policies evaluated, tasks created and refreshed, suggestions created and refreshed, and policies skipped. 
+     * Run the batch replenishment scan
+     */
+    async runReplenishmentScanRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentScanResultResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:replenishment:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/replenishment/scan`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReplenishmentScanResultResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Runs the batch replenishment scan, evaluating every active non-snoozed policy against its lead-time forecast and creating or refreshing replenishment tasks for triggered pick faces. Use this tool to materialise restock work; use listReplenishmentNeeds instead for a side-effect-free preview of what the scan would do. Preconditions: none; policies preferring PURCHASE produce purchase suggestions instead of tasks, and a need already covered by an open source transfer order or an open task is not duplicated. Required inputs: none; there is no request body. Emits an INVENTORY_REPLENISHMENT_SCAN_RUN event and creates or refreshes tasks and purchase suggestions; the run is idempotent per policy and UTC day, and a triggered policy whose computed quantity is zero creates nothing. Returns 200 with a summary of policies evaluated, tasks created and refreshed, suggestions created and refreshed, and policies skipped. 
+     * Run the batch replenishment scan
+     */
+    async runReplenishmentScan(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentScanResultResponse> {
+        const response = await this.runReplenishmentScanRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Snoozes a replenishment policy so scan, event and needs evaluation all skip it until the given future instant, or clears an existing snooze. Use this tool to silence a policy temporarily; do not use updateReplenishmentPolicy, which cannot touch snooze state, and prefer snoozing over clearing the active flag when the pause should expire on its own. Preconditions: the policy must exist; a non-null snoozedUntil must lie in the future. Required inputs: policyId (UUID) path parameter and a body whose optional snoozedUntil instant sets the snooze; a null snoozedUntil clears it — there is no separate unsnooze endpoint. Emits an INVENTORY_REPLENISHMENT_POLICY_SNOOZE event; the policy is excluded from evaluation until the instant passes. Returns 404 when the policy does not exist, and 422 with REPLENISHMENT_SNOOZE_NOT_IN_FUTURE when snoozedUntil is not in the future. 
+     * Snooze or unsnooze a replenishment policy
+     */
+    async snoozeReplenishmentPolicyRaw(requestParameters: SnoozeReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentPolicyResponse>> {
+        if (requestParameters['policyId'] == null) {
+            throw new runtime.RequiredError(
+                'policyId',
+                'Required parameter "policyId" was null or undefined when calling snoozeReplenishmentPolicy().'
+            );
+        }
+
+        if (requestParameters['snoozeReplenishmentPolicyRequest'] == null) {
+            throw new runtime.RequiredError(
+                'snoozeReplenishmentPolicyRequest',
+                'Required parameter "snoozeReplenishmentPolicyRequest" was null or undefined when calling snoozeReplenishmentPolicy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:replenishment:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/replenishment/policies/{policyId}/snooze`.replace(`{${"policyId"}}`, encodeURIComponent(String(requestParameters['policyId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: SnoozeReplenishmentPolicyRequestToJSON(requestParameters['snoozeReplenishmentPolicyRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReplenishmentPolicyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Snoozes a replenishment policy so scan, event and needs evaluation all skip it until the given future instant, or clears an existing snooze. Use this tool to silence a policy temporarily; do not use updateReplenishmentPolicy, which cannot touch snooze state, and prefer snoozing over clearing the active flag when the pause should expire on its own. Preconditions: the policy must exist; a non-null snoozedUntil must lie in the future. Required inputs: policyId (UUID) path parameter and a body whose optional snoozedUntil instant sets the snooze; a null snoozedUntil clears it — there is no separate unsnooze endpoint. Emits an INVENTORY_REPLENISHMENT_POLICY_SNOOZE event; the policy is excluded from evaluation until the instant passes. Returns 404 when the policy does not exist, and 422 with REPLENISHMENT_SNOOZE_NOT_IN_FUTURE when snoozedUntil is not in the future. 
+     * Snooze or unsnooze a replenishment policy
+     */
+    async snoozeReplenishmentPolicy(requestParameters: SnoozeReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentPolicyResponse> {
+        const response = await this.snoozeReplenishmentPolicyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces every tunable field of a replenishment policy: min/max thresholds, order multiple, lead-time override, preferred source type and active flag. Use this tool to retune an existing policy; do not use snoozeReplenishmentPolicy, which manages the snooze state this endpoint cannot touch, and do not use createReplenishmentPolicy, which defines a new policy. Preconditions: the policy must exist; its location and SKU identity are immutable here. Required inputs: policyId (UUID) path parameter plus minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); omitted optional fields are cleared or reset — orderMultiple and leadTimeDaysOverride to none, preferredSourceType to EITHER, active to true. Emits an INVENTORY_REPLENISHMENT_POLICY_UPDATE event; the next scan or stock event evaluates the new thresholds. Returns 404 when the policy does not exist, and 400 when minimumQuantity is not less than maximumQuantity. 
+     * Update replenishment policy
+     */
+    async updateReplenishmentPolicyRaw(requestParameters: UpdateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplenishmentPolicyResponse>> {
+        if (requestParameters['policyId'] == null) {
+            throw new runtime.RequiredError(
+                'policyId',
+                'Required parameter "policyId" was null or undefined when calling updateReplenishmentPolicy().'
+            );
+        }
+
+        if (requestParameters['updateReplenishmentPolicyRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateReplenishmentPolicyRequest',
+                'Required parameter "updateReplenishmentPolicyRequest" was null or undefined when calling updateReplenishmentPolicy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:replenishment:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/replenishment/policies/{policyId}`.replace(`{${"policyId"}}`, encodeURIComponent(String(requestParameters['policyId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateReplenishmentPolicyRequestToJSON(requestParameters['updateReplenishmentPolicyRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReplenishmentPolicyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces every tunable field of a replenishment policy: min/max thresholds, order multiple, lead-time override, preferred source type and active flag. Use this tool to retune an existing policy; do not use snoozeReplenishmentPolicy, which manages the snooze state this endpoint cannot touch, and do not use createReplenishmentPolicy, which defines a new policy. Preconditions: the policy must exist; its location and SKU identity are immutable here. Required inputs: policyId (UUID) path parameter plus minimumQuantity (at least 0) strictly less than maximumQuantity (at least 1); omitted optional fields are cleared or reset — orderMultiple and leadTimeDaysOverride to none, preferredSourceType to EITHER, active to true. Emits an INVENTORY_REPLENISHMENT_POLICY_UPDATE event; the next scan or stock event evaluates the new thresholds. Returns 404 when the policy does not exist, and 400 when minimumQuantity is not less than maximumQuantity. 
+     * Update replenishment policy
+     */
+    async updateReplenishmentPolicy(requestParameters: UpdateReplenishmentPolicyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplenishmentPolicyResponse> {
+        const response = await this.updateReplenishmentPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

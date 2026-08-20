@@ -31,7 +31,7 @@ import {
     WorkorderPickedItemResponseToJSON,
 } from '../models/index';
 
-export interface ConsumePickedItemsOperationRequest {
+export interface ConsumeWorkorderPickedItemsRequest {
     workorderId: string;
     consumePickedItemsRequest: ConsumePickedItemsRequest;
 }
@@ -46,21 +46,21 @@ export interface GetPickedItemsRequest {
 export class WorkorderPickedItemsApi extends runtime.BaseAPI {
 
     /**
-     * Consume the picked items for a workorder so parts usage is recorded against the job
-     * Consume picked items into workorder
+     * Queues asynchronous consumption of picked items into the workorder over the Kafka command feed per ADR-0044; each item is acknowledged with status PENDING, and the inventory consumption-recorded fact later updates the pick replicas. Use this tool when staged picked parts are installed on the job; do not use consumeParts, which operates on workorder part lines outside the pick flow. Preconditions: a pick list replica must exist for the workorder and every referenced pickTaskId must belong to it. Required inputs: workorderId (UUID) as a path parameter and a non-empty items list, each entry carrying pickTaskId (UUID) and quantityToConsume (integer). Emits a WORKORDER_PICKED_ITEMS_CONSUME event and publishes a consume command; callers must poll getPickedItems to observe the consumed quantities. Returns 202 with per-item PENDING results, 404 when the pick list or a referenced pick task is missing, and 503 when the command feed is unavailable. 
+     * Consume Picked Items into Workorder
      */
-    async consumePickedItemsRaw(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConsumePickedItemsResponse>> {
+    async consumeWorkorderPickedItemsRaw(requestParameters: ConsumeWorkorderPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConsumePickedItemsResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling consumePickedItems().'
+                'Required parameter "workorderId" was null or undefined when calling consumeWorkorderPickedItems().'
             );
         }
 
         if (requestParameters['consumePickedItemsRequest'] == null) {
             throw new runtime.RequiredError(
                 'consumePickedItemsRequest',
-                'Required parameter "consumePickedItemsRequest" was null or undefined when calling consumePickedItems().'
+                'Required parameter "consumePickedItemsRequest" was null or undefined when calling consumeWorkorderPickedItems().'
             );
         }
 
@@ -90,17 +90,17 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Consume the picked items for a workorder so parts usage is recorded against the job
-     * Consume picked items into workorder
+     * Queues asynchronous consumption of picked items into the workorder over the Kafka command feed per ADR-0044; each item is acknowledged with status PENDING, and the inventory consumption-recorded fact later updates the pick replicas. Use this tool when staged picked parts are installed on the job; do not use consumeParts, which operates on workorder part lines outside the pick flow. Preconditions: a pick list replica must exist for the workorder and every referenced pickTaskId must belong to it. Required inputs: workorderId (UUID) as a path parameter and a non-empty items list, each entry carrying pickTaskId (UUID) and quantityToConsume (integer). Emits a WORKORDER_PICKED_ITEMS_CONSUME event and publishes a consume command; callers must poll getPickedItems to observe the consumed quantities. Returns 202 with per-item PENDING results, 404 when the pick list or a referenced pick task is missing, and 503 when the command feed is unavailable. 
+     * Consume Picked Items into Workorder
      */
-    async consumePickedItems(requestParameters: ConsumePickedItemsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConsumePickedItemsResponse> {
-        const response = await this.consumePickedItemsRaw(requestParameters, initOverrides);
+    async consumeWorkorderPickedItems(requestParameters: ConsumeWorkorderPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConsumePickedItemsResponse> {
+        const response = await this.consumeWorkorderPickedItemsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve the items already picked for a workorder before they are consumed
-     * Get picked items for workorder
+     * Returns the items already picked for a workorder from the local pick replica, showing picked and consumed quantities before installation. Use this tool to see what is staged and available to consume; use consumeWorkorderPickedItems to actually record consumption, and getPickTasks for lines still being picked. Preconditions: none — a workorder without a pick list yields an empty list rather than an error. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only replica projection. Returns 200 with the picked items, possibly empty. 
+     * Get Picked Items for Workorder
      */
     async getPickedItemsRaw(requestParameters: GetPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderPickedItemResponse>>> {
         if (requestParameters['workorderId'] == null) {
@@ -133,8 +133,8 @@ export class WorkorderPickedItemsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the items already picked for a workorder before they are consumed
-     * Get picked items for workorder
+     * Returns the items already picked for a workorder from the local pick replica, showing picked and consumed quantities before installation. Use this tool to see what is staged and available to consume; use consumeWorkorderPickedItems to actually record consumption, and getPickTasks for lines still being picked. Preconditions: none — a workorder without a pick list yields an empty list rather than an error. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only replica projection. Returns 200 with the picked items, possibly empty. 
+     * Get Picked Items for Workorder
      */
     async getPickedItems(requestParameters: GetPickedItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderPickedItemResponse>> {
         const response = await this.getPickedItemsRaw(requestParameters, initOverrides);

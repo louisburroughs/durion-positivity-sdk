@@ -14,29 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A rule-evaluation step submitted while creating a pricing snapshot
  * @export
  * @interface PricingRuleTraceEntryRequest
  */
 export interface PricingRuleTraceEntryRequest {
     /**
      * 
-     * @type {string}
+     * @type {any}
      * @memberof PricingRuleTraceEntryRequest
      */
-    ruleId?: string;
+    inputs?: any;
     /**
      * 
+     * @type {any}
+     * @memberof PricingRuleTraceEntryRequest
+     */
+    outputs?: any;
+    /**
+     * Identifier of the evaluated rule
      * @type {string}
      * @memberof PricingRuleTraceEntryRequest
      */
-    status?: string;
+    ruleId: string;
+    /**
+     * Evaluation status of the rule
+     * @type {string}
+     * @memberof PricingRuleTraceEntryRequest
+     */
+    status: string;
 }
 
 /**
  * Check if a given object implements the PricingRuleTraceEntryRequest interface.
  */
 export function instanceOfPricingRuleTraceEntryRequest(value: object): boolean {
+    if (!('ruleId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -50,8 +64,10 @@ export function PricingRuleTraceEntryRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'ruleId': json['ruleId'] == null ? undefined : json['ruleId'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'inputs': json['inputs'] == null ? undefined : json['inputs'],
+        'outputs': json['outputs'] == null ? undefined : json['outputs'],
+        'ruleId': json['ruleId'],
+        'status': json['status'],
     };
 }
 
@@ -61,6 +77,8 @@ export function PricingRuleTraceEntryRequestToJSON(value?: PricingRuleTraceEntry
     }
     return {
         
+        'inputs': value['inputs'],
+        'outputs': value['outputs'],
         'ruleId': value['ruleId'],
         'status': value['status'],
     };

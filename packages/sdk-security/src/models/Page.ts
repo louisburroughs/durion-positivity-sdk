@@ -34,46 +34,16 @@ import {
 export interface Page {
     /**
      * 
-     * @type {number}
-     * @memberof Page
-     */
-    totalElements?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof Page
-     */
-    totalPages?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof Page
-     */
-    size?: number;
-    /**
-     * 
      * @type {Array<string>}
      * @memberof Page
      */
     content?: Array<string>;
     /**
      * 
-     * @type {number}
+     * @type {boolean}
      * @memberof Page
      */
-    number?: number;
-    /**
-     * 
-     * @type {PageableObject}
-     * @memberof Page
-     */
-    pageable?: PageableObject;
-    /**
-     * 
-     * @type {SortObject}
-     * @memberof Page
-     */
-    sort?: SortObject;
+    empty?: boolean;
     /**
      * 
      * @type {boolean}
@@ -91,13 +61,43 @@ export interface Page {
      * @type {number}
      * @memberof Page
      */
+    number?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof Page
+     */
     numberOfElements?: number;
     /**
      * 
-     * @type {boolean}
+     * @type {PageableObject}
      * @memberof Page
      */
-    empty?: boolean;
+    pageable?: PageableObject;
+    /**
+     * 
+     * @type {number}
+     * @memberof Page
+     */
+    size?: number;
+    /**
+     * 
+     * @type {SortObject}
+     * @memberof Page
+     */
+    sort?: SortObject;
+    /**
+     * 
+     * @type {number}
+     * @memberof Page
+     */
+    totalElements?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof Page
+     */
+    totalPages?: number;
 }
 
 /**
@@ -117,17 +117,17 @@ export function PageFromJSONTyped(json: any, ignoreDiscriminator: boolean): Page
     }
     return {
         
-        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : json['content'],
-        'number': json['number'] == null ? undefined : json['number'],
-        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
-        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'empty': json['empty'] == null ? undefined : json['empty'],
         'first': json['first'] == null ? undefined : json['first'],
         'last': json['last'] == null ? undefined : json['last'],
+        'number': json['number'] == null ? undefined : json['number'],
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
-        'empty': json['empty'] == null ? undefined : json['empty'],
+        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
+        'size': json['size'] == null ? undefined : json['size'],
+        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
+        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
     };
 }
 
@@ -137,17 +137,17 @@ export function PageToJSON(value?: Page | null): any {
     }
     return {
         
-        'totalElements': value['totalElements'],
-        'totalPages': value['totalPages'],
-        'size': value['size'],
         'content': value['content'],
-        'number': value['number'],
-        'pageable': PageableObjectToJSON(value['pageable']),
-        'sort': SortObjectToJSON(value['sort']),
+        'empty': value['empty'],
         'first': value['first'],
         'last': value['last'],
+        'number': value['number'],
         'numberOfElements': value['numberOfElements'],
-        'empty': value['empty'],
+        'pageable': PageableObjectToJSON(value['pageable']),
+        'size': value['size'],
+        'sort': SortObjectToJSON(value['sort']),
+        'totalElements': value['totalElements'],
+        'totalPages': value['totalPages'],
     };
 }
 

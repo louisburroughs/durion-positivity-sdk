@@ -14,17 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * Vehicle update request
+ * Request payload for partially updating mutable vehicle fields.
  * @export
  * @interface UpdateVehicleRequest
  */
 export interface UpdateVehicleRequest {
     /**
-     * Fleet/unit number.
+     * Owning party (account) id. Providing a different accountId transfers the vehicle to that party; the vehicle-party association follows via vehicle.events.v1 (ADR-0044 §6).
      * @type {string}
      * @memberof UpdateVehicleRequest
      */
-    unitNumber?: string;
+    accountId?: string;
     /**
      * Human-readable vehicle description.
      * @type {string}
@@ -44,12 +44,6 @@ export interface UpdateVehicleRequest {
      */
     licensePlateJurisdiction?: string;
     /**
-     * Model year.
-     * @type {number}
-     * @memberof UpdateVehicleRequest
-     */
-    year?: number;
-    /**
      * Vehicle make.
      * @type {string}
      * @memberof UpdateVehicleRequest
@@ -67,6 +61,18 @@ export interface UpdateVehicleRequest {
      * @memberof UpdateVehicleRequest
      */
     trim?: string;
+    /**
+     * Fleet/unit number.
+     * @type {string}
+     * @memberof UpdateVehicleRequest
+     */
+    unitNumber?: string;
+    /**
+     * Model year.
+     * @type {number}
+     * @memberof UpdateVehicleRequest
+     */
+    year?: number;
 }
 
 /**
@@ -86,14 +92,15 @@ export function UpdateVehicleRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'accountId': json['accountId'] == null ? undefined : json['accountId'],
         'description': json['description'] == null ? undefined : json['description'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
-        'year': json['year'] == null ? undefined : json['year'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
         'trim': json['trim'] == null ? undefined : json['trim'],
+        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'year': json['year'] == null ? undefined : json['year'],
     };
 }
 
@@ -103,14 +110,15 @@ export function UpdateVehicleRequestToJSON(value?: UpdateVehicleRequest | null):
     }
     return {
         
-        'unitNumber': value['unitNumber'],
+        'accountId': value['accountId'],
         'description': value['description'],
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],
-        'year': value['year'],
         'make': value['make'],
         'model': value['model'],
         'trim': value['trim'],
+        'unitNumber': value['unitNumber'],
+        'year': value['year'],
     };
 }
 

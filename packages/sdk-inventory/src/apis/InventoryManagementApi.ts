@@ -25,7 +25,7 @@ import {
     DeactivateLocationResponseToJSON,
 } from '../models/index';
 
-export interface DeactivateRequest {
+export interface DeactivateInventoryLocationRequest {
     locationId: string;
     deactivateLocationRequest?: DeactivateLocationRequest;
 }
@@ -36,14 +36,14 @@ export interface DeactivateRequest {
 export class InventoryManagementApi extends runtime.BaseAPI {
 
     /**
-     * Deactivate a storage location with atomic stock transfer to a destination location (Option B). If the location contains active inventory, a destination location must be specified.
+     * Deactivates a storage location, atomically transferring any remaining on-hand stock to a destination location in the same site through paired TRANSFER_OUT and TRANSFER_IN ledger entries with reason LOCATION_DEACTIVATION_TRANSFER. Use this tool to retire a bin or storage location; do not use triggerLocationSync, which repairs the roster replica, and do not use it for routine stock relocation between active locations. Preconditions: the location must exist and be active; when it holds stock, the destination must exist, be active, differ from the source and belong to the same site. Required inputs: locationId (UUID) path parameter; the body is optional and carries destinationLocationId, which becomes mandatory when the source holds stock. Emits an INVENTORY_LOCATION_DEACTIVATE event, posts the transfer entries when stock is moved and publishes an audit event; the response reports status Inactive with the moved items. Returns 404 when the source or destination location is unknown, 409 when the source or destination is already inactive, and 400 when destinationLocationId is missing while stock remains, equals the source, or belongs to a different site. 
      * Deactivate a storage location
      */
-    async deactivateRaw(requestParameters: DeactivateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeactivateLocationResponse>> {
+    async deactivateInventoryLocationRaw(requestParameters: DeactivateInventoryLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DeactivateLocationResponse>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling deactivate().'
+                'Required parameter "locationId" was null or undefined when calling deactivateInventoryLocation().'
             );
         }
 
@@ -73,11 +73,11 @@ export class InventoryManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivate a storage location with atomic stock transfer to a destination location (Option B). If the location contains active inventory, a destination location must be specified.
+     * Deactivates a storage location, atomically transferring any remaining on-hand stock to a destination location in the same site through paired TRANSFER_OUT and TRANSFER_IN ledger entries with reason LOCATION_DEACTIVATION_TRANSFER. Use this tool to retire a bin or storage location; do not use triggerLocationSync, which repairs the roster replica, and do not use it for routine stock relocation between active locations. Preconditions: the location must exist and be active; when it holds stock, the destination must exist, be active, differ from the source and belong to the same site. Required inputs: locationId (UUID) path parameter; the body is optional and carries destinationLocationId, which becomes mandatory when the source holds stock. Emits an INVENTORY_LOCATION_DEACTIVATE event, posts the transfer entries when stock is moved and publishes an audit event; the response reports status Inactive with the moved items. Returns 404 when the source or destination location is unknown, 409 when the source or destination is already inactive, and 400 when destinationLocationId is missing while stock remains, equals the source, or belongs to a different site. 
      * Deactivate a storage location
      */
-    async deactivate(requestParameters: DeactivateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DeactivateLocationResponse> {
-        const response = await this.deactivateRaw(requestParameters, initOverrides);
+    async deactivateInventoryLocation(requestParameters: DeactivateInventoryLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DeactivateLocationResponse> {
+        const response = await this.deactivateInventoryLocationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

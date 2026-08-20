@@ -20,30 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface LeadTimeInfo {
     /**
-     * Source of lead time data
-     * @type {string}
-     * @memberof LeadTimeInfo
-     */
-    source?: LeadTimeInfoSourceEnum;
-    /**
-     * Minimum days for delivery
-     * @type {number}
-     * @memberof LeadTimeInfo
-     */
-    minDays?: number;
-    /**
-     * Maximum days for delivery
-     * @type {number}
-     * @memberof LeadTimeInfo
-     */
-    maxDays?: number;
-    /**
-     * Human-readable lead time hint
-     * @type {string}
-     * @memberof LeadTimeInfo
-     */
-    displayText?: string;
-    /**
      * Timestamp of lead time data
      * @type {Date}
      * @memberof LeadTimeInfo
@@ -54,18 +30,33 @@ export interface LeadTimeInfo {
      * @type {string}
      * @memberof LeadTimeInfo
      */
-    confidence?: LeadTimeInfoConfidenceEnum;
+    confidence: LeadTimeInfoConfidenceEnum;
+    /**
+     * Human-readable lead time hint
+     * @type {string}
+     * @memberof LeadTimeInfo
+     */
+    displayText?: string;
+    /**
+     * Maximum days for delivery
+     * @type {number}
+     * @memberof LeadTimeInfo
+     */
+    maxDays?: number;
+    /**
+     * Minimum days for delivery
+     * @type {number}
+     * @memberof LeadTimeInfo
+     */
+    minDays?: number;
+    /**
+     * Source of lead time data
+     * @type {string}
+     * @memberof LeadTimeInfo
+     */
+    source: LeadTimeInfoSourceEnum;
 }
 
-/**
-* @export
-* @enum {string}
-*/
-export enum LeadTimeInfoSourceEnum {
-    Catalog = 'CATALOG',
-    Inventory = 'INVENTORY',
-    SupplyChain = 'SUPPLY_CHAIN'
-}
 /**
 * @export
 * @enum {string}
@@ -75,12 +66,23 @@ export enum LeadTimeInfoConfidenceEnum {
     Medium = 'MEDIUM',
     High = 'HIGH'
 }
+/**
+* @export
+* @enum {string}
+*/
+export enum LeadTimeInfoSourceEnum {
+    Catalog = 'CATALOG',
+    Inventory = 'INVENTORY',
+    SupplyChain = 'SUPPLY_CHAIN'
+}
 
 
 /**
  * Check if a given object implements the LeadTimeInfo interface.
  */
 export function instanceOfLeadTimeInfo(value: object): boolean {
+    if (!('confidence' in value)) return false;
+    if (!('source' in value)) return false;
     return true;
 }
 
@@ -94,12 +96,12 @@ export function LeadTimeInfoFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'source': json['source'] == null ? undefined : json['source'],
-        'minDays': json['minDays'] == null ? undefined : json['minDays'],
-        'maxDays': json['maxDays'] == null ? undefined : json['maxDays'],
-        'displayText': json['displayText'] == null ? undefined : json['displayText'],
         'asOf': json['asOf'] == null ? undefined : (new Date(json['asOf'])),
-        'confidence': json['confidence'] == null ? undefined : json['confidence'],
+        'confidence': json['confidence'],
+        'displayText': json['displayText'] == null ? undefined : json['displayText'],
+        'maxDays': json['maxDays'] == null ? undefined : json['maxDays'],
+        'minDays': json['minDays'] == null ? undefined : json['minDays'],
+        'source': json['source'],
     };
 }
 
@@ -109,12 +111,12 @@ export function LeadTimeInfoToJSON(value?: LeadTimeInfo | null): any {
     }
     return {
         
-        'source': value['source'],
-        'minDays': value['minDays'],
-        'maxDays': value['maxDays'],
-        'displayText': value['displayText'],
         'asOf': value['asOf'] == null ? undefined : ((value['asOf']).toISOString()),
         'confidence': value['confidence'],
+        'displayText': value['displayText'],
+        'maxDays': value['maxDays'],
+        'minDays': value['minDays'],
+        'source': value['source'],
     };
 }
 

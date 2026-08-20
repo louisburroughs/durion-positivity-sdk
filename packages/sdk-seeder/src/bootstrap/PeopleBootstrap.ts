@@ -111,8 +111,14 @@ export class PeopleBootstrap {
       const label = seed.preferredName ?? seed.legalName;
       let employeeId = employeeIndex.get(seed.employeeNumber);
       if (!employeeId) {
+        // The regenerated API takes firstName/lastName instead of a single
+        // legalName; split the seed's legal name at the last space.
+        const nameParts = seed.legalName.trim().split(/\s+/);
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : seed.legalName;
+        const firstName = nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : seed.legalName;
         const createEmployeeRequest: CreateEmployeeRequest = {
-          legalName: seed.legalName,
+          firstName,
+          lastName,
           preferredName: seed.preferredName,
           employeeNumber: seed.employeeNumber,
           status: CreateEmployeeRequestStatusEnum.Active,
@@ -135,9 +141,9 @@ export class PeopleBootstrap {
         employeeId,
         seed.role,
         locationId,
-        async (personId: string) => peopleStaffingAssignmentsApi.getAssignments1({ personId }),
+        async (personId: string) => peopleStaffingAssignmentsApi.listStaffingAssignments({ personId }),
         async (request: CreateStaffingAssignmentRequest) =>
-          peopleStaffingAssignmentsApi.createAssignment1({ createStaffingAssignmentRequest: request }),
+          peopleStaffingAssignmentsApi.createStaffingAssignment({ createStaffingAssignmentRequest: request }),
       );
 
       switch (seed.bucket) {

@@ -14,89 +14,95 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Lifecycle and lock state of a user account
  * @export
  * @interface AccountStateResponse
  */
 export interface AccountStateResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof AccountStateResponse
-     */
-    userId?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof AccountStateResponse
-     */
-    enabled?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof AccountStateResponse
-     */
-    accountNonLocked?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof AccountStateResponse
-     */
-    accountNonExpired?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof AccountStateResponse
-     */
-    credentialsNonExpired?: boolean;
-    /**
-     * 
-     * @type {number}
-     * @memberof AccountStateResponse
-     */
-    failedLoginAttempts?: number;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AccountStateResponse
-     */
-    lockedAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AccountStateResponse
-     */
-    lockedUntil?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AccountStateResponse
-     */
-    disabledAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof AccountStateResponse
-     */
-    disabledBy?: string;
-    /**
-     * 
+     * Timestamp at which the account expires
      * @type {Date}
      * @memberof AccountStateResponse
      */
     accountExpiresAt?: Date;
     /**
-     * 
+     * True when the account has not expired
+     * @type {boolean}
+     * @memberof AccountStateResponse
+     */
+    accountNonExpired: boolean;
+    /**
+     * True when the account is not locked
+     * @type {boolean}
+     * @memberof AccountStateResponse
+     */
+    accountNonLocked: boolean;
+    /**
+     * Timestamp at which the credentials expire
      * @type {Date}
      * @memberof AccountStateResponse
      */
     credentialsExpireAt?: Date;
+    /**
+     * True when the credentials have not expired
+     * @type {boolean}
+     * @memberof AccountStateResponse
+     */
+    credentialsNonExpired: boolean;
+    /**
+     * Timestamp at which the account was disabled
+     * @type {Date}
+     * @memberof AccountStateResponse
+     */
+    disabledAt?: Date;
+    /**
+     * Actor that disabled the account
+     * @type {string}
+     * @memberof AccountStateResponse
+     */
+    disabledBy?: string;
+    /**
+     * True when the account is enabled
+     * @type {boolean}
+     * @memberof AccountStateResponse
+     */
+    enabled: boolean;
+    /**
+     * Number of consecutive failed login attempts
+     * @type {number}
+     * @memberof AccountStateResponse
+     */
+    failedLoginAttempts: number;
+    /**
+     * Timestamp at which the account was locked
+     * @type {Date}
+     * @memberof AccountStateResponse
+     */
+    lockedAt?: Date;
+    /**
+     * Timestamp until which the account remains locked
+     * @type {Date}
+     * @memberof AccountStateResponse
+     */
+    lockedUntil?: Date;
+    /**
+     * User identifier
+     * @type {string}
+     * @memberof AccountStateResponse
+     */
+    userId: string;
 }
 
 /**
  * Check if a given object implements the AccountStateResponse interface.
  */
 export function instanceOfAccountStateResponse(value: object): boolean {
+    if (!('accountNonExpired' in value)) return false;
+    if (!('accountNonLocked' in value)) return false;
+    if (!('credentialsNonExpired' in value)) return false;
+    if (!('enabled' in value)) return false;
+    if (!('failedLoginAttempts' in value)) return false;
+    if (!('userId' in value)) return false;
     return true;
 }
 
@@ -110,18 +116,18 @@ export function AccountStateResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'userId': json['userId'] == null ? undefined : json['userId'],
-        'enabled': json['enabled'] == null ? undefined : json['enabled'],
-        'accountNonLocked': json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
-        'accountNonExpired': json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
-        'credentialsNonExpired': json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
-        'failedLoginAttempts': json['failedLoginAttempts'] == null ? undefined : json['failedLoginAttempts'],
-        'lockedAt': json['lockedAt'] == null ? undefined : (new Date(json['lockedAt'])),
-        'lockedUntil': json['lockedUntil'] == null ? undefined : (new Date(json['lockedUntil'])),
+        'accountExpiresAt': json['accountExpiresAt'] == null ? undefined : (new Date(json['accountExpiresAt'])),
+        'accountNonExpired': json['accountNonExpired'],
+        'accountNonLocked': json['accountNonLocked'],
+        'credentialsExpireAt': json['credentialsExpireAt'] == null ? undefined : (new Date(json['credentialsExpireAt'])),
+        'credentialsNonExpired': json['credentialsNonExpired'],
         'disabledAt': json['disabledAt'] == null ? undefined : (new Date(json['disabledAt'])),
         'disabledBy': json['disabledBy'] == null ? undefined : json['disabledBy'],
-        'accountExpiresAt': json['accountExpiresAt'] == null ? undefined : (new Date(json['accountExpiresAt'])),
-        'credentialsExpireAt': json['credentialsExpireAt'] == null ? undefined : (new Date(json['credentialsExpireAt'])),
+        'enabled': json['enabled'],
+        'failedLoginAttempts': json['failedLoginAttempts'],
+        'lockedAt': json['lockedAt'] == null ? undefined : (new Date(json['lockedAt'])),
+        'lockedUntil': json['lockedUntil'] == null ? undefined : (new Date(json['lockedUntil'])),
+        'userId': json['userId'],
     };
 }
 
@@ -131,18 +137,18 @@ export function AccountStateResponseToJSON(value?: AccountStateResponse | null):
     }
     return {
         
-        'userId': value['userId'],
-        'enabled': value['enabled'],
-        'accountNonLocked': value['accountNonLocked'],
+        'accountExpiresAt': value['accountExpiresAt'] == null ? undefined : ((value['accountExpiresAt']).toISOString()),
         'accountNonExpired': value['accountNonExpired'],
+        'accountNonLocked': value['accountNonLocked'],
+        'credentialsExpireAt': value['credentialsExpireAt'] == null ? undefined : ((value['credentialsExpireAt']).toISOString()),
         'credentialsNonExpired': value['credentialsNonExpired'],
+        'disabledAt': value['disabledAt'] == null ? undefined : ((value['disabledAt']).toISOString()),
+        'disabledBy': value['disabledBy'],
+        'enabled': value['enabled'],
         'failedLoginAttempts': value['failedLoginAttempts'],
         'lockedAt': value['lockedAt'] == null ? undefined : ((value['lockedAt']).toISOString()),
         'lockedUntil': value['lockedUntil'] == null ? undefined : ((value['lockedUntil']).toISOString()),
-        'disabledAt': value['disabledAt'] == null ? undefined : ((value['disabledAt']).toISOString()),
-        'disabledBy': value['disabledBy'],
-        'accountExpiresAt': value['accountExpiresAt'] == null ? undefined : ((value['accountExpiresAt']).toISOString()),
-        'credentialsExpireAt': value['credentialsExpireAt'] == null ? undefined : ((value['credentialsExpireAt']).toISOString()),
+        'userId': value['userId'],
     };
 }
 

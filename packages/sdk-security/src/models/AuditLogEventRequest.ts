@@ -14,41 +14,60 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to record an immutable audit event
  * @export
  * @interface AuditLogEventRequest
  */
 export interface AuditLogEventRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof AuditLogEventRequest
-     */
-    eventType?: string;
-    /**
-     * 
+     * Ignored; actor is resolved server-side from the security context per ADR-0018
      * @type {string}
      * @memberof AuditLogEventRequest
      */
     actorId?: string;
     /**
      * 
+     * @type {any}
+     * @memberof AuditLogEventRequest
+     */
+    context?: any;
+    /**
+     * Identifier of the affected entity
      * @type {string}
      * @memberof AuditLogEventRequest
      */
     entityId?: string;
     /**
-     * 
+     * Type of the affected entity
      * @type {string}
      * @memberof AuditLogEventRequest
      */
     entityType?: string;
+    /**
+     * Event type code
+     * @type {string}
+     * @memberof AuditLogEventRequest
+     */
+    eventType: string;
+    /**
+     * 
+     * @type {any}
+     * @memberof AuditLogEventRequest
+     */
+    newValue?: any;
+    /**
+     * 
+     * @type {any}
+     * @memberof AuditLogEventRequest
+     */
+    oldValue?: any;
 }
 
 /**
  * Check if a given object implements the AuditLogEventRequest interface.
  */
 export function instanceOfAuditLogEventRequest(value: object): boolean {
+    if (!('eventType' in value)) return false;
     return true;
 }
 
@@ -62,10 +81,13 @@ export function AuditLogEventRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
+        'context': json['context'] == null ? undefined : json['context'],
         'entityId': json['entityId'] == null ? undefined : json['entityId'],
         'entityType': json['entityType'] == null ? undefined : json['entityType'],
+        'eventType': json['eventType'],
+        'newValue': json['newValue'] == null ? undefined : json['newValue'],
+        'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
     };
 }
 
@@ -75,10 +97,13 @@ export function AuditLogEventRequestToJSON(value?: AuditLogEventRequest | null):
     }
     return {
         
-        'eventType': value['eventType'],
         'actorId': value['actorId'],
+        'context': value['context'],
         'entityId': value['entityId'],
         'entityType': value['entityType'],
+        'eventType': value['eventType'],
+        'newValue': value['newValue'],
+        'oldValue': value['oldValue'],
     };
 }
 

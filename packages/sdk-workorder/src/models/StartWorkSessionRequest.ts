@@ -20,11 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface StartWorkSessionRequest {
     /**
+     * ID of the work location
+     * @type {string}
+     * @memberof StartWorkSessionRequest
+     */
+    locationId: string;
+    /**
      * ID of the mechanic starting the session
      * @type {string}
      * @memberof StartWorkSessionRequest
      */
     mechanicId: string;
+    /**
+     * Reason for overriding overlap policy (requires permission)
+     * @type {string}
+     * @memberof StartWorkSessionRequest
+     */
+    overlapOverrideReason?: string;
+    /**
+     * Optional resource/bay ID
+     * @type {string}
+     * @memberof StartWorkSessionRequest
+     */
+    resourceId?: string;
     /**
      * ID of the work order
      * @type {string}
@@ -37,34 +55,16 @@ export interface StartWorkSessionRequest {
      * @memberof StartWorkSessionRequest
      */
     workOrderTaskId: string;
-    /**
-     * ID of the work location
-     * @type {string}
-     * @memberof StartWorkSessionRequest
-     */
-    locationId: string;
-    /**
-     * Optional resource/bay ID
-     * @type {string}
-     * @memberof StartWorkSessionRequest
-     */
-    resourceId?: string;
-    /**
-     * Reason for overriding overlap policy (requires permission)
-     * @type {string}
-     * @memberof StartWorkSessionRequest
-     */
-    overlapOverrideReason?: string;
 }
 
 /**
  * Check if a given object implements the StartWorkSessionRequest interface.
  */
 export function instanceOfStartWorkSessionRequest(value: object): boolean {
+    if (!('locationId' in value)) return false;
     if (!('mechanicId' in value)) return false;
     if (!('workOrderId' in value)) return false;
     if (!('workOrderTaskId' in value)) return false;
-    if (!('locationId' in value)) return false;
     return true;
 }
 
@@ -78,12 +78,12 @@ export function StartWorkSessionRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'locationId': json['locationId'],
         'mechanicId': json['mechanicId'],
+        'overlapOverrideReason': json['overlapOverrideReason'] == null ? undefined : json['overlapOverrideReason'],
+        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'workOrderId': json['workOrderId'],
         'workOrderTaskId': json['workOrderTaskId'],
-        'locationId': json['locationId'],
-        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
-        'overlapOverrideReason': json['overlapOverrideReason'] == null ? undefined : json['overlapOverrideReason'],
     };
 }
 
@@ -93,12 +93,12 @@ export function StartWorkSessionRequestToJSON(value?: StartWorkSessionRequest | 
     }
     return {
         
+        'locationId': value['locationId'],
         'mechanicId': value['mechanicId'],
+        'overlapOverrideReason': value['overlapOverrideReason'],
+        'resourceId': value['resourceId'],
         'workOrderId': value['workOrderId'],
         'workOrderTaskId': value['workOrderTaskId'],
-        'locationId': value['locationId'],
-        'resourceId': value['resourceId'],
-        'overlapOverrideReason': value['overlapOverrideReason'],
     };
 }
 

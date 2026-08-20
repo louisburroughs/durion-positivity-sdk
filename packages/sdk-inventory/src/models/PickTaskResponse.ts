@@ -14,59 +14,77 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Pick task details describing a single SKU-and-location pick within a pick list
  * @export
  * @interface PickTaskResponse
  */
 export interface PickTaskResponse {
     /**
-     * 
+     * Identifier of the location the SKU is picked from
      * @type {string}
      * @memberof PickTaskResponse
      */
-    pickTaskId?: string;
+    locationId: string;
     /**
-     * 
+     * Identifier of the pick list this task belongs to
      * @type {string}
      * @memberof PickTaskResponse
      */
-    pickListId?: string;
+    pickListId: string;
     /**
-     * 
+     * Unique identifier of the pick task
      * @type {string}
      * @memberof PickTaskResponse
      */
-    skuId?: string;
+    pickTaskId: string;
     /**
-     * 
+     * Identifier of the lot actually keyed at pick confirmation for LOT-tracked SKUs; null for untracked SKUs and before confirmation
      * @type {string}
      * @memberof PickTaskResponse
      */
-    locationId?: string;
+    pickedLotId?: string;
     /**
-     * 
+     * Quantity already picked against this task
      * @type {number}
      * @memberof PickTaskResponse
      */
-    quantityRequired?: number;
+    quantityPicked: number;
     /**
-     * 
+     * Quantity required to satisfy this pick task
      * @type {number}
      * @memberof PickTaskResponse
      */
-    quantityPicked?: number;
+    quantityRequired: number;
     /**
-     * 
+     * Identifier of the SKU to be picked
      * @type {string}
      * @memberof PickTaskResponse
      */
-    status?: PickTaskResponseStatusEnum;
+    skuId: string;
     /**
-     * 
+     * Ordinal position of this task in the pick sequence
      * @type {number}
      * @memberof PickTaskResponse
      */
-    sortOrder?: number;
+    sortOrder: number;
+    /**
+     * Current status of the pick task
+     * @type {string}
+     * @memberof PickTaskResponse
+     */
+    status: PickTaskResponseStatusEnum;
+    /**
+     * Advisory lot suggestion for LOT-tracked SKUs (FIFO by lot receivedAt at the suggested location; FEFO once expiry data exists). Null for untracked SKUs or when no lot has stock
+     * @type {string}
+     * @memberof PickTaskResponse
+     */
+    suggestedLotNumber?: string;
+    /**
+     * The SKU's base unit of measure, when skuId resolves to a catalog product with a declared UoM; null otherwise
+     * @type {string}
+     * @memberof PickTaskResponse
+     */
+    unitOfMeasure?: string;
 }
 
 /**
@@ -85,6 +103,14 @@ export enum PickTaskResponseStatusEnum {
  * Check if a given object implements the PickTaskResponse interface.
  */
 export function instanceOfPickTaskResponse(value: object): boolean {
+    if (!('locationId' in value)) return false;
+    if (!('pickListId' in value)) return false;
+    if (!('pickTaskId' in value)) return false;
+    if (!('quantityPicked' in value)) return false;
+    if (!('quantityRequired' in value)) return false;
+    if (!('skuId' in value)) return false;
+    if (!('sortOrder' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -98,14 +124,17 @@ export function PickTaskResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'pickTaskId': json['pickTaskId'] == null ? undefined : json['pickTaskId'],
-        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
-        'skuId': json['skuId'] == null ? undefined : json['skuId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'quantityRequired': json['quantityRequired'] == null ? undefined : json['quantityRequired'],
-        'quantityPicked': json['quantityPicked'] == null ? undefined : json['quantityPicked'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'sortOrder': json['sortOrder'] == null ? undefined : json['sortOrder'],
+        'locationId': json['locationId'],
+        'pickListId': json['pickListId'],
+        'pickTaskId': json['pickTaskId'],
+        'pickedLotId': json['pickedLotId'] == null ? undefined : json['pickedLotId'],
+        'quantityPicked': json['quantityPicked'],
+        'quantityRequired': json['quantityRequired'],
+        'skuId': json['skuId'],
+        'sortOrder': json['sortOrder'],
+        'status': json['status'],
+        'suggestedLotNumber': json['suggestedLotNumber'] == null ? undefined : json['suggestedLotNumber'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
     };
 }
 
@@ -115,14 +144,17 @@ export function PickTaskResponseToJSON(value?: PickTaskResponse | null): any {
     }
     return {
         
-        'pickTaskId': value['pickTaskId'],
-        'pickListId': value['pickListId'],
-        'skuId': value['skuId'],
         'locationId': value['locationId'],
-        'quantityRequired': value['quantityRequired'],
+        'pickListId': value['pickListId'],
+        'pickTaskId': value['pickTaskId'],
+        'pickedLotId': value['pickedLotId'],
         'quantityPicked': value['quantityPicked'],
-        'status': value['status'],
+        'quantityRequired': value['quantityRequired'],
+        'skuId': value['skuId'],
         'sortOrder': value['sortOrder'],
+        'status': value['status'],
+        'suggestedLotNumber': value['suggestedLotNumber'],
+        'unitOfMeasure': value['unitOfMeasure'],
     };
 }
 

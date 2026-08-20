@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for submitting travel segments for a work date
  * @export
  * @interface SubmitTravelSegmentsRequest
  */
 export interface SubmitTravelSegmentsRequest {
     /**
-     * 
-     * @type {Date}
-     * @memberof SubmitTravelSegmentsRequest
-     */
-    workDate: Date;
-    /**
-     * 
+     * Optional notes accompanying the travel segment submission
      * @type {string}
      * @memberof SubmitTravelSegmentsRequest
      */
     notes?: string;
+    /**
+     * Work date whose travel segments are being submitted
+     * @type {Date}
+     * @memberof SubmitTravelSegmentsRequest
+     */
+    workDate: Date;
 }
 
 /**
@@ -51,8 +51,8 @@ export function SubmitTravelSegmentsRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'workDate': (new Date(json['workDate'])),
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'workDate': (new Date(json['workDate'])),
     };
 }
 
@@ -62,8 +62,8 @@ export function SubmitTravelSegmentsRequestToJSON(value?: SubmitTravelSegmentsRe
     }
     return {
         
-        'workDate': ((value['workDate']).toISOString().substring(0,10)),
         'notes': value['notes'],
+        'workDate': ((value['workDate']).toISOString().substring(0,10)),
     };
 }
 

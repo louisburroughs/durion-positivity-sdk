@@ -14,41 +14,62 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Per-location availability projection for inventory availability queries
  * @export
  * @interface LocationAvailabilityDto
  */
 export interface LocationAvailabilityDto {
     /**
-     * 
-     * @type {string}
-     * @memberof LocationAvailabilityDto
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationAvailabilityDto
-     */
-    locationName?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationAvailabilityDto
-     */
-    onHandQuantity?: number;
-    /**
-     * 
+     * Available-to-promise quantity at the location. Null for as-of (historical) requests: historical allocation state is not reliably reconstructable from ATP-neutral ledger events, so as-of responses carry on-hand only.
      * @type {number}
      * @memberof LocationAvailabilityDto
      */
     availableToPromiseQuantity?: number;
+    /**
+     * Open expected supply at the site: approved purchase-order open line quantity plus un-received ASN remainder. Bounded by the 'horizon' query parameter when present (documents without an expected date are excluded from horizon-bounded results). Omitted for as-of requests.
+     * @type {number}
+     * @memberof LocationAvailabilityDto
+     */
+    incomingQty?: number;
+    /**
+     * Identifier of the location
+     * @type {string}
+     * @memberof LocationAvailabilityDto
+     */
+    locationId: string;
+    /**
+     * Human-readable name of the location
+     * @type {string}
+     * @memberof LocationAvailabilityDto
+     */
+    locationName: string;
+    /**
+     * On-hand quantity at the location
+     * @type {number}
+     * @memberof LocationAvailabilityDto
+     */
+    onHandQuantity: number;
+    /**
+     * Open expected demand not yet decremented from on-hand: unallocated reservation remainders plus released-not-picked pick-task remainders. Reservation demand carries no site and is included in every site row. Omitted for as-of requests.
+     * @type {number}
+     * @memberof LocationAvailabilityDto
+     */
+    outgoingQty?: number;
+    /**
+     * Projected availability: onHandQuantity + incomingQty - outgoingQty (Odoo virtual_available). Omitted for as-of requests.
+     * @type {number}
+     * @memberof LocationAvailabilityDto
+     */
+    projectedAvailable?: number;
 }
 
 /**
  * Check if a given object implements the LocationAvailabilityDto interface.
  */
 export function instanceOfLocationAvailabilityDto(value: object): boolean {
+    if (!('locationId' in value)) return false;
+    if (!('locationName' in value)) return false;
+    if (!('onHandQuantity' in value)) return false;
     return true;
 }
 
@@ -62,10 +83,13 @@ export function LocationAvailabilityDtoFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'locationName': json['locationName'] == null ? undefined : json['locationName'],
-        'onHandQuantity': json['onHandQuantity'] == null ? undefined : json['onHandQuantity'],
         'availableToPromiseQuantity': json['availableToPromiseQuantity'] == null ? undefined : json['availableToPromiseQuantity'],
+        'incomingQty': json['incomingQty'] == null ? undefined : json['incomingQty'],
+        'locationId': json['locationId'],
+        'locationName': json['locationName'],
+        'onHandQuantity': json['onHandQuantity'],
+        'outgoingQty': json['outgoingQty'] == null ? undefined : json['outgoingQty'],
+        'projectedAvailable': json['projectedAvailable'] == null ? undefined : json['projectedAvailable'],
     };
 }
 
@@ -75,10 +99,13 @@ export function LocationAvailabilityDtoToJSON(value?: LocationAvailabilityDto | 
     }
     return {
         
+        'availableToPromiseQuantity': value['availableToPromiseQuantity'],
+        'incomingQty': value['incomingQty'],
         'locationId': value['locationId'],
         'locationName': value['locationName'],
         'onHandQuantity': value['onHandQuantity'],
-        'availableToPromiseQuantity': value['availableToPromiseQuantity'],
+        'outgoingQty': value['outgoingQty'],
+        'projectedAvailable': value['projectedAvailable'],
     };
 }
 

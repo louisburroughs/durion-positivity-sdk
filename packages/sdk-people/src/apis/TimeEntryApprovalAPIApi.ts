@@ -22,12 +22,12 @@ import {
     TimeEntryDecisionBatchRequestToJSON,
 } from '../models/index';
 
-export interface ApproveTimeEntriesRequest {
+export interface ApproveTimeEntriesBatchRequest {
     timeEntryDecisionBatchRequest: TimeEntryDecisionBatchRequest;
     xCorrelationId?: string;
 }
 
-export interface RejectTimeEntriesRequest {
+export interface RejectTimeEntriesBatchRequest {
     timeEntryDecisionBatchRequest: TimeEntryDecisionBatchRequest;
     xCorrelationId?: string;
 }
@@ -38,14 +38,14 @@ export interface RejectTimeEntriesRequest {
 export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
 
     /**
-     * Approve multiple time entries. pos-people is authoritative for approval execution.
-     * Batch approve time entries
+     * Approves a batch of time entries, marking each SUBMITTED or PENDING_APPROVAL entry APPROVED and stamping the approver and approval time; pos-people is authoritative for approval execution. Use this tool for supervisor approval of individually selected time entries; do not use rejectTimeEntriesBatch, which rejects them, and do not use approveTimePeriod, which approves a whole pay period per person. Preconditions: each entry must exist and be in SUBMITTED or PENDING_APPROVAL status, and the caller needs the people:timeEntry:approve authority for individual entries to succeed. Required inputs: decisions, a non-empty list of objects each carrying timeEntryId (UUID string); an optional X-Correlation-Id header is recorded in the audit trail. Emits a PEOPLE_TIME_ENTRY_APPROVE event and writes an audit row per decision. Returns 200 with a per-entry result list (failure codes NOT_FOUND, ENTRY_NOT_PENDING, FORBIDDEN) rather than failing the whole batch, and 400 when the decisions list is missing or empty. 
+     * Batch Approve Submitted Time Entries
      */
-    async approveTimeEntriesRaw(requestParameters: ApproveTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async approveTimeEntriesBatchRaw(requestParameters: ApproveTimeEntriesBatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryDecisionBatchRequest',
-                'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling approveTimeEntries().'
+                'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling approveTimeEntriesBatch().'
             );
         }
 
@@ -79,23 +79,23 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approve multiple time entries. pos-people is authoritative for approval execution.
-     * Batch approve time entries
+     * Approves a batch of time entries, marking each SUBMITTED or PENDING_APPROVAL entry APPROVED and stamping the approver and approval time; pos-people is authoritative for approval execution. Use this tool for supervisor approval of individually selected time entries; do not use rejectTimeEntriesBatch, which rejects them, and do not use approveTimePeriod, which approves a whole pay period per person. Preconditions: each entry must exist and be in SUBMITTED or PENDING_APPROVAL status, and the caller needs the people:timeEntry:approve authority for individual entries to succeed. Required inputs: decisions, a non-empty list of objects each carrying timeEntryId (UUID string); an optional X-Correlation-Id header is recorded in the audit trail. Emits a PEOPLE_TIME_ENTRY_APPROVE event and writes an audit row per decision. Returns 200 with a per-entry result list (failure codes NOT_FOUND, ENTRY_NOT_PENDING, FORBIDDEN) rather than failing the whole batch, and 400 when the decisions list is missing or empty. 
+     * Batch Approve Submitted Time Entries
      */
-    async approveTimeEntries(requestParameters: ApproveTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
-        const response = await this.approveTimeEntriesRaw(requestParameters, initOverrides);
+    async approveTimeEntriesBatch(requestParameters: ApproveTimeEntriesBatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.approveTimeEntriesBatchRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Reject multiple time entries. rejectionReason is required for each decision.
-     * Batch reject time entries
+     * Rejects a batch of time entries, marking each SUBMITTED or PENDING_APPROVAL entry REJECTED with the supplied reason stored on the entry. Use this tool to send individually selected entries back with a reason; do not use approveTimeEntriesBatch, which approves them, and do not use rejectTimePeriod, which rejects a whole pay period per person. Preconditions: each entry must exist and be in SUBMITTED or PENDING_APPROVAL status, and the caller needs the people:timeEntry:reject authority for individual entries to succeed. Required inputs: decisions, a non-empty list where every element carries timeEntryId and a non-blank rejectionReason; one missing reason fails the entire request before any entry is touched. Emits a PEOPLE_TIME_ENTRY_REJECT event and writes an audit row per decision. Returns 200 with a per-entry result list (failure codes NOT_FOUND, ENTRY_NOT_PENDING, FORBIDDEN), and 400 when any decision lacks a rejectionReason. 
+     * Batch Reject Submitted Time Entries
      */
-    async rejectTimeEntriesRaw(requestParameters: RejectTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async rejectTimeEntriesBatchRaw(requestParameters: RejectTimeEntriesBatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['timeEntryDecisionBatchRequest'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryDecisionBatchRequest',
-                'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling rejectTimeEntries().'
+                'Required parameter "timeEntryDecisionBatchRequest" was null or undefined when calling rejectTimeEntriesBatch().'
             );
         }
 
@@ -129,11 +129,11 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reject multiple time entries. rejectionReason is required for each decision.
-     * Batch reject time entries
+     * Rejects a batch of time entries, marking each SUBMITTED or PENDING_APPROVAL entry REJECTED with the supplied reason stored on the entry. Use this tool to send individually selected entries back with a reason; do not use approveTimeEntriesBatch, which approves them, and do not use rejectTimePeriod, which rejects a whole pay period per person. Preconditions: each entry must exist and be in SUBMITTED or PENDING_APPROVAL status, and the caller needs the people:timeEntry:reject authority for individual entries to succeed. Required inputs: decisions, a non-empty list where every element carries timeEntryId and a non-blank rejectionReason; one missing reason fails the entire request before any entry is touched. Emits a PEOPLE_TIME_ENTRY_REJECT event and writes an audit row per decision. Returns 200 with a per-entry result list (failure codes NOT_FOUND, ENTRY_NOT_PENDING, FORBIDDEN), and 400 when any decision lacks a rejectionReason. 
+     * Batch Reject Submitted Time Entries
      */
-    async rejectTimeEntries(requestParameters: RejectTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
-        const response = await this.rejectTimeEntriesRaw(requestParameters, initOverrides);
+    async rejectTimeEntriesBatch(requestParameters: RejectTimeEntriesBatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.rejectTimeEntriesBatchRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

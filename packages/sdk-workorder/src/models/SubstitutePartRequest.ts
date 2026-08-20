@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface SubstitutePartRequest {
     /**
+     * Optional substitution notes
+     * @type {string}
+     * @memberof SubstitutePartRequest
+     */
+    notes?: string;
+    /**
      * Original part identifier
      * @type {string}
      * @memberof SubstitutePartRequest
      */
     originalPartId: string;
-    /**
-     * Substitute part identifier
-     * @type {string}
-     * @memberof SubstitutePartRequest
-     */
-    substitutePartId: string;
     /**
      * Audit reason for substitution
      * @type {string}
@@ -38,11 +38,11 @@ export interface SubstitutePartRequest {
      */
     reason: string;
     /**
-     * Optional substitution notes
+     * Substitute part identifier
      * @type {string}
      * @memberof SubstitutePartRequest
      */
-    notes?: string;
+    substitutePartId: string;
 }
 
 /**
@@ -50,8 +50,8 @@ export interface SubstitutePartRequest {
  */
 export function instanceOfSubstitutePartRequest(value: object): boolean {
     if (!('originalPartId' in value)) return false;
-    if (!('substitutePartId' in value)) return false;
     if (!('reason' in value)) return false;
+    if (!('substitutePartId' in value)) return false;
     return true;
 }
 
@@ -65,10 +65,10 @@ export function SubstitutePartRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'originalPartId': json['originalPartId'],
-        'substitutePartId': json['substitutePartId'],
-        'reason': json['reason'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'originalPartId': json['originalPartId'],
+        'reason': json['reason'],
+        'substitutePartId': json['substitutePartId'],
     };
 }
 
@@ -78,10 +78,10 @@ export function SubstitutePartRequestToJSON(value?: SubstitutePartRequest | null
     }
     return {
         
-        'originalPartId': value['originalPartId'],
-        'substitutePartId': value['substitutePartId'],
-        'reason': value['reason'],
         'notes': value['notes'],
+        'originalPartId': value['originalPartId'],
+        'reason': value['reason'],
+        'substitutePartId': value['substitutePartId'],
     };
 }
 

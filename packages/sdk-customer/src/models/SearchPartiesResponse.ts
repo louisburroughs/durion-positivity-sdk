@@ -21,41 +21,45 @@ import {
 } from './PartySummary';
 
 /**
- * 
+ * Paged response of matching party summaries
  * @export
  * @interface SearchPartiesResponse
  */
 export interface SearchPartiesResponse {
     /**
-     * 
+     * Current page number
+     * @type {number}
+     * @memberof SearchPartiesResponse
+     */
+    pageNumber: number;
+    /**
+     * Items per page
+     * @type {number}
+     * @memberof SearchPartiesResponse
+     */
+    pageSize: number;
+    /**
+     * List of party summary records
      * @type {Array<PartySummary>}
      * @memberof SearchPartiesResponse
      */
-    results?: Array<PartySummary>;
+    results: Array<PartySummary>;
     /**
-     * 
+     * Total number of matching records
      * @type {number}
      * @memberof SearchPartiesResponse
      */
-    totalCount?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof SearchPartiesResponse
-     */
-    pageNumber?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof SearchPartiesResponse
-     */
-    pageSize?: number;
+    totalCount: number;
 }
 
 /**
  * Check if a given object implements the SearchPartiesResponse interface.
  */
 export function instanceOfSearchPartiesResponse(value: object): boolean {
+    if (!('pageNumber' in value)) return false;
+    if (!('pageSize' in value)) return false;
+    if (!('results' in value)) return false;
+    if (!('totalCount' in value)) return false;
     return true;
 }
 
@@ -69,10 +73,10 @@ export function SearchPartiesResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(PartySummaryFromJSON)),
-        'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
-        'pageNumber': json['pageNumber'] == null ? undefined : json['pageNumber'],
-        'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
+        'pageNumber': json['pageNumber'],
+        'pageSize': json['pageSize'],
+        'results': ((json['results'] as Array<any>).map(PartySummaryFromJSON)),
+        'totalCount': json['totalCount'],
     };
 }
 
@@ -82,10 +86,10 @@ export function SearchPartiesResponseToJSON(value?: SearchPartiesResponse | null
     }
     return {
         
-        'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(PartySummaryToJSON)),
-        'totalCount': value['totalCount'],
         'pageNumber': value['pageNumber'],
         'pageSize': value['pageSize'],
+        'results': ((value['results'] as Array<any>).map(PartySummaryToJSON)),
+        'totalCount': value['totalCount'],
     };
 }
 

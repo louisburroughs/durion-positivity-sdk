@@ -20,17 +20,23 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderPartAdjustmentEventResponse {
     /**
+     * Adjustment type
+     * @type {string}
+     * @memberof WorkorderPartAdjustmentEventResponse
+     */
+    adjustmentType: string;
+    /**
      * Adjustment event identifier
      * @type {string}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    id?: string;
+    id: string;
     /**
-     * Original part identifier
+     * Optional additional notes
      * @type {string}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    originalPartId?: string;
+    notes?: string;
     /**
      * Original part description
      * @type {string}
@@ -38,35 +44,29 @@ export interface WorkorderPartAdjustmentEventResponse {
      */
     originalPartDescription?: string;
     /**
-     * Workorder identifier
+     * Original part identifier
      * @type {string}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    workorderId?: string;
+    originalPartId: string;
     /**
-     * Adjustment type
-     * @type {string}
+     * Adjustment timestamp
+     * @type {Date}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    adjustmentType?: string;
+    performedAt: Date;
     /**
-     * Substitute part identifier for substitution adjustments
+     * Actor identifier who performed adjustment
      * @type {string}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    substitutedWithPartId?: string;
-    /**
-     * Substitute part description
-     * @type {string}
-     * @memberof WorkorderPartAdjustmentEventResponse
-     */
-    substitutedWithPartDescription?: string;
+    performedBy: string;
     /**
      * Signed quantity adjustment
      * @type {number}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    quantityAdjustment?: number;
+    quantityAdjustment: number;
     /**
      * Adjustment reason
      * @type {string}
@@ -74,29 +74,36 @@ export interface WorkorderPartAdjustmentEventResponse {
      */
     reason?: string;
     /**
-     * Actor identifier who performed adjustment
+     * Substitute part description
      * @type {string}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    performedBy?: string;
+    substitutedWithPartDescription?: string;
     /**
-     * Adjustment timestamp
-     * @type {Date}
-     * @memberof WorkorderPartAdjustmentEventResponse
-     */
-    performedAt?: Date;
-    /**
-     * Optional additional notes
+     * Substitute part identifier for substitution adjustments
      * @type {string}
      * @memberof WorkorderPartAdjustmentEventResponse
      */
-    notes?: string;
+    substitutedWithPartId?: string;
+    /**
+     * Workorder identifier
+     * @type {string}
+     * @memberof WorkorderPartAdjustmentEventResponse
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the WorkorderPartAdjustmentEventResponse interface.
  */
 export function instanceOfWorkorderPartAdjustmentEventResponse(value: object): boolean {
+    if (!('adjustmentType' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('originalPartId' in value)) return false;
+    if (!('performedAt' in value)) return false;
+    if (!('performedBy' in value)) return false;
+    if (!('quantityAdjustment' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -110,18 +117,18 @@ export function WorkorderPartAdjustmentEventResponseFromJSONTyped(json: any, ign
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'originalPartId': json['originalPartId'] == null ? undefined : json['originalPartId'],
-        'originalPartDescription': json['originalPartDescription'] == null ? undefined : json['originalPartDescription'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'adjustmentType': json['adjustmentType'] == null ? undefined : json['adjustmentType'],
-        'substitutedWithPartId': json['substitutedWithPartId'] == null ? undefined : json['substitutedWithPartId'],
-        'substitutedWithPartDescription': json['substitutedWithPartDescription'] == null ? undefined : json['substitutedWithPartDescription'],
-        'quantityAdjustment': json['quantityAdjustment'] == null ? undefined : json['quantityAdjustment'],
-        'reason': json['reason'] == null ? undefined : json['reason'],
-        'performedBy': json['performedBy'] == null ? undefined : json['performedBy'],
-        'performedAt': json['performedAt'] == null ? undefined : (new Date(json['performedAt'])),
+        'adjustmentType': json['adjustmentType'],
+        'id': json['id'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'originalPartDescription': json['originalPartDescription'] == null ? undefined : json['originalPartDescription'],
+        'originalPartId': json['originalPartId'],
+        'performedAt': (new Date(json['performedAt'])),
+        'performedBy': json['performedBy'],
+        'quantityAdjustment': json['quantityAdjustment'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'substitutedWithPartDescription': json['substitutedWithPartDescription'] == null ? undefined : json['substitutedWithPartDescription'],
+        'substitutedWithPartId': json['substitutedWithPartId'] == null ? undefined : json['substitutedWithPartId'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -131,18 +138,18 @@ export function WorkorderPartAdjustmentEventResponseToJSON(value?: WorkorderPart
     }
     return {
         
-        'id': value['id'],
-        'originalPartId': value['originalPartId'],
-        'originalPartDescription': value['originalPartDescription'],
-        'workorderId': value['workorderId'],
         'adjustmentType': value['adjustmentType'],
-        'substitutedWithPartId': value['substitutedWithPartId'],
-        'substitutedWithPartDescription': value['substitutedWithPartDescription'],
+        'id': value['id'],
+        'notes': value['notes'],
+        'originalPartDescription': value['originalPartDescription'],
+        'originalPartId': value['originalPartId'],
+        'performedAt': ((value['performedAt']).toISOString()),
+        'performedBy': value['performedBy'],
         'quantityAdjustment': value['quantityAdjustment'],
         'reason': value['reason'],
-        'performedBy': value['performedBy'],
-        'performedAt': value['performedAt'] == null ? undefined : ((value['performedAt']).toISOString()),
-        'notes': value['notes'],
+        'substitutedWithPartDescription': value['substitutedWithPartDescription'],
+        'substitutedWithPartId': value['substitutedWithPartId'],
+        'workorderId': value['workorderId'],
     };
 }
 

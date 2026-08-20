@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Optional account/vehicle context used to evaluate promotion eligibility
+ * Optional account/vehicle/campaign context used to evaluate promotion eligibility
  * @export
  * @interface EligibilityContext
  */
@@ -25,6 +25,18 @@ export interface EligibilityContext {
      * @memberof EligibilityContext
      */
     accountId?: string;
+    /**
+     * Campaign audience type used for audience-based eligibility rules; compared case-insensitively
+     * @type {string}
+     * @memberof EligibilityContext
+     */
+    audienceType?: string;
+    /**
+     * Marketing campaign code used for campaign-based eligibility rules
+     * @type {string}
+     * @memberof EligibilityContext
+     */
+    campaignCode?: string;
     /**
      * Vehicle identifier used for vehicle-based eligibility rules
      * @type {string}
@@ -51,6 +63,8 @@ export function EligibilityContextFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'accountId': json['accountId'] == null ? undefined : json['accountId'],
+        'audienceType': json['audienceType'] == null ? undefined : json['audienceType'],
+        'campaignCode': json['campaignCode'] == null ? undefined : json['campaignCode'],
         'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
     };
 }
@@ -62,6 +76,8 @@ export function EligibilityContextToJSON(value?: EligibilityContext | null): any
     return {
         
         'accountId': value['accountId'],
+        'audienceType': value['audienceType'],
+        'campaignCode': value['campaignCode'],
         'vehicleId': value['vehicleId'],
     };
 }

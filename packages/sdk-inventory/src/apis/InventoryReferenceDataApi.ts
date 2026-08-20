@@ -46,7 +46,7 @@ export interface ListInventoryStorageLocationsRequest {
 export class InventoryReferenceDataApi extends runtime.BaseAPI {
 
     /**
-     * Returns paged inventory location zones.
+     * Lists inventory location zones as a page; the current implementation is a placeholder that always returns an empty page until the pos-location client integration lands. Use this tool only to probe the future location-zone contract; use listInventoryLocations instead for reference data that is actually served. Preconditions: none. Required inputs: none; locationId and the page/size parameters (default size 20) are accepted but no data is served yet. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page unconditionally in the current implementation. 
      * List inventory location zones
      */
     async listInventoryLocationZonesRaw(requestParameters: ListInventoryLocationZonesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
@@ -92,7 +92,7 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns paged inventory location zones.
+     * Lists inventory location zones as a page; the current implementation is a placeholder that always returns an empty page until the pos-location client integration lands. Use this tool only to probe the future location-zone contract; use listInventoryLocations instead for reference data that is actually served. Preconditions: none. Required inputs: none; locationId and the page/size parameters (default size 20) are accepted but no data is served yet. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page unconditionally in the current implementation. 
      * List inventory location zones
      */
     async listInventoryLocationZones(requestParameters: ListInventoryLocationZonesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
@@ -101,7 +101,7 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns paged inventory locations.
+     * Lists inventory locations as a page, served from the local location roster that is continuously synced from pos-location. Use this tool to browse the roster the inventory module actually posts against; use listInventoryStorageLocations instead for bin-level records, and use triggerLocationSync when the roster looks stale. Preconditions: none; the roster reflects the last synced state, not a live pos-location call. Required inputs: none; the standard page/size parameters default to a page size of 20, and the siteId parameter is accepted but not yet applied because the roster carries no site linkage. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when the roster is empty, so an empty result is not an error condition. 
      * List inventory locations
      */
     async listInventoryLocationsRaw(requestParameters: ListInventoryLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
@@ -147,7 +147,7 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns paged inventory locations.
+     * Lists inventory locations as a page, served from the local location roster that is continuously synced from pos-location. Use this tool to browse the roster the inventory module actually posts against; use listInventoryStorageLocations instead for bin-level records, and use triggerLocationSync when the roster looks stale. Preconditions: none; the roster reflects the last synced state, not a live pos-location call. Required inputs: none; the standard page/size parameters default to a page size of 20, and the siteId parameter is accepted but not yet applied because the roster carries no site linkage. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when the roster is empty, so an empty result is not an error condition. 
      * List inventory locations
      */
     async listInventoryLocations(requestParameters: ListInventoryLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
@@ -156,7 +156,7 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns paged inventory storage locations.
+     * Lists inventory storage locations as a page; the current implementation is a placeholder that always returns an empty page until the pos-location client integration lands. Use this tool only to probe the future storage-location contract; use listInventoryLocations instead for the site-level roster that is actually populated. Preconditions: none. Required inputs: none; locationId and the page/size parameters (default size 20) are accepted but no data is served yet. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page unconditionally in the current implementation. 
      * List inventory storage locations
      */
     async listInventoryStorageLocationsRaw(requestParameters: ListInventoryStorageLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
@@ -202,11 +202,47 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns paged inventory storage locations.
+     * Lists inventory storage locations as a page; the current implementation is a placeholder that always returns an empty page until the pos-location client integration lands. Use this tool only to probe the future storage-location contract; use listInventoryLocations instead for the site-level roster that is actually populated. Preconditions: none. Required inputs: none; locationId and the page/size parameters (default size 20) are accepted but no data is served yet. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page unconditionally in the current implementation. 
      * List inventory storage locations
      */
     async listInventoryStorageLocations(requestParameters: ListInventoryStorageLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listInventoryStorageLocationsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the supported storage location type codes — FLOOR, SHELF, BIN, CAGE and TRUCK — a static mirror of the vocabulary owned by pos-location. Use this tool to populate storage-type pickers; do not use listInventoryStorageLocations, which lists storage-location records rather than the type vocabulary. Preconditions: none; the list is pinned by the CAP-214 frontend contract and requires no lookup. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only constant projection. Returns 200 with the full five-code list on every call. 
+     * List storage location types
+     */
+    async listStorageTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<string>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/meta/storage-types`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * Returns the supported storage location type codes — FLOOR, SHELF, BIN, CAGE and TRUCK — a static mirror of the vocabulary owned by pos-location. Use this tool to populate storage-type pickers; do not use listInventoryStorageLocations, which lists storage-location records rather than the type vocabulary. Preconditions: none; the list is pinned by the CAP-214 frontend contract and requires no lookup. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only constant projection. Returns 200 with the full five-code list on every call. 
+     * List storage location types
+     */
+    async listStorageTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<string>> {
+        const response = await this.listStorageTypesRaw(initOverrides);
         return await response.value();
     }
 

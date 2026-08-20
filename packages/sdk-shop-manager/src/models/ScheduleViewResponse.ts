@@ -21,65 +21,71 @@ import {
 } from './ScheduleResourceView';
 
 /**
- * 
+ * Schedule view for a location and date, grouped by resource with their events
  * @export
  * @interface ScheduleViewResponse
  */
 export interface ScheduleViewResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof ScheduleViewResponse
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof ScheduleViewResponse
-     */
-    date?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof ScheduleViewResponse
-     */
-    viewGeneratedAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof ScheduleViewResponse
-     */
-    dayStartAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof ScheduleViewResponse
-     */
-    dayEndAt?: Date;
-    /**
-     * 
+     * Status of the availability overlay (e.g. AVAILABLE, UNAVAILABLE, SKIPPED)
      * @type {string}
      * @memberof ScheduleViewResponse
      */
     availabilityOverlayStatus?: string;
     /**
-     * 
+     * Calendar date of the schedule view (ISO-8601)
+     * @type {Date}
+     * @memberof ScheduleViewResponse
+     */
+    date: Date;
+    /**
+     * End of the displayed day window in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof ScheduleViewResponse
+     */
+    dayEndAt: Date;
+    /**
+     * Start of the displayed day window in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof ScheduleViewResponse
+     */
+    dayStartAt: Date;
+    /**
+     * Location identifier the schedule belongs to
+     * @type {string}
+     * @memberof ScheduleViewResponse
+     */
+    locationId: string;
+    /**
+     * Resources and their scheduled events
+     * @type {Array<ScheduleResourceView>}
+     * @memberof ScheduleViewResponse
+     */
+    resources: Array<ScheduleResourceView>;
+    /**
+     * Instant the view was generated in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof ScheduleViewResponse
+     */
+    viewGeneratedAt: Date;
+    /**
+     * Non-fatal warnings generated while assembling the view
      * @type {Array<string>}
      * @memberof ScheduleViewResponse
      */
     warnings?: Array<string>;
-    /**
-     * 
-     * @type {Array<ScheduleResourceView>}
-     * @memberof ScheduleViewResponse
-     */
-    resources?: Array<ScheduleResourceView>;
 }
 
 /**
  * Check if a given object implements the ScheduleViewResponse interface.
  */
 export function instanceOfScheduleViewResponse(value: object): boolean {
+    if (!('date' in value)) return false;
+    if (!('dayEndAt' in value)) return false;
+    if (!('dayStartAt' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('resources' in value)) return false;
+    if (!('viewGeneratedAt' in value)) return false;
     return true;
 }
 
@@ -93,14 +99,14 @@ export function ScheduleViewResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'date': json['date'] == null ? undefined : (new Date(json['date'])),
-        'viewGeneratedAt': json['viewGeneratedAt'] == null ? undefined : (new Date(json['viewGeneratedAt'])),
-        'dayStartAt': json['dayStartAt'] == null ? undefined : (new Date(json['dayStartAt'])),
-        'dayEndAt': json['dayEndAt'] == null ? undefined : (new Date(json['dayEndAt'])),
         'availabilityOverlayStatus': json['availabilityOverlayStatus'] == null ? undefined : json['availabilityOverlayStatus'],
+        'date': (new Date(json['date'])),
+        'dayEndAt': (new Date(json['dayEndAt'])),
+        'dayStartAt': (new Date(json['dayStartAt'])),
+        'locationId': json['locationId'],
+        'resources': ((json['resources'] as Array<any>).map(ScheduleResourceViewFromJSON)),
+        'viewGeneratedAt': (new Date(json['viewGeneratedAt'])),
         'warnings': json['warnings'] == null ? undefined : json['warnings'],
-        'resources': json['resources'] == null ? undefined : ((json['resources'] as Array<any>).map(ScheduleResourceViewFromJSON)),
     };
 }
 
@@ -110,14 +116,14 @@ export function ScheduleViewResponseToJSON(value?: ScheduleViewResponse | null):
     }
     return {
         
-        'locationId': value['locationId'],
-        'date': value['date'] == null ? undefined : ((value['date']).toISOString().substring(0,10)),
-        'viewGeneratedAt': value['viewGeneratedAt'] == null ? undefined : ((value['viewGeneratedAt']).toISOString()),
-        'dayStartAt': value['dayStartAt'] == null ? undefined : ((value['dayStartAt']).toISOString()),
-        'dayEndAt': value['dayEndAt'] == null ? undefined : ((value['dayEndAt']).toISOString()),
         'availabilityOverlayStatus': value['availabilityOverlayStatus'],
+        'date': ((value['date']).toISOString().substring(0,10)),
+        'dayEndAt': ((value['dayEndAt']).toISOString()),
+        'dayStartAt': ((value['dayStartAt']).toISOString()),
+        'locationId': value['locationId'],
+        'resources': ((value['resources'] as Array<any>).map(ScheduleResourceViewToJSON)),
+        'viewGeneratedAt': ((value['viewGeneratedAt']).toISOString()),
         'warnings': value['warnings'],
-        'resources': value['resources'] == null ? undefined : ((value['resources'] as Array<any>).map(ScheduleResourceViewToJSON)),
     };
 }
 

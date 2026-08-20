@@ -22,7 +22,7 @@ import {
     ApiErrorToJSON,
 } from '../models/index';
 
-export interface AssignRoleToPrincipalRequest {
+export interface AssignPrincipalRoleRequest {
     principalId: string;
     roleId: string;
 }
@@ -33,21 +33,21 @@ export interface AssignRoleToPrincipalRequest {
 export class PrincipalRoleManagementApi extends runtime.BaseAPI {
 
     /**
-     * Assigns the specified role to the specified principal identifier for RBAC matrix authorization.
-     * Assign a role to a principal
+     * Links a free-form principal identifier to a role in the RBAC principal matrix consulted by getAuthorizationDecision. Use this tool for matrix principals that are not user UUIDs; do not use assignUserRole, which creates a role assignment for a real user account. Preconditions: the caller must hold security:role:assign and the role must exist; the principal is not validated against any store, and an existing identical link makes the call a no-op. Required inputs: principalId (arbitrary string) and roleId (UUID) as path parameters; there is no request body. Emits a SECURITY_PRINCIPAL_ROLE_ASSIGN event. Returns 404 when the role does not exist; repeat assignments still return 200. 
+     * Assign a Role to a Principal
      */
-    async assignRoleToPrincipalRaw(requestParameters: AssignRoleToPrincipalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async assignPrincipalRoleRaw(requestParameters: AssignPrincipalRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['principalId'] == null) {
             throw new runtime.RequiredError(
                 'principalId',
-                'Required parameter "principalId" was null or undefined when calling assignRoleToPrincipal().'
+                'Required parameter "principalId" was null or undefined when calling assignPrincipalRole().'
             );
         }
 
         if (requestParameters['roleId'] == null) {
             throw new runtime.RequiredError(
                 'roleId',
-                'Required parameter "roleId" was null or undefined when calling assignRoleToPrincipal().'
+                'Required parameter "roleId" was null or undefined when calling assignPrincipalRole().'
             );
         }
 
@@ -74,11 +74,11 @@ export class PrincipalRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns the specified role to the specified principal identifier for RBAC matrix authorization.
-     * Assign a role to a principal
+     * Links a free-form principal identifier to a role in the RBAC principal matrix consulted by getAuthorizationDecision. Use this tool for matrix principals that are not user UUIDs; do not use assignUserRole, which creates a role assignment for a real user account. Preconditions: the caller must hold security:role:assign and the role must exist; the principal is not validated against any store, and an existing identical link makes the call a no-op. Required inputs: principalId (arbitrary string) and roleId (UUID) as path parameters; there is no request body. Emits a SECURITY_PRINCIPAL_ROLE_ASSIGN event. Returns 404 when the role does not exist; repeat assignments still return 200. 
+     * Assign a Role to a Principal
      */
-    async assignRoleToPrincipal(requestParameters: AssignRoleToPrincipalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.assignRoleToPrincipalRaw(requestParameters, initOverrides);
+    async assignPrincipalRole(requestParameters: AssignPrincipalRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.assignPrincipalRoleRaw(requestParameters, initOverrides);
     }
 
 }

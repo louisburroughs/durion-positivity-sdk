@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single page of ledger entries with an optional cursor to the next page
  * @export
  * @interface LedgerPage
  */
 export interface LedgerPage {
     /**
-     * 
+     * Ledger entries contained in this page
      * @type {Array<string>}
      * @memberof LedgerPage
      */
-    entries?: Array<string>;
+    entries: Array<string>;
     /**
-     * 
+     * Opaque cursor for the next page; null when there are no more entries
      * @type {string}
      * @memberof LedgerPage
      */
@@ -37,6 +37,7 @@ export interface LedgerPage {
  * Check if a given object implements the LedgerPage interface.
  */
 export function instanceOfLedgerPage(value: object): boolean {
+    if (!('entries' in value)) return false;
     return true;
 }
 
@@ -50,7 +51,7 @@ export function LedgerPageFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'entries': json['entries'] == null ? undefined : json['entries'],
+        'entries': json['entries'],
         'nextPageToken': json['nextPageToken'] == null ? undefined : json['nextPageToken'],
     };
 }

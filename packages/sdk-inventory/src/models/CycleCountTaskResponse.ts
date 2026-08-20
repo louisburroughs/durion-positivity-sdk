@@ -14,77 +14,83 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A cycle count task describing an item to be counted at a location and its current state
  * @export
  * @interface CycleCountTaskResponse
  */
 export interface CycleCountTaskResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof CycleCountTaskResponse
-     */
-    taskId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CycleCountTaskResponse
-     */
-    binLocation?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CycleCountTaskResponse
-     */
-    itemSku?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CycleCountTaskResponse
-     */
-    itemDescription?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof CycleCountTaskResponse
-     */
-    expectedQuantity?: number;
-    /**
-     * 
+     * Identifier of the auditor assigned to the task, if assigned
      * @type {string}
      * @memberof CycleCountTaskResponse
      */
     auditorId?: string;
     /**
-     * 
+     * Bin or location code where the item is stored
      * @type {string}
      * @memberof CycleCountTaskResponse
      */
-    status?: CycleCountTaskResponseStatusEnum;
+    binLocation: string;
     /**
-     * 
+     * Total number of count entries recorded for the task
+     * @type {number}
+     * @memberof CycleCountTaskResponse
+     */
+    countEntriesCount: number;
+    /**
+     * Timestamp when the task was created
+     * @type {Date}
+     * @memberof CycleCountTaskResponse
+     */
+    createdAt: Date;
+    /**
+     * Quantity expected on hand for the item, in base UoM
+     * @type {number}
+     * @memberof CycleCountTaskResponse
+     */
+    expectedQuantity: number;
+    /**
+     * Human-readable description of the item
+     * @type {string}
+     * @memberof CycleCountTaskResponse
+     */
+    itemDescription?: string;
+    /**
+     * Stock keeping unit of the item to count
+     * @type {string}
+     * @memberof CycleCountTaskResponse
+     */
+    itemSku: string;
+    /**
+     * Identifier of the most recent count entry recorded for the task, if any
      * @type {string}
      * @memberof CycleCountTaskResponse
      */
     latestCountEntryId?: string;
     /**
-     * 
-     * @type {number}
+     * Current status of the cycle count task
+     * @type {string}
      * @memberof CycleCountTaskResponse
      */
-    countEntriesCount?: number;
+    status: CycleCountTaskResponseStatusEnum;
     /**
-     * 
+     * Unique identifier of the cycle count task
+     * @type {string}
+     * @memberof CycleCountTaskResponse
+     */
+    taskId: string;
+    /**
+     * The item's base unit of measure, when itemSku resolves to a catalog product with a declared UoM; null otherwise
+     * @type {string}
+     * @memberof CycleCountTaskResponse
+     */
+    unitOfMeasure?: string;
+    /**
+     * Timestamp when the task was last updated
      * @type {Date}
      * @memberof CycleCountTaskResponse
      */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CycleCountTaskResponse
-     */
-    updatedAt?: Date;
+    updatedAt: Date;
 }
 
 /**
@@ -94,7 +100,9 @@ export interface CycleCountTaskResponse {
 export enum CycleCountTaskResponseStatusEnum {
     Assigned = 'ASSIGNED',
     CountedPendingReview = 'COUNTED_PENDING_REVIEW',
+    Conflict = 'CONFLICT',
     RequiresInvestigation = 'REQUIRES_INVESTIGATION',
+    AcceptedWithinTolerance = 'ACCEPTED_WITHIN_TOLERANCE',
     Approved = 'APPROVED',
     Rejected = 'REJECTED'
 }
@@ -104,6 +112,14 @@ export enum CycleCountTaskResponseStatusEnum {
  * Check if a given object implements the CycleCountTaskResponse interface.
  */
 export function instanceOfCycleCountTaskResponse(value: object): boolean {
+    if (!('binLocation' in value)) return false;
+    if (!('countEntriesCount' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('expectedQuantity' in value)) return false;
+    if (!('itemSku' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('taskId' in value)) return false;
+    if (!('updatedAt' in value)) return false;
     return true;
 }
 
@@ -117,17 +133,18 @@ export function CycleCountTaskResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'taskId': json['taskId'] == null ? undefined : json['taskId'],
-        'binLocation': json['binLocation'] == null ? undefined : json['binLocation'],
-        'itemSku': json['itemSku'] == null ? undefined : json['itemSku'],
-        'itemDescription': json['itemDescription'] == null ? undefined : json['itemDescription'],
-        'expectedQuantity': json['expectedQuantity'] == null ? undefined : json['expectedQuantity'],
         'auditorId': json['auditorId'] == null ? undefined : json['auditorId'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'binLocation': json['binLocation'],
+        'countEntriesCount': json['countEntriesCount'],
+        'createdAt': (new Date(json['createdAt'])),
+        'expectedQuantity': json['expectedQuantity'],
+        'itemDescription': json['itemDescription'] == null ? undefined : json['itemDescription'],
+        'itemSku': json['itemSku'],
         'latestCountEntryId': json['latestCountEntryId'] == null ? undefined : json['latestCountEntryId'],
-        'countEntriesCount': json['countEntriesCount'] == null ? undefined : json['countEntriesCount'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'status': json['status'],
+        'taskId': json['taskId'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'updatedAt': (new Date(json['updatedAt'])),
     };
 }
 
@@ -137,17 +154,18 @@ export function CycleCountTaskResponseToJSON(value?: CycleCountTaskResponse | nu
     }
     return {
         
-        'taskId': value['taskId'],
-        'binLocation': value['binLocation'],
-        'itemSku': value['itemSku'],
-        'itemDescription': value['itemDescription'],
-        'expectedQuantity': value['expectedQuantity'],
         'auditorId': value['auditorId'],
-        'status': value['status'],
-        'latestCountEntryId': value['latestCountEntryId'],
+        'binLocation': value['binLocation'],
         'countEntriesCount': value['countEntriesCount'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'createdAt': ((value['createdAt']).toISOString()),
+        'expectedQuantity': value['expectedQuantity'],
+        'itemDescription': value['itemDescription'],
+        'itemSku': value['itemSku'],
+        'latestCountEntryId': value['latestCountEntryId'],
+        'status': value['status'],
+        'taskId': value['taskId'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
     };
 }
 

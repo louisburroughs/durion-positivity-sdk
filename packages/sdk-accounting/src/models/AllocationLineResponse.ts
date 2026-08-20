@@ -26,11 +26,11 @@ export interface AllocationLineResponse {
      */
     allocationId?: string;
     /**
-     * Vendor bill UUID
-     * @type {string}
+     * Allocation sequence number
+     * @type {number}
      * @memberof AllocationLineResponse
      */
-    vendorBillId?: string;
+    allocationSequence?: number;
     /**
      * Amount applied to this bill
      * @type {number}
@@ -38,11 +38,11 @@ export interface AllocationLineResponse {
      */
     appliedAmount?: number;
     /**
-     * Allocation sequence number
-     * @type {number}
+     * Vendor bill UUID
+     * @type {string}
      * @memberof AllocationLineResponse
      */
-    allocationSequence?: number;
+    vendorBillId?: string;
 }
 
 /**
@@ -63,9 +63,9 @@ export function AllocationLineResponseFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'allocationId': json['allocationId'] == null ? undefined : json['allocationId'],
-        'vendorBillId': json['vendorBillId'] == null ? undefined : json['vendorBillId'],
-        'appliedAmount': json['appliedAmount'] == null ? undefined : json['appliedAmount'],
         'allocationSequence': json['allocationSequence'] == null ? undefined : json['allocationSequence'],
+        'appliedAmount': json['appliedAmount'] == null ? undefined : json['appliedAmount'],
+        'vendorBillId': json['vendorBillId'] == null ? undefined : json['vendorBillId'],
     };
 }
 
@@ -76,9 +76,9 @@ export function AllocationLineResponseToJSON(value?: AllocationLineResponse | nu
     return {
         
         'allocationId': value['allocationId'],
-        'vendorBillId': value['vendorBillId'],
-        'appliedAmount': value['appliedAmount'],
         'allocationSequence': value['allocationSequence'],
+        'appliedAmount': value['appliedAmount'],
+        'vendorBillId': value['vendorBillId'],
     };
 }
 

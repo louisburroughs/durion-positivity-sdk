@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ReturnPartQuantityRequest {
     /**
-     * Workorder part identifier
+     * Optional return notes
      * @type {string}
      * @memberof ReturnPartQuantityRequest
      */
-    workorderPartId: string;
+    notes?: string;
     /**
      * Quantity to return
      * @type {number}
@@ -38,20 +38,20 @@ export interface ReturnPartQuantityRequest {
      */
     reason: string;
     /**
-     * Optional return notes
+     * Workorder part identifier
      * @type {string}
      * @memberof ReturnPartQuantityRequest
      */
-    notes?: string;
+    workorderPartId: string;
 }
 
 /**
  * Check if a given object implements the ReturnPartQuantityRequest interface.
  */
 export function instanceOfReturnPartQuantityRequest(value: object): boolean {
-    if (!('workorderPartId' in value)) return false;
     if (!('quantity' in value)) return false;
     if (!('reason' in value)) return false;
+    if (!('workorderPartId' in value)) return false;
     return true;
 }
 
@@ -65,10 +65,10 @@ export function ReturnPartQuantityRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'workorderPartId': json['workorderPartId'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
         'quantity': json['quantity'],
         'reason': json['reason'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
+        'workorderPartId': json['workorderPartId'],
     };
 }
 
@@ -78,10 +78,10 @@ export function ReturnPartQuantityRequestToJSON(value?: ReturnPartQuantityReques
     }
     return {
         
-        'workorderPartId': value['workorderPartId'],
+        'notes': value['notes'],
         'quantity': value['quantity'],
         'reason': value['reason'],
-        'notes': value['notes'],
+        'workorderPartId': value['workorderPartId'],
     };
 }
 

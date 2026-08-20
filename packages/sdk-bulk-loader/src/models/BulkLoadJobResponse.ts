@@ -14,91 +14,91 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Bulk load job state and progress counters
  * @export
  * @interface BulkLoadJobResponse
  */
 export interface BulkLoadJobResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof BulkLoadJobResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BulkLoadJobResponse
-     */
-    operatorId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BulkLoadJobResponse
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BulkLoadJobResponse
-     */
-    fileName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BulkLoadJobResponse
-     */
-    domainType?: BulkLoadJobResponseDomainTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof BulkLoadJobResponse
-     */
-    status?: BulkLoadJobResponseStatusEnum;
-    /**
-     * 
-     * @type {number}
-     * @memberof BulkLoadJobResponse
-     */
-    totalRows?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof BulkLoadJobResponse
-     */
-    processedRows?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof BulkLoadJobResponse
-     */
-    successCount?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof BulkLoadJobResponse
-     */
-    failureCount?: number;
-    /**
-     * 
-     * @type {Date}
-     * @memberof BulkLoadJobResponse
-     */
-    startedAt?: Date;
-    /**
-     * 
+     * Timestamp when processing completed (ISO 8601)
      * @type {Date}
      * @memberof BulkLoadJobResponse
      */
     completedAt?: Date;
     /**
-     * 
+     * Timestamp when the job was created (ISO 8601)
      * @type {Date}
      * @memberof BulkLoadJobResponse
      */
-    createdAt?: Date;
+    createdAt: Date;
     /**
-     * 
+     * Detected or selected target domain for the load
+     * @type {string}
+     * @memberof BulkLoadJobResponse
+     */
+    domainType: BulkLoadJobResponseDomainTypeEnum;
+    /**
+     * Number of rows that failed processing
+     * @type {number}
+     * @memberof BulkLoadJobResponse
+     */
+    failureCount?: number;
+    /**
+     * Original name of the uploaded source file
+     * @type {string}
+     * @memberof BulkLoadJobResponse
+     */
+    fileName: string;
+    /**
+     * Unique identifier of the bulk load job
+     * @type {string}
+     * @memberof BulkLoadJobResponse
+     */
+    id: string;
+    /**
+     * Identifier of the location the job targets, if scoped to one
+     * @type {string}
+     * @memberof BulkLoadJobResponse
+     */
+    locationId?: string;
+    /**
+     * Identifier of the operator who created the job
+     * @type {string}
+     * @memberof BulkLoadJobResponse
+     */
+    operatorId?: string;
+    /**
+     * Number of rows processed so far
+     * @type {number}
+     * @memberof BulkLoadJobResponse
+     */
+    processedRows?: number;
+    /**
+     * Timestamp when processing started (ISO 8601)
+     * @type {Date}
+     * @memberof BulkLoadJobResponse
+     */
+    startedAt?: Date;
+    /**
+     * Current lifecycle status of the job
+     * @type {string}
+     * @memberof BulkLoadJobResponse
+     */
+    status: BulkLoadJobResponseStatusEnum;
+    /**
+     * Number of rows successfully loaded
+     * @type {number}
+     * @memberof BulkLoadJobResponse
+     */
+    successCount?: number;
+    /**
+     * Total number of data rows detected in the source file
+     * @type {number}
+     * @memberof BulkLoadJobResponse
+     */
+    totalRows?: number;
+    /**
+     * Timestamp when the job was last updated (ISO 8601)
      * @type {Date}
      * @memberof BulkLoadJobResponse
      */
@@ -140,6 +140,11 @@ export enum BulkLoadJobResponseStatusEnum {
  * Check if a given object implements the BulkLoadJobResponse interface.
  */
 export function instanceOfBulkLoadJobResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('domainType' in value)) return false;
+    if (!('fileName' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -153,19 +158,19 @@ export function BulkLoadJobResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'fileName': json['fileName'] == null ? undefined : json['fileName'],
-        'domainType': json['domainType'] == null ? undefined : json['domainType'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'totalRows': json['totalRows'] == null ? undefined : json['totalRows'],
-        'processedRows': json['processedRows'] == null ? undefined : json['processedRows'],
-        'successCount': json['successCount'] == null ? undefined : json['successCount'],
-        'failureCount': json['failureCount'] == null ? undefined : json['failureCount'],
-        'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'createdAt': (new Date(json['createdAt'])),
+        'domainType': json['domainType'],
+        'failureCount': json['failureCount'] == null ? undefined : json['failureCount'],
+        'fileName': json['fileName'],
+        'id': json['id'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
+        'processedRows': json['processedRows'] == null ? undefined : json['processedRows'],
+        'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
+        'status': json['status'],
+        'successCount': json['successCount'] == null ? undefined : json['successCount'],
+        'totalRows': json['totalRows'] == null ? undefined : json['totalRows'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -176,19 +181,19 @@ export function BulkLoadJobResponseToJSON(value?: BulkLoadJobResponse | null): a
     }
     return {
         
-        'id': value['id'],
-        'operatorId': value['operatorId'],
-        'locationId': value['locationId'],
-        'fileName': value['fileName'],
-        'domainType': value['domainType'],
-        'status': value['status'],
-        'totalRows': value['totalRows'],
-        'processedRows': value['processedRows'],
-        'successCount': value['successCount'],
-        'failureCount': value['failureCount'],
-        'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'createdAt': ((value['createdAt']).toISOString()),
+        'domainType': value['domainType'],
+        'failureCount': value['failureCount'],
+        'fileName': value['fileName'],
+        'id': value['id'],
+        'locationId': value['locationId'],
+        'operatorId': value['operatorId'],
+        'processedRows': value['processedRows'],
+        'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
+        'status': value['status'],
+        'successCount': value['successCount'],
+        'totalRows': value['totalRows'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

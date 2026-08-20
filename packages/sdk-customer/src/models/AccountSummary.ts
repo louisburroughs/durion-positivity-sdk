@@ -14,41 +14,45 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Account summary surfaced in a CRM snapshot
  * @export
  * @interface AccountSummary
  */
 export interface AccountSummary {
     /**
-     * 
+     * Account display name
      * @type {string}
      * @memberof AccountSummary
      */
-    partyId?: string;
+    accountName: string;
     /**
-     * 
+     * Human-readable account/customer number
      * @type {string}
      * @memberof AccountSummary
      */
-    accountNumber?: string;
+    accountNumber: string;
     /**
-     * 
+     * Account type discriminator
      * @type {string}
      * @memberof AccountSummary
      */
-    accountName?: string;
+    accountType: string;
     /**
-     * 
+     * Canonical party identifier of the account
      * @type {string}
      * @memberof AccountSummary
      */
-    accountType?: string;
+    partyId: string;
 }
 
 /**
  * Check if a given object implements the AccountSummary interface.
  */
 export function instanceOfAccountSummary(value: object): boolean {
+    if (!('accountName' in value)) return false;
+    if (!('accountNumber' in value)) return false;
+    if (!('accountType' in value)) return false;
+    if (!('partyId' in value)) return false;
     return true;
 }
 
@@ -62,10 +66,10 @@ export function AccountSummaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'accountNumber': json['accountNumber'] == null ? undefined : json['accountNumber'],
-        'accountName': json['accountName'] == null ? undefined : json['accountName'],
-        'accountType': json['accountType'] == null ? undefined : json['accountType'],
+        'accountName': json['accountName'],
+        'accountNumber': json['accountNumber'],
+        'accountType': json['accountType'],
+        'partyId': json['partyId'],
     };
 }
 
@@ -75,10 +79,10 @@ export function AccountSummaryToJSON(value?: AccountSummary | null): any {
     }
     return {
         
-        'partyId': value['partyId'],
-        'accountNumber': value['accountNumber'],
         'accountName': value['accountName'],
+        'accountNumber': value['accountNumber'],
         'accountType': value['accountType'],
+        'partyId': value['partyId'],
     };
 }
 

@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface BulkIngestVehicleFitmentsRequest {
     bulkIngestRequestFitmentBulkIngestRecord: BulkIngestRequestFitmentBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class VehicleFitmentBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Bulk-imports part fitment records, creating one part-to-vehicle fitment row per record and resolving manufacturer, make, model and vehicle-type names to reference rows. Use this tool for catalog-scale fitment loads from a prepared batch; do not use createVehicleHint, which manages per-product applicability hint tags rather than part fitment rows. Preconditions: the caller must hold vehicle-fitment:hint:create; referenced manufacturer, make, model and vehicle-type names need not pre-exist, because each is matched case-insensitively and created on the fly when missing. Required inputs: jobId (UUID), locationId (UUID) and records, a non-empty list where each record requires partNumberId (numeric); manufacturerName, makeName, modelName, vehicleTypeName, vehicleYear, engineType, submodel and notes are optional, and jobId, locationId and operatorId are accepted for the envelope but not persisted by this module. Emits a VEHICLE_FITMENT_BULK_INGEST event covering the whole batch; rows are processed independently, so one failed row does not roll back the others. Returns 200 even when every row fails, so callers must inspect each result\'s success flag and FITMENT_INGEST_FAILED errorCode rather than trusting the status alone. 
+     * Bulk Ingest Part Fitment Records
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async bulkIngestVehicleFitmentsRaw(requestParameters: BulkIngestVehicleFitmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestFitmentBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestFitmentBulkIngestRecord',
-                'Required parameter "bulkIngestRequestFitmentBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestFitmentBulkIngestRecord" was null or undefined when calling bulkIngestVehicleFitments().'
             );
         }
 
@@ -72,11 +72,11 @@ export class VehicleFitmentBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Accepts a batch of domain records for bulk import. Returns per-record results.
-     * Bulk ingest records
+     * Bulk-imports part fitment records, creating one part-to-vehicle fitment row per record and resolving manufacturer, make, model and vehicle-type names to reference rows. Use this tool for catalog-scale fitment loads from a prepared batch; do not use createVehicleHint, which manages per-product applicability hint tags rather than part fitment rows. Preconditions: the caller must hold vehicle-fitment:hint:create; referenced manufacturer, make, model and vehicle-type names need not pre-exist, because each is matched case-insensitively and created on the fly when missing. Required inputs: jobId (UUID), locationId (UUID) and records, a non-empty list where each record requires partNumberId (numeric); manufacturerName, makeName, modelName, vehicleTypeName, vehicleYear, engineType, submodel and notes are optional, and jobId, locationId and operatorId are accepted for the envelope but not persisted by this module. Emits a VEHICLE_FITMENT_BULK_INGEST event covering the whole batch; rows are processed independently, so one failed row does not roll back the others. Returns 200 even when every row fails, so callers must inspect each result\'s success flag and FITMENT_INGEST_FAILED errorCode rather than trusting the status alone. 
+     * Bulk Ingest Part Fitment Records
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async bulkIngestVehicleFitments(requestParameters: BulkIngestVehicleFitmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.bulkIngestVehicleFitmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

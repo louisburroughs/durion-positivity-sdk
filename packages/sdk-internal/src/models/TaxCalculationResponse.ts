@@ -33,29 +33,29 @@ import {
  */
 export interface TaxCalculationResponse {
     /**
-     * Total amount before tax
-     * @type {number}
+     * Timestamp when calculation completed
+     * @type {Date}
      * @memberof TaxCalculationResponse
      */
-    subtotal: number;
+    calculatedAt: Date;
     /**
-     * Total tax amount
-     * @type {number}
+     * Calculation direction echoed from the request: SALE or REFUND. REFUND amounts are positive; callers negate at posting.
+     * @type {string}
      * @memberof TaxCalculationResponse
      */
-    totalTax: number;
+    calculationType?: TaxCalculationResponseCalculationTypeEnum;
     /**
-     * Total amount including tax
-     * @type {number}
-     * @memberof TaxCalculationResponse
-     */
-    total: number;
-    /**
-     * Effective tax rate as percentage
+     * Effective tax rate: total tax divided by the exempt-filtered taxable base (the taxable amount remaining after tax-exempt lines are excluded), expressed as percentage points. This is NOT total tax divided by the raw subtotal (ADR-0042).
      * @type {number}
      * @memberof TaxCalculationResponse
      */
     effectiveTaxRate: number;
+    /**
+     * External tax provider transaction identifier
+     * @type {string}
+     * @memberof TaxCalculationResponse
+     */
+    externalTransactionId?: string;
     /**
      * Applied tax jurisdictions with per-jurisdiction tax amounts
      * @type {Array<TaxJurisdiction>}
@@ -69,17 +69,11 @@ export interface TaxCalculationResponse {
      */
     lineItemTaxes: Array<LineItemTax>;
     /**
-     * Whether calculation was performed in test mode
-     * @type {boolean}
+     * Original sale reference echoed on REFUND calculations; null for SALE.
+     * @type {string}
      * @memberof TaxCalculationResponse
      */
-    testMode?: boolean;
-    /**
-     * Timestamp when calculation completed
-     * @type {Date}
-     * @memberof TaxCalculationResponse
-     */
-    calculatedAt: Date;
+    originalReferenceId?: string;
     /**
      * Reference ID echoed from request
      * @type {string}
@@ -93,13 +87,39 @@ export interface TaxCalculationResponse {
      */
     referenceType?: TaxCalculationResponseReferenceTypeEnum;
     /**
-     * External tax provider transaction identifier
-     * @type {string}
+     * Total amount before tax
+     * @type {number}
      * @memberof TaxCalculationResponse
      */
-    externalTransactionId?: string;
+    subtotal: number;
+    /**
+     * Whether calculation was performed in test mode
+     * @type {boolean}
+     * @memberof TaxCalculationResponse
+     */
+    testMode: boolean;
+    /**
+     * Total amount including tax
+     * @type {number}
+     * @memberof TaxCalculationResponse
+     */
+    total: number;
+    /**
+     * Total tax amount
+     * @type {number}
+     * @memberof TaxCalculationResponse
+     */
+    totalTax: number;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum TaxCalculationResponseCalculationTypeEnum {
+    Sale = 'SALE',
+    Refund = 'REFUND'
+}
 /**
 * @export
 * @enum {string}
@@ -118,13 +138,14 @@ export enum TaxCalculationResponseReferenceTypeEnum {
  * Check if a given object implements the TaxCalculationResponse interface.
  */
 export function instanceOfTaxCalculationResponse(value: object): boolean {
-    if (!('subtotal' in value)) return false;
-    if (!('totalTax' in value)) return false;
-    if (!('total' in value)) return false;
+    if (!('calculatedAt' in value)) return false;
     if (!('effectiveTaxRate' in value)) return false;
     if (!('jurisdictions' in value)) return false;
     if (!('lineItemTaxes' in value)) return false;
-    if (!('calculatedAt' in value)) return false;
+    if (!('subtotal' in value)) return false;
+    if (!('testMode' in value)) return false;
+    if (!('total' in value)) return false;
+    if (!('totalTax' in value)) return false;
     return true;
 }
 
@@ -138,17 +159,19 @@ export function TaxCalculationResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'subtotal': json['subtotal'],
-        'totalTax': json['totalTax'],
-        'total': json['total'],
+        'calculatedAt': (new Date(json['calculatedAt'])),
+        'calculationType': json['calculationType'] == null ? undefined : json['calculationType'],
         'effectiveTaxRate': json['effectiveTaxRate'],
+        'externalTransactionId': json['externalTransactionId'] == null ? undefined : json['externalTransactionId'],
         'jurisdictions': ((json['jurisdictions'] as Array<any>).map(TaxJurisdictionFromJSON)),
         'lineItemTaxes': ((json['lineItemTaxes'] as Array<any>).map(LineItemTaxFromJSON)),
-        'testMode': json['testMode'] == null ? undefined : json['testMode'],
-        'calculatedAt': (new Date(json['calculatedAt'])),
+        'originalReferenceId': json['originalReferenceId'] == null ? undefined : json['originalReferenceId'],
         'referenceId': json['referenceId'] == null ? undefined : json['referenceId'],
         'referenceType': json['referenceType'] == null ? undefined : json['referenceType'],
-        'externalTransactionId': json['externalTransactionId'] == null ? undefined : json['externalTransactionId'],
+        'subtotal': json['subtotal'],
+        'testMode': json['testMode'],
+        'total': json['total'],
+        'totalTax': json['totalTax'],
     };
 }
 
@@ -158,17 +181,19 @@ export function TaxCalculationResponseToJSON(value?: TaxCalculationResponse | nu
     }
     return {
         
-        'subtotal': value['subtotal'],
-        'totalTax': value['totalTax'],
-        'total': value['total'],
+        'calculatedAt': ((value['calculatedAt']).toISOString()),
+        'calculationType': value['calculationType'],
         'effectiveTaxRate': value['effectiveTaxRate'],
+        'externalTransactionId': value['externalTransactionId'],
         'jurisdictions': ((value['jurisdictions'] as Array<any>).map(TaxJurisdictionToJSON)),
         'lineItemTaxes': ((value['lineItemTaxes'] as Array<any>).map(LineItemTaxToJSON)),
-        'testMode': value['testMode'],
-        'calculatedAt': ((value['calculatedAt']).toISOString()),
+        'originalReferenceId': value['originalReferenceId'],
         'referenceId': value['referenceId'],
         'referenceType': value['referenceType'],
-        'externalTransactionId': value['externalTransactionId'],
+        'subtotal': value['subtotal'],
+        'testMode': value['testMode'],
+        'total': value['total'],
+        'totalTax': value['totalTax'],
     };
 }
 

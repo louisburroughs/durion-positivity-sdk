@@ -14,17 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for reversing a journal entry
  * @export
  * @interface JournalEntryReversalRequest
  */
 export interface JournalEntryReversalRequest {
     /**
-     * 
+     * Optional justification for reversing into a CLOSED accounting period (story B2). When the resolved reversal date falls in a CLOSED period, supplying a non-blank justification together with the accounting:period:override permission allows the reversal to post into that period (audit-logged); without it the reversal is rejected with 422 PERIOD_CLOSED. Has no effect for dates in OPEN periods and can never bypass the hard lock (422 PERIOD_HARD_LOCKED).
+     * @type {string}
+     * @memberof JournalEntryReversalRequest
+     */
+    overrideJustification?: string;
+    /**
+     * Reason for reversing the journal entry
      * @type {string}
      * @memberof JournalEntryReversalRequest
      */
     reason: string;
+    /**
+     * Optional transaction date for the reversal entry. When omitted or null, the date defaults to the original entry's transaction date if that date's accounting period is OPEN, otherwise to today's date. Whether explicit or defaulted, the resolved date must fall in an OPEN accounting period; a date in a CLOSED period is rejected with 422 PERIOD_CLOSED.
+     * @type {Date}
+     * @memberof JournalEntryReversalRequest
+     */
+    reversalDate?: Date;
 }
 
 /**
@@ -45,7 +57,9 @@ export function JournalEntryReversalRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
+        'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
         'reason': json['reason'],
+        'reversalDate': json['reversalDate'] == null ? undefined : (new Date(json['reversalDate'])),
     };
 }
 
@@ -55,7 +69,9 @@ export function JournalEntryReversalRequestToJSON(value?: JournalEntryReversalRe
     }
     return {
         
+        'overrideJustification': value['overrideJustification'],
         'reason': value['reason'],
+        'reversalDate': value['reversalDate'] == null ? undefined : ((value['reversalDate']).toISOString().substring(0,10)),
     };
 }
 

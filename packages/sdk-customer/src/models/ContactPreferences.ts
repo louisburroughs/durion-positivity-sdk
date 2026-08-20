@@ -14,53 +14,57 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Communication preferences for a contact
  * @export
  * @interface ContactPreferences
  */
 export interface ContactPreferences {
     /**
-     * 
+     * Whether the contact should not be contacted at all
      * @type {boolean}
      * @memberof ContactPreferences
      */
-    emailOptIn?: boolean;
+    doNotContact: boolean;
     /**
-     * 
+     * Whether the contact has opted in to email communications
      * @type {boolean}
      * @memberof ContactPreferences
      */
-    smsOptIn?: boolean;
+    emailOptIn: boolean;
     /**
-     * 
+     * Whether the contact has opted in to phone communications
      * @type {boolean}
      * @memberof ContactPreferences
      */
-    phoneOptIn?: boolean;
+    phoneOptIn: boolean;
     /**
-     * 
-     * @type {boolean}
-     * @memberof ContactPreferences
-     */
-    doNotContact?: boolean;
-    /**
-     * 
+     * Preferred method of contact
      * @type {string}
      * @memberof ContactPreferences
      */
     preferredContactMethod?: string;
     /**
-     * 
+     * Preferred language for communications
      * @type {string}
      * @memberof ContactPreferences
      */
     preferredLanguage?: string;
+    /**
+     * Whether the contact has opted in to SMS communications
+     * @type {boolean}
+     * @memberof ContactPreferences
+     */
+    smsOptIn: boolean;
 }
 
 /**
  * Check if a given object implements the ContactPreferences interface.
  */
 export function instanceOfContactPreferences(value: object): boolean {
+    if (!('doNotContact' in value)) return false;
+    if (!('emailOptIn' in value)) return false;
+    if (!('phoneOptIn' in value)) return false;
+    if (!('smsOptIn' in value)) return false;
     return true;
 }
 
@@ -74,12 +78,12 @@ export function ContactPreferencesFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'emailOptIn': json['emailOptIn'] == null ? undefined : json['emailOptIn'],
-        'smsOptIn': json['smsOptIn'] == null ? undefined : json['smsOptIn'],
-        'phoneOptIn': json['phoneOptIn'] == null ? undefined : json['phoneOptIn'],
-        'doNotContact': json['doNotContact'] == null ? undefined : json['doNotContact'],
+        'doNotContact': json['doNotContact'],
+        'emailOptIn': json['emailOptIn'],
+        'phoneOptIn': json['phoneOptIn'],
         'preferredContactMethod': json['preferredContactMethod'] == null ? undefined : json['preferredContactMethod'],
         'preferredLanguage': json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
+        'smsOptIn': json['smsOptIn'],
     };
 }
 
@@ -89,12 +93,12 @@ export function ContactPreferencesToJSON(value?: ContactPreferences | null): any
     }
     return {
         
-        'emailOptIn': value['emailOptIn'],
-        'smsOptIn': value['smsOptIn'],
-        'phoneOptIn': value['phoneOptIn'],
         'doNotContact': value['doNotContact'],
+        'emailOptIn': value['emailOptIn'],
+        'phoneOptIn': value['phoneOptIn'],
         'preferredContactMethod': value['preferredContactMethod'],
         'preferredLanguage': value['preferredLanguage'],
+        'smsOptIn': value['smsOptIn'],
     };
 }
 

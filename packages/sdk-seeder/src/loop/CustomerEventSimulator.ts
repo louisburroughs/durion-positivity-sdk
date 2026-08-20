@@ -238,7 +238,7 @@ export class CustomerEventSimulator {
         } else {
           firstName = this.random.firstName();
           lastName = this.random.lastName();
-          const customer = await this.customerClient.crmAccountsApi.createCommercialAccount({
+          const customer = await this.customerClient.crmAccountsApi.createCrmCommercialAccount({
             createCommercialAccountRequest: {
               legalName: `${firstName} ${lastName}`,
               displayName: `${firstName} ${lastName}`,
@@ -268,8 +268,8 @@ export class CustomerEventSimulator {
         if (knownVehicles.length > 0 && this.random.chance(0.7)) {
           vehicleId = this.random.pickOne(knownVehicles);
         } else {
-          const vehicle = await this.customerClient.crmVehiclesApi.createVehicles({
-            customerId: partyId,
+          const vehicle = await this.customerClient.crmAccountsApi.createVehicleForParty({
+            partyId,
             createVehicleForPartyRequest: {
               vinNumber: this.random.vin(),
               unitNumber: `${this.random.vehicleYear()} ${this.random.vehicleMake()} ${this.random.vehicleModel()}`,
@@ -364,7 +364,7 @@ export class CustomerEventSimulator {
       }
 
       try {
-        await this.workorderClient.estimateAPIApi.submitForApproval({ estimateId });
+        await this.workorderClient.estimateAPIApi.submitEstimateForApproval({ estimateId });
       } catch (error) {
         await logStepError('submitForApproval', error);
         return 'error';
@@ -398,7 +398,7 @@ export class CustomerEventSimulator {
       let serviceToWorkorderItemMap = new Map<string, string>();
 
       try {
-        const workorderResponse = await this.workorderClient.estimateAPIApi.promoteEstimateToWorkorder({ estimateId });
+        const workorderResponse = await this.workorderClient.estimateAPIApi.promoteEstimate({ estimateId });
         workorderId = requireField(readString(workorderResponse, 'id', 'workorderId'), 'workorderId');
 
         // Build mapping from serviceEntityId to workorder item ID via detail endpoint
@@ -430,7 +430,7 @@ export class CustomerEventSimulator {
       }
 
       try {
-        await this.workorderClient.operationalContextApi.startWork({
+        await this.workorderClient.operationalContextApi.startWorkorder({
           workorderId,
         });
       } catch (error) {
@@ -539,7 +539,7 @@ export class CustomerEventSimulator {
             });
           }
 
-          await this.workorderClient.workorderPickedItemsApi.consumePickedItems({
+          await this.workorderClient.workorderPickedItemsApi.consumeWorkorderPickedItems({
             workorderId,
             consumePickedItemsRequest: {
               items: pickTasks
@@ -609,7 +609,7 @@ export class CustomerEventSimulator {
 
       let invoiceId: string | undefined;
       try {
-        const invoiceResponse = await this.workorderClient.workOrderAPIApi.generateInvoice({ workorderId });
+        const invoiceResponse = await this.workorderClient.workOrderAPIApi.generateWorkorderInvoice({ workorderId });
         invoiceId = requireField(invoiceResponse.invoiceId, 'invoiceId');
       } catch (error) {
         await logStepError('generateInvoice', error);
@@ -630,7 +630,7 @@ export class CustomerEventSimulator {
 
       try {
         const paymentMethod = this.random.chance(0.95) ? 'CREDIT_CARD' : 'CASH';
-        await this.accountingClient.accountingEventsApi.submitEvent({
+        await this.accountingClient.accountingEventsApi.submitAccountingEvent({
           accountingEventSubmitRequest: {
             eventType: 'INVOICE_PAYMENT',
             organizationId: this.refs.locationId,
@@ -649,7 +649,7 @@ export class CustomerEventSimulator {
 
       try {
         if (workSessionId) {
-          await this.workorderClient.workSessionAPIApi.stopWorkSession({
+          await this.workorderClient.workSessionAPIApi.stopWorkexecWorkSession({
             workSessionId,
             stopWorkSessionRequest: {
               mechanicId: this.random.pickOne(this.refs.employees.technicians),

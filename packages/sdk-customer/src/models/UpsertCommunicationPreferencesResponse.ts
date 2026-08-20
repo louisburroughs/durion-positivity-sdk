@@ -14,47 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response after upserting communication preferences
  * @export
  * @interface UpsertCommunicationPreferencesResponse
  */
 export interface UpsertCommunicationPreferencesResponse {
     /**
-     * 
+     * Operation type (CREATED|UPDATED)
      * @type {string}
      * @memberof UpsertCommunicationPreferencesResponse
      */
-    partyId?: string;
+    operationType: string;
     /**
-     * 
+     * Identifier of the party that was updated
      * @type {string}
      * @memberof UpsertCommunicationPreferencesResponse
      */
-    version?: string;
+    partyId: string;
     /**
-     * 
+     * Update status (SUCCESS|CONFLICT)
      * @type {string}
      * @memberof UpsertCommunicationPreferencesResponse
      */
-    operationType?: string;
+    status: string;
     /**
-     * 
-     * @type {string}
-     * @memberof UpsertCommunicationPreferencesResponse
-     */
-    status?: string;
-    /**
-     * 
+     * Timestamp of update (ISO 8601)
      * @type {string}
      * @memberof UpsertCommunicationPreferencesResponse
      */
     updatedAt?: string;
+    /**
+     * Updated version for optimistic locking
+     * @type {string}
+     * @memberof UpsertCommunicationPreferencesResponse
+     */
+    version?: string;
 }
 
 /**
  * Check if a given object implements the UpsertCommunicationPreferencesResponse interface.
  */
 export function instanceOfUpsertCommunicationPreferencesResponse(value: object): boolean {
+    if (!('operationType' in value)) return false;
+    if (!('partyId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function UpsertCommunicationPreferencesResponseFromJSONTyped(json: any, i
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'version': json['version'] == null ? undefined : json['version'],
-        'operationType': json['operationType'] == null ? undefined : json['operationType'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'operationType': json['operationType'],
+        'partyId': json['partyId'],
+        'status': json['status'],
         'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
+        'version': json['version'] == null ? undefined : json['version'],
     };
 }
 
@@ -82,11 +85,11 @@ export function UpsertCommunicationPreferencesResponseToJSON(value?: UpsertCommu
     }
     return {
         
-        'partyId': value['partyId'],
-        'version': value['version'],
         'operationType': value['operationType'],
+        'partyId': value['partyId'],
         'status': value['status'],
         'updatedAt': value['updatedAt'],
+        'version': value['version'],
     };
 }
 

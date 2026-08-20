@@ -20,23 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface CatalogItemRequestDto {
     /**
-     * Item name
+     * Color for product type
      * @type {string}
      * @memberof CatalogItemRequestDto
      */
-    name?: string;
+    color?: string;
     /**
-     * Short description
+     * Country of origin for product type
      * @type {string}
      * @memberof CatalogItemRequestDto
      */
-    shortDescription?: string;
-    /**
-     * Long description
-     * @type {string}
-     * @memberof CatalogItemRequestDto
-     */
-    longDescription?: string;
+    countryOfOrigin?: string;
     /**
      * Product image URLs for product type
      * @type {Array<string>}
@@ -44,11 +38,17 @@ export interface CatalogItemRequestDto {
      */
     images?: Array<string>;
     /**
-     * Manufacturer part number for product type
+     * Long description
      * @type {string}
      * @memberof CatalogItemRequestDto
      */
-    manufacturerPartNumber?: string;
+    longDescription?: string;
+    /**
+     * Manufacturer brand for product type
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    manufacturerBrand?: string;
     /**
      * Manufacturer identifier for product type
      * @type {string}
@@ -62,41 +62,17 @@ export interface CatalogItemRequestDto {
      */
     manufacturerName?: string;
     /**
+     * Manufacturer part number for product type
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    manufacturerPartNumber?: string;
+    /**
      * Manufacturer warranty for product type
      * @type {string}
      * @memberof CatalogItemRequestDto
      */
     manufacturerWarranty?: string;
-    /**
-     * Manufacturer brand for product type
-     * @type {string}
-     * @memberof CatalogItemRequestDto
-     */
-    manufacturerBrand?: string;
-    /**
-     * Country of origin for product type
-     * @type {string}
-     * @memberof CatalogItemRequestDto
-     */
-    countryOfOrigin?: string;
-    /**
-     * SKU for product type
-     * @type {string}
-     * @memberof CatalogItemRequestDto
-     */
-    sku?: string;
-    /**
-     * Product code for product type
-     * @type {string}
-     * @memberof CatalogItemRequestDto
-     */
-    productCode?: string;
-    /**
-     * Product type
-     * @type {string}
-     * @memberof CatalogItemRequestDto
-     */
-    type?: string;
     /**
      * Material for product type
      * @type {string}
@@ -104,23 +80,47 @@ export interface CatalogItemRequestDto {
      */
     material?: string;
     /**
-     * Color for product type
+     * Item name
      * @type {string}
      * @memberof CatalogItemRequestDto
      */
-    color?: string;
+    name?: string;
     /**
-     * Warranty for product type
+     * Product code for product type
      * @type {string}
      * @memberof CatalogItemRequestDto
      */
-    warranty?: string;
+    productCode?: string;
+    /**
+     * Short description
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    shortDescription?: string;
+    /**
+     * SKU for product type
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    sku?: string;
     /**
      * Detailed specifications JSON for product type
      * @type {string}
      * @memberof CatalogItemRequestDto
      */
     specifications?: string;
+    /**
+     * Product type
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    type?: string;
+    /**
+     * Warranty for product type
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    warranty?: string;
 }
 
 /**
@@ -140,23 +140,23 @@ export function CatalogItemRequestDtoFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
-        'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
-        'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
+        'color': json['color'] == null ? undefined : json['color'],
+        'countryOfOrigin': json['countryOfOrigin'] == null ? undefined : json['countryOfOrigin'],
         'images': json['images'] == null ? undefined : json['images'],
-        'manufacturerPartNumber': json['manufacturerPartNumber'] == null ? undefined : json['manufacturerPartNumber'],
+        'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
+        'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
         'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
         'manufacturerName': json['manufacturerName'] == null ? undefined : json['manufacturerName'],
+        'manufacturerPartNumber': json['manufacturerPartNumber'] == null ? undefined : json['manufacturerPartNumber'],
         'manufacturerWarranty': json['manufacturerWarranty'] == null ? undefined : json['manufacturerWarranty'],
-        'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
-        'countryOfOrigin': json['countryOfOrigin'] == null ? undefined : json['countryOfOrigin'],
-        'sku': json['sku'] == null ? undefined : json['sku'],
-        'productCode': json['productCode'] == null ? undefined : json['productCode'],
-        'type': json['type'] == null ? undefined : json['type'],
         'material': json['material'] == null ? undefined : json['material'],
-        'color': json['color'] == null ? undefined : json['color'],
-        'warranty': json['warranty'] == null ? undefined : json['warranty'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'productCode': json['productCode'] == null ? undefined : json['productCode'],
+        'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
+        'sku': json['sku'] == null ? undefined : json['sku'],
         'specifications': json['specifications'] == null ? undefined : json['specifications'],
+        'type': json['type'] == null ? undefined : json['type'],
+        'warranty': json['warranty'] == null ? undefined : json['warranty'],
     };
 }
 
@@ -166,23 +166,23 @@ export function CatalogItemRequestDtoToJSON(value?: CatalogItemRequestDto | null
     }
     return {
         
-        'name': value['name'],
-        'shortDescription': value['shortDescription'],
-        'longDescription': value['longDescription'],
+        'color': value['color'],
+        'countryOfOrigin': value['countryOfOrigin'],
         'images': value['images'],
-        'manufacturerPartNumber': value['manufacturerPartNumber'],
+        'longDescription': value['longDescription'],
+        'manufacturerBrand': value['manufacturerBrand'],
         'manufacturerId': value['manufacturerId'],
         'manufacturerName': value['manufacturerName'],
+        'manufacturerPartNumber': value['manufacturerPartNumber'],
         'manufacturerWarranty': value['manufacturerWarranty'],
-        'manufacturerBrand': value['manufacturerBrand'],
-        'countryOfOrigin': value['countryOfOrigin'],
-        'sku': value['sku'],
-        'productCode': value['productCode'],
-        'type': value['type'],
         'material': value['material'],
-        'color': value['color'],
-        'warranty': value['warranty'],
+        'name': value['name'],
+        'productCode': value['productCode'],
+        'shortDescription': value['shortDescription'],
+        'sku': value['sku'],
         'specifications': value['specifications'],
+        'type': value['type'],
+        'warranty': value['warranty'],
     };
 }
 

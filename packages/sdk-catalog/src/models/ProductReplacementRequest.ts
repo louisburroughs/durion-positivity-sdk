@@ -20,17 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ProductReplacementRequest {
     /**
-     * Replacement product identifier
-     * @type {string}
+     * Replacement effective instant
+     * @type {Date}
      * @memberof ProductReplacementRequest
      */
-    replacementProductId?: string;
-    /**
-     * Display priority order
-     * @type {number}
-     * @memberof ProductReplacementRequest
-     */
-    priorityOrder?: number;
+    effectiveAt?: Date;
     /**
      * Replacement notes
      * @type {string}
@@ -38,17 +32,24 @@ export interface ProductReplacementRequest {
      */
     notes?: string;
     /**
-     * Replacement effective instant
-     * @type {Date}
+     * Display priority order
+     * @type {number}
      * @memberof ProductReplacementRequest
      */
-    effectiveAt?: Date;
+    priorityOrder?: number;
+    /**
+     * Replacement product identifier
+     * @type {string}
+     * @memberof ProductReplacementRequest
+     */
+    replacementProductId: string;
 }
 
 /**
  * Check if a given object implements the ProductReplacementRequest interface.
  */
 export function instanceOfProductReplacementRequest(value: object): boolean {
+    if (!('replacementProductId' in value)) return false;
     return true;
 }
 
@@ -62,10 +63,10 @@ export function ProductReplacementRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'replacementProductId': json['replacementProductId'] == null ? undefined : json['replacementProductId'],
-        'priorityOrder': json['priorityOrder'] == null ? undefined : json['priorityOrder'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
         'effectiveAt': json['effectiveAt'] == null ? undefined : (new Date(json['effectiveAt'])),
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'priorityOrder': json['priorityOrder'] == null ? undefined : json['priorityOrder'],
+        'replacementProductId': json['replacementProductId'],
     };
 }
 
@@ -75,10 +76,10 @@ export function ProductReplacementRequestToJSON(value?: ProductReplacementReques
     }
     return {
         
-        'replacementProductId': value['replacementProductId'],
-        'priorityOrder': value['priorityOrder'],
-        'notes': value['notes'],
         'effectiveAt': value['effectiveAt'] == null ? undefined : ((value['effectiveAt']).toISOString()),
+        'notes': value['notes'],
+        'priorityOrder': value['priorityOrder'],
+        'replacementProductId': value['replacementProductId'],
     };
 }
 

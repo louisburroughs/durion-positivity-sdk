@@ -20,25 +20,25 @@ import { mapValues } from '../runtime';
  */
 export interface FilterProductsResponse {
     /**
-     * List of matching product identifiers
-     * @type {Array<string>}
-     * @memberof FilterProductsResponse
-     */
-    productIds: Array<string>;
-    /**
      * Count of matching products
      * @type {number}
      * @memberof FilterProductsResponse
      */
     count: number;
+    /**
+     * List of matching product identifiers
+     * @type {Array<string>}
+     * @memberof FilterProductsResponse
+     */
+    productIds: Array<string>;
 }
 
 /**
  * Check if a given object implements the FilterProductsResponse interface.
  */
 export function instanceOfFilterProductsResponse(value: object): boolean {
-    if (!('productIds' in value)) return false;
     if (!('count' in value)) return false;
+    if (!('productIds' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function FilterProductsResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'productIds': json['productIds'],
         'count': json['count'],
+        'productIds': json['productIds'],
     };
 }
 
@@ -63,8 +63,8 @@ export function FilterProductsResponseToJSON(value?: FilterProductsResponse | nu
     }
     return {
         
-        'productIds': value['productIds'],
         'count': value['count'],
+        'productIds': value['productIds'],
     };
 }
 

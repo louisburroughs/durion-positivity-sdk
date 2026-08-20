@@ -15,12 +15,16 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateCreditMemoRequest,
   CreditMemoResponse,
   PageCreditMemoResponse,
   Pageable,
+  VoidCreditMemoRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateCreditMemoRequestFromJSON,
     CreateCreditMemoRequestToJSON,
     CreditMemoResponseFromJSON,
@@ -29,6 +33,8 @@ import {
     PageCreditMemoResponseToJSON,
     PageableFromJSON,
     PageableToJSON,
+    VoidCreditMemoRequestFromJSON,
+    VoidCreditMemoRequestToJSON,
 } from '../models/index';
 
 export interface CreateCreditMemoOperationRequest {
@@ -46,14 +52,19 @@ export interface ListCreditMemosRequest {
     status?: ListCreditMemosStatusEnum;
 }
 
+export interface VoidCreditMemoOperationRequest {
+    creditMemoId: string;
+    voidCreditMemoRequest: VoidCreditMemoRequest;
+}
+
 /**
  * 
  */
 export class CreditMemosApi extends runtime.BaseAPI {
 
     /**
-     * Create a new Credit Memo to reverse invoice charges. Reduces Accounts Receivable by posting offsetting GL entries. Requires finalized invoice and credit amount within outstanding balance.
-     * Create credit memo
+     * Creates and posts a credit memo against a finalized invoice, reversing invoice charges by posting debit revenue and tax, credit Accounts Receivable, and reducing the invoice\'s outstanding balance. Use this tool for AR corrections against a specific invoice; do not use applyCustomerCredit, which draws down a standing customer credit, and do not use voidCreditMemo, which backs out a memo already posted. Preconditions: the invoice must exist and be finalized, and creditAmount must not exceed the invoice\'s outstanding balance. Required inputs: originalInvoiceId (UUID), creditAmount (min 0.01) and reasonCode (max 50 chars, kept for the audit trail); justificationNote (max 1000 chars) is optional. Emits an ACCOUNTING_CREDIT_MEMO_CREATE event and posts the reversing GL entries. Returns 404 when the invoice is not found, 409 when the amount exceeds the outstanding balance or the invoice is not finalized, and 401 when no authenticated user is present. 
+     * Create Credit Memo
      */
     async createCreditMemoRaw(requestParameters: CreateCreditMemoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreditMemoResponse>> {
         if (requestParameters['createCreditMemoRequest'] == null) {
@@ -89,8 +100,8 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new Credit Memo to reverse invoice charges. Reduces Accounts Receivable by posting offsetting GL entries. Requires finalized invoice and credit amount within outstanding balance.
-     * Create credit memo
+     * Creates and posts a credit memo against a finalized invoice, reversing invoice charges by posting debit revenue and tax, credit Accounts Receivable, and reducing the invoice\'s outstanding balance. Use this tool for AR corrections against a specific invoice; do not use applyCustomerCredit, which draws down a standing customer credit, and do not use voidCreditMemo, which backs out a memo already posted. Preconditions: the invoice must exist and be finalized, and creditAmount must not exceed the invoice\'s outstanding balance. Required inputs: originalInvoiceId (UUID), creditAmount (min 0.01) and reasonCode (max 50 chars, kept for the audit trail); justificationNote (max 1000 chars) is optional. Emits an ACCOUNTING_CREDIT_MEMO_CREATE event and posts the reversing GL entries. Returns 404 when the invoice is not found, 409 when the amount exceeds the outstanding balance or the invoice is not finalized, and 401 when no authenticated user is present. 
+     * Create Credit Memo
      */
     async createCreditMemo(requestParameters: CreateCreditMemoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreditMemoResponse> {
         const response = await this.createCreditMemoRaw(requestParameters, initOverrides);
@@ -98,8 +109,8 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve details for a specific Credit Memo by ID. Includes full audit trail and current invoice balance.
-     * Get credit memo
+     * Returns one credit memo with its amounts, status, audit trail and the invoice\'s current balance. Use this tool when the memo id is already known; use listCreditMemos instead when searching by customer, invoice or status. Preconditions: the credit memo must exist. Required inputs: creditMemoId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_CREDIT_MEMO_GET audit event; no state changes. Returns 404 when no credit memo exists for the supplied id. 
+     * Get Credit Memo
      */
     async getCreditMemoRaw(requestParameters: GetCreditMemoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreditMemoResponse>> {
         if (requestParameters['creditMemoId'] == null) {
@@ -132,8 +143,8 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve details for a specific Credit Memo by ID. Includes full audit trail and current invoice balance.
-     * Get credit memo
+     * Returns one credit memo with its amounts, status, audit trail and the invoice\'s current balance. Use this tool when the memo id is already known; use listCreditMemos instead when searching by customer, invoice or status. Preconditions: the credit memo must exist. Required inputs: creditMemoId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_CREDIT_MEMO_GET audit event; no state changes. Returns 404 when no credit memo exists for the supplied id. 
+     * Get Credit Memo
      */
     async getCreditMemo(requestParameters: GetCreditMemoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreditMemoResponse> {
         const response = await this.getCreditMemoRaw(requestParameters, initOverrides);
@@ -141,8 +152,8 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated credit memos with optional filters. Filter by customer, invoice, or status. Supports standard pagination parameters (page, size, sort).
-     * List credit memos
+     * Lists credit memos as a paginated projection, optionally filtered by customer, original invoice or lifecycle status. Use this tool when browsing or reconciling memos; do not use getCreditMemo, which fetches one memo by its known id. Preconditions: none beyond the caller holding accounting:credit-memo:read. Required inputs: none; customerId, originalInvoiceId and status (DRAFT, POSTED, APPLIED, VOIDED) are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CREDIT_MEMO_LIST audit event; no state changes. Returns 400 when pagination or filter parameters are invalid. 
+     * List Credit Memos
      */
     async listCreditMemosRaw(requestParameters: ListCreditMemosRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageCreditMemoResponse>> {
         if (requestParameters['pageable'] == null) {
@@ -191,11 +202,64 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated credit memos with optional filters. Filter by customer, invoice, or status. Supports standard pagination parameters (page, size, sort).
-     * List credit memos
+     * Lists credit memos as a paginated projection, optionally filtered by customer, original invoice or lifecycle status. Use this tool when browsing or reconciling memos; do not use getCreditMemo, which fetches one memo by its known id. Preconditions: none beyond the caller holding accounting:credit-memo:read. Required inputs: none; customerId, originalInvoiceId and status (DRAFT, POSTED, APPLIED, VOIDED) are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CREDIT_MEMO_LIST audit event; no state changes. Returns 400 when pagination or filter parameters are invalid. 
+     * List Credit Memos
      */
     async listCreditMemos(requestParameters: ListCreditMemosRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCreditMemoResponse> {
         const response = await this.listCreditMemosRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Voids a POSTED credit memo by posting the mirror GL entry (debit AR, credit Revenue and Sales-Tax Payable) dated at void time, restoring the invoice\'s outstanding balance. Use this tool to back out a memo issued in error; do not use createCreditMemo, which issues new credit, and note that APPLIED memos have been consumed and cannot be voided. Preconditions: the credit memo must exist and be in POSTED status; VOIDED is terminal. Required inputs: creditMemoId (UUID) as a path parameter and a non-blank voidReason (max 1000 chars). Emits an ACCOUNTING_CREDIT_MEMO_VOID event; the memo\'s original posting-period figures are never restated, and the tax-liability report restores the reversed tax in the void\'s period so GL drift stays zero. Returns 404 when the memo is not found, 409 when it is not POSTED, and 400 when the void reason is missing or blank. 
+     * Void Credit Memo
+     */
+    async voidCreditMemoRaw(requestParameters: VoidCreditMemoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreditMemoResponse>> {
+        if (requestParameters['creditMemoId'] == null) {
+            throw new runtime.RequiredError(
+                'creditMemoId',
+                'Required parameter "creditMemoId" was null or undefined when calling voidCreditMemo().'
+            );
+        }
+
+        if (requestParameters['voidCreditMemoRequest'] == null) {
+            throw new runtime.RequiredError(
+                'voidCreditMemoRequest',
+                'Required parameter "voidCreditMemoRequest" was null or undefined when calling voidCreditMemo().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:credit-memo:void"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/credit-memos/{creditMemoId}/void`.replace(`{${"creditMemoId"}}`, encodeURIComponent(String(requestParameters['creditMemoId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VoidCreditMemoRequestToJSON(requestParameters['voidCreditMemoRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CreditMemoResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Voids a POSTED credit memo by posting the mirror GL entry (debit AR, credit Revenue and Sales-Tax Payable) dated at void time, restoring the invoice\'s outstanding balance. Use this tool to back out a memo issued in error; do not use createCreditMemo, which issues new credit, and note that APPLIED memos have been consumed and cannot be voided. Preconditions: the credit memo must exist and be in POSTED status; VOIDED is terminal. Required inputs: creditMemoId (UUID) as a path parameter and a non-blank voidReason (max 1000 chars). Emits an ACCOUNTING_CREDIT_MEMO_VOID event; the memo\'s original posting-period figures are never restated, and the tax-liability report restores the reversed tax in the void\'s period so GL drift stays zero. Returns 404 when the memo is not found, 409 when it is not POSTED, and 400 when the void reason is missing or blank. 
+     * Void Credit Memo
+     */
+    async voidCreditMemo(requestParameters: VoidCreditMemoOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreditMemoResponse> {
+        const response = await this.voidCreditMemoRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

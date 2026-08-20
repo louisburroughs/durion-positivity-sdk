@@ -20,18 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface AssignmentHistoryEntry {
     /**
-     * Technician ID for this assignment period
-     * @type {string}
-     * @memberof AssignmentHistoryEntry
-     */
-    technicianId?: string;
-    /**
-     * Technician display name
-     * @type {string}
-     * @memberof AssignmentHistoryEntry
-     */
-    technicianName?: string;
-    /**
      * When the technician was assigned
      * @type {Date}
      * @memberof AssignmentHistoryEntry
@@ -44,11 +32,11 @@ export interface AssignmentHistoryEntry {
      */
     assignedBy?: string;
     /**
-     * When the technician was unassigned (null for current assignment)
-     * @type {Date}
+     * Assignment notes
+     * @type {string}
      * @memberof AssignmentHistoryEntry
      */
-    unassignedAt?: Date;
+    notes?: string;
     /**
      * Reason for reassignment/unassignment
      * @type {string}
@@ -56,11 +44,23 @@ export interface AssignmentHistoryEntry {
      */
     reason?: string;
     /**
-     * Assignment notes
+     * Technician ID for this assignment period
      * @type {string}
      * @memberof AssignmentHistoryEntry
      */
-    notes?: string;
+    technicianId?: string;
+    /**
+     * Technician display name
+     * @type {string}
+     * @memberof AssignmentHistoryEntry
+     */
+    technicianName?: string;
+    /**
+     * When the technician was unassigned (null for current assignment)
+     * @type {Date}
+     * @memberof AssignmentHistoryEntry
+     */
+    unassignedAt?: Date;
 }
 
 /**
@@ -80,13 +80,13 @@ export function AssignmentHistoryEntryFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
-        'technicianName': json['technicianName'] == null ? undefined : json['technicianName'],
         'assignedAt': json['assignedAt'] == null ? undefined : (new Date(json['assignedAt'])),
         'assignedBy': json['assignedBy'] == null ? undefined : json['assignedBy'],
-        'unassignedAt': json['unassignedAt'] == null ? undefined : (new Date(json['unassignedAt'])),
-        'reason': json['reason'] == null ? undefined : json['reason'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
+        'technicianName': json['technicianName'] == null ? undefined : json['technicianName'],
+        'unassignedAt': json['unassignedAt'] == null ? undefined : (new Date(json['unassignedAt'])),
     };
 }
 
@@ -96,13 +96,13 @@ export function AssignmentHistoryEntryToJSON(value?: AssignmentHistoryEntry | nu
     }
     return {
         
-        'technicianId': value['technicianId'],
-        'technicianName': value['technicianName'],
         'assignedAt': value['assignedAt'] == null ? undefined : ((value['assignedAt']).toISOString()),
         'assignedBy': value['assignedBy'],
-        'unassignedAt': value['unassignedAt'] == null ? undefined : ((value['unassignedAt']).toISOString()),
-        'reason': value['reason'],
         'notes': value['notes'],
+        'reason': value['reason'],
+        'technicianId': value['technicianId'],
+        'technicianName': value['technicianName'],
+        'unassignedAt': value['unassignedAt'] == null ? undefined : ((value['unassignedAt']).toISOString()),
     };
 }
 

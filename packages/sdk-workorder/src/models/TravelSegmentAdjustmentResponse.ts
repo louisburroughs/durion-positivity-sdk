@@ -14,77 +14,80 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response representation of a travel segment time adjustment
  * @export
  * @interface TravelSegmentAdjustmentResponse
  */
 export interface TravelSegmentAdjustmentResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentAdjustmentResponse
-     */
-    adjustmentId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentAdjustmentResponse
-     */
-    travelSegmentId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof TravelSegmentAdjustmentResponse
-     */
-    adjustedStartAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof TravelSegmentAdjustmentResponse
-     */
-    adjustedEndAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentAdjustmentResponse
-     */
-    adjustmentReason?: string;
-    /**
-     * 
+     * Identifier of the user who made the adjustment
      * @type {string}
      * @memberof TravelSegmentAdjustmentResponse
      */
     adjustedByUserId?: string;
     /**
-     * 
+     * Adjusted end timestamp of the travel segment
+     * @type {Date}
+     * @memberof TravelSegmentAdjustmentResponse
+     */
+    adjustedEndAt?: Date;
+    /**
+     * Adjusted start timestamp of the travel segment
+     * @type {Date}
+     * @memberof TravelSegmentAdjustmentResponse
+     */
+    adjustedStartAt?: Date;
+    /**
+     * Unique identifier of the adjustment
+     * @type {string}
+     * @memberof TravelSegmentAdjustmentResponse
+     */
+    adjustmentId: string;
+    /**
+     * Reason recorded for the adjustment
+     * @type {string}
+     * @memberof TravelSegmentAdjustmentResponse
+     */
+    adjustmentReason?: string;
+    /**
+     * Approval status of the adjustment
      * @type {string}
      * @memberof TravelSegmentAdjustmentResponse
      */
     approvalStatus?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentAdjustmentResponse
-     */
-    approvedByUserId?: string;
-    /**
-     * 
+     * Timestamp when the adjustment was approved
      * @type {Date}
      * @memberof TravelSegmentAdjustmentResponse
      */
     approvedAt?: Date;
     /**
-     * 
+     * Identifier of the user who approved the adjustment
+     * @type {string}
+     * @memberof TravelSegmentAdjustmentResponse
+     */
+    approvedByUserId?: string;
+    /**
+     * Timestamp when the adjustment was created
      * @type {Date}
      * @memberof TravelSegmentAdjustmentResponse
      */
-    createdAt?: Date;
+    createdAt: Date;
+    /**
+     * Identifier of the travel segment that was adjusted
+     * @type {string}
+     * @memberof TravelSegmentAdjustmentResponse
+     */
+    travelSegmentId: string;
 }
 
 /**
  * Check if a given object implements the TravelSegmentAdjustmentResponse interface.
  */
 export function instanceOfTravelSegmentAdjustmentResponse(value: object): boolean {
+    if (!('adjustmentId' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('travelSegmentId' in value)) return false;
     return true;
 }
 
@@ -98,16 +101,16 @@ export function TravelSegmentAdjustmentResponseFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'adjustmentId': json['adjustmentId'] == null ? undefined : json['adjustmentId'],
-        'travelSegmentId': json['travelSegmentId'] == null ? undefined : json['travelSegmentId'],
-        'adjustedStartAt': json['adjustedStartAt'] == null ? undefined : (new Date(json['adjustedStartAt'])),
-        'adjustedEndAt': json['adjustedEndAt'] == null ? undefined : (new Date(json['adjustedEndAt'])),
-        'adjustmentReason': json['adjustmentReason'] == null ? undefined : json['adjustmentReason'],
         'adjustedByUserId': json['adjustedByUserId'] == null ? undefined : json['adjustedByUserId'],
+        'adjustedEndAt': json['adjustedEndAt'] == null ? undefined : (new Date(json['adjustedEndAt'])),
+        'adjustedStartAt': json['adjustedStartAt'] == null ? undefined : (new Date(json['adjustedStartAt'])),
+        'adjustmentId': json['adjustmentId'],
+        'adjustmentReason': json['adjustmentReason'] == null ? undefined : json['adjustmentReason'],
         'approvalStatus': json['approvalStatus'] == null ? undefined : json['approvalStatus'],
-        'approvedByUserId': json['approvedByUserId'] == null ? undefined : json['approvedByUserId'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'approvedByUserId': json['approvedByUserId'] == null ? undefined : json['approvedByUserId'],
+        'createdAt': (new Date(json['createdAt'])),
+        'travelSegmentId': json['travelSegmentId'],
     };
 }
 
@@ -117,16 +120,16 @@ export function TravelSegmentAdjustmentResponseToJSON(value?: TravelSegmentAdjus
     }
     return {
         
-        'adjustmentId': value['adjustmentId'],
-        'travelSegmentId': value['travelSegmentId'],
-        'adjustedStartAt': value['adjustedStartAt'] == null ? undefined : ((value['adjustedStartAt']).toISOString()),
-        'adjustedEndAt': value['adjustedEndAt'] == null ? undefined : ((value['adjustedEndAt']).toISOString()),
-        'adjustmentReason': value['adjustmentReason'],
         'adjustedByUserId': value['adjustedByUserId'],
+        'adjustedEndAt': value['adjustedEndAt'] == null ? undefined : ((value['adjustedEndAt']).toISOString()),
+        'adjustedStartAt': value['adjustedStartAt'] == null ? undefined : ((value['adjustedStartAt']).toISOString()),
+        'adjustmentId': value['adjustmentId'],
+        'adjustmentReason': value['adjustmentReason'],
         'approvalStatus': value['approvalStatus'],
-        'approvedByUserId': value['approvedByUserId'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'approvedByUserId': value['approvedByUserId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'travelSegmentId': value['travelSegmentId'],
     };
 }
 

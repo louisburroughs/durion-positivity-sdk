@@ -24,7 +24,7 @@ export interface SubstitutionHint {
      * @type {string}
      * @memberof SubstitutionHint
      */
-    productId?: string;
+    productId: string;
     /**
      * Reason for substitution
      * @type {string}
@@ -37,6 +37,7 @@ export interface SubstitutionHint {
  * Check if a given object implements the SubstitutionHint interface.
  */
 export function instanceOfSubstitutionHint(value: object): boolean {
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -50,7 +51,7 @@ export function SubstitutionHintFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'productId': json['productId'] == null ? undefined : json['productId'],
+        'productId': json['productId'],
         'reason': json['reason'] == null ? undefined : json['reason'],
     };
 }

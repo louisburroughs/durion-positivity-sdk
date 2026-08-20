@@ -14,89 +14,90 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * GL mapping response payload
  * @export
  * @interface GLMappingResponse
  */
 export interface GLMappingResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof GLMappingResponse
-     */
-    glMappingId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GLMappingResponse
-     */
-    sourceSystem?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GLMappingResponse
-     */
-    externalCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GLMappingResponse
-     */
-    glAccountId?: string;
-    /**
-     * 
+     * GL account code
      * @type {string}
      * @memberof GLMappingResponse
      */
     accountCode?: string;
     /**
-     * 
+     * GL account name
      * @type {string}
      * @memberof GLMappingResponse
      */
     accountName?: string;
     /**
-     * 
-     * @type {Date}
-     * @memberof GLMappingResponse
-     */
-    effectiveStartDate?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof GLMappingResponse
-     */
-    effectiveEndDate?: Date;
-    /**
-     * 
-     * @type {{ [key: string]: string; }}
-     * @memberof GLMappingResponse
-     */
-    dimensions?: { [key: string]: string; };
-    /**
-     * 
-     * @type {number}
-     * @memberof GLMappingResponse
-     */
-    priority?: number;
-    /**
-     * 
+     * Created timestamp
      * @type {Date}
      * @memberof GLMappingResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Created by username
      * @type {string}
      * @memberof GLMappingResponse
      */
     createdBy?: string;
+    /**
+     * Dimensional context for this mapping
+     * @type {{ [key: string]: string; }}
+     * @memberof GLMappingResponse
+     */
+    dimensions?: { [key: string]: string; };
+    /**
+     * Exclusive end of the mapping's temporal validity (open-ended when null)
+     * @type {Date}
+     * @memberof GLMappingResponse
+     */
+    effectiveEndDate?: Date;
+    /**
+     * Inclusive start of the mapping's temporal validity
+     * @type {Date}
+     * @memberof GLMappingResponse
+     */
+    effectiveStartDate?: Date;
+    /**
+     * External code from the source system
+     * @type {string}
+     * @memberof GLMappingResponse
+     */
+    externalCode?: string;
+    /**
+     * GL account UUID this code maps to
+     * @type {string}
+     * @memberof GLMappingResponse
+     */
+    glAccountId?: string;
+    /**
+     * GL mapping UUID
+     * @type {string}
+     * @memberof GLMappingResponse
+     */
+    glMappingId: string;
+    /**
+     * Mapping resolution priority
+     * @type {number}
+     * @memberof GLMappingResponse
+     */
+    priority?: number;
+    /**
+     * Source system identifier
+     * @type {string}
+     * @memberof GLMappingResponse
+     */
+    sourceSystem?: string;
 }
 
 /**
  * Check if a given object implements the GLMappingResponse interface.
  */
 export function instanceOfGLMappingResponse(value: object): boolean {
+    if (!('glMappingId' in value)) return false;
     return true;
 }
 
@@ -110,18 +111,18 @@ export function GLMappingResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'glMappingId': json['glMappingId'] == null ? undefined : json['glMappingId'],
-        'sourceSystem': json['sourceSystem'] == null ? undefined : json['sourceSystem'],
-        'externalCode': json['externalCode'] == null ? undefined : json['externalCode'],
-        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
         'accountCode': json['accountCode'] == null ? undefined : json['accountCode'],
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
-        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
-        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
-        'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
-        'priority': json['priority'] == null ? undefined : json['priority'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
+        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
+        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
+        'externalCode': json['externalCode'] == null ? undefined : json['externalCode'],
+        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
+        'glMappingId': json['glMappingId'],
+        'priority': json['priority'] == null ? undefined : json['priority'],
+        'sourceSystem': json['sourceSystem'] == null ? undefined : json['sourceSystem'],
     };
 }
 
@@ -131,18 +132,18 @@ export function GLMappingResponseToJSON(value?: GLMappingResponse | null): any {
     }
     return {
         
-        'glMappingId': value['glMappingId'],
-        'sourceSystem': value['sourceSystem'],
-        'externalCode': value['externalCode'],
-        'glAccountId': value['glAccountId'],
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
-        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
-        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
-        'dimensions': value['dimensions'],
-        'priority': value['priority'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'dimensions': value['dimensions'],
+        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
+        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
+        'externalCode': value['externalCode'],
+        'glAccountId': value['glAccountId'],
+        'glMappingId': value['glMappingId'],
+        'priority': value['priority'],
+        'sourceSystem': value['sourceSystem'],
     };
 }
 

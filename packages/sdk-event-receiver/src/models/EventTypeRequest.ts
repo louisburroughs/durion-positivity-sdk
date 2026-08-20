@@ -20,18 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface EventTypeRequest {
     /**
-     * Unique code identifying the event type
-     * @type {string}
-     * @memberof EventTypeRequest
-     */
-    typeCode: string;
-    /**
-     * Human-readable description of the event type
-     * @type {string}
-     * @memberof EventTypeRequest
-     */
-    description: string;
-    /**
      * Whether the event type is active
      * @type {boolean}
      * @memberof EventTypeRequest
@@ -43,6 +31,12 @@ export interface EventTypeRequest {
      * @memberof EventTypeRequest
      */
     apiVersion?: string;
+    /**
+     * Human-readable description of the event type
+     * @type {string}
+     * @memberof EventTypeRequest
+     */
+    description: string;
     /**
      * 50th percentile latency threshold in microseconds (default: 10,000,000 = 10s)
      * @type {number}
@@ -61,14 +55,20 @@ export interface EventTypeRequest {
      * @memberof EventTypeRequest
      */
     p99Micros?: number;
+    /**
+     * Unique code identifying the event type
+     * @type {string}
+     * @memberof EventTypeRequest
+     */
+    typeCode: string;
 }
 
 /**
  * Check if a given object implements the EventTypeRequest interface.
  */
 export function instanceOfEventTypeRequest(value: object): boolean {
-    if (!('typeCode' in value)) return false;
     if (!('description' in value)) return false;
+    if (!('typeCode' in value)) return false;
     return true;
 }
 
@@ -82,13 +82,13 @@ export function EventTypeRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'typeCode': json['typeCode'],
-        'description': json['description'],
         'active': json['active'] == null ? undefined : json['active'],
         'apiVersion': json['apiVersion'] == null ? undefined : json['apiVersion'],
+        'description': json['description'],
         'p50Micros': json['p50Micros'] == null ? undefined : json['p50Micros'],
         'p95Micros': json['p95Micros'] == null ? undefined : json['p95Micros'],
         'p99Micros': json['p99Micros'] == null ? undefined : json['p99Micros'],
+        'typeCode': json['typeCode'],
     };
 }
 
@@ -98,13 +98,13 @@ export function EventTypeRequestToJSON(value?: EventTypeRequest | null): any {
     }
     return {
         
-        'typeCode': value['typeCode'],
-        'description': value['description'],
         'active': value['active'],
         'apiVersion': value['apiVersion'],
+        'description': value['description'],
         'p50Micros': value['p50Micros'],
         'p95Micros': value['p95Micros'],
         'p99Micros': value['p99Micros'],
+        'typeCode': value['typeCode'],
     };
 }
 

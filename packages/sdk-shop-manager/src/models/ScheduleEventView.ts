@@ -21,71 +21,76 @@ import {
 } from './ConflictDetails';
 
 /**
- * 
+ * A single event displayed within a resource lane
  * @export
  * @interface ScheduleEventView
  */
 export interface ScheduleEventView {
     /**
      * 
-     * @type {string}
+     * @type {ConflictDetails}
      * @memberof ScheduleEventView
      */
-    eventId?: string;
+    conflictDetails?: ConflictDetails;
     /**
-     * 
-     * @type {string}
-     * @memberof ScheduleEventView
-     */
-    eventType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ScheduleEventView
-     */
-    subType?: string;
-    /**
-     * 
+     * Event end instant in UTC (ISO-8601)
      * @type {Date}
      * @memberof ScheduleEventView
      */
-    startTime?: Date;
+    endTime: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof ScheduleEventView
-     */
-    endTime?: Date;
-    /**
-     * 
+     * Event identifier
      * @type {string}
      * @memberof ScheduleEventView
      */
-    title?: string;
+    eventId: string;
     /**
-     * 
+     * Event type (e.g. APPOINTMENT, SHIFT, PTO)
+     * @type {string}
+     * @memberof ScheduleEventView
+     */
+    eventType: string;
+    /**
+     * Whether this event has a scheduling conflict
      * @type {boolean}
      * @memberof ScheduleEventView
      */
-    hasConflict?: boolean;
+    hasConflict: boolean;
     /**
-     * 
+     * Conflict severity when hasConflict is true (HARD or SOFT)
      * @type {string}
      * @memberof ScheduleEventView
      */
     severity?: string;
     /**
-     * 
-     * @type {ConflictDetails}
+     * Event start instant in UTC (ISO-8601)
+     * @type {Date}
      * @memberof ScheduleEventView
      */
-    conflictDetails?: ConflictDetails;
+    startTime: Date;
+    /**
+     * Event sub-type, when applicable
+     * @type {string}
+     * @memberof ScheduleEventView
+     */
+    subType?: string;
+    /**
+     * Event display title
+     * @type {string}
+     * @memberof ScheduleEventView
+     */
+    title?: string;
 }
 
 /**
  * Check if a given object implements the ScheduleEventView interface.
  */
 export function instanceOfScheduleEventView(value: object): boolean {
+    if (!('endTime' in value)) return false;
+    if (!('eventId' in value)) return false;
+    if (!('eventType' in value)) return false;
+    if (!('hasConflict' in value)) return false;
+    if (!('startTime' in value)) return false;
     return true;
 }
 
@@ -99,15 +104,15 @@ export function ScheduleEventViewFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'eventId': json['eventId'] == null ? undefined : json['eventId'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'subType': json['subType'] == null ? undefined : json['subType'],
-        'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
-        'endTime': json['endTime'] == null ? undefined : (new Date(json['endTime'])),
-        'title': json['title'] == null ? undefined : json['title'],
-        'hasConflict': json['hasConflict'] == null ? undefined : json['hasConflict'],
-        'severity': json['severity'] == null ? undefined : json['severity'],
         'conflictDetails': json['conflictDetails'] == null ? undefined : ConflictDetailsFromJSON(json['conflictDetails']),
+        'endTime': (new Date(json['endTime'])),
+        'eventId': json['eventId'],
+        'eventType': json['eventType'],
+        'hasConflict': json['hasConflict'],
+        'severity': json['severity'] == null ? undefined : json['severity'],
+        'startTime': (new Date(json['startTime'])),
+        'subType': json['subType'] == null ? undefined : json['subType'],
+        'title': json['title'] == null ? undefined : json['title'],
     };
 }
 
@@ -117,15 +122,15 @@ export function ScheduleEventViewToJSON(value?: ScheduleEventView | null): any {
     }
     return {
         
+        'conflictDetails': ConflictDetailsToJSON(value['conflictDetails']),
+        'endTime': ((value['endTime']).toISOString()),
         'eventId': value['eventId'],
         'eventType': value['eventType'],
-        'subType': value['subType'],
-        'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
-        'endTime': value['endTime'] == null ? undefined : ((value['endTime']).toISOString()),
-        'title': value['title'],
         'hasConflict': value['hasConflict'],
         'severity': value['severity'],
-        'conflictDetails': ConflictDetailsToJSON(value['conflictDetails']),
+        'startTime': ((value['startTime']).toISOString()),
+        'subType': value['subType'],
+        'title': value['title'],
     };
 }
 

@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single inventory item moved during location deactivation
  * @export
  * @interface MovedItem
  */
 export interface MovedItem {
     /**
-     * 
+     * Identifier of the moved inventory item
      * @type {string}
      * @memberof MovedItem
      */
-    itemId?: string;
+    itemId: string;
     /**
-     * 
+     * Quantity of the item moved
      * @type {number}
      * @memberof MovedItem
      */
-    quantity?: number;
+    quantity: number;
 }
 
 /**
  * Check if a given object implements the MovedItem interface.
  */
 export function instanceOfMovedItem(value: object): boolean {
+    if (!('itemId' in value)) return false;
+    if (!('quantity' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function MovedItemFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'itemId': json['itemId'] == null ? undefined : json['itemId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'itemId': json['itemId'],
+        'quantity': json['quantity'],
     };
 }
 

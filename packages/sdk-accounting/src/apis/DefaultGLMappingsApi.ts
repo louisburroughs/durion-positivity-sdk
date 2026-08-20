@@ -66,8 +66,8 @@ export interface UpdateDefaultMappingRequest {
 export class DefaultGLMappingsApi extends runtime.BaseAPI {
 
     /**
-     * Create a new default GL account mapping for an event type
-     * Create default GL mapping
+     * Creates a fallback debit and credit account pair for an event type, used by the posting engine when no explicit posting rule matches; resolution order is explicit rule, then org-scoped default, then global default, then UNMAPPED_EVENT_TYPE failure. Use this tool to guarantee an event type always posts somewhere; do not use createGLMapping, which maps a source-system external code to a single account. Preconditions: the debit and credit GL accounts must exist. Required inputs: eventType (max 100 chars), debitAccountId (UUID) and creditAccountId (UUID); organizationId is optional (null makes the default global) and active defaults to true. Emits an ACCOUNTING_DEFAULT_MAPPING_CREATE event. Returns 400 when a referenced GL account cannot be resolved. 
+     * Create Default GL Mapping
      */
     async createDefaultMappingRaw(requestParameters: CreateDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DefaultGLMappingResponse>> {
         if (requestParameters['defaultGLMappingRequest'] == null) {
@@ -103,8 +103,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new default GL account mapping for an event type
-     * Create default GL mapping
+     * Creates a fallback debit and credit account pair for an event type, used by the posting engine when no explicit posting rule matches; resolution order is explicit rule, then org-scoped default, then global default, then UNMAPPED_EVENT_TYPE failure. Use this tool to guarantee an event type always posts somewhere; do not use createGLMapping, which maps a source-system external code to a single account. Preconditions: the debit and credit GL accounts must exist. Required inputs: eventType (max 100 chars), debitAccountId (UUID) and creditAccountId (UUID); organizationId is optional (null makes the default global) and active defaults to true. Emits an ACCOUNTING_DEFAULT_MAPPING_CREATE event. Returns 400 when a referenced GL account cannot be resolved. 
+     * Create Default GL Mapping
      */
     async createDefaultMapping(requestParameters: CreateDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DefaultGLMappingResponse> {
         const response = await this.createDefaultMappingRaw(requestParameters, initOverrides);
@@ -112,8 +112,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Soft delete (deactivate) a default GL mapping
-     * Deactivate default GL mapping
+     * Soft deletes a default GL mapping by marking it inactive; the row is retained for history and stops participating in fallback resolution. Use this tool to retire a fallback pair; do not use updateDefaultMapping with active=false only when other fields must change at the same time, and note there is no reactivation endpoint other than updateDefaultMapping. Preconditions: the default mapping must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_DEFAULT_MAPPING_DELETE event. Returns 400 when no default mapping exists for the supplied id (mapped as VALIDATION_ERROR, not 404), and 204 with no body on success. 
+     * Deactivate Default GL Mapping
      */
     async deactivateDefaultMappingRaw(requestParameters: DeactivateDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -146,16 +146,16 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Soft delete (deactivate) a default GL mapping
-     * Deactivate default GL mapping
+     * Soft deletes a default GL mapping by marking it inactive; the row is retained for history and stops participating in fallback resolution. Use this tool to retire a fallback pair; do not use updateDefaultMapping with active=false only when other fields must change at the same time, and note there is no reactivation endpoint other than updateDefaultMapping. Preconditions: the default mapping must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_DEFAULT_MAPPING_DELETE event. Returns 400 when no default mapping exists for the supplied id (mapped as VALIDATION_ERROR, not 404), and 204 with no body on success. 
+     * Deactivate Default GL Mapping
      */
     async deactivateDefaultMapping(requestParameters: DeactivateDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deactivateDefaultMappingRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve a default GL mapping by identifier
-     * Get default GL mapping
+     * Returns one default GL mapping with its event type, debit and credit accounts, scope and active flag. Use this tool when the mapping id is already known; use searchDefaultMappings or listDefaultMappings instead when hunting by event type or organization. Preconditions: the default mapping must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when no default mapping exists for the supplied id (mapped as VALIDATION_ERROR, not 404). 
+     * Get Default GL Mapping
      */
     async getDefaultMappingRaw(requestParameters: GetDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DefaultGLMappingResponse>> {
         if (requestParameters['id'] == null) {
@@ -188,8 +188,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a default GL mapping by identifier
-     * Get default GL mapping
+     * Returns one default GL mapping with its event type, debit and credit accounts, scope and active flag. Use this tool when the mapping id is already known; use searchDefaultMappings or listDefaultMappings instead when hunting by event type or organization. Preconditions: the default mapping must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when no default mapping exists for the supplied id (mapped as VALIDATION_ERROR, not 404). 
+     * Get Default GL Mapping
      */
     async getDefaultMapping(requestParameters: GetDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DefaultGLMappingResponse> {
         const response = await this.getDefaultMappingRaw(requestParameters, initOverrides);
@@ -197,8 +197,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated list of default GL mappings
-     * List default GL mappings
+     * Lists all default GL mappings as a paginated projection, including inactive ones. Use this tool to browse the fallback catalog; use searchDefaultMappings instead to filter by event type or organization, or resolveDefaultMapping to find the one that would apply to an event. Preconditions: none beyond the caller holding accounting:default-mapping:view. Required inputs: none; page defaults to 0 and size to 20. Emits an ACCOUNTING_DEFAULT_MAPPING_LIST audit event; no state changes. Returns 200 with an empty page when no default mappings exist. 
+     * List Default GL Mappings
      */
     async listDefaultMappingsRaw(requestParameters: ListDefaultMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DefaultGLMappingListResponse>> {
         const queryParameters: any = {};
@@ -232,8 +232,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated list of default GL mappings
-     * List default GL mappings
+     * Lists all default GL mappings as a paginated projection, including inactive ones. Use this tool to browse the fallback catalog; use searchDefaultMappings instead to filter by event type or organization, or resolveDefaultMapping to find the one that would apply to an event. Preconditions: none beyond the caller holding accounting:default-mapping:view. Required inputs: none; page defaults to 0 and size to 20. Emits an ACCOUNTING_DEFAULT_MAPPING_LIST audit event; no state changes. Returns 200 with an empty page when no default mappings exist. 
+     * List Default GL Mappings
      */
     async listDefaultMappings(requestParameters: ListDefaultMappingsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DefaultGLMappingListResponse> {
         const response = await this.listDefaultMappingsRaw(requestParameters, initOverrides);
@@ -241,10 +241,10 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all global default GL mappings (organizationId IS NULL)
-     * List global default mappings
+     * Returns all global default GL mappings, meaning those with no organizationId, which act as the last fallback before an event type fails as UNMAPPED_EVENT_TYPE. Use this tool to audit the global safety net; use searchDefaultMappings instead when org-scoped mappings are also of interest. Preconditions: none beyond the caller holding accounting:default-mapping:view. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no global defaults are configured. 
+     * List Global Default Mappings
      */
-    async listGlobalDefaultsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<DefaultGLMappingResponse>>> {
+    async listGlobalDefaultMappingsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<DefaultGLMappingResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -268,17 +268,17 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all global default GL mappings (organizationId IS NULL)
-     * List global default mappings
+     * Returns all global default GL mappings, meaning those with no organizationId, which act as the last fallback before an event type fails as UNMAPPED_EVENT_TYPE. Use this tool to audit the global safety net; use searchDefaultMappings instead when org-scoped mappings are also of interest. Preconditions: none beyond the caller holding accounting:default-mapping:view. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no global defaults are configured. 
+     * List Global Default Mappings
      */
-    async listGlobalDefaults(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<DefaultGLMappingResponse>> {
-        const response = await this.listGlobalDefaultsRaw(initOverrides);
+    async listGlobalDefaultMappings(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<DefaultGLMappingResponse>> {
+        const response = await this.listGlobalDefaultMappingsRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Find the most specific active default mapping for an event type and organization
-     * Resolve default mapping for event
+     * Finds the most specific active default mapping for an event type, preferring an org-scoped mapping over the global one. Use this tool to see which fallback the posting engine would use for an event; do not use searchDefaultMappings, which lists matches without applying resolution priority. Preconditions: an active default mapping must exist for the event type at org or global scope. Required inputs: eventType as a query parameter; organizationId (UUID) is optional and widens resolution to that org\'s mappings first. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no active default mapping resolves for the event type. 
+     * Resolve Default Mapping For Event
      */
     async resolveDefaultMappingRaw(requestParameters: ResolveDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DefaultGLMappingResponse>> {
         if (requestParameters['eventType'] == null) {
@@ -319,8 +319,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Find the most specific active default mapping for an event type and organization
-     * Resolve default mapping for event
+     * Finds the most specific active default mapping for an event type, preferring an org-scoped mapping over the global one. Use this tool to see which fallback the posting engine would use for an event; do not use searchDefaultMappings, which lists matches without applying resolution priority. Preconditions: an active default mapping must exist for the event type at org or global scope. Required inputs: eventType as a query parameter; organizationId (UUID) is optional and widens resolution to that org\'s mappings first. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no active default mapping resolves for the event type. 
+     * Resolve Default Mapping For Event
      */
     async resolveDefaultMapping(requestParameters: ResolveDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DefaultGLMappingResponse> {
         const response = await this.resolveDefaultMappingRaw(requestParameters, initOverrides);
@@ -328,8 +328,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Find default GL mappings by event type or organization
-     * Search default GL mappings
+     * Finds default GL mappings filtered by event type or organization; when both filters are omitted it returns the global defaults only. Use this tool to filter the fallback catalog; do not use resolveDefaultMapping, which applies the org-then-global resolution priority to pick the single winning mapping. Preconditions: none; eventType takes precedence when both filters are supplied. Required inputs: none; eventType and organizationId are optional query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches the filter. 
+     * Search Default GL Mappings
      */
     async searchDefaultMappingsRaw(requestParameters: SearchDefaultMappingsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<DefaultGLMappingResponse>>> {
         const queryParameters: any = {};
@@ -363,8 +363,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Find default GL mappings by event type or organization
-     * Search default GL mappings
+     * Finds default GL mappings filtered by event type or organization; when both filters are omitted it returns the global defaults only. Use this tool to filter the fallback catalog; do not use resolveDefaultMapping, which applies the org-then-global resolution priority to pick the single winning mapping. Preconditions: none; eventType takes precedence when both filters are supplied. Required inputs: none; eventType and organizationId are optional query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches the filter. 
+     * Search Default GL Mappings
      */
     async searchDefaultMappings(requestParameters: SearchDefaultMappingsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<DefaultGLMappingResponse>> {
         const response = await this.searchDefaultMappingsRaw(requestParameters, initOverrides);
@@ -372,8 +372,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing default GL account mapping
-     * Update default GL mapping
+     * Updates an existing default GL mapping\'s event type, accounts, scope, description or active flag. Use this tool to repoint or rescope an existing fallback; do not use createDefaultMapping, which adds a new one, or deactivateDefaultMapping, which soft deletes. Preconditions: the default mapping must exist. Required inputs: id (UUID) as a path parameter plus the full replacement body with eventType, debitAccountId and creditAccountId; organizationId null means global scope. Emits an ACCOUNTING_DEFAULT_MAPPING_UPDATE event; future postings resolve against the updated pair while already-posted entries are untouched. Returns 400 when no default mapping exists for the supplied id (mapped as VALIDATION_ERROR, not 404). 
+     * Update Default GL Mapping
      */
     async updateDefaultMappingRaw(requestParameters: UpdateDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DefaultGLMappingResponse>> {
         if (requestParameters['id'] == null) {
@@ -416,8 +416,8 @@ export class DefaultGLMappingsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing default GL account mapping
-     * Update default GL mapping
+     * Updates an existing default GL mapping\'s event type, accounts, scope, description or active flag. Use this tool to repoint or rescope an existing fallback; do not use createDefaultMapping, which adds a new one, or deactivateDefaultMapping, which soft deletes. Preconditions: the default mapping must exist. Required inputs: id (UUID) as a path parameter plus the full replacement body with eventType, debitAccountId and creditAccountId; organizationId null means global scope. Emits an ACCOUNTING_DEFAULT_MAPPING_UPDATE event; future postings resolve against the updated pair while already-posted entries are untouched. Returns 400 when no default mapping exists for the supplied id (mapped as VALIDATION_ERROR, not 404). 
+     * Update Default GL Mapping
      */
     async updateDefaultMapping(requestParameters: UpdateDefaultMappingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DefaultGLMappingResponse> {
         const response = await this.updateDefaultMappingRaw(requestParameters, initOverrides);

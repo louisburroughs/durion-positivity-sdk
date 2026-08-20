@@ -20,23 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface CompletionPreconditionsResponse {
     /**
-     * Workorder identifier
-     * @type {string}
+     * Blocking reasons that prevent completion
+     * @type {Array<string>}
      * @memberof CompletionPreconditionsResponse
      */
-    workorderId?: string;
+    blockingReasons?: Array<string>;
     /**
      * Whether the workorder can be completed
      * @type {boolean}
      * @memberof CompletionPreconditionsResponse
      */
-    canComplete?: boolean;
-    /**
-     * Current status
-     * @type {string}
-     * @memberof CompletionPreconditionsResponse
-     */
-    currentStatus?: string;
+    canComplete: boolean;
     /**
      * Checklist items evaluated before completion
      * @type {Array<string>}
@@ -44,29 +38,11 @@ export interface CompletionPreconditionsResponse {
      */
     checklistItems?: Array<string>;
     /**
-     * Blocking reasons that prevent completion
-     * @type {Array<string>}
+     * Current status
+     * @type {string}
      * @memberof CompletionPreconditionsResponse
      */
-    blockingReasons?: Array<string>;
-    /**
-     * Number of unresolved approval-gated change requests
-     * @type {number}
-     * @memberof CompletionPreconditionsResponse
-     */
-    unresolvedApprovalGatedChangeRequests?: number;
-    /**
-     * Number of service items not in COMPLETED/CANCELLED status
-     * @type {number}
-     * @memberof CompletionPreconditionsResponse
-     */
-    nonTerminalServiceItems?: number;
-    /**
-     * Number of part items not in COMPLETED/CANCELLED status
-     * @type {number}
-     * @memberof CompletionPreconditionsResponse
-     */
-    nonTerminalPartItems?: number;
+    currentStatus: string;
     /**
      * Whether emergency denial acknowledgment requirements are satisfied
      * @type {boolean}
@@ -79,12 +55,39 @@ export interface CompletionPreconditionsResponse {
      * @memberof CompletionPreconditionsResponse
      */
     hasBillableItems?: boolean;
+    /**
+     * Number of part items not in COMPLETED/CANCELLED status
+     * @type {number}
+     * @memberof CompletionPreconditionsResponse
+     */
+    nonTerminalPartItems?: number;
+    /**
+     * Number of service items not in COMPLETED/CANCELLED status
+     * @type {number}
+     * @memberof CompletionPreconditionsResponse
+     */
+    nonTerminalServiceItems?: number;
+    /**
+     * Number of unresolved approval-gated change requests
+     * @type {number}
+     * @memberof CompletionPreconditionsResponse
+     */
+    unresolvedApprovalGatedChangeRequests?: number;
+    /**
+     * Workorder identifier
+     * @type {string}
+     * @memberof CompletionPreconditionsResponse
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the CompletionPreconditionsResponse interface.
  */
 export function instanceOfCompletionPreconditionsResponse(value: object): boolean {
+    if (!('canComplete' in value)) return false;
+    if (!('currentStatus' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -98,16 +101,16 @@ export function CompletionPreconditionsResponseFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'canComplete': json['canComplete'] == null ? undefined : json['canComplete'],
-        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
-        'checklistItems': json['checklistItems'] == null ? undefined : json['checklistItems'],
         'blockingReasons': json['blockingReasons'] == null ? undefined : json['blockingReasons'],
-        'unresolvedApprovalGatedChangeRequests': json['unresolvedApprovalGatedChangeRequests'] == null ? undefined : json['unresolvedApprovalGatedChangeRequests'],
-        'nonTerminalServiceItems': json['nonTerminalServiceItems'] == null ? undefined : json['nonTerminalServiceItems'],
-        'nonTerminalPartItems': json['nonTerminalPartItems'] == null ? undefined : json['nonTerminalPartItems'],
+        'canComplete': json['canComplete'],
+        'checklistItems': json['checklistItems'] == null ? undefined : json['checklistItems'],
+        'currentStatus': json['currentStatus'],
         'emergencyDenialAcknowledged': json['emergencyDenialAcknowledged'] == null ? undefined : json['emergencyDenialAcknowledged'],
         'hasBillableItems': json['hasBillableItems'] == null ? undefined : json['hasBillableItems'],
+        'nonTerminalPartItems': json['nonTerminalPartItems'] == null ? undefined : json['nonTerminalPartItems'],
+        'nonTerminalServiceItems': json['nonTerminalServiceItems'] == null ? undefined : json['nonTerminalServiceItems'],
+        'unresolvedApprovalGatedChangeRequests': json['unresolvedApprovalGatedChangeRequests'] == null ? undefined : json['unresolvedApprovalGatedChangeRequests'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -117,16 +120,16 @@ export function CompletionPreconditionsResponseToJSON(value?: CompletionPrecondi
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'canComplete': value['canComplete'],
-        'currentStatus': value['currentStatus'],
-        'checklistItems': value['checklistItems'],
         'blockingReasons': value['blockingReasons'],
-        'unresolvedApprovalGatedChangeRequests': value['unresolvedApprovalGatedChangeRequests'],
-        'nonTerminalServiceItems': value['nonTerminalServiceItems'],
-        'nonTerminalPartItems': value['nonTerminalPartItems'],
+        'canComplete': value['canComplete'],
+        'checklistItems': value['checklistItems'],
+        'currentStatus': value['currentStatus'],
         'emergencyDenialAcknowledged': value['emergencyDenialAcknowledged'],
         'hasBillableItems': value['hasBillableItems'],
+        'nonTerminalPartItems': value['nonTerminalPartItems'],
+        'nonTerminalServiceItems': value['nonTerminalServiceItems'],
+        'unresolvedApprovalGatedChangeRequests': value['unresolvedApprovalGatedChangeRequests'],
+        'workorderId': value['workorderId'],
     };
 }
 

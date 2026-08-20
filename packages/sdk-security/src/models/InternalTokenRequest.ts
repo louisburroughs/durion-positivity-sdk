@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface InternalTokenRequest {
     /**
-     * User identifier (subject claim)
-     * @type {string}
-     * @memberof InternalTokenRequest
-     */
-    subject: string;
-    /**
      * Optional set of role names to include in token
      * @type {Set<string>}
      * @memberof InternalTokenRequest
      */
     roles?: Set<string>;
+    /**
+     * User identifier (subject claim)
+     * @type {string}
+     * @memberof InternalTokenRequest
+     */
+    subject: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function InternalTokenRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'subject': json['subject'],
         'roles': json['roles'] == null ? undefined : json['roles'],
+        'subject': json['subject'],
     };
 }
 
@@ -62,8 +62,8 @@ export function InternalTokenRequestToJSON(value?: InternalTokenRequest | null):
     }
     return {
         
-        'subject': value['subject'],
         'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
+        'subject': value['subject'],
     };
 }
 

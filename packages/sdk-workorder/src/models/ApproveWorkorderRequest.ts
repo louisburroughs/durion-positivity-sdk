@@ -21,7 +21,7 @@ import {
 } from './LineItemApprovalDto';
 
 /**
- * Request to approve a work order with customer signature
+ * Approval request with customer ID and signature capture
  * @export
  * @interface ApproveWorkorderRequest
  */
@@ -32,6 +32,18 @@ export interface ApproveWorkorderRequest {
      * @memberof ApproveWorkorderRequest
      */
     customerId: string;
+    /**
+     * Individual line item approvals/rejections. If omitted, all items are considered approved.
+     * @type {Array<LineItemApprovalDto>}
+     * @memberof ApproveWorkorderRequest
+     */
+    lineItemApprovals?: Array<LineItemApprovalDto>;
+    /**
+     * Additional notes or comments
+     * @type {string}
+     * @memberof ApproveWorkorderRequest
+     */
+    notes?: string;
     /**
      * Base64-encoded signature image data (PNG format recommended)
      * @type {string}
@@ -50,18 +62,6 @@ export interface ApproveWorkorderRequest {
      * @memberof ApproveWorkorderRequest
      */
     signerName?: string;
-    /**
-     * Additional notes or comments
-     * @type {string}
-     * @memberof ApproveWorkorderRequest
-     */
-    notes?: string;
-    /**
-     * Individual line item approvals/rejections. If omitted, all items are considered approved.
-     * @type {Array<LineItemApprovalDto>}
-     * @memberof ApproveWorkorderRequest
-     */
-    lineItemApprovals?: Array<LineItemApprovalDto>;
 }
 
 /**
@@ -83,11 +83,11 @@ export function ApproveWorkorderRequestFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'customerId': json['customerId'],
+        'lineItemApprovals': json['lineItemApprovals'] == null ? undefined : ((json['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoFromJSON)),
+        'notes': json['notes'] == null ? undefined : json['notes'],
         'signatureData': json['signatureData'] == null ? undefined : json['signatureData'],
         'signatureMimeType': json['signatureMimeType'] == null ? undefined : json['signatureMimeType'],
         'signerName': json['signerName'] == null ? undefined : json['signerName'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
-        'lineItemApprovals': json['lineItemApprovals'] == null ? undefined : ((json['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoFromJSON)),
     };
 }
 
@@ -98,11 +98,11 @@ export function ApproveWorkorderRequestToJSON(value?: ApproveWorkorderRequest | 
     return {
         
         'customerId': value['customerId'],
+        'lineItemApprovals': value['lineItemApprovals'] == null ? undefined : ((value['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoToJSON)),
+        'notes': value['notes'],
         'signatureData': value['signatureData'],
         'signatureMimeType': value['signatureMimeType'],
         'signerName': value['signerName'],
-        'notes': value['notes'],
-        'lineItemApprovals': value['lineItemApprovals'] == null ? undefined : ((value['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoToJSON)),
     };
 }
 

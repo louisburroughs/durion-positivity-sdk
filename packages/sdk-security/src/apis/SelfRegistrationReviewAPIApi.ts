@@ -28,16 +28,16 @@ import {
     SelfRegistrationReviewCaseResponseToJSON,
 } from '../models/index';
 
-export interface GetCaseRequest {
+export interface GetSelfRegistrationReviewCaseRequest {
     caseId: string;
 }
 
-export interface ListCasesRequest {
-    status?: ListCasesStatusEnum;
-    caseType?: ListCasesCaseTypeEnum;
+export interface ListSelfRegistrationReviewCasesRequest {
+    status?: ListSelfRegistrationReviewCasesStatusEnum;
+    caseType?: ListSelfRegistrationReviewCasesCaseTypeEnum;
 }
 
-export interface ResolveCaseRequest {
+export interface ResolveSelfRegistrationReviewCaseOperationRequest {
     caseId: string;
     resolveSelfRegistrationReviewCaseRequest: ResolveSelfRegistrationReviewCaseRequest;
 }
@@ -48,14 +48,14 @@ export interface ResolveCaseRequest {
 export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns the details of a blocked self-registration case.
-     * Get a self-registration review case
+     * Returns the full detail of one blocked self-registration case, including reason codes, CRM match summary, and any linked person or user ids. Use this tool when the case id is known, typically from the referenceId of a 409 selfRegisterUser conflict; use listSelfRegistrationReviewCases instead to browse the queue. Preconditions: the caller must hold security:user_account_state:view and the case must exist. Required inputs: caseId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no review case exists for the supplied id. 
+     * Get One Self-Registration Review Case
      */
-    async getCaseRaw(requestParameters: GetCaseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SelfRegistrationReviewCaseResponse>> {
+    async getSelfRegistrationReviewCaseRaw(requestParameters: GetSelfRegistrationReviewCaseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SelfRegistrationReviewCaseResponse>> {
         if (requestParameters['caseId'] == null) {
             throw new runtime.RequiredError(
                 'caseId',
-                'Required parameter "caseId" was null or undefined when calling getCase().'
+                'Required parameter "caseId" was null or undefined when calling getSelfRegistrationReviewCase().'
             );
         }
 
@@ -82,19 +82,19 @@ export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the details of a blocked self-registration case.
-     * Get a self-registration review case
+     * Returns the full detail of one blocked self-registration case, including reason codes, CRM match summary, and any linked person or user ids. Use this tool when the case id is known, typically from the referenceId of a 409 selfRegisterUser conflict; use listSelfRegistrationReviewCases instead to browse the queue. Preconditions: the caller must hold security:user_account_state:view and the case must exist. Required inputs: caseId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no review case exists for the supplied id. 
+     * Get One Self-Registration Review Case
      */
-    async getCase(requestParameters: GetCaseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SelfRegistrationReviewCaseResponse> {
-        const response = await this.getCaseRaw(requestParameters, initOverrides);
+    async getSelfRegistrationReviewCase(requestParameters: GetSelfRegistrationReviewCaseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SelfRegistrationReviewCaseResponse> {
+        const response = await this.getSelfRegistrationReviewCaseRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns blocked self-registration cases for recovery or identity review.
-     * List self-registration review cases
+     * Returns blocked self-registration review cases, newest first, optionally filtered by status and case type. Use this tool to work the recovery and identity-review queue; use getSelfRegistrationReviewCase instead for one known case. Preconditions: the caller must hold security:user_account_state:view. Required inputs: none are mandatory; status filters on OPEN or RESOLVED and caseType on ACCOUNT_RECOVERY or IDENTITY_REVIEW. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches, and 400 when a filter value is not a valid enum constant. 
+     * List Self-Registration Review Cases
      */
-    async listCasesRaw(requestParameters: ListCasesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SelfRegistrationReviewCaseResponse>>> {
+    async listSelfRegistrationReviewCasesRaw(requestParameters: ListSelfRegistrationReviewCasesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SelfRegistrationReviewCaseResponse>>> {
         const queryParameters: any = {};
 
         if (requestParameters['status'] != null) {
@@ -126,30 +126,30 @@ export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns blocked self-registration cases for recovery or identity review.
-     * List self-registration review cases
+     * Returns blocked self-registration review cases, newest first, optionally filtered by status and case type. Use this tool to work the recovery and identity-review queue; use getSelfRegistrationReviewCase instead for one known case. Preconditions: the caller must hold security:user_account_state:view. Required inputs: none are mandatory; status filters on OPEN or RESOLVED and caseType on ACCOUNT_RECOVERY or IDENTITY_REVIEW. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches, and 400 when a filter value is not a valid enum constant. 
+     * List Self-Registration Review Cases
      */
-    async listCases(requestParameters: ListCasesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SelfRegistrationReviewCaseResponse>> {
-        const response = await this.listCasesRaw(requestParameters, initOverrides);
+    async listSelfRegistrationReviewCases(requestParameters: ListSelfRegistrationReviewCasesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SelfRegistrationReviewCaseResponse>> {
+        const response = await this.listSelfRegistrationReviewCasesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Marks a blocked self-registration case as resolved after recovery or manual review.
-     * Resolve a self-registration review case
+     * Marks a blocked self-registration case RESOLVED, recording the resolving operator, timestamp, and resolution notes. Use this tool after the underlying recovery or identity review is finished; do not use it to recover the account itself, which is done first with account-state endpoints such as enableUserAccount. Preconditions: the caller must hold security:user_account_state:manage and be authenticated (the resolver is taken from the request principal); the case must exist, and re-resolving an already RESOLVED case overwrites the resolution fields. Required inputs: caseId (UUID) as a path parameter and resolutionNotes, non-blank, in the body. Emits a SECURITY_SELF_REGISTRATION_REVIEW_RESOLVE event. Returns 404 when no review case exists for the supplied id. 
+     * Resolve a Self-Registration Review Case
      */
-    async resolveCaseRaw(requestParameters: ResolveCaseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SelfRegistrationReviewCaseResponse>> {
+    async resolveSelfRegistrationReviewCaseRaw(requestParameters: ResolveSelfRegistrationReviewCaseOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SelfRegistrationReviewCaseResponse>> {
         if (requestParameters['caseId'] == null) {
             throw new runtime.RequiredError(
                 'caseId',
-                'Required parameter "caseId" was null or undefined when calling resolveCase().'
+                'Required parameter "caseId" was null or undefined when calling resolveSelfRegistrationReviewCase().'
             );
         }
 
         if (requestParameters['resolveSelfRegistrationReviewCaseRequest'] == null) {
             throw new runtime.RequiredError(
                 'resolveSelfRegistrationReviewCaseRequest',
-                'Required parameter "resolveSelfRegistrationReviewCaseRequest" was null or undefined when calling resolveCase().'
+                'Required parameter "resolveSelfRegistrationReviewCaseRequest" was null or undefined when calling resolveSelfRegistrationReviewCase().'
             );
         }
 
@@ -179,11 +179,11 @@ export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a blocked self-registration case as resolved after recovery or manual review.
-     * Resolve a self-registration review case
+     * Marks a blocked self-registration case RESOLVED, recording the resolving operator, timestamp, and resolution notes. Use this tool after the underlying recovery or identity review is finished; do not use it to recover the account itself, which is done first with account-state endpoints such as enableUserAccount. Preconditions: the caller must hold security:user_account_state:manage and be authenticated (the resolver is taken from the request principal); the case must exist, and re-resolving an already RESOLVED case overwrites the resolution fields. Required inputs: caseId (UUID) as a path parameter and resolutionNotes, non-blank, in the body. Emits a SECURITY_SELF_REGISTRATION_REVIEW_RESOLVE event. Returns 404 when no review case exists for the supplied id. 
+     * Resolve a Self-Registration Review Case
      */
-    async resolveCase(requestParameters: ResolveCaseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SelfRegistrationReviewCaseResponse> {
-        const response = await this.resolveCaseRaw(requestParameters, initOverrides);
+    async resolveSelfRegistrationReviewCase(requestParameters: ResolveSelfRegistrationReviewCaseOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SelfRegistrationReviewCaseResponse> {
+        const response = await this.resolveSelfRegistrationReviewCaseRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -193,7 +193,7 @@ export class SelfRegistrationReviewAPIApi extends runtime.BaseAPI {
   * @export
   * @enum {string}
   */
-export enum ListCasesStatusEnum {
+export enum ListSelfRegistrationReviewCasesStatusEnum {
     Open = 'OPEN',
     Resolved = 'RESOLVED'
 }
@@ -201,7 +201,7 @@ export enum ListCasesStatusEnum {
   * @export
   * @enum {string}
   */
-export enum ListCasesCaseTypeEnum {
+export enum ListSelfRegistrationReviewCasesCaseTypeEnum {
     AccountRecovery = 'ACCOUNT_RECOVERY',
     IdentityReview = 'IDENTITY_REVIEW'
 }

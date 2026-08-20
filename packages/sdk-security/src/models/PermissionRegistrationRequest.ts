@@ -21,31 +21,31 @@ import {
 } from './PermissionDefinition';
 
 /**
- * 
+ * Request to register the permission catalog published by a domain service
  * @export
  * @interface PermissionRegistrationRequest
  */
 export interface PermissionRegistrationRequest {
     /**
-     * 
+     * Domain that owns the permissions being registered
      * @type {string}
      * @memberof PermissionRegistrationRequest
      */
-    domain?: string;
+    domain: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PermissionRegistrationRequest
-     */
-    serviceName?: string;
-    /**
-     * 
+     * Permission definitions to register or update
      * @type {Array<PermissionDefinition>}
      * @memberof PermissionRegistrationRequest
      */
-    permissions?: Array<PermissionDefinition>;
+    permissions: Array<PermissionDefinition>;
     /**
-     * 
+     * Service identifier registering the permissions
+     * @type {string}
+     * @memberof PermissionRegistrationRequest
+     */
+    serviceName: string;
+    /**
+     * Manifest schema version
      * @type {string}
      * @memberof PermissionRegistrationRequest
      */
@@ -56,6 +56,9 @@ export interface PermissionRegistrationRequest {
  * Check if a given object implements the PermissionRegistrationRequest interface.
  */
 export function instanceOfPermissionRegistrationRequest(value: object): boolean {
+    if (!('domain' in value)) return false;
+    if (!('permissions' in value)) return false;
+    if (!('serviceName' in value)) return false;
     return true;
 }
 
@@ -69,9 +72,9 @@ export function PermissionRegistrationRequestFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'domain': json['domain'] == null ? undefined : json['domain'],
-        'serviceName': json['serviceName'] == null ? undefined : json['serviceName'],
-        'permissions': json['permissions'] == null ? undefined : ((json['permissions'] as Array<any>).map(PermissionDefinitionFromJSON)),
+        'domain': json['domain'],
+        'permissions': ((json['permissions'] as Array<any>).map(PermissionDefinitionFromJSON)),
+        'serviceName': json['serviceName'],
         'version': json['version'] == null ? undefined : json['version'],
     };
 }
@@ -83,8 +86,8 @@ export function PermissionRegistrationRequestToJSON(value?: PermissionRegistrati
     return {
         
         'domain': value['domain'],
+        'permissions': ((value['permissions'] as Array<any>).map(PermissionDefinitionToJSON)),
         'serviceName': value['serviceName'],
-        'permissions': value['permissions'] == null ? undefined : ((value['permissions'] as Array<any>).map(PermissionDefinitionToJSON)),
         'version': value['version'],
     };
 }

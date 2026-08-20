@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface ExportJobRequest {
     /**
+     * How the export will be delivered
+     * @type {string}
+     * @memberof ExportJobRequest
+     */
+    deliveryMode?: string;
+    /**
      * Type of export
      * @type {string}
      * @memberof ExportJobRequest
@@ -37,12 +43,6 @@ export interface ExportJobRequest {
      * @memberof ExportJobRequest
      */
     format: string;
-    /**
-     * How the export will be delivered
-     * @type {string}
-     * @memberof ExportJobRequest
-     */
-    deliveryMode?: string;
 }
 
 /**
@@ -64,10 +64,10 @@ export function ExportJobRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'deliveryMode': json['deliveryMode'] == null ? undefined : json['deliveryMode'],
         'exportType': json['exportType'],
         'filters': json['filters'] == null ? undefined : json['filters'],
         'format': json['format'],
-        'deliveryMode': json['deliveryMode'] == null ? undefined : json['deliveryMode'],
     };
 }
 
@@ -77,10 +77,10 @@ export function ExportJobRequestToJSON(value?: ExportJobRequest | null): any {
     }
     return {
         
+        'deliveryMode': value['deliveryMode'],
         'exportType': value['exportType'],
         'filters': value['filters'],
         'format': value['format'],
-        'deliveryMode': value['deliveryMode'],
     };
 }
 

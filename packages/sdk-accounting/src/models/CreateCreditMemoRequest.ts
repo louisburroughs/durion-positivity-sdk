@@ -14,43 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a credit memo against a finalized invoice
  * @export
  * @interface CreateCreditMemoRequest
  */
 export interface CreateCreditMemoRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateCreditMemoRequest
-     */
-    originalInvoiceId: string;
-    /**
-     * 
+     * Credit amount; must not exceed the invoice outstanding balance
      * @type {number}
      * @memberof CreateCreditMemoRequest
      */
     creditAmount: number;
     /**
-     * 
-     * @type {string}
-     * @memberof CreateCreditMemoRequest
-     */
-    reasonCode: string;
-    /**
-     * 
+     * Optional justification note explaining the credit
      * @type {string}
      * @memberof CreateCreditMemoRequest
      */
     justificationNote?: string;
+    /**
+     * Identifier of the finalized invoice the credit memo references
+     * @type {string}
+     * @memberof CreateCreditMemoRequest
+     */
+    originalInvoiceId: string;
+    /**
+     * Reason code for the credit memo (mandatory for audit)
+     * @type {string}
+     * @memberof CreateCreditMemoRequest
+     */
+    reasonCode: string;
 }
 
 /**
  * Check if a given object implements the CreateCreditMemoRequest interface.
  */
 export function instanceOfCreateCreditMemoRequest(value: object): boolean {
-    if (!('originalInvoiceId' in value)) return false;
     if (!('creditAmount' in value)) return false;
+    if (!('originalInvoiceId' in value)) return false;
     if (!('reasonCode' in value)) return false;
     return true;
 }
@@ -65,10 +65,10 @@ export function CreateCreditMemoRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'originalInvoiceId': json['originalInvoiceId'],
         'creditAmount': json['creditAmount'],
-        'reasonCode': json['reasonCode'],
         'justificationNote': json['justificationNote'] == null ? undefined : json['justificationNote'],
+        'originalInvoiceId': json['originalInvoiceId'],
+        'reasonCode': json['reasonCode'],
     };
 }
 
@@ -78,10 +78,10 @@ export function CreateCreditMemoRequestToJSON(value?: CreateCreditMemoRequest | 
     }
     return {
         
-        'originalInvoiceId': value['originalInvoiceId'],
         'creditAmount': value['creditAmount'],
-        'reasonCode': value['reasonCode'],
         'justificationNote': value['justificationNote'],
+        'originalInvoiceId': value['originalInvoiceId'],
+        'reasonCode': value['reasonCode'],
     };
 }
 

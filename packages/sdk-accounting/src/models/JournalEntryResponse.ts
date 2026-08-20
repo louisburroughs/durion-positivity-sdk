@@ -27,90 +27,6 @@ import {
  */
 export interface JournalEntryResponse {
     /**
-     * Journal entry UUID
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    journalEntryId?: string;
-    /**
-     * Journal entry status
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    status?: JournalEntryResponseStatusEnum;
-    /**
-     * Transaction date and time
-     * @type {Date}
-     * @memberof JournalEntryResponse
-     */
-    transactionDate?: Date;
-    /**
-     * Journal entry description
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    description?: string;
-    /**
-     * Source event UUID
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    sourceEventId?: string;
-    /**
-     * Source event type
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    sourceEventType?: string;
-    /**
-     * Posting rule set UUID
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    postingRuleSetId?: string;
-    /**
-     * Posting rule version UUID
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    postingRuleVersionId?: string;
-    /**
-     * Original journal entry UUID when this entry is a reversal
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    reversalJournalEntryId?: string;
-    /**
-     * Reversal journal entry UUID when this entry has been reversed
-     * @type {string}
-     * @memberof JournalEntryResponse
-     */
-    reversedByJournalEntryId?: string;
-    /**
-     * Total debits
-     * @type {number}
-     * @memberof JournalEntryResponse
-     */
-    totalDebits?: number;
-    /**
-     * Total credits
-     * @type {number}
-     * @memberof JournalEntryResponse
-     */
-    totalCredits?: number;
-    /**
-     * Whether total debits equal total credits
-     * @type {boolean}
-     * @memberof JournalEntryResponse
-     */
-    isBalanced?: boolean;
-    /**
-     * Journal entry lines
-     * @type {Array<JournalEntryLineResponse>}
-     * @memberof JournalEntryResponse
-     */
-    lines?: Array<JournalEntryLineResponse>;
-    /**
      * Created timestamp
      * @type {Date}
      * @memberof JournalEntryResponse
@@ -122,6 +38,36 @@ export interface JournalEntryResponse {
      * @memberof JournalEntryResponse
      */
     createdBy?: string;
+    /**
+     * Journal entry description
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    description?: string;
+    /**
+     * Human-readable posted-entry number in the format JE-{YYYYMM}-{seq}, sequential within the entry's transaction month and assigned at posting time. Null for DRAFT and PENDING entries and for entries posted before numbering existed.
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    entryNumber?: string;
+    /**
+     * Whether total debits equal total credits
+     * @type {boolean}
+     * @memberof JournalEntryResponse
+     */
+    isBalanced?: boolean;
+    /**
+     * Journal entry UUID
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    journalEntryId?: string;
+    /**
+     * Journal entry lines
+     * @type {Array<JournalEntryLineResponse>}
+     * @memberof JournalEntryResponse
+     */
+    lines?: Array<JournalEntryLineResponse>;
     /**
      * Last modified timestamp
      * @type {Date}
@@ -147,11 +93,71 @@ export interface JournalEntryResponse {
      */
     postedBy?: string;
     /**
+     * Posting rule set UUID
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    postingRuleSetId?: string;
+    /**
+     * Posting rule version UUID
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    postingRuleVersionId?: string;
+    /**
+     * Original journal entry UUID when this entry is a reversal
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    reversalJournalEntryId?: string;
+    /**
      * Reversed timestamp
      * @type {Date}
      * @memberof JournalEntryResponse
      */
     reversedAt?: Date;
+    /**
+     * Reversal journal entry UUID when this entry has been reversed
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    reversedByJournalEntryId?: string;
+    /**
+     * Source event UUID
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    sourceEventId?: string;
+    /**
+     * Source event type
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    sourceEventType?: string;
+    /**
+     * Journal entry status
+     * @type {string}
+     * @memberof JournalEntryResponse
+     */
+    status?: JournalEntryResponseStatusEnum;
+    /**
+     * Total credits
+     * @type {number}
+     * @memberof JournalEntryResponse
+     */
+    totalCredits?: number;
+    /**
+     * Total debits
+     * @type {number}
+     * @memberof JournalEntryResponse
+     */
+    totalDebits?: number;
+    /**
+     * Transaction date and time
+     * @type {Date}
+     * @memberof JournalEntryResponse
+     */
+    transactionDate?: Date;
 }
 
 /**
@@ -183,27 +189,28 @@ export function JournalEntryResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
-        'description': json['description'] == null ? undefined : json['description'],
-        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
-        'sourceEventType': json['sourceEventType'] == null ? undefined : json['sourceEventType'],
-        'postingRuleSetId': json['postingRuleSetId'] == null ? undefined : json['postingRuleSetId'],
-        'postingRuleVersionId': json['postingRuleVersionId'] == null ? undefined : json['postingRuleVersionId'],
-        'reversalJournalEntryId': json['reversalJournalEntryId'] == null ? undefined : json['reversalJournalEntryId'],
-        'reversedByJournalEntryId': json['reversedByJournalEntryId'] == null ? undefined : json['reversedByJournalEntryId'],
-        'totalDebits': json['totalDebits'] == null ? undefined : json['totalDebits'],
-        'totalCredits': json['totalCredits'] == null ? undefined : json['totalCredits'],
-        'isBalanced': json['isBalanced'] == null ? undefined : json['isBalanced'],
-        'lines': json['lines'] == null ? undefined : ((json['lines'] as Array<any>).map(JournalEntryLineResponseFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'entryNumber': json['entryNumber'] == null ? undefined : json['entryNumber'],
+        'isBalanced': json['isBalanced'] == null ? undefined : json['isBalanced'],
+        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
+        'lines': json['lines'] == null ? undefined : ((json['lines'] as Array<any>).map(JournalEntryLineResponseFromJSON)),
         'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
         'modifiedBy': json['modifiedBy'] == null ? undefined : json['modifiedBy'],
         'postedAt': json['postedAt'] == null ? undefined : (new Date(json['postedAt'])),
         'postedBy': json['postedBy'] == null ? undefined : json['postedBy'],
+        'postingRuleSetId': json['postingRuleSetId'] == null ? undefined : json['postingRuleSetId'],
+        'postingRuleVersionId': json['postingRuleVersionId'] == null ? undefined : json['postingRuleVersionId'],
+        'reversalJournalEntryId': json['reversalJournalEntryId'] == null ? undefined : json['reversalJournalEntryId'],
         'reversedAt': json['reversedAt'] == null ? undefined : (new Date(json['reversedAt'])),
+        'reversedByJournalEntryId': json['reversedByJournalEntryId'] == null ? undefined : json['reversedByJournalEntryId'],
+        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
+        'sourceEventType': json['sourceEventType'] == null ? undefined : json['sourceEventType'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'totalCredits': json['totalCredits'] == null ? undefined : json['totalCredits'],
+        'totalDebits': json['totalDebits'] == null ? undefined : json['totalDebits'],
+        'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
     };
 }
 
@@ -213,27 +220,28 @@ export function JournalEntryResponseToJSON(value?: JournalEntryResponse | null):
     }
     return {
         
-        'journalEntryId': value['journalEntryId'],
-        'status': value['status'],
-        'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString()),
-        'description': value['description'],
-        'sourceEventId': value['sourceEventId'],
-        'sourceEventType': value['sourceEventType'],
-        'postingRuleSetId': value['postingRuleSetId'],
-        'postingRuleVersionId': value['postingRuleVersionId'],
-        'reversalJournalEntryId': value['reversalJournalEntryId'],
-        'reversedByJournalEntryId': value['reversedByJournalEntryId'],
-        'totalDebits': value['totalDebits'],
-        'totalCredits': value['totalCredits'],
-        'isBalanced': value['isBalanced'],
-        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(JournalEntryLineResponseToJSON)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'description': value['description'],
+        'entryNumber': value['entryNumber'],
+        'isBalanced': value['isBalanced'],
+        'journalEntryId': value['journalEntryId'],
+        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(JournalEntryLineResponseToJSON)),
         'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
         'modifiedBy': value['modifiedBy'],
         'postedAt': value['postedAt'] == null ? undefined : ((value['postedAt']).toISOString()),
         'postedBy': value['postedBy'],
+        'postingRuleSetId': value['postingRuleSetId'],
+        'postingRuleVersionId': value['postingRuleVersionId'],
+        'reversalJournalEntryId': value['reversalJournalEntryId'],
         'reversedAt': value['reversedAt'] == null ? undefined : ((value['reversedAt']).toISOString()),
+        'reversedByJournalEntryId': value['reversedByJournalEntryId'],
+        'sourceEventId': value['sourceEventId'],
+        'sourceEventType': value['sourceEventType'],
+        'status': value['status'],
+        'totalCredits': value['totalCredits'],
+        'totalDebits': value['totalDebits'],
+        'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString()),
     };
 }
 

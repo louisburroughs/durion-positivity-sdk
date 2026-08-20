@@ -14,58 +14,58 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a location price override
  * @export
  * @interface LocationPriceOverrideCreateRequestDto
  */
 export interface LocationPriceOverrideCreateRequestDto {
     /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideCreateRequestDto
-     */
-    locationId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideCreateRequestDto
-     */
-    productId: string;
-    /**
-     * 
+     * Base price before override
      * @type {number}
      * @memberof LocationPriceOverrideCreateRequestDto
      */
     basePrice: number;
     /**
-     * 
+     * Item cost used for margin calculation
      * @type {number}
      * @memberof LocationPriceOverrideCreateRequestDto
      */
     cost?: number;
     /**
-     * 
+     * Identifier of the user creating the override
+     * @type {string}
+     * @memberof LocationPriceOverrideCreateRequestDto
+     */
+    createdByUserId: string;
+    /**
+     * Location identifier the override applies to
+     * @type {string}
+     * @memberof LocationPriceOverrideCreateRequestDto
+     */
+    locationId: string;
+    /**
+     * Requested override price
      * @type {number}
      * @memberof LocationPriceOverrideCreateRequestDto
      */
     overridePrice: number;
     /**
-     * 
+     * Product identifier the override applies to
      * @type {string}
      * @memberof LocationPriceOverrideCreateRequestDto
      */
-    createdByUserId: string;
+    productId: string;
 }
 
 /**
  * Check if a given object implements the LocationPriceOverrideCreateRequestDto interface.
  */
 export function instanceOfLocationPriceOverrideCreateRequestDto(value: object): boolean {
-    if (!('locationId' in value)) return false;
-    if (!('productId' in value)) return false;
     if (!('basePrice' in value)) return false;
-    if (!('overridePrice' in value)) return false;
     if (!('createdByUserId' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('overridePrice' in value)) return false;
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -79,12 +79,12 @@ export function LocationPriceOverrideCreateRequestDtoFromJSONTyped(json: any, ig
     }
     return {
         
-        'locationId': json['locationId'],
-        'productId': json['productId'],
         'basePrice': json['basePrice'],
         'cost': json['cost'] == null ? undefined : json['cost'],
-        'overridePrice': json['overridePrice'],
         'createdByUserId': json['createdByUserId'],
+        'locationId': json['locationId'],
+        'overridePrice': json['overridePrice'],
+        'productId': json['productId'],
     };
 }
 
@@ -94,12 +94,12 @@ export function LocationPriceOverrideCreateRequestDtoToJSON(value?: LocationPric
     }
     return {
         
-        'locationId': value['locationId'],
-        'productId': value['productId'],
         'basePrice': value['basePrice'],
         'cost': value['cost'],
-        'overridePrice': value['overridePrice'],
         'createdByUserId': value['createdByUserId'],
+        'locationId': value['locationId'],
+        'overridePrice': value['overridePrice'],
+        'productId': value['productId'],
     };
 }
 

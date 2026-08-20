@@ -14,71 +14,76 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Party details for a commercial account or individual party
  * @export
  * @interface GetPartyResponse
  */
 export interface GetPartyResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof GetPartyResponse
-     */
-    partyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetPartyResponse
-     */
-    partyType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetPartyResponse
-     */
-    legalName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetPartyResponse
-     */
-    displayName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetPartyResponse
-     */
-    taxId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetPartyResponse
-     */
-    status?: string;
-    /**
-     * 
+     * Billing terms ID
      * @type {string}
      * @memberof GetPartyResponse
      */
     billingTermsId?: string;
     /**
-     * 
+     * Party creation timestamp (ISO 8601)
      * @type {string}
      * @memberof GetPartyResponse
      */
-    createdAt?: string;
+    createdAt: string;
     /**
-     * 
+     * Display/trading name
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    displayName?: string;
+    /**
+     * Legal name of the party
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    legalName: string;
+    /**
+     * Last modification timestamp (ISO 8601)
      * @type {string}
      * @memberof GetPartyResponse
      */
     modifiedAt?: string;
+    /**
+     * Party ID (canonical CRM identifier)
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    partyId: string;
+    /**
+     * Party type discriminator
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    partyType: string;
+    /**
+     * Current status of the party
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    status: string;
+    /**
+     * Tax identification number
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    taxId?: string;
 }
 
 /**
  * Check if a given object implements the GetPartyResponse interface.
  */
 export function instanceOfGetPartyResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('legalName' in value)) return false;
+    if (!('partyId' in value)) return false;
+    if (!('partyType' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -92,15 +97,15 @@ export function GetPartyResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'partyType': json['partyType'] == null ? undefined : json['partyType'],
-        'legalName': json['legalName'] == null ? undefined : json['legalName'],
-        'displayName': json['displayName'] == null ? undefined : json['displayName'],
-        'taxId': json['taxId'] == null ? undefined : json['taxId'],
-        'status': json['status'] == null ? undefined : json['status'],
         'billingTermsId': json['billingTermsId'] == null ? undefined : json['billingTermsId'],
-        'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
+        'createdAt': json['createdAt'],
+        'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'legalName': json['legalName'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : json['modifiedAt'],
+        'partyId': json['partyId'],
+        'partyType': json['partyType'],
+        'status': json['status'],
+        'taxId': json['taxId'] == null ? undefined : json['taxId'],
     };
 }
 
@@ -110,15 +115,15 @@ export function GetPartyResponseToJSON(value?: GetPartyResponse | null): any {
     }
     return {
         
-        'partyId': value['partyId'],
-        'partyType': value['partyType'],
-        'legalName': value['legalName'],
-        'displayName': value['displayName'],
-        'taxId': value['taxId'],
-        'status': value['status'],
         'billingTermsId': value['billingTermsId'],
         'createdAt': value['createdAt'],
+        'displayName': value['displayName'],
+        'legalName': value['legalName'],
         'modifiedAt': value['modifiedAt'],
+        'partyId': value['partyId'],
+        'partyType': value['partyType'],
+        'status': value['status'],
+        'taxId': value['taxId'],
     };
 }
 

@@ -31,25 +31,27 @@ export interface CatalogSearchResultDto {
      * @type {Array<ProductSummary>}
      * @memberof CatalogSearchResultDto
      */
-    data?: Array<ProductSummary>;
+    data: Array<ProductSummary>;
+    /**
+     * Number of items requested (limit)
+     * @type {number}
+     * @memberof CatalogSearchResultDto
+     */
+    limit: number;
     /**
      * Opaque cursor for the next page; null if no more results
      * @type {string}
      * @memberof CatalogSearchResultDto
      */
     nextCursor?: string;
-    /**
-     * Number of items requested (limit)
-     * @type {number}
-     * @memberof CatalogSearchResultDto
-     */
-    limit?: number;
 }
 
 /**
  * Check if a given object implements the CatalogSearchResultDto interface.
  */
 export function instanceOfCatalogSearchResultDto(value: object): boolean {
+    if (!('data' in value)) return false;
+    if (!('limit' in value)) return false;
     return true;
 }
 
@@ -63,9 +65,9 @@ export function CatalogSearchResultDtoFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'data': json['data'] == null ? undefined : ((json['data'] as Array<any>).map(ProductSummaryFromJSON)),
+        'data': ((json['data'] as Array<any>).map(ProductSummaryFromJSON)),
+        'limit': json['limit'],
         'nextCursor': json['nextCursor'] == null ? undefined : json['nextCursor'],
-        'limit': json['limit'] == null ? undefined : json['limit'],
     };
 }
 
@@ -75,9 +77,9 @@ export function CatalogSearchResultDtoToJSON(value?: CatalogSearchResultDto | nu
     }
     return {
         
-        'data': value['data'] == null ? undefined : ((value['data'] as Array<any>).map(ProductSummaryToJSON)),
-        'nextCursor': value['nextCursor'],
+        'data': ((value['data'] as Array<any>).map(ProductSummaryToJSON)),
         'limit': value['limit'],
+        'nextCursor': value['nextCursor'],
     };
 }
 

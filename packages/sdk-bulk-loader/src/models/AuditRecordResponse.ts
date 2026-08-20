@@ -14,65 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Audit record for a single row processed during a bulk load job
  * @export
  * @interface AuditRecordResponse
  */
 export interface AuditRecordResponse {
     /**
-     * 
-     * @type {string}
+     * Timestamp when the audit record was created (ISO 8601)
+     * @type {Date}
      * @memberof AuditRecordResponse
      */
-    id?: string;
+    createdAt: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof AuditRecordResponse
-     */
-    jobId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditRecordResponse
-     */
-    entityType?: string;
-    /**
-     * 
+     * Identifier of the entity created or updated from the row, if any
      * @type {string}
      * @memberof AuditRecordResponse
      */
     entityId?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof AuditRecordResponse
-     */
-    rowNumber?: number;
-    /**
-     * 
+     * Type of the target entity for the processed row
      * @type {string}
      * @memberof AuditRecordResponse
      */
-    reviewStatus?: AuditRecordResponseReviewStatusEnum;
+    entityType?: string;
     /**
-     * 
+     * Unique identifier of the audit record
      * @type {string}
      * @memberof AuditRecordResponse
      */
-    reasonCodes?: string;
+    id: string;
     /**
-     * 
+     * Identifier of the bulk load job this audit record belongs to
+     * @type {string}
+     * @memberof AuditRecordResponse
+     */
+    jobId: string;
+    /**
+     * Serialized original values from the source row
      * @type {string}
      * @memberof AuditRecordResponse
      */
     originalValues?: string;
     /**
-     * 
-     * @type {Date}
+     * Machine-readable reason codes describing why the row needs review
+     * @type {string}
      * @memberof AuditRecordResponse
      */
-    createdAt?: Date;
+    reasonCodes?: string;
+    /**
+     * Review status of the audit record
+     * @type {string}
+     * @memberof AuditRecordResponse
+     */
+    reviewStatus: AuditRecordResponseReviewStatusEnum;
+    /**
+     * One-based row number within the source file
+     * @type {number}
+     * @memberof AuditRecordResponse
+     */
+    rowNumber?: number;
 }
 
 /**
@@ -91,6 +91,10 @@ export enum AuditRecordResponseReviewStatusEnum {
  * Check if a given object implements the AuditRecordResponse interface.
  */
 export function instanceOfAuditRecordResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('jobId' in value)) return false;
+    if (!('reviewStatus' in value)) return false;
     return true;
 }
 
@@ -104,15 +108,15 @@ export function AuditRecordResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'jobId': json['jobId'] == null ? undefined : json['jobId'],
-        'entityType': json['entityType'] == null ? undefined : json['entityType'],
+        'createdAt': (new Date(json['createdAt'])),
         'entityId': json['entityId'] == null ? undefined : json['entityId'],
-        'rowNumber': json['rowNumber'] == null ? undefined : json['rowNumber'],
-        'reviewStatus': json['reviewStatus'] == null ? undefined : json['reviewStatus'],
-        'reasonCodes': json['reasonCodes'] == null ? undefined : json['reasonCodes'],
+        'entityType': json['entityType'] == null ? undefined : json['entityType'],
+        'id': json['id'],
+        'jobId': json['jobId'],
         'originalValues': json['originalValues'] == null ? undefined : json['originalValues'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'reasonCodes': json['reasonCodes'] == null ? undefined : json['reasonCodes'],
+        'reviewStatus': json['reviewStatus'],
+        'rowNumber': json['rowNumber'] == null ? undefined : json['rowNumber'],
     };
 }
 
@@ -122,15 +126,15 @@ export function AuditRecordResponseToJSON(value?: AuditRecordResponse | null): a
     }
     return {
         
+        'createdAt': ((value['createdAt']).toISOString()),
+        'entityId': value['entityId'],
+        'entityType': value['entityType'],
         'id': value['id'],
         'jobId': value['jobId'],
-        'entityType': value['entityType'],
-        'entityId': value['entityId'],
-        'rowNumber': value['rowNumber'],
-        'reviewStatus': value['reviewStatus'],
-        'reasonCodes': value['reasonCodes'],
         'originalValues': value['originalValues'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'reasonCodes': value['reasonCodes'],
+        'reviewStatus': value['reviewStatus'],
+        'rowNumber': value['rowNumber'],
     };
 }
 

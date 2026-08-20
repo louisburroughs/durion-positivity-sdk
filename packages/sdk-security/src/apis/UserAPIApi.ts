@@ -28,7 +28,7 @@ import {
     UserUpdateRequestToJSON,
 } from '../models/index';
 
-export interface AssignRolesRequest {
+export interface AssignUserRolesByUsernameRequest {
     username: string;
     body: object;
 }
@@ -56,21 +56,21 @@ export interface UpdateUserRequest {
 export class UserAPIApi extends runtime.BaseAPI {
 
     /**
-     * Replaces or applies the requested role set for the specified user by username.
-     * Assign roles to a user
+     * Replaces a user\'s directly attached role set with the supplied role names, looking the user up by username. Use this tool for wholesale role replacement by username; do not use assignUserRole, which adds a single scoped role assignment by UUID without touching the direct set. Preconditions: the caller must hold security:role:assign, the username must resolve to a user, and every named role must exist. Required inputs: username as a path parameter and roles, an array of existing role names, in the body; the set replaces all current direct roles. Emits a SECURITY_USER_ASSIGN_ROLES event. Returns 400 with INVALID_REQUEST when the user or a named role cannot be found; the miss surfaces as 400 rather than 404. 
+     * Replace a User\'s Direct Role Set
      */
-    async assignRolesRaw(requestParameters: AssignRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
+    async assignUserRolesByUsernameRaw(requestParameters: AssignUserRolesByUsernameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
         if (requestParameters['username'] == null) {
             throw new runtime.RequiredError(
                 'username',
-                'Required parameter "username" was null or undefined when calling assignRoles().'
+                'Required parameter "username" was null or undefined when calling assignUserRolesByUsername().'
             );
         }
 
         if (requestParameters['body'] == null) {
             throw new runtime.RequiredError(
                 'body',
-                'Required parameter "body" was null or undefined when calling assignRoles().'
+                'Required parameter "body" was null or undefined when calling assignUserRolesByUsername().'
             );
         }
 
@@ -100,17 +100,17 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces or applies the requested role set for the specified user by username.
-     * Assign roles to a user
+     * Replaces a user\'s directly attached role set with the supplied role names, looking the user up by username. Use this tool for wholesale role replacement by username; do not use assignUserRole, which adds a single scoped role assignment by UUID without touching the direct set. Preconditions: the caller must hold security:role:assign, the username must resolve to a user, and every named role must exist. Required inputs: username as a path parameter and roles, an array of existing role names, in the body; the set replaces all current direct roles. Emits a SECURITY_USER_ASSIGN_ROLES event. Returns 400 with INVALID_REQUEST when the user or a named role cannot be found; the miss surfaces as 400 rather than 404. 
+     * Replace a User\'s Direct Role Set
      */
-    async assignRoles(requestParameters: AssignRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
-        const response = await this.assignRolesRaw(requestParameters, initOverrides);
+    async assignUserRolesByUsername(requestParameters: AssignUserRolesByUsernameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
+        const response = await this.assignUserRolesByUsernameRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates a new user with username, password, and roles.
-     * Create a new user
+     * Creates a user account with a username, a hashed password, and a set of directly attached roles. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 400 when the username already exists or a named role is not found. 
+     * Create a User With Roles
      */
     async createUserRaw(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
         if (requestParameters['body'] == null) {
@@ -146,8 +146,8 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new user with username, password, and roles.
-     * Create a new user
+     * Creates a user account with a username, a hashed password, and a set of directly attached roles. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 400 when the username already exists or a named role is not found. 
+     * Create a User With Roles
      */
     async createUser(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
         const response = await this.createUserRaw(requestParameters, initOverrides);
@@ -155,8 +155,8 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a user by their unique ID.
-     * Delete a user
+     * Deletes a user account and queues removal of its user-person link so downstream projections follow the account out. Use this tool to remove an account permanently; do not use disableUserAccount, which blocks sign-in reversibly and keeps the record. Preconditions: the caller must hold security:user:delete; deleting an id that does not exist is a silent no-op. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_USER_DELETE event and sends a UserPersonLinkRemoveRequested command to the people-contact domain in the same transaction. Returns 204 in all cases, including when the user was already absent. 
+     * Delete a User Account
      */
     async deleteUserRaw(requestParameters: DeleteUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -189,52 +189,16 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a user by their unique ID.
-     * Delete a user
+     * Deletes a user account and queues removal of its user-person link so downstream projections follow the account out. Use this tool to remove an account permanently; do not use disableUserAccount, which blocks sign-in reversibly and keeps the record. Preconditions: the caller must hold security:user:delete; deleting an id that does not exist is a silent no-op. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_USER_DELETE event and sends a UserPersonLinkRemoveRequested command to the people-contact domain in the same transaction. Returns 204 in all cases, including when the user was already absent. 
+     * Delete a User Account
      */
     async deleteUser(requestParameters: DeleteUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteUserRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve a list of all users.
-     * Get all users
-     */
-    async getAllUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserDto>>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:user:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserDtoFromJSON));
-    }
-
-    /**
-     * Retrieve a list of all users.
-     * Get all users
-     */
-    async getAllUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserDto>> {
-        const response = await this.getAllUsersRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve a user by their unique ID.
-     * Get user by ID
+     * Returns a single user account by UUID, including effective role names merged from direct roles and currently active role assignments. Use this tool when the user id is known; use listUsers instead to browse accounts, and getUserAccountState for administrative lock and expiry flags. Preconditions: the caller must hold security:user:view and the user must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no user exists for the supplied id. 
+     * Get a User Account by Id
      */
     async getUserByIdRaw(requestParameters: GetUserByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
         if (requestParameters['id'] == null) {
@@ -267,8 +231,8 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a user by their unique ID.
-     * Get user by ID
+     * Returns a single user account by UUID, including effective role names merged from direct roles and currently active role assignments. Use this tool when the user id is known; use listUsers instead to browse accounts, and getUserAccountState for administrative lock and expiry flags. Preconditions: the caller must hold security:user:view and the user must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no user exists for the supplied id. 
+     * Get a User Account by Id
      */
     async getUserById(requestParameters: GetUserByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
         const response = await this.getUserByIdRaw(requestParameters, initOverrides);
@@ -276,8 +240,44 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the details of an existing user.
-     * Update an existing user
+     * Returns every user account with its id, username, effective role names, and linked personId. Use this tool to enumerate accounts; use getUserById instead for one known user. Preconditions: the caller must hold security:user:view. Required inputs: none; there are no filters or paging parameters, so the full user table is returned. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no users exist; there are no business error conditions. 
+     * List All User Accounts
+     */
+    async listUsersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserDto>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserDtoFromJSON));
+    }
+
+    /**
+     * Returns every user account with its id, username, effective role names, and linked personId. Use this tool to enumerate accounts; use getUserById instead for one known user. Preconditions: the caller must hold security:user:view. Required inputs: none; there are no filters or paging parameters, so the full user table is returned. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no users exist; there are no business error conditions. 
+     * List All User Accounts
+     */
+    async listUsers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserDto>> {
+        const response = await this.listUsersRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Applies a partial update to a user account: username, password, and the direct role set are each replaced only when supplied. Use this tool to change account fields; do not use assignUserRolesByUsername, which only replaces roles, and do not use the account-state endpoints such as disableUserAccount, which flip administrative flags. Preconditions: the caller must hold security:user:edit, the user must exist, and any named role must already exist. Required inputs: id (UUID) as a path parameter; username, password, and roles are all optional, and omitted or blank fields are left unchanged. Emits a SECURITY_USER_UPDATE event; a supplied password is re-hashed before storage. Returns 400 with INVALID_REQUEST when the user or a named role cannot be found; the miss surfaces as 400 rather than 404. 
+     * Partially Update a User Account
      */
     async updateUserRaw(requestParameters: UpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
         if (requestParameters['id'] == null) {
@@ -320,8 +320,8 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the details of an existing user.
-     * Update an existing user
+     * Applies a partial update to a user account: username, password, and the direct role set are each replaced only when supplied. Use this tool to change account fields; do not use assignUserRolesByUsername, which only replaces roles, and do not use the account-state endpoints such as disableUserAccount, which flip administrative flags. Preconditions: the caller must hold security:user:edit, the user must exist, and any named role must already exist. Required inputs: id (UUID) as a path parameter; username, password, and roles are all optional, and omitted or blank fields are left unchanged. Emits a SECURITY_USER_UPDATE event; a supplied password is re-hashed before storage. Returns 400 with INVALID_REQUEST when the user or a named role cannot be found; the miss surfaces as 400 rather than 404. 
+     * Partially Update a User Account
      */
     async updateUser(requestParameters: UpdateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
         const response = await this.updateUserRaw(requestParameters, initOverrides);

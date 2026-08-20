@@ -14,47 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to assign a role to a user within a scope
  * @export
  * @interface RoleAssignmentRequest
  */
 export interface RoleAssignmentRequest {
     /**
-     * 
-     * @type {string}
+     * Exclusive end of the effective window
+     * @type {Date}
      * @memberof RoleAssignmentRequest
      */
-    userId?: string;
+    effectiveEndDate?: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof RoleAssignmentRequest
-     */
-    roleId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RoleAssignmentRequest
-     */
-    scopeType?: RoleAssignmentRequestScopeTypeEnum;
-    /**
-     * 
-     * @type {Set<string>}
-     * @memberof RoleAssignmentRequest
-     */
-    scopeLocationIds?: Set<string>;
-    /**
-     * 
+     * Inclusive start of the effective window
      * @type {Date}
      * @memberof RoleAssignmentRequest
      */
     effectiveStartDate?: Date;
     /**
-     * 
-     * @type {Date}
+     * Identifier of the role to assign
+     * @type {string}
      * @memberof RoleAssignmentRequest
      */
-    effectiveEndDate?: Date;
+    roleId: string;
+    /**
+     * Location identifiers the assignment applies to when scopeType is LOCATION
+     * @type {Set<string>}
+     * @memberof RoleAssignmentRequest
+     */
+    scopeLocationIds?: Set<string>;
+    /**
+     * Scope type that constrains the assignment
+     * @type {string}
+     * @memberof RoleAssignmentRequest
+     */
+    scopeType?: RoleAssignmentRequestScopeTypeEnum;
+    /**
+     * Identifier of the user to assign the role to
+     * @type {string}
+     * @memberof RoleAssignmentRequest
+     */
+    userId: string;
 }
 
 /**
@@ -71,6 +71,8 @@ export enum RoleAssignmentRequestScopeTypeEnum {
  * Check if a given object implements the RoleAssignmentRequest interface.
  */
 export function instanceOfRoleAssignmentRequest(value: object): boolean {
+    if (!('roleId' in value)) return false;
+    if (!('userId' in value)) return false;
     return true;
 }
 
@@ -84,12 +86,12 @@ export function RoleAssignmentRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'userId': json['userId'] == null ? undefined : json['userId'],
-        'roleId': json['roleId'] == null ? undefined : json['roleId'],
-        'scopeType': json['scopeType'] == null ? undefined : json['scopeType'],
-        'scopeLocationIds': json['scopeLocationIds'] == null ? undefined : json['scopeLocationIds'],
-        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
+        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
+        'roleId': json['roleId'],
+        'scopeLocationIds': json['scopeLocationIds'] == null ? undefined : json['scopeLocationIds'],
+        'scopeType': json['scopeType'] == null ? undefined : json['scopeType'],
+        'userId': json['userId'],
     };
 }
 
@@ -99,12 +101,12 @@ export function RoleAssignmentRequestToJSON(value?: RoleAssignmentRequest | null
     }
     return {
         
-        'userId': value['userId'],
-        'roleId': value['roleId'],
-        'scopeType': value['scopeType'],
-        'scopeLocationIds': value['scopeLocationIds'] == null ? undefined : Array.from(value['scopeLocationIds'] as Set<any>),
-        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
+        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
+        'roleId': value['roleId'],
+        'scopeLocationIds': value['scopeLocationIds'] == null ? undefined : Array.from(value['scopeLocationIds'] as Set<any>),
+        'scopeType': value['scopeType'],
+        'userId': value['userId'],
     };
 }
 

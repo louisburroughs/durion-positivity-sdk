@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for finalizing an invoice
  * @export
  * @interface FinalizationRequest
  */
 export interface FinalizationRequest {
     /**
-     * 
+     * Manager approval code, required when approval threshold is exceeded
      * @type {string}
      * @memberof FinalizationRequest
      */
     managerApprovalCode?: string;
     /**
-     * 
+     * Free-text reason for overriding the amount limit
      * @type {string}
      * @memberof FinalizationRequest
      */

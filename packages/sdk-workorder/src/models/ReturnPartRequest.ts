@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ReturnPartRequest {
     /**
-     * Workorder part identifier
+     * Optional return notes
      * @type {string}
      * @memberof ReturnPartRequest
      */
-    workorderPartId: string;
+    notes?: string;
     /**
      * Quantity to return
      * @type {number}
@@ -32,19 +32,25 @@ export interface ReturnPartRequest {
      */
     quantity: number;
     /**
-     * Optional return notes
+     * Unit quantity is expressed in. Omit for the product's base unit -- today's implicit behavior. Converted to base and validated against the product's catalog divisibility.
      * @type {string}
      * @memberof ReturnPartRequest
      */
-    notes?: string;
+    uomCode?: string;
+    /**
+     * Workorder part identifier
+     * @type {string}
+     * @memberof ReturnPartRequest
+     */
+    workorderPartId: string;
 }
 
 /**
  * Check if a given object implements the ReturnPartRequest interface.
  */
 export function instanceOfReturnPartRequest(value: object): boolean {
-    if (!('workorderPartId' in value)) return false;
     if (!('quantity' in value)) return false;
+    if (!('workorderPartId' in value)) return false;
     return true;
 }
 
@@ -58,9 +64,10 @@ export function ReturnPartRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'workorderPartId': json['workorderPartId'],
-        'quantity': json['quantity'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'quantity': json['quantity'],
+        'uomCode': json['uomCode'] == null ? undefined : json['uomCode'],
+        'workorderPartId': json['workorderPartId'],
     };
 }
 
@@ -70,9 +77,10 @@ export function ReturnPartRequestToJSON(value?: ReturnPartRequest | null): any {
     }
     return {
         
-        'workorderPartId': value['workorderPartId'],
-        'quantity': value['quantity'],
         'notes': value['notes'],
+        'quantity': value['quantity'],
+        'uomCode': value['uomCode'],
+        'workorderPartId': value['workorderPartId'],
     };
 }
 

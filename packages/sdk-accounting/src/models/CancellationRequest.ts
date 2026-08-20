@@ -14,61 +14,61 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to record a cancellation audit event
  * @export
  * @interface CancellationRequest
  */
 export interface CancellationRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    orderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    invoiceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    cancellationType: CancellationRequestCancellationTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    beforeSnapshot: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    afterSnapshot: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CancellationRequest
-     */
-    partialPaymentInfo?: string;
-    /**
-     * 
+     * Legacy client-provided actor identifier; service resolves authoritative actor from security context
      * @type {string}
      * @memberof CancellationRequest
      */
     actorId?: string;
     /**
-     * 
+     * Role of the actor performing the cancellation
      * @type {string}
      * @memberof CancellationRequest
      */
     actorRole: string;
     /**
-     * 
+     * Snapshot of state after the cancellation (JSON)
+     * @type {string}
+     * @memberof CancellationRequest
+     */
+    afterSnapshot: string;
+    /**
+     * Snapshot of state before the cancellation (JSON)
+     * @type {string}
+     * @memberof CancellationRequest
+     */
+    beforeSnapshot: string;
+    /**
+     * Type of cancellation being recorded
+     * @type {string}
+     * @memberof CancellationRequest
+     */
+    cancellationType: CancellationRequestCancellationTypeEnum;
+    /**
+     * Identifier of the invoice being cancelled
+     * @type {string}
+     * @memberof CancellationRequest
+     */
+    invoiceId?: string;
+    /**
+     * Identifier of the order being cancelled
+     * @type {string}
+     * @memberof CancellationRequest
+     */
+    orderId?: string;
+    /**
+     * Partial payment details captured at cancellation (JSON)
+     * @type {string}
+     * @memberof CancellationRequest
+     */
+    partialPaymentInfo?: string;
+    /**
+     * Reason for the cancellation
      * @type {string}
      * @memberof CancellationRequest
      */
@@ -90,10 +90,10 @@ export enum CancellationRequestCancellationTypeEnum {
  * Check if a given object implements the CancellationRequest interface.
  */
 export function instanceOfCancellationRequest(value: object): boolean {
-    if (!('cancellationType' in value)) return false;
-    if (!('beforeSnapshot' in value)) return false;
-    if (!('afterSnapshot' in value)) return false;
     if (!('actorRole' in value)) return false;
+    if (!('afterSnapshot' in value)) return false;
+    if (!('beforeSnapshot' in value)) return false;
+    if (!('cancellationType' in value)) return false;
     if (!('reason' in value)) return false;
     return true;
 }
@@ -108,14 +108,14 @@ export function CancellationRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'orderId': json['orderId'] == null ? undefined : json['orderId'],
-        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
-        'cancellationType': json['cancellationType'],
-        'beforeSnapshot': json['beforeSnapshot'],
-        'afterSnapshot': json['afterSnapshot'],
-        'partialPaymentInfo': json['partialPaymentInfo'] == null ? undefined : json['partialPaymentInfo'],
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
         'actorRole': json['actorRole'],
+        'afterSnapshot': json['afterSnapshot'],
+        'beforeSnapshot': json['beforeSnapshot'],
+        'cancellationType': json['cancellationType'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
+        'orderId': json['orderId'] == null ? undefined : json['orderId'],
+        'partialPaymentInfo': json['partialPaymentInfo'] == null ? undefined : json['partialPaymentInfo'],
         'reason': json['reason'],
     };
 }
@@ -126,14 +126,14 @@ export function CancellationRequestToJSON(value?: CancellationRequest | null): a
     }
     return {
         
-        'orderId': value['orderId'],
-        'invoiceId': value['invoiceId'],
-        'cancellationType': value['cancellationType'],
-        'beforeSnapshot': value['beforeSnapshot'],
-        'afterSnapshot': value['afterSnapshot'],
-        'partialPaymentInfo': value['partialPaymentInfo'],
         'actorId': value['actorId'],
         'actorRole': value['actorRole'],
+        'afterSnapshot': value['afterSnapshot'],
+        'beforeSnapshot': value['beforeSnapshot'],
+        'cancellationType': value['cancellationType'],
+        'invoiceId': value['invoiceId'],
+        'orderId': value['orderId'],
+        'partialPaymentInfo': value['partialPaymentInfo'],
         'reason': value['reason'],
     };
 }

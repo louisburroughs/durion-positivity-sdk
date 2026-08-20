@@ -20,25 +20,25 @@ import { mapValues } from '../runtime';
  */
 export interface AdjustLaborRequest {
     /**
-     * Adjusted hours worked
-     * @type {number}
-     * @memberof AdjustLaborRequest
-     */
-    hoursWorked: number;
-    /**
      * Reason for the adjustment
      * @type {string}
      * @memberof AdjustLaborRequest
      */
     adjustmentReason: string;
+    /**
+     * Adjusted hours worked
+     * @type {number}
+     * @memberof AdjustLaborRequest
+     */
+    hoursWorked: number;
 }
 
 /**
  * Check if a given object implements the AdjustLaborRequest interface.
  */
 export function instanceOfAdjustLaborRequest(value: object): boolean {
-    if (!('hoursWorked' in value)) return false;
     if (!('adjustmentReason' in value)) return false;
+    if (!('hoursWorked' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function AdjustLaborRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'hoursWorked': json['hoursWorked'],
         'adjustmentReason': json['adjustmentReason'],
+        'hoursWorked': json['hoursWorked'],
     };
 }
 
@@ -63,8 +63,8 @@ export function AdjustLaborRequestToJSON(value?: AdjustLaborRequest | null): any
     }
     return {
         
-        'hoursWorked': value['hoursWorked'],
         'adjustmentReason': value['adjustmentReason'],
+        'hoursWorked': value['hoursWorked'],
     };
 }
 

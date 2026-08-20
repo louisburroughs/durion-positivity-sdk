@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CatalogSearchResultDto,
   EffectiveLocationPriceResponseDto,
   GuardrailPolicyUpsertRequestDto,
@@ -22,17 +23,22 @@ import type {
   LocationPriceOverrideDecisionRequestDto,
   LocationPriceOverrideResponseDto,
   NonInventoryProductDto,
+  ProductCodeMatch,
   ProductCreateRequestDto,
   ProductDetailView,
   ProductDto,
+  ProductFactReplayResultDto,
   ProductLifecycleResponse,
   ProductLifecycleUpdateRequest,
   ProductReplacementRequest,
+  ProductTrackingLevelUpdateRequestDto,
   ProductUpdateRequestDto,
   ReplacementOption,
   ServiceDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CatalogSearchResultDtoFromJSON,
     CatalogSearchResultDtoToJSON,
     EffectiveLocationPriceResponseDtoFromJSON,
@@ -47,18 +53,24 @@ import {
     LocationPriceOverrideResponseDtoToJSON,
     NonInventoryProductDtoFromJSON,
     NonInventoryProductDtoToJSON,
+    ProductCodeMatchFromJSON,
+    ProductCodeMatchToJSON,
     ProductCreateRequestDtoFromJSON,
     ProductCreateRequestDtoToJSON,
     ProductDetailViewFromJSON,
     ProductDetailViewToJSON,
     ProductDtoFromJSON,
     ProductDtoToJSON,
+    ProductFactReplayResultDtoFromJSON,
+    ProductFactReplayResultDtoToJSON,
     ProductLifecycleResponseFromJSON,
     ProductLifecycleResponseToJSON,
     ProductLifecycleUpdateRequestFromJSON,
     ProductLifecycleUpdateRequestToJSON,
     ProductReplacementRequestFromJSON,
     ProductReplacementRequestToJSON,
+    ProductTrackingLevelUpdateRequestDtoFromJSON,
+    ProductTrackingLevelUpdateRequestDtoToJSON,
     ProductUpdateRequestDtoFromJSON,
     ProductUpdateRequestDtoToJSON,
     ReplacementOptionFromJSON,
@@ -67,7 +79,7 @@ import {
     ServiceDtoToJSON,
 } from '../models/index';
 
-export interface AddReplacementProductRequest {
+export interface AddProductReplacementRequest {
     productId: string;
     productReplacementRequest: ProductReplacementRequest;
 }
@@ -85,6 +97,11 @@ export interface CreateProductRequest {
     productCreateRequestDto: ProductCreateRequestDto;
 }
 
+export interface FindProductByCodeRequest {
+    codeType: FindProductByCodeCodeTypeEnum;
+    code: string;
+}
+
 export interface GetEffectiveLocationPriceRequest {
     locationId: string;
     productId: string;
@@ -94,20 +111,12 @@ export interface GetNonInventoryProductByIdRequest {
     productId: string;
 }
 
-export interface GetNonInventoryProductByNameRequest {
-    name: string;
-}
-
 export interface GetPartSubstitutesRequest {
     productId: string;
 }
 
 export interface GetProductByIdRequest {
     productId: string;
-}
-
-export interface GetProductByNameRequest {
-    name: string;
 }
 
 export interface GetProductDetailViewRequest {
@@ -119,15 +128,23 @@ export interface GetProductLifecycleRequest {
     productId: string;
 }
 
-export interface GetReplacementsRequest {
-    productId: string;
-}
-
 export interface GetServiceByIdRequest {
     serviceId: string;
 }
 
-export interface GetServiceByNameRequest {
+export interface ListNonInventoryProductsByNameRequest {
+    name: string;
+}
+
+export interface ListProductReplacementsRequest {
+    productId: string;
+}
+
+export interface ListProductsByNameRequest {
+    name: string;
+}
+
+export interface ListServicesByNameRequest {
     name: string;
 }
 
@@ -136,23 +153,40 @@ export interface RejectLocationPriceOverrideRequest {
     locationPriceOverrideDecisionRequestDto: LocationPriceOverrideDecisionRequestDto;
 }
 
-export interface SearchProductsRequest {
+export interface ReplayProductFactsRequest {
+    afterProductId?: string;
+    updatedSince?: Date;
+    limit?: number;
+}
+
+export interface SearchCatalogProductsRequest {
     q?: string;
     brand?: string;
     category?: string;
     sku?: string;
     cursor?: string;
-    limit?: string;
+    limit?: number;
+    detailed?: boolean;
 }
 
-export interface SetLifecycleStateRequest {
-    productId: string;
-    productLifecycleUpdateRequest: ProductLifecycleUpdateRequest;
+export interface SearchCatalogServicesRequest {
+    q?: string;
+    limit?: number;
 }
 
 export interface UpdateProductRequest {
     productId: string;
     productUpdateRequestDto: ProductUpdateRequestDto;
+}
+
+export interface UpdateProductLifecycleRequest {
+    productId: string;
+    productLifecycleUpdateRequest: ProductLifecycleUpdateRequest;
+}
+
+export interface UpdateProductTrackingLevelRequest {
+    productId: string;
+    productTrackingLevelUpdateRequestDto: ProductTrackingLevelUpdateRequestDto;
 }
 
 export interface UpsertLocationGuardrailPolicyRequest {
@@ -165,21 +199,21 @@ export interface UpsertLocationGuardrailPolicyRequest {
 export class ProductsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Adds a replacement suggestion to a discontinued product.
-     * Add replacement product
+     * Records a replacement suggestion on a discontinued product, pointing buyers at the product that supersedes it, ordered among other options by priorityOrder. Use this tool after discontinuing a product via updateProductLifecycle; do not use listProductReplacements, which only reads the recorded options. Preconditions: the original product must exist and be in lifecycle state DISCONTINUED, and the replacement product must itself exist and differ from the original. Required inputs: productId (UUID) path parameter plus replacementProductId (UUID) and priorityOrder greater than zero; notes are optional and effectiveAt defaults to now when omitted. Emits a CATALOG_PRODUCT_REPLACEMENT_ADD event and invalidates the product-detail cache for the original product. Returns 404 when the original or replacement product does not exist, 409 when the original product is not DISCONTINUED, and 400 when the replacement equals the original or priorityOrder is not positive. 
+     * Add Replacement Product
      */
-    async addReplacementProductRaw(requestParameters: AddReplacementProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplacementOption>> {
+    async addProductReplacementRaw(requestParameters: AddProductReplacementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReplacementOption>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling addReplacementProduct().'
+                'Required parameter "productId" was null or undefined when calling addProductReplacement().'
             );
         }
 
         if (requestParameters['productReplacementRequest'] == null) {
             throw new runtime.RequiredError(
                 'productReplacementRequest',
-                'Required parameter "productReplacementRequest" was null or undefined when calling addReplacementProduct().'
+                'Required parameter "productReplacementRequest" was null or undefined when calling addProductReplacement().'
             );
         }
 
@@ -209,17 +243,17 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Adds a replacement suggestion to a discontinued product.
-     * Add replacement product
+     * Records a replacement suggestion on a discontinued product, pointing buyers at the product that supersedes it, ordered among other options by priorityOrder. Use this tool after discontinuing a product via updateProductLifecycle; do not use listProductReplacements, which only reads the recorded options. Preconditions: the original product must exist and be in lifecycle state DISCONTINUED, and the replacement product must itself exist and differ from the original. Required inputs: productId (UUID) path parameter plus replacementProductId (UUID) and priorityOrder greater than zero; notes are optional and effectiveAt defaults to now when omitted. Emits a CATALOG_PRODUCT_REPLACEMENT_ADD event and invalidates the product-detail cache for the original product. Returns 404 when the original or replacement product does not exist, 409 when the original product is not DISCONTINUED, and 400 when the replacement equals the original or priorityOrder is not positive. 
+     * Add Replacement Product
      */
-    async addReplacementProduct(requestParameters: AddReplacementProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplacementOption> {
-        const response = await this.addReplacementProductRaw(requestParameters, initOverrides);
+    async addProductReplacement(requestParameters: AddProductReplacementRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReplacementOption> {
+        const response = await this.addProductReplacementRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Approves a pending override and activates it as the effective location price.
-     * Approve pending location price override
+     * Approves a PENDING_APPROVAL location price override, setting it ACTIVE and closing its approval request as APPROVED. Use this tool to grant a pending override; do not use rejectLocationPriceOverride, which terminally declines it instead. Preconditions: the override must exist, be in PENDING_APPROVAL status, have an open approval request, and the supplied version must match the override\'s current version. Required inputs: overrideId (UUID) path parameter plus version (long) and actorUserId (UUID) in the body; rejection fields are ignored on approval. Emits a CATALOG_LOCATION_OVERRIDE_APPROVE event and invalidates the product-detail cache for the override\'s location. Returns 404 when the override or its approval request cannot be found, 400 when the override is not in PENDING_APPROVAL status, and 409 when the supplied version does not match the current one. 
+     * Approve Pending Price Override
      */
     async approveLocationPriceOverrideRaw(requestParameters: ApproveLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['overrideId'] == null) {
@@ -262,8 +296,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves a pending override and activates it as the effective location price.
-     * Approve pending location price override
+     * Approves a PENDING_APPROVAL location price override, setting it ACTIVE and closing its approval request as APPROVED. Use this tool to grant a pending override; do not use rejectLocationPriceOverride, which terminally declines it instead. Preconditions: the override must exist, be in PENDING_APPROVAL status, have an open approval request, and the supplied version must match the override\'s current version. Required inputs: overrideId (UUID) path parameter plus version (long) and actorUserId (UUID) in the body; rejection fields are ignored on approval. Emits a CATALOG_LOCATION_OVERRIDE_APPROVE event and invalidates the product-detail cache for the override\'s location. Returns 404 when the override or its approval request cannot be found, 400 when the override is not in PENDING_APPROVAL status, and 409 when the supplied version does not match the current one. 
+     * Approve Pending Price Override
      */
     async approveLocationPriceOverride(requestParameters: ApproveLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.approveLocationPriceOverrideRaw(requestParameters, initOverrides);
@@ -271,8 +305,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a location-specific price override and enforces guardrails for margin and discount limits.
-     * Create location price override
+     * Creates a location-specific price override for one product, enforcing the location\'s guardrail policy; discounts at or below the auto-approval threshold activate immediately, larger discounts are stored as PENDING_APPROVAL with an approval request assigned to a deterministic approver. Use this tool to discount a product at one location; do not use upsertLocationGuardrailPolicy, which sets the limits themselves, and use approveLocationPriceOverride to activate a pending one. Preconditions: the product must exist and a LOCATION guardrail policy must already exist for the locationId; any currently ACTIVE override for the same location and product is set INACTIVE. Required inputs: locationId, productId, createdByUserId (UUIDs), positive basePrice and overridePrice with overridePrice not exceeding basePrice; cost is optional and enables the margin check when present. Emits a CATALOG_LOCATION_OVERRIDE_CREATE event and invalidates the product-detail cache for that location. Returns 404 when the product does not exist, and 400 when no guardrail policy exists for the location, the discount exceeds maxDiscountPercent, or the margin falls below minMarginPercent; callers must read the returned status to learn whether the override is ACTIVE or PENDING_APPROVAL. 
+     * Create Location Price Override
      */
     async createLocationPriceOverrideRaw(requestParameters: CreateLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['locationPriceOverrideCreateRequestDto'] == null) {
@@ -308,8 +342,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a location-specific price override and enforces guardrails for margin and discount limits.
-     * Create location price override
+     * Creates a location-specific price override for one product, enforcing the location\'s guardrail policy; discounts at or below the auto-approval threshold activate immediately, larger discounts are stored as PENDING_APPROVAL with an approval request assigned to a deterministic approver. Use this tool to discount a product at one location; do not use upsertLocationGuardrailPolicy, which sets the limits themselves, and use approveLocationPriceOverride to activate a pending one. Preconditions: the product must exist and a LOCATION guardrail policy must already exist for the locationId; any currently ACTIVE override for the same location and product is set INACTIVE. Required inputs: locationId, productId, createdByUserId (UUIDs), positive basePrice and overridePrice with overridePrice not exceeding basePrice; cost is optional and enables the margin check when present. Emits a CATALOG_LOCATION_OVERRIDE_CREATE event and invalidates the product-detail cache for that location. Returns 404 when the product does not exist, and 400 when no guardrail policy exists for the location, the discount exceeds maxDiscountPercent, or the margin falls below minMarginPercent; callers must read the returned status to learn whether the override is ACTIVE or PENDING_APPROVAL. 
+     * Create Location Price Override
      */
     async createLocationPriceOverride(requestParameters: CreateLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.createLocationPriceOverrideRaw(requestParameters, initOverrides);
@@ -317,8 +351,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a product master record with immutable SKU and uniqueness checks.
-     * Create product master record
+     * Creates a product master record with an immutable SKU, status ACTIVE, and uniqueness enforced on SKU and on the manufacturerId plus mpn pair. Use this tool for governed product-master entry; do not use createCatalogItem, which is the lightweight catalog-item path with no duplicate checks, and do not use bulkIngestCatalogProducts, which loads many products in one call. Preconditions: no product may already use the SKU (case-insensitive), and when manufacturerId is supplied no product may already pair it with the same mpn; a supplied categoryId must resolve. Required inputs: name, description, unitOfMeasure, sku and mpn, all non-blank; manufacturerId, categoryId, upc and attributes are optional, and a upc also becomes the productCode with type UPC. Emits a CATALOG_PRODUCT_CREATED event, publishes a product fact for downstream replicas, and invalidates the product-detail cache. Returns 409 when the SKU or the manufacturerId plus mpn pair already exists, and 400 when the supplied categoryId does not resolve. 
+     * Create Product Master Record
      */
     async createProductRaw(requestParameters: CreateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productCreateRequestDto'] == null) {
@@ -354,8 +388,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a product master record with immutable SKU and uniqueness checks.
-     * Create product master record
+     * Creates a product master record with an immutable SKU, status ACTIVE, and uniqueness enforced on SKU and on the manufacturerId plus mpn pair. Use this tool for governed product-master entry; do not use createCatalogItem, which is the lightweight catalog-item path with no duplicate checks, and do not use bulkIngestCatalogProducts, which loads many products in one call. Preconditions: no product may already use the SKU (case-insensitive), and when manufacturerId is supplied no product may already pair it with the same mpn; a supplied categoryId must resolve. Required inputs: name, description, unitOfMeasure, sku and mpn, all non-blank; manufacturerId, categoryId, upc and attributes are optional, and a upc also becomes the productCode with type UPC. Emits a CATALOG_PRODUCT_CREATED event, publishes a product fact for downstream replicas, and invalidates the product-detail cache. Returns 409 when the SKU or the manufacturerId plus mpn pair already exists, and 400 when the supplied categoryId does not resolve. 
+     * Create Product Master Record
      */
     async createProduct(requestParameters: CreateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.createProductRaw(requestParameters, initOverrides);
@@ -363,8 +397,66 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves effective price using precedence: ACTIVE override first, otherwise base price.
-     * Get effective location price
+     * Resolves the single product carrying an exact product code under one code scheme, EAN or UPC, which is the deterministic matching step supplier price-catalog ingestion runs before it applies a vendor line to a product. Use this tool when a code from a vendor document or a scanner must be turned into a product id; use searchCatalogProducts instead for partial text or filters, and getProductById when the id is already known. Preconditions: EAN and UPC values are unique per scheme, so a match is either absent or unique; surrounding whitespace is trimmed but no other normalisation is applied, so a code differing by a leading zero is a different code and will not match. Required inputs: codeType (EAN or UPC) and code, both query parameters; there is no request body and no fuzzy fallback — an unmatched code is reported as a miss, never as a near match. Emits a CATALOG_PRODUCT_CODE_LOOKUP event; no state changes. Returns 404 when no product carries the code, 400 when codeType is not EAN or UPC, and 409 on a schema whose duplicate codes have not yet been cleaned up, in which case the value is ambiguous and matching is refused rather than guessed. 
+     * Find a Product by Exact EAN or UPC
+     */
+    async findProductByCodeRaw(requestParameters: FindProductByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductCodeMatch>> {
+        if (requestParameters['codeType'] == null) {
+            throw new runtime.RequiredError(
+                'codeType',
+                'Required parameter "codeType" was null or undefined when calling findProductByCode().'
+            );
+        }
+
+        if (requestParameters['code'] == null) {
+            throw new runtime.RequiredError(
+                'code',
+                'Required parameter "code" was null or undefined when calling findProductByCode().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['codeType'] != null) {
+            queryParameters['codeType'] = requestParameters['codeType'];
+        }
+
+        if (requestParameters['code'] != null) {
+            queryParameters['code'] = requestParameters['code'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/by-code`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductCodeMatchFromJSON(jsonValue));
+    }
+
+    /**
+     * Resolves the single product carrying an exact product code under one code scheme, EAN or UPC, which is the deterministic matching step supplier price-catalog ingestion runs before it applies a vendor line to a product. Use this tool when a code from a vendor document or a scanner must be turned into a product id; use searchCatalogProducts instead for partial text or filters, and getProductById when the id is already known. Preconditions: EAN and UPC values are unique per scheme, so a match is either absent or unique; surrounding whitespace is trimmed but no other normalisation is applied, so a code differing by a leading zero is a different code and will not match. Required inputs: codeType (EAN or UPC) and code, both query parameters; there is no request body and no fuzzy fallback — an unmatched code is reported as a miss, never as a near match. Emits a CATALOG_PRODUCT_CODE_LOOKUP event; no state changes. Returns 404 when no product carries the code, 400 when codeType is not EAN or UPC, and 409 on a schema whose duplicate codes have not yet been cleaned up, in which case the value is ambiguous and matching is refused rather than guessed. 
+     * Find a Product by Exact EAN or UPC
+     */
+    async findProductByCode(requestParameters: FindProductByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductCodeMatch> {
+        const response = await this.findProductByCodeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Resolves the price a location currently charges for a product from its override records: the newest ACTIVE override wins, otherwise a PENDING_APPROVAL override reports its basePrice as the effective price with status PENDING_APPROVAL. Use this tool to check what an override has done to a product\'s price at one location; do not use getProductDetailView, which returns the full consolidated pricing and availability view. Preconditions: at least one ACTIVE or PENDING_APPROVAL override must exist for the pair; a product with no override history at the location has no answer here. Required inputs: locationId and productId (UUIDs) as path parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no ACTIVE or PENDING_APPROVAL override exists for the location and product pair, even if the product itself exists. 
+     * Get Effective Location Price
      */
     async getEffectiveLocationPriceRaw(requestParameters: GetEffectiveLocationPriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EffectiveLocationPriceResponseDto>> {
         if (requestParameters['locationId'] == null) {
@@ -404,8 +496,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves effective price using precedence: ACTIVE override first, otherwise base price.
-     * Get effective location price
+     * Resolves the price a location currently charges for a product from its override records: the newest ACTIVE override wins, otherwise a PENDING_APPROVAL override reports its basePrice as the effective price with status PENDING_APPROVAL. Use this tool to check what an override has done to a product\'s price at one location; do not use getProductDetailView, which returns the full consolidated pricing and availability view. Preconditions: at least one ACTIVE or PENDING_APPROVAL override must exist for the pair; a product with no override history at the location has no answer here. Required inputs: locationId and productId (UUIDs) as path parameters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no ACTIVE or PENDING_APPROVAL override exists for the location and product pair, even if the product itself exists. 
+     * Get Effective Location Price
      */
     async getEffectiveLocationPrice(requestParameters: GetEffectiveLocationPriceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EffectiveLocationPriceResponseDto> {
         const response = await this.getEffectiveLocationPriceRaw(requestParameters, initOverrides);
@@ -413,8 +505,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a specific non-inventory product by its unique ID.
-     * Get a non-inventory product by ID
+     * Returns one non-inventory product — an item sold without stock tracking, such as a fee or shop supply — with its name and descriptions. Use this tool when the id is already known; use listNonInventoryProductsByName instead to find non-inventory products by exact name. Preconditions: the non-inventory product must exist. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no non-inventory product exists for the supplied id. 
+     * Get Non-Inventory Product by ID
      */
     async getNonInventoryProductByIdRaw(requestParameters: GetNonInventoryProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NonInventoryProductDto>> {
         if (requestParameters['productId'] == null) {
@@ -447,8 +539,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a specific non-inventory product by its unique ID.
-     * Get a non-inventory product by ID
+     * Returns one non-inventory product — an item sold without stock tracking, such as a fee or shop supply — with its name and descriptions. Use this tool when the id is already known; use listNonInventoryProductsByName instead to find non-inventory products by exact name. Preconditions: the non-inventory product must exist. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no non-inventory product exists for the supplied id. 
+     * Get Non-Inventory Product by ID
      */
     async getNonInventoryProductById(requestParameters: GetNonInventoryProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<NonInventoryProductDto> {
         const response = await this.getNonInventoryProductByIdRaw(requestParameters, initOverrides);
@@ -456,51 +548,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a list of non-inventory products matching the given name.
-     * Get non-inventory products by name
-     */
-    async getNonInventoryProductByNameRaw(requestParameters: GetNonInventoryProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NonInventoryProductDto>> {
-        if (requestParameters['name'] == null) {
-            throw new runtime.RequiredError(
-                'name',
-                'Required parameter "name" was null or undefined when calling getNonInventoryProductByName().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/products/noninventory/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => NonInventoryProductDtoFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieves a list of non-inventory products matching the given name.
-     * Get non-inventory products by name
-     */
-    async getNonInventoryProductByName(requestParameters: GetNonInventoryProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<NonInventoryProductDto> {
-        const response = await this.getNonInventoryProductByNameRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns list of substitute parts for a given productId.
-     * Get substitute parts
+     * Returns the full product records of a product\'s recorded replacements, resolved from its replacement options in priority order with duplicates and dangling references dropped. Use this tool when selling and a substitute product\'s details are needed directly; use listProductReplacements instead for the raw option rows with priority and notes. Preconditions: the product must exist; substitutes appear only after replacements were recorded via addProductReplacement. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id, and 200 with an empty array when no replacement products resolve. 
+     * Get Substitute Parts
      */
     async getPartSubstitutesRaw(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productId'] == null) {
@@ -533,8 +582,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns list of substitute parts for a given productId.
-     * Get substitute parts
+     * Returns the full product records of a product\'s recorded replacements, resolved from its replacement options in priority order with duplicates and dangling references dropped. Use this tool when selling and a substitute product\'s details are needed directly; use listProductReplacements instead for the raw option rows with priority and notes. Preconditions: the product must exist; substitutes appear only after replacements were recorded via addProductReplacement. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id, and 200 with an empty array when no replacement products resolve. 
+     * Get Substitute Parts
      */
     async getPartSubstitutes(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.getPartSubstitutesRaw(requestParameters, initOverrides);
@@ -542,8 +591,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a specific product by its unique ID.
-     * Get a product by ID
+     * Returns the full product record including identity codes, manufacturer data, category, dimensions, tracking level and lifecycle state. Use this tool when the productId is already known; use searchCatalogProducts instead to find products by text or filters. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id. 
+     * Get a Product by ID
      */
     async getProductByIdRaw(requestParameters: GetProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productId'] == null) {
@@ -576,8 +625,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a specific product by its unique ID.
-     * Get a product by ID
+     * Returns the full product record including identity codes, manufacturer data, category, dimensions, tracking level and lifecycle state. Use this tool when the productId is already known; use searchCatalogProducts instead to find products by text or filters. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id. 
+     * Get a Product by ID
      */
     async getProductById(requestParameters: GetProductByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.getProductByIdRaw(requestParameters, initOverrides);
@@ -585,51 +634,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a list of products matching the given name.
-     * Get products by name
-     */
-    async getProductByNameRaw(requestParameters: GetProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
-        if (requestParameters['name'] == null) {
-            throw new runtime.RequiredError(
-                'name',
-                'Required parameter "name" was null or undefined when calling getProductByName().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/products/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieves a list of products matching the given name.
-     * Get products by name
-     */
-    async getProductByName(requestParameters: GetProductByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
-        const response = await this.getProductByNameRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieves a consolidated view of product information including catalog data, location-specific pricing, and availability. Implements graceful degradation and returns partial data when non-critical services are unavailable.
-     * Get product details with pricing and availability
+     * Returns a consolidated product view for one location: catalog data, location-specific pricing, availability and lead time, with a confidence indicator describing how complete the data is. Use this tool for a sales-facing view of one product at one store; use getProductById instead for raw master data, and getEffectiveLocationPrice for the override-derived price alone. Preconditions: the product must exist; pricing and availability sources may be degraded, in which case partial data is returned rather than an error. Required inputs: productId (UUID) path parameter and location_id (UUID) query parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist, and 400 when location_id is missing or malformed; a 200 may still carry partial data, so callers should inspect the confidence field. 
+     * Get Product Detail With Pricing
      */
     async getProductDetailViewRaw(requestParameters: GetProductDetailViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDetailView>> {
         if (requestParameters['productId'] == null) {
@@ -673,8 +679,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a consolidated view of product information including catalog data, location-specific pricing, and availability. Implements graceful degradation and returns partial data when non-critical services are unavailable.
-     * Get product details with pricing and availability
+     * Returns a consolidated product view for one location: catalog data, location-specific pricing, availability and lead time, with a confidence indicator describing how complete the data is. Use this tool for a sales-facing view of one product at one store; use getProductById instead for raw master data, and getEffectiveLocationPrice for the override-derived price alone. Preconditions: the product must exist; pricing and availability sources may be degraded, in which case partial data is returned rather than an error. Required inputs: productId (UUID) path parameter and location_id (UUID) query parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist, and 400 when location_id is missing or malformed; a 200 may still carry partial data, so callers should inspect the confidence field. 
+     * Get Product Detail With Pricing
      */
     async getProductDetailView(requestParameters: GetProductDetailViewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDetailView> {
         const response = await this.getProductDetailViewRaw(requestParameters, initOverrides);
@@ -682,8 +688,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves lifecycle state and replacement suggestions for a product.
-     * Get product lifecycle state
+     * Returns a product\'s lifecycle state — ACTIVE, INACTIVE or DISCONTINUED, defaulting to ACTIVE when never set — together with its effective instant, last-change audit fields and ordered replacement options. Use this tool to inspect selling state before a transition; do not use updateProductLifecycle, which changes the state, and use listProductReplacements when only the replacements are needed. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no request body. Emits a CATALOG_PRODUCT_LIFECYCLE_GET audit event; no state changes. Returns 404 when no product exists for the supplied id. 
+     * Get Product Lifecycle State
      */
     async getProductLifecycleRaw(requestParameters: GetProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductLifecycleResponse>> {
         if (requestParameters['productId'] == null) {
@@ -716,8 +722,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves lifecycle state and replacement suggestions for a product.
-     * Get product lifecycle state
+     * Returns a product\'s lifecycle state — ACTIVE, INACTIVE or DISCONTINUED, defaulting to ACTIVE when never set — together with its effective instant, last-change audit fields and ordered replacement options. Use this tool to inspect selling state before a transition; do not use updateProductLifecycle, which changes the state, and use listProductReplacements when only the replacements are needed. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no request body. Emits a CATALOG_PRODUCT_LIFECYCLE_GET audit event; no state changes. Returns 404 when no product exists for the supplied id. 
+     * Get Product Lifecycle State
      */
     async getProductLifecycle(requestParameters: GetProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductLifecycleResponse> {
         const response = await this.getProductLifecycleRaw(requestParameters, initOverrides);
@@ -725,51 +731,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns replacement options for a product.
-     * List replacement products
-     */
-    async getReplacementsRaw(requestParameters: GetReplacementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReplacementOption>>> {
-        if (requestParameters['productId'] == null) {
-            throw new runtime.RequiredError(
-                'productId',
-                'Required parameter "productId" was null or undefined when calling getReplacements().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW", "product:lifecycle:update"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReplacementOptionFromJSON));
-    }
-
-    /**
-     * Returns replacement options for a product.
-     * List replacement products
-     */
-    async getReplacements(requestParameters: GetReplacementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReplacementOption>> {
-        const response = await this.getReplacementsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieves a specific service by its unique ID.
-     * Get a service by ID
+     * Returns one catalog service record with its name, short description and long description. Use this tool when the serviceId is already known; use searchCatalogServices instead to find services by partial name. Preconditions: the service must exist. Required inputs: serviceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no service exists for the supplied id. 
+     * Get a Service by ID
      */
     async getServiceByIdRaw(requestParameters: GetServiceByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceDto>> {
         if (requestParameters['serviceId'] == null) {
@@ -802,8 +765,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a specific service by its unique ID.
-     * Get a service by ID
+     * Returns one catalog service record with its name, short description and long description. Use this tool when the serviceId is already known; use searchCatalogServices instead to find services by partial name. Preconditions: the service must exist. Required inputs: serviceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no service exists for the supplied id. 
+     * Get a Service by ID
      */
     async getServiceById(requestParameters: GetServiceByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceDto> {
         const response = await this.getServiceByIdRaw(requestParameters, initOverrides);
@@ -811,14 +774,143 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a list of services matching the given name.
-     * Get services by name
+     * Returns every non-inventory product whose name equals the supplied value exactly; this is a whole-name match, not a substring search. Use this tool only when the exact name is known; use getNonInventoryProductById instead when the id is available, since there is no substring search for non-inventory products. Preconditions: none; an empty result simply means no non-inventory product carries that exact name. Required inputs: name as a path parameter; there is no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing matches, so an empty result is not an error condition. 
+     * List Non-Inventory Products by Name
      */
-    async getServiceByNameRaw(requestParameters: GetServiceByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceDto>> {
+    async listNonInventoryProductsByNameRaw(requestParameters: ListNonInventoryProductsByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<NonInventoryProductDto>> {
         if (requestParameters['name'] == null) {
             throw new runtime.RequiredError(
                 'name',
-                'Required parameter "name" was null or undefined when calling getServiceByName().'
+                'Required parameter "name" was null or undefined when calling listNonInventoryProductsByName().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/noninventory/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => NonInventoryProductDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns every non-inventory product whose name equals the supplied value exactly; this is a whole-name match, not a substring search. Use this tool only when the exact name is known; use getNonInventoryProductById instead when the id is available, since there is no substring search for non-inventory products. Preconditions: none; an empty result simply means no non-inventory product carries that exact name. Required inputs: name as a path parameter; there is no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing matches, so an empty result is not an error condition. 
+     * List Non-Inventory Products by Name
+     */
+    async listNonInventoryProductsByName(requestParameters: ListNonInventoryProductsByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<NonInventoryProductDto> {
+        const response = await this.listNonInventoryProductsByNameRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the non-deleted replacement options recorded for a product, ordered by priority, each with its replacement product id, notes and effective instant. Use this tool to see what supersedes a discontinued product; do not use addProductReplacement, which records a new option, and use getPartSubstitutes to resolve the full substitute product records instead of the option rows. Preconditions: the product must exist; replacements are normally present only on DISCONTINUED products. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id, and 200 with an empty array when the product has no replacements. 
+     * List Replacement Products
+     */
+    async listProductReplacementsRaw(requestParameters: ListProductReplacementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReplacementOption>>> {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError(
+                'productId',
+                'Required parameter "productId" was null or undefined when calling listProductReplacements().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW", "product:lifecycle:update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/{productId}/replacements`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReplacementOptionFromJSON));
+    }
+
+    /**
+     * Returns the non-deleted replacement options recorded for a product, ordered by priority, each with its replacement product id, notes and effective instant. Use this tool to see what supersedes a discontinued product; do not use addProductReplacement, which records a new option, and use getPartSubstitutes to resolve the full substitute product records instead of the option rows. Preconditions: the product must exist; replacements are normally present only on DISCONTINUED products. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id, and 200 with an empty array when the product has no replacements. 
+     * List Replacement Products
+     */
+    async listProductReplacements(requestParameters: ListProductReplacementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReplacementOption>> {
+        const response = await this.listProductReplacementsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every product whose name equals the supplied value exactly; this is a whole-name match, not a substring search. Use this tool only when the exact product name is known; use searchCatalogProducts instead for partial text, brand, category or SKU matching. Preconditions: none; an empty result simply means no product carries that exact name. Required inputs: name as a path parameter; there is no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing matches, so an empty result is not an error condition. 
+     * List Products by Exact Name
+     */
+    async listProductsByNameRaw(requestParameters: ListProductsByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
+        if (requestParameters['name'] == null) {
+            throw new runtime.RequiredError(
+                'name',
+                'Required parameter "name" was null or undefined when calling listProductsByName().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/name/{name}`.replace(`{${"name"}}`, encodeURIComponent(String(requestParameters['name']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns every product whose name equals the supplied value exactly; this is a whole-name match, not a substring search. Use this tool only when the exact product name is known; use searchCatalogProducts instead for partial text, brand, category or SKU matching. Preconditions: none; an empty result simply means no product carries that exact name. Required inputs: name as a path parameter; there is no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing matches, so an empty result is not an error condition. 
+     * List Products by Exact Name
+     */
+    async listProductsByName(requestParameters: ListProductsByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
+        const response = await this.listProductsByNameRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every catalog service whose name equals the supplied value exactly; this is a whole-name match, not a substring search. Use this tool only when the exact service name is known; use searchCatalogServices instead for partial, typeahead-style matching. Preconditions: none; an empty result simply means no service carries that exact name. Required inputs: name as a path parameter; there is no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing matches, so an empty result is not an error condition. 
+     * List Services by Exact Name
+     */
+    async listServicesByNameRaw(requestParameters: ListServicesByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceDto>> {
+        if (requestParameters['name'] == null) {
+            throw new runtime.RequiredError(
+                'name',
+                'Required parameter "name" was null or undefined when calling listServicesByName().'
             );
         }
 
@@ -845,17 +937,17 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a list of services matching the given name.
-     * Get services by name
+     * Returns every catalog service whose name equals the supplied value exactly; this is a whole-name match, not a substring search. Use this tool only when the exact service name is known; use searchCatalogServices instead for partial, typeahead-style matching. Preconditions: none; an empty result simply means no service carries that exact name. Required inputs: name as a path parameter; there is no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing matches, so an empty result is not an error condition. 
+     * List Services by Exact Name
      */
-    async getServiceByName(requestParameters: GetServiceByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceDto> {
-        const response = await this.getServiceByNameRaw(requestParameters, initOverrides);
+    async listServicesByName(requestParameters: ListServicesByNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceDto> {
+        const response = await this.listServicesByNameRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Rejects a pending override, persists rejection metadata, and marks the request as terminal.
-     * Reject pending location price override
+     * Rejects a PENDING_APPROVAL location price override, recording who rejected it and why, and closing its approval request as REJECTED; the decision is terminal, a rejected override cannot be revived. Use this tool to decline a pending override; do not use approveLocationPriceOverride, which activates it instead. Preconditions: the override must exist, be in PENDING_APPROVAL status, have an open approval request, and the supplied version must match the override\'s current version. Required inputs: overrideId (UUID) path parameter plus version (long), actorUserId (UUID), and non-blank rejectionReasonCode and rejectionNotes in the body. Emits a CATALOG_LOCATION_OVERRIDE_REJECT event and invalidates the product-detail cache for the override\'s location. Returns 404 when the override or its approval request cannot be found, 400 when the override is not in PENDING_APPROVAL status or the rejection reason or notes are blank, and 409 when the supplied version does not match the current one. 
+     * Reject Pending Price Override
      */
     async rejectLocationPriceOverrideRaw(requestParameters: RejectLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['overrideId'] == null) {
@@ -898,8 +990,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Rejects a pending override, persists rejection metadata, and marks the request as terminal.
-     * Reject pending location price override
+     * Rejects a PENDING_APPROVAL location price override, recording who rejected it and why, and closing its approval request as REJECTED; the decision is terminal, a rejected override cannot be revived. Use this tool to decline a pending override; do not use approveLocationPriceOverride, which activates it instead. Preconditions: the override must exist, be in PENDING_APPROVAL status, have an open approval request, and the supplied version must match the override\'s current version. Required inputs: overrideId (UUID) path parameter plus version (long), actorUserId (UUID), and non-blank rejectionReasonCode and rejectionNotes in the body. Emits a CATALOG_LOCATION_OVERRIDE_REJECT event and invalidates the product-detail cache for the override\'s location. Returns 404 when the override or its approval request cannot be found, 400 when the override is not in PENDING_APPROVAL status or the rejection reason or notes are blank, and 409 when the supplied version does not match the current one. 
+     * Reject Pending Price Override
      */
     async rejectLocationPriceOverride(requestParameters: RejectLocationPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.rejectLocationPriceOverrideRaw(requestParameters, initOverrides);
@@ -907,10 +999,58 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Cursor-based product search with optional free-text query and exact filters for brand, category, and SKU.
-     * Search catalog products
+     * Re-publishes catalog.product.updated facts for one bounded page of products so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one product, which republishes itself on its next ordinary update. Preconditions: Kafka publication must be enabled, or the facts queue in the outbox and reach nobody; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterProductId resumes a previous page, updatedSince restricts to products changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_PRODUCT_FACT_REPLAY event and queues one product fact per product in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the catalog end is reached, and 400 when limit is out of range or a parameter is malformed. 
+     * Re-emit Product Facts for Replica Consumers
      */
-    async searchProductsRaw(requestParameters: SearchProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogSearchResultDto>> {
+    async replayProductFactsRaw(requestParameters: ReplayProductFactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductFactReplayResultDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['afterProductId'] != null) {
+            queryParameters['afterProductId'] = requestParameters['afterProductId'];
+        }
+
+        if (requestParameters['updatedSince'] != null) {
+            queryParameters['updatedSince'] = (requestParameters['updatedSince'] as any).toISOString();
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/facts/replay`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductFactReplayResultDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-publishes catalog.product.updated facts for one bounded page of products so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one product, which republishes itself on its next ordinary update. Preconditions: Kafka publication must be enabled, or the facts queue in the outbox and reach nobody; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterProductId resumes a previous page, updatedSince restricts to products changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_PRODUCT_FACT_REPLAY event and queues one product fact per product in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the catalog end is reached, and 400 when limit is out of range or a parameter is malformed. 
+     * Re-emit Product Facts for Replica Consumers
+     */
+    async replayProductFacts(requestParameters: ReplayProductFactsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductFactReplayResultDto> {
+        const response = await this.replayProductFactsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Searches products with an optional free-text query over name and description plus exact case-insensitive filters for brand, category and SKU, paged by an opaque cursor. Use this tool to find products by partial text or filters; use getProductById instead when the id is known, and listProductsByName only for exact whole-name matches. Preconditions: none; a malformed or missing cursor silently restarts at the first page rather than failing. Required inputs: all parameters are optional; limit defaults to 20 and is clamped to 1-100, and detailed defaults to false — pass detailed=true to enrich each row with lifecycle state, its effective instant and the active MSRP, with null price fields for products lacking an active MSRP. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty items array when nothing matches, so an empty result is not an error condition. 
+     * Search Catalog Products
+     */
+    async searchCatalogProductsRaw(requestParameters: SearchCatalogProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogSearchResultDto>> {
         const queryParameters: any = {};
 
         if (requestParameters['q'] != null) {
@@ -937,6 +1077,10 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             queryParameters['limit'] = requestParameters['limit'];
         }
 
+        if (requestParameters['detailed'] != null) {
+            queryParameters['detailed'] = requestParameters['detailed'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.accessToken) {
@@ -958,70 +1102,61 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Cursor-based product search with optional free-text query and exact filters for brand, category, and SKU.
-     * Search catalog products
+     * Searches products with an optional free-text query over name and description plus exact case-insensitive filters for brand, category and SKU, paged by an opaque cursor. Use this tool to find products by partial text or filters; use getProductById instead when the id is known, and listProductsByName only for exact whole-name matches. Preconditions: none; a malformed or missing cursor silently restarts at the first page rather than failing. Required inputs: all parameters are optional; limit defaults to 20 and is clamped to 1-100, and detailed defaults to false — pass detailed=true to enrich each row with lifecycle state, its effective instant and the active MSRP, with null price fields for products lacking an active MSRP. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty items array when nothing matches, so an empty result is not an error condition. 
+     * Search Catalog Products
      */
-    async searchProducts(requestParameters: SearchProductsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogSearchResultDto> {
-        const response = await this.searchProductsRaw(requestParameters, initOverrides);
+    async searchCatalogProducts(requestParameters: SearchCatalogProductsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogSearchResultDto> {
+        const response = await this.searchCatalogProductsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Sets lifecycle state to ACTIVE, INACTIVE, or DISCONTINUED with effective date semantics.
-     * Set product lifecycle state
+     * Searches services by a case-insensitive substring of the service name, ordered by name, sized for typeahead selection. Use this tool to find a serviceId by partial name; use getServiceById instead when the id is known, and listServicesByName for exact whole-name matches. Preconditions: none; a blank or missing q returns an empty list rather than all services. Required inputs: q as the substring to match; limit is optional, defaults to 20 and is clamped to 1-100. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when q is blank or nothing matches, so an empty result is not an error condition. 
+     * Search Catalog Services
      */
-    async setLifecycleStateRaw(requestParameters: SetLifecycleStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductLifecycleResponse>> {
-        if (requestParameters['productId'] == null) {
-            throw new runtime.RequiredError(
-                'productId',
-                'Required parameter "productId" was null or undefined when calling setLifecycleState().'
-            );
-        }
-
-        if (requestParameters['productLifecycleUpdateRequest'] == null) {
-            throw new runtime.RequiredError(
-                'productLifecycleUpdateRequest',
-                'Required parameter "productLifecycleUpdateRequest" was null or undefined when calling setLifecycleState().'
-            );
-        }
-
+    async searchCatalogServicesRaw(requestParameters: SearchCatalogServicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServiceDto>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        headerParameters['Content-Type'] = 'application/json';
-
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
         const response = await this.request({
-            path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
-            method: 'PUT',
+            path: `/v1/products/services/search`,
+            method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-            body: ProductLifecycleUpdateRequestToJSON(requestParameters['productLifecycleUpdateRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ProductLifecycleResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceDtoFromJSON));
     }
 
     /**
-     * Sets lifecycle state to ACTIVE, INACTIVE, or DISCONTINUED with effective date semantics.
-     * Set product lifecycle state
+     * Searches services by a case-insensitive substring of the service name, ordered by name, sized for typeahead selection. Use this tool to find a serviceId by partial name; use getServiceById instead when the id is known, and listServicesByName for exact whole-name matches. Preconditions: none; a blank or missing q returns an empty list rather than all services. Required inputs: q as the substring to match; limit is optional, defaults to 20 and is clamped to 1-100. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when q is blank or nothing matches, so an empty result is not an error condition. 
+     * Search Catalog Services
      */
-    async setLifecycleState(requestParameters: SetLifecycleStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductLifecycleResponse> {
-        const response = await this.setLifecycleStateRaw(requestParameters, initOverrides);
+    async searchCatalogServices(requestParameters: SearchCatalogServicesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServiceDto>> {
+        const response = await this.searchCatalogServicesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Updates mutable product master fields. SKU is immutable.
-     * Update product master record
+     * Replaces the mutable master-data fields of a product — name, description, unit of measure, manufacturer, category, UPC and attributes — while the SKU stays immutable. Use this tool to correct product master data; do not use updateProductLifecycle, which changes selling state, and do not use updateProductTrackingLevel, which changes stock tracking. Preconditions: the product must exist, and a sku field in the body must either be omitted or match the stored SKU exactly. Required inputs: productId (UUID) path parameter plus non-blank name, description, unitOfMeasure and mpn; omitted optional fields such as upc and categoryId are cleared, not preserved. Emits a CATALOG_PRODUCT_UPDATED event, publishes a product fact for downstream replicas, and invalidates the product-detail cache. Returns 404 when the product does not exist, 400 when the body tries to change the SKU or names a categoryId that does not resolve, and 409 when the manufacturerId plus mpn pair collides with another product. 
+     * Update Product Master Record
      */
     async updateProductRaw(requestParameters: UpdateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
         if (requestParameters['productId'] == null) {
@@ -1064,8 +1199,8 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates mutable product master fields. SKU is immutable.
-     * Update product master record
+     * Replaces the mutable master-data fields of a product — name, description, unit of measure, manufacturer, category, UPC and attributes — while the SKU stays immutable. Use this tool to correct product master data; do not use updateProductLifecycle, which changes selling state, and do not use updateProductTrackingLevel, which changes stock tracking. Preconditions: the product must exist, and a sku field in the body must either be omitted or match the stored SKU exactly. Required inputs: productId (UUID) path parameter plus non-blank name, description, unitOfMeasure and mpn; omitted optional fields such as upc and categoryId are cleared, not preserved. Emits a CATALOG_PRODUCT_UPDATED event, publishes a product fact for downstream replicas, and invalidates the product-detail cache. Returns 404 when the product does not exist, 400 when the body tries to change the SKU or names a categoryId that does not resolve, and 409 when the manufacturerId plus mpn pair collides with another product. 
+     * Update Product Master Record
      */
     async updateProduct(requestParameters: UpdateProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
         const response = await this.updateProductRaw(requestParameters, initOverrides);
@@ -1073,8 +1208,114 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates or updates the active LOCATION guardrail policy used by price overrides.
-     * Upsert location guardrail policy
+     * Transitions a product\'s lifecycle state to ACTIVE, INACTIVE or DISCONTINUED with an effective instant; discontinuation is one-way, a DISCONTINUED product can never be reactivated and callers must record a replacement via addProductReplacement instead. Use this tool to change selling state; do not use updateProduct, which edits master data, and do not use deleteCatalogItem, which removes the row outright. Preconditions: the product must exist and must not already be in the requested state; any transition into DISCONTINUED requires the product:lifecycle:override_discontinued authority and a non-blank overrideReason. Required inputs: productId (UUID) path parameter plus lifecycleState and either effectiveAt (instant) or effectiveDate (date, resolved to UTC start of day); effectiveAt more than two seconds in the past is rejected. Emits a CATALOG_PRODUCT_LIFECYCLE_UPDATE event, publishes a product fact for downstream replicas, and invalidates the product-detail cache. Returns 404 when the product does not exist, 409 when attempting to leave DISCONTINUED, 403 when the discontinued-override authority is missing, and 400 when the state is unchanged, the effective time is absent or in the past, or overrideReason is missing for a discontinuation. 
+     * Set Product Lifecycle State
+     */
+    async updateProductLifecycleRaw(requestParameters: UpdateProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductLifecycleResponse>> {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError(
+                'productId',
+                'Required parameter "productId" was null or undefined when calling updateProductLifecycle().'
+            );
+        }
+
+        if (requestParameters['productLifecycleUpdateRequest'] == null) {
+            throw new runtime.RequiredError(
+                'productLifecycleUpdateRequest',
+                'Required parameter "productLifecycleUpdateRequest" was null or undefined when calling updateProductLifecycle().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT", "product:lifecycle:update"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/{productId}/lifecycle`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ProductLifecycleUpdateRequestToJSON(requestParameters['productLifecycleUpdateRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductLifecycleResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Transitions a product\'s lifecycle state to ACTIVE, INACTIVE or DISCONTINUED with an effective instant; discontinuation is one-way, a DISCONTINUED product can never be reactivated and callers must record a replacement via addProductReplacement instead. Use this tool to change selling state; do not use updateProduct, which edits master data, and do not use deleteCatalogItem, which removes the row outright. Preconditions: the product must exist and must not already be in the requested state; any transition into DISCONTINUED requires the product:lifecycle:override_discontinued authority and a non-blank overrideReason. Required inputs: productId (UUID) path parameter plus lifecycleState and either effectiveAt (instant) or effectiveDate (date, resolved to UTC start of day); effectiveAt more than two seconds in the past is rejected. Emits a CATALOG_PRODUCT_LIFECYCLE_UPDATE event, publishes a product fact for downstream replicas, and invalidates the product-detail cache. Returns 404 when the product does not exist, 409 when attempting to leave DISCONTINUED, 403 when the discontinued-override authority is missing, and 400 when the state is unchanged, the effective time is absent or in the past, or overrideReason is missing for a discontinuation. 
+     * Set Product Lifecycle State
+     */
+    async updateProductLifecycle(requestParameters: UpdateProductLifecycleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductLifecycleResponse> {
+        const response = await this.updateProductLifecycleRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sets the product\'s stock tracking level to NONE, LOT or SERIAL, controlling whether inventory tracks the product per lot or per serial number. Use this tool when a product\'s tracking granularity changes; do not use updateProduct, which replaces master-data fields and does not touch the tracking level. Preconditions: the product must exist; no transition rules apply between levels. Required inputs: productId (UUID) path parameter and trackingLevel in the body, one of NONE, LOT or SERIAL. Emits a CATALOG_PRODUCT_TRACKING_LEVEL_UPDATE event, re-publishes the product fact so downstream replicas pick up the new level, and invalidates the product-detail cache. Returns 404 when the product does not exist, and 400 when trackingLevel is missing or not a valid enum value. 
+     * Set Product Tracking Level
+     */
+    async updateProductTrackingLevelRaw(requestParameters: UpdateProductTrackingLevelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
+        if (requestParameters['productId'] == null) {
+            throw new runtime.RequiredError(
+                'productId',
+                'Required parameter "productId" was null or undefined when calling updateProductTrackingLevel().'
+            );
+        }
+
+        if (requestParameters['productTrackingLevelUpdateRequestDto'] == null) {
+            throw new runtime.RequiredError(
+                'productTrackingLevelUpdateRequestDto',
+                'Required parameter "productTrackingLevelUpdateRequestDto" was null or undefined when calling updateProductTrackingLevel().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/{productId}/tracking-level`.replace(`{${"productId"}}`, encodeURIComponent(String(requestParameters['productId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ProductTrackingLevelUpdateRequestDtoToJSON(requestParameters['productTrackingLevelUpdateRequestDto']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Sets the product\'s stock tracking level to NONE, LOT or SERIAL, controlling whether inventory tracks the product per lot or per serial number. Use this tool when a product\'s tracking granularity changes; do not use updateProduct, which replaces master-data fields and does not touch the tracking level. Preconditions: the product must exist; no transition rules apply between levels. Required inputs: productId (UUID) path parameter and trackingLevel in the body, one of NONE, LOT or SERIAL. Emits a CATALOG_PRODUCT_TRACKING_LEVEL_UPDATE event, re-publishes the product fact so downstream replicas pick up the new level, and invalidates the product-detail cache. Returns 404 when the product does not exist, and 400 when trackingLevel is missing or not a valid enum value. 
+     * Set Product Tracking Level
+     */
+    async updateProductTrackingLevel(requestParameters: UpdateProductTrackingLevelRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
+        const response = await this.updateProductTrackingLevelRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates or updates the LOCATION-scoped guardrail policy that createLocationPriceOverride enforces for discount, margin and auto-approval limits. Use this tool to set pricing guardrails for a location before overrides are created there; do not use createLocationPriceOverride, which applies a price and is rejected until a policy exists. Preconditions: none; when a policy already exists for the scopeId its limits are overwritten, otherwise a new policy row is created. Required inputs: scopeId (the location UUID), minMarginPercent, maxDiscountPercent and autoApprovalThresholdPercent, all mandatory. Emits a CATALOG_GUARDRAIL_POLICY_UPSERT event; existing overrides are not re-evaluated, the new limits apply only to overrides created afterwards. Returns 400 when any of the four fields is missing; the 200 response body carries only the locationId, not the stored limits. 
+     * Upsert Location Guardrail Policy
      */
     async upsertLocationGuardrailPolicyRaw(requestParameters: UpsertLocationGuardrailPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationPriceOverrideResponseDto>> {
         if (requestParameters['guardrailPolicyUpsertRequestDto'] == null) {
@@ -1110,12 +1351,21 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates or updates the active LOCATION guardrail policy used by price overrides.
-     * Upsert location guardrail policy
+     * Creates or updates the LOCATION-scoped guardrail policy that createLocationPriceOverride enforces for discount, margin and auto-approval limits. Use this tool to set pricing guardrails for a location before overrides are created there; do not use createLocationPriceOverride, which applies a price and is rejected until a policy exists. Preconditions: none; when a policy already exists for the scopeId its limits are overwritten, otherwise a new policy row is created. Required inputs: scopeId (the location UUID), minMarginPercent, maxDiscountPercent and autoApprovalThresholdPercent, all mandatory. Emits a CATALOG_GUARDRAIL_POLICY_UPSERT event; existing overrides are not re-evaluated, the new limits apply only to overrides created afterwards. Returns 400 when any of the four fields is missing; the 200 response body carries only the locationId, not the stored limits. 
+     * Upsert Location Guardrail Policy
      */
     async upsertLocationGuardrailPolicy(requestParameters: UpsertLocationGuardrailPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationPriceOverrideResponseDto> {
         const response = await this.upsertLocationGuardrailPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum FindProductByCodeCodeTypeEnum {
+    Upc = 'UPC',
+    Ean = 'EAN'
 }

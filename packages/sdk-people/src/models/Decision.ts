@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface Decision {
     /**
-     * The unique identifier of the time entry
-     * @type {string}
-     * @memberof Decision
-     */
-    timeEntryId: string;
-    /**
      * The reason for rejection. Applicable if this is a rejection request.
      * @type {string}
      * @memberof Decision
      */
     rejectionReason?: string;
+    /**
+     * The unique identifier of the time entry
+     * @type {string}
+     * @memberof Decision
+     */
+    timeEntryId: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function DecisionFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'timeEntryId': json['timeEntryId'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
+        'timeEntryId': json['timeEntryId'],
     };
 }
 
@@ -62,8 +62,8 @@ export function DecisionToJSON(value?: Decision | null): any {
     }
     return {
         
-        'timeEntryId': value['timeEntryId'],
         'rejectionReason': value['rejectionReason'],
+        'timeEntryId': value['timeEntryId'],
     };
 }
 

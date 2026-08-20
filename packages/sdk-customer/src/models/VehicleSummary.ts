@@ -14,43 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Vehicle summary within a CRM snapshot
  * @export
  * @interface VehicleSummary
  */
 export interface VehicleSummary {
     /**
-     * 
-     * @type {string}
-     * @memberof VehicleSummary
-     */
-    vehicleId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VehicleSummary
-     */
-    vin?: string;
-    /**
-     * 
+     * License plate
      * @type {string}
      * @memberof VehicleSummary
      */
     licensePlate?: string;
     /**
-     * 
+     * Vehicle make
      * @type {string}
      * @memberof VehicleSummary
      */
     make?: string;
     /**
-     * 
+     * Vehicle model
      * @type {string}
      * @memberof VehicleSummary
      */
     model?: string;
     /**
-     * 
+     * Identifier of the vehicle
+     * @type {string}
+     * @memberof VehicleSummary
+     */
+    vehicleId: string;
+    /**
+     * Vehicle Identification Number
+     * @type {string}
+     * @memberof VehicleSummary
+     */
+    vin?: string;
+    /**
+     * Model year
      * @type {number}
      * @memberof VehicleSummary
      */
@@ -61,6 +61,7 @@ export interface VehicleSummary {
  * Check if a given object implements the VehicleSummary interface.
  */
 export function instanceOfVehicleSummary(value: object): boolean {
+    if (!('vehicleId' in value)) return false;
     return true;
 }
 
@@ -74,11 +75,11 @@ export function VehicleSummaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'vin': json['vin'] == null ? undefined : json['vin'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
+        'vehicleId': json['vehicleId'],
+        'vin': json['vin'] == null ? undefined : json['vin'],
         'year': json['year'] == null ? undefined : json['year'],
     };
 }
@@ -89,11 +90,11 @@ export function VehicleSummaryToJSON(value?: VehicleSummary | null): any {
     }
     return {
         
-        'vehicleId': value['vehicleId'],
-        'vin': value['vin'],
         'licensePlate': value['licensePlate'],
         'make': value['make'],
         'model': value['model'],
+        'vehicleId': value['vehicleId'],
+        'vin': value['vin'],
         'year': value['year'],
     };
 }

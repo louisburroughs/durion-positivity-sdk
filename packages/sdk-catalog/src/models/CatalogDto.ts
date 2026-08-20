@@ -20,23 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface CatalogDto {
     /**
-     * Catalog identifier
-     * @type {string}
-     * @memberof CatalogDto
-     */
-    id?: string;
-    /**
-     * Catalog name
-     * @type {string}
-     * @memberof CatalogDto
-     */
-    name?: string;
-    /**
      * Catalog description
      * @type {string}
      * @memberof CatalogDto
      */
     description?: string;
+    /**
+     * Catalog identifier
+     * @type {string}
+     * @memberof CatalogDto
+     */
+    id: string;
+    /**
+     * Catalog name
+     * @type {string}
+     * @memberof CatalogDto
+     */
+    name: string;
+    /**
+     * Non-inventory product IDs included in the catalog
+     * @type {Array<string>}
+     * @memberof CatalogDto
+     */
+    nonInventoryProductIds?: Array<string>;
     /**
      * Product IDs included in the catalog
      * @type {Array<string>}
@@ -49,18 +55,14 @@ export interface CatalogDto {
      * @memberof CatalogDto
      */
     serviceIds?: Array<string>;
-    /**
-     * Non-inventory product IDs included in the catalog
-     * @type {Array<string>}
-     * @memberof CatalogDto
-     */
-    nonInventoryProductIds?: Array<string>;
 }
 
 /**
  * Check if a given object implements the CatalogDto interface.
  */
 export function instanceOfCatalogDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -74,12 +76,12 @@ export function CatalogDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
+        'id': json['id'],
+        'name': json['name'],
+        'nonInventoryProductIds': json['nonInventoryProductIds'] == null ? undefined : json['nonInventoryProductIds'],
         'productIds': json['productIds'] == null ? undefined : json['productIds'],
         'serviceIds': json['serviceIds'] == null ? undefined : json['serviceIds'],
-        'nonInventoryProductIds': json['nonInventoryProductIds'] == null ? undefined : json['nonInventoryProductIds'],
     };
 }
 
@@ -89,12 +91,12 @@ export function CatalogDtoToJSON(value?: CatalogDto | null): any {
     }
     return {
         
+        'description': value['description'],
         'id': value['id'],
         'name': value['name'],
-        'description': value['description'],
+        'nonInventoryProductIds': value['nonInventoryProductIds'],
         'productIds': value['productIds'],
         'serviceIds': value['serviceIds'],
-        'nonInventoryProductIds': value['nonInventoryProductIds'],
     };
 }
 

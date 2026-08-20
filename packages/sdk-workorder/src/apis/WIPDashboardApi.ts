@@ -32,10 +32,10 @@ export interface GetWipDetailRequest {
     workorderId: string;
 }
 
-export interface ListWipRequest {
+export interface ListWipWorkordersRequest {
     locationId: string;
     pageable: Pageable;
-    multiLocation?: string;
+    multiLocation?: boolean;
 }
 
 /**
@@ -44,8 +44,8 @@ export interface ListWipRequest {
 export class WIPDashboardApi extends runtime.BaseAPI {
 
     /**
-     * Returns full WIP detail for a single workorder including status history.
-     * Get WIP detail for a workorder
+     * Returns the full work-in-progress detail for one workorder: current status, the complete status transition history with actors and reasons, blocking part numbers, and the currently assigned technician. Use this tool when drilling into a single workorder from the WIP board; use listWipWorkorders instead for the paginated board itself. Preconditions: the workorder must exist; it does not need to be in an active WIP status to be viewed. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_WIP_VIEW audit event; no workorder state changes — this is a read-only projection. Returns 400 with code INVALID_ARGUMENT when no workorder exists for the id — the not-found case surfaces as 400 rather than 404 in this operation. 
+     * Get WIP Detail for Workorder
      */
     async getWipDetailRaw(requestParameters: GetWipDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderStatusDetail>> {
         if (requestParameters['workorderId'] == null) {
@@ -78,8 +78,8 @@ export class WIPDashboardApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns full WIP detail for a single workorder including status history.
-     * Get WIP detail for a workorder
+     * Returns the full work-in-progress detail for one workorder: current status, the complete status transition history with actors and reasons, blocking part numbers, and the currently assigned technician. Use this tool when drilling into a single workorder from the WIP board; use listWipWorkorders instead for the paginated board itself. Preconditions: the workorder must exist; it does not need to be in an active WIP status to be viewed. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_WIP_VIEW audit event; no workorder state changes — this is a read-only projection. Returns 400 with code INVALID_ARGUMENT when no workorder exists for the id — the not-found case surfaces as 400 rather than 404 in this operation. 
+     * Get WIP Detail for Workorder
      */
     async getWipDetail(requestParameters: GetWipDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderStatusDetail> {
         const response = await this.getWipDetailRaw(requestParameters, initOverrides);
@@ -87,21 +87,21 @@ export class WIPDashboardApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of workorders in active WIP statuses. When the caller holds workorder:wip:view_all_locations, results span all locations.
-     * List active WIP workorders
+     * Returns a page of workorders in active work-in-progress statuses (APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, AWAITING_APPROVAL), enriched with customer and vehicle references. Use this tool for the WIP status board; do not use getDispatchDashboard, which aggregates mechanics, bays, and conflicts for one date, and use getWipDetail for a single workorder\'s status history. Preconditions: multiLocation=true requires the caller to hold workorder:wip:view_all_locations; otherwise results are scoped to the given location. Required inputs: locationId (UUID as a string) as a query parameter — ignored when multiLocation is true; multiLocation defaults to false and page size defaults to 25. Emits a WORKORDER_WIP_LIST audit event; no workorder state changes — this is a read-only projection. Returns 400 when locationId does not parse as a UUID, and 403 when multiLocation is requested without workorder:wip:view_all_locations. 
+     * List Active WIP Workorders
      */
-    async listWipRaw(requestParameters: ListWipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageWorkorderStatusView>> {
+    async listWipWorkordersRaw(requestParameters: ListWipWorkordersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageWorkorderStatusView>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling listWip().'
+                'Required parameter "locationId" was null or undefined when calling listWipWorkorders().'
             );
         }
 
         if (requestParameters['pageable'] == null) {
             throw new runtime.RequiredError(
                 'pageable',
-                'Required parameter "pageable" was null or undefined when calling listWip().'
+                'Required parameter "pageable" was null or undefined when calling listWipWorkorders().'
             );
         }
 
@@ -140,11 +140,11 @@ export class WIPDashboardApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paginated list of workorders in active WIP statuses. When the caller holds workorder:wip:view_all_locations, results span all locations.
-     * List active WIP workorders
+     * Returns a page of workorders in active work-in-progress statuses (APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, AWAITING_APPROVAL), enriched with customer and vehicle references. Use this tool for the WIP status board; do not use getDispatchDashboard, which aggregates mechanics, bays, and conflicts for one date, and use getWipDetail for a single workorder\'s status history. Preconditions: multiLocation=true requires the caller to hold workorder:wip:view_all_locations; otherwise results are scoped to the given location. Required inputs: locationId (UUID as a string) as a query parameter — ignored when multiLocation is true; multiLocation defaults to false and page size defaults to 25. Emits a WORKORDER_WIP_LIST audit event; no workorder state changes — this is a read-only projection. Returns 400 when locationId does not parse as a UUID, and 403 when multiLocation is requested without workorder:wip:view_all_locations. 
+     * List Active WIP Workorders
      */
-    async listWip(requestParameters: ListWipRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageWorkorderStatusView> {
-        const response = await this.listWipRaw(requestParameters, initOverrides);
+    async listWipWorkorders(requestParameters: ListWipWorkordersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageWorkorderStatusView> {
+        const response = await this.listWipWorkordersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

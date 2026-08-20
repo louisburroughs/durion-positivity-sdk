@@ -3,9 +3,9 @@ import { AccountingEventsApi } from '../apis/AccountingEventsApi';
 export class AccountingEventWorkflow {
   constructor(private readonly accountingEventsApi: AccountingEventsApi) { }
 
-  /** @operationId retryEventProcessing */
-  retry(params: Parameters<AccountingEventsApi['retryEventProcessing']>[0]) {
-    return this.accountingEventsApi.retryEventProcessing(params);
+  /** @operationId retryAccountingEvent */
+  retry(params: Parameters<AccountingEventsApi['retryAccountingEvent']>[0]) {
+    return this.accountingEventsApi.retryAccountingEvent(params);
   }
 
   /** @operationId reprocessSuspendedEvent */
@@ -13,8 +13,8 @@ export class AccountingEventWorkflow {
     return this.accountingEventsApi.reprocessSuspendedEvent(params);
   }
 
-  /** @operationId submitEvent */
-  submit(params: Parameters<AccountingEventsApi['submitEvent']>[0]) {
-    return this.accountingEventsApi.submitEvent(params);
+  /** @operationId submitAccountingEvent */
+  submit(params: Parameters<AccountingEventsApi['submitAccountingEvent']>[0]) {
+    return this.accountingEventsApi.submitAccountingEvent(params);
   }
 }

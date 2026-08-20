@@ -36,8 +36,8 @@ export interface ExecutePutawayRequest {
 export class PutawayExecutionApi extends runtime.BaseAPI {
 
     /**
-     * Executes a putaway task by moving SKU quantity from source location to destination location.
-     * Execute putaway task
+     * Executes a putaway move, posting paired PUTAWAY ledger entries that decrement on-hand at the staging source location and increment it at the destination, then marking the task COMPLETED with the actual destination recorded. Use this tool when the clerk physically moves staged stock into storage; do not use generatePutawayTasks, which only creates tasks, and do not use claimPutawayTask, which only assigns one. Preconditions: the task must exist, the source location must hold on-hand stock of the SKU, and the destination must be valid for the SKU and within capacity unless the matching override flag is set by a caller holding the corresponding putaway override permission; every override needs overrideReasonCode and overrideJustification, and a capacity override also needs approvedBy and must stay within the configured overfill tolerance. Required inputs: taskId (UUID string) path parameter plus skuId, sourceLocationId, destinationLocationId and a positive quantity; the destination may differ from the task\'s suggestion, and the override fields are optional. Emits an INVENTORY_PUTAWAY_EXECUTE event; on-hand shifts between the two locations immediately and the task leaves the executable pool. Returns 404 when the task does not exist, 422 when the source lacks on-hand, the destination is invalid for the SKU or at capacity, or an override omits its audit fields, 403 when an override is requested without its permission, and 400 when taskId is not a valid UUID. 
+     * Execute Putaway Task
      */
     async executePutawayRaw(requestParameters: ExecutePutawayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PutawayExecutionResponse>> {
         if (requestParameters['taskId'] == null) {
@@ -80,8 +80,8 @@ export class PutawayExecutionApi extends runtime.BaseAPI {
     }
 
     /**
-     * Executes a putaway task by moving SKU quantity from source location to destination location.
-     * Execute putaway task
+     * Executes a putaway move, posting paired PUTAWAY ledger entries that decrement on-hand at the staging source location and increment it at the destination, then marking the task COMPLETED with the actual destination recorded. Use this tool when the clerk physically moves staged stock into storage; do not use generatePutawayTasks, which only creates tasks, and do not use claimPutawayTask, which only assigns one. Preconditions: the task must exist, the source location must hold on-hand stock of the SKU, and the destination must be valid for the SKU and within capacity unless the matching override flag is set by a caller holding the corresponding putaway override permission; every override needs overrideReasonCode and overrideJustification, and a capacity override also needs approvedBy and must stay within the configured overfill tolerance. Required inputs: taskId (UUID string) path parameter plus skuId, sourceLocationId, destinationLocationId and a positive quantity; the destination may differ from the task\'s suggestion, and the override fields are optional. Emits an INVENTORY_PUTAWAY_EXECUTE event; on-hand shifts between the two locations immediately and the task leaves the executable pool. Returns 404 when the task does not exist, 422 when the source lacks on-hand, the destination is invalid for the SKU or at capacity, or an override omits its audit fields, 403 when an override is requested without its permission, and 400 when taskId is not a valid UUID. 
+     * Execute Putaway Task
      */
     async executePutaway(requestParameters: ExecutePutawayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PutawayExecutionResponse> {
         const response = await this.executePutawayRaw(requestParameters, initOverrides);

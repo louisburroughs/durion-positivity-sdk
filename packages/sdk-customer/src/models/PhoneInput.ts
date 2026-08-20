@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface PhoneInput {
     /**
-     * Phone number
-     * @type {string}
+     * 
+     * @type {boolean}
      * @memberof PhoneInput
      */
-    value: string;
+    primary?: boolean;
     /**
      * Phone type
      * @type {string}
@@ -32,11 +32,11 @@ export interface PhoneInput {
      */
     type?: PhoneInputTypeEnum;
     /**
-     * 
-     * @type {boolean}
+     * Phone number
+     * @type {string}
      * @memberof PhoneInput
      */
-    primary?: boolean;
+    value: string;
 }
 
 /**
@@ -70,9 +70,9 @@ export function PhoneInputFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'value': json['value'],
-        'type': json['type'] == null ? undefined : json['type'],
         'primary': json['primary'] == null ? undefined : json['primary'],
+        'type': json['type'] == null ? undefined : json['type'],
+        'value': json['value'],
     };
 }
 
@@ -82,9 +82,9 @@ export function PhoneInputToJSON(value?: PhoneInput | null): any {
     }
     return {
         
-        'value': value['value'],
-        'type': value['type'],
         'primary': value['primary'],
+        'type': value['type'],
+        'value': value['value'],
     };
 }
 

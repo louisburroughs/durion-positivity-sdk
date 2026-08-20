@@ -27,23 +27,11 @@ import {
  */
 export interface ProductLifecycleResponse {
     /**
-     * Product identifier
-     * @type {string}
-     * @memberof ProductLifecycleResponse
-     */
-    productId?: string;
-    /**
-     * Current lifecycle state
-     * @type {string}
-     * @memberof ProductLifecycleResponse
-     */
-    lifecycleState?: ProductLifecycleResponseLifecycleStateEnum;
-    /**
-     * Lifecycle state effective instant
+     * Last lifecycle state change instant
      * @type {Date}
      * @memberof ProductLifecycleResponse
      */
-    lifecycleStateEffectiveAt?: Date;
+    lastStateChangedAt?: Date;
     /**
      * User that last changed lifecycle state
      * @type {string}
@@ -51,17 +39,29 @@ export interface ProductLifecycleResponse {
      */
     lastStateChangedBy?: string;
     /**
-     * Last lifecycle state change instant
-     * @type {Date}
-     * @memberof ProductLifecycleResponse
-     */
-    lastStateChangedAt?: Date;
-    /**
      * Lifecycle override reason
      * @type {string}
      * @memberof ProductLifecycleResponse
      */
     lifecycleOverrideReason?: string;
+    /**
+     * Current lifecycle state
+     * @type {string}
+     * @memberof ProductLifecycleResponse
+     */
+    lifecycleState: ProductLifecycleResponseLifecycleStateEnum;
+    /**
+     * Lifecycle state effective instant
+     * @type {Date}
+     * @memberof ProductLifecycleResponse
+     */
+    lifecycleStateEffectiveAt?: Date;
+    /**
+     * Product identifier
+     * @type {string}
+     * @memberof ProductLifecycleResponse
+     */
+    productId: string;
     /**
      * Replacement options for this product lifecycle state
      * @type {Array<ReplacementOption>}
@@ -85,6 +85,8 @@ export enum ProductLifecycleResponseLifecycleStateEnum {
  * Check if a given object implements the ProductLifecycleResponse interface.
  */
 export function instanceOfProductLifecycleResponse(value: object): boolean {
+    if (!('lifecycleState' in value)) return false;
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -98,12 +100,12 @@ export function ProductLifecycleResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'lifecycleState': json['lifecycleState'] == null ? undefined : json['lifecycleState'],
-        'lifecycleStateEffectiveAt': json['lifecycleStateEffectiveAt'] == null ? undefined : (new Date(json['lifecycleStateEffectiveAt'])),
-        'lastStateChangedBy': json['lastStateChangedBy'] == null ? undefined : json['lastStateChangedBy'],
         'lastStateChangedAt': json['lastStateChangedAt'] == null ? undefined : (new Date(json['lastStateChangedAt'])),
+        'lastStateChangedBy': json['lastStateChangedBy'] == null ? undefined : json['lastStateChangedBy'],
         'lifecycleOverrideReason': json['lifecycleOverrideReason'] == null ? undefined : json['lifecycleOverrideReason'],
+        'lifecycleState': json['lifecycleState'],
+        'lifecycleStateEffectiveAt': json['lifecycleStateEffectiveAt'] == null ? undefined : (new Date(json['lifecycleStateEffectiveAt'])),
+        'productId': json['productId'],
         'replacementOptions': json['replacementOptions'] == null ? undefined : ((json['replacementOptions'] as Array<any>).map(ReplacementOptionFromJSON)),
     };
 }
@@ -114,12 +116,12 @@ export function ProductLifecycleResponseToJSON(value?: ProductLifecycleResponse 
     }
     return {
         
-        'productId': value['productId'],
+        'lastStateChangedAt': value['lastStateChangedAt'] == null ? undefined : ((value['lastStateChangedAt']).toISOString()),
+        'lastStateChangedBy': value['lastStateChangedBy'],
+        'lifecycleOverrideReason': value['lifecycleOverrideReason'],
         'lifecycleState': value['lifecycleState'],
         'lifecycleStateEffectiveAt': value['lifecycleStateEffectiveAt'] == null ? undefined : ((value['lifecycleStateEffectiveAt']).toISOString()),
-        'lastStateChangedBy': value['lastStateChangedBy'],
-        'lastStateChangedAt': value['lastStateChangedAt'] == null ? undefined : ((value['lastStateChangedAt']).toISOString()),
-        'lifecycleOverrideReason': value['lifecycleOverrideReason'],
+        'productId': value['productId'],
         'replacementOptions': value['replacementOptions'] == null ? undefined : ((value['replacementOptions'] as Array<any>).map(ReplacementOptionToJSON)),
     };
 }

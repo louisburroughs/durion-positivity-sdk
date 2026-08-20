@@ -14,107 +14,125 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response containing credit memo details
  * @export
  * @interface CreditMemoResponse
  */
 export interface CreditMemoResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof CreditMemoResponse
-     */
-    creditMemoId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreditMemoResponse
-     */
-    originalInvoiceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreditMemoResponse
-     */
-    customerId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof CreditMemoResponse
-     */
-    creditAmount?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof CreditMemoResponse
-     */
-    taxAmountReversed?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof CreditMemoResponse
-     */
-    totalAmount?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreditMemoResponse
-     */
-    reasonCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreditMemoResponse
-     */
-    justificationNote?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreditMemoResponse
-     */
-    status?: CreditMemoResponseStatusEnum;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CreditMemoResponse
-     */
-    creationTimestamp?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CreditMemoResponse
-     */
-    postedTimestamp?: Date;
-    /**
-     * 
+     * Identifier of the user who created the credit memo
      * @type {string}
      * @memberof CreditMemoResponse
      */
     createdByUserId?: string;
     /**
-     * 
-     * @type {boolean}
+     * Timestamp when the credit memo was created (ISO 8601)
+     * @type {Date}
      * @memberof CreditMemoResponse
      */
-    priorPeriodAdjustment?: boolean;
+    creationTimestamp: Date;
     /**
-     * 
+     * Credit amount
+     * @type {number}
+     * @memberof CreditMemoResponse
+     */
+    creditAmount: number;
+    /**
+     * Unique identifier of the credit memo
      * @type {string}
      * @memberof CreditMemoResponse
      */
-    originalPeriodId?: string;
+    creditMemoId: string;
     /**
-     * 
+     * ISO 4217 currency code
      * @type {string}
      * @memberof CreditMemoResponse
      */
     currency?: string;
     /**
-     * 
+     * Identifier of the customer the credit memo applies to
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    customerId?: string;
+    /**
+     * Invoice outstanding balance after the credit was applied
      * @type {number}
      * @memberof CreditMemoResponse
      */
     invoiceBalanceAfter?: number;
+    /**
+     * Justification note explaining the credit
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    justificationNote?: string;
+    /**
+     * Identifier of the original invoice the credit memo references
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    originalInvoiceId: string;
+    /**
+     * Identifier of the original accounting period
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    originalPeriodId?: string;
+    /**
+     * Timestamp when the credit memo was posted (ISO 8601)
+     * @type {Date}
+     * @memberof CreditMemoResponse
+     */
+    postedTimestamp?: Date;
+    /**
+     * Whether the credit memo is a prior-period adjustment
+     * @type {boolean}
+     * @memberof CreditMemoResponse
+     */
+    priorPeriodAdjustment?: boolean;
+    /**
+     * Reason code for the credit memo
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    reasonCode?: string;
+    /**
+     * Current status of the credit memo
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    status: CreditMemoResponseStatusEnum;
+    /**
+     * Tax amount reversed by the credit
+     * @type {number}
+     * @memberof CreditMemoResponse
+     */
+    taxAmountReversed?: number;
+    /**
+     * Total amount of the credit memo including tax
+     * @type {number}
+     * @memberof CreditMemoResponse
+     */
+    totalAmount?: number;
+    /**
+     * Reason the memo was voided; null unless status is VOIDED
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    voidReason?: string;
+    /**
+     * User who voided the memo; null unless status is VOIDED
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    voidedByUserId?: string;
+    /**
+     * When the memo was voided; null unless status is VOIDED
+     * @type {Date}
+     * @memberof CreditMemoResponse
+     */
+    voidedTimestamp?: Date;
 }
 
 /**
@@ -133,6 +151,11 @@ export enum CreditMemoResponseStatusEnum {
  * Check if a given object implements the CreditMemoResponse interface.
  */
 export function instanceOfCreditMemoResponse(value: object): boolean {
+    if (!('creationTimestamp' in value)) return false;
+    if (!('creditAmount' in value)) return false;
+    if (!('creditMemoId' in value)) return false;
+    if (!('originalInvoiceId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -146,22 +169,25 @@ export function CreditMemoResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'creditMemoId': json['creditMemoId'] == null ? undefined : json['creditMemoId'],
-        'originalInvoiceId': json['originalInvoiceId'] == null ? undefined : json['originalInvoiceId'],
+        'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
+        'creationTimestamp': (new Date(json['creationTimestamp'])),
+        'creditAmount': json['creditAmount'],
+        'creditMemoId': json['creditMemoId'],
+        'currency': json['currency'] == null ? undefined : json['currency'],
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'creditAmount': json['creditAmount'] == null ? undefined : json['creditAmount'],
+        'invoiceBalanceAfter': json['invoiceBalanceAfter'] == null ? undefined : json['invoiceBalanceAfter'],
+        'justificationNote': json['justificationNote'] == null ? undefined : json['justificationNote'],
+        'originalInvoiceId': json['originalInvoiceId'],
+        'originalPeriodId': json['originalPeriodId'] == null ? undefined : json['originalPeriodId'],
+        'postedTimestamp': json['postedTimestamp'] == null ? undefined : (new Date(json['postedTimestamp'])),
+        'priorPeriodAdjustment': json['priorPeriodAdjustment'] == null ? undefined : json['priorPeriodAdjustment'],
+        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'status': json['status'],
         'taxAmountReversed': json['taxAmountReversed'] == null ? undefined : json['taxAmountReversed'],
         'totalAmount': json['totalAmount'] == null ? undefined : json['totalAmount'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'justificationNote': json['justificationNote'] == null ? undefined : json['justificationNote'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'creationTimestamp': json['creationTimestamp'] == null ? undefined : (new Date(json['creationTimestamp'])),
-        'postedTimestamp': json['postedTimestamp'] == null ? undefined : (new Date(json['postedTimestamp'])),
-        'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
-        'priorPeriodAdjustment': json['priorPeriodAdjustment'] == null ? undefined : json['priorPeriodAdjustment'],
-        'originalPeriodId': json['originalPeriodId'] == null ? undefined : json['originalPeriodId'],
-        'currency': json['currency'] == null ? undefined : json['currency'],
-        'invoiceBalanceAfter': json['invoiceBalanceAfter'] == null ? undefined : json['invoiceBalanceAfter'],
+        'voidReason': json['voidReason'] == null ? undefined : json['voidReason'],
+        'voidedByUserId': json['voidedByUserId'] == null ? undefined : json['voidedByUserId'],
+        'voidedTimestamp': json['voidedTimestamp'] == null ? undefined : (new Date(json['voidedTimestamp'])),
     };
 }
 
@@ -171,22 +197,25 @@ export function CreditMemoResponseToJSON(value?: CreditMemoResponse | null): any
     }
     return {
         
-        'creditMemoId': value['creditMemoId'],
-        'originalInvoiceId': value['originalInvoiceId'],
-        'customerId': value['customerId'],
+        'createdByUserId': value['createdByUserId'],
+        'creationTimestamp': ((value['creationTimestamp']).toISOString()),
         'creditAmount': value['creditAmount'],
+        'creditMemoId': value['creditMemoId'],
+        'currency': value['currency'],
+        'customerId': value['customerId'],
+        'invoiceBalanceAfter': value['invoiceBalanceAfter'],
+        'justificationNote': value['justificationNote'],
+        'originalInvoiceId': value['originalInvoiceId'],
+        'originalPeriodId': value['originalPeriodId'],
+        'postedTimestamp': value['postedTimestamp'] == null ? undefined : ((value['postedTimestamp']).toISOString()),
+        'priorPeriodAdjustment': value['priorPeriodAdjustment'],
+        'reasonCode': value['reasonCode'],
+        'status': value['status'],
         'taxAmountReversed': value['taxAmountReversed'],
         'totalAmount': value['totalAmount'],
-        'reasonCode': value['reasonCode'],
-        'justificationNote': value['justificationNote'],
-        'status': value['status'],
-        'creationTimestamp': value['creationTimestamp'] == null ? undefined : ((value['creationTimestamp']).toISOString()),
-        'postedTimestamp': value['postedTimestamp'] == null ? undefined : ((value['postedTimestamp']).toISOString()),
-        'createdByUserId': value['createdByUserId'],
-        'priorPeriodAdjustment': value['priorPeriodAdjustment'],
-        'originalPeriodId': value['originalPeriodId'],
-        'currency': value['currency'],
-        'invoiceBalanceAfter': value['invoiceBalanceAfter'],
+        'voidReason': value['voidReason'],
+        'voidedByUserId': value['voidedByUserId'],
+        'voidedTimestamp': value['voidedTimestamp'] == null ? undefined : ((value['voidedTimestamp']).toISOString()),
     };
 }
 

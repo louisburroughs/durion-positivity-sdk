@@ -14,77 +14,125 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Communication preferences and consent flags for a party
  * @export
  * @interface GetCommunicationPreferencesResponse
  */
 export interface GetCommunicationPreferencesResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof GetCommunicationPreferencesResponse
-     */
-    partyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetCommunicationPreferencesResponse
-     */
-    version?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetCommunicationPreferencesResponse
-     */
-    emailPreference?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetCommunicationPreferencesResponse
-     */
-    smsPreference?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetCommunicationPreferencesResponse
-     */
-    phonePreference?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GetCommunicationPreferencesResponse
-     */
-    marketingPreference?: string;
-    /**
-     * 
+     * Consent flags keyed by consent type
      * @type {{ [key: string]: boolean; }}
      * @memberof GetCommunicationPreferencesResponse
      */
     consentFlags?: { [key: string]: boolean; };
     /**
-     * 
+     * Email communication preference
+     * @type {string}
+     * @memberof GetCommunicationPreferencesResponse
+     */
+    emailPreference?: GetCommunicationPreferencesResponseEmailPreferenceEnum;
+    /**
+     * Marketing communications preference
+     * @type {string}
+     * @memberof GetCommunicationPreferencesResponse
+     */
+    marketingPreference?: GetCommunicationPreferencesResponseMarketingPreferenceEnum;
+    /**
+     * Party identifier the preferences belong to
+     * @type {string}
+     * @memberof GetCommunicationPreferencesResponse
+     */
+    partyId: string;
+    /**
+     * Phone communication preference
+     * @type {string}
+     * @memberof GetCommunicationPreferencesResponse
+     */
+    phonePreference?: GetCommunicationPreferencesResponsePhonePreferenceEnum;
+    /**
+     * User-provided note or preferences summary
      * @type {string}
      * @memberof GetCommunicationPreferencesResponse
      */
     preferencesNote?: string;
     /**
-     * 
+     * SMS communication preference
+     * @type {string}
+     * @memberof GetCommunicationPreferencesResponse
+     */
+    smsPreference?: GetCommunicationPreferencesResponseSmsPreferenceEnum;
+    /**
+     * Source of the last update
+     * @type {string}
+     * @memberof GetCommunicationPreferencesResponse
+     */
+    updateSource?: GetCommunicationPreferencesResponseUpdateSourceEnum;
+    /**
+     * Last update timestamp (ISO 8601)
      * @type {string}
      * @memberof GetCommunicationPreferencesResponse
      */
     updatedAt?: string;
     /**
-     * 
+     * Optimistic locking version token for concurrent updates
      * @type {string}
      * @memberof GetCommunicationPreferencesResponse
      */
-    updateSource?: string;
+    version?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum GetCommunicationPreferencesResponseEmailPreferenceEnum {
+    OptIn = 'OPT_IN',
+    OptOut = 'OPT_OUT',
+    NotApplicable = 'NOT_APPLICABLE'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum GetCommunicationPreferencesResponseMarketingPreferenceEnum {
+    In = 'OPT_IN',
+    Out = 'OPT_OUT'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum GetCommunicationPreferencesResponsePhonePreferenceEnum {
+    OptIn = 'OPT_IN',
+    OptOut = 'OPT_OUT',
+    NotApplicable = 'NOT_APPLICABLE'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum GetCommunicationPreferencesResponseSmsPreferenceEnum {
+    OptIn = 'OPT_IN',
+    OptOut = 'OPT_OUT',
+    NotApplicable = 'NOT_APPLICABLE'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum GetCommunicationPreferencesResponseUpdateSourceEnum {
+    App = 'APP',
+    Api = 'API',
+    Admin = 'ADMIN',
+    Import = 'IMPORT'
+}
+
 
 /**
  * Check if a given object implements the GetCommunicationPreferencesResponse interface.
  */
 export function instanceOfGetCommunicationPreferencesResponse(value: object): boolean {
+    if (!('partyId' in value)) return false;
     return true;
 }
 
@@ -98,16 +146,16 @@ export function GetCommunicationPreferencesResponseFromJSONTyped(json: any, igno
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'version': json['version'] == null ? undefined : json['version'],
-        'emailPreference': json['emailPreference'] == null ? undefined : json['emailPreference'],
-        'smsPreference': json['smsPreference'] == null ? undefined : json['smsPreference'],
-        'phonePreference': json['phonePreference'] == null ? undefined : json['phonePreference'],
-        'marketingPreference': json['marketingPreference'] == null ? undefined : json['marketingPreference'],
         'consentFlags': json['consentFlags'] == null ? undefined : json['consentFlags'],
+        'emailPreference': json['emailPreference'] == null ? undefined : json['emailPreference'],
+        'marketingPreference': json['marketingPreference'] == null ? undefined : json['marketingPreference'],
+        'partyId': json['partyId'],
+        'phonePreference': json['phonePreference'] == null ? undefined : json['phonePreference'],
         'preferencesNote': json['preferencesNote'] == null ? undefined : json['preferencesNote'],
-        'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
+        'smsPreference': json['smsPreference'] == null ? undefined : json['smsPreference'],
         'updateSource': json['updateSource'] == null ? undefined : json['updateSource'],
+        'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
+        'version': json['version'] == null ? undefined : json['version'],
     };
 }
 
@@ -117,16 +165,16 @@ export function GetCommunicationPreferencesResponseToJSON(value?: GetCommunicati
     }
     return {
         
-        'partyId': value['partyId'],
-        'version': value['version'],
-        'emailPreference': value['emailPreference'],
-        'smsPreference': value['smsPreference'],
-        'phonePreference': value['phonePreference'],
-        'marketingPreference': value['marketingPreference'],
         'consentFlags': value['consentFlags'],
+        'emailPreference': value['emailPreference'],
+        'marketingPreference': value['marketingPreference'],
+        'partyId': value['partyId'],
+        'phonePreference': value['phonePreference'],
         'preferencesNote': value['preferencesNote'],
-        'updatedAt': value['updatedAt'],
+        'smsPreference': value['smsPreference'],
         'updateSource': value['updateSource'],
+        'updatedAt': value['updatedAt'],
+        'version': value['version'],
     };
 }
 

@@ -14,35 +14,36 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing default storage location configuration for a site
  * @export
  * @interface SiteDefaultsResponse
  */
 export interface SiteDefaultsResponse {
     /**
-     * 
+     * Identifier of the default quarantine storage location
      * @type {string}
      * @memberof SiteDefaultsResponse
      */
-    siteId?: string;
+    defaultQuarantineLocationId?: string;
     /**
-     * 
+     * Identifier of the default staging storage location
      * @type {string}
      * @memberof SiteDefaultsResponse
      */
     defaultStagingLocationId?: string;
     /**
-     * 
+     * Identifier of the site
      * @type {string}
      * @memberof SiteDefaultsResponse
      */
-    defaultQuarantineLocationId?: string;
+    siteId: string;
 }
 
 /**
  * Check if a given object implements the SiteDefaultsResponse interface.
  */
 export function instanceOfSiteDefaultsResponse(value: object): boolean {
+    if (!('siteId' in value)) return false;
     return true;
 }
 
@@ -56,9 +57,9 @@ export function SiteDefaultsResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'siteId': json['siteId'] == null ? undefined : json['siteId'],
-        'defaultStagingLocationId': json['defaultStagingLocationId'] == null ? undefined : json['defaultStagingLocationId'],
         'defaultQuarantineLocationId': json['defaultQuarantineLocationId'] == null ? undefined : json['defaultQuarantineLocationId'],
+        'defaultStagingLocationId': json['defaultStagingLocationId'] == null ? undefined : json['defaultStagingLocationId'],
+        'siteId': json['siteId'],
     };
 }
 
@@ -68,9 +69,9 @@ export function SiteDefaultsResponseToJSON(value?: SiteDefaultsResponse | null):
     }
     return {
         
-        'siteId': value['siteId'],
-        'defaultStagingLocationId': value['defaultStagingLocationId'],
         'defaultQuarantineLocationId': value['defaultQuarantineLocationId'],
+        'defaultStagingLocationId': value['defaultStagingLocationId'],
+        'siteId': value['siteId'],
     };
 }
 

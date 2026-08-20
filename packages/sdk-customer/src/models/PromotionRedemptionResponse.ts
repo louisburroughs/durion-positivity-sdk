@@ -14,89 +14,95 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of recording a promotion redemption for a customer
  * @export
  * @interface PromotionRedemptionResponse
  */
 export interface PromotionRedemptionResponse {
     /**
-     * 
+     * Campaign code the redemption is attributed to, if any
      * @type {string}
      * @memberof PromotionRedemptionResponse
      */
-    promotionRedemptionId?: string;
+    campaignCode?: string;
     /**
-     * 
+     * Timestamp when the redemption record was created
+     * @type {Date}
+     * @memberof PromotionRedemptionResponse
+     */
+    createdAt: Date;
+    /**
+     * Identifier of the customer who redeemed the promotion
      * @type {string}
      * @memberof PromotionRedemptionResponse
      */
-    promotionId?: string;
+    customerId: string;
     /**
-     * 
+     * Discount amount applied by the redemption
+     * @type {number}
+     * @memberof PromotionRedemptionResponse
+     */
+    discountAmount: number;
+    /**
+     * Type of discount applied
      * @type {string}
      * @memberof PromotionRedemptionResponse
      */
-    customerId?: string;
+    discountType: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PromotionRedemptionResponse
-     */
-    workorderId?: string;
-    /**
-     * 
+     * Identifier of the invoice the redemption was applied to, if any
      * @type {string}
      * @memberof PromotionRedemptionResponse
      */
     invoiceId?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof PromotionRedemptionResponse
-     */
-    discountAmount?: number;
-    /**
-     * 
+     * Promotion code that was redeemed
      * @type {string}
      * @memberof PromotionRedemptionResponse
      */
-    discountType?: string;
+    promotionCode: string;
     /**
-     * 
+     * Identifier of the redeemed promotion
      * @type {string}
      * @memberof PromotionRedemptionResponse
      */
-    promotionCode?: string;
+    promotionId: string;
     /**
-     * 
+     * Unique identifier of the promotion redemption record
+     * @type {string}
+     * @memberof PromotionRedemptionResponse
+     */
+    promotionRedemptionId: string;
+    /**
+     * Identifier of the actor who recorded the redemption
      * @type {string}
      * @memberof PromotionRedemptionResponse
      */
     recordedBy?: string;
     /**
-     * 
+     * Whether the redemption was recorded over the configured usage limit
      * @type {boolean}
      * @memberof PromotionRedemptionResponse
      */
     recordedOverLimit?: boolean;
     /**
-     * 
-     * @type {string}
-     * @memberof PromotionRedemptionResponse
-     */
-    status?: PromotionRedemptionResponseStatusEnum;
-    /**
-     * 
+     * Timestamp when the redemption occurred
      * @type {Date}
      * @memberof PromotionRedemptionResponse
      */
     redemptionTimestamp?: Date;
     /**
-     * 
-     * @type {Date}
+     * Current status of the redemption
+     * @type {string}
      * @memberof PromotionRedemptionResponse
      */
-    createdAt?: Date;
+    status: PromotionRedemptionResponseStatusEnum;
+    /**
+     * Identifier of the workorder the redemption was applied to
+     * @type {string}
+     * @memberof PromotionRedemptionResponse
+     */
+    workorderId: string;
 }
 
 /**
@@ -113,6 +119,15 @@ export enum PromotionRedemptionResponseStatusEnum {
  * Check if a given object implements the PromotionRedemptionResponse interface.
  */
 export function instanceOfPromotionRedemptionResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('customerId' in value)) return false;
+    if (!('discountAmount' in value)) return false;
+    if (!('discountType' in value)) return false;
+    if (!('promotionCode' in value)) return false;
+    if (!('promotionId' in value)) return false;
+    if (!('promotionRedemptionId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -126,19 +141,20 @@ export function PromotionRedemptionResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'promotionRedemptionId': json['promotionRedemptionId'] == null ? undefined : json['promotionRedemptionId'],
-        'promotionId': json['promotionId'] == null ? undefined : json['promotionId'],
-        'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
+        'campaignCode': json['campaignCode'] == null ? undefined : json['campaignCode'],
+        'createdAt': (new Date(json['createdAt'])),
+        'customerId': json['customerId'],
+        'discountAmount': json['discountAmount'],
+        'discountType': json['discountType'],
         'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
-        'discountAmount': json['discountAmount'] == null ? undefined : json['discountAmount'],
-        'discountType': json['discountType'] == null ? undefined : json['discountType'],
-        'promotionCode': json['promotionCode'] == null ? undefined : json['promotionCode'],
+        'promotionCode': json['promotionCode'],
+        'promotionId': json['promotionId'],
+        'promotionRedemptionId': json['promotionRedemptionId'],
         'recordedBy': json['recordedBy'] == null ? undefined : json['recordedBy'],
         'recordedOverLimit': json['recordedOverLimit'] == null ? undefined : json['recordedOverLimit'],
-        'status': json['status'] == null ? undefined : json['status'],
         'redemptionTimestamp': json['redemptionTimestamp'] == null ? undefined : (new Date(json['redemptionTimestamp'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'status': json['status'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -148,19 +164,20 @@ export function PromotionRedemptionResponseToJSON(value?: PromotionRedemptionRes
     }
     return {
         
-        'promotionRedemptionId': value['promotionRedemptionId'],
-        'promotionId': value['promotionId'],
+        'campaignCode': value['campaignCode'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'customerId': value['customerId'],
-        'workorderId': value['workorderId'],
-        'invoiceId': value['invoiceId'],
         'discountAmount': value['discountAmount'],
         'discountType': value['discountType'],
+        'invoiceId': value['invoiceId'],
         'promotionCode': value['promotionCode'],
+        'promotionId': value['promotionId'],
+        'promotionRedemptionId': value['promotionRedemptionId'],
         'recordedBy': value['recordedBy'],
         'recordedOverLimit': value['recordedOverLimit'],
-        'status': value['status'],
         'redemptionTimestamp': value['redemptionTimestamp'] == null ? undefined : ((value['redemptionTimestamp']).toISOString()),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'status': value['status'],
+        'workorderId': value['workorderId'],
     };
 }
 

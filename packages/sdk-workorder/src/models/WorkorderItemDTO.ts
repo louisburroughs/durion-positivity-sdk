@@ -20,29 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderItemDTO {
     /**
-     * Service catalog entity identifier for service items
+     * Emergency notes used when photo evidence is unavailable
      * @type {string}
      * @memberof WorkorderItemDTO
      */
-    serviceEntityId?: string;
-    /**
-     * Product entity identifier for inventory part items
-     * @type {string}
-     * @memberof WorkorderItemDTO
-     */
-    productEntityId?: string;
-    /**
-     * Product entity identifier for non-inventory part items
-     * @type {string}
-     * @memberof WorkorderItemDTO
-     */
-    nonInventoryProductEntityId?: string;
-    /**
-     * Requested quantity for part line items
-     * @type {number}
-     * @memberof WorkorderItemDTO
-     */
-    quantity?: number;
+    emergencyNotes?: string;
     /**
      * Whether this item is emergency/safety related
      * @type {boolean}
@@ -50,23 +32,41 @@ export interface WorkorderItemDTO {
      */
     isEmergencySafety?: boolean;
     /**
+     * Product entity identifier for non-inventory part items
+     * @type {string}
+     * @memberof WorkorderItemDTO
+     */
+    nonInventoryProductEntityId?: string;
+    /**
      * Photo evidence URL for emergency/safety documentation
      * @type {string}
      * @memberof WorkorderItemDTO
      */
     photoEvidenceUrl?: string;
     /**
-     * Emergency notes used when photo evidence is unavailable
-     * @type {string}
-     * @memberof WorkorderItemDTO
-     */
-    emergencyNotes?: string;
-    /**
      * Flag indicating photo capture was not possible
      * @type {boolean}
      * @memberof WorkorderItemDTO
      */
     photoNotPossible?: boolean;
+    /**
+     * Product entity identifier for inventory part items
+     * @type {string}
+     * @memberof WorkorderItemDTO
+     */
+    productEntityId?: string;
+    /**
+     * Requested quantity for part line items
+     * @type {number}
+     * @memberof WorkorderItemDTO
+     */
+    quantity?: number;
+    /**
+     * Service catalog entity identifier for service items
+     * @type {string}
+     * @memberof WorkorderItemDTO
+     */
+    serviceEntityId?: string;
 }
 
 /**
@@ -86,14 +86,14 @@ export function WorkorderItemDTOFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'serviceEntityId': json['serviceEntityId'] == null ? undefined : json['serviceEntityId'],
-        'productEntityId': json['productEntityId'] == null ? undefined : json['productEntityId'],
-        'nonInventoryProductEntityId': json['nonInventoryProductEntityId'] == null ? undefined : json['nonInventoryProductEntityId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'isEmergencySafety': json['isEmergencySafety'] == null ? undefined : json['isEmergencySafety'],
-        'photoEvidenceUrl': json['photoEvidenceUrl'] == null ? undefined : json['photoEvidenceUrl'],
         'emergencyNotes': json['emergencyNotes'] == null ? undefined : json['emergencyNotes'],
+        'isEmergencySafety': json['isEmergencySafety'] == null ? undefined : json['isEmergencySafety'],
+        'nonInventoryProductEntityId': json['nonInventoryProductEntityId'] == null ? undefined : json['nonInventoryProductEntityId'],
+        'photoEvidenceUrl': json['photoEvidenceUrl'] == null ? undefined : json['photoEvidenceUrl'],
         'photoNotPossible': json['photoNotPossible'] == null ? undefined : json['photoNotPossible'],
+        'productEntityId': json['productEntityId'] == null ? undefined : json['productEntityId'],
+        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'serviceEntityId': json['serviceEntityId'] == null ? undefined : json['serviceEntityId'],
     };
 }
 
@@ -103,14 +103,14 @@ export function WorkorderItemDTOToJSON(value?: WorkorderItemDTO | null): any {
     }
     return {
         
-        'serviceEntityId': value['serviceEntityId'],
-        'productEntityId': value['productEntityId'],
-        'nonInventoryProductEntityId': value['nonInventoryProductEntityId'],
-        'quantity': value['quantity'],
-        'isEmergencySafety': value['isEmergencySafety'],
-        'photoEvidenceUrl': value['photoEvidenceUrl'],
         'emergencyNotes': value['emergencyNotes'],
+        'isEmergencySafety': value['isEmergencySafety'],
+        'nonInventoryProductEntityId': value['nonInventoryProductEntityId'],
+        'photoEvidenceUrl': value['photoEvidenceUrl'],
         'photoNotPossible': value['photoNotPossible'],
+        'productEntityId': value['productEntityId'],
+        'quantity': value['quantity'],
+        'serviceEntityId': value['serviceEntityId'],
     };
 }
 

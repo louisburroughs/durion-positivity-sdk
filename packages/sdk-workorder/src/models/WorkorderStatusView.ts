@@ -20,35 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderStatusView {
     /**
-     * Workorder unique identifier
-     * @type {string}
-     * @memberof WorkorderStatusView
-     */
-    workorderId?: string;
-    /**
-     * Current workorder status
-     * @type {string}
-     * @memberof WorkorderStatusView
-     */
-    status?: WorkorderStatusViewStatusEnum;
-    /**
      * ID of the technician currently assigned (null if unassigned)
      * @type {string}
      * @memberof WorkorderStatusView
      */
     assignedTechnicianId?: string;
-    /**
-     * Location ID the workorder belongs to
-     * @type {string}
-     * @memberof WorkorderStatusView
-     */
-    locationId?: string;
-    /**
-     * Estimated time of completion (null if not set)
-     * @type {Date}
-     * @memberof WorkorderStatusView
-     */
-    estimatedCompletionTime?: Date;
     /**
      * Full name of the customer
      * @type {string}
@@ -56,17 +32,41 @@ export interface WorkorderStatusView {
      */
     customerName?: string;
     /**
-     * Human-readable vehicle description (year/make/model/trim)
-     * @type {string}
+     * Estimated time of completion (null if not set)
+     * @type {Date}
      * @memberof WorkorderStatusView
      */
-    vehicleInfo?: string;
+    estimatedCompletionTime?: Date;
     /**
      * Timestamp of the last status update
      * @type {Date}
      * @memberof WorkorderStatusView
      */
     lastUpdatedAt?: Date;
+    /**
+     * Location ID the workorder belongs to
+     * @type {string}
+     * @memberof WorkorderStatusView
+     */
+    locationId?: string;
+    /**
+     * Current workorder status
+     * @type {string}
+     * @memberof WorkorderStatusView
+     */
+    status?: WorkorderStatusViewStatusEnum;
+    /**
+     * Human-readable vehicle description (year/make/model/trim)
+     * @type {string}
+     * @memberof WorkorderStatusView
+     */
+    vehicleInfo?: string;
+    /**
+     * Workorder unique identifier
+     * @type {string}
+     * @memberof WorkorderStatusView
+     */
+    workorderId?: string;
 }
 
 /**
@@ -103,14 +103,14 @@ export function WorkorderStatusViewFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'status': json['status'] == null ? undefined : json['status'],
         'assignedTechnicianId': json['assignedTechnicianId'] == null ? undefined : json['assignedTechnicianId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'estimatedCompletionTime': json['estimatedCompletionTime'] == null ? undefined : (new Date(json['estimatedCompletionTime'])),
         'customerName': json['customerName'] == null ? undefined : json['customerName'],
-        'vehicleInfo': json['vehicleInfo'] == null ? undefined : json['vehicleInfo'],
+        'estimatedCompletionTime': json['estimatedCompletionTime'] == null ? undefined : (new Date(json['estimatedCompletionTime'])),
         'lastUpdatedAt': json['lastUpdatedAt'] == null ? undefined : (new Date(json['lastUpdatedAt'])),
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'vehicleInfo': json['vehicleInfo'] == null ? undefined : json['vehicleInfo'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -120,14 +120,14 @@ export function WorkorderStatusViewToJSON(value?: WorkorderStatusView | null): a
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'status': value['status'],
         'assignedTechnicianId': value['assignedTechnicianId'],
-        'locationId': value['locationId'],
-        'estimatedCompletionTime': value['estimatedCompletionTime'] == null ? undefined : ((value['estimatedCompletionTime']).toISOString()),
         'customerName': value['customerName'],
-        'vehicleInfo': value['vehicleInfo'],
+        'estimatedCompletionTime': value['estimatedCompletionTime'] == null ? undefined : ((value['estimatedCompletionTime']).toISOString()),
         'lastUpdatedAt': value['lastUpdatedAt'] == null ? undefined : ((value['lastUpdatedAt']).toISOString()),
+        'locationId': value['locationId'],
+        'status': value['status'],
+        'vehicleInfo': value['vehicleInfo'],
+        'workorderId': value['workorderId'],
     };
 }
 

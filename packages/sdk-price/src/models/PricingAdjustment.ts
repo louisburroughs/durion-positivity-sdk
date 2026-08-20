@@ -20,11 +20,23 @@ import { mapValues } from '../runtime';
  */
 export interface PricingAdjustment {
     /**
-     * Adjustment type
+     * Adjustment amount; negative values reduce total
+     * @type {number}
+     * @memberof PricingAdjustment
+     */
+    amount: number;
+    /**
+     * Human-readable adjustment label
      * @type {string}
      * @memberof PricingAdjustment
      */
-    type?: string;
+    label: string;
+    /**
+     * 
+     * @type {any}
+     * @memberof PricingAdjustment
+     */
+    metadata?: any;
     /**
      * Source identifier that produced this adjustment
      * @type {string}
@@ -32,29 +44,20 @@ export interface PricingAdjustment {
      */
     sourceId?: string;
     /**
-     * Human-readable adjustment label
+     * Adjustment type
      * @type {string}
      * @memberof PricingAdjustment
      */
-    label?: string;
-    /**
-     * Adjustment amount; negative values reduce total
-     * @type {number}
-     * @memberof PricingAdjustment
-     */
-    amount?: number;
-    /**
-     * 
-     * @type {any}
-     * @memberof PricingAdjustment
-     */
-    metadata?: any;
+    type: string;
 }
 
 /**
  * Check if a given object implements the PricingAdjustment interface.
  */
 export function instanceOfPricingAdjustment(value: object): boolean {
+    if (!('amount' in value)) return false;
+    if (!('label' in value)) return false;
+    if (!('type' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function PricingAdjustmentFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'type': json['type'] == null ? undefined : json['type'],
-        'sourceId': json['sourceId'] == null ? undefined : json['sourceId'],
-        'label': json['label'] == null ? undefined : json['label'],
-        'amount': json['amount'] == null ? undefined : json['amount'],
+        'amount': json['amount'],
+        'label': json['label'],
         'metadata': json['metadata'] == null ? undefined : json['metadata'],
+        'sourceId': json['sourceId'] == null ? undefined : json['sourceId'],
+        'type': json['type'],
     };
 }
 
@@ -82,11 +85,11 @@ export function PricingAdjustmentToJSON(value?: PricingAdjustment | null): any {
     }
     return {
         
-        'type': value['type'],
-        'sourceId': value['sourceId'],
-        'label': value['label'],
         'amount': value['amount'],
+        'label': value['label'],
         'metadata': value['metadata'],
+        'sourceId': value['sourceId'],
+        'type': value['type'],
     };
 }
 

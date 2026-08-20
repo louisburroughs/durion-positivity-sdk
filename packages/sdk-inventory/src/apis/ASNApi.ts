@@ -56,7 +56,7 @@ export interface GetGoodsReceiptRequest {
 export class ASNApi extends runtime.BaseAPI {
 
     /**
-     * Creates an advanced shipping notice for inbound inventory
+     * Creates an advance shipping notice (ASN) declaring an inbound vendor shipment against one or more approved purchase orders, stored in LOADED status with its declared lines. Use this tool when a vendor announces a shipment before it arrives; do not use createGoodsReceipt, which records goods actually received and posts stock, and do not use createReceivingSession, which starts a line-by-line receiving workflow. Preconditions: every purchase order in relatedPoIds must exist and be APPROVED, and no ASN may already exist for the same vendorId and asnReferenceNumber pair. Required inputs: vendorId (UUID), asnReferenceNumber, relatedPoIds (non-empty) and lineItems each naming poId and sku plus either quantityShipped in base UoM or the documentUom/documentQuantity pair, from which the base quantity is derived; shipDate and expectedArrivalDate are optional. Emits an INVENTORY_ASN_CREATE event; no stock is posted and no on-hand quantity changes until a goods receipt or receiving session references the ASN. Returns 409 when an ASN with the same vendor and reference number already exists, 400 when a related purchase order is unknown or not APPROVED, and 422 when a documentUom has no conversion path to the product\'s base UoM. 
      * Create ASN
      */
     async createAsnRaw(requestParameters: CreateAsnOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AsnResponse>> {
@@ -93,7 +93,7 @@ export class ASNApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an advanced shipping notice for inbound inventory
+     * Creates an advance shipping notice (ASN) declaring an inbound vendor shipment against one or more approved purchase orders, stored in LOADED status with its declared lines. Use this tool when a vendor announces a shipment before it arrives; do not use createGoodsReceipt, which records goods actually received and posts stock, and do not use createReceivingSession, which starts a line-by-line receiving workflow. Preconditions: every purchase order in relatedPoIds must exist and be APPROVED, and no ASN may already exist for the same vendorId and asnReferenceNumber pair. Required inputs: vendorId (UUID), asnReferenceNumber, relatedPoIds (non-empty) and lineItems each naming poId and sku plus either quantityShipped in base UoM or the documentUom/documentQuantity pair, from which the base quantity is derived; shipDate and expectedArrivalDate are optional. Emits an INVENTORY_ASN_CREATE event; no stock is posted and no on-hand quantity changes until a goods receipt or receiving session references the ASN. Returns 409 when an ASN with the same vendor and reference number already exists, 400 when a related purchase order is unknown or not APPROVED, and 422 when a documentUom has no conversion path to the product\'s base UoM. 
      * Create ASN
      */
     async createAsn(requestParameters: CreateAsnOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AsnResponse> {
@@ -102,8 +102,8 @@ export class ASNApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a goods receipt for an inbound shipment
-     * Create goods receipt
+     * Records a goods receipt against a purchase order, posting GOODS_RECEIPT ledger entries that increase on-hand stock at the receiving location. Use this tool when goods physically arrive and should enter stock in one posting; do not use createAsn, which only declares an expected shipment, and do not use the session-based flow of createReceivingSession and receiveItemsIntoStaging. Preconditions: the purchase order must exist and be APPROVED or PARTIALLY_RECEIVED, the ASN when supplied must exist, and the receipt total may not exceed the purchase order\'s open balance unless the caller holds inventory:goods_receipt:override. Required inputs: poId (UUID), locationId (UUID) and lines each naming sku and unitCostMinor plus either a whole-number quantityReceived in base UoM or the documentUom/documentQuantity pair; lotNumber is mandatory for LOT-tracked SKUs, serialNumbers must enumerate exactly the received quantity for SERIAL-tracked SKUs, and asnId is optional. Emits an INVENTORY_GOODS_RECEIPT_CREATE event, decrements the purchase order\'s open balance, moves the PO to PARTIALLY_RECEIVED or FULLY_RECEIVED, and updates the linked ASN\'s received quantities and status. Returns 403 when the receipt exceeds the open balance without the override authority, 404 when the ASN or a referenced PO line cannot be resolved, 400 when the purchase order is unknown or not receivable, and 422 when a UoM has no conversion path, a LOT-tracked line omits lotNumber, or a serialized line\'s serial count mismatches the received quantity. 
+     * Create Goods Receipt
      */
     async createGoodsReceiptRaw(requestParameters: CreateGoodsReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GoodsReceiptResponse>> {
         if (requestParameters['createGoodsReceiptRequest'] == null) {
@@ -139,8 +139,8 @@ export class ASNApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a goods receipt for an inbound shipment
-     * Create goods receipt
+     * Records a goods receipt against a purchase order, posting GOODS_RECEIPT ledger entries that increase on-hand stock at the receiving location. Use this tool when goods physically arrive and should enter stock in one posting; do not use createAsn, which only declares an expected shipment, and do not use the session-based flow of createReceivingSession and receiveItemsIntoStaging. Preconditions: the purchase order must exist and be APPROVED or PARTIALLY_RECEIVED, the ASN when supplied must exist, and the receipt total may not exceed the purchase order\'s open balance unless the caller holds inventory:goods_receipt:override. Required inputs: poId (UUID), locationId (UUID) and lines each naming sku and unitCostMinor plus either a whole-number quantityReceived in base UoM or the documentUom/documentQuantity pair; lotNumber is mandatory for LOT-tracked SKUs, serialNumbers must enumerate exactly the received quantity for SERIAL-tracked SKUs, and asnId is optional. Emits an INVENTORY_GOODS_RECEIPT_CREATE event, decrements the purchase order\'s open balance, moves the PO to PARTIALLY_RECEIVED or FULLY_RECEIVED, and updates the linked ASN\'s received quantities and status. Returns 403 when the receipt exceeds the open balance without the override authority, 404 when the ASN or a referenced PO line cannot be resolved, 400 when the purchase order is unknown or not receivable, and 422 when a UoM has no conversion path, a LOT-tracked line omits lotNumber, or a serialized line\'s serial count mismatches the received quantity. 
+     * Create Goods Receipt
      */
     async createGoodsReceipt(requestParameters: CreateGoodsReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GoodsReceiptResponse> {
         const response = await this.createGoodsReceiptRaw(requestParameters, initOverrides);
@@ -148,7 +148,7 @@ export class ASNApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves an ASN by identifier
+     * Returns one advance shipping notice with its status, dates and per-line shipped and received quantities. Use this tool when the asnId is already known; use getGoodsReceipt instead to inspect what was actually received on a specific receipt. Preconditions: the ASN must exist. Required inputs: asnId (UUIDv7) path parameter; there is no request body. Emits an INVENTORY_ASN_GET audit event; no stock state changes, this is a read-only projection. Returns 404 when no ASN exists for the supplied id. 
      * Get ASN
      */
     async getAsnRaw(requestParameters: GetAsnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AsnResponse>> {
@@ -182,7 +182,7 @@ export class ASNApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves an ASN by identifier
+     * Returns one advance shipping notice with its status, dates and per-line shipped and received quantities. Use this tool when the asnId is already known; use getGoodsReceipt instead to inspect what was actually received on a specific receipt. Preconditions: the ASN must exist. Required inputs: asnId (UUIDv7) path parameter; there is no request body. Emits an INVENTORY_ASN_GET audit event; no stock state changes, this is a read-only projection. Returns 404 when no ASN exists for the supplied id. 
      * Get ASN
      */
     async getAsn(requestParameters: GetAsnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AsnResponse> {
@@ -191,8 +191,8 @@ export class ASNApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a goods receipt by identifier
-     * Get goods receipt
+     * Returns one goods receipt with its accrued amounts and per-line received quantities and costs. Use this tool when the receiptId is already known; use getAsn instead to check the shipment declaration and its outstanding quantities. Preconditions: the goods receipt must exist. Required inputs: receiptId (UUIDv7) path parameter; there is no request body. Emits an INVENTORY_GOODS_RECEIPT_GET audit event; no stock state changes, this is a read-only projection. Returns 404 when no goods receipt exists for the supplied id. 
+     * Get Goods Receipt
      */
     async getGoodsReceiptRaw(requestParameters: GetGoodsReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GoodsReceiptResponse>> {
         if (requestParameters['receiptId'] == null) {
@@ -225,8 +225,8 @@ export class ASNApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a goods receipt by identifier
-     * Get goods receipt
+     * Returns one goods receipt with its accrued amounts and per-line received quantities and costs. Use this tool when the receiptId is already known; use getAsn instead to check the shipment declaration and its outstanding quantities. Preconditions: the goods receipt must exist. Required inputs: receiptId (UUIDv7) path parameter; there is no request body. Emits an INVENTORY_GOODS_RECEIPT_GET audit event; no stock state changes, this is a read-only projection. Returns 404 when no goods receipt exists for the supplied id. 
+     * Get Goods Receipt
      */
     async getGoodsReceipt(requestParameters: GetGoodsReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GoodsReceiptResponse> {
         const response = await this.getGoodsReceiptRaw(requestParameters, initOverrides);

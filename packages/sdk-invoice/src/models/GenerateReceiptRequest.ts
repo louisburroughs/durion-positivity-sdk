@@ -14,35 +14,35 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to generate a receipt for an invoice payment
  * @export
  * @interface GenerateReceiptRequest
  */
 export interface GenerateReceiptRequest {
     /**
-     * 
+     * Payment intent the receipt is generated for
      * @type {string}
      * @memberof GenerateReceiptRequest
      */
     paymentIntentId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof GenerateReceiptRequest
-     */
-    terminalId: string;
-    /**
-     * 
+     * Receipt template identifier
      * @type {string}
      * @memberof GenerateReceiptRequest
      */
     templateId: string;
     /**
-     * 
+     * Receipt template version
      * @type {string}
      * @memberof GenerateReceiptRequest
      */
     templateVersion: string;
+    /**
+     * Identifier of the terminal producing the receipt
+     * @type {string}
+     * @memberof GenerateReceiptRequest
+     */
+    terminalId: string;
 }
 
 /**
@@ -50,9 +50,9 @@ export interface GenerateReceiptRequest {
  */
 export function instanceOfGenerateReceiptRequest(value: object): boolean {
     if (!('paymentIntentId' in value)) return false;
-    if (!('terminalId' in value)) return false;
     if (!('templateId' in value)) return false;
     if (!('templateVersion' in value)) return false;
+    if (!('terminalId' in value)) return false;
     return true;
 }
 
@@ -67,9 +67,9 @@ export function GenerateReceiptRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'paymentIntentId': json['paymentIntentId'],
-        'terminalId': json['terminalId'],
         'templateId': json['templateId'],
         'templateVersion': json['templateVersion'],
+        'terminalId': json['terminalId'],
     };
 }
 
@@ -80,9 +80,9 @@ export function GenerateReceiptRequestToJSON(value?: GenerateReceiptRequest | nu
     return {
         
         'paymentIntentId': value['paymentIntentId'],
-        'terminalId': value['terminalId'],
         'templateId': value['templateId'],
         'templateVersion': value['templateVersion'],
+        'terminalId': value['terminalId'],
     };
 }
 

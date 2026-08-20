@@ -25,8 +25,8 @@ export interface NormalizePricingRequest {
 export class PriceNormalizationApi extends runtime.BaseAPI {
 
     /**
-     * Normalize and standardize pricing data across the system.
-     * Normalize pricing
+     * Normalizes and standardizes pricing data across the system; this operation is a declared placeholder that is not yet implemented. Use this tool only to probe for the future normalization capability; use calculatePriceQuote instead for any real pricing work, since no normalization logic exists yet. Preconditions: none; any authenticated caller is accepted. Required inputs: none are read; the optional JSON body is accepted but ignored. Emits a PRICE_NORMALIZATION_NORMALIZE event even though no normalization is performed and no state changes. Returns 501 unconditionally until the operation is implemented. 
+     * Normalize Pricing Data
      */
     async normalizePricingRaw(requestParameters: NormalizePricingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
@@ -55,8 +55,8 @@ export class PriceNormalizationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Normalize and standardize pricing data across the system.
-     * Normalize pricing
+     * Normalizes and standardizes pricing data across the system; this operation is a declared placeholder that is not yet implemented. Use this tool only to probe for the future normalization capability; use calculatePriceQuote instead for any real pricing work, since no normalization logic exists yet. Preconditions: none; any authenticated caller is accepted. Required inputs: none are read; the optional JSON body is accepted but ignored. Emits a PRICE_NORMALIZATION_NORMALIZE event even though no normalization is performed and no state changes. Returns 501 unconditionally until the operation is implemented. 
+     * Normalize Pricing Data
      */
     async normalizePricing(requestParameters: NormalizePricingRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.normalizePricingRaw(requestParameters, initOverrides);

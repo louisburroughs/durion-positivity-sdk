@@ -14,131 +14,131 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Location price override detail
  * @export
  * @interface LocationPriceOverrideResponseDto
  */
 export interface LocationPriceOverrideResponseDto {
     /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    overrideId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    version?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    productId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    basePrice?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    cost?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    overridePrice?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    discountPercent?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    marginPercent?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    status?: LocationPriceOverrideResponseDtoStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    createdByUserId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    assignedApproverId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    assignmentStrategy?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationPriceOverrideResponseDto
-     */
-    approvedByUserId?: string;
-    /**
-     * 
+     * Timestamp the override was approved
      * @type {Date}
      * @memberof LocationPriceOverrideResponseDto
      */
     approvedAt?: Date;
     /**
-     * 
+     * Identifier of the user that approved the override
      * @type {string}
      * @memberof LocationPriceOverrideResponseDto
      */
-    rejectedBy?: string;
+    approvedByUserId?: string;
     /**
-     * 
+     * Identifier of the assigned approver
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    assignedApproverId?: string;
+    /**
+     * Strategy used to assign the approver
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    assignmentStrategy?: string;
+    /**
+     * Base price before override
+     * @type {number}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    basePrice: number;
+    /**
+     * Item cost used for margin calculation
+     * @type {number}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    cost?: number;
+    /**
+     * Timestamp the override was created
+     * @type {Date}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    createdAt: Date;
+    /**
+     * Identifier of the user that created the override
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    createdByUserId: string;
+    /**
+     * Computed discount percent versus base price
+     * @type {number}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    discountPercent?: number;
+    /**
+     * Location identifier the override applies to
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    locationId: string;
+    /**
+     * Computed margin percent versus cost
+     * @type {number}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    marginPercent?: number;
+    /**
+     * Override identifier
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    overrideId: string;
+    /**
+     * Override price
+     * @type {number}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    overridePrice: number;
+    /**
+     * Product identifier the override applies to
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    productId: string;
+    /**
+     * Timestamp the override was rejected
      * @type {Date}
      * @memberof LocationPriceOverrideResponseDto
      */
     rejectedAt?: Date;
     /**
-     * 
+     * Identifier of the user that rejected the override
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    rejectedBy?: string;
+    /**
+     * Free-text notes for rejection
+     * @type {string}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    rejectionNotes?: string;
+    /**
+     * Reason code for rejection
      * @type {string}
      * @memberof LocationPriceOverrideResponseDto
      */
     rejectionReasonCode?: string;
     /**
-     * 
+     * Current override status
      * @type {string}
      * @memberof LocationPriceOverrideResponseDto
      */
-    rejectionNotes?: string;
+    status: LocationPriceOverrideResponseDtoStatusEnum;
+    /**
+     * Version for optimistic locking
+     * @type {number}
+     * @memberof LocationPriceOverrideResponseDto
+     */
+    version: number;
 }
 
 /**
@@ -157,6 +157,15 @@ export enum LocationPriceOverrideResponseDtoStatusEnum {
  * Check if a given object implements the LocationPriceOverrideResponseDto interface.
  */
 export function instanceOfLocationPriceOverrideResponseDto(value: object): boolean {
+    if (!('basePrice' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('createdByUserId' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('overrideId' in value)) return false;
+    if (!('overridePrice' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -170,26 +179,26 @@ export function LocationPriceOverrideResponseDtoFromJSONTyped(json: any, ignoreD
     }
     return {
         
-        'overrideId': json['overrideId'] == null ? undefined : json['overrideId'],
-        'version': json['version'] == null ? undefined : json['version'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'basePrice': json['basePrice'] == null ? undefined : json['basePrice'],
-        'cost': json['cost'] == null ? undefined : json['cost'],
-        'overridePrice': json['overridePrice'] == null ? undefined : json['overridePrice'],
-        'discountPercent': json['discountPercent'] == null ? undefined : json['discountPercent'],
-        'marginPercent': json['marginPercent'] == null ? undefined : json['marginPercent'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
+        'approvedByUserId': json['approvedByUserId'] == null ? undefined : json['approvedByUserId'],
         'assignedApproverId': json['assignedApproverId'] == null ? undefined : json['assignedApproverId'],
         'assignmentStrategy': json['assignmentStrategy'] == null ? undefined : json['assignmentStrategy'],
-        'approvedByUserId': json['approvedByUserId'] == null ? undefined : json['approvedByUserId'],
-        'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
-        'rejectedBy': json['rejectedBy'] == null ? undefined : json['rejectedBy'],
+        'basePrice': json['basePrice'],
+        'cost': json['cost'] == null ? undefined : json['cost'],
+        'createdAt': (new Date(json['createdAt'])),
+        'createdByUserId': json['createdByUserId'],
+        'discountPercent': json['discountPercent'] == null ? undefined : json['discountPercent'],
+        'locationId': json['locationId'],
+        'marginPercent': json['marginPercent'] == null ? undefined : json['marginPercent'],
+        'overrideId': json['overrideId'],
+        'overridePrice': json['overridePrice'],
+        'productId': json['productId'],
         'rejectedAt': json['rejectedAt'] == null ? undefined : (new Date(json['rejectedAt'])),
-        'rejectionReasonCode': json['rejectionReasonCode'] == null ? undefined : json['rejectionReasonCode'],
+        'rejectedBy': json['rejectedBy'] == null ? undefined : json['rejectedBy'],
         'rejectionNotes': json['rejectionNotes'] == null ? undefined : json['rejectionNotes'],
+        'rejectionReasonCode': json['rejectionReasonCode'] == null ? undefined : json['rejectionReasonCode'],
+        'status': json['status'],
+        'version': json['version'],
     };
 }
 
@@ -199,26 +208,26 @@ export function LocationPriceOverrideResponseDtoToJSON(value?: LocationPriceOver
     }
     return {
         
-        'overrideId': value['overrideId'],
-        'version': value['version'],
-        'locationId': value['locationId'],
-        'productId': value['productId'],
-        'basePrice': value['basePrice'],
-        'cost': value['cost'],
-        'overridePrice': value['overridePrice'],
-        'discountPercent': value['discountPercent'],
-        'marginPercent': value['marginPercent'],
-        'status': value['status'],
-        'createdByUserId': value['createdByUserId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
+        'approvedByUserId': value['approvedByUserId'],
         'assignedApproverId': value['assignedApproverId'],
         'assignmentStrategy': value['assignmentStrategy'],
-        'approvedByUserId': value['approvedByUserId'],
-        'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
-        'rejectedBy': value['rejectedBy'],
+        'basePrice': value['basePrice'],
+        'cost': value['cost'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdByUserId': value['createdByUserId'],
+        'discountPercent': value['discountPercent'],
+        'locationId': value['locationId'],
+        'marginPercent': value['marginPercent'],
+        'overrideId': value['overrideId'],
+        'overridePrice': value['overridePrice'],
+        'productId': value['productId'],
         'rejectedAt': value['rejectedAt'] == null ? undefined : ((value['rejectedAt']).toISOString()),
-        'rejectionReasonCode': value['rejectionReasonCode'],
+        'rejectedBy': value['rejectedBy'],
         'rejectionNotes': value['rejectionNotes'],
+        'rejectionReasonCode': value['rejectionReasonCode'],
+        'status': value['status'],
+        'version': value['version'],
     };
 }
 

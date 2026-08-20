@@ -14,53 +14,57 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response describing the outcome of consuming inventory items against a workorder, including the ledger entries created
  * @export
  * @interface ConsumptionResponse
  */
 export interface ConsumptionResponse {
     /**
-     * 
+     * Unique identifier of the consumption record
      * @type {string}
      * @memberof ConsumptionResponse
      */
-    consumptionId?: string;
+    consumptionId: string;
     /**
-     * 
-     * @type {string}
+     * Timestamp when the consumption was recorded
+     * @type {Date}
      * @memberof ConsumptionResponse
      */
-    workorderId?: string;
+    createdAt: Date;
     /**
-     * 
+     * Identifiers of the inventory ledger entries created by this consumption
+     * @type {Array<string>}
+     * @memberof ConsumptionResponse
+     */
+    ledgerEntryIds?: Array<string>;
+    /**
+     * Identifier of the pick list the consumed items were drawn from, if applicable
      * @type {string}
      * @memberof ConsumptionResponse
      */
     pickListId?: string;
     /**
-     * 
+     * Total number of items consumed in this operation
      * @type {number}
      * @memberof ConsumptionResponse
      */
-    totalItemsConsumed?: number;
+    totalItemsConsumed: number;
     /**
-     * 
-     * @type {Date}
+     * Identifier of the workorder the items were consumed for
+     * @type {string}
      * @memberof ConsumptionResponse
      */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ConsumptionResponse
-     */
-    ledgerEntryIds?: Array<string>;
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the ConsumptionResponse interface.
  */
 export function instanceOfConsumptionResponse(value: object): boolean {
+    if (!('consumptionId' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('totalItemsConsumed' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -74,12 +78,12 @@ export function ConsumptionResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'consumptionId': json['consumptionId'] == null ? undefined : json['consumptionId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
-        'totalItemsConsumed': json['totalItemsConsumed'] == null ? undefined : json['totalItemsConsumed'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'consumptionId': json['consumptionId'],
+        'createdAt': (new Date(json['createdAt'])),
         'ledgerEntryIds': json['ledgerEntryIds'] == null ? undefined : json['ledgerEntryIds'],
+        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
+        'totalItemsConsumed': json['totalItemsConsumed'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -90,11 +94,11 @@ export function ConsumptionResponseToJSON(value?: ConsumptionResponse | null): a
     return {
         
         'consumptionId': value['consumptionId'],
-        'workorderId': value['workorderId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'ledgerEntryIds': value['ledgerEntryIds'],
         'pickListId': value['pickListId'],
         'totalItemsConsumed': value['totalItemsConsumed'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'ledgerEntryIds': value['ledgerEntryIds'],
+        'workorderId': value['workorderId'],
     };
 }
 

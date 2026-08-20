@@ -21,65 +21,65 @@ import {
 } from './AsnLineResponse';
 
 /**
- * 
+ * Advance shipping notice (ASN) representing an inbound shipment from a vendor, including its line items and lifecycle status
  * @export
  * @interface AsnResponse
  */
 export interface AsnResponse {
     /**
-     * 
+     * Unique identifier of the ASN
      * @type {string}
      * @memberof AsnResponse
      */
-    asnId?: string;
+    asnId: string;
     /**
-     * 
+     * Human-readable reference number assigned to the ASN
      * @type {string}
      * @memberof AsnResponse
      */
-    asnReferenceNumber?: string;
+    asnReferenceNumber: string;
     /**
-     * 
-     * @type {string}
-     * @memberof AsnResponse
-     */
-    vendorId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AsnResponse
-     */
-    status?: AsnResponseStatusEnum;
-    /**
-     * 
+     * Timestamp when the ASN was created
      * @type {Date}
      * @memberof AsnResponse
      */
-    shipDate?: Date;
+    createdAt: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof AsnResponse
-     */
-    expectedArrivalDate?: Date;
-    /**
-     * 
+     * Identifier of the user who created the ASN
      * @type {string}
      * @memberof AsnResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Expected arrival date of the shipment at the destination
      * @type {Date}
      * @memberof AsnResponse
      */
-    createdAt?: Date;
+    expectedArrivalDate?: Date;
     /**
-     * 
+     * Line items detailing the SKUs and quantities included in this ASN
      * @type {Array<AsnLineResponse>}
      * @memberof AsnResponse
      */
     lineItems?: Array<AsnLineResponse>;
+    /**
+     * Date the shipment left the vendor
+     * @type {Date}
+     * @memberof AsnResponse
+     */
+    shipDate?: Date;
+    /**
+     * Current lifecycle status of the ASN
+     * @type {string}
+     * @memberof AsnResponse
+     */
+    status: AsnResponseStatusEnum;
+    /**
+     * Identifier of the vendor that issued the shipment
+     * @type {string}
+     * @memberof AsnResponse
+     */
+    vendorId: string;
 }
 
 /**
@@ -99,6 +99,11 @@ export enum AsnResponseStatusEnum {
  * Check if a given object implements the AsnResponse interface.
  */
 export function instanceOfAsnResponse(value: object): boolean {
+    if (!('asnId' in value)) return false;
+    if (!('asnReferenceNumber' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('vendorId' in value)) return false;
     return true;
 }
 
@@ -112,15 +117,15 @@ export function AsnResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'asnId': json['asnId'] == null ? undefined : json['asnId'],
-        'asnReferenceNumber': json['asnReferenceNumber'] == null ? undefined : json['asnReferenceNumber'],
-        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'shipDate': json['shipDate'] == null ? undefined : (new Date(json['shipDate'])),
-        'expectedArrivalDate': json['expectedArrivalDate'] == null ? undefined : (new Date(json['expectedArrivalDate'])),
+        'asnId': json['asnId'],
+        'asnReferenceNumber': json['asnReferenceNumber'],
+        'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'expectedArrivalDate': json['expectedArrivalDate'] == null ? undefined : (new Date(json['expectedArrivalDate'])),
         'lineItems': json['lineItems'] == null ? undefined : ((json['lineItems'] as Array<any>).map(AsnLineResponseFromJSON)),
+        'shipDate': json['shipDate'] == null ? undefined : (new Date(json['shipDate'])),
+        'status': json['status'],
+        'vendorId': json['vendorId'],
     };
 }
 
@@ -132,13 +137,13 @@ export function AsnResponseToJSON(value?: AsnResponse | null): any {
         
         'asnId': value['asnId'],
         'asnReferenceNumber': value['asnReferenceNumber'],
-        'vendorId': value['vendorId'],
-        'status': value['status'],
-        'shipDate': value['shipDate'] == null ? undefined : ((value['shipDate']).toISOString().substring(0,10)),
-        'expectedArrivalDate': value['expectedArrivalDate'] == null ? undefined : ((value['expectedArrivalDate']).toISOString().substring(0,10)),
+        'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'expectedArrivalDate': value['expectedArrivalDate'] == null ? undefined : ((value['expectedArrivalDate']).toISOString().substring(0,10)),
         'lineItems': value['lineItems'] == null ? undefined : ((value['lineItems'] as Array<any>).map(AsnLineResponseToJSON)),
+        'shipDate': value['shipDate'] == null ? undefined : ((value['shipDate']).toISOString().substring(0,10)),
+        'status': value['status'],
+        'vendorId': value['vendorId'],
     };
 }
 

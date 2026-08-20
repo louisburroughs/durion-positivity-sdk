@@ -14,71 +14,74 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Immutable audit event record
  * @export
  * @interface AuditLogEventDto
  */
 export interface AuditLogEventDto {
     /**
-     * 
-     * @type {string}
-     * @memberof AuditLogEventDto
-     */
-    eventId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AuditLogEventDto
-     */
-    timestamp?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditLogEventDto
-     */
-    eventType?: string;
-    /**
-     * 
+     * Actor that triggered the event
      * @type {string}
      * @memberof AuditLogEventDto
      */
     actorId?: string;
     /**
-     * 
+     * Additional contextual metadata
+     * @type {string}
+     * @memberof AuditLogEventDto
+     */
+    context?: string;
+    /**
+     * Identifier of the affected entity
      * @type {string}
      * @memberof AuditLogEventDto
      */
     entityId?: string;
     /**
-     * 
+     * Type of the affected entity
      * @type {string}
      * @memberof AuditLogEventDto
      */
     entityType?: string;
     /**
-     * 
+     * Audit event identifier
      * @type {string}
      * @memberof AuditLogEventDto
      */
-    oldValue?: string;
+    eventId: string;
     /**
-     * 
+     * Event type code
+     * @type {string}
+     * @memberof AuditLogEventDto
+     */
+    eventType: string;
+    /**
+     * Serialized value after the change
      * @type {string}
      * @memberof AuditLogEventDto
      */
     newValue?: string;
     /**
-     * 
+     * Serialized value before the change
      * @type {string}
      * @memberof AuditLogEventDto
      */
-    context?: string;
+    oldValue?: string;
+    /**
+     * Timestamp recorded for the event
+     * @type {Date}
+     * @memberof AuditLogEventDto
+     */
+    timestamp: Date;
 }
 
 /**
  * Check if a given object implements the AuditLogEventDto interface.
  */
 export function instanceOfAuditLogEventDto(value: object): boolean {
+    if (!('eventId' in value)) return false;
+    if (!('eventType' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -92,15 +95,15 @@ export function AuditLogEventDtoFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'eventId': json['eventId'] == null ? undefined : json['eventId'],
-        'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
+        'context': json['context'] == null ? undefined : json['context'],
         'entityId': json['entityId'] == null ? undefined : json['entityId'],
         'entityType': json['entityType'] == null ? undefined : json['entityType'],
-        'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
+        'eventId': json['eventId'],
+        'eventType': json['eventType'],
         'newValue': json['newValue'] == null ? undefined : json['newValue'],
-        'context': json['context'] == null ? undefined : json['context'],
+        'oldValue': json['oldValue'] == null ? undefined : json['oldValue'],
+        'timestamp': (new Date(json['timestamp'])),
     };
 }
 
@@ -110,15 +113,15 @@ export function AuditLogEventDtoToJSON(value?: AuditLogEventDto | null): any {
     }
     return {
         
-        'eventId': value['eventId'],
-        'timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
-        'eventType': value['eventType'],
         'actorId': value['actorId'],
+        'context': value['context'],
         'entityId': value['entityId'],
         'entityType': value['entityType'],
-        'oldValue': value['oldValue'],
+        'eventId': value['eventId'],
+        'eventType': value['eventType'],
         'newValue': value['newValue'],
-        'context': value['context'],
+        'oldValue': value['oldValue'],
+        'timestamp': ((value['timestamp']).toISOString()),
     };
 }
 

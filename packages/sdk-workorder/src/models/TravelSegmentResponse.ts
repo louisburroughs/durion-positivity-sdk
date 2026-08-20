@@ -20,133 +20,142 @@ import { mapValues } from '../runtime';
  */
 export interface TravelSegmentResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    travelSegmentId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    mobileWorkAssignmentId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    technicianId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    segmentType?: TravelSegmentResponseSegmentTypeEnum;
-    /**
-     * 
-     * @type {Date}
-     * @memberof TravelSegmentResponse
-     */
-    startAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof TravelSegmentResponse
-     */
-    endAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    fromLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    toLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    workOrderId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof TravelSegmentResponse
-     */
-    durationMinutes?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof TravelSegmentResponse
-     */
-    rawMinutes?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof TravelSegmentResponse
-     */
-    bufferedMinutes?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    status?: TravelSegmentResponseStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    createdBy?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelSegmentResponse
-     */
-    lastModifiedBy?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof TravelSegmentResponse
-     */
-    lastModifiedAt?: Date;
-    /**
-     * 
+     * Identifier of the user who acted to record the segment
      * @type {string}
      * @memberof TravelSegmentResponse
      */
     actedByUserId?: string;
     /**
-     * 
+     * Identifier of the person the segment was recorded on behalf of
      * @type {string}
      * @memberof TravelSegmentResponse
      */
     actedForPersonId?: string;
     /**
-     * 
+     * Buffered travel minutes applied by policy
+     * @type {number}
+     * @memberof TravelSegmentResponse
+     */
+    bufferedMinutes?: number;
+    /**
+     * Timestamp when the segment was created
+     * @type {Date}
+     * @memberof TravelSegmentResponse
+     */
+    createdAt: Date;
+    /**
+     * Identifier of the user who created the segment
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    createdBy?: string;
+    /**
+     * Effective travel duration in minutes
+     * @type {number}
+     * @memberof TravelSegmentResponse
+     */
+    durationMinutes?: number;
+    /**
+     * Timestamp when the travel segment ended
+     * @type {Date}
+     * @memberof TravelSegmentResponse
+     */
+    endAt?: Date;
+    /**
+     * Identifier of the origin location
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    fromLocationId?: string;
+    /**
+     * Timestamp when the segment was last modified
+     * @type {Date}
+     * @memberof TravelSegmentResponse
+     */
+    lastModifiedAt?: Date;
+    /**
+     * Identifier of the user who last modified the segment
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    lastModifiedBy?: string;
+    /**
+     * Identifier of the mobile work assignment this segment belongs to
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    mobileWorkAssignmentId: string;
+    /**
+     * Reason code when the segment was entered on behalf of another person
      * @type {string}
      * @memberof TravelSegmentResponse
      */
     onBehalfReasonCode?: TravelSegmentResponseOnBehalfReasonCodeEnum;
     /**
-     * 
-     * @type {Date}
+     * Raw recorded travel minutes before buffering
+     * @type {number}
      * @memberof TravelSegmentResponse
      */
-    createdAt?: Date;
+    rawMinutes?: number;
     /**
-     * 
+     * Direction or purpose of the travel leg
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    segmentType: TravelSegmentResponseSegmentTypeEnum;
+    /**
+     * Timestamp when the travel segment started
      * @type {Date}
      * @memberof TravelSegmentResponse
      */
-    updatedAt?: Date;
+    startAt?: Date;
+    /**
+     * Current status of the travel segment
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    status: TravelSegmentResponseStatusEnum;
+    /**
+     * Identifier of the technician who performed the travel
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    technicianId: string;
+    /**
+     * Identifier of the destination location
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    toLocationId?: string;
+    /**
+     * Unique identifier of the travel segment
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    travelSegmentId: string;
+    /**
+     * Timestamp when the segment was last updated
+     * @type {Date}
+     * @memberof TravelSegmentResponse
+     */
+    updatedAt: Date;
+    /**
+     * Identifier of the workorder associated with the travel
+     * @type {string}
+     * @memberof TravelSegmentResponse
+     */
+    workOrderId?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum TravelSegmentResponseOnBehalfReasonCodeEnum {
+    TechnicianUnavailable = 'TECHNICIAN_UNAVAILABLE',
+    ForgotToClock = 'FORGOT_TO_CLOCK',
+    DataEntryError = 'DATA_ENTRY_ERROR'
+}
 /**
 * @export
 * @enum {string}
@@ -171,21 +180,19 @@ export enum TravelSegmentResponseStatusEnum {
     Approved = 'APPROVED',
     Cancelled = 'CANCELLED'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum TravelSegmentResponseOnBehalfReasonCodeEnum {
-    TechnicianUnavailable = 'TECHNICIAN_UNAVAILABLE',
-    ForgotToClock = 'FORGOT_TO_CLOCK',
-    DataEntryError = 'DATA_ENTRY_ERROR'
-}
 
 
 /**
  * Check if a given object implements the TravelSegmentResponse interface.
  */
 export function instanceOfTravelSegmentResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('mobileWorkAssignmentId' in value)) return false;
+    if (!('segmentType' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('technicianId' in value)) return false;
+    if (!('travelSegmentId' in value)) return false;
+    if (!('updatedAt' in value)) return false;
     return true;
 }
 
@@ -199,27 +206,27 @@ export function TravelSegmentResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'travelSegmentId': json['travelSegmentId'] == null ? undefined : json['travelSegmentId'],
-        'mobileWorkAssignmentId': json['mobileWorkAssignmentId'] == null ? undefined : json['mobileWorkAssignmentId'],
-        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
-        'segmentType': json['segmentType'] == null ? undefined : json['segmentType'],
-        'startAt': json['startAt'] == null ? undefined : (new Date(json['startAt'])),
-        'endAt': json['endAt'] == null ? undefined : (new Date(json['endAt'])),
-        'fromLocationId': json['fromLocationId'] == null ? undefined : json['fromLocationId'],
-        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
-        'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
-        'durationMinutes': json['durationMinutes'] == null ? undefined : json['durationMinutes'],
-        'rawMinutes': json['rawMinutes'] == null ? undefined : json['rawMinutes'],
-        'bufferedMinutes': json['bufferedMinutes'] == null ? undefined : json['bufferedMinutes'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
-        'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'actedByUserId': json['actedByUserId'] == null ? undefined : json['actedByUserId'],
         'actedForPersonId': json['actedForPersonId'] == null ? undefined : json['actedForPersonId'],
+        'bufferedMinutes': json['bufferedMinutes'] == null ? undefined : json['bufferedMinutes'],
+        'createdAt': (new Date(json['createdAt'])),
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'durationMinutes': json['durationMinutes'] == null ? undefined : json['durationMinutes'],
+        'endAt': json['endAt'] == null ? undefined : (new Date(json['endAt'])),
+        'fromLocationId': json['fromLocationId'] == null ? undefined : json['fromLocationId'],
+        'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
+        'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
+        'mobileWorkAssignmentId': json['mobileWorkAssignmentId'],
         'onBehalfReasonCode': json['onBehalfReasonCode'] == null ? undefined : json['onBehalfReasonCode'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'rawMinutes': json['rawMinutes'] == null ? undefined : json['rawMinutes'],
+        'segmentType': json['segmentType'],
+        'startAt': json['startAt'] == null ? undefined : (new Date(json['startAt'])),
+        'status': json['status'],
+        'technicianId': json['technicianId'],
+        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
+        'travelSegmentId': json['travelSegmentId'],
+        'updatedAt': (new Date(json['updatedAt'])),
+        'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
     };
 }
 
@@ -229,27 +236,27 @@ export function TravelSegmentResponseToJSON(value?: TravelSegmentResponse | null
     }
     return {
         
-        'travelSegmentId': value['travelSegmentId'],
-        'mobileWorkAssignmentId': value['mobileWorkAssignmentId'],
-        'technicianId': value['technicianId'],
-        'segmentType': value['segmentType'],
-        'startAt': value['startAt'] == null ? undefined : ((value['startAt']).toISOString()),
-        'endAt': value['endAt'] == null ? undefined : ((value['endAt']).toISOString()),
-        'fromLocationId': value['fromLocationId'],
-        'toLocationId': value['toLocationId'],
-        'workOrderId': value['workOrderId'],
-        'durationMinutes': value['durationMinutes'],
-        'rawMinutes': value['rawMinutes'],
-        'bufferedMinutes': value['bufferedMinutes'],
-        'status': value['status'],
-        'createdBy': value['createdBy'],
-        'lastModifiedBy': value['lastModifiedBy'],
-        'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'actedByUserId': value['actedByUserId'],
         'actedForPersonId': value['actedForPersonId'],
+        'bufferedMinutes': value['bufferedMinutes'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
+        'durationMinutes': value['durationMinutes'],
+        'endAt': value['endAt'] == null ? undefined : ((value['endAt']).toISOString()),
+        'fromLocationId': value['fromLocationId'],
+        'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
+        'lastModifiedBy': value['lastModifiedBy'],
+        'mobileWorkAssignmentId': value['mobileWorkAssignmentId'],
         'onBehalfReasonCode': value['onBehalfReasonCode'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'rawMinutes': value['rawMinutes'],
+        'segmentType': value['segmentType'],
+        'startAt': value['startAt'] == null ? undefined : ((value['startAt']).toISOString()),
+        'status': value['status'],
+        'technicianId': value['technicianId'],
+        'toLocationId': value['toLocationId'],
+        'travelSegmentId': value['travelSegmentId'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
+        'workOrderId': value['workOrderId'],
     };
 }
 

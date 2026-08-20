@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to complete a pick task
  * @export
  * @interface CompletePickTaskRequest
  */
 export interface CompletePickTaskRequest {
     /**
-     * 
+     * Optional reason for completing the pick task
      * @type {string}
      * @memberof CompletePickTaskRequest
      */

@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Labor quantity and unit of measure
  * @export
  * @interface LaborQuantity
  */
 export interface LaborQuantity {
     /**
-     * 
+     * Amount of labor performed
      * @type {number}
      * @memberof LaborQuantity
      */
     quantity: number;
     /**
-     * 
+     * Unit of measure for the labor quantity
      * @type {string}
      * @memberof LaborQuantity
      */

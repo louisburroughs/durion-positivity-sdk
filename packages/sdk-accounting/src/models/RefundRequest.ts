@@ -14,70 +14,61 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to record a refund audit event
  * @export
  * @interface RefundRequest
  */
 export interface RefundRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof RefundRequest
-     */
-    invoiceId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RefundRequest
-     */
-    paymentId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RefundRequest
-     */
-    refundType: RefundRequestRefundTypeEnum;
-    /**
-     * 
-     * @type {number}
-     * @memberof RefundRequest
-     */
-    refundAmount: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof RefundRequest
-     */
-    originalPaymentStatus: RefundRequestOriginalPaymentStatusEnum;
-    /**
-     * 
+     * Legacy client-provided actor identifier; service resolves authoritative actor from security context
      * @type {string}
      * @memberof RefundRequest
      */
     actorId?: string;
     /**
-     * 
+     * Role of the actor performing the refund
      * @type {string}
      * @memberof RefundRequest
      */
     actorRole: string;
     /**
-     * 
+     * Identifier of the invoice being refunded
+     * @type {string}
+     * @memberof RefundRequest
+     */
+    invoiceId: string;
+    /**
+     * Status of the original payment being refunded
+     * @type {string}
+     * @memberof RefundRequest
+     */
+    originalPaymentStatus: RefundRequestOriginalPaymentStatusEnum;
+    /**
+     * Identifier of the payment being refunded
+     * @type {string}
+     * @memberof RefundRequest
+     */
+    paymentId: string;
+    /**
+     * Reason for the refund
      * @type {string}
      * @memberof RefundRequest
      */
     reason: string;
+    /**
+     * Amount being refunded
+     * @type {number}
+     * @memberof RefundRequest
+     */
+    refundAmount: number;
+    /**
+     * Type of refund being recorded
+     * @type {string}
+     * @memberof RefundRequest
+     */
+    refundType: RefundRequestRefundTypeEnum;
 }
 
-/**
-* @export
-* @enum {string}
-*/
-export enum RefundRequestRefundTypeEnum {
-    Reversal = 'REVERSAL',
-    CreditMemo = 'CREDIT_MEMO',
-    Adjustment = 'ADJUSTMENT'
-}
 /**
 * @export
 * @enum {string}
@@ -88,19 +79,28 @@ export enum RefundRequestOriginalPaymentStatusEnum {
     Failed = 'FAILED',
     Authorized = 'AUTHORIZED'
 }
+/**
+* @export
+* @enum {string}
+*/
+export enum RefundRequestRefundTypeEnum {
+    Reversal = 'REVERSAL',
+    CreditMemo = 'CREDIT_MEMO',
+    Adjustment = 'ADJUSTMENT'
+}
 
 
 /**
  * Check if a given object implements the RefundRequest interface.
  */
 export function instanceOfRefundRequest(value: object): boolean {
-    if (!('invoiceId' in value)) return false;
-    if (!('paymentId' in value)) return false;
-    if (!('refundType' in value)) return false;
-    if (!('refundAmount' in value)) return false;
-    if (!('originalPaymentStatus' in value)) return false;
     if (!('actorRole' in value)) return false;
+    if (!('invoiceId' in value)) return false;
+    if (!('originalPaymentStatus' in value)) return false;
+    if (!('paymentId' in value)) return false;
     if (!('reason' in value)) return false;
+    if (!('refundAmount' in value)) return false;
+    if (!('refundType' in value)) return false;
     return true;
 }
 
@@ -114,14 +114,14 @@ export function RefundRequestFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'invoiceId': json['invoiceId'],
-        'paymentId': json['paymentId'],
-        'refundType': json['refundType'],
-        'refundAmount': json['refundAmount'],
-        'originalPaymentStatus': json['originalPaymentStatus'],
         'actorId': json['actorId'] == null ? undefined : json['actorId'],
         'actorRole': json['actorRole'],
+        'invoiceId': json['invoiceId'],
+        'originalPaymentStatus': json['originalPaymentStatus'],
+        'paymentId': json['paymentId'],
         'reason': json['reason'],
+        'refundAmount': json['refundAmount'],
+        'refundType': json['refundType'],
     };
 }
 
@@ -131,14 +131,14 @@ export function RefundRequestToJSON(value?: RefundRequest | null): any {
     }
     return {
         
-        'invoiceId': value['invoiceId'],
-        'paymentId': value['paymentId'],
-        'refundType': value['refundType'],
-        'refundAmount': value['refundAmount'],
-        'originalPaymentStatus': value['originalPaymentStatus'],
         'actorId': value['actorId'],
         'actorRole': value['actorRole'],
+        'invoiceId': value['invoiceId'],
+        'originalPaymentStatus': value['originalPaymentStatus'],
+        'paymentId': value['paymentId'],
         'reason': value['reason'],
+        'refundAmount': value['refundAmount'],
+        'refundType': value['refundType'],
     };
 }
 

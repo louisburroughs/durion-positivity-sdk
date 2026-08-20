@@ -20,41 +20,35 @@ import { mapValues } from '../runtime';
  */
 export interface VehicleResponse {
     /**
-     * Vehicle identifier.
-     * @type {string}
-     * @memberof VehicleResponse
-     */
-    vehicleId?: string;
-    /**
      * Owning account identifier.
      * @type {string}
      * @memberof VehicleResponse
      */
-    accountId?: string;
+    accountId: string;
     /**
-     * Vehicle VIN.
+     * Record creation timestamp (UTC).
+     * @type {Date}
+     * @memberof VehicleResponse
+     */
+    createdAt: Date;
+    /**
+     * Username of the actor who created this record.
      * @type {string}
      * @memberof VehicleResponse
      */
-    vin?: string;
-    /**
-     * Normalized VIN used for lookup and uniqueness.
-     * @type {string}
-     * @memberof VehicleResponse
-     */
-    vinNormalized?: string;
-    /**
-     * Fleet/unit number.
-     * @type {string}
-     * @memberof VehicleResponse
-     */
-    unitNumber?: string;
+    createdBy?: string;
     /**
      * Human-readable vehicle description.
      * @type {string}
      * @memberof VehicleResponse
      */
-    description?: string;
+    description: string;
+    /**
+     * Whether vehicle is active.
+     * @type {boolean}
+     * @memberof VehicleResponse
+     */
+    isActive: boolean;
     /**
      * License plate value.
      * @type {string}
@@ -68,12 +62,6 @@ export interface VehicleResponse {
      */
     licensePlateJurisdiction?: string;
     /**
-     * Model year.
-     * @type {number}
-     * @memberof VehicleResponse
-     */
-    year?: number;
-    /**
      * Vehicle make.
      * @type {string}
      * @memberof VehicleResponse
@@ -86,35 +74,35 @@ export interface VehicleResponse {
      */
     model?: string;
     /**
+     * Unit of the odometer reading (MILES or KILOMETERS).
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    odometerUnit?: VehicleResponseOdometerUnitEnum;
+    /**
+     * Last recorded odometer reading value.
+     * @type {number}
+     * @memberof VehicleResponse
+     */
+    odometerValue?: number;
+    /**
      * Vehicle trim.
      * @type {string}
      * @memberof VehicleResponse
      */
     trim?: string;
     /**
-     * Whether vehicle is active.
-     * @type {boolean}
+     * Fleet/unit number.
+     * @type {string}
      * @memberof VehicleResponse
      */
-    isActive?: boolean;
-    /**
-     * Record creation timestamp (UTC).
-     * @type {Date}
-     * @memberof VehicleResponse
-     */
-    createdAt?: Date;
+    unitNumber: string;
     /**
      * Last update timestamp (UTC).
      * @type {Date}
      * @memberof VehicleResponse
      */
-    updatedAt?: Date;
-    /**
-     * Username of the actor who created this record.
-     * @type {string}
-     * @memberof VehicleResponse
-     */
-    createdBy?: string;
+    updatedAt: Date;
     /**
      * Username of the actor who last modified this record.
      * @type {string}
@@ -122,17 +110,61 @@ export interface VehicleResponse {
      */
     updatedBy?: string;
     /**
+     * Vehicle identifier.
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    vehicleId: string;
+    /**
      * Optimistic lock version.
      * @type {number}
      * @memberof VehicleResponse
      */
-    version?: number;
+    version: number;
+    /**
+     * Vehicle VIN.
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    vin: string;
+    /**
+     * Normalized VIN used for lookup and uniqueness.
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    vinNormalized: string;
+    /**
+     * Model year.
+     * @type {number}
+     * @memberof VehicleResponse
+     */
+    year?: number;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum VehicleResponseOdometerUnitEnum {
+    Miles = 'MILES',
+    Kilometers = 'KILOMETERS'
+}
+
 
 /**
  * Check if a given object implements the VehicleResponse interface.
  */
 export function instanceOfVehicleResponse(value: object): boolean {
+    if (!('accountId' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('description' in value)) return false;
+    if (!('isActive' in value)) return false;
+    if (!('unitNumber' in value)) return false;
+    if (!('updatedAt' in value)) return false;
+    if (!('vehicleId' in value)) return false;
+    if (!('version' in value)) return false;
+    if (!('vin' in value)) return false;
+    if (!('vinNormalized' in value)) return false;
     return true;
 }
 
@@ -146,24 +178,26 @@ export function VehicleResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'accountId': json['accountId'] == null ? undefined : json['accountId'],
-        'vin': json['vin'] == null ? undefined : json['vin'],
-        'vinNormalized': json['vinNormalized'] == null ? undefined : json['vinNormalized'],
-        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
-        'description': json['description'] == null ? undefined : json['description'],
+        'accountId': json['accountId'],
+        'createdAt': (new Date(json['createdAt'])),
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'description': json['description'],
+        'isActive': json['isActive'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
-        'year': json['year'] == null ? undefined : json['year'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
+        'odometerUnit': json['odometerUnit'] == null ? undefined : json['odometerUnit'],
+        'odometerValue': json['odometerValue'] == null ? undefined : json['odometerValue'],
         'trim': json['trim'] == null ? undefined : json['trim'],
-        'isActive': json['isActive'] == null ? undefined : json['isActive'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'unitNumber': json['unitNumber'],
+        'updatedAt': (new Date(json['updatedAt'])),
         'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
-        'version': json['version'] == null ? undefined : json['version'],
+        'vehicleId': json['vehicleId'],
+        'version': json['version'],
+        'vin': json['vin'],
+        'vinNormalized': json['vinNormalized'],
+        'year': json['year'] == null ? undefined : json['year'],
     };
 }
 
@@ -173,24 +207,26 @@ export function VehicleResponseToJSON(value?: VehicleResponse | null): any {
     }
     return {
         
-        'vehicleId': value['vehicleId'],
         'accountId': value['accountId'],
-        'vin': value['vin'],
-        'vinNormalized': value['vinNormalized'],
-        'unitNumber': value['unitNumber'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
         'description': value['description'],
+        'isActive': value['isActive'],
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],
-        'year': value['year'],
         'make': value['make'],
         'model': value['model'],
+        'odometerUnit': value['odometerUnit'],
+        'odometerValue': value['odometerValue'],
         'trim': value['trim'],
-        'isActive': value['isActive'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
-        'createdBy': value['createdBy'],
+        'unitNumber': value['unitNumber'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
         'updatedBy': value['updatedBy'],
+        'vehicleId': value['vehicleId'],
         'version': value['version'],
+        'vin': value['vin'],
+        'vinNormalized': value['vinNormalized'],
+        'year': value['year'],
     };
 }
 

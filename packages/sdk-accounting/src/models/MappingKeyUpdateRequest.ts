@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for updating an existing mapping key
  * @export
  * @interface MappingKeyUpdateRequest
  */
 export interface MappingKeyUpdateRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof MappingKeyUpdateRequest
-     */
-    keyName: string;
-    /**
-     * 
+     * Optional description of the mapping key
      * @type {string}
      * @memberof MappingKeyUpdateRequest
      */
     description?: string;
     /**
-     * 
+     * Name of the mapping key
+     * @type {string}
+     * @memberof MappingKeyUpdateRequest
+     */
+    keyName: string;
+    /**
+     * Identifier of the user modifying the mapping key
      * @type {string}
      * @memberof MappingKeyUpdateRequest
      */
@@ -58,8 +58,8 @@ export function MappingKeyUpdateRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'keyName': json['keyName'],
         'description': json['description'] == null ? undefined : json['description'],
+        'keyName': json['keyName'],
         'modifiedBy': json['modifiedBy'],
     };
 }
@@ -70,8 +70,8 @@ export function MappingKeyUpdateRequestToJSON(value?: MappingKeyUpdateRequest | 
     }
     return {
         
-        'keyName': value['keyName'],
         'description': value['description'],
+        'keyName': value['keyName'],
         'modifiedBy': value['modifiedBy'],
     };
 }

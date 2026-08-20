@@ -27,102 +27,6 @@ import {
  */
 export interface APPaymentResponse {
     /**
-     * Payment UUID
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    paymentId?: string;
-    /**
-     * Payment reference (idempotency key)
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    paymentRef?: string;
-    /**
-     * Vendor UUID
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    vendorId?: string;
-    /**
-     * Vendor name
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    vendorName?: string;
-    /**
-     * Gross payment amount
-     * @type {number}
-     * @memberof APPaymentResponse
-     */
-    grossAmount?: number;
-    /**
-     * Fee amount
-     * @type {number}
-     * @memberof APPaymentResponse
-     */
-    feeAmount?: number;
-    /**
-     * Net amount
-     * @type {number}
-     * @memberof APPaymentResponse
-     */
-    netAmount?: number;
-    /**
-     * Unapplied amount (credit to vendor)
-     * @type {number}
-     * @memberof APPaymentResponse
-     */
-    unappliedAmount?: number;
-    /**
-     * Currency code
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    currency?: string;
-    /**
-     * Payment status
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    status?: APPaymentResponseStatusEnum;
-    /**
-     * Gateway transaction ID
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    gatewayTransactionId?: string;
-    /**
-     * Gateway response timestamp
-     * @type {Date}
-     * @memberof APPaymentResponse
-     */
-    gatewayTimestamp?: Date;
-    /**
-     * GL journal entry ID (once posted)
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    glJournalEntryId?: string;
-    /**
-     * GL posting timestamp
-     * @type {Date}
-     * @memberof APPaymentResponse
-     */
-    glPostedAt?: Date;
-    /**
-     * GL posting error message (if failed)
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    glPostError?: string;
-    /**
-     * Payment memo/notes
-     * @type {string}
-     * @memberof APPaymentResponse
-     */
-    memo?: string;
-    /**
      * Allocations to vendor bills
      * @type {Array<AllocationLineResponse>}
      * @memberof APPaymentResponse
@@ -140,6 +44,102 @@ export interface APPaymentResponse {
      * @memberof APPaymentResponse
      */
     createdBy?: string;
+    /**
+     * Currency code
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    currency?: string;
+    /**
+     * Fee amount
+     * @type {number}
+     * @memberof APPaymentResponse
+     */
+    feeAmount?: number;
+    /**
+     * Gateway response timestamp
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    gatewayTimestamp?: Date;
+    /**
+     * Gateway transaction ID
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    gatewayTransactionId?: string;
+    /**
+     * GL journal entry ID (once posted)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    glJournalEntryId?: string;
+    /**
+     * GL posting error message (if failed)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    glPostError?: string;
+    /**
+     * GL posting timestamp
+     * @type {Date}
+     * @memberof APPaymentResponse
+     */
+    glPostedAt?: Date;
+    /**
+     * Gross payment amount
+     * @type {number}
+     * @memberof APPaymentResponse
+     */
+    grossAmount?: number;
+    /**
+     * Payment memo/notes
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    memo?: string;
+    /**
+     * Net amount
+     * @type {number}
+     * @memberof APPaymentResponse
+     */
+    netAmount?: number;
+    /**
+     * Payment UUID
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    paymentId?: string;
+    /**
+     * Payment reference (idempotency key)
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    paymentRef?: string;
+    /**
+     * Payment status
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    status?: APPaymentResponseStatusEnum;
+    /**
+     * Unapplied amount (credit to vendor)
+     * @type {number}
+     * @memberof APPaymentResponse
+     */
+    unappliedAmount?: number;
+    /**
+     * Vendor UUID
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    vendorId?: string;
+    /**
+     * Vendor name
+     * @type {string}
+     * @memberof APPaymentResponse
+     */
+    vendorName?: string;
 }
 
 /**
@@ -174,25 +174,25 @@ export function APPaymentResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
-        'paymentRef': json['paymentRef'] == null ? undefined : json['paymentRef'],
-        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
-        'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
-        'grossAmount': json['grossAmount'] == null ? undefined : json['grossAmount'],
-        'feeAmount': json['feeAmount'] == null ? undefined : json['feeAmount'],
-        'netAmount': json['netAmount'] == null ? undefined : json['netAmount'],
-        'unappliedAmount': json['unappliedAmount'] == null ? undefined : json['unappliedAmount'],
-        'currency': json['currency'] == null ? undefined : json['currency'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'gatewayTransactionId': json['gatewayTransactionId'] == null ? undefined : json['gatewayTransactionId'],
-        'gatewayTimestamp': json['gatewayTimestamp'] == null ? undefined : (new Date(json['gatewayTimestamp'])),
-        'glJournalEntryId': json['glJournalEntryId'] == null ? undefined : json['glJournalEntryId'],
-        'glPostedAt': json['glPostedAt'] == null ? undefined : (new Date(json['glPostedAt'])),
-        'glPostError': json['glPostError'] == null ? undefined : json['glPostError'],
-        'memo': json['memo'] == null ? undefined : json['memo'],
         'allocations': json['allocations'] == null ? undefined : ((json['allocations'] as Array<any>).map(AllocationLineResponseFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'currency': json['currency'] == null ? undefined : json['currency'],
+        'feeAmount': json['feeAmount'] == null ? undefined : json['feeAmount'],
+        'gatewayTimestamp': json['gatewayTimestamp'] == null ? undefined : (new Date(json['gatewayTimestamp'])),
+        'gatewayTransactionId': json['gatewayTransactionId'] == null ? undefined : json['gatewayTransactionId'],
+        'glJournalEntryId': json['glJournalEntryId'] == null ? undefined : json['glJournalEntryId'],
+        'glPostError': json['glPostError'] == null ? undefined : json['glPostError'],
+        'glPostedAt': json['glPostedAt'] == null ? undefined : (new Date(json['glPostedAt'])),
+        'grossAmount': json['grossAmount'] == null ? undefined : json['grossAmount'],
+        'memo': json['memo'] == null ? undefined : json['memo'],
+        'netAmount': json['netAmount'] == null ? undefined : json['netAmount'],
+        'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
+        'paymentRef': json['paymentRef'] == null ? undefined : json['paymentRef'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'unappliedAmount': json['unappliedAmount'] == null ? undefined : json['unappliedAmount'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
+        'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
     };
 }
 
@@ -202,25 +202,25 @@ export function APPaymentResponseToJSON(value?: APPaymentResponse | null): any {
     }
     return {
         
-        'paymentId': value['paymentId'],
-        'paymentRef': value['paymentRef'],
-        'vendorId': value['vendorId'],
-        'vendorName': value['vendorName'],
-        'grossAmount': value['grossAmount'],
-        'feeAmount': value['feeAmount'],
-        'netAmount': value['netAmount'],
-        'unappliedAmount': value['unappliedAmount'],
-        'currency': value['currency'],
-        'status': value['status'],
-        'gatewayTransactionId': value['gatewayTransactionId'],
-        'gatewayTimestamp': value['gatewayTimestamp'] == null ? undefined : ((value['gatewayTimestamp']).toISOString()),
-        'glJournalEntryId': value['glJournalEntryId'],
-        'glPostedAt': value['glPostedAt'] == null ? undefined : ((value['glPostedAt']).toISOString()),
-        'glPostError': value['glPostError'],
-        'memo': value['memo'],
         'allocations': value['allocations'] == null ? undefined : ((value['allocations'] as Array<any>).map(AllocationLineResponseToJSON)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'currency': value['currency'],
+        'feeAmount': value['feeAmount'],
+        'gatewayTimestamp': value['gatewayTimestamp'] == null ? undefined : ((value['gatewayTimestamp']).toISOString()),
+        'gatewayTransactionId': value['gatewayTransactionId'],
+        'glJournalEntryId': value['glJournalEntryId'],
+        'glPostError': value['glPostError'],
+        'glPostedAt': value['glPostedAt'] == null ? undefined : ((value['glPostedAt']).toISOString()),
+        'grossAmount': value['grossAmount'],
+        'memo': value['memo'],
+        'netAmount': value['netAmount'],
+        'paymentId': value['paymentId'],
+        'paymentRef': value['paymentRef'],
+        'status': value['status'],
+        'unappliedAmount': value['unappliedAmount'],
+        'vendorId': value['vendorId'],
+        'vendorName': value['vendorName'],
     };
 }
 

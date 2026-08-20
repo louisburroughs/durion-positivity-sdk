@@ -20,65 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ChangeRequestResponse {
     /**
-     * Unique identifier for the change request
-     * @type {string}
-     * @memberof ChangeRequestResponse
-     */
-    id?: string;
-    /**
-     * Workorder ID
-     * @type {string}
-     * @memberof ChangeRequestResponse
-     */
-    workorderId?: string;
-    /**
-     * User ID who requested the change
-     * @type {string}
-     * @memberof ChangeRequestResponse
-     */
-    requestedByUserId?: string;
-    /**
-     * Date and time the change was requested
-     * @type {Date}
-     * @memberof ChangeRequestResponse
-     */
-    requestedAt?: Date;
-    /**
-     * Change request status
-     * @type {string}
-     * @memberof ChangeRequestResponse
-     */
-    status?: string;
-    /**
-     * Description of the change request
-     * @type {string}
-     * @memberof ChangeRequestResponse
-     */
-    description?: string;
-    /**
-     * Whether this is an emergency exception
-     * @type {boolean}
-     * @memberof ChangeRequestResponse
-     */
-    isEmergencyException?: boolean;
-    /**
-     * Reason for the exception if applicable
-     * @type {string}
-     * @memberof ChangeRequestResponse
-     */
-    exceptionReason?: string;
-    /**
      * Approval notes
      * @type {string}
      * @memberof ChangeRequestResponse
      */
     approvalNote?: string;
-    /**
-     * Whether approval is gated
-     * @type {boolean}
-     * @memberof ChangeRequestResponse
-     */
-    isApprovalGated?: boolean;
     /**
      * Date and time the change was approved
      * @type {Date}
@@ -97,6 +43,60 @@ export interface ChangeRequestResponse {
      * @memberof ChangeRequestResponse
      */
     declinedAt?: Date;
+    /**
+     * Description of the change request
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    description?: string;
+    /**
+     * Reason for the exception if applicable
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    exceptionReason?: string;
+    /**
+     * Unique identifier for the change request
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    id?: string;
+    /**
+     * Whether approval is gated
+     * @type {boolean}
+     * @memberof ChangeRequestResponse
+     */
+    isApprovalGated?: boolean;
+    /**
+     * Whether this is an emergency exception
+     * @type {boolean}
+     * @memberof ChangeRequestResponse
+     */
+    isEmergencyException?: boolean;
+    /**
+     * Date and time the change was requested
+     * @type {Date}
+     * @memberof ChangeRequestResponse
+     */
+    requestedAt?: Date;
+    /**
+     * User ID who requested the change
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    requestedByUserId?: string;
+    /**
+     * Change request status
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    status?: string;
+    /**
+     * Workorder ID
+     * @type {string}
+     * @memberof ChangeRequestResponse
+     */
+    workorderId?: string;
 }
 
 /**
@@ -116,19 +116,19 @@ export function ChangeRequestResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'requestedByUserId': json['requestedByUserId'] == null ? undefined : json['requestedByUserId'],
-        'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
-        'status': json['status'] == null ? undefined : json['status'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'isEmergencyException': json['isEmergencyException'] == null ? undefined : json['isEmergencyException'],
-        'exceptionReason': json['exceptionReason'] == null ? undefined : json['exceptionReason'],
         'approvalNote': json['approvalNote'] == null ? undefined : json['approvalNote'],
-        'isApprovalGated': json['isApprovalGated'] == null ? undefined : json['isApprovalGated'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
         'declinedAt': json['declinedAt'] == null ? undefined : (new Date(json['declinedAt'])),
+        'description': json['description'] == null ? undefined : json['description'],
+        'exceptionReason': json['exceptionReason'] == null ? undefined : json['exceptionReason'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'isApprovalGated': json['isApprovalGated'] == null ? undefined : json['isApprovalGated'],
+        'isEmergencyException': json['isEmergencyException'] == null ? undefined : json['isEmergencyException'],
+        'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
+        'requestedByUserId': json['requestedByUserId'] == null ? undefined : json['requestedByUserId'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -138,19 +138,19 @@ export function ChangeRequestResponseToJSON(value?: ChangeRequestResponse | null
     }
     return {
         
-        'id': value['id'],
-        'workorderId': value['workorderId'],
-        'requestedByUserId': value['requestedByUserId'],
-        'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
-        'status': value['status'],
-        'description': value['description'],
-        'isEmergencyException': value['isEmergencyException'],
-        'exceptionReason': value['exceptionReason'],
         'approvalNote': value['approvalNote'],
-        'isApprovalGated': value['isApprovalGated'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedBy': value['approvedBy'],
         'declinedAt': value['declinedAt'] == null ? undefined : ((value['declinedAt']).toISOString()),
+        'description': value['description'],
+        'exceptionReason': value['exceptionReason'],
+        'id': value['id'],
+        'isApprovalGated': value['isApprovalGated'],
+        'isEmergencyException': value['isEmergencyException'],
+        'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
+        'requestedByUserId': value['requestedByUserId'],
+        'status': value['status'],
+        'workorderId': value['workorderId'],
     };
 }
 

@@ -13,54 +13,80 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PrimaryContact } from './PrimaryContact';
+import {
+    PrimaryContactFromJSON,
+    PrimaryContactFromJSONTyped,
+    PrimaryContactToJSON,
+} from './PrimaryContact';
+
 /**
- * 
+ * Party summary record for a directory row
  * @export
  * @interface PartySummary
  */
 export interface PartySummary {
     /**
-     * 
+     * Creation timestamp (ISO 8601)
      * @type {string}
      * @memberof PartySummary
      */
-    partyId?: string;
+    createdAt?: string;
     /**
-     * 
+     * Human-readable customer/account number for display and lookup
      * @type {string}
      * @memberof PartySummary
      */
-    legalName?: string;
+    customerNumber?: string;
     /**
-     * 
+     * Display name of the party
      * @type {string}
      * @memberof PartySummary
      */
     displayName?: string;
     /**
-     * 
+     * Legal name of the party
+     * @type {string}
+     * @memberof PartySummary
+     */
+    legalName?: string;
+    /**
+     * Unique identifier of the party
+     * @type {string}
+     * @memberof PartySummary
+     */
+    partyId: string;
+    /**
+     * Party type (ORGANIZATION|INDIVIDUAL)
      * @type {string}
      * @memberof PartySummary
      */
     partyType?: string;
     /**
      * 
+     * @type {PrimaryContact}
+     * @memberof PartySummary
+     */
+    primaryContact?: PrimaryContact;
+    /**
+     * Party status (ACTIVE|PENDING|SUSPENDED|INACTIVE)
      * @type {string}
      * @memberof PartySummary
      */
     status?: string;
     /**
-     * 
-     * @type {string}
+     * Number of vehicles associated with the party (defaults to 0)
+     * @type {number}
      * @memberof PartySummary
      */
-    createdAt?: string;
+    vehicleCount?: number;
 }
 
 /**
  * Check if a given object implements the PartySummary interface.
  */
 export function instanceOfPartySummary(value: object): boolean {
+    if (!('partyId' in value)) return false;
     return true;
 }
 
@@ -74,12 +100,15 @@ export function PartySummaryFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'legalName': json['legalName'] == null ? undefined : json['legalName'],
-        'displayName': json['displayName'] == null ? undefined : json['displayName'],
-        'partyType': json['partyType'] == null ? undefined : json['partyType'],
-        'status': json['status'] == null ? undefined : json['status'],
         'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
+        'customerNumber': json['customerNumber'] == null ? undefined : json['customerNumber'],
+        'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'legalName': json['legalName'] == null ? undefined : json['legalName'],
+        'partyId': json['partyId'],
+        'partyType': json['partyType'] == null ? undefined : json['partyType'],
+        'primaryContact': json['primaryContact'] == null ? undefined : PrimaryContactFromJSON(json['primaryContact']),
+        'status': json['status'] == null ? undefined : json['status'],
+        'vehicleCount': json['vehicleCount'] == null ? undefined : json['vehicleCount'],
     };
 }
 
@@ -89,12 +118,15 @@ export function PartySummaryToJSON(value?: PartySummary | null): any {
     }
     return {
         
-        'partyId': value['partyId'],
-        'legalName': value['legalName'],
-        'displayName': value['displayName'],
-        'partyType': value['partyType'],
-        'status': value['status'],
         'createdAt': value['createdAt'],
+        'customerNumber': value['customerNumber'],
+        'displayName': value['displayName'],
+        'legalName': value['legalName'],
+        'partyId': value['partyId'],
+        'partyType': value['partyType'],
+        'primaryContact': PrimaryContactToJSON(value['primaryContact']),
+        'status': value['status'],
+        'vehicleCount': value['vehicleCount'],
     };
 }
 

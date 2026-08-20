@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for applying an emergency override
+ * Emergency override details including manager ID and reason
  * @export
  * @interface EmergencyOverrideDTO
  */

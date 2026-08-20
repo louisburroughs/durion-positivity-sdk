@@ -20,47 +20,51 @@ import { mapValues } from '../runtime';
  */
 export interface ContractField {
     /**
-     * 
-     * @type {string}
-     * @memberof ContractField
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ContractField
-     */
-    jsonPath?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ContractField
-     */
-    type?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof ContractField
-     */
-    required?: boolean;
-    /**
-     * 
+     * Human-readable description of the field
      * @type {string}
      * @memberof ContractField
      */
     description?: string;
     /**
-     * 
+     * Allowed enum values for the field, if constrained
      * @type {Array<string>}
      * @memberof ContractField
      */
     enumValues?: Array<string>;
+    /**
+     * JSON path locating the field within the envelope
+     * @type {string}
+     * @memberof ContractField
+     */
+    jsonPath: string;
+    /**
+     * Name of the field
+     * @type {string}
+     * @memberof ContractField
+     */
+    name: string;
+    /**
+     * Whether the field is required in the envelope
+     * @type {boolean}
+     * @memberof ContractField
+     */
+    required: boolean;
+    /**
+     * Data type of the field
+     * @type {string}
+     * @memberof ContractField
+     */
+    type: string;
 }
 
 /**
  * Check if a given object implements the ContractField interface.
  */
 export function instanceOfContractField(value: object): boolean {
+    if (!('jsonPath' in value)) return false;
+    if (!('name' in value)) return false;
+    if (!('required' in value)) return false;
+    if (!('type' in value)) return false;
     return true;
 }
 
@@ -74,12 +78,12 @@ export function ContractFieldFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
-        'jsonPath': json['jsonPath'] == null ? undefined : json['jsonPath'],
-        'type': json['type'] == null ? undefined : json['type'],
-        'required': json['required'] == null ? undefined : json['required'],
         'description': json['description'] == null ? undefined : json['description'],
         'enumValues': json['enumValues'] == null ? undefined : json['enumValues'],
+        'jsonPath': json['jsonPath'],
+        'name': json['name'],
+        'required': json['required'],
+        'type': json['type'],
     };
 }
 
@@ -89,12 +93,12 @@ export function ContractFieldToJSON(value?: ContractField | null): any {
     }
     return {
         
-        'name': value['name'],
-        'jsonPath': value['jsonPath'],
-        'type': value['type'],
-        'required': value['required'],
         'description': value['description'],
         'enumValues': value['enumValues'],
+        'jsonPath': value['jsonPath'],
+        'name': value['name'],
+        'required': value['required'],
+        'type': value['type'],
     };
 }
 

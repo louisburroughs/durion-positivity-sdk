@@ -14,41 +14,44 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * User account view returned by user-management endpoints
  * @export
  * @interface UserDto
  */
 export interface UserDto {
     /**
-     * 
+     * User identifier
      * @type {string}
      * @memberof UserDto
      */
-    id?: string;
+    id: string;
     /**
-     * 
-     * @type {string}
-     * @memberof UserDto
-     */
-    username?: string;
-    /**
-     * 
-     * @type {Set<string>}
-     * @memberof UserDto
-     */
-    roles?: Set<string>;
-    /**
-     * 
+     * Linked person identifier, when the account is linked to a person record
      * @type {string}
      * @memberof UserDto
      */
     personId?: string;
+    /**
+     * Role names assigned to the user
+     * @type {Set<string>}
+     * @memberof UserDto
+     */
+    roles: Set<string>;
+    /**
+     * Login username
+     * @type {string}
+     * @memberof UserDto
+     */
+    username: string;
 }
 
 /**
  * Check if a given object implements the UserDto interface.
  */
 export function instanceOfUserDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('roles' in value)) return false;
+    if (!('username' in value)) return false;
     return true;
 }
 
@@ -62,10 +65,10 @@ export function UserDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): U
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'username': json['username'] == null ? undefined : json['username'],
-        'roles': json['roles'] == null ? undefined : json['roles'],
+        'id': json['id'],
         'personId': json['personId'] == null ? undefined : json['personId'],
+        'roles': json['roles'],
+        'username': json['username'],
     };
 }
 
@@ -76,9 +79,9 @@ export function UserDtoToJSON(value?: UserDto | null): any {
     return {
         
         'id': value['id'],
-        'username': value['username'],
-        'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
         'personId': value['personId'],
+        'roles': Array.from(value['roles'] as Set<any>),
+        'username': value['username'],
     };
 }
 

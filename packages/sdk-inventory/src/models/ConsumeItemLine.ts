@@ -14,35 +14,44 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single line in a consumption request, identifying a SKU and quantity to consume against a pick task
  * @export
  * @interface ConsumeItemLine
  */
 export interface ConsumeItemLine {
     /**
-     * 
+     * Optional lot override for LOT-tracked SKUs: must reference an existing (422 LOT_UNKNOWN) ACTIVE (422 LOT_NOT_AVAILABLE) lot. When absent, the lot recorded at pick confirmation is used; a LOT-tracked SKU with neither is rejected (422 LOT_NUMBER_REQUIRED). Ignored for untracked SKUs
      * @type {string}
      * @memberof ConsumeItemLine
      */
-    pickTaskId?: string;
+    lotNumber?: string;
     /**
-     * 
+     * Identifier of the pick task the consumed items are drawn from
      * @type {string}
      * @memberof ConsumeItemLine
      */
-    skuId?: string;
+    pickTaskId: string;
     /**
-     * 
+     * Quantity of the SKU to consume
      * @type {number}
      * @memberof ConsumeItemLine
      */
-    quantity?: number;
+    quantity: number;
+    /**
+     * Identifier of the SKU being consumed
+     * @type {string}
+     * @memberof ConsumeItemLine
+     */
+    skuId: string;
 }
 
 /**
  * Check if a given object implements the ConsumeItemLine interface.
  */
 export function instanceOfConsumeItemLine(value: object): boolean {
+    if (!('pickTaskId' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('skuId' in value)) return false;
     return true;
 }
 
@@ -56,9 +65,10 @@ export function ConsumeItemLineFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'pickTaskId': json['pickTaskId'] == null ? undefined : json['pickTaskId'],
-        'skuId': json['skuId'] == null ? undefined : json['skuId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
+        'pickTaskId': json['pickTaskId'],
+        'quantity': json['quantity'],
+        'skuId': json['skuId'],
     };
 }
 
@@ -68,9 +78,10 @@ export function ConsumeItemLineToJSON(value?: ConsumeItemLine | null): any {
     }
     return {
         
+        'lotNumber': value['lotNumber'],
         'pickTaskId': value['pickTaskId'],
-        'skuId': value['skuId'],
         'quantity': value['quantity'],
+        'skuId': value['skuId'],
     };
 }
 

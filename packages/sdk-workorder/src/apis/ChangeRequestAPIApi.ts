@@ -34,7 +34,11 @@ import {
     EmergencyOverrideDTOToJSON,
 } from '../models/index';
 
-export interface ApplyEmergencyOverrideRequest {
+export interface AcknowledgeChangeRequestDenialRequest {
+    changeId: string;
+}
+
+export interface ApplyChangeRequestEmergencyOverrideRequest {
     changeId: string;
     emergencyOverrideDTO: EmergencyOverrideDTO;
 }
@@ -44,7 +48,7 @@ export interface ApproveChangeRequestRequest {
     approveChangeRequestDTO: ApproveChangeRequestDTO;
 }
 
-export interface CanCloseWorkorderRequest {
+export interface CheckWorkorderCanCloseRequest {
     workorderId: string;
 }
 
@@ -59,16 +63,12 @@ export interface DeclineChangeRequestRequest {
     declineChangeRequestDTO: DeclineChangeRequestDTO;
 }
 
-export interface GetChangeRequestByIdRequest {
+export interface GetChangeRequestRequest {
     changeId: string;
 }
 
-export interface GetChangeRequestsByWorkorderRequest {
+export interface ListChangeRequestsRequest {
     workorderId: string;
-}
-
-export interface RecordCustomerDenialAcknowledgmentRequest {
-    changeId: string;
 }
 
 /**
@@ -77,21 +77,63 @@ export interface RecordCustomerDenialAcknowledgmentRequest {
 export class ChangeRequestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Manager applies emergency override to approve a change request with exception. Requires Manager role and a valid exception reason. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status.
-     * Apply emergency override
+     * Records that the customer acknowledged the denial of a declined emergency or safety change request, marking every emergency-flagged service and part item on it as acknowledged. Use this tool after a customer refuses safety-critical work so the vehicle can be released; use checkWorkorderCanClose instead to verify whether any acknowledgments are still outstanding. Preconditions: the change request must exist, be flagged as an emergency or safety exception, and be in DECLINED status. Required inputs: changeId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_CHANGE_REQUEST_DENIAL_ACKNOWLEDGE event. Returns 204 on success, and 400 when the change request cannot be found, is not an emergency exception, or is not declined — all failures surface as 400 in this operation. 
+     * Record Customer Denial Acknowledgment
      */
-    async applyEmergencyOverrideRaw(requestParameters: ApplyEmergencyOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
+    async acknowledgeChangeRequestDenialRaw(requestParameters: AcknowledgeChangeRequestDenialRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['changeId'] == null) {
             throw new runtime.RequiredError(
                 'changeId',
-                'Required parameter "changeId" was null or undefined when calling applyEmergencyOverride().'
+                'Required parameter "changeId" was null or undefined when calling acknowledgeChangeRequestDenial().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/changeRequests/{changeId}/acknowledgeDenial`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Records that the customer acknowledged the denial of a declined emergency or safety change request, marking every emergency-flagged service and part item on it as acknowledged. Use this tool after a customer refuses safety-critical work so the vehicle can be released; use checkWorkorderCanClose instead to verify whether any acknowledgments are still outstanding. Preconditions: the change request must exist, be flagged as an emergency or safety exception, and be in DECLINED status. Required inputs: changeId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_CHANGE_REQUEST_DENIAL_ACKNOWLEDGE event. Returns 204 on success, and 400 when the change request cannot be found, is not an emergency exception, or is not declined — all failures surface as 400 in this operation. 
+     * Record Customer Denial Acknowledgment
+     */
+    async acknowledgeChangeRequestDenial(requestParameters: AcknowledgeChangeRequestDenialRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.acknowledgeChangeRequestDenialRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Applies a manager\'s emergency override to a change request awaiting advisor review, setting it to APPROVED_WITH_EXCEPTION, flagging it as an emergency exception, and moving its items to READY_TO_EXECUTE. Use this tool only when safety-critical work must proceed without the normal approval artifact; do not use approveChangeRequest, which is the standard advisor approval. Preconditions: the change request must exist in AWAITING_ADVISOR_REVIEW status, and the caller must hold workorder:change_request:emergency_override — the caller\'s identity becomes the overriding manager of record. Required inputs: changeId (UUID) as a path parameter and a non-blank exceptionReason; the managerId body field is ignored in favor of the security context. Emits a WORKORDER_CHANGE_REQUEST_EMERGENCY_OVERRIDE event and persists an ApprovalRecord with the APPROVED_WITH_EXCEPTION resolution. Returns 400 when the change request cannot be found, is not awaiting review, or the reason is missing — all failures surface as 400 in this operation. 
+     * Apply Manager Emergency Override
+     */
+    async applyChangeRequestEmergencyOverrideRaw(requestParameters: ApplyChangeRequestEmergencyOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
+        if (requestParameters['changeId'] == null) {
+            throw new runtime.RequiredError(
+                'changeId',
+                'Required parameter "changeId" was null or undefined when calling applyChangeRequestEmergencyOverride().'
             );
         }
 
         if (requestParameters['emergencyOverrideDTO'] == null) {
             throw new runtime.RequiredError(
                 'emergencyOverrideDTO',
-                'Required parameter "emergencyOverrideDTO" was null or undefined when calling applyEmergencyOverride().'
+                'Required parameter "emergencyOverrideDTO" was null or undefined when calling applyChangeRequestEmergencyOverride().'
             );
         }
 
@@ -121,17 +163,17 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Manager applies emergency override to approve a change request with exception. Requires Manager role and a valid exception reason. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status.
-     * Apply emergency override
+     * Applies a manager\'s emergency override to a change request awaiting advisor review, setting it to APPROVED_WITH_EXCEPTION, flagging it as an emergency exception, and moving its items to READY_TO_EXECUTE. Use this tool only when safety-critical work must proceed without the normal approval artifact; do not use approveChangeRequest, which is the standard advisor approval. Preconditions: the change request must exist in AWAITING_ADVISOR_REVIEW status, and the caller must hold workorder:change_request:emergency_override — the caller\'s identity becomes the overriding manager of record. Required inputs: changeId (UUID) as a path parameter and a non-blank exceptionReason; the managerId body field is ignored in favor of the security context. Emits a WORKORDER_CHANGE_REQUEST_EMERGENCY_OVERRIDE event and persists an ApprovalRecord with the APPROVED_WITH_EXCEPTION resolution. Returns 400 when the change request cannot be found, is not awaiting review, or the reason is missing — all failures surface as 400 in this operation. 
+     * Apply Manager Emergency Override
      */
-    async applyEmergencyOverride(requestParameters: ApplyEmergencyOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
-        const response = await this.applyEmergencyOverrideRaw(requestParameters, initOverrides);
+    async applyChangeRequestEmergencyOverride(requestParameters: ApplyChangeRequestEmergencyOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
+        const response = await this.applyChangeRequestEmergencyOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Service Advisor approves the change request. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status. Approval note is required as the approval artifact.
-     * Approve a change request
+     * Approves a change request awaiting advisor review, setting it to APPROVED, writing an immutable approval record, and moving its items from PENDING_APPROVAL to READY_TO_EXECUTE. Use this tool for a normal advisor approval; do not use applyChangeRequestEmergencyOverride, which is the manager\'s exception path producing APPROVED_WITH_EXCEPTION. Preconditions: the change request must exist in AWAITING_ADVISOR_REVIEW status, and the caller must be an authenticated user whose identity becomes the approver of record. Required inputs: changeId (UUID) as a path parameter and a non-blank approvalNote as the approval artifact; the approvedBy body field is ignored in favor of the security context. Emits a WORKORDER_CHANGE_REQUEST_APPROVE event and persists an ApprovalRecord audit row. Returns 400 when the change request cannot be found, is not awaiting review, or the note is missing — all failures surface as 400 in this operation. 
+     * Approve a Change Request
      */
     async approveChangeRequestRaw(requestParameters: ApproveChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
         if (requestParameters['changeId'] == null) {
@@ -174,8 +216,8 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Service Advisor approves the change request. Items move from PENDING_APPROVAL to READY_TO_EXECUTE status. Approval note is required as the approval artifact.
-     * Approve a change request
+     * Approves a change request awaiting advisor review, setting it to APPROVED, writing an immutable approval record, and moving its items from PENDING_APPROVAL to READY_TO_EXECUTE. Use this tool for a normal advisor approval; do not use applyChangeRequestEmergencyOverride, which is the manager\'s exception path producing APPROVED_WITH_EXCEPTION. Preconditions: the change request must exist in AWAITING_ADVISOR_REVIEW status, and the caller must be an authenticated user whose identity becomes the approver of record. Required inputs: changeId (UUID) as a path parameter and a non-blank approvalNote as the approval artifact; the approvedBy body field is ignored in favor of the security context. Emits a WORKORDER_CHANGE_REQUEST_APPROVE event and persists an ApprovalRecord audit row. Returns 400 when the change request cannot be found, is not awaiting review, or the note is missing — all failures surface as 400 in this operation. 
+     * Approve a Change Request
      */
     async approveChangeRequest(requestParameters: ApproveChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
         const response = await this.approveChangeRequestRaw(requestParameters, initOverrides);
@@ -183,14 +225,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Verify all declined emergency/safety items have customer denial acknowledgment
-     * Check if work order can be closed
+     * Checks whether a workorder can be closed with respect to declined emergency change requests, returning true only when every declined emergency or safety item has a customer denial acknowledgment. Use this tool before completing a workorder that had declined safety work; use acknowledgeChangeRequestDenial to clear a blocking acknowledgment rather than re-polling this check. Preconditions: none — a workorder with no declined emergency requests yields true. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only check. Returns 200 with a bare boolean body; no 404 is produced for unknown workorders. 
+     * Check Workorder Close Eligibility
      */
-    async canCloseWorkorderRaw(requestParameters: CanCloseWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
+    async checkWorkorderCanCloseRaw(requestParameters: CheckWorkorderCanCloseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling canCloseWorkorder().'
+                'Required parameter "workorderId" was null or undefined when calling checkWorkorderCanClose().'
             );
         }
 
@@ -221,17 +263,17 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Verify all declined emergency/safety items have customer denial acknowledgment
-     * Check if work order can be closed
+     * Checks whether a workorder can be closed with respect to declined emergency change requests, returning true only when every declined emergency or safety item has a customer denial acknowledgment. Use this tool before completing a workorder that had declined safety work; use acknowledgeChangeRequestDenial to clear a blocking acknowledgment rather than re-polling this check. Preconditions: none — a workorder with no declined emergency requests yields true. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only check. Returns 200 with a bare boolean body; no 404 is produced for unknown workorders. 
+     * Check Workorder Close Eligibility
      */
-    async canCloseWorkorder(requestParameters: CanCloseWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
-        const response = await this.canCloseWorkorderRaw(requestParameters, initOverrides);
+    async checkWorkorderCanClose(requestParameters: CheckWorkorderCanCloseRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
+        const response = await this.checkWorkorderCanCloseRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Technician creates a request for additional work beyond authorized scope. Items are marked as PENDING_APPROVAL until advisor approves. Requires description and at least one service or part item. Supports idempotent creation via Idempotency-Key header to prevent duplicate change requests.
-     * Create a change request
+     * Creates a change request for work beyond the authorized scope, placing it in AWAITING_ADVISOR_REVIEW with its service and part items marked PENDING_APPROVAL. Use this tool when a technician finds additional work mid-job; do not use approveChangeRequest or declineChangeRequest, which are the advisor\'s decision steps on an existing request. Preconditions: the workorder must exist and be in WORK_IN_PROGRESS status, and emergency exception requests must carry the required emergency documentation on their items. Required inputs: workorderId (UUID) as a path parameter, a non-blank description, and at least one entry in services or parts; an Idempotency-Key header is recommended — a repeated key returns the originally created request instead of a duplicate. Emits a WORKORDER_CHANGE_REQUEST_CREATE event and renders a supplemental estimate PDF via the documents service when items are present. Returns 400 when the description or items are missing, the workorder is absent or not WORK_IN_PROGRESS, or emergency documentation is incomplete — all failures surface as 400 in this operation. 
+     * Create Change Request for Additional Work
      */
     async createChangeRequestRaw(requestParameters: CreateChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -278,8 +320,8 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Technician creates a request for additional work beyond authorized scope. Items are marked as PENDING_APPROVAL until advisor approves. Requires description and at least one service or part item. Supports idempotent creation via Idempotency-Key header to prevent duplicate change requests.
-     * Create a change request
+     * Creates a change request for work beyond the authorized scope, placing it in AWAITING_ADVISOR_REVIEW with its service and part items marked PENDING_APPROVAL. Use this tool when a technician finds additional work mid-job; do not use approveChangeRequest or declineChangeRequest, which are the advisor\'s decision steps on an existing request. Preconditions: the workorder must exist and be in WORK_IN_PROGRESS status, and emergency exception requests must carry the required emergency documentation on their items. Required inputs: workorderId (UUID) as a path parameter, a non-blank description, and at least one entry in services or parts; an Idempotency-Key header is recommended — a repeated key returns the originally created request instead of a duplicate. Emits a WORKORDER_CHANGE_REQUEST_CREATE event and renders a supplemental estimate PDF via the documents service when items are present. Returns 400 when the description or items are missing, the workorder is absent or not WORK_IN_PROGRESS, or emergency documentation is incomplete — all failures surface as 400 in this operation. 
+     * Create Change Request for Additional Work
      */
     async createChangeRequest(requestParameters: CreateChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
         const response = await this.createChangeRequestRaw(requestParameters, initOverrides);
@@ -287,8 +329,8 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Service Advisor declines the change request. Items move from PENDING_APPROVAL to CANCELLED status (not billable). Approval note is required to record the decline decision.
-     * Decline a change request
+     * Declines a change request awaiting advisor review, setting it to DECLINED, writing an immutable approval record, and moving its items from PENDING_APPROVAL to CANCELLED so they are not billable. Use this tool when the customer refuses the additional work; do not use approveChangeRequest, which authorizes the work instead. Preconditions: the change request must exist in AWAITING_ADVISOR_REVIEW status, and the caller must be an authenticated user whose identity becomes the decliner of record. Required inputs: changeId (UUID) as a path parameter and a non-blank approvalNote recording the decline decision. Emits a WORKORDER_CHANGE_REQUEST_DECLINE event; declined emergency items later require acknowledgeChangeRequestDenial before the workorder can close. Returns 400 when the change request cannot be found, is not awaiting review, or the note is missing — all failures surface as 400 in this operation. 
+     * Decline a Change Request
      */
     async declineChangeRequestRaw(requestParameters: DeclineChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
         if (requestParameters['changeId'] == null) {
@@ -331,8 +373,8 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Service Advisor declines the change request. Items move from PENDING_APPROVAL to CANCELLED status (not billable). Approval note is required to record the decline decision.
-     * Decline a change request
+     * Declines a change request awaiting advisor review, setting it to DECLINED, writing an immutable approval record, and moving its items from PENDING_APPROVAL to CANCELLED so they are not billable. Use this tool when the customer refuses the additional work; do not use approveChangeRequest, which authorizes the work instead. Preconditions: the change request must exist in AWAITING_ADVISOR_REVIEW status, and the caller must be an authenticated user whose identity becomes the decliner of record. Required inputs: changeId (UUID) as a path parameter and a non-blank approvalNote recording the decline decision. Emits a WORKORDER_CHANGE_REQUEST_DECLINE event; declined emergency items later require acknowledgeChangeRequestDenial before the workorder can close. Returns 400 when the change request cannot be found, is not awaiting review, or the note is missing — all failures surface as 400 in this operation. 
+     * Decline a Change Request
      */
     async declineChangeRequest(requestParameters: DeclineChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
         const response = await this.declineChangeRequestRaw(requestParameters, initOverrides);
@@ -340,14 +382,14 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve details of a specific change request
-     * Get change request by ID
+     * Returns one change request with its status, description, emergency flags, approval details, and item associations. Use this tool when the change request id is known; use listChangeRequests instead to see every change request on a workorder. Preconditions: the change request must exist. Required inputs: changeId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no change request exists for the id. 
+     * Get Change Request by Id
      */
-    async getChangeRequestByIdRaw(requestParameters: GetChangeRequestByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
+    async getChangeRequestRaw(requestParameters: GetChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChangeRequestResponse>> {
         if (requestParameters['changeId'] == null) {
             throw new runtime.RequiredError(
                 'changeId',
-                'Required parameter "changeId" was null or undefined when calling getChangeRequestById().'
+                'Required parameter "changeId" was null or undefined when calling getChangeRequest().'
             );
         }
 
@@ -374,23 +416,23 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve details of a specific change request
-     * Get change request by ID
+     * Returns one change request with its status, description, emergency flags, approval details, and item associations. Use this tool when the change request id is known; use listChangeRequests instead to see every change request on a workorder. Preconditions: the change request must exist. Required inputs: changeId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no change request exists for the id. 
+     * Get Change Request by Id
      */
-    async getChangeRequestById(requestParameters: GetChangeRequestByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
-        const response = await this.getChangeRequestByIdRaw(requestParameters, initOverrides);
+    async getChangeRequest(requestParameters: GetChangeRequestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChangeRequestResponse> {
+        const response = await this.getChangeRequestRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all change requests associated with a specific work order
-     * Get all change requests for a work order
+     * Returns every change request attached to a workorder, in all statuses from AWAITING_ADVISOR_REVIEW through APPROVED, DECLINED, CANCELLED, and APPROVED_WITH_EXCEPTION. Use this tool when reviewing a workorder\'s additional-work history; use getChangeRequest instead for one request by id. Preconditions: none — an unknown workorderId simply yields an empty list. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_CHANGE_REQUEST_LIST audit event; no change request state changes — this is a read-only projection. Returns 200 with the list, possibly empty; no 404 is produced for unknown workorders. 
+     * List Change Requests for Workorder
      */
-    async getChangeRequestsByWorkorderRaw(requestParameters: GetChangeRequestsByWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ChangeRequestResponse>>> {
+    async listChangeRequestsRaw(requestParameters: ListChangeRequestsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ChangeRequestResponse>>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling getChangeRequestsByWorkorder().'
+                'Required parameter "workorderId" was null or undefined when calling listChangeRequests().'
             );
         }
 
@@ -417,54 +459,12 @@ export class ChangeRequestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all change requests associated with a specific work order
-     * Get all change requests for a work order
+     * Returns every change request attached to a workorder, in all statuses from AWAITING_ADVISOR_REVIEW through APPROVED, DECLINED, CANCELLED, and APPROVED_WITH_EXCEPTION. Use this tool when reviewing a workorder\'s additional-work history; use getChangeRequest instead for one request by id. Preconditions: none — an unknown workorderId simply yields an empty list. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_CHANGE_REQUEST_LIST audit event; no change request state changes — this is a read-only projection. Returns 200 with the list, possibly empty; no 404 is produced for unknown workorders. 
+     * List Change Requests for Workorder
      */
-    async getChangeRequestsByWorkorder(requestParameters: GetChangeRequestsByWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ChangeRequestResponse>> {
-        const response = await this.getChangeRequestsByWorkorderRaw(requestParameters, initOverrides);
+    async listChangeRequests(requestParameters: ListChangeRequestsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ChangeRequestResponse>> {
+        const response = await this.listChangeRequestsRaw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * For declined emergency/safety items, record that customer acknowledged the denial. Required before closing the work order and returning the vehicle.
-     * Record customer denial acknowledgment
-     */
-    async recordCustomerDenialAcknowledgmentRaw(requestParameters: RecordCustomerDenialAcknowledgmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['changeId'] == null) {
-            throw new runtime.RequiredError(
-                'changeId',
-                'Required parameter "changeId" was null or undefined when calling recordCustomerDenialAcknowledgment().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/workorders/changeRequests/{changeId}/acknowledgeDenial`.replace(`{${"changeId"}}`, encodeURIComponent(String(requestParameters['changeId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * For declined emergency/safety items, record that customer acknowledged the denial. Required before closing the work order and returning the vehicle.
-     * Record customer denial acknowledgment
-     */
-    async recordCustomerDenialAcknowledgment(requestParameters: RecordCustomerDenialAcknowledgmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.recordCustomerDenialAcknowledgmentRaw(requestParameters, initOverrides);
     }
 
 }
