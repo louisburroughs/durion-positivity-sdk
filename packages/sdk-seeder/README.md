@@ -41,17 +41,17 @@ npm run seed:day -w packages/sdk-seeder
 
 All configuration is via environment variables.
 
-| Variable | Default | Required | Description |
-|---|---|---|---|
-| `SEEDER_BASE_URL` | `http://localhost:8080` | No | API gateway base URL |
-| `SEEDER_SECURITY_SERVICE_URL` | `http://localhost:8086` | No | Direct security service URL |
-| `SEEDER_USERNAME` | — | **Yes** | Login username |
-| `SEEDER_PASSWORD` | — | **Yes** | Login password |
-| `SEEDER_DAYS` | `365` | No | Number of virtual days to simulate |
-| `SEEDER_SCALE` | `1000` | No | Time compression factor (sleep between days = `86400000 / scale` ms) |
-| `SEEDER_SEED` | *(random)* | No | Integer RNG seed for reproducible runs |
-| `SEEDER_MIN_CUSTOMERS_PER_DAY` | `4` | No | Minimum customer events per virtual day |
-| `SEEDER_MAX_CUSTOMERS_PER_DAY` | `12` | No | Maximum customer events per virtual day |
+| Variable                       | Default                 | Required | Description                                                          |
+| ------------------------------ | ----------------------- | -------- | -------------------------------------------------------------------- |
+| `SEEDER_BASE_URL`              | `http://localhost:8080` | No       | API gateway base URL                                                 |
+| `SEEDER_SECURITY_SERVICE_URL`  | `http://localhost:8086` | No       | Direct security service URL                                          |
+| `SEEDER_USERNAME`              | —                       | **Yes**  | Login username                                                       |
+| `SEEDER_PASSWORD`              | —                       | **Yes**  | Login password                                                       |
+| `SEEDER_DAYS`                  | `365`                   | No       | Number of virtual days to simulate                                   |
+| `SEEDER_SCALE`                 | `1000`                  | No       | Time compression factor (sleep between days = `86400000 / scale` ms) |
+| `SEEDER_SEED`                  | _(random)_              | No       | Integer RNG seed for reproducible runs                               |
+| `SEEDER_MIN_CUSTOMERS_PER_DAY` | `4`                     | No       | Minimum customer events per virtual day                              |
+| `SEEDER_MAX_CUSTOMERS_PER_DAY` | `12`                    | No       | Maximum customer events per virtual day                              |
 
 At the default scale of 1000, each virtual day takes approximately 86 seconds of real time, so a full 365-day run completes in roughly 9 hours.
 
