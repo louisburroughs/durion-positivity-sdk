@@ -94,6 +94,20 @@ cleanup_inventory_duplicate_exports() {
 	fi
 }
 
+cleanup_accounting_duplicate_exports() {
+	# Post-generation cleanup: FinancialReportingApi and FinancialReportingForTaxLiabilityApi
+	# both export identical TaxLiability request-parameter interfaces, which makes the
+	# `export *` barrel in apis/index.ts ambiguous (TS2308). Drop `export` from the
+	# duplicates in the tax-liability API so FinancialReportingApi's exports win.
+	echo "[generate] Applying sdk-accounting duplicate-export cleanup..."
+	TAX_API_FILE="packages/sdk-accounting/src/apis/FinancialReportingForTaxLiabilityApi.ts"
+
+	if [[ -f "$TAX_API_FILE" ]]; then
+		sed -i 's/^export interface FreezeTaxLiabilitySnapshotRequest {/interface FreezeTaxLiabilitySnapshotRequest {/;s/^export interface GetTaxLiabilitySnapshotRequest {/interface GetTaxLiabilitySnapshotRequest {/;s/^export interface ListTaxLiabilitySnapshotsRequest {/interface ListTaxLiabilitySnapshotsRequest {/;s/^export interface VerifyTaxLiabilitySnapshotRequest {/interface VerifyTaxLiabilitySnapshotRequest {/' "$TAX_API_FILE"
+		echo "[generate] Patched FinancialReportingForTaxLiabilityApi.ts to un-export duplicate TaxLiability request interfaces"
+	fi
+}
+
 if [[ -n "$module" ]]; then
 	# Validate the provided module name
 	valid=false
@@ -111,6 +125,9 @@ if [[ -n "$module" ]]; then
 	npx @openapitools/openapi-generator-cli generate --generator-key "sdk-${module}"
 
 	patch_package_tsconfig "$module"
+	if [[ "$module" == "accounting" ]]; then
+		cleanup_accounting_duplicate_exports
+	fi
 	if [[ "$module" == "inventory" ]]; then
 		cleanup_inventory_duplicate_exports
 	fi
@@ -124,6 +141,9 @@ else
 		npx @openapitools/openapi-generator-cli generate --generator-key "sdk-${m}"
 
 		patch_package_tsconfig "$m"
+		if [[ "$m" == "accounting" ]]; then
+			cleanup_accounting_duplicate_exports
+		fi
 		if [[ "$m" == "inventory" ]]; then
 			cleanup_inventory_duplicate_exports
 		fi

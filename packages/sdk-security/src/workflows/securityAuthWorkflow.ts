@@ -7,14 +7,14 @@ export class SecurityAuthWorkflow {
     private readonly jwtApi: JWTAPIApi,
   ) { }
 
-  /** @operationId login */
-  login(params: Parameters<AuthAPIApi['login']>[0]) {
-    return this.authApi.login(params);
+  /** @operationId loginUser */
+  login(params: Parameters<AuthAPIApi['loginUser']>[0]) {
+    return this.authApi.loginUser(params);
   }
 
-  /** @operationId refreshAccessToken */
-  refresh(params: Parameters<JWTAPIApi['refreshAccessToken']>[0]) {
-    return this.jwtApi.refreshAccessToken(params);
+  /** @operationId refreshTokenPair */
+  refresh(params: Parameters<JWTAPIApi['refreshTokenPair']>[0]) {
+    return this.jwtApi.refreshTokenPair(params);
   }
 
   /** @operationId validateToken */
