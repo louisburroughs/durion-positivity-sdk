@@ -18,8 +18,8 @@ export class OrderPriceOverrideWorkflow {
     return this.priceOverridesApi.rejectPriceOverride(params);
   }
 
-  /** @operationId getPendingApprovals */
+  /** @operationId listPendingPriceOverrides */
   getPending() {
-    return this.priceOverridesApi.getPendingApprovals();
+    return this.priceOverridesApi.listPendingPriceOverrides();
   }
 }

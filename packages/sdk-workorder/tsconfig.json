@@ -1,14 +1,11 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "target": "es6",
-    "module": "commonjs",
-    "moduleResolution": "node16",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "dist",
-    "rootDir": "src",
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "rootDir": "src"
   },
   "exclude": [
     "dist",

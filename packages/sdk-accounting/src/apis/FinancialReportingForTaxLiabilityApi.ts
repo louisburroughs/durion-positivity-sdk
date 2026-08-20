@@ -31,20 +31,20 @@ import {
     TaxLiabilitySnapshotVerificationToJSON,
 } from '../models/index';
 
-export interface FreezeTaxLiabilitySnapshotRequest {
+interface FreezeTaxLiabilitySnapshotRequest {
     periodCode: string;
     supersede?: boolean;
 }
 
-export interface GetTaxLiabilitySnapshotRequest {
+interface GetTaxLiabilitySnapshotRequest {
     snapshotId: string;
 }
 
-export interface ListTaxLiabilitySnapshotsRequest {
+interface ListTaxLiabilitySnapshotsRequest {
     periodCode?: string;
 }
 
-export interface VerifyTaxLiabilitySnapshotRequest {
+interface VerifyTaxLiabilitySnapshotRequest {
     snapshotId: string;
 }
 

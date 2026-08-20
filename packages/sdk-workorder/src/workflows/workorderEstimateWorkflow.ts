@@ -8,9 +8,9 @@ export class WorkorderEstimateWorkflow {
     return this.estimateApi.createEstimate(params);
   }
 
-  /** @operationId submitForApproval */
-  submitForApproval(params: Parameters<EstimateAPIApi['submitForApproval']>[0]) {
-    return this.estimateApi.submitForApproval(params);
+  /** @operationId submitEstimateForApproval */
+  submitForApproval(params: Parameters<EstimateAPIApi['submitEstimateForApproval']>[0]) {
+    return this.estimateApi.submitEstimateForApproval(params);
   }
 
   /** @operationId approveEstimate */
@@ -23,8 +23,8 @@ export class WorkorderEstimateWorkflow {
     return this.estimateApi.declineEstimate(params);
   }
 
-  /** @operationId promoteEstimateToWorkorder */
-  promoteToWorkorder(params: Parameters<EstimateAPIApi['promoteEstimateToWorkorder']>[0]) {
-    return this.estimateApi.promoteEstimateToWorkorder(params);
+  /** @operationId promoteEstimate */
+  promoteToWorkorder(params: Parameters<EstimateAPIApi['promoteEstimate']>[0]) {
+    return this.estimateApi.promoteEstimate(params);
   }
 }
