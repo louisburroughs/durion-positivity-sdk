@@ -33,6 +33,12 @@ patch_package_tsconfig() {
 	local pkg="$1"
 	local tsconfig="packages/sdk-${pkg}/tsconfig.json"
 	local tsconfig_esm="packages/sdk-${pkg}/tsconfig.esm.json"
+	local pkg_json="packages/sdk-${pkg}/package.json"
+	# The generator pins typescript ^4.0, which predates the moduleResolution
+	# "bundler" setting used by the esm build; align with the workspace pin.
+	if [[ -f "$pkg_json" ]]; then
+		sed -i 's/"typescript": "\^4[^"]*"/"typescript": "~5.9.3"/' "$pkg_json"
+	fi
 	# The generator emits legacy settings (target es6, module commonjs,
 	# moduleResolution node) and its esm variant inherits moduleResolution,
 	# which TS 5.x rejects when paired with a non-Node16 module (TS5110).
@@ -47,6 +53,7 @@ patch_package_tsconfig() {
 			t.compilerOptions.module = "NodeNext";
 			t.compilerOptions.moduleResolution = "NodeNext";
 			t.compilerOptions.rootDir = t.compilerOptions.rootDir || "src";
+			t.compilerOptions.skipLibCheck = true;
 			delete t.compilerOptions.typeRoots;
 			fs.writeFileSync(file, JSON.stringify(t, null, 2) + "\n");
 		' "$tsconfig"
