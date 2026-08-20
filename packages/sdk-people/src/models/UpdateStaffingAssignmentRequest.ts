@@ -20,23 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface UpdateStaffingAssignmentRequest {
     /**
-     * Person identifier
-     * @type {string}
+     * 
+     * @type {boolean}
      * @memberof UpdateStaffingAssignmentRequest
      */
-    personId: string;
-    /**
-     * Location identifier
-     * @type {string}
-     * @memberof UpdateStaffingAssignmentRequest
-     */
-    locationId: string;
-    /**
-     * Assignment role
-     * @type {string}
-     * @memberof UpdateStaffingAssignmentRequest
-     */
-    role: string;
+    effectiveDateRangeValid?: boolean;
     /**
      * Assignment effective start date
      * @type {Date}
@@ -50,28 +38,40 @@ export interface UpdateStaffingAssignmentRequest {
      */
     effectiveTo?: Date;
     /**
-     * 
-     * @type {boolean}
-     * @memberof UpdateStaffingAssignmentRequest
-     */
-    effectiveDateRangeValid?: boolean;
-    /**
      * Whether this assignment is primary
      * @type {boolean}
      * @memberof UpdateStaffingAssignmentRequest
      */
     isPrimary: boolean;
+    /**
+     * Location identifier
+     * @type {string}
+     * @memberof UpdateStaffingAssignmentRequest
+     */
+    locationId: string;
+    /**
+     * Person identifier
+     * @type {string}
+     * @memberof UpdateStaffingAssignmentRequest
+     */
+    personId: string;
+    /**
+     * Assignment role
+     * @type {string}
+     * @memberof UpdateStaffingAssignmentRequest
+     */
+    role: string;
 }
 
 /**
  * Check if a given object implements the UpdateStaffingAssignmentRequest interface.
  */
 export function instanceOfUpdateStaffingAssignmentRequest(value: object): boolean {
-    if (!('personId' in value)) return false;
-    if (!('locationId' in value)) return false;
-    if (!('role' in value)) return false;
     if (!('effectiveFrom' in value)) return false;
     if (!('isPrimary' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('personId' in value)) return false;
+    if (!('role' in value)) return false;
     return true;
 }
 
@@ -85,13 +85,13 @@ export function UpdateStaffingAssignmentRequestFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'personId': json['personId'],
-        'locationId': json['locationId'],
-        'role': json['role'],
+        'effectiveDateRangeValid': json['effectiveDateRangeValid'] == null ? undefined : json['effectiveDateRangeValid'],
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
-        'effectiveDateRangeValid': json['effectiveDateRangeValid'] == null ? undefined : json['effectiveDateRangeValid'],
         'isPrimary': json['isPrimary'],
+        'locationId': json['locationId'],
+        'personId': json['personId'],
+        'role': json['role'],
     };
 }
 
@@ -101,13 +101,13 @@ export function UpdateStaffingAssignmentRequestToJSON(value?: UpdateStaffingAssi
     }
     return {
         
-        'personId': value['personId'],
-        'locationId': value['locationId'],
-        'role': value['role'],
+        'effectiveDateRangeValid': value['effectiveDateRangeValid'],
         'effectiveFrom': ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
-        'effectiveDateRangeValid': value['effectiveDateRangeValid'],
         'isPrimary': value['isPrimary'],
+        'locationId': value['locationId'],
+        'personId': value['personId'],
+        'role': value['role'],
     };
 }
 

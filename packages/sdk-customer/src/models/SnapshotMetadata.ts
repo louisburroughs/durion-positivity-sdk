@@ -14,53 +14,67 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Metadata describing a CRM snapshot, including freshness and version
  * @export
  * @interface SnapshotMetadata
  */
 export interface SnapshotMetadata {
     /**
-     * 
-     * @type {string}
-     * @memberof SnapshotMetadata
-     */
-    snapshotId?: string;
-    /**
-     * 
+     * Timestamp when the snapshot was created (ISO 8601)
      * @type {Date}
      * @memberof SnapshotMetadata
      */
-    createdAt?: Date;
+    createdAt: Date;
     /**
-     * 
+     * Unique identifier of the snapshot
      * @type {string}
      * @memberof SnapshotMetadata
      */
-    version?: string;
+    snapshotId: string;
     /**
-     * 
+     * Data source the snapshot was served from
      * @type {string}
      * @memberof SnapshotMetadata
      */
-    source?: string;
+    source?: SnapshotMetadataSourceEnum;
     /**
-     * 
+     * Whether this snapshot was served from a stale (expired) cache entry
      * @type {boolean}
      * @memberof SnapshotMetadata
      */
-    stale?: boolean;
+    stale: boolean;
     /**
-     * 
+     * Timestamp when the cache entry went stale; only present when stale is true
      * @type {Date}
      * @memberof SnapshotMetadata
      */
     staleSince?: Date;
+    /**
+     * Snapshot schema/content version
+     * @type {string}
+     * @memberof SnapshotMetadata
+     */
+    version: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum SnapshotMetadataSourceEnum {
+    Cache = 'CACHE',
+    CrmApi = 'CRM_API'
+}
+
 
 /**
  * Check if a given object implements the SnapshotMetadata interface.
  */
 export function instanceOfSnapshotMetadata(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('snapshotId' in value)) return false;
+    if (!('stale' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -74,12 +88,12 @@ export function SnapshotMetadataFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'snapshotId': json['snapshotId'] == null ? undefined : json['snapshotId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'version': json['version'] == null ? undefined : json['version'],
+        'createdAt': (new Date(json['createdAt'])),
+        'snapshotId': json['snapshotId'],
         'source': json['source'] == null ? undefined : json['source'],
-        'stale': json['stale'] == null ? undefined : json['stale'],
+        'stale': json['stale'],
         'staleSince': json['staleSince'] == null ? undefined : (new Date(json['staleSince'])),
+        'version': json['version'],
     };
 }
 
@@ -89,12 +103,12 @@ export function SnapshotMetadataToJSON(value?: SnapshotMetadata | null): any {
     }
     return {
         
+        'createdAt': ((value['createdAt']).toISOString()),
         'snapshotId': value['snapshotId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'version': value['version'],
         'source': value['source'],
         'stale': value['stale'],
         'staleSince': value['staleSince'] == null ? undefined : ((value['staleSince']).toISOString()),
+        'version': value['version'],
     };
 }
 

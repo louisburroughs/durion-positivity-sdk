@@ -14,35 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Break taken within a work session
  * @export
  * @interface BreakDto
  */
 export interface BreakDto {
     /**
-     * 
-     * @type {string}
-     * @memberof BreakDto
-     */
-    sessionId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof BreakDto
-     */
-    startedAt?: Date;
-    /**
-     * 
+     * Timestamp the break ended
      * @type {Date}
      * @memberof BreakDto
      */
     endedAt?: Date;
+    /**
+     * Work session the break belongs to
+     * @type {string}
+     * @memberof BreakDto
+     */
+    sessionId: string;
+    /**
+     * Timestamp the break started
+     * @type {Date}
+     * @memberof BreakDto
+     */
+    startedAt: Date;
 }
 
 /**
  * Check if a given object implements the BreakDto interface.
  */
 export function instanceOfBreakDto(value: object): boolean {
+    if (!('sessionId' in value)) return false;
+    if (!('startedAt' in value)) return false;
     return true;
 }
 
@@ -56,9 +58,9 @@ export function BreakDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
-        'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
         'endedAt': json['endedAt'] == null ? undefined : (new Date(json['endedAt'])),
+        'sessionId': json['sessionId'],
+        'startedAt': (new Date(json['startedAt'])),
     };
 }
 
@@ -68,9 +70,9 @@ export function BreakDtoToJSON(value?: BreakDto | null): any {
     }
     return {
         
-        'sessionId': value['sessionId'],
-        'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
         'endedAt': value['endedAt'] == null ? undefined : ((value['endedAt']).toISOString()),
+        'sessionId': value['sessionId'],
+        'startedAt': ((value['startedAt']).toISOString()),
     };
 }
 

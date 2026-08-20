@@ -14,36 +14,42 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create an inventory reservation against a demand line (a workorder line or a sales-order line, CAP #1315) for a stock item. Exactly one of workorderLineId/salesOrderLineId must be set; the service rejects a request that sets both or neither.
  * @export
  * @interface CreateReservationRequest
  */
 export interface CreateReservationRequest {
     /**
-     * 
+     * Quantity of the stock item required by the reservation. Decimal-capable, and permitted decimals only to the precision_scale the product's catalog declaration allows (ADR-0055)
+     * @type {number}
+     * @memberof CreateReservationRequest
+     */
+    requiredQuantity: number;
+    /**
+     * Identifier of the sales-order line the reservation fulfils, when demand is from a sales order (CAP #1315). Exactly one of this and workorderLineId must be set.
      * @type {string}
      * @memberof CreateReservationRequest
      */
-    workorderLineId: string;
+    salesOrderLineId?: string;
     /**
-     * 
+     * Identifier of the stock item being reserved
      * @type {string}
      * @memberof CreateReservationRequest
      */
     stockItemId: string;
     /**
-     * 
-     * @type {number}
+     * Identifier of the workorder line the reservation fulfils, when demand is from a workorder. Exactly one of this and salesOrderLineId must be set.
+     * @type {string}
      * @memberof CreateReservationRequest
      */
-    requiredQuantity?: number;
+    workorderLineId?: string;
 }
 
 /**
  * Check if a given object implements the CreateReservationRequest interface.
  */
 export function instanceOfCreateReservationRequest(value: object): boolean {
-    if (!('workorderLineId' in value)) return false;
+    if (!('requiredQuantity' in value)) return false;
     if (!('stockItemId' in value)) return false;
     return true;
 }
@@ -58,9 +64,10 @@ export function CreateReservationRequestFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'workorderLineId': json['workorderLineId'],
+        'requiredQuantity': json['requiredQuantity'],
+        'salesOrderLineId': json['salesOrderLineId'] == null ? undefined : json['salesOrderLineId'],
         'stockItemId': json['stockItemId'],
-        'requiredQuantity': json['requiredQuantity'] == null ? undefined : json['requiredQuantity'],
+        'workorderLineId': json['workorderLineId'] == null ? undefined : json['workorderLineId'],
     };
 }
 
@@ -70,9 +77,10 @@ export function CreateReservationRequestToJSON(value?: CreateReservationRequest 
     }
     return {
         
-        'workorderLineId': value['workorderLineId'],
-        'stockItemId': value['stockItemId'],
         'requiredQuantity': value['requiredQuantity'],
+        'salesOrderLineId': value['salesOrderLineId'],
+        'stockItemId': value['stockItemId'],
+        'workorderLineId': value['workorderLineId'],
     };
 }
 

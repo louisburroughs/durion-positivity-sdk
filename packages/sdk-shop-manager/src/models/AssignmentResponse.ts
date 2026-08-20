@@ -21,71 +21,71 @@ import {
 } from './AssignedMechanicInfo';
 
 /**
- * 
+ * Representation of a mechanic assignment returned from the API
  * @export
  * @interface AssignmentResponse
  */
 export interface AssignmentResponse {
     /**
-     * 
+     * Appointment identifier the assignment belongs to
      * @type {string}
      * @memberof AssignmentResponse
      */
-    assignmentId?: string;
+    appointmentId: string;
     /**
-     * 
+     * Instant the assignment was first created/confirmed in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof AssignmentResponse
+     */
+    assignedAt: Date;
+    /**
+     * Unique assignment identifier
      * @type {string}
      * @memberof AssignmentResponse
      */
-    appointmentId?: string;
+    assignmentId: string;
     /**
-     * 
-     * @type {Array<AssignedMechanicInfo>}
-     * @memberof AssignmentResponse
-     */
-    mechanics?: Array<AssignedMechanicInfo>;
-    /**
-     * 
-     * @type {string}
-     * @memberof AssignmentResponse
-     */
-    resourceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AssignmentResponse
-     */
-    resourceType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AssignmentResponse
-     */
-    status?: AssignmentResponseStatusEnum;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof AssignmentResponse
-     */
-    override?: boolean;
-    /**
-     * 
+     * Optional notes for this assignment (max 500 chars)
      * @type {string}
      * @memberof AssignmentResponse
      */
     assignmentNotes?: string;
     /**
-     * 
-     * @type {Date}
-     * @memberof AssignmentResponse
-     */
-    assignedAt?: Date;
-    /**
-     * 
+     * Instant the assignment was last modified in UTC (ISO-8601)
      * @type {Date}
      * @memberof AssignmentResponse
      */
     lastUpdatedAt?: Date;
+    /**
+     * Mechanics assigned to the appointment
+     * @type {Array<AssignedMechanicInfo>}
+     * @memberof AssignmentResponse
+     */
+    mechanics: Array<AssignedMechanicInfo>;
+    /**
+     * Whether the assignment was created with a conflict override
+     * @type {boolean}
+     * @memberof AssignmentResponse
+     */
+    override: boolean;
+    /**
+     * Associated resource (bay or mobile unit) identifier
+     * @type {string}
+     * @memberof AssignmentResponse
+     */
+    resourceId?: string;
+    /**
+     * Type of the associated resource
+     * @type {string}
+     * @memberof AssignmentResponse
+     */
+    resourceType?: string;
+    /**
+     * Current assignment status
+     * @type {string}
+     * @memberof AssignmentResponse
+     */
+    status: AssignmentResponseStatusEnum;
 }
 
 /**
@@ -104,6 +104,12 @@ export enum AssignmentResponseStatusEnum {
  * Check if a given object implements the AssignmentResponse interface.
  */
 export function instanceOfAssignmentResponse(value: object): boolean {
+    if (!('appointmentId' in value)) return false;
+    if (!('assignedAt' in value)) return false;
+    if (!('assignmentId' in value)) return false;
+    if (!('mechanics' in value)) return false;
+    if (!('override' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -117,16 +123,16 @@ export function AssignmentResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'assignmentId': json['assignmentId'] == null ? undefined : json['assignmentId'],
-        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
-        'mechanics': json['mechanics'] == null ? undefined : ((json['mechanics'] as Array<any>).map(AssignedMechanicInfoFromJSON)),
+        'appointmentId': json['appointmentId'],
+        'assignedAt': (new Date(json['assignedAt'])),
+        'assignmentId': json['assignmentId'],
+        'assignmentNotes': json['assignmentNotes'] == null ? undefined : json['assignmentNotes'],
+        'lastUpdatedAt': json['lastUpdatedAt'] == null ? undefined : (new Date(json['lastUpdatedAt'])),
+        'mechanics': ((json['mechanics'] as Array<any>).map(AssignedMechanicInfoFromJSON)),
+        'override': json['override'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'override': json['override'] == null ? undefined : json['override'],
-        'assignmentNotes': json['assignmentNotes'] == null ? undefined : json['assignmentNotes'],
-        'assignedAt': json['assignedAt'] == null ? undefined : (new Date(json['assignedAt'])),
-        'lastUpdatedAt': json['lastUpdatedAt'] == null ? undefined : (new Date(json['lastUpdatedAt'])),
+        'status': json['status'],
     };
 }
 
@@ -136,16 +142,16 @@ export function AssignmentResponseToJSON(value?: AssignmentResponse | null): any
     }
     return {
         
-        'assignmentId': value['assignmentId'],
         'appointmentId': value['appointmentId'],
-        'mechanics': value['mechanics'] == null ? undefined : ((value['mechanics'] as Array<any>).map(AssignedMechanicInfoToJSON)),
+        'assignedAt': ((value['assignedAt']).toISOString()),
+        'assignmentId': value['assignmentId'],
+        'assignmentNotes': value['assignmentNotes'],
+        'lastUpdatedAt': value['lastUpdatedAt'] == null ? undefined : ((value['lastUpdatedAt']).toISOString()),
+        'mechanics': ((value['mechanics'] as Array<any>).map(AssignedMechanicInfoToJSON)),
+        'override': value['override'],
         'resourceId': value['resourceId'],
         'resourceType': value['resourceType'],
         'status': value['status'],
-        'override': value['override'],
-        'assignmentNotes': value['assignmentNotes'],
-        'assignedAt': value['assignedAt'] == null ? undefined : ((value['assignedAt']).toISOString()),
-        'lastUpdatedAt': value['lastUpdatedAt'] == null ? undefined : ((value['lastUpdatedAt']).toISOString()),
     };
 }
 

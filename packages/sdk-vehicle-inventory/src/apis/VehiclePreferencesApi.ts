@@ -28,20 +28,20 @@ import {
     VehicleCarePreferenceResponseToJSON,
 } from '../models/index';
 
-export interface DeletePreferencesRequest {
+export interface DeleteVehiclePreferencesRequest {
     vehicleId: string;
 }
 
-export interface GetPreferencesRequest {
+export interface GetVehiclePreferencesRequest {
     vehicleId: string;
 }
 
-export interface MergePreferencesRequest {
+export interface MergeVehiclePreferencesRequest {
     vehicleId: string;
     preferencesMergeDto: PreferencesMergeDto;
 }
 
-export interface UpsertPreferencesRequest {
+export interface UpsertVehiclePreferencesRequest {
     vehicleId: string;
     preferencesUpsertDto: PreferencesUpsertDto;
 }
@@ -52,14 +52,14 @@ export interface UpsertPreferencesRequest {
 export class VehiclePreferencesApi extends runtime.BaseAPI {
 
     /**
-     * Removes all preferences for a vehicle
+     * Removes the entire care-preference document for a vehicle when one exists. Use this tool to clear all stored preferences at once; do not use mergeVehiclePreferences to blank individual keys when the intent is a full reset. Preconditions: none; the operation is idempotent and a vehicle without preferences is left untouched. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. Emits a VEHICLE_PREFERENCES_DELETE event, and queues a vehicle.care-preference.updated tombstone fact for CRM consumers only when a document was actually removed. Returns 204 in all cases, including when no preference document exists, because deletion is idempotent. 
      * Delete vehicle care preferences
      */
-    async deletePreferencesRaw(requestParameters: DeletePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteVehiclePreferencesRaw(requestParameters: DeleteVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling deletePreferences().'
+                'Required parameter "vehicleId" was null or undefined when calling deleteVehiclePreferences().'
             );
         }
 
@@ -86,22 +86,22 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes all preferences for a vehicle
+     * Removes the entire care-preference document for a vehicle when one exists. Use this tool to clear all stored preferences at once; do not use mergeVehiclePreferences to blank individual keys when the intent is a full reset. Preconditions: none; the operation is idempotent and a vehicle without preferences is left untouched. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. Emits a VEHICLE_PREFERENCES_DELETE event, and queues a vehicle.care-preference.updated tombstone fact for CRM consumers only when a document was actually removed. Returns 204 in all cases, including when no preference document exists, because deletion is idempotent. 
      * Delete vehicle care preferences
      */
-    async deletePreferences(requestParameters: DeletePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deletePreferencesRaw(requestParameters, initOverrides);
+    async deleteVehiclePreferences(requestParameters: DeleteVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteVehiclePreferencesRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieves the care preferences for a vehicle. Returns 404 if no preferences exist.
+     * Returns the care-preference document for a vehicle, including the free-form preferences map, the structured service interval in months and any service notes. Use this tool to read what a customer wants for vehicle care; do not use getVehicle, which returns the registry record itself and carries no preferences. Preconditions: a preference document must already have been stored for the vehicle, because vehicles start with no preferences. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no preference document exists for the vehicle. 
      * Get vehicle care preferences
      */
-    async getPreferencesRaw(requestParameters: GetPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleCarePreferenceResponse>> {
+    async getVehiclePreferencesRaw(requestParameters: GetVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleCarePreferenceResponse>> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling getPreferences().'
+                'Required parameter "vehicleId" was null or undefined when calling getVehiclePreferences().'
             );
         }
 
@@ -128,30 +128,30 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves the care preferences for a vehicle. Returns 404 if no preferences exist.
+     * Returns the care-preference document for a vehicle, including the free-form preferences map, the structured service interval in months and any service notes. Use this tool to read what a customer wants for vehicle care; do not use getVehicle, which returns the registry record itself and carries no preferences. Preconditions: a preference document must already have been stored for the vehicle, because vehicles start with no preferences. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no preference document exists for the vehicle. 
      * Get vehicle care preferences
      */
-    async getPreferences(requestParameters: GetPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleCarePreferenceResponse> {
-        const response = await this.getPreferencesRaw(requestParameters, initOverrides);
+    async getVehiclePreferences(requestParameters: GetVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleCarePreferenceResponse> {
+        const response = await this.getVehiclePreferencesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Merges provided preference fields into existing preferences without replacing the entire map
+     * Merges the supplied preference keys into a vehicle\'s existing care-preference document without replacing the rest of the map. Use this tool for partial changes such as one key or the interval alone; do not use upsertVehiclePreferences, which replaces the whole map and clears the interval when it is omitted. Preconditions: a preference document must already exist for the vehicle, because this operation cannot create one. Required inputs: no body field is individually mandatory; partialPreferences keys overwrite matching stored keys, serviceIntervalMonths must be between 1 and 120 months and leaves the stored value unchanged when null, and a legacy serviceIntervalMonths key inside the map is promoted into the structured column rather than kept in the blob. Emits a VEHICLE_PREFERENCES_MERGE event and queues a vehicle.care-preference.updated fact for CRM consumers. Returns 200 with the merged document, 404 with a RESOURCE_NOT_FOUND ApiError when no preference document exists for the vehicle, and 400 with a VALIDATION_ERROR ApiError when an interval value is out of range or not a whole number. 
      * Partially update vehicle care preferences
      */
-    async mergePreferencesRaw(requestParameters: MergePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleCarePreferenceResponse>> {
+    async mergeVehiclePreferencesRaw(requestParameters: MergeVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleCarePreferenceResponse>> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling mergePreferences().'
+                'Required parameter "vehicleId" was null or undefined when calling mergeVehiclePreferences().'
             );
         }
 
         if (requestParameters['preferencesMergeDto'] == null) {
             throw new runtime.RequiredError(
                 'preferencesMergeDto',
-                'Required parameter "preferencesMergeDto" was null or undefined when calling mergePreferences().'
+                'Required parameter "preferencesMergeDto" was null or undefined when calling mergeVehiclePreferences().'
             );
         }
 
@@ -181,30 +181,30 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Merges provided preference fields into existing preferences without replacing the entire map
+     * Merges the supplied preference keys into a vehicle\'s existing care-preference document without replacing the rest of the map. Use this tool for partial changes such as one key or the interval alone; do not use upsertVehiclePreferences, which replaces the whole map and clears the interval when it is omitted. Preconditions: a preference document must already exist for the vehicle, because this operation cannot create one. Required inputs: no body field is individually mandatory; partialPreferences keys overwrite matching stored keys, serviceIntervalMonths must be between 1 and 120 months and leaves the stored value unchanged when null, and a legacy serviceIntervalMonths key inside the map is promoted into the structured column rather than kept in the blob. Emits a VEHICLE_PREFERENCES_MERGE event and queues a vehicle.care-preference.updated fact for CRM consumers. Returns 200 with the merged document, 404 with a RESOURCE_NOT_FOUND ApiError when no preference document exists for the vehicle, and 400 with a VALIDATION_ERROR ApiError when an interval value is out of range or not a whole number. 
      * Partially update vehicle care preferences
      */
-    async mergePreferences(requestParameters: MergePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleCarePreferenceResponse> {
-        const response = await this.mergePreferencesRaw(requestParameters, initOverrides);
+    async mergeVehiclePreferences(requestParameters: MergeVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleCarePreferenceResponse> {
+        const response = await this.mergeVehiclePreferencesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Upserts preferences for a vehicle. If preferences exist, replaces them entirely. Use PATCH for partial updates.
+     * Creates or fully replaces the care-preference document for a vehicle, storing the preferences map and the structured service interval. Use this tool to set preferences wholesale; use mergeVehiclePreferences instead for partial changes, because this operation replaces the entire map and a null serviceIntervalMonths clears the stored interval override. Preconditions: the vehicle must exist in the registry; an existing preference document is replaced and a missing one is created. Required inputs: preferences (a map, which may be empty but not null); serviceIntervalMonths is optional and must be between 1 and 120 months, a legacy serviceIntervalMonths key inside the map is promoted into the structured column, and serviceNotes, createdByUserId and updatedByUserId are optional. Emits a VEHICLE_PREFERENCES_UPSERT event and queues a vehicle.care-preference.updated fact for CRM consumers. Returns 200 with the saved document for both create and replace, 404 with a RESOURCE_NOT_FOUND ApiError when the vehicle does not exist, and 400 with a VALIDATION_ERROR ApiError when serviceIntervalMonths is outside 1 to 120. 
      * Create or update vehicle care preferences
      */
-    async upsertPreferencesRaw(requestParameters: UpsertPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleCarePreferenceResponse>> {
+    async upsertVehiclePreferencesRaw(requestParameters: UpsertVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleCarePreferenceResponse>> {
         if (requestParameters['vehicleId'] == null) {
             throw new runtime.RequiredError(
                 'vehicleId',
-                'Required parameter "vehicleId" was null or undefined when calling upsertPreferences().'
+                'Required parameter "vehicleId" was null or undefined when calling upsertVehiclePreferences().'
             );
         }
 
         if (requestParameters['preferencesUpsertDto'] == null) {
             throw new runtime.RequiredError(
                 'preferencesUpsertDto',
-                'Required parameter "preferencesUpsertDto" was null or undefined when calling upsertPreferences().'
+                'Required parameter "preferencesUpsertDto" was null or undefined when calling upsertVehiclePreferences().'
             );
         }
 
@@ -234,11 +234,11 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Upserts preferences for a vehicle. If preferences exist, replaces them entirely. Use PATCH for partial updates.
+     * Creates or fully replaces the care-preference document for a vehicle, storing the preferences map and the structured service interval. Use this tool to set preferences wholesale; use mergeVehiclePreferences instead for partial changes, because this operation replaces the entire map and a null serviceIntervalMonths clears the stored interval override. Preconditions: the vehicle must exist in the registry; an existing preference document is replaced and a missing one is created. Required inputs: preferences (a map, which may be empty but not null); serviceIntervalMonths is optional and must be between 1 and 120 months, a legacy serviceIntervalMonths key inside the map is promoted into the structured column, and serviceNotes, createdByUserId and updatedByUserId are optional. Emits a VEHICLE_PREFERENCES_UPSERT event and queues a vehicle.care-preference.updated fact for CRM consumers. Returns 200 with the saved document for both create and replace, 404 with a RESOURCE_NOT_FOUND ApiError when the vehicle does not exist, and 400 with a VALIDATION_ERROR ApiError when serviceIntervalMonths is outside 1 to 120. 
      * Create or update vehicle care preferences
      */
-    async upsertPreferences(requestParameters: UpsertPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleCarePreferenceResponse> {
-        const response = await this.upsertPreferencesRaw(requestParameters, initOverrides);
+    async upsertVehiclePreferences(requestParameters: UpsertVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleCarePreferenceResponse> {
+        const response = await this.upsertVehiclePreferencesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -14,47 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A monetary adjustment applied to an invoice
  * @export
  * @interface InvoiceAdjustmentResponse
  */
 export interface InvoiceAdjustmentResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof InvoiceAdjustmentResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InvoiceAdjustmentResponse
-     */
-    type?: InvoiceAdjustmentResponseTypeEnum;
-    /**
-     * 
+     * Adjustment amount
      * @type {number}
      * @memberof InvoiceAdjustmentResponse
      */
     amount?: number;
     /**
-     * 
-     * @type {string}
-     * @memberof InvoiceAdjustmentResponse
-     */
-    reason?: string;
-    /**
-     * 
+     * Identifier of the actor who authorized the adjustment
      * @type {string}
      * @memberof InvoiceAdjustmentResponse
      */
     authorizedBy?: string;
     /**
-     * 
+     * Timestamp when the adjustment was created
      * @type {Date}
      * @memberof InvoiceAdjustmentResponse
      */
     createdAt?: Date;
+    /**
+     * Optional correlation id to an external record (e.g. a warranty claim code)
+     * @type {string}
+     * @memberof InvoiceAdjustmentResponse
+     */
+    externalReference?: string;
+    /**
+     * Unique identifier of the adjustment entry
+     * @type {string}
+     * @memberof InvoiceAdjustmentResponse
+     */
+    id?: string;
+    /**
+     * Business reason justifying the adjustment
+     * @type {string}
+     * @memberof InvoiceAdjustmentResponse
+     */
+    reason?: string;
+    /**
+     * Type of adjustment applied
+     * @type {string}
+     * @memberof InvoiceAdjustmentResponse
+     */
+    type?: InvoiceAdjustmentResponseTypeEnum;
 }
 
 /**
@@ -64,7 +70,8 @@ export interface InvoiceAdjustmentResponse {
 export enum InvoiceAdjustmentResponseTypeEnum {
     Discount = 'DISCOUNT',
     Fee = 'FEE',
-    Correction = 'CORRECTION'
+    Correction = 'CORRECTION',
+    Warranty = 'WARRANTY'
 }
 
 
@@ -85,12 +92,13 @@ export function InvoiceAdjustmentResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'type': json['type'] == null ? undefined : json['type'],
         'amount': json['amount'] == null ? undefined : json['amount'],
-        'reason': json['reason'] == null ? undefined : json['reason'],
         'authorizedBy': json['authorizedBy'] == null ? undefined : json['authorizedBy'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'externalReference': json['externalReference'] == null ? undefined : json['externalReference'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'type': json['type'] == null ? undefined : json['type'],
     };
 }
 
@@ -100,12 +108,13 @@ export function InvoiceAdjustmentResponseToJSON(value?: InvoiceAdjustmentRespons
     }
     return {
         
-        'id': value['id'],
-        'type': value['type'],
         'amount': value['amount'],
-        'reason': value['reason'],
         'authorizedBy': value['authorizedBy'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'externalReference': value['externalReference'],
+        'id': value['id'],
+        'reason': value['reason'],
+        'type': value['type'],
     };
 }
 

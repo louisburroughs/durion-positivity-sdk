@@ -20,36 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface OperationalContextResponse {
     /**
-     * Operational context version
-     * @type {string}
-     * @memberof OperationalContextResponse
-     */
-    version?: string;
-    /**
-     * Location identifier
-     * @type {string}
-     * @memberof OperationalContextResponse
-     */
-    locationId?: string;
-    /**
-     * Bay identifier
-     * @type {string}
-     * @memberof OperationalContextResponse
-     */
-    bayId?: string;
-    /**
-     * Scheduled start time
-     * @type {Date}
-     * @memberof OperationalContextResponse
-     */
-    scheduledStartAt?: Date;
-    /**
-     * Scheduled end time
-     * @type {Date}
-     * @memberof OperationalContextResponse
-     */
-    scheduledEndAt?: Date;
-    /**
      * Assigned mechanic identifiers
      * @type {Array<string>}
      * @memberof OperationalContextResponse
@@ -62,23 +32,54 @@ export interface OperationalContextResponse {
      */
     assignedResources?: Array<string>;
     /**
+     * Bay identifier
+     * @type {string}
+     * @memberof OperationalContextResponse
+     */
+    bayId?: string;
+    /**
      * Operational constraints
      * @type {Array<string>}
      * @memberof OperationalContextResponse
      */
     constraints?: Array<string>;
     /**
+     * Location identifier
+     * @type {string}
+     * @memberof OperationalContextResponse
+     */
+    locationId?: string;
+    /**
      * Whether context is locked after work start
      * @type {boolean}
      * @memberof OperationalContextResponse
      */
-    locked?: boolean;
+    locked: boolean;
+    /**
+     * Scheduled end time
+     * @type {Date}
+     * @memberof OperationalContextResponse
+     */
+    scheduledEndAt?: Date;
+    /**
+     * Scheduled start time
+     * @type {Date}
+     * @memberof OperationalContextResponse
+     */
+    scheduledStartAt?: Date;
+    /**
+     * Operational context version
+     * @type {string}
+     * @memberof OperationalContextResponse
+     */
+    version?: string;
 }
 
 /**
  * Check if a given object implements the OperationalContextResponse interface.
  */
 export function instanceOfOperationalContextResponse(value: object): boolean {
+    if (!('locked' in value)) return false;
     return true;
 }
 
@@ -92,15 +93,15 @@ export function OperationalContextResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'bayId': json['bayId'] == null ? undefined : json['bayId'],
-        'scheduledStartAt': json['scheduledStartAt'] == null ? undefined : (new Date(json['scheduledStartAt'])),
-        'scheduledEndAt': json['scheduledEndAt'] == null ? undefined : (new Date(json['scheduledEndAt'])),
         'assignedMechanics': json['assignedMechanics'] == null ? undefined : json['assignedMechanics'],
         'assignedResources': json['assignedResources'] == null ? undefined : json['assignedResources'],
+        'bayId': json['bayId'] == null ? undefined : json['bayId'],
         'constraints': json['constraints'] == null ? undefined : json['constraints'],
-        'locked': json['locked'] == null ? undefined : json['locked'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'locked': json['locked'],
+        'scheduledEndAt': json['scheduledEndAt'] == null ? undefined : (new Date(json['scheduledEndAt'])),
+        'scheduledStartAt': json['scheduledStartAt'] == null ? undefined : (new Date(json['scheduledStartAt'])),
+        'version': json['version'] == null ? undefined : json['version'],
     };
 }
 
@@ -110,15 +111,15 @@ export function OperationalContextResponseToJSON(value?: OperationalContextRespo
     }
     return {
         
-        'version': value['version'],
-        'locationId': value['locationId'],
-        'bayId': value['bayId'],
-        'scheduledStartAt': value['scheduledStartAt'] == null ? undefined : ((value['scheduledStartAt']).toISOString()),
-        'scheduledEndAt': value['scheduledEndAt'] == null ? undefined : ((value['scheduledEndAt']).toISOString()),
         'assignedMechanics': value['assignedMechanics'],
         'assignedResources': value['assignedResources'],
+        'bayId': value['bayId'],
         'constraints': value['constraints'],
+        'locationId': value['locationId'],
         'locked': value['locked'],
+        'scheduledEndAt': value['scheduledEndAt'] == null ? undefined : ((value['scheduledEndAt']).toISOString()),
+        'scheduledStartAt': value['scheduledStartAt'] == null ? undefined : ((value['scheduledStartAt']).toISOString()),
+        'version': value['version'],
     };
 }
 

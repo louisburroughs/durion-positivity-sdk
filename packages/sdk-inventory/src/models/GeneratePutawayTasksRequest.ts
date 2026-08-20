@@ -21,35 +21,35 @@ import {
 } from './PutawayLineItemRequest';
 
 /**
- * 
+ * Request to generate putaway tasks for goods received against a source receipt
  * @export
  * @interface GeneratePutawayTasksRequest
  */
 export interface GeneratePutawayTasksRequest {
     /**
-     * 
-     * @type {string}
+     * Line items describing the products and quantities to be put away
+     * @type {Array<PutawayLineItemRequest>}
      * @memberof GeneratePutawayTasksRequest
      */
-    sourceReceiptId: string;
+    lineItems?: Array<PutawayLineItemRequest>;
     /**
-     * 
+     * Legacy single-line product identifier; prefer lineItems for new integrations
      * @type {string}
      * @memberof GeneratePutawayTasksRequest
      */
     productId?: string;
     /**
-     * 
+     * Legacy single-line quantity received; prefer lineItems for new integrations
      * @type {number}
      * @memberof GeneratePutawayTasksRequest
      */
     quantity?: number;
     /**
-     * 
-     * @type {Array<PutawayLineItemRequest>}
+     * Identifier of the receipt the received goods belong to
+     * @type {string}
      * @memberof GeneratePutawayTasksRequest
      */
-    lineItems?: Array<PutawayLineItemRequest>;
+    sourceReceiptId: string;
 }
 
 /**
@@ -70,10 +70,10 @@ export function GeneratePutawayTasksRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'sourceReceiptId': json['sourceReceiptId'],
+        'lineItems': json['lineItems'] == null ? undefined : ((json['lineItems'] as Array<any>).map(PutawayLineItemRequestFromJSON)),
         'productId': json['productId'] == null ? undefined : json['productId'],
         'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'lineItems': json['lineItems'] == null ? undefined : ((json['lineItems'] as Array<any>).map(PutawayLineItemRequestFromJSON)),
+        'sourceReceiptId': json['sourceReceiptId'],
     };
 }
 
@@ -83,10 +83,10 @@ export function GeneratePutawayTasksRequestToJSON(value?: GeneratePutawayTasksRe
     }
     return {
         
-        'sourceReceiptId': value['sourceReceiptId'],
+        'lineItems': value['lineItems'] == null ? undefined : ((value['lineItems'] as Array<any>).map(PutawayLineItemRequestToJSON)),
         'productId': value['productId'],
         'quantity': value['quantity'],
-        'lineItems': value['lineItems'] == null ? undefined : ((value['lineItems'] as Array<any>).map(PutawayLineItemRequestToJSON)),
+        'sourceReceiptId': value['sourceReceiptId'],
     };
 }
 

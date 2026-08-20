@@ -20,11 +20,53 @@ import { mapValues } from '../runtime';
  */
 export interface ProductSummary {
     /**
-     * Unique product identifier
+     * Category name
      * @type {string}
      * @memberof ProductSummary
      */
-    productId?: string;
+    category?: string;
+    /**
+     * Lifecycle state; only populated for detailed search
+     * @type {string}
+     * @memberof ProductSummary
+     */
+    lifecycleState?: ProductSummaryLifecycleStateEnum;
+    /**
+     * UTC instant the current lifecycle state took effect; only populated for detailed search
+     * @type {Date}
+     * @memberof ProductSummary
+     */
+    lifecycleStateEffectiveAt?: Date;
+    /**
+     * Manufacturer brand name
+     * @type {string}
+     * @memberof ProductSummary
+     */
+    manufacturerBrand?: string;
+    /**
+     * Active MSRP amount; null when the product has no active MSRP or for lean search
+     * @type {string}
+     * @memberof ProductSummary
+     */
+    msrpAmount?: string;
+    /**
+     * Active MSRP ISO 4217 currency code; null when no active MSRP or for lean search
+     * @type {string}
+     * @memberof ProductSummary
+     */
+    msrpCurrency?: string;
+    /**
+     * End of the active MSRP effective window; null for open-ended, no active MSRP, or lean search
+     * @type {Date}
+     * @memberof ProductSummary
+     */
+    msrpEffectiveEndDate?: Date;
+    /**
+     * Start of the active MSRP effective window; null when no active MSRP or for lean search
+     * @type {Date}
+     * @memberof ProductSummary
+     */
+    msrpEffectiveStartDate?: Date;
     /**
      * Product name
      * @type {string}
@@ -32,30 +74,35 @@ export interface ProductSummary {
      */
     name?: string;
     /**
+     * Unique product identifier
+     * @type {string}
+     * @memberof ProductSummary
+     */
+    productId?: string;
+    /**
      * Stock Keeping Unit
      * @type {string}
      * @memberof ProductSummary
      */
     sku?: string;
     /**
-     * Category name
-     * @type {string}
-     * @memberof ProductSummary
-     */
-    category?: string;
-    /**
      * URL of the primary product thumbnail image
      * @type {string}
      * @memberof ProductSummary
      */
     thumbnailUrl?: string;
-    /**
-     * Manufacturer brand name
-     * @type {string}
-     * @memberof ProductSummary
-     */
-    manufacturerBrand?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ProductSummaryLifecycleStateEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE',
+    Discontinued = 'DISCONTINUED'
+}
+
 
 /**
  * Check if a given object implements the ProductSummary interface.
@@ -74,12 +121,18 @@ export function ProductSummaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'sku': json['sku'] == null ? undefined : json['sku'],
         'category': json['category'] == null ? undefined : json['category'],
-        'thumbnailUrl': json['thumbnailUrl'] == null ? undefined : json['thumbnailUrl'],
+        'lifecycleState': json['lifecycleState'] == null ? undefined : json['lifecycleState'],
+        'lifecycleStateEffectiveAt': json['lifecycleStateEffectiveAt'] == null ? undefined : (new Date(json['lifecycleStateEffectiveAt'])),
         'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
+        'msrpAmount': json['msrpAmount'] == null ? undefined : json['msrpAmount'],
+        'msrpCurrency': json['msrpCurrency'] == null ? undefined : json['msrpCurrency'],
+        'msrpEffectiveEndDate': json['msrpEffectiveEndDate'] == null ? undefined : (new Date(json['msrpEffectiveEndDate'])),
+        'msrpEffectiveStartDate': json['msrpEffectiveStartDate'] == null ? undefined : (new Date(json['msrpEffectiveStartDate'])),
+        'name': json['name'] == null ? undefined : json['name'],
+        'productId': json['productId'] == null ? undefined : json['productId'],
+        'sku': json['sku'] == null ? undefined : json['sku'],
+        'thumbnailUrl': json['thumbnailUrl'] == null ? undefined : json['thumbnailUrl'],
     };
 }
 
@@ -89,12 +142,18 @@ export function ProductSummaryToJSON(value?: ProductSummary | null): any {
     }
     return {
         
-        'productId': value['productId'],
-        'name': value['name'],
-        'sku': value['sku'],
         'category': value['category'],
-        'thumbnailUrl': value['thumbnailUrl'],
+        'lifecycleState': value['lifecycleState'],
+        'lifecycleStateEffectiveAt': value['lifecycleStateEffectiveAt'] == null ? undefined : ((value['lifecycleStateEffectiveAt'] as any).toISOString()),
         'manufacturerBrand': value['manufacturerBrand'],
+        'msrpAmount': value['msrpAmount'],
+        'msrpCurrency': value['msrpCurrency'],
+        'msrpEffectiveEndDate': value['msrpEffectiveEndDate'] == null ? undefined : ((value['msrpEffectiveEndDate'] as any).toISOString().substring(0,10)),
+        'msrpEffectiveStartDate': value['msrpEffectiveStartDate'] == null ? undefined : ((value['msrpEffectiveStartDate'] as any).toISOString().substring(0,10)),
+        'name': value['name'],
+        'productId': value['productId'],
+        'sku': value['sku'],
+        'thumbnailUrl': value['thumbnailUrl'],
     };
 }
 

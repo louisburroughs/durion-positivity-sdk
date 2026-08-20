@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface EligibilityDecisionResponse {
     /**
-     * Detailed ineligibility reason when eligibility is false
-     * @type {string}
-     * @memberof EligibilityDecisionResponse
-     */
-    reasonCode?: EligibilityDecisionResponseReasonCodeEnum;
-    /**
      * 
      * @type {boolean}
      * @memberof EligibilityDecisionResponse
@@ -36,7 +30,13 @@ export interface EligibilityDecisionResponse {
      * @type {boolean}
      * @memberof EligibilityDecisionResponse
      */
-    isEligible?: boolean;
+    isEligible: boolean;
+    /**
+     * Detailed ineligibility reason when eligibility is false
+     * @type {string}
+     * @memberof EligibilityDecisionResponse
+     */
+    reasonCode?: EligibilityDecisionResponseReasonCodeEnum;
 }
 
 /**
@@ -50,7 +50,13 @@ export enum EligibilityDecisionResponseReasonCodeEnum {
     VehicleTagNotPresent = 'VEHICLE_TAG_NOT_PRESENT',
     VehicleTagExcluded = 'VEHICLE_TAG_EXCLUDED',
     FleetSizeTooSmall = 'FLEET_SIZE_TOO_SMALL',
+    AudienceTypeNotMatched = 'AUDIENCE_TYPE_NOT_MATCHED',
+    AudienceTypeExcluded = 'AUDIENCE_TYPE_EXCLUDED',
+    CampaignCodeNotMatched = 'CAMPAIGN_CODE_NOT_MATCHED',
+    CampaignCodeExcluded = 'CAMPAIGN_CODE_EXCLUDED',
     MissingAccountContext = 'MISSING_ACCOUNT_CONTEXT',
+    MissingAudienceContext = 'MISSING_AUDIENCE_CONTEXT',
+    MissingCampaignContext = 'MISSING_CAMPAIGN_CONTEXT',
     MissingVehicleContext = 'MISSING_VEHICLE_CONTEXT',
     EvaluationError = 'EVALUATION_ERROR'
 }
@@ -60,6 +66,7 @@ export enum EligibilityDecisionResponseReasonCodeEnum {
  * Check if a given object implements the EligibilityDecisionResponse interface.
  */
 export function instanceOfEligibilityDecisionResponse(value: object): boolean {
+    if (!('isEligible' in value)) return false;
     return true;
 }
 
@@ -73,9 +80,9 @@ export function EligibilityDecisionResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
         'eligible': json['eligible'] == null ? undefined : json['eligible'],
-        'isEligible': json['isEligible'] == null ? undefined : json['isEligible'],
+        'isEligible': json['isEligible'],
+        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
     };
 }
 
@@ -85,9 +92,9 @@ export function EligibilityDecisionResponseToJSON(value?: EligibilityDecisionRes
     }
     return {
         
-        'reasonCode': value['reasonCode'],
         'eligible': value['eligible'],
         'isEligible': value['isEligible'],
+        'reasonCode': value['reasonCode'],
     };
 }
 

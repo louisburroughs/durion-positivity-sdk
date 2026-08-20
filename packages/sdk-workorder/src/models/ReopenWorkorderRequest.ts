@@ -20,24 +20,25 @@ import { mapValues } from '../runtime';
  */
 export interface ReopenWorkorderRequest {
     /**
+     * Mandatory reason for reopening completed workorder
+     * @type {string}
+     * @memberof ReopenWorkorderRequest
+     */
+    reopenReason: string;
+    /**
      * Deprecated. Actor identity is resolved from authenticated security context.
      * @type {string}
      * @memberof ReopenWorkorderRequest
      * @deprecated
      */
     userId?: string;
-    /**
-     * Mandatory reason for reopening completed workorder
-     * @type {string}
-     * @memberof ReopenWorkorderRequest
-     */
-    reopenReason?: string;
 }
 
 /**
  * Check if a given object implements the ReopenWorkorderRequest interface.
  */
 export function instanceOfReopenWorkorderRequest(value: object): boolean {
+    if (!('reopenReason' in value)) return false;
     return true;
 }
 
@@ -51,8 +52,8 @@ export function ReopenWorkorderRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'reopenReason': json['reopenReason'],
         'userId': json['userId'] == null ? undefined : json['userId'],
-        'reopenReason': json['reopenReason'] == null ? undefined : json['reopenReason'],
     };
 }
 
@@ -62,8 +63,8 @@ export function ReopenWorkorderRequestToJSON(value?: ReopenWorkorderRequest | nu
     }
     return {
         
-        'userId': value['userId'],
         'reopenReason': value['reopenReason'],
+        'userId': value['userId'],
     };
 }
 

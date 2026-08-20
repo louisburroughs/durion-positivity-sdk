@@ -14,41 +14,41 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Effective location-specific price for a product
  * @export
  * @interface EffectiveLocationPriceResponseDto
  */
 export interface EffectiveLocationPriceResponseDto {
     /**
-     * 
-     * @type {string}
-     * @memberof EffectiveLocationPriceResponseDto
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EffectiveLocationPriceResponseDto
-     */
-    productId?: string;
-    /**
-     * 
+     * Base price before any override
      * @type {number}
      * @memberof EffectiveLocationPriceResponseDto
      */
-    basePrice?: number;
+    basePrice: number;
     /**
-     * 
+     * Effective price after applying any override
      * @type {number}
      * @memberof EffectiveLocationPriceResponseDto
      */
-    effectivePrice?: number;
+    effectivePrice: number;
     /**
-     * 
+     * Location identifier
+     * @type {string}
+     * @memberof EffectiveLocationPriceResponseDto
+     */
+    locationId: string;
+    /**
+     * Status of the override applied to derive the effective price
      * @type {string}
      * @memberof EffectiveLocationPriceResponseDto
      */
     overrideStatus?: EffectiveLocationPriceResponseDtoOverrideStatusEnum;
+    /**
+     * Product identifier
+     * @type {string}
+     * @memberof EffectiveLocationPriceResponseDto
+     */
+    productId: string;
 }
 
 /**
@@ -67,6 +67,10 @@ export enum EffectiveLocationPriceResponseDtoOverrideStatusEnum {
  * Check if a given object implements the EffectiveLocationPriceResponseDto interface.
  */
 export function instanceOfEffectiveLocationPriceResponseDto(value: object): boolean {
+    if (!('basePrice' in value)) return false;
+    if (!('effectivePrice' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -80,11 +84,11 @@ export function EffectiveLocationPriceResponseDtoFromJSONTyped(json: any, ignore
     }
     return {
         
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'basePrice': json['basePrice'] == null ? undefined : json['basePrice'],
-        'effectivePrice': json['effectivePrice'] == null ? undefined : json['effectivePrice'],
+        'basePrice': json['basePrice'],
+        'effectivePrice': json['effectivePrice'],
+        'locationId': json['locationId'],
         'overrideStatus': json['overrideStatus'] == null ? undefined : json['overrideStatus'],
+        'productId': json['productId'],
     };
 }
 
@@ -94,11 +98,11 @@ export function EffectiveLocationPriceResponseDtoToJSON(value?: EffectiveLocatio
     }
     return {
         
-        'locationId': value['locationId'],
-        'productId': value['productId'],
         'basePrice': value['basePrice'],
         'effectivePrice': value['effectivePrice'],
+        'locationId': value['locationId'],
         'overrideStatus': value['overrideStatus'],
+        'productId': value['productId'],
     };
 }
 

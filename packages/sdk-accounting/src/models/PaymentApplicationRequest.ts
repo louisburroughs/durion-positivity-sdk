@@ -21,24 +21,40 @@ import {
 } from './InvoiceApplication';
 
 /**
- * 
+ * Request payload for applying a payment to one or more invoices
  * @export
  * @interface PaymentApplicationRequest
  */
 export interface PaymentApplicationRequest {
     /**
-     * 
+     * Optional allocation strategy. CALLER_ORDER (default when absent) applies amounts in the order supplied by the caller; OLDEST_FIRST allocates by ascending invoice date. Omitting this field is equivalent to CALLER_ORDER.
+     * @type {string}
+     * @memberof PaymentApplicationRequest
+     */
+    allocationStrategy?: PaymentApplicationRequestAllocationStrategyEnum;
+    /**
+     * Idempotency key for this application request; retries with the same key must not duplicate
      * @type {string}
      * @memberof PaymentApplicationRequest
      */
     applicationRequestId: string;
     /**
-     * 
+     * Invoice applications allocating the payment amount to each invoice
      * @type {Array<InvoiceApplication>}
      * @memberof PaymentApplicationRequest
      */
     applications: Array<InvoiceApplication>;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum PaymentApplicationRequestAllocationStrategyEnum {
+    CallerOrder = 'CALLER_ORDER',
+    OldestFirst = 'OLDEST_FIRST'
+}
+
 
 /**
  * Check if a given object implements the PaymentApplicationRequest interface.
@@ -59,6 +75,7 @@ export function PaymentApplicationRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'allocationStrategy': json['allocationStrategy'] == null ? undefined : json['allocationStrategy'],
         'applicationRequestId': json['applicationRequestId'],
         'applications': ((json['applications'] as Array<any>).map(InvoiceApplicationFromJSON)),
     };
@@ -70,6 +87,7 @@ export function PaymentApplicationRequestToJSON(value?: PaymentApplicationReques
     }
     return {
         
+        'allocationStrategy': value['allocationStrategy'],
         'applicationRequestId': value['applicationRequestId'],
         'applications': ((value['applications'] as Array<any>).map(InvoiceApplicationToJSON)),
     };

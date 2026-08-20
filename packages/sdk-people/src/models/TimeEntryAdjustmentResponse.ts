@@ -26,17 +26,17 @@ export interface TimeEntryAdjustmentResponse {
      */
     adjustmentId?: string;
     /**
-     * Indicates whether the operation was successful
-     * @type {boolean}
-     * @memberof TimeEntryAdjustmentResponse
-     */
-    success: boolean;
-    /**
      * Human-readable message describing the outcome
      * @type {string}
      * @memberof TimeEntryAdjustmentResponse
      */
     message?: string;
+    /**
+     * Indicates whether the operation was successful
+     * @type {boolean}
+     * @memberof TimeEntryAdjustmentResponse
+     */
+    success: boolean;
 }
 
 /**
@@ -58,8 +58,8 @@ export function TimeEntryAdjustmentResponseFromJSONTyped(json: any, ignoreDiscri
     return {
         
         'adjustmentId': json['adjustmentId'] == null ? undefined : json['adjustmentId'],
-        'success': json['success'],
         'message': json['message'] == null ? undefined : json['message'],
+        'success': json['success'],
     };
 }
 
@@ -70,8 +70,8 @@ export function TimeEntryAdjustmentResponseToJSON(value?: TimeEntryAdjustmentRes
     return {
         
         'adjustmentId': value['adjustmentId'],
-        'success': value['success'],
         'message': value['message'],
+        'success': value['success'],
     };
 }
 

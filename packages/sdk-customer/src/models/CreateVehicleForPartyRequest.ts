@@ -14,47 +14,48 @@
 
 import { mapValues } from '../runtime';
 /**
- * Vehicle creation request
+ * Request to create a vehicle record for a party
  * @export
  * @interface CreateVehicleForPartyRequest
  */
 export interface CreateVehicleForPartyRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateVehicleForPartyRequest
-     */
-    vinNumber?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateVehicleForPartyRequest
-     */
-    unitNumber?: string;
-    /**
-     * 
+     * Vehicle description
      * @type {string}
      * @memberof CreateVehicleForPartyRequest
      */
     description?: string;
     /**
-     * 
+     * License plate (single string or plate plus region)
      * @type {string}
      * @memberof CreateVehicleForPartyRequest
      */
     licensePlate?: string;
     /**
-     * 
+     * License plate region/state
      * @type {string}
      * @memberof CreateVehicleForPartyRequest
      */
     licensePlateRegion?: string;
+    /**
+     * Unit number or internal reference
+     * @type {string}
+     * @memberof CreateVehicleForPartyRequest
+     */
+    unitNumber?: string;
+    /**
+     * Vehicle Identification Number (uniqueness scope global or per-party)
+     * @type {string}
+     * @memberof CreateVehicleForPartyRequest
+     */
+    vinNumber: string;
 }
 
 /**
  * Check if a given object implements the CreateVehicleForPartyRequest interface.
  */
 export function instanceOfCreateVehicleForPartyRequest(value: object): boolean {
+    if (!('vinNumber' in value)) return false;
     return true;
 }
 
@@ -68,11 +69,11 @@ export function CreateVehicleForPartyRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'vinNumber': json['vinNumber'] == null ? undefined : json['vinNumber'],
-        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
         'description': json['description'] == null ? undefined : json['description'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateRegion': json['licensePlateRegion'] == null ? undefined : json['licensePlateRegion'],
+        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'vinNumber': json['vinNumber'],
     };
 }
 
@@ -82,11 +83,11 @@ export function CreateVehicleForPartyRequestToJSON(value?: CreateVehicleForParty
     }
     return {
         
-        'vinNumber': value['vinNumber'],
-        'unitNumber': value['unitNumber'],
         'description': value['description'],
         'licensePlate': value['licensePlate'],
         'licensePlateRegion': value['licensePlateRegion'],
+        'unitNumber': value['unitNumber'],
+        'vinNumber': value['vinNumber'],
     };
 }
 

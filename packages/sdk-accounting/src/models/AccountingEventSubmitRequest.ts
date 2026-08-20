@@ -38,6 +38,12 @@ export interface AccountingEventSubmitRequest {
      */
     organizationId: string;
     /**
+     * Event-specific payload content
+     * @type {object}
+     * @memberof AccountingEventSubmitRequest
+     */
+    payload: object;
+    /**
      * Source system name. If omitted, defaults to POS_ACCOUNTING_API.
      * @type {string}
      * @memberof AccountingEventSubmitRequest
@@ -49,12 +55,6 @@ export interface AccountingEventSubmitRequest {
      * @memberof AccountingEventSubmitRequest
      */
     transactionDate?: Date;
-    /**
-     * Event-specific payload content
-     * @type {object}
-     * @memberof AccountingEventSubmitRequest
-     */
-    payload: object;
 }
 
 /**
@@ -80,9 +80,9 @@ export function AccountingEventSubmitRequestFromJSONTyped(json: any, ignoreDiscr
         'eventId': json['eventId'] == null ? undefined : json['eventId'],
         'eventType': json['eventType'],
         'organizationId': json['organizationId'],
+        'payload': json['payload'],
         'sourceSystem': json['sourceSystem'] == null ? undefined : json['sourceSystem'],
         'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
-        'payload': json['payload'],
     };
 }
 
@@ -95,9 +95,9 @@ export function AccountingEventSubmitRequestToJSON(value?: AccountingEventSubmit
         'eventId': value['eventId'],
         'eventType': value['eventType'],
         'organizationId': value['organizationId'],
+        'payload': value['payload'],
         'sourceSystem': value['sourceSystem'],
         'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString()),
-        'payload': value['payload'],
     };
 }
 

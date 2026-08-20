@@ -14,29 +14,30 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single role assignment detail
  * @export
  * @interface RoleAssignment
  */
 export interface RoleAssignment {
     /**
-     * 
-     * @type {string}
-     * @memberof RoleAssignment
-     */
-    roleCode?: string;
-    /**
-     * 
+     * Flag: set this contact as primary for this role
      * @type {boolean}
      * @memberof RoleAssignment
      */
     isPrimary?: boolean;
+    /**
+     * Role code (BILLING|APPROVER|DRIVER)
+     * @type {string}
+     * @memberof RoleAssignment
+     */
+    roleCode: string;
 }
 
 /**
  * Check if a given object implements the RoleAssignment interface.
  */
 export function instanceOfRoleAssignment(value: object): boolean {
+    if (!('roleCode' in value)) return false;
     return true;
 }
 
@@ -50,8 +51,8 @@ export function RoleAssignmentFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'roleCode': json['roleCode'] == null ? undefined : json['roleCode'],
         'isPrimary': json['isPrimary'] == null ? undefined : json['isPrimary'],
+        'roleCode': json['roleCode'],
     };
 }
 
@@ -61,8 +62,8 @@ export function RoleAssignmentToJSON(value?: RoleAssignment | null): any {
     }
     return {
         
-        'roleCode': value['roleCode'],
         'isPrimary': value['isPrimary'],
+        'roleCode': value['roleCode'],
     };
 }
 

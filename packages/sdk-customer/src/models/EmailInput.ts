@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface EmailInput {
     /**
-     * Email address
-     * @type {string}
-     * @memberof EmailInput
-     */
-    value: string;
-    /**
      * 
      * @type {boolean}
      * @memberof EmailInput
      */
     primary?: boolean;
+    /**
+     * Email address
+     * @type {string}
+     * @memberof EmailInput
+     */
+    value: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function EmailInputFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'value': json['value'],
         'primary': json['primary'] == null ? undefined : json['primary'],
+        'value': json['value'],
     };
 }
 
@@ -62,8 +62,8 @@ export function EmailInputToJSON(value?: EmailInput | null): any {
     }
     return {
         
-        'value': value['value'],
         'primary': value['primary'],
+        'value': value['value'],
     };
 }
 

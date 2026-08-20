@@ -14,65 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Price book detail
  * @export
  * @interface PriceBookDto
  */
 export interface PriceBookDto {
     /**
-     * 
-     * @type {string}
-     * @memberof PriceBookDto
-     */
-    priceBookId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookDto
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookDto
-     */
-    scope?: PriceBookDtoScopeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookDto
-     */
-    scopeId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookDto
-     */
-    status?: PriceBookDtoStatusEnum;
-    /**
-     * 
+     * Timestamp the price book was created
      * @type {Date}
      * @memberof PriceBookDto
      */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof PriceBookDto
-     */
-    updatedAt?: Date;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceBookDto
-     */
-    version?: number;
+    createdAt: Date;
     /**
      * 
      * @type {boolean}
      * @memberof PriceBookDto
      */
     _default?: boolean;
+    /**
+     * Price book name
+     * @type {string}
+     * @memberof PriceBookDto
+     */
+    name: string;
+    /**
+     * Price book identifier
+     * @type {string}
+     * @memberof PriceBookDto
+     */
+    priceBookId: string;
+    /**
+     * Scope the price book applies to
+     * @type {string}
+     * @memberof PriceBookDto
+     */
+    scope: PriceBookDtoScopeEnum;
+    /**
+     * Identifier of the scoped entity (location or customer tier)
+     * @type {string}
+     * @memberof PriceBookDto
+     */
+    scopeId?: string;
+    /**
+     * Current status of the price book
+     * @type {string}
+     * @memberof PriceBookDto
+     */
+    status: PriceBookDtoStatusEnum;
+    /**
+     * Timestamp the price book was last updated
+     * @type {Date}
+     * @memberof PriceBookDto
+     */
+    updatedAt?: Date;
+    /**
+     * Version for optimistic locking
+     * @type {number}
+     * @memberof PriceBookDto
+     */
+    version: number;
 }
 
 /**
@@ -98,6 +98,12 @@ export enum PriceBookDtoStatusEnum {
  * Check if a given object implements the PriceBookDto interface.
  */
 export function instanceOfPriceBookDto(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('name' in value)) return false;
+    if (!('priceBookId' in value)) return false;
+    if (!('scope' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -111,15 +117,15 @@ export function PriceBookDtoFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'priceBookId': json['priceBookId'] == null ? undefined : json['priceBookId'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'scope': json['scope'] == null ? undefined : json['scope'],
-        'scopeId': json['scopeId'] == null ? undefined : json['scopeId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'version': json['version'] == null ? undefined : json['version'],
+        'createdAt': (new Date(json['createdAt'])),
         '_default': json['default'] == null ? undefined : json['default'],
+        'name': json['name'],
+        'priceBookId': json['priceBookId'],
+        'scope': json['scope'],
+        'scopeId': json['scopeId'] == null ? undefined : json['scopeId'],
+        'status': json['status'],
+        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'version': json['version'],
     };
 }
 
@@ -129,15 +135,15 @@ export function PriceBookDtoToJSON(value?: PriceBookDto | null): any {
     }
     return {
         
-        'priceBookId': value['priceBookId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'default': value['_default'],
         'name': value['name'],
+        'priceBookId': value['priceBookId'],
         'scope': value['scope'],
         'scopeId': value['scopeId'],
         'status': value['status'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
         'version': value['version'],
-        'default': value['_default'],
     };
 }
 

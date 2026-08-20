@@ -20,18 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface InitiatePaymentResponse {
     /**
-     * Payment intent identifier
-     * @type {string}
-     * @memberof InitiatePaymentResponse
-     */
-    paymentIntentId?: string;
-    /**
-     * Current lifecycle status of the payment intent
-     * @type {string}
-     * @memberof InitiatePaymentResponse
-     */
-    status?: InitiatePaymentResponseStatusEnum;
-    /**
      * Amount authorized on the card
      * @type {number}
      * @memberof InitiatePaymentResponse
@@ -44,12 +32,6 @@ export interface InitiatePaymentResponse {
      */
     capturedAmount?: number;
     /**
-     * Remainder voided after partial capture
-     * @type {number}
-     * @memberof InitiatePaymentResponse
-     */
-    voidedRemainderAmount?: number;
-    /**
      * Gateway provider identifier (e.g., stripe)
      * @type {string}
      * @memberof InitiatePaymentResponse
@@ -61,6 +43,24 @@ export interface InitiatePaymentResponse {
      * @memberof InitiatePaymentResponse
      */
     gatewayResponse?: string;
+    /**
+     * Payment intent identifier
+     * @type {string}
+     * @memberof InitiatePaymentResponse
+     */
+    paymentIntentId: string;
+    /**
+     * Current lifecycle status of the payment intent
+     * @type {string}
+     * @memberof InitiatePaymentResponse
+     */
+    status: InitiatePaymentResponseStatusEnum;
+    /**
+     * Remainder voided after partial capture
+     * @type {number}
+     * @memberof InitiatePaymentResponse
+     */
+    voidedRemainderAmount?: number;
 }
 
 /**
@@ -81,6 +81,8 @@ export enum InitiatePaymentResponseStatusEnum {
  * Check if a given object implements the InitiatePaymentResponse interface.
  */
 export function instanceOfInitiatePaymentResponse(value: object): boolean {
+    if (!('paymentIntentId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -94,13 +96,13 @@ export function InitiatePaymentResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'paymentIntentId': json['paymentIntentId'] == null ? undefined : json['paymentIntentId'],
-        'status': json['status'] == null ? undefined : json['status'],
         'authorizedAmount': json['authorizedAmount'] == null ? undefined : json['authorizedAmount'],
         'capturedAmount': json['capturedAmount'] == null ? undefined : json['capturedAmount'],
-        'voidedRemainderAmount': json['voidedRemainderAmount'] == null ? undefined : json['voidedRemainderAmount'],
         'gatewayProvider': json['gatewayProvider'] == null ? undefined : json['gatewayProvider'],
         'gatewayResponse': json['gatewayResponse'] == null ? undefined : json['gatewayResponse'],
+        'paymentIntentId': json['paymentIntentId'],
+        'status': json['status'],
+        'voidedRemainderAmount': json['voidedRemainderAmount'] == null ? undefined : json['voidedRemainderAmount'],
     };
 }
 
@@ -110,13 +112,13 @@ export function InitiatePaymentResponseToJSON(value?: InitiatePaymentResponse | 
     }
     return {
         
-        'paymentIntentId': value['paymentIntentId'],
-        'status': value['status'],
         'authorizedAmount': value['authorizedAmount'],
         'capturedAmount': value['capturedAmount'],
-        'voidedRemainderAmount': value['voidedRemainderAmount'],
         'gatewayProvider': value['gatewayProvider'],
         'gatewayResponse': value['gatewayResponse'],
+        'paymentIntentId': value['paymentIntentId'],
+        'status': value['status'],
+        'voidedRemainderAmount': value['voidedRemainderAmount'],
     };
 }
 

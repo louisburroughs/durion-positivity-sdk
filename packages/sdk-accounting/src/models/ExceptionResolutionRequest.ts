@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ExceptionResolutionRequest {
     /**
-     * Resolution action
+     * Operator identifier performing resolution
      * @type {string}
      * @memberof ExceptionResolutionRequest
      */
-    resolutionAction: ExceptionResolutionRequestResolutionActionEnum;
+    operatorId: string;
     /**
      * Reason for chosen resolution
      * @type {string}
@@ -32,11 +32,11 @@ export interface ExceptionResolutionRequest {
      */
     reason: string;
     /**
-     * Operator identifier performing resolution
+     * Resolution action
      * @type {string}
      * @memberof ExceptionResolutionRequest
      */
-    operatorId: string;
+    resolutionAction: ExceptionResolutionRequestResolutionActionEnum;
 }
 
 /**
@@ -54,9 +54,9 @@ export enum ExceptionResolutionRequestResolutionActionEnum {
  * Check if a given object implements the ExceptionResolutionRequest interface.
  */
 export function instanceOfExceptionResolutionRequest(value: object): boolean {
-    if (!('resolutionAction' in value)) return false;
-    if (!('reason' in value)) return false;
     if (!('operatorId' in value)) return false;
+    if (!('reason' in value)) return false;
+    if (!('resolutionAction' in value)) return false;
     return true;
 }
 
@@ -70,9 +70,9 @@ export function ExceptionResolutionRequestFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'resolutionAction': json['resolutionAction'],
-        'reason': json['reason'],
         'operatorId': json['operatorId'],
+        'reason': json['reason'],
+        'resolutionAction': json['resolutionAction'],
     };
 }
 
@@ -82,9 +82,9 @@ export function ExceptionResolutionRequestToJSON(value?: ExceptionResolutionRequ
     }
     return {
         
-        'resolutionAction': value['resolutionAction'],
-        'reason': value['reason'],
         'operatorId': value['operatorId'],
+        'reason': value['reason'],
+        'resolutionAction': value['resolutionAction'],
     };
 }
 

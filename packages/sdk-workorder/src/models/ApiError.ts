@@ -31,31 +31,13 @@ export interface ApiError {
      * @type {string}
      * @memberof ApiError
      */
-    code?: string;
-    /**
-     * Human-readable error message
-     * @type {string}
-     * @memberof ApiError
-     */
-    message?: string;
-    /**
-     * HTTP status code
-     * @type {number}
-     * @memberof ApiError
-     */
-    status?: number;
-    /**
-     * ISO 8601 UTC timestamp of the error
-     * @type {string}
-     * @memberof ApiError
-     */
-    timestamp?: string;
+    code: string;
     /**
      * Unique correlation ID for distributed request tracing
      * @type {string}
      * @memberof ApiError
      */
-    correlationId?: string;
+    correlationId: string;
     /**
      * Field-level validation errors; present (non-null) for validation-related errors such as VALIDATION_ERROR or VALIDATION_FAILED; omitted for all other error types
      * @type {Array<FieldError>}
@@ -63,11 +45,11 @@ export interface ApiError {
      */
     fieldErrors?: Array<FieldError>;
     /**
-     * Workflow or review-case reference identifier, when applicable
+     * Human-readable error message
      * @type {string}
      * @memberof ApiError
      */
-    referenceId?: string;
+    message: string;
     /**
      * Recommended next step for the caller, when applicable
      * @type {string}
@@ -75,17 +57,40 @@ export interface ApiError {
      */
     nextAction?: string;
     /**
+     * Workflow or review-case reference identifier, when applicable
+     * @type {string}
+     * @memberof ApiError
+     */
+    referenceId?: string;
+    /**
+     * HTTP status code
+     * @type {number}
+     * @memberof ApiError
+     */
+    status: number;
+    /**
      * Support or admin investigation guidance, when applicable
      * @type {string}
      * @memberof ApiError
      */
     supportAction?: string;
+    /**
+     * ISO 8601 UTC timestamp of the error
+     * @type {string}
+     * @memberof ApiError
+     */
+    timestamp: string;
 }
 
 /**
  * Check if a given object implements the ApiError interface.
  */
 export function instanceOfApiError(value: object): boolean {
+    if (!('code' in value)) return false;
+    if (!('correlationId' in value)) return false;
+    if (!('message' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -99,15 +104,15 @@ export function ApiErrorFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'code': json['code'] == null ? undefined : json['code'],
-        'message': json['message'] == null ? undefined : json['message'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'timestamp': json['timestamp'] == null ? undefined : json['timestamp'],
-        'correlationId': json['correlationId'] == null ? undefined : json['correlationId'],
+        'code': json['code'],
+        'correlationId': json['correlationId'],
         'fieldErrors': json['fieldErrors'] == null ? undefined : ((json['fieldErrors'] as Array<any>).map(FieldErrorFromJSON)),
-        'referenceId': json['referenceId'] == null ? undefined : json['referenceId'],
+        'message': json['message'],
         'nextAction': json['nextAction'] == null ? undefined : json['nextAction'],
+        'referenceId': json['referenceId'] == null ? undefined : json['referenceId'],
+        'status': json['status'],
         'supportAction': json['supportAction'] == null ? undefined : json['supportAction'],
+        'timestamp': json['timestamp'],
     };
 }
 
@@ -118,14 +123,14 @@ export function ApiErrorToJSON(value?: ApiError | null): any {
     return {
         
         'code': value['code'],
-        'message': value['message'],
-        'status': value['status'],
-        'timestamp': value['timestamp'],
         'correlationId': value['correlationId'],
         'fieldErrors': value['fieldErrors'] == null ? undefined : ((value['fieldErrors'] as Array<any>).map(FieldErrorToJSON)),
-        'referenceId': value['referenceId'],
+        'message': value['message'],
         'nextAction': value['nextAction'],
+        'referenceId': value['referenceId'],
+        'status': value['status'],
         'supportAction': value['supportAction'],
+        'timestamp': value['timestamp'],
     };
 }
 

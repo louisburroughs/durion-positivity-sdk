@@ -14,59 +14,59 @@
 
 import { mapValues } from '../runtime';
 /**
- * Communication preferences to set
+ * Request to upsert communication preferences and consent flags for a party
  * @export
  * @interface UpsertCommunicationPreferencesRequest
  */
 export interface UpsertCommunicationPreferencesRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof UpsertCommunicationPreferencesRequest
-     */
-    version?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UpsertCommunicationPreferencesRequest
-     */
-    emailPreference?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UpsertCommunicationPreferencesRequest
-     */
-    smsPreference?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UpsertCommunicationPreferencesRequest
-     */
-    phonePreference?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UpsertCommunicationPreferencesRequest
-     */
-    marketingPreference?: string;
-    /**
-     * 
+     * Consent flags keyed by consent type; field names depend on legal requirements
      * @type {{ [key: string]: boolean; }}
      * @memberof UpsertCommunicationPreferencesRequest
      */
     consentFlags?: { [key: string]: boolean; };
     /**
-     * 
+     * Email preference (OPT_IN|OPT_OUT|NOT_APPLICABLE)
+     * @type {string}
+     * @memberof UpsertCommunicationPreferencesRequest
+     */
+    emailPreference?: string;
+    /**
+     * Marketing communications preference (OPT_IN|OPT_OUT)
+     * @type {string}
+     * @memberof UpsertCommunicationPreferencesRequest
+     */
+    marketingPreference?: string;
+    /**
+     * Phone preference (OPT_IN|OPT_OUT|NOT_APPLICABLE)
+     * @type {string}
+     * @memberof UpsertCommunicationPreferencesRequest
+     */
+    phonePreference?: string;
+    /**
+     * User-provided note or preferences summary
      * @type {string}
      * @memberof UpsertCommunicationPreferencesRequest
      */
     preferencesNote?: string;
     /**
-     * 
+     * SMS preference (OPT_IN|OPT_OUT|NOT_APPLICABLE)
+     * @type {string}
+     * @memberof UpsertCommunicationPreferencesRequest
+     */
+    smsPreference?: string;
+    /**
+     * Source of update (APP|API|ADMIN)
      * @type {string}
      * @memberof UpsertCommunicationPreferencesRequest
      */
     updateSource?: string;
+    /**
+     * Optimistic locking version; required for updates, omitted for creates
+     * @type {string}
+     * @memberof UpsertCommunicationPreferencesRequest
+     */
+    version?: string;
 }
 
 /**
@@ -86,14 +86,14 @@ export function UpsertCommunicationPreferencesRequestFromJSONTyped(json: any, ig
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'emailPreference': json['emailPreference'] == null ? undefined : json['emailPreference'],
-        'smsPreference': json['smsPreference'] == null ? undefined : json['smsPreference'],
-        'phonePreference': json['phonePreference'] == null ? undefined : json['phonePreference'],
-        'marketingPreference': json['marketingPreference'] == null ? undefined : json['marketingPreference'],
         'consentFlags': json['consentFlags'] == null ? undefined : json['consentFlags'],
+        'emailPreference': json['emailPreference'] == null ? undefined : json['emailPreference'],
+        'marketingPreference': json['marketingPreference'] == null ? undefined : json['marketingPreference'],
+        'phonePreference': json['phonePreference'] == null ? undefined : json['phonePreference'],
         'preferencesNote': json['preferencesNote'] == null ? undefined : json['preferencesNote'],
+        'smsPreference': json['smsPreference'] == null ? undefined : json['smsPreference'],
         'updateSource': json['updateSource'] == null ? undefined : json['updateSource'],
+        'version': json['version'] == null ? undefined : json['version'],
     };
 }
 
@@ -103,14 +103,14 @@ export function UpsertCommunicationPreferencesRequestToJSON(value?: UpsertCommun
     }
     return {
         
-        'version': value['version'],
-        'emailPreference': value['emailPreference'],
-        'smsPreference': value['smsPreference'],
-        'phonePreference': value['phonePreference'],
-        'marketingPreference': value['marketingPreference'],
         'consentFlags': value['consentFlags'],
+        'emailPreference': value['emailPreference'],
+        'marketingPreference': value['marketingPreference'],
+        'phonePreference': value['phonePreference'],
         'preferencesNote': value['preferencesNote'],
+        'smsPreference': value['smsPreference'],
         'updateSource': value['updateSource'],
+        'version': value['version'],
     };
 }
 

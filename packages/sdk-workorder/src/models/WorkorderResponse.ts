@@ -20,42 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderResponse {
     /**
-     * Unique identifier for the workorder
-     * @type {string}
-     * @memberof WorkorderResponse
-     */
-    id?: string;
-    /**
-     * Estimate ID
-     * @type {string}
-     * @memberof WorkorderResponse
-     */
-    estimateId?: string;
-    /**
-     * Customer ID
-     * @type {string}
-     * @memberof WorkorderResponse
-     */
-    customerId?: string;
-    /**
-     * Shop ID
-     * @type {string}
-     * @memberof WorkorderResponse
-     */
-    shopId?: string;
-    /**
-     * Vehicle ID
-     * @type {string}
-     * @memberof WorkorderResponse
-     */
-    vehicleId?: string;
-    /**
-     * Workorder status
-     * @type {string}
-     * @memberof WorkorderResponse
-     */
-    status?: string;
-    /**
      * Date and time the workorder was approved
      * @type {Date}
      * @memberof WorkorderResponse
@@ -68,17 +32,11 @@ export interface WorkorderResponse {
      */
     completedAt?: Date;
     /**
-     * Whether the completed workorder is currently reopened for controlled edits
-     * @type {boolean}
+     * List of CRM contact identifiers
+     * @type {Array<string>}
      * @memberof WorkorderResponse
      */
-    isReopened?: boolean;
-    /**
-     * Date and time the workorder was reopened
-     * @type {Date}
-     * @memberof WorkorderResponse
-     */
-    reopenedAt?: Date;
+    crmContactIds?: Array<string>;
     /**
      * CRM party identifier
      * @type {string}
@@ -92,11 +50,53 @@ export interface WorkorderResponse {
      */
     crmVehicleId?: string;
     /**
-     * List of CRM contact identifiers
-     * @type {Array<string>}
+     * Customer ID
+     * @type {string}
      * @memberof WorkorderResponse
      */
-    crmContactIds?: Array<string>;
+    customerId?: string;
+    /**
+     * Estimate ID
+     * @type {string}
+     * @memberof WorkorderResponse
+     */
+    estimateId?: string;
+    /**
+     * Unique identifier for the workorder
+     * @type {string}
+     * @memberof WorkorderResponse
+     */
+    id?: string;
+    /**
+     * Whether the completed workorder is currently reopened for controlled edits
+     * @type {boolean}
+     * @memberof WorkorderResponse
+     */
+    isReopened?: boolean;
+    /**
+     * Date and time the workorder was reopened
+     * @type {Date}
+     * @memberof WorkorderResponse
+     */
+    reopenedAt?: Date;
+    /**
+     * Shop ID
+     * @type {string}
+     * @memberof WorkorderResponse
+     */
+    shopId?: string;
+    /**
+     * Workorder status
+     * @type {string}
+     * @memberof WorkorderResponse
+     */
+    status?: string;
+    /**
+     * Vehicle ID
+     * @type {string}
+     * @memberof WorkorderResponse
+     */
+    vehicleId?: string;
 }
 
 /**
@@ -116,19 +116,19 @@ export function WorkorderResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
-        'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'shopId': json['shopId'] == null ? undefined : json['shopId'],
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'status': json['status'] == null ? undefined : json['status'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
-        'isReopened': json['isReopened'] == null ? undefined : json['isReopened'],
-        'reopenedAt': json['reopenedAt'] == null ? undefined : (new Date(json['reopenedAt'])),
+        'crmContactIds': json['crmContactIds'] == null ? undefined : json['crmContactIds'],
         'crmPartyId': json['crmPartyId'] == null ? undefined : json['crmPartyId'],
         'crmVehicleId': json['crmVehicleId'] == null ? undefined : json['crmVehicleId'],
-        'crmContactIds': json['crmContactIds'] == null ? undefined : json['crmContactIds'],
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
+        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'isReopened': json['isReopened'] == null ? undefined : json['isReopened'],
+        'reopenedAt': json['reopenedAt'] == null ? undefined : (new Date(json['reopenedAt'])),
+        'shopId': json['shopId'] == null ? undefined : json['shopId'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
     };
 }
 
@@ -138,19 +138,19 @@ export function WorkorderResponseToJSON(value?: WorkorderResponse | null): any {
     }
     return {
         
-        'id': value['id'],
-        'estimateId': value['estimateId'],
-        'customerId': value['customerId'],
-        'shopId': value['shopId'],
-        'vehicleId': value['vehicleId'],
-        'status': value['status'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
-        'isReopened': value['isReopened'],
-        'reopenedAt': value['reopenedAt'] == null ? undefined : ((value['reopenedAt']).toISOString()),
+        'crmContactIds': value['crmContactIds'],
         'crmPartyId': value['crmPartyId'],
         'crmVehicleId': value['crmVehicleId'],
-        'crmContactIds': value['crmContactIds'],
+        'customerId': value['customerId'],
+        'estimateId': value['estimateId'],
+        'id': value['id'],
+        'isReopened': value['isReopened'],
+        'reopenedAt': value['reopenedAt'] == null ? undefined : ((value['reopenedAt']).toISOString()),
+        'shopId': value['shopId'],
+        'status': value['status'],
+        'vehicleId': value['vehicleId'],
     };
 }
 

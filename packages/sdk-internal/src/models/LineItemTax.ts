@@ -13,12 +13,37 @@
  */
 
 import { mapValues } from '../runtime';
+import type { JurisdictionTax } from './JurisdictionTax';
+import {
+    JurisdictionTaxFromJSON,
+    JurisdictionTaxFromJSONTyped,
+    JurisdictionTaxToJSON,
+} from './JurisdictionTax';
+
 /**
  * Tax breakdown for a single line item
  * @export
  * @interface LineItemTax
  */
 export interface LineItemTax {
+    /**
+     * Whether a claimed exemption was denied (unbacked by a valid certificate) and the line taxed anyway
+     * @type {boolean}
+     * @memberof LineItemTax
+     */
+    exemptionDenied?: boolean;
+    /**
+     * Resolved exemption reason echoed onto this line (honored or denied)
+     * @type {string}
+     * @memberof LineItemTax
+     */
+    exemptionReasonCode?: LineItemTaxExemptionReasonCodeEnum;
+    /**
+     * Per-jurisdiction tax breakdown for this line item; rows sum to taxAmount
+     * @type {Array<JurisdictionTax>}
+     * @memberof LineItemTax
+     */
+    jurisdictions?: Array<JurisdictionTax>;
     /**
      * Line item identifier
      * @type {string}
@@ -38,18 +63,31 @@ export interface LineItemTax {
      */
     taxAmount: number;
     /**
+     * Whether this line item is tax exempt (resolved exemption produced zero-rate rows)
+     * @type {boolean}
+     * @memberof LineItemTax
+     */
+    taxExempt: boolean;
+    /**
      * Line total including tax
      * @type {number}
      * @memberof LineItemTax
      */
     total: number;
-    /**
-     * Whether this line item is tax exempt
-     * @type {boolean}
-     * @memberof LineItemTax
-     */
-    taxExempt?: boolean;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum LineItemTaxExemptionReasonCodeEnum {
+    Resale = 'RESALE',
+    Government = 'GOVERNMENT',
+    Nonprofit = 'NONPROFIT',
+    Agricultural = 'AGRICULTURAL',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the LineItemTax interface.
@@ -58,6 +96,7 @@ export function instanceOfLineItemTax(value: object): boolean {
     if (!('lineItemId' in value)) return false;
     if (!('subtotal' in value)) return false;
     if (!('taxAmount' in value)) return false;
+    if (!('taxExempt' in value)) return false;
     if (!('total' in value)) return false;
     return true;
 }
@@ -72,11 +111,14 @@ export function LineItemTaxFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
+        'exemptionDenied': json['exemptionDenied'] == null ? undefined : json['exemptionDenied'],
+        'exemptionReasonCode': json['exemptionReasonCode'] == null ? undefined : json['exemptionReasonCode'],
+        'jurisdictions': json['jurisdictions'] == null ? undefined : ((json['jurisdictions'] as Array<any>).map(JurisdictionTaxFromJSON)),
         'lineItemId': json['lineItemId'],
         'subtotal': json['subtotal'],
         'taxAmount': json['taxAmount'],
+        'taxExempt': json['taxExempt'],
         'total': json['total'],
-        'taxExempt': json['taxExempt'] == null ? undefined : json['taxExempt'],
     };
 }
 
@@ -86,11 +128,14 @@ export function LineItemTaxToJSON(value?: LineItemTax | null): any {
     }
     return {
         
+        'exemptionDenied': value['exemptionDenied'],
+        'exemptionReasonCode': value['exemptionReasonCode'],
+        'jurisdictions': value['jurisdictions'] == null ? undefined : ((value['jurisdictions'] as Array<any>).map(JurisdictionTaxToJSON)),
         'lineItemId': value['lineItemId'],
         'subtotal': value['subtotal'],
         'taxAmount': value['taxAmount'],
-        'total': value['total'],
         'taxExempt': value['taxExempt'],
+        'total': value['total'],
     };
 }
 

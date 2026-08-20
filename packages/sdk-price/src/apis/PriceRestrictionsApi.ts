@@ -31,11 +31,11 @@ import {
     RestrictionOverrideResponseToJSON,
 } from '../models/index';
 
-export interface EvaluateRestrictionsRequest {
+export interface EvaluatePriceRestrictionsRequest {
     restrictionEvaluationRequest: RestrictionEvaluationRequest;
 }
 
-export interface OverrideRestrictionsRequest {
+export interface OverridePriceRestrictionRequest {
     restrictionOverrideRequest: RestrictionOverrideRequest;
 }
 
@@ -45,14 +45,14 @@ export interface OverrideRestrictionsRequest {
 export class PriceRestrictionsApi extends runtime.BaseAPI {
 
     /**
-     * Evaluates whether products are subject to restrictions in the given context.
-     * Evaluate price restrictions
+     * Evaluates each submitted product and context entry against active sale-restriction rules and returns a per-item decision of ALLOW, BLOCK, ALLOW_WITH_OVERRIDE, or RESTRICTION_UNKNOWN. Use this tool before quoting or selling a product to learn whether the sale is blocked or needs an override; do not use overridePriceRestriction, which records the override itself after a decision of ALLOW_WITH_OVERRIDE. Preconditions: none; items with no matching active rule resolve to ALLOW. Required inputs: items (at least one), each with productId (UUID), locationTag, serviceTag, and context (BROWSE, QUOTE, CHECKOUT, INVOICE_FINALIZE, or COMMIT_SALE); any matching rule with overrideable false forces BLOCK, otherwise matching rules yield ALLOW_WITH_OVERRIDE with the matched ruleIds. Emits a PRICE_RESTRICTIONS_EVALUATE event; the evaluation itself is read-only and each item is bounded by an 800 ms timeout. Returns 503 when evaluation fails or times out for an item in a commit-path context (CHECKOUT, INVOICE_FINALIZE, COMMIT_SALE), while the same failure on BROWSE or QUOTE degrades that item to a RESTRICTION_UNKNOWN decision instead of an error. 
+     * Evaluate Price Restrictions
      */
-    async evaluateRestrictionsRaw(requestParameters: EvaluateRestrictionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionEvaluationResponse>> {
+    async evaluatePriceRestrictionsRaw(requestParameters: EvaluatePriceRestrictionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionEvaluationResponse>> {
         if (requestParameters['restrictionEvaluationRequest'] == null) {
             throw new runtime.RequiredError(
                 'restrictionEvaluationRequest',
-                'Required parameter "restrictionEvaluationRequest" was null or undefined when calling evaluateRestrictions().'
+                'Required parameter "restrictionEvaluationRequest" was null or undefined when calling evaluatePriceRestrictions().'
             );
         }
 
@@ -82,23 +82,23 @@ export class PriceRestrictionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Evaluates whether products are subject to restrictions in the given context.
-     * Evaluate price restrictions
+     * Evaluates each submitted product and context entry against active sale-restriction rules and returns a per-item decision of ALLOW, BLOCK, ALLOW_WITH_OVERRIDE, or RESTRICTION_UNKNOWN. Use this tool before quoting or selling a product to learn whether the sale is blocked or needs an override; do not use overridePriceRestriction, which records the override itself after a decision of ALLOW_WITH_OVERRIDE. Preconditions: none; items with no matching active rule resolve to ALLOW. Required inputs: items (at least one), each with productId (UUID), locationTag, serviceTag, and context (BROWSE, QUOTE, CHECKOUT, INVOICE_FINALIZE, or COMMIT_SALE); any matching rule with overrideable false forces BLOCK, otherwise matching rules yield ALLOW_WITH_OVERRIDE with the matched ruleIds. Emits a PRICE_RESTRICTIONS_EVALUATE event; the evaluation itself is read-only and each item is bounded by an 800 ms timeout. Returns 503 when evaluation fails or times out for an item in a commit-path context (CHECKOUT, INVOICE_FINALIZE, COMMIT_SALE), while the same failure on BROWSE or QUOTE degrades that item to a RESTRICTION_UNKNOWN decision instead of an error. 
+     * Evaluate Price Restrictions
      */
-    async evaluateRestrictions(requestParameters: EvaluateRestrictionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionEvaluationResponse> {
-        const response = await this.evaluateRestrictionsRaw(requestParameters, initOverrides);
+    async evaluatePriceRestrictions(requestParameters: EvaluatePriceRestrictionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionEvaluationResponse> {
+        const response = await this.evaluatePriceRestrictionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Issues an override for price restrictions. Requires pricing:restriction:override authority.
-     * Override price restrictions
+     * Issues an audited, time-boxed override of a sale-restriction rule for a specific transaction and product. Use this tool after evaluatePriceRestrictions returns ALLOW_WITH_OVERRIDE; do not use deactivateRestrictionRule, which retires the rule for everyone instead of exempting one transaction. Preconditions: the referenced restriction rule must exist; the rule\'s overrideable flag is not re-checked here, so callers must honour a BLOCK decision from evaluation rather than overriding it. Required inputs: ruleId, transactionId, and productId (UUIDs), overrideContext (BROWSE, QUOTE, CHECKOUT, INVOICE_FINALIZE, or COMMIT_SALE), and reasonCode; notes and approvedBy are optional. Emits a PRICE_RESTRICTIONS_OVERRIDE event and persists an ISSUED audit record capturing the actor and the rule\'s policyVersion; the returned overrideId expires 24 hours after issue. Returns 404 when the referenced restriction rule does not exist. 
+     * Override Price Restrictions
      */
-    async overrideRestrictionsRaw(requestParameters: OverrideRestrictionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionOverrideResponse>> {
+    async overridePriceRestrictionRaw(requestParameters: OverridePriceRestrictionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionOverrideResponse>> {
         if (requestParameters['restrictionOverrideRequest'] == null) {
             throw new runtime.RequiredError(
                 'restrictionOverrideRequest',
-                'Required parameter "restrictionOverrideRequest" was null or undefined when calling overrideRestrictions().'
+                'Required parameter "restrictionOverrideRequest" was null or undefined when calling overridePriceRestriction().'
             );
         }
 
@@ -128,11 +128,11 @@ export class PriceRestrictionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Issues an override for price restrictions. Requires pricing:restriction:override authority.
-     * Override price restrictions
+     * Issues an audited, time-boxed override of a sale-restriction rule for a specific transaction and product. Use this tool after evaluatePriceRestrictions returns ALLOW_WITH_OVERRIDE; do not use deactivateRestrictionRule, which retires the rule for everyone instead of exempting one transaction. Preconditions: the referenced restriction rule must exist; the rule\'s overrideable flag is not re-checked here, so callers must honour a BLOCK decision from evaluation rather than overriding it. Required inputs: ruleId, transactionId, and productId (UUIDs), overrideContext (BROWSE, QUOTE, CHECKOUT, INVOICE_FINALIZE, or COMMIT_SALE), and reasonCode; notes and approvedBy are optional. Emits a PRICE_RESTRICTIONS_OVERRIDE event and persists an ISSUED audit record capturing the actor and the rule\'s policyVersion; the returned overrideId expires 24 hours after issue. Returns 404 when the referenced restriction rule does not exist. 
+     * Override Price Restrictions
      */
-    async overrideRestrictions(requestParameters: OverrideRestrictionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionOverrideResponse> {
-        const response = await this.overrideRestrictionsRaw(requestParameters, initOverrides);
+    async overridePriceRestriction(requestParameters: OverridePriceRestrictionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionOverrideResponse> {
+        const response = await this.overridePriceRestrictionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

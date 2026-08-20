@@ -21,29 +21,30 @@ import {
 } from './RoleAssignment';
 
 /**
- * Role update request
+ * Request to update the set of role assignments for a contact
  * @export
  * @interface UpdateContactRolesRequest
  */
 export interface UpdateContactRolesRequest {
     /**
-     * 
+     * List of roles to assign to this contact
+     * @type {Array<RoleAssignment>}
+     * @memberof UpdateContactRolesRequest
+     */
+    roles: Array<RoleAssignment>;
+    /**
+     * Optimistic locking version; required when the backend enforces optimistic locking
      * @type {string}
      * @memberof UpdateContactRolesRequest
      */
     version?: string;
-    /**
-     * 
-     * @type {Array<RoleAssignment>}
-     * @memberof UpdateContactRolesRequest
-     */
-    roles?: Array<RoleAssignment>;
 }
 
 /**
  * Check if a given object implements the UpdateContactRolesRequest interface.
  */
 export function instanceOfUpdateContactRolesRequest(value: object): boolean {
+    if (!('roles' in value)) return false;
     return true;
 }
 
@@ -57,8 +58,8 @@ export function UpdateContactRolesRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'roles': ((json['roles'] as Array<any>).map(RoleAssignmentFromJSON)),
         'version': json['version'] == null ? undefined : json['version'],
-        'roles': json['roles'] == null ? undefined : ((json['roles'] as Array<any>).map(RoleAssignmentFromJSON)),
     };
 }
 
@@ -68,8 +69,8 @@ export function UpdateContactRolesRequestToJSON(value?: UpdateContactRolesReques
     }
     return {
         
+        'roles': ((value['roles'] as Array<any>).map(RoleAssignmentToJSON)),
         'version': value['version'],
-        'roles': value['roles'] == null ? undefined : ((value['roles'] as Array<any>).map(RoleAssignmentToJSON)),
     };
 }
 

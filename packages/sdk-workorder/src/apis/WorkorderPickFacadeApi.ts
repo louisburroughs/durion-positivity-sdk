@@ -53,15 +53,15 @@ export interface ConfirmPickLineOperationRequest {
     confirmPickLineRequest: ConfirmPickLineRequest;
 }
 
-export interface GetPickListRequest {
-    workorderId: string;
-}
-
 export interface GetPickTasksRequest {
     workorderId: string;
 }
 
-export interface ResolveScanOperationRequest {
+export interface GetWorkorderPickListRequest {
+    workorderId: string;
+}
+
+export interface ResolvePickScanRequest {
     workorderId: string;
     pickTaskId: string;
     resolveScanRequest: ResolveScanRequest;
@@ -73,8 +73,8 @@ export interface ResolveScanOperationRequest {
 export class WorkorderPickFacadeApi extends runtime.BaseAPI {
 
     /**
-     * Complete a workorder pick task after all of its pick lines are confirmed
-     * Complete pick task
+     * Queues asynchronous completion of a pick task by confirming its full required quantity over the Kafka command feed per ADR-0044; a task with nothing left to pick is returned as-is. Use this tool to close out a pick task in one step; use confirmPickLine instead to record a partial picked quantity. Preconditions: the pick task must exist on the workorder\'s pick list replica. Required inputs: workorderId and pickTaskId (UUIDs) as path parameters; the body is optional and may carry a completion reason. Emits a WORKORDER_PICK_FACADE_COMPLETE_TASK event and publishes a pick-confirm command for the remaining quantity; callers must poll getPickTasks to observe the applied state. Returns 202 with status PENDING while the command is in flight, 200 with the current state when the task is already complete, 404 when the pick list or task is missing, and 503 when the command feed is unavailable. 
+     * Complete a Workorder Pick Task
      */
     async completePickTaskRaw(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickTaskResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -117,8 +117,8 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Complete a workorder pick task after all of its pick lines are confirmed
-     * Complete pick task
+     * Queues asynchronous completion of a pick task by confirming its full required quantity over the Kafka command feed per ADR-0044; a task with nothing left to pick is returned as-is. Use this tool to close out a pick task in one step; use confirmPickLine instead to record a partial picked quantity. Preconditions: the pick task must exist on the workorder\'s pick list replica. Required inputs: workorderId and pickTaskId (UUIDs) as path parameters; the body is optional and may carry a completion reason. Emits a WORKORDER_PICK_FACADE_COMPLETE_TASK event and publishes a pick-confirm command for the remaining quantity; callers must poll getPickTasks to observe the applied state. Returns 202 with status PENDING while the command is in flight, 200 with the current state when the task is already complete, 404 when the pick list or task is missing, and 503 when the command feed is unavailable. 
+     * Complete a Workorder Pick Task
      */
     async completePickTask(requestParameters: CompletePickTaskOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickTaskResponse> {
         const response = await this.completePickTaskRaw(requestParameters, initOverrides);
@@ -126,8 +126,8 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Confirm the picked quantity for a workorder pick line after scan resolution
-     * Confirm pick line quantity
+     * Queues asynchronous confirmation of a picked quantity on one pick line over the Kafka command feed per ADR-0044; the response carries status PENDING, and the inventory pick-task-updated fact later updates the local replica. Use this tool after resolvePickScan validates the scan; do not use completePickTask, which confirms the full remaining required quantity in one step. Preconditions: the pick task must exist on the workorder\'s pick list replica, and pickLineId must equal pickTaskId in the current single-line model. Required inputs: workorderId, pickTaskId, and pickLineId (UUIDs) as path parameters, plus quantityPicked (integer) in the body. Emits a WORKORDER_PICK_FACADE_CONFIRM_LINE event and publishes a pick-confirm command; callers must poll getPickTasks to observe the applied quantity. Returns 202 with status PENDING when the confirmation is queued, 400 when pickLineId does not match pickTaskId, 404 when the pick list or task is missing, and 503 when the command feed is unavailable. 
+     * Confirm Pick Line Quantity
      */
     async confirmPickLineRaw(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickTaskResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -184,8 +184,8 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Confirm the picked quantity for a workorder pick line after scan resolution
-     * Confirm pick line quantity
+     * Queues asynchronous confirmation of a picked quantity on one pick line over the Kafka command feed per ADR-0044; the response carries status PENDING, and the inventory pick-task-updated fact later updates the local replica. Use this tool after resolvePickScan validates the scan; do not use completePickTask, which confirms the full remaining required quantity in one step. Preconditions: the pick task must exist on the workorder\'s pick list replica, and pickLineId must equal pickTaskId in the current single-line model. Required inputs: workorderId, pickTaskId, and pickLineId (UUIDs) as path parameters, plus quantityPicked (integer) in the body. Emits a WORKORDER_PICK_FACADE_CONFIRM_LINE event and publishes a pick-confirm command; callers must poll getPickTasks to observe the applied quantity. Returns 202 with status PENDING when the confirmation is queued, 400 when pickLineId does not match pickTaskId, 404 when the pick list or task is missing, and 503 when the command feed is unavailable. 
+     * Confirm Pick Line Quantity
      */
     async confirmPickLine(requestParameters: ConfirmPickLineOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickTaskResponse> {
         const response = await this.confirmPickLineRaw(requestParameters, initOverrides);
@@ -193,51 +193,8 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the pick list for a workorder so parts can be staged and fulfilled
-     * Get pick list for workorder
-     */
-    async getPickListRaw(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickListResponse>> {
-        if (requestParameters['workorderId'] == null) {
-            throw new runtime.RequiredError(
-                'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling getPickList().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/workorders/{workorderId}/pick-list`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPickListResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve the pick list for a workorder so parts can be staged and fulfilled
-     * Get pick list for workorder
-     */
-    async getPickList(requestParameters: GetPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickListResponse> {
-        const response = await this.getPickListRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve the pick tasks for a workorder to guide pick-list execution
-     * Get pick tasks for workorder
+     * Returns the pick tasks of the workorder\'s primary pick list in sort order, each with its SKU, location, required and picked quantities, and status. Use this tool to drive pick execution line by line; use getWorkorderPickList instead for the list header and getPickedItems for what has already been picked. Preconditions: a pick list replica must already exist for the workorder. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only replica projection. Returns 404 when no pick list exists for the workorder. 
+     * Get Pick Tasks for Workorder
      */
     async getPickTasksRaw(requestParameters: GetPickTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderPickTaskResponse>>> {
         if (requestParameters['workorderId'] == null) {
@@ -270,8 +227,8 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the pick tasks for a workorder to guide pick-list execution
-     * Get pick tasks for workorder
+     * Returns the pick tasks of the workorder\'s primary pick list in sort order, each with its SKU, location, required and picked quantities, and status. Use this tool to drive pick execution line by line; use getWorkorderPickList instead for the list header and getPickedItems for what has already been picked. Preconditions: a pick list replica must already exist for the workorder. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only replica projection. Returns 404 when no pick list exists for the workorder. 
+     * Get Pick Tasks for Workorder
      */
     async getPickTasks(requestParameters: GetPickTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderPickTaskResponse>> {
         const response = await this.getPickTasksRaw(requestParameters, initOverrides);
@@ -279,28 +236,71 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolve a scanned item for a workorder pick task before confirming fulfillment
-     * Resolve scan for pick task
+     * Returns the workorder\'s primary pick list header from the local inventory replica so parts can be staged and fulfilled. Use this tool for the pick list summary; use getPickTasks instead for the individual pick lines that guide execution. Preconditions: a pick list replica must already exist for the workorder, replicated from pos-inventory facts. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only replica projection. Returns 404 when no pick list exists for the workorder. 
+     * Get Pick List for Workorder
      */
-    async resolveScanRaw(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResolveScanResponse>> {
+    async getWorkorderPickListRaw(requestParameters: GetWorkorderPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPickListResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling resolveScan().'
+                'Required parameter "workorderId" was null or undefined when calling getWorkorderPickList().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:pick_list:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/pick-list`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPickListResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the workorder\'s primary pick list header from the local inventory replica so parts can be staged and fulfilled. Use this tool for the pick list summary; use getPickTasks instead for the individual pick lines that guide execution. Preconditions: a pick list replica must already exist for the workorder, replicated from pos-inventory facts. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only replica projection. Returns 404 when no pick list exists for the workorder. 
+     * Get Pick List for Workorder
+     */
+    async getWorkorderPickList(requestParameters: GetWorkorderPickListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPickListResponse> {
+        const response = await this.getWorkorderPickListRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Checks a scanned SKU and location against a pick task\'s expected SKU and location, returning matched plus a matchStatus of MATCHED, SKU_MISMATCH, LOCATION_MISMATCH, or NO_MATCH. Use this tool to validate a barcode scan before confirmPickLine; it performs no confirmation itself, so do not treat a match as a recorded pick. Preconditions: the pick task must exist on the workorder\'s pick list replica. Required inputs: workorderId and pickTaskId (UUIDs) as path parameters, plus scannedSkuId and scannedLocationId (UUIDs) in the body. Emits a WORKORDER_PICK_FACADE_RESOLVE_SCAN audit event; no pick state changes — the check is purely evaluative. Returns 404 when the workorder has no pick list or the pick task is not on it. 
+     * Resolve Scan Against Pick Task
+     */
+    async resolvePickScanRaw(requestParameters: ResolvePickScanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResolveScanResponse>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling resolvePickScan().'
             );
         }
 
         if (requestParameters['pickTaskId'] == null) {
             throw new runtime.RequiredError(
                 'pickTaskId',
-                'Required parameter "pickTaskId" was null or undefined when calling resolveScan().'
+                'Required parameter "pickTaskId" was null or undefined when calling resolvePickScan().'
             );
         }
 
         if (requestParameters['resolveScanRequest'] == null) {
             throw new runtime.RequiredError(
                 'resolveScanRequest',
-                'Required parameter "resolveScanRequest" was null or undefined when calling resolveScan().'
+                'Required parameter "resolveScanRequest" was null or undefined when calling resolvePickScan().'
             );
         }
 
@@ -330,11 +330,11 @@ export class WorkorderPickFacadeApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolve a scanned item for a workorder pick task before confirming fulfillment
-     * Resolve scan for pick task
+     * Checks a scanned SKU and location against a pick task\'s expected SKU and location, returning matched plus a matchStatus of MATCHED, SKU_MISMATCH, LOCATION_MISMATCH, or NO_MATCH. Use this tool to validate a barcode scan before confirmPickLine; it performs no confirmation itself, so do not treat a match as a recorded pick. Preconditions: the pick task must exist on the workorder\'s pick list replica. Required inputs: workorderId and pickTaskId (UUIDs) as path parameters, plus scannedSkuId and scannedLocationId (UUIDs) in the body. Emits a WORKORDER_PICK_FACADE_RESOLVE_SCAN audit event; no pick state changes — the check is purely evaluative. Returns 404 when the workorder has no pick list or the pick task is not on it. 
+     * Resolve Scan Against Pick Task
      */
-    async resolveScan(requestParameters: ResolveScanOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResolveScanResponse> {
-        const response = await this.resolveScanRaw(requestParameters, initOverrides);
+    async resolvePickScan(requestParameters: ResolvePickScanRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResolveScanResponse> {
+        const response = await this.resolvePickScanRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

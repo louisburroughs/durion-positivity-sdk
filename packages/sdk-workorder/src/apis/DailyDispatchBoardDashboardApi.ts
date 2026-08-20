@@ -22,7 +22,7 @@ import {
     DashboardResponseToJSON,
 } from '../models/index';
 
-export interface GetDashboardRequest {
+export interface GetDispatchDashboardRequest {
     locationId: string;
     date?: Date;
 }
@@ -33,14 +33,14 @@ export interface GetDashboardRequest {
 export class DailyDispatchBoardDashboardApi extends runtime.BaseAPI {
 
     /**
-     * Returns workorder, mechanic, bay, and conflict data for the given location and date
-     * Get daily dispatch dashboard
+     * Returns the aggregated dispatch board for one location and one date: workorder summaries, mechanic statuses, bay statuses derived from workorder assignments, and detected scheduling conflicts. Use this tool when rendering the shop\'s daily dispatch board; do not use listWipWorkorders, which returns flat work-in-progress rows without mechanic, bay, or conflict aggregation. Preconditions: the location must exist as a UUID-keyed location; mechanic availability comes from local people replicas, and a failed replica lookup sets dataQualityWarning to true instead of failing the call. Required inputs: locationId (UUID as a string) as a query parameter; date (ISO date) is optional and defaults to today on the server clock. Emits a WORKEXEC_DASHBOARD_TODAY_GET audit event; no workorder state changes — this is a read-only aggregation. Returns 400 when locationId does not parse as a UUID, and 200 with empty panels when no workorders are scheduled for the date. 
+     * Get Daily Dispatch Board Dashboard
      */
-    async getDashboardRaw(requestParameters: GetDashboardRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardResponse>> {
+    async getDispatchDashboardRaw(requestParameters: GetDispatchDashboardRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DashboardResponse>> {
         if (requestParameters['locationId'] == null) {
             throw new runtime.RequiredError(
                 'locationId',
-                'Required parameter "locationId" was null or undefined when calling getDashboard().'
+                'Required parameter "locationId" was null or undefined when calling getDispatchDashboard().'
             );
         }
 
@@ -75,11 +75,11 @@ export class DailyDispatchBoardDashboardApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns workorder, mechanic, bay, and conflict data for the given location and date
-     * Get daily dispatch dashboard
+     * Returns the aggregated dispatch board for one location and one date: workorder summaries, mechanic statuses, bay statuses derived from workorder assignments, and detected scheduling conflicts. Use this tool when rendering the shop\'s daily dispatch board; do not use listWipWorkorders, which returns flat work-in-progress rows without mechanic, bay, or conflict aggregation. Preconditions: the location must exist as a UUID-keyed location; mechanic availability comes from local people replicas, and a failed replica lookup sets dataQualityWarning to true instead of failing the call. Required inputs: locationId (UUID as a string) as a query parameter; date (ISO date) is optional and defaults to today on the server clock. Emits a WORKEXEC_DASHBOARD_TODAY_GET audit event; no workorder state changes — this is a read-only aggregation. Returns 400 when locationId does not parse as a UUID, and 200 with empty panels when no workorders are scheduled for the date. 
+     * Get Daily Dispatch Board Dashboard
      */
-    async getDashboard(requestParameters: GetDashboardRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardResponse> {
-        const response = await this.getDashboardRaw(requestParameters, initOverrides);
+    async getDispatchDashboard(requestParameters: GetDispatchDashboardRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DashboardResponse> {
+        const response = await this.getDispatchDashboardRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

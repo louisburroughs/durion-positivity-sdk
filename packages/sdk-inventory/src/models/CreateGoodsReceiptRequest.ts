@@ -21,44 +21,44 @@ import {
 } from './CreateGoodsReceiptLineRequest';
 
 /**
- * 
+ * Request payload to record a goods receipt for inventory received against a purchase order, optionally linked to an ASN
  * @export
  * @interface CreateGoodsReceiptRequest
  */
 export interface CreateGoodsReceiptRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateGoodsReceiptRequest
-     */
-    poId: string;
-    /**
-     * 
+     * Identifier of the advance shipping notice (ASN) this receipt fulfills, if applicable
      * @type {string}
      * @memberof CreateGoodsReceiptRequest
      */
     asnId?: string;
     /**
-     * 
+     * Received line items detailing the SKUs and quantities in this goods receipt
+     * @type {Array<CreateGoodsReceiptLineRequest>}
+     * @memberof CreateGoodsReceiptRequest
+     */
+    lines: Array<CreateGoodsReceiptLineRequest>;
+    /**
+     * Identifier of the location where the goods are received into inventory
      * @type {string}
      * @memberof CreateGoodsReceiptRequest
      */
     locationId: string;
     /**
-     * 
-     * @type {Array<CreateGoodsReceiptLineRequest>}
+     * Identifier of the purchase order the goods are received against
+     * @type {string}
      * @memberof CreateGoodsReceiptRequest
      */
-    lines: Array<CreateGoodsReceiptLineRequest>;
+    poId: string;
 }
 
 /**
  * Check if a given object implements the CreateGoodsReceiptRequest interface.
  */
 export function instanceOfCreateGoodsReceiptRequest(value: object): boolean {
-    if (!('poId' in value)) return false;
-    if (!('locationId' in value)) return false;
     if (!('lines' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('poId' in value)) return false;
     return true;
 }
 
@@ -72,10 +72,10 @@ export function CreateGoodsReceiptRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'poId': json['poId'],
         'asnId': json['asnId'] == null ? undefined : json['asnId'],
-        'locationId': json['locationId'],
         'lines': ((json['lines'] as Array<any>).map(CreateGoodsReceiptLineRequestFromJSON)),
+        'locationId': json['locationId'],
+        'poId': json['poId'],
     };
 }
 
@@ -85,10 +85,10 @@ export function CreateGoodsReceiptRequestToJSON(value?: CreateGoodsReceiptReques
     }
     return {
         
-        'poId': value['poId'],
         'asnId': value['asnId'],
-        'locationId': value['locationId'],
         'lines': ((value['lines'] as Array<any>).map(CreateGoodsReceiptLineRequestToJSON)),
+        'locationId': value['locationId'],
+        'poId': value['poId'],
     };
 }
 

@@ -25,7 +25,7 @@ import {
     ConflictOverrideResponseToJSON,
 } from '../models/index';
 
-export interface ExecuteOverrideRequest {
+export interface ExecuteConflictOverrideRequest {
     appointmentId: string;
     conflictOverrideRequest: ConflictOverrideRequest;
 }
@@ -36,21 +36,21 @@ export interface ExecuteOverrideRequest {
 export class ConflictOverrideAPIApi extends runtime.BaseAPI {
 
     /**
-     * Executes a conflict override for the specified appointment when authorized.
-     * Execute appointment conflict override
+     * Records a manager-authorized bypass of a detected scheduling conflict, flagging the appointment as conflict-overridden and persisting an immutable override record with the acting user and timestamp. Use this tool when a blocking conflict on an appointment must be deliberately accepted; do not use createAssignment with override=true, which overrides assignment constraints while staffing, and do not use rescheduleAppointment, which resolves the conflict by moving the appointment instead. Preconditions: the appointment must exist, and the caller must hold the shop:schedule:edit or appointments:reschedule authority. Required inputs: appointmentId in the body matching the path parameter, and a non-blank overrideReason; conflictDetails is an optional JSON string describing the conflict being bypassed. Emits a SHOPMGR_APPOINTMENT_CONFLICT_OVERRIDE_CREATE event, sets the appointment\'s conflict-override flag and stores the override record with the actor resolved from the security context. Returns 400 when the path and body appointmentId differ, the overrideReason is blank, or the appointment cannot be resolved, and 403 when the caller lacks the required authority. 
+     * Override a Scheduling Conflict on an Appointment
      */
-    async executeOverrideRaw(requestParameters: ExecuteOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConflictOverrideResponse>> {
+    async executeConflictOverrideRaw(requestParameters: ExecuteConflictOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ConflictOverrideResponse>> {
         if (requestParameters['appointmentId'] == null) {
             throw new runtime.RequiredError(
                 'appointmentId',
-                'Required parameter "appointmentId" was null or undefined when calling executeOverride().'
+                'Required parameter "appointmentId" was null or undefined when calling executeConflictOverride().'
             );
         }
 
         if (requestParameters['conflictOverrideRequest'] == null) {
             throw new runtime.RequiredError(
                 'conflictOverrideRequest',
-                'Required parameter "conflictOverrideRequest" was null or undefined when calling executeOverride().'
+                'Required parameter "conflictOverrideRequest" was null or undefined when calling executeConflictOverride().'
             );
         }
 
@@ -80,11 +80,11 @@ export class ConflictOverrideAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Executes a conflict override for the specified appointment when authorized.
-     * Execute appointment conflict override
+     * Records a manager-authorized bypass of a detected scheduling conflict, flagging the appointment as conflict-overridden and persisting an immutable override record with the acting user and timestamp. Use this tool when a blocking conflict on an appointment must be deliberately accepted; do not use createAssignment with override=true, which overrides assignment constraints while staffing, and do not use rescheduleAppointment, which resolves the conflict by moving the appointment instead. Preconditions: the appointment must exist, and the caller must hold the shop:schedule:edit or appointments:reschedule authority. Required inputs: appointmentId in the body matching the path parameter, and a non-blank overrideReason; conflictDetails is an optional JSON string describing the conflict being bypassed. Emits a SHOPMGR_APPOINTMENT_CONFLICT_OVERRIDE_CREATE event, sets the appointment\'s conflict-override flag and stores the override record with the actor resolved from the security context. Returns 400 when the path and body appointmentId differ, the overrideReason is blank, or the appointment cannot be resolved, and 403 when the caller lacks the required authority. 
+     * Override a Scheduling Conflict on an Appointment
      */
-    async executeOverride(requestParameters: ExecuteOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConflictOverrideResponse> {
-        const response = await this.executeOverrideRaw(requestParameters, initOverrides);
+    async executeConflictOverride(requestParameters: ExecuteConflictOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ConflictOverrideResponse> {
+        const response = await this.executeConflictOverrideRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -20,101 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface EstimateResponse {
     /**
-     * Unique identifier for the estimate
+     * Additional notes provided at approval time
      * @type {string}
      * @memberof EstimateResponse
      */
-    id?: string;
-    /**
-     * Estimate number
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    estimateNumber?: string;
-    /**
-     * Customer ID
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    customerId?: string;
-    /**
-     * Vehicle ID
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    vehicleId?: string;
-    /**
-     * Location ID
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    locationId?: string;
-    /**
-     * Currency UOM ID
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    currencyUomId?: string;
-    /**
-     * Tax region ID
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    taxRegionId?: string;
-    /**
-     * Estimate status
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    status?: string;
-    /**
-     * Username who created the estimate
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    createdByUserId?: string;
-    /**
-     * Date and time the estimate was created
-     * @type {Date}
-     * @memberof EstimateResponse
-     */
-    createdAt?: Date;
-    /**
-     * Subtotal amount before tax
-     * @type {number}
-     * @memberof EstimateResponse
-     */
-    subtotal?: number;
-    /**
-     * Tax amount
-     * @type {number}
-     * @memberof EstimateResponse
-     */
-    taxAmount?: number;
-    /**
-     * Total amount including tax
-     * @type {number}
-     * @memberof EstimateResponse
-     */
-    total?: number;
-    /**
-     * Date and time the estimate was submitted for approval
-     * @type {Date}
-     * @memberof EstimateResponse
-     */
-    submittedAt?: Date;
-    /**
-     * Username who submitted the estimate for approval
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    submittedBy?: string;
-    /**
-     * Date and time the approval window expires
-     * @type {Date}
-     * @memberof EstimateResponse
-     */
-    expiresAt?: Date;
+    approvalNotes?: string;
     /**
      * Date and time the estimate was approved
      * @type {Date}
@@ -127,6 +37,78 @@ export interface EstimateResponse {
      * @memberof EstimateResponse
      */
     approvedBy?: string;
+    /**
+     * Date and time the estimate was created
+     * @type {Date}
+     * @memberof EstimateResponse
+     */
+    createdAt?: Date;
+    /**
+     * Username who created the estimate
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    createdByUserId?: string;
+    /**
+     * List of CRM contact identifiers
+     * @type {Array<string>}
+     * @memberof EstimateResponse
+     */
+    crmContactIds?: Array<string>;
+    /**
+     * CRM party identifier
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    crmPartyId?: string;
+    /**
+     * CRM vehicle identifier
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    crmVehicleId?: string;
+    /**
+     * Currency UOM ID
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    currencyUomId?: string;
+    /**
+     * Customer ID
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    customerId?: string;
+    /**
+     * Estimate number
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    estimateNumber: string;
+    /**
+     * Date and time the approval window expires
+     * @type {Date}
+     * @memberof EstimateResponse
+     */
+    expiresAt?: Date;
+    /**
+     * Unique identifier for the estimate
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    id: string;
+    /**
+     * Location ID
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    locationId?: string;
+    /**
+     * Purchase order number for commercial accounts
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    purchaseOrderNumber?: string;
     /**
      * Base64-encoded signature image
      * @type {string}
@@ -146,47 +128,68 @@ export interface EstimateResponse {
      */
     signerName?: string;
     /**
-     * Additional notes provided at approval time
+     * Estimate status
      * @type {string}
      * @memberof EstimateResponse
      */
-    approvalNotes?: string;
+    status: string;
     /**
-     * Purchase order number for commercial accounts
+     * Date and time the estimate was submitted for approval
+     * @type {Date}
+     * @memberof EstimateResponse
+     */
+    submittedAt?: Date;
+    /**
+     * Username who submitted the estimate for approval
      * @type {string}
      * @memberof EstimateResponse
      */
-    purchaseOrderNumber?: string;
+    submittedBy?: string;
+    /**
+     * Subtotal amount before tax
+     * @type {number}
+     * @memberof EstimateResponse
+     */
+    subtotal?: number;
+    /**
+     * Tax amount
+     * @type {number}
+     * @memberof EstimateResponse
+     */
+    taxAmount?: number;
+    /**
+     * Whether tax is pending because the tax service was unavailable at calculation time (degraded estimate; no rate invented). Cleared by a successful recalculation.
+     * @type {boolean}
+     * @memberof EstimateResponse
+     */
+    taxPending?: boolean;
+    /**
+     * Total amount including tax
+     * @type {number}
+     * @memberof EstimateResponse
+     */
+    total?: number;
+    /**
+     * Vehicle ID
+     * @type {string}
+     * @memberof EstimateResponse
+     */
+    vehicleId?: string;
     /**
      * Optimistic locking version
      * @type {number}
      * @memberof EstimateResponse
      */
     version?: number;
-    /**
-     * CRM party identifier
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    crmPartyId?: string;
-    /**
-     * CRM vehicle identifier
-     * @type {string}
-     * @memberof EstimateResponse
-     */
-    crmVehicleId?: string;
-    /**
-     * List of CRM contact identifiers
-     * @type {Array<string>}
-     * @memberof EstimateResponse
-     */
-    crmContactIds?: Array<string>;
 }
 
 /**
  * Check if a given object implements the EstimateResponse interface.
  */
 export function instanceOfEstimateResponse(value: object): boolean {
+    if (!('estimateNumber' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -200,33 +203,33 @@ export function EstimateResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'estimateNumber': json['estimateNumber'] == null ? undefined : json['estimateNumber'],
-        'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'currencyUomId': json['currencyUomId'] == null ? undefined : json['currencyUomId'],
-        'taxRegionId': json['taxRegionId'] == null ? undefined : json['taxRegionId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
-        'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
-        'total': json['total'] == null ? undefined : json['total'],
-        'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
-        'submittedBy': json['submittedBy'] == null ? undefined : json['submittedBy'],
-        'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
+        'approvalNotes': json['approvalNotes'] == null ? undefined : json['approvalNotes'],
         'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
+        'crmContactIds': json['crmContactIds'] == null ? undefined : json['crmContactIds'],
+        'crmPartyId': json['crmPartyId'] == null ? undefined : json['crmPartyId'],
+        'crmVehicleId': json['crmVehicleId'] == null ? undefined : json['crmVehicleId'],
+        'currencyUomId': json['currencyUomId'] == null ? undefined : json['currencyUomId'],
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
+        'estimateNumber': json['estimateNumber'],
+        'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
+        'id': json['id'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'purchaseOrderNumber': json['purchaseOrderNumber'] == null ? undefined : json['purchaseOrderNumber'],
         'signatureData': json['signatureData'] == null ? undefined : json['signatureData'],
         'signatureMimeType': json['signatureMimeType'] == null ? undefined : json['signatureMimeType'],
         'signerName': json['signerName'] == null ? undefined : json['signerName'],
-        'approvalNotes': json['approvalNotes'] == null ? undefined : json['approvalNotes'],
-        'purchaseOrderNumber': json['purchaseOrderNumber'] == null ? undefined : json['purchaseOrderNumber'],
+        'status': json['status'],
+        'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
+        'submittedBy': json['submittedBy'] == null ? undefined : json['submittedBy'],
+        'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
+        'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
+        'taxPending': json['taxPending'] == null ? undefined : json['taxPending'],
+        'total': json['total'] == null ? undefined : json['total'],
+        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
         'version': json['version'] == null ? undefined : json['version'],
-        'crmPartyId': json['crmPartyId'] == null ? undefined : json['crmPartyId'],
-        'crmVehicleId': json['crmVehicleId'] == null ? undefined : json['crmVehicleId'],
-        'crmContactIds': json['crmContactIds'] == null ? undefined : json['crmContactIds'],
     };
 }
 
@@ -236,33 +239,33 @@ export function EstimateResponseToJSON(value?: EstimateResponse | null): any {
     }
     return {
         
-        'id': value['id'],
-        'estimateNumber': value['estimateNumber'],
-        'customerId': value['customerId'],
-        'vehicleId': value['vehicleId'],
-        'locationId': value['locationId'],
-        'currencyUomId': value['currencyUomId'],
-        'taxRegionId': value['taxRegionId'],
-        'status': value['status'],
-        'createdByUserId': value['createdByUserId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'subtotal': value['subtotal'],
-        'taxAmount': value['taxAmount'],
-        'total': value['total'],
-        'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
-        'submittedBy': value['submittedBy'],
-        'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
+        'approvalNotes': value['approvalNotes'],
         'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedBy': value['approvedBy'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'createdByUserId': value['createdByUserId'],
+        'crmContactIds': value['crmContactIds'],
+        'crmPartyId': value['crmPartyId'],
+        'crmVehicleId': value['crmVehicleId'],
+        'currencyUomId': value['currencyUomId'],
+        'customerId': value['customerId'],
+        'estimateNumber': value['estimateNumber'],
+        'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
+        'id': value['id'],
+        'locationId': value['locationId'],
+        'purchaseOrderNumber': value['purchaseOrderNumber'],
         'signatureData': value['signatureData'],
         'signatureMimeType': value['signatureMimeType'],
         'signerName': value['signerName'],
-        'approvalNotes': value['approvalNotes'],
-        'purchaseOrderNumber': value['purchaseOrderNumber'],
+        'status': value['status'],
+        'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
+        'submittedBy': value['submittedBy'],
+        'subtotal': value['subtotal'],
+        'taxAmount': value['taxAmount'],
+        'taxPending': value['taxPending'],
+        'total': value['total'],
+        'vehicleId': value['vehicleId'],
         'version': value['version'],
-        'crmPartyId': value['crmPartyId'],
-        'crmVehicleId': value['crmVehicleId'],
-        'crmContactIds': value['crmContactIds'],
     };
 }
 

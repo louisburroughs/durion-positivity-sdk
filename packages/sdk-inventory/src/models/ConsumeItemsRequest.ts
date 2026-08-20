@@ -21,29 +21,29 @@ import {
 } from './ConsumeItemLine';
 
 /**
- * 
+ * Request payload to consume inventory items against a workorder, optionally drawn from a specific pick list
  * @export
  * @interface ConsumeItemsRequest
  */
 export interface ConsumeItemsRequest {
     /**
-     * 
-     * @type {string}
+     * Line items identifying the SKUs and quantities to consume
+     * @type {Array<ConsumeItemLine>}
      * @memberof ConsumeItemsRequest
      */
-    workorderId: string;
+    items?: Array<ConsumeItemLine>;
     /**
-     * 
+     * Identifier of the pick list the consumed items are drawn from, if applicable
      * @type {string}
      * @memberof ConsumeItemsRequest
      */
     pickListId?: string;
     /**
-     * 
-     * @type {Array<ConsumeItemLine>}
+     * Identifier of the workorder the items are consumed for
+     * @type {string}
      * @memberof ConsumeItemsRequest
      */
-    items?: Array<ConsumeItemLine>;
+    workorderId: string;
 }
 
 /**
@@ -64,9 +64,9 @@ export function ConsumeItemsRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'workorderId': json['workorderId'],
-        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
         'items': json['items'] == null ? undefined : ((json['items'] as Array<any>).map(ConsumeItemLineFromJSON)),
+        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -76,9 +76,9 @@ export function ConsumeItemsRequestToJSON(value?: ConsumeItemsRequest | null): a
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'pickListId': value['pickListId'],
         'items': value['items'] == null ? undefined : ((value['items'] as Array<any>).map(ConsumeItemLineToJSON)),
+        'pickListId': value['pickListId'],
+        'workorderId': value['workorderId'],
     };
 }
 

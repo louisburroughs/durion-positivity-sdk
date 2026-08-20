@@ -40,19 +40,15 @@ import {
     ValidateResponseToJSON,
 } from '../models/index';
 
-export interface GenerateTokenPairRequest {
-    tokenPairRequest: TokenPairRequest;
-}
-
-export interface GetRolesRequest {
+export interface GetTokenRolesRequest {
     token: string;
 }
 
-export interface GetSubjectRequest {
+export interface GetTokenSubjectRequest {
     token: string;
 }
 
-export interface GetUserIdRequest {
+export interface GetTokenUserIdRequest {
     token: string;
 }
 
@@ -60,7 +56,11 @@ export interface IssueInternalTokenRequest {
     internalTokenRequest: InternalTokenRequest;
 }
 
-export interface RefreshAccessTokenRequest {
+export interface IssueTokenPairRequest {
+    tokenPairRequest: TokenPairRequest;
+}
+
+export interface RefreshTokenPairRequest {
     refreshTokenRequest: RefreshTokenRequest;
 }
 
@@ -78,60 +78,14 @@ export interface ValidateTokenRequest {
 export class JWTAPIApi extends runtime.BaseAPI {
 
     /**
-     * Privileged internal endpoint that issues both access token (1-hour) and refresh token (7-day). Requires authority security:token:issue_internal. See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
-     * Issue privileged JWT token pair (access + refresh)
+     * Extracts the roles claim from a valid JWT token and returns the normalized role names. Use this tool when a caller holds a token and needs its roles; use getTokenSubject instead for the username, and decodePermissionBits instead to expand the token\'s perm_bits claim into permission codes. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extract Roles From JWT Token
      */
-    async generateTokenPairRaw(requestParameters: GenerateTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
-        if (requestParameters['tokenPairRequest'] == null) {
-            throw new runtime.RequiredError(
-                'tokenPairRequest',
-                'Required parameter "tokenPairRequest" was null or undefined when calling generateTokenPair().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:token:issue_internal"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/auth/token-pair`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: TokenPairRequestToJSON(requestParameters['tokenPairRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => TokenPairResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Privileged internal endpoint that issues both access token (1-hour) and refresh token (7-day). Requires authority security:token:issue_internal. See BACKEND_CONTRACT_GUIDE.md §Token Pair Endpoint for full specification.
-     * Issue privileged JWT token pair (access + refresh)
-     */
-    async generateTokenPair(requestParameters: GenerateTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
-        const response = await this.generateTokenPairRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Get the roles claim from a JWT token
-     * Extract roles from JWT token
-     */
-    async getRolesRaw(requestParameters: GetRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<string>>> {
+    async getTokenRolesRaw(requestParameters: GetTokenRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<string>>> {
         if (requestParameters['token'] == null) {
             throw new runtime.RequiredError(
                 'token',
-                'Required parameter "token" was null or undefined when calling getRoles().'
+                'Required parameter "token" was null or undefined when calling getTokenRoles().'
             );
         }
 
@@ -162,23 +116,23 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get the roles claim from a JWT token
-     * Extract roles from JWT token
+     * Extracts the roles claim from a valid JWT token and returns the normalized role names. Use this tool when a caller holds a token and needs its roles; use getTokenSubject instead for the username, and decodePermissionBits instead to expand the token\'s perm_bits claim into permission codes. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extract Roles From JWT Token
      */
-    async getRoles(requestParameters: GetRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<string>> {
-        const response = await this.getRolesRaw(requestParameters, initOverrides);
+    async getTokenRoles(requestParameters: GetTokenRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<string>> {
+        const response = await this.getTokenRolesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Get the subject (username) from a JWT token
-     * Extract subject from JWT token
+     * Extracts the subject claim, the username, from a valid JWT token and returns it as a plain string body. Use this tool to resolve which user a token belongs to; use getTokenUserId instead for the stable UUID identifier, and getTokenRoles for the role claim. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extract Subject From JWT Token
      */
-    async getSubjectRaw(requestParameters: GetSubjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+    async getTokenSubjectRaw(requestParameters: GetTokenSubjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
         if (requestParameters['token'] == null) {
             throw new runtime.RequiredError(
                 'token',
-                'Required parameter "token" was null or undefined when calling getSubject().'
+                'Required parameter "token" was null or undefined when calling getTokenSubject().'
             );
         }
 
@@ -213,23 +167,23 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get the subject (username) from a JWT token
-     * Extract subject from JWT token
+     * Extracts the subject claim, the username, from a valid JWT token and returns it as a plain string body. Use this tool to resolve which user a token belongs to; use getTokenUserId instead for the stable UUID identifier, and getTokenRoles for the role claim. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extract Subject From JWT Token
      */
-    async getSubject(requestParameters: GetSubjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
-        const response = await this.getSubjectRaw(requestParameters, initOverrides);
+    async getTokenSubject(requestParameters: GetTokenSubjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.getTokenSubjectRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Get the stable user identifier from a JWT token
-     * Extract userId from JWT token
+     * Extracts the stable user identifier from a valid JWT token\'s uid claim (falling back to the legacy userId claim) and returns it as a plain string body. Use this tool to resolve the user UUID behind a token; use getTokenSubject instead when the username is what is needed. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extract User Id From JWT Token
      */
-    async getUserIdRaw(requestParameters: GetUserIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
+    async getTokenUserIdRaw(requestParameters: GetTokenUserIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
         if (requestParameters['token'] == null) {
             throw new runtime.RequiredError(
                 'token',
-                'Required parameter "token" was null or undefined when calling getUserId().'
+                'Required parameter "token" was null or undefined when calling getTokenUserId().'
             );
         }
 
@@ -264,17 +218,17 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get the stable user identifier from a JWT token
-     * Extract userId from JWT token
+     * Extracts the stable user identifier from a valid JWT token\'s uid claim (falling back to the legacy userId claim) and returns it as a plain string body. Use this tool to resolve the user UUID behind a token; use getTokenSubject instead when the username is what is needed. Preconditions: the token must pass full validation, including revocation and token-store checks. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only claim extraction. Returns 401 when the token is invalid, expired, revoked, or unknown to the token store. 
+     * Extract User Id From JWT Token
      */
-    async getUserId(requestParameters: GetUserIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
-        const response = await this.getUserIdRaw(requestParameters, initOverrides);
+    async getTokenUserId(requestParameters: GetTokenUserIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+        const response = await this.getTokenUserIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Internal endpoint to issue a JWT access token (1-hour expiration). See BACKEND_CONTRACT_GUIDE.md §Login Endpoint for full specification.
-     * Issue internal JWT access token
+     * Issues a single JWT access token (1-hour expiry) for an existing user\'s username on behalf of a trusted internal caller, without checking a password. Use this tool for internal service-to-service token minting when only an access token is needed; do not use issueTokenPair, which also returns a 7-day refresh token, and do not use loginUser, which authenticates with credentials. Preconditions: the caller must hold security:token:issue_internal, and a user must already exist for the subject username. Required inputs: subject, an existing username; roles is nominally optional, but an empty effective role set is rejected, so supply at least one role name. Emits a SECURITY_AUTH_INTERNAL_TOKEN_ISSUE event and persists the issued token so validateToken and revokeToken recognize it. Returns 400 when the subject is blank, no user exists for the subject, or the role set is empty. 
+     * Issue Internal JWT Access Token
      */
     async issueInternalTokenRaw(requestParameters: IssueInternalTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenResponse>> {
         if (requestParameters['internalTokenRequest'] == null) {
@@ -310,8 +264,8 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Internal endpoint to issue a JWT access token (1-hour expiration). See BACKEND_CONTRACT_GUIDE.md §Login Endpoint for full specification.
-     * Issue internal JWT access token
+     * Issues a single JWT access token (1-hour expiry) for an existing user\'s username on behalf of a trusted internal caller, without checking a password. Use this tool for internal service-to-service token minting when only an access token is needed; do not use issueTokenPair, which also returns a 7-day refresh token, and do not use loginUser, which authenticates with credentials. Preconditions: the caller must hold security:token:issue_internal, and a user must already exist for the subject username. Required inputs: subject, an existing username; roles is nominally optional, but an empty effective role set is rejected, so supply at least one role name. Emits a SECURITY_AUTH_INTERNAL_TOKEN_ISSUE event and persists the issued token so validateToken and revokeToken recognize it. Returns 400 when the subject is blank, no user exists for the subject, or the role set is empty. 
+     * Issue Internal JWT Access Token
      */
     async issueInternalToken(requestParameters: IssueInternalTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenResponse> {
         const response = await this.issueInternalTokenRaw(requestParameters, initOverrides);
@@ -319,14 +273,60 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Exchange a valid refresh token for a new access token and refresh token. Old tokens are immediately revoked. See BACKEND_CONTRACT_GUIDE.md §Refresh Endpoint for full specification.
-     * Refresh access token using refresh token
+     * Privileged internal endpoint that issues a JWT access token (1-hour) and refresh token (7-day) for an existing user\'s username on behalf of a trusted internal caller, embedding uid, roles, perm_bits, and perm_ver claims. Use this tool when an internal caller needs a refreshable session for an existing user; do not use issueInternalToken, which returns only a single access token, and do not use loginUser, which requires the user\'s password. Preconditions: the caller must hold security:token:issue_internal, and a user must already exist for the subject username. Required inputs: subject, an existing username, and at least one role name in roles; roles are expanded to authorities and encoded into the perm_bits bitset claim. Emits a SECURITY_AUTH_TOKEN_PAIR event and persists the pair so validateToken and refreshTokenPair recognize it. Returns 400 when the subject is blank, no user exists for the subject, or the role set is empty. 
+     * Issue Privileged JWT Token Pair
      */
-    async refreshAccessTokenRaw(requestParameters: RefreshAccessTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
+    async issueTokenPairRaw(requestParameters: IssueTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
+        if (requestParameters['tokenPairRequest'] == null) {
+            throw new runtime.RequiredError(
+                'tokenPairRequest',
+                'Required parameter "tokenPairRequest" was null or undefined when calling issueTokenPair().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:token:issue_internal"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/auth/token-pair`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TokenPairRequestToJSON(requestParameters['tokenPairRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TokenPairResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Privileged internal endpoint that issues a JWT access token (1-hour) and refresh token (7-day) for an existing user\'s username on behalf of a trusted internal caller, embedding uid, roles, perm_bits, and perm_ver claims. Use this tool when an internal caller needs a refreshable session for an existing user; do not use issueInternalToken, which returns only a single access token, and do not use loginUser, which requires the user\'s password. Preconditions: the caller must hold security:token:issue_internal, and a user must already exist for the subject username. Required inputs: subject, an existing username, and at least one role name in roles; roles are expanded to authorities and encoded into the perm_bits bitset claim. Emits a SECURITY_AUTH_TOKEN_PAIR event and persists the pair so validateToken and refreshTokenPair recognize it. Returns 400 when the subject is blank, no user exists for the subject, or the role set is empty. 
+     * Issue Privileged JWT Token Pair
+     */
+    async issueTokenPair(requestParameters: IssueTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
+        const response = await this.issueTokenPairRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Exchanges a valid refresh token for a new access and refresh token pair, revoking the old pair in the same call (token rotation). Use this tool when an access token nears expiry and the client still holds a refresh token; do not use loginUser, which requires credentials, and do not use validateToken, which only checks a token without renewing it. Preconditions: the refresh token must be unexpired, unrevoked, present in the token store, and its user must still exist with at least one role. Required inputs: refreshToken, the exact refresh token string previously issued. Emits a SECURITY_AUTH_REFRESH event, revokes the old access and refresh token JTIs in Redis, deletes the stored pair, and persists the replacement pair. Returns 400 when the refresh token is invalid, expired, revoked, or unknown, or the user has no roles, 401 with INVALID_REFRESH_TOKEN when the referenced user no longer exists, and 409 when concurrent refreshes race on the same token. 
+     * Refresh Access Token With Rotation
+     */
+    async refreshTokenPairRaw(requestParameters: RefreshTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
         if (requestParameters['refreshTokenRequest'] == null) {
             throw new runtime.RequiredError(
                 'refreshTokenRequest',
-                'Required parameter "refreshTokenRequest" was null or undefined when calling refreshAccessToken().'
+                'Required parameter "refreshTokenRequest" was null or undefined when calling refreshTokenPair().'
             );
         }
 
@@ -348,17 +348,17 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Exchange a valid refresh token for a new access token and refresh token. Old tokens are immediately revoked. See BACKEND_CONTRACT_GUIDE.md §Refresh Endpoint for full specification.
-     * Refresh access token using refresh token
+     * Exchanges a valid refresh token for a new access and refresh token pair, revoking the old pair in the same call (token rotation). Use this tool when an access token nears expiry and the client still holds a refresh token; do not use loginUser, which requires credentials, and do not use validateToken, which only checks a token without renewing it. Preconditions: the refresh token must be unexpired, unrevoked, present in the token store, and its user must still exist with at least one role. Required inputs: refreshToken, the exact refresh token string previously issued. Emits a SECURITY_AUTH_REFRESH event, revokes the old access and refresh token JTIs in Redis, deletes the stored pair, and persists the replacement pair. Returns 400 when the refresh token is invalid, expired, revoked, or unknown, or the user has no roles, 401 with INVALID_REFRESH_TOKEN when the referenced user no longer exists, and 409 when concurrent refreshes race on the same token. 
+     * Refresh Access Token With Rotation
      */
-    async refreshAccessToken(requestParameters: RefreshAccessTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
-        const response = await this.refreshAccessTokenRaw(requestParameters, initOverrides);
+    async refreshTokenPair(requestParameters: RefreshTokenPairRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
+        const response = await this.refreshTokenPairRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Revoke a JWT token immediately (Redis cache + database)
-     * Revoke JWT token
+     * Revokes a JWT access token immediately by deleting its stored pair and adding its JTI to the Redis revocation cache until natural expiry. Use this tool to invalidate one compromised or abandoned token; do not use disableUserAccount, which revokes every token for a user and blocks future sign-in. Preconditions: an authenticated caller; the token should exist in the token store, though an unknown token is silently ignored. Required inputs: token as a query parameter, the exact access token string to revoke. Emits a SECURITY_AUTH_REVOKE event; revocation takes effect immediately for validateToken and downstream gateway checks. Returns 204 in all cases, including when the token was not found, so revocation success cannot be inferred from the status code. 
+     * Revoke a JWT Access Token
      */
     async revokeTokenRaw(requestParameters: RevokeTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['token'] == null) {
@@ -395,16 +395,16 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Revoke a JWT token immediately (Redis cache + database)
-     * Revoke JWT token
+     * Revokes a JWT access token immediately by deleting its stored pair and adding its JTI to the Redis revocation cache until natural expiry. Use this tool to invalidate one compromised or abandoned token; do not use disableUserAccount, which revokes every token for a user and blocks future sign-in. Preconditions: an authenticated caller; the token should exist in the token store, though an unknown token is silently ignored. Required inputs: token as a query parameter, the exact access token string to revoke. Emits a SECURITY_AUTH_REVOKE event; revocation takes effect immediately for validateToken and downstream gateway checks. Returns 204 in all cases, including when the token was not found, so revocation success cannot be inferred from the status code. 
+     * Revoke a JWT Access Token
      */
     async revokeToken(requestParameters: RevokeTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.revokeTokenRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Check if a JWT token is valid (signature, expiration, revocation)
-     * Validate JWT token
+     * Checks whether a JWT access token is currently valid by verifying signature, issuer, audience, expiry, Redis revocation status, and presence in the token store. Use this tool to test a token without side effects; do not use refreshTokenPair, which rotates tokens, and do not use revokeToken, which invalidates one. Preconditions: none beyond possessing the token string; the endpoint is public. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only check. Returns 200 in all cases with a valid flag, so callers must read valid=false rather than expect an error status when the token fails any check. 
+     * Validate a JWT Access Token
      */
     async validateTokenRaw(requestParameters: ValidateTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ValidateResponse>> {
         if (requestParameters['token'] == null) {
@@ -433,8 +433,8 @@ export class JWTAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Check if a JWT token is valid (signature, expiration, revocation)
-     * Validate JWT token
+     * Checks whether a JWT access token is currently valid by verifying signature, issuer, audience, expiry, Redis revocation status, and presence in the token store. Use this tool to test a token without side effects; do not use refreshTokenPair, which rotates tokens, and do not use revokeToken, which invalidates one. Preconditions: none beyond possessing the token string; the endpoint is public. Required inputs: token as a query parameter. No events are emitted and no state changes; this is a read-only check. Returns 200 in all cases with a valid flag, so callers must read valid=false rather than expect an error status when the token fails any check. 
+     * Validate a JWT Access Token
      */
     async validateToken(requestParameters: ValidateTokenRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ValidateResponse> {
         const response = await this.validateTokenRaw(requestParameters, initOverrides);

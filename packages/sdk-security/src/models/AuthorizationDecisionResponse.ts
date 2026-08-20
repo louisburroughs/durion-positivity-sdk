@@ -14,23 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of an authorization decision check
  * @export
  * @interface AuthorizationDecisionResponse
  */
 export interface AuthorizationDecisionResponse {
     /**
-     * 
+     * Authorization decision (PERMIT|DENY)
      * @type {string}
      * @memberof AuthorizationDecisionResponse
      */
-    decision?: string;
+    decision: string;
 }
 
 /**
  * Check if a given object implements the AuthorizationDecisionResponse interface.
  */
 export function instanceOfAuthorizationDecisionResponse(value: object): boolean {
+    if (!('decision' in value)) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function AuthorizationDecisionResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'decision': json['decision'] == null ? undefined : json['decision'],
+        'decision': json['decision'],
     };
 }
 

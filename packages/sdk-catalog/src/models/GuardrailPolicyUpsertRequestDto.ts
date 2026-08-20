@@ -14,45 +14,45 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for upserting a pricing guardrail policy
  * @export
  * @interface GuardrailPolicyUpsertRequestDto
  */
 export interface GuardrailPolicyUpsertRequestDto {
     /**
-     * 
-     * @type {string}
-     * @memberof GuardrailPolicyUpsertRequestDto
-     */
-    scopeId: string;
-    /**
-     * 
+     * Threshold percent below which overrides are auto-approved
      * @type {number}
      * @memberof GuardrailPolicyUpsertRequestDto
      */
-    minMarginPercent: number;
+    autoApprovalThresholdPercent: number;
     /**
-     * 
+     * Maximum allowed discount percent
      * @type {number}
      * @memberof GuardrailPolicyUpsertRequestDto
      */
     maxDiscountPercent: number;
     /**
-     * 
+     * Minimum allowed margin percent
      * @type {number}
      * @memberof GuardrailPolicyUpsertRequestDto
      */
-    autoApprovalThresholdPercent: number;
+    minMarginPercent: number;
+    /**
+     * Scope identifier the guardrail policy applies to
+     * @type {string}
+     * @memberof GuardrailPolicyUpsertRequestDto
+     */
+    scopeId: string;
 }
 
 /**
  * Check if a given object implements the GuardrailPolicyUpsertRequestDto interface.
  */
 export function instanceOfGuardrailPolicyUpsertRequestDto(value: object): boolean {
-    if (!('scopeId' in value)) return false;
-    if (!('minMarginPercent' in value)) return false;
-    if (!('maxDiscountPercent' in value)) return false;
     if (!('autoApprovalThresholdPercent' in value)) return false;
+    if (!('maxDiscountPercent' in value)) return false;
+    if (!('minMarginPercent' in value)) return false;
+    if (!('scopeId' in value)) return false;
     return true;
 }
 
@@ -66,10 +66,10 @@ export function GuardrailPolicyUpsertRequestDtoFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'scopeId': json['scopeId'],
-        'minMarginPercent': json['minMarginPercent'],
-        'maxDiscountPercent': json['maxDiscountPercent'],
         'autoApprovalThresholdPercent': json['autoApprovalThresholdPercent'],
+        'maxDiscountPercent': json['maxDiscountPercent'],
+        'minMarginPercent': json['minMarginPercent'],
+        'scopeId': json['scopeId'],
     };
 }
 
@@ -79,10 +79,10 @@ export function GuardrailPolicyUpsertRequestDtoToJSON(value?: GuardrailPolicyUps
     }
     return {
         
-        'scopeId': value['scopeId'],
-        'minMarginPercent': value['minMarginPercent'],
-        'maxDiscountPercent': value['maxDiscountPercent'],
         'autoApprovalThresholdPercent': value['autoApprovalThresholdPercent'],
+        'maxDiscountPercent': value['maxDiscountPercent'],
+        'minMarginPercent': value['minMarginPercent'],
+        'scopeId': value['scopeId'],
     };
 }
 

@@ -20,24 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface EventTypeResponse {
     /**
-     * Event type identifier
-     * @type {string}
-     * @memberof EventTypeResponse
-     */
-    id: string;
-    /**
-     * Unique event type code
-     * @type {string}
-     * @memberof EventTypeResponse
-     */
-    typeCode: string;
-    /**
-     * Human-readable event type description
-     * @type {string}
-     * @memberof EventTypeResponse
-     */
-    description: string;
-    /**
      * Whether this event type is active
      * @type {boolean}
      * @memberof EventTypeResponse
@@ -49,6 +31,18 @@ export interface EventTypeResponse {
      * @memberof EventTypeResponse
      */
     apiVersion: string;
+    /**
+     * Human-readable event type description
+     * @type {string}
+     * @memberof EventTypeResponse
+     */
+    description: string;
+    /**
+     * Event type identifier
+     * @type {string}
+     * @memberof EventTypeResponse
+     */
+    id: string;
     /**
      * p50 latency threshold in microseconds
      * @type {number}
@@ -67,20 +61,26 @@ export interface EventTypeResponse {
      * @memberof EventTypeResponse
      */
     p99Micros: number;
+    /**
+     * Unique event type code
+     * @type {string}
+     * @memberof EventTypeResponse
+     */
+    typeCode: string;
 }
 
 /**
  * Check if a given object implements the EventTypeResponse interface.
  */
 export function instanceOfEventTypeResponse(value: object): boolean {
-    if (!('id' in value)) return false;
-    if (!('typeCode' in value)) return false;
-    if (!('description' in value)) return false;
     if (!('active' in value)) return false;
     if (!('apiVersion' in value)) return false;
+    if (!('description' in value)) return false;
+    if (!('id' in value)) return false;
     if (!('p50Micros' in value)) return false;
     if (!('p95Micros' in value)) return false;
     if (!('p99Micros' in value)) return false;
+    if (!('typeCode' in value)) return false;
     return true;
 }
 
@@ -94,14 +94,14 @@ export function EventTypeResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'id': json['id'],
-        'typeCode': json['typeCode'],
-        'description': json['description'],
         'active': json['active'],
         'apiVersion': json['apiVersion'],
+        'description': json['description'],
+        'id': json['id'],
         'p50Micros': json['p50Micros'],
         'p95Micros': json['p95Micros'],
         'p99Micros': json['p99Micros'],
+        'typeCode': json['typeCode'],
     };
 }
 
@@ -111,14 +111,14 @@ export function EventTypeResponseToJSON(value?: EventTypeResponse | null): any {
     }
     return {
         
-        'id': value['id'],
-        'typeCode': value['typeCode'],
-        'description': value['description'],
         'active': value['active'],
         'apiVersion': value['apiVersion'],
+        'description': value['description'],
+        'id': value['id'],
         'p50Micros': value['p50Micros'],
         'p95Micros': value['p95Micros'],
         'p99Micros': value['p99Micros'],
+        'typeCode': value['typeCode'],
     };
 }
 

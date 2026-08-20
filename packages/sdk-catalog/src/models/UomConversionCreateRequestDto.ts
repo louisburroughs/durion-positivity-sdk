@@ -14,44 +14,44 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a unit-of-measure conversion
  * @export
  * @interface UomConversionCreateRequestDto
  */
 export interface UomConversionCreateRequestDto {
     /**
-     * 
-     * @type {string}
-     * @memberof UomConversionCreateRequestDto
-     */
-    fromUomCode: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UomConversionCreateRequestDto
-     */
-    toUomCode: string;
-    /**
-     * 
+     * Multiplier to convert one unit of the source UOM into the target UOM
      * @type {number}
      * @memberof UomConversionCreateRequestDto
      */
     conversionFactor: number;
     /**
-     * 
+     * Identifier of the user creating the conversion
      * @type {string}
      * @memberof UomConversionCreateRequestDto
      */
     createdBy?: string;
+    /**
+     * Source unit-of-measure code
+     * @type {string}
+     * @memberof UomConversionCreateRequestDto
+     */
+    fromUomCode: string;
+    /**
+     * Target unit-of-measure code
+     * @type {string}
+     * @memberof UomConversionCreateRequestDto
+     */
+    toUomCode: string;
 }
 
 /**
  * Check if a given object implements the UomConversionCreateRequestDto interface.
  */
 export function instanceOfUomConversionCreateRequestDto(value: object): boolean {
+    if (!('conversionFactor' in value)) return false;
     if (!('fromUomCode' in value)) return false;
     if (!('toUomCode' in value)) return false;
-    if (!('conversionFactor' in value)) return false;
     return true;
 }
 
@@ -65,10 +65,10 @@ export function UomConversionCreateRequestDtoFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'fromUomCode': json['fromUomCode'],
-        'toUomCode': json['toUomCode'],
         'conversionFactor': json['conversionFactor'],
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'fromUomCode': json['fromUomCode'],
+        'toUomCode': json['toUomCode'],
     };
 }
 
@@ -78,10 +78,10 @@ export function UomConversionCreateRequestDtoToJSON(value?: UomConversionCreateR
     }
     return {
         
-        'fromUomCode': value['fromUomCode'],
-        'toUomCode': value['toUomCode'],
         'conversionFactor': value['conversionFactor'],
         'createdBy': value['createdBy'],
+        'fromUomCode': value['fromUomCode'],
+        'toUomCode': value['toUomCode'],
     };
 }
 

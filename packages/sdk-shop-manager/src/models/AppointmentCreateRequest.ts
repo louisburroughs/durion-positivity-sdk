@@ -14,71 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * Appointment creation request body
+ * Request to create an appointment from an estimate or workorder source document
  * @export
  * @interface AppointmentCreateRequest
  */
 export interface AppointmentCreateRequest {
     /**
-     * 
+     * CRM customer identifier the appointment is booked for
      * @type {string}
      * @memberof AppointmentCreateRequest
      */
     crmCustomerId: string;
     /**
-     * 
+     * CRM vehicle identifier the appointment services
      * @type {string}
      * @memberof AppointmentCreateRequest
      */
     crmVehicleId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof AppointmentCreateRequest
-     */
-    locationId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AppointmentCreateRequest
-     */
-    resourceId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AppointmentCreateRequest
-     */
-    startAt: Date;
-    /**
-     * 
+     * Appointment end instant in UTC (ISO-8601); must be after startAt
      * @type {Date}
      * @memberof AppointmentCreateRequest
      */
     endAt: Date;
     /**
-     * 
+     * Facility/location identifier where the appointment is scheduled
+     * @type {string}
+     * @memberof AppointmentCreateRequest
+     */
+    locationId: string;
+    /**
+     * Optional resource (bay or mobile unit) reserved for the appointment
+     * @type {string}
+     * @memberof AppointmentCreateRequest
+     */
+    resourceId?: string;
+    /**
+     * Service request identifiers included in this appointment (at least one required)
      * @type {Array<string>}
      * @memberof AppointmentCreateRequest
      */
     serviceRequestIds: Array<string>;
     /**
-     * 
+     * External identifier of the originating estimate or workorder; required when sourceType is set
      * @type {string}
      * @memberof AppointmentCreateRequest
      */
-    workorderLinkRef?: string;
+    sourceId?: string;
     /**
-     * 
+     * Originating workexec source type; when set, sourceId must also be provided
      * @type {string}
      * @memberof AppointmentCreateRequest
      */
     sourceType?: AppointmentCreateRequestSourceTypeEnum;
     /**
-     * 
+     * Appointment start instant in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof AppointmentCreateRequest
+     */
+    startAt: Date;
+    /**
+     * Optional reference linking the appointment to a workorder
      * @type {string}
      * @memberof AppointmentCreateRequest
      */
-    sourceId?: string;
+    workorderLinkRef?: string;
 }
 
 /**
@@ -97,10 +97,10 @@ export enum AppointmentCreateRequestSourceTypeEnum {
 export function instanceOfAppointmentCreateRequest(value: object): boolean {
     if (!('crmCustomerId' in value)) return false;
     if (!('crmVehicleId' in value)) return false;
-    if (!('locationId' in value)) return false;
-    if (!('startAt' in value)) return false;
     if (!('endAt' in value)) return false;
+    if (!('locationId' in value)) return false;
     if (!('serviceRequestIds' in value)) return false;
+    if (!('startAt' in value)) return false;
     return true;
 }
 
@@ -116,14 +116,14 @@ export function AppointmentCreateRequestFromJSONTyped(json: any, ignoreDiscrimin
         
         'crmCustomerId': json['crmCustomerId'],
         'crmVehicleId': json['crmVehicleId'],
+        'endAt': (new Date(json['endAt'])),
         'locationId': json['locationId'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
-        'startAt': (new Date(json['startAt'])),
-        'endAt': (new Date(json['endAt'])),
         'serviceRequestIds': json['serviceRequestIds'],
-        'workorderLinkRef': json['workorderLinkRef'] == null ? undefined : json['workorderLinkRef'],
-        'sourceType': json['sourceType'] == null ? undefined : json['sourceType'],
         'sourceId': json['sourceId'] == null ? undefined : json['sourceId'],
+        'sourceType': json['sourceType'] == null ? undefined : json['sourceType'],
+        'startAt': (new Date(json['startAt'])),
+        'workorderLinkRef': json['workorderLinkRef'] == null ? undefined : json['workorderLinkRef'],
     };
 }
 
@@ -135,14 +135,14 @@ export function AppointmentCreateRequestToJSON(value?: AppointmentCreateRequest 
         
         'crmCustomerId': value['crmCustomerId'],
         'crmVehicleId': value['crmVehicleId'],
+        'endAt': ((value['endAt']).toISOString()),
         'locationId': value['locationId'],
         'resourceId': value['resourceId'],
-        'startAt': ((value['startAt']).toISOString()),
-        'endAt': ((value['endAt']).toISOString()),
         'serviceRequestIds': value['serviceRequestIds'],
-        'workorderLinkRef': value['workorderLinkRef'],
-        'sourceType': value['sourceType'],
         'sourceId': value['sourceId'],
+        'sourceType': value['sourceType'],
+        'startAt': ((value['startAt']).toISOString()),
+        'workorderLinkRef': value['workorderLinkRef'],
     };
 }
 

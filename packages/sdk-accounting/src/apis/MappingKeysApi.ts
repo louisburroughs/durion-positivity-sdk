@@ -62,8 +62,8 @@ export interface UpdateMappingKeyRequest {
 export class MappingKeysApi extends runtime.BaseAPI {
 
     /**
-     * Create a new mapping key for a posting category.
-     * Create mapping key
+     * Creates a mapping key inside a posting category, extending the taxonomy that GL mappings attach to. Use this tool when adding a new key under an existing category; do not use createPostingCategory, which creates the parent category itself. Preconditions: the posting category must exist, and no key with the same trimmed name may already exist inside it. Required inputs: postingCategoryId (UUID), keyName (max 100 chars, trimmed before uniqueness check) and createdBy (max 50 chars); description is optional. Emits an ACCOUNTING_MAPPING_KEY_CREATE event. Returns 404 when the posting category does not exist, and 400 when the key name already exists in that category. 
+     * Create Mapping Key
      */
     async createMappingKeyRaw(requestParameters: CreateMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MappingKeyResponse>> {
         if (requestParameters['mappingKeyCreateRequest'] == null) {
@@ -99,8 +99,8 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new mapping key for a posting category.
-     * Create mapping key
+     * Creates a mapping key inside a posting category, extending the taxonomy that GL mappings attach to. Use this tool when adding a new key under an existing category; do not use createPostingCategory, which creates the parent category itself. Preconditions: the posting category must exist, and no key with the same trimmed name may already exist inside it. Required inputs: postingCategoryId (UUID), keyName (max 100 chars, trimmed before uniqueness check) and createdBy (max 50 chars); description is optional. Emits an ACCOUNTING_MAPPING_KEY_CREATE event. Returns 404 when the posting category does not exist, and 400 when the key name already exists in that category. 
+     * Create Mapping Key
      */
     async createMappingKey(requestParameters: CreateMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MappingKeyResponse> {
         const response = await this.createMappingKeyRaw(requestParameters, initOverrides);
@@ -108,8 +108,8 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivate a mapping key.
-     * Deactivate mapping key
+     * Deactivates a mapping key so it can no longer be attached to new GL mappings; the record is retained. Use this tool to retire an unused key; do not use deactivatePostingCategory, which retires the whole parent category. Preconditions: the mapping key must exist and have no active GL mappings attached. Required inputs: mappingKeyId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_MAPPING_KEY_DEACTIVATE event. Returns 404 when the mapping key does not exist, 409 when active GL mappings still reference it, and 204 with no body on success. 
+     * Deactivate Mapping Key
      */
     async deactivateMappingKeyRaw(requestParameters: DeactivateMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['mappingKeyId'] == null) {
@@ -142,16 +142,16 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivate a mapping key.
-     * Deactivate mapping key
+     * Deactivates a mapping key so it can no longer be attached to new GL mappings; the record is retained. Use this tool to retire an unused key; do not use deactivatePostingCategory, which retires the whole parent category. Preconditions: the mapping key must exist and have no active GL mappings attached. Required inputs: mappingKeyId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_MAPPING_KEY_DEACTIVATE event. Returns 404 when the mapping key does not exist, 409 when active GL mappings still reference it, and 204 with no body on success. 
+     * Deactivate Mapping Key
      */
     async deactivateMappingKey(requestParameters: DeactivateMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deactivateMappingKeyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve a mapping key by identifier.
-     * Get mapping key
+     * Returns one mapping key with its posting category, name, description and active flag. Use this tool when the mapping key id is already known; use listMappingKeysByCategory instead when browsing the keys of a category. Preconditions: the mapping key and its parent posting category must exist. Required inputs: mappingKeyId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no mapping key exists for the supplied id. 
+     * Get Mapping Key
      */
     async getMappingKeyRaw(requestParameters: GetMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MappingKeyResponse>> {
         if (requestParameters['mappingKeyId'] == null) {
@@ -184,8 +184,8 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a mapping key by identifier.
-     * Get mapping key
+     * Returns one mapping key with its posting category, name, description and active flag. Use this tool when the mapping key id is already known; use listMappingKeysByCategory instead when browsing the keys of a category. Preconditions: the mapping key and its parent posting category must exist. Required inputs: mappingKeyId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no mapping key exists for the supplied id. 
+     * Get Mapping Key
      */
     async getMappingKey(requestParameters: GetMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MappingKeyResponse> {
         const response = await this.getMappingKeyRaw(requestParameters, initOverrides);
@@ -193,8 +193,8 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated mapping keys for a posting category.
-     * List mapping keys by category
+     * Lists the mapping keys of one posting category as a paginated projection, optionally filtered by active flag. Use this tool when browsing a category\'s keys; do not use getMappingKey, which fetches a single key by id. Preconditions: the posting category must exist. Required inputs: postingCategoryId (UUID) as a path parameter; page defaults to 0, size to 20, sort to keyName (an unsupported sort field silently falls back to keyName), and isActive is an optional filter. Emits an ACCOUNTING_MAPPING_KEY_LIST audit event; no state changes. Returns 404 when the posting category does not exist. 
+     * List Mapping Keys By Category
      */
     async listMappingKeysByCategoryRaw(requestParameters: ListMappingKeysByCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MappingKeyListResponse>> {
         if (requestParameters['postingCategoryId'] == null) {
@@ -250,8 +250,8 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated mapping keys for a posting category.
-     * List mapping keys by category
+     * Lists the mapping keys of one posting category as a paginated projection, optionally filtered by active flag. Use this tool when browsing a category\'s keys; do not use getMappingKey, which fetches a single key by id. Preconditions: the posting category must exist. Required inputs: postingCategoryId (UUID) as a path parameter; page defaults to 0, size to 20, sort to keyName (an unsupported sort field silently falls back to keyName), and isActive is an optional filter. Emits an ACCOUNTING_MAPPING_KEY_LIST audit event; no state changes. Returns 404 when the posting category does not exist. 
+     * List Mapping Keys By Category
      */
     async listMappingKeysByCategory(requestParameters: ListMappingKeysByCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MappingKeyListResponse> {
         const response = await this.listMappingKeysByCategoryRaw(requestParameters, initOverrides);
@@ -259,8 +259,8 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing mapping key.
-     * Update mapping key
+     * Renames a mapping key or changes its description; the key stays in its posting category. Use this tool to correct a key\'s name or description; do not use deactivateMappingKey, which retires the key from future mapping use. Preconditions: the mapping key must exist, and a changed name must not collide with another key in the same category. Required inputs: mappingKeyId (UUID) as a path parameter, keyName (max 100 chars) and modifiedBy (max 50 chars); description is optional. Emits an ACCOUNTING_MAPPING_KEY_UPDATE event. Returns 404 when the mapping key does not exist, and 400 when the new name already exists in the category. 
+     * Update Mapping Key
      */
     async updateMappingKeyRaw(requestParameters: UpdateMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MappingKeyResponse>> {
         if (requestParameters['mappingKeyId'] == null) {
@@ -303,8 +303,8 @@ export class MappingKeysApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing mapping key.
-     * Update mapping key
+     * Renames a mapping key or changes its description; the key stays in its posting category. Use this tool to correct a key\'s name or description; do not use deactivateMappingKey, which retires the key from future mapping use. Preconditions: the mapping key must exist, and a changed name must not collide with another key in the same category. Required inputs: mappingKeyId (UUID) as a path parameter, keyName (max 100 chars) and modifiedBy (max 50 chars); description is optional. Emits an ACCOUNTING_MAPPING_KEY_UPDATE event. Returns 404 when the mapping key does not exist, and 400 when the new name already exists in the category. 
+     * Update Mapping Key
      */
     async updateMappingKey(requestParameters: UpdateMappingKeyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MappingKeyResponse> {
         const response = await this.updateMappingKeyRaw(requestParameters, initOverrides);

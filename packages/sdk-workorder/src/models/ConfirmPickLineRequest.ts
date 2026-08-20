@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to confirm a picked pick-list line
  * @export
  * @interface ConfirmPickLineRequest
  */
 export interface ConfirmPickLineRequest {
     /**
-     * 
+     * Quantity picked for the line
      * @type {number}
      * @memberof ConfirmPickLineRequest
      */

@@ -27,29 +27,11 @@ import {
  */
 export interface ExecuteAPPaymentRequest {
     /**
-     * Vendor UUID
-     * @type {string}
+     * Optional explicit allocations to vendor bills. If omitted, automatic allocation applied.
+     * @type {Array<AllocationLineRequest>}
      * @memberof ExecuteAPPaymentRequest
      */
-    vendorId: string;
-    /**
-     * Gross payment amount
-     * @type {number}
-     * @memberof ExecuteAPPaymentRequest
-     */
-    grossAmount: number;
-    /**
-     * Fee amount (if known at capture time)
-     * @type {number}
-     * @memberof ExecuteAPPaymentRequest
-     */
-    feeAmount?: number;
-    /**
-     * Net amount deposited (if applicable)
-     * @type {number}
-     * @memberof ExecuteAPPaymentRequest
-     */
-    netAmount?: number;
+    allocations?: Array<AllocationLineRequest>;
     /**
      * ISO 4217 currency code
      * @type {string}
@@ -57,23 +39,17 @@ export interface ExecuteAPPaymentRequest {
      */
     currency: string;
     /**
-     * Unique payment reference (idempotency key)
-     * @type {string}
+     * Fee amount (if known at capture time)
+     * @type {number}
      * @memberof ExecuteAPPaymentRequest
      */
-    paymentRef: string;
+    feeAmount?: number;
     /**
-     * Payment method (ACH, CHECK, WIRE, CREDIT_CARD, OTHER)
-     * @type {string}
+     * Gross payment amount
+     * @type {number}
      * @memberof ExecuteAPPaymentRequest
      */
-    paymentMethod: ExecuteAPPaymentRequestPaymentMethodEnum;
-    /**
-     * Payment source token or identifier from the payment provider (e.g., Stripe token, bank account ID)
-     * @type {string}
-     * @memberof ExecuteAPPaymentRequest
-     */
-    paymentSource?: string;
+    grossAmount: number;
     /**
      * Optional payment memo/notes
      * @type {string}
@@ -81,11 +57,35 @@ export interface ExecuteAPPaymentRequest {
      */
     memo?: string;
     /**
-     * Optional explicit allocations to vendor bills. If omitted, automatic allocation applied.
-     * @type {Array<AllocationLineRequest>}
+     * Net amount deposited (if applicable)
+     * @type {number}
      * @memberof ExecuteAPPaymentRequest
      */
-    allocations?: Array<AllocationLineRequest>;
+    netAmount?: number;
+    /**
+     * Payment method (ACH, CHECK, WIRE, CREDIT_CARD, OTHER)
+     * @type {string}
+     * @memberof ExecuteAPPaymentRequest
+     */
+    paymentMethod: ExecuteAPPaymentRequestPaymentMethodEnum;
+    /**
+     * Unique payment reference (idempotency key)
+     * @type {string}
+     * @memberof ExecuteAPPaymentRequest
+     */
+    paymentRef: string;
+    /**
+     * Payment source token or identifier from the payment provider (e.g., Stripe token, bank account ID)
+     * @type {string}
+     * @memberof ExecuteAPPaymentRequest
+     */
+    paymentSource?: string;
+    /**
+     * Vendor UUID
+     * @type {string}
+     * @memberof ExecuteAPPaymentRequest
+     */
+    vendorId: string;
 }
 
 /**
@@ -105,11 +105,11 @@ export enum ExecuteAPPaymentRequestPaymentMethodEnum {
  * Check if a given object implements the ExecuteAPPaymentRequest interface.
  */
 export function instanceOfExecuteAPPaymentRequest(value: object): boolean {
-    if (!('vendorId' in value)) return false;
-    if (!('grossAmount' in value)) return false;
     if (!('currency' in value)) return false;
-    if (!('paymentRef' in value)) return false;
+    if (!('grossAmount' in value)) return false;
     if (!('paymentMethod' in value)) return false;
+    if (!('paymentRef' in value)) return false;
+    if (!('vendorId' in value)) return false;
     return true;
 }
 
@@ -123,16 +123,16 @@ export function ExecuteAPPaymentRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'vendorId': json['vendorId'],
-        'grossAmount': json['grossAmount'],
-        'feeAmount': json['feeAmount'] == null ? undefined : json['feeAmount'],
-        'netAmount': json['netAmount'] == null ? undefined : json['netAmount'],
-        'currency': json['currency'],
-        'paymentRef': json['paymentRef'],
-        'paymentMethod': json['paymentMethod'],
-        'paymentSource': json['paymentSource'] == null ? undefined : json['paymentSource'],
-        'memo': json['memo'] == null ? undefined : json['memo'],
         'allocations': json['allocations'] == null ? undefined : ((json['allocations'] as Array<any>).map(AllocationLineRequestFromJSON)),
+        'currency': json['currency'],
+        'feeAmount': json['feeAmount'] == null ? undefined : json['feeAmount'],
+        'grossAmount': json['grossAmount'],
+        'memo': json['memo'] == null ? undefined : json['memo'],
+        'netAmount': json['netAmount'] == null ? undefined : json['netAmount'],
+        'paymentMethod': json['paymentMethod'],
+        'paymentRef': json['paymentRef'],
+        'paymentSource': json['paymentSource'] == null ? undefined : json['paymentSource'],
+        'vendorId': json['vendorId'],
     };
 }
 
@@ -142,16 +142,16 @@ export function ExecuteAPPaymentRequestToJSON(value?: ExecuteAPPaymentRequest | 
     }
     return {
         
-        'vendorId': value['vendorId'],
-        'grossAmount': value['grossAmount'],
-        'feeAmount': value['feeAmount'],
-        'netAmount': value['netAmount'],
-        'currency': value['currency'],
-        'paymentRef': value['paymentRef'],
-        'paymentMethod': value['paymentMethod'],
-        'paymentSource': value['paymentSource'],
-        'memo': value['memo'],
         'allocations': value['allocations'] == null ? undefined : ((value['allocations'] as Array<any>).map(AllocationLineRequestToJSON)),
+        'currency': value['currency'],
+        'feeAmount': value['feeAmount'],
+        'grossAmount': value['grossAmount'],
+        'memo': value['memo'],
+        'netAmount': value['netAmount'],
+        'paymentMethod': value['paymentMethod'],
+        'paymentRef': value['paymentRef'],
+        'paymentSource': value['paymentSource'],
+        'vendorId': value['vendorId'],
     };
 }
 

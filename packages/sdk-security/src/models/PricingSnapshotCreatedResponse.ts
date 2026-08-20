@@ -14,23 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Minimal acknowledgement returned after creating a pricing snapshot
  * @export
  * @interface PricingSnapshotCreatedResponse
  */
 export interface PricingSnapshotCreatedResponse {
     /**
-     * 
+     * Identifier of the created pricing snapshot
      * @type {string}
      * @memberof PricingSnapshotCreatedResponse
      */
-    snapshotId?: string;
+    snapshotId: string;
 }
 
 /**
  * Check if a given object implements the PricingSnapshotCreatedResponse interface.
  */
 export function instanceOfPricingSnapshotCreatedResponse(value: object): boolean {
+    if (!('snapshotId' in value)) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function PricingSnapshotCreatedResponseFromJSONTyped(json: any, ignoreDis
     }
     return {
         
-        'snapshotId': json['snapshotId'] == null ? undefined : json['snapshotId'],
+        'snapshotId': json['snapshotId'],
     };
 }
 

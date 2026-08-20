@@ -14,35 +14,36 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single operating-hours entry for a day of the week
  * @export
  * @interface OperatingHoursRequest
  */
 export interface OperatingHoursRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof OperatingHoursRequest
-     */
-    dayOfWeek?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof OperatingHoursRequest
-     */
-    openTime?: string;
-    /**
-     * 
+     * Closing time (local time)
      * @type {string}
      * @memberof OperatingHoursRequest
      */
     closeTime?: string;
+    /**
+     * Day of week the hours apply to
+     * @type {string}
+     * @memberof OperatingHoursRequest
+     */
+    dayOfWeek: string;
+    /**
+     * Opening time (local time)
+     * @type {string}
+     * @memberof OperatingHoursRequest
+     */
+    openTime?: string;
 }
 
 /**
  * Check if a given object implements the OperatingHoursRequest interface.
  */
 export function instanceOfOperatingHoursRequest(value: object): boolean {
+    if (!('dayOfWeek' in value)) return false;
     return true;
 }
 
@@ -56,9 +57,9 @@ export function OperatingHoursRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'dayOfWeek': json['dayOfWeek'] == null ? undefined : json['dayOfWeek'],
-        'openTime': json['openTime'] == null ? undefined : json['openTime'],
         'closeTime': json['closeTime'] == null ? undefined : json['closeTime'],
+        'dayOfWeek': json['dayOfWeek'],
+        'openTime': json['openTime'] == null ? undefined : json['openTime'],
     };
 }
 
@@ -68,9 +69,9 @@ export function OperatingHoursRequestToJSON(value?: OperatingHoursRequest | null
     }
     return {
         
+        'closeTime': value['closeTime'],
         'dayOfWeek': value['dayOfWeek'],
         'openTime': value['openTime'],
-        'closeTime': value['closeTime'],
     };
 }
 

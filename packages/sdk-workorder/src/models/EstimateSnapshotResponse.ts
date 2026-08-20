@@ -20,30 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface EstimateSnapshotResponse {
     /**
-     * Snapshot identifier
-     * @type {string}
-     * @memberof EstimateSnapshotResponse
-     */
-    id?: string;
-    /**
-     * Estimate identifier
-     * @type {string}
-     * @memberof EstimateSnapshotResponse
-     */
-    estimateId?: string;
-    /**
-     * Estimate status at capture time
-     * @type {string}
-     * @memberof EstimateSnapshotResponse
-     */
-    status?: EstimateSnapshotResponseStatusEnum;
-    /**
-     * Serialized snapshot content
-     * @type {string}
-     * @memberof EstimateSnapshotResponse
-     */
-    snapshotData?: string;
-    /**
      * Snapshot capture timestamp
      * @type {Date}
      * @memberof EstimateSnapshotResponse
@@ -56,11 +32,35 @@ export interface EstimateSnapshotResponse {
      */
     capturedById?: string;
     /**
+     * Estimate identifier
+     * @type {string}
+     * @memberof EstimateSnapshotResponse
+     */
+    estimateId: string;
+    /**
+     * Snapshot identifier
+     * @type {string}
+     * @memberof EstimateSnapshotResponse
+     */
+    id: string;
+    /**
      * Optional snapshot notes
      * @type {string}
      * @memberof EstimateSnapshotResponse
      */
     notes?: string;
+    /**
+     * Serialized snapshot content
+     * @type {string}
+     * @memberof EstimateSnapshotResponse
+     */
+    snapshotData?: string;
+    /**
+     * Estimate status at capture time
+     * @type {string}
+     * @memberof EstimateSnapshotResponse
+     */
+    status: EstimateSnapshotResponseStatusEnum;
 }
 
 /**
@@ -86,6 +86,9 @@ export enum EstimateSnapshotResponseStatusEnum {
  * Check if a given object implements the EstimateSnapshotResponse interface.
  */
 export function instanceOfEstimateSnapshotResponse(value: object): boolean {
+    if (!('estimateId' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -99,13 +102,13 @@ export function EstimateSnapshotResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'snapshotData': json['snapshotData'] == null ? undefined : json['snapshotData'],
         'capturedAt': json['capturedAt'] == null ? undefined : (new Date(json['capturedAt'])),
         'capturedById': json['capturedById'] == null ? undefined : json['capturedById'],
+        'estimateId': json['estimateId'],
+        'id': json['id'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'snapshotData': json['snapshotData'] == null ? undefined : json['snapshotData'],
+        'status': json['status'],
     };
 }
 
@@ -115,13 +118,13 @@ export function EstimateSnapshotResponseToJSON(value?: EstimateSnapshotResponse 
     }
     return {
         
-        'id': value['id'],
-        'estimateId': value['estimateId'],
-        'status': value['status'],
-        'snapshotData': value['snapshotData'],
         'capturedAt': value['capturedAt'] == null ? undefined : ((value['capturedAt']).toISOString()),
         'capturedById': value['capturedById'],
+        'estimateId': value['estimateId'],
+        'id': value['id'],
         'notes': value['notes'],
+        'snapshotData': value['snapshotData'],
+        'status': value['status'],
     };
 }
 

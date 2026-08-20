@@ -24,17 +24,16 @@ import type {
   DuplicateCheckResponse,
   GetAccountTierResponse,
   GetCommunicationPreferencesResponse,
-  GetContactsWithRolesResponse,
   GetPartyResponse,
   MergePartiesRequest,
   MergePartiesResponse,
   Pageable,
+  PartyNameRef,
+  PartyNameResolveRequest,
   ResolveAccountTierRequest,
   ResolveAccountTierResponse,
   SearchPartiesRequest,
   SearchPartiesResponse,
-  UpdateContactRolesRequest,
-  UpdateContactRolesResponse,
   UpsertBillingRulesRequest,
   UpsertCommunicationPreferencesRequest,
   UpsertCommunicationPreferencesResponse,
@@ -58,8 +57,6 @@ import {
     GetAccountTierResponseToJSON,
     GetCommunicationPreferencesResponseFromJSON,
     GetCommunicationPreferencesResponseToJSON,
-    GetContactsWithRolesResponseFromJSON,
-    GetContactsWithRolesResponseToJSON,
     GetPartyResponseFromJSON,
     GetPartyResponseToJSON,
     MergePartiesRequestFromJSON,
@@ -68,6 +65,10 @@ import {
     MergePartiesResponseToJSON,
     PageableFromJSON,
     PageableToJSON,
+    PartyNameRefFromJSON,
+    PartyNameRefToJSON,
+    PartyNameResolveRequestFromJSON,
+    PartyNameResolveRequestToJSON,
     ResolveAccountTierRequestFromJSON,
     ResolveAccountTierRequestToJSON,
     ResolveAccountTierResponseFromJSON,
@@ -76,10 +77,6 @@ import {
     SearchPartiesRequestToJSON,
     SearchPartiesResponseFromJSON,
     SearchPartiesResponseToJSON,
-    UpdateContactRolesRequestFromJSON,
-    UpdateContactRolesRequestToJSON,
-    UpdateContactRolesResponseFromJSON,
-    UpdateContactRolesResponseToJSON,
     UpsertBillingRulesRequestFromJSON,
     UpsertBillingRulesRequestToJSON,
     UpsertCommunicationPreferencesRequestFromJSON,
@@ -90,31 +87,33 @@ import {
 
 export interface BrowsePartiesRequest {
     pageable: Pageable;
+    name?: string;
+    status?: string;
+    partyType?: string;
+    customerNumber?: string;
+    sortField?: string;
+    sortOrder?: string;
 }
 
 export interface CheckPartyDuplicatesRequest {
     legalName: string;
 }
 
-export interface CreateCommercialAccountOperationRequest {
-    createCommercialAccountRequest?: CreateCommercialAccountRequest;
+export interface CreateCrmCommercialAccountRequest {
+    createCommercialAccountRequest: CreateCommercialAccountRequest;
 }
 
 export interface CreateVehicleForPartyOperationRequest {
     partyId: string;
-    createVehicleForPartyRequest?: CreateVehicleForPartyRequest;
+    createVehicleForPartyRequest: CreateVehicleForPartyRequest;
+}
+
+export interface GetAccountCommunicationPreferencesRequest {
+    partyId: string;
 }
 
 export interface GetAccountTierRequest {
     accountId: string;
-}
-
-export interface GetCommunicationPreferences1Request {
-    partyId: string;
-}
-
-export interface GetContactsWithRoles1Request {
-    partyId: string;
 }
 
 export interface GetPartyRequest {
@@ -123,31 +122,29 @@ export interface GetPartyRequest {
 
 export interface MergePartiesOperationRequest {
     partyId: string;
-    mergePartiesRequest?: MergePartiesRequest;
+    mergePartiesRequest: MergePartiesRequest;
 }
 
 export interface ResolveAccountTierOperationRequest {
     resolveAccountTierRequest: ResolveAccountTierRequest;
 }
 
+export interface ResolvePartyNamesRequest {
+    partyNameResolveRequest: PartyNameResolveRequest;
+}
+
 export interface SearchPartiesOperationRequest {
     searchPartiesRequest?: SearchPartiesRequest;
 }
 
-export interface UpdateContactRoles1Request {
+export interface UpsertAccountCommunicationPreferencesRequest {
     partyId: string;
-    contactId: string;
-    updateContactRolesRequest?: UpdateContactRolesRequest;
+    upsertCommunicationPreferencesRequest: UpsertCommunicationPreferencesRequest;
 }
 
-export interface UpsertBillingRulesOperationRequest {
+export interface UpsertPartyBillingRulesRequest {
     partyId: string;
     upsertBillingRulesRequest: UpsertBillingRulesRequest;
-}
-
-export interface UpsertCommunicationPreferences1Request {
-    partyId: string;
-    upsertCommunicationPreferencesRequest?: UpsertCommunicationPreferencesRequest;
 }
 
 /**
@@ -156,8 +153,8 @@ export interface UpsertCommunicationPreferences1Request {
 export class CRMAccountsApi extends runtime.BaseAPI {
 
     /**
-     * Browse parties with paging and sorting. The service sorts by legalName ascending by default, appends partyId ascending as a stable tie-breaker whenever the requested sort list does not explicitly include partyId, and applies case-insensitive legalName sorting.
-     * Browse parties
+     * Returns a paged customer directory that unifies commercial parties and standalone individual customers, with person names and contact points resolved from pos-people. Use this tool when listing or typeahead-filtering customers by name, status, party type, or customer number; do not use searchParties, which filters commercial parties only by structured criteria, and use getParty instead when the party id is already known. Preconditions: none; an empty page is returned when nothing matches, and a pos-people outage degrades person names to null rather than failing the request. Required inputs: none; page defaults to 0 with size 20, the name filter matches legal name, display name, or customer number case-insensitively, status matches ACTIVE, INACTIVE, ON_HOLD, or MERGED, sortField is name (default) or customerNumber, and sortOrder is asc (default) or desc with partyId as a stable tie-breaker. Emits a CUSTOMER_PARTY_BROWSE audit event; no state changes occur. Returns 200 with an empty results array rather than an error when no party matches the filters. 
+     * Browse Customer Directory
      */
     async browsePartiesRaw(requestParameters: BrowsePartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchPartiesResponse>> {
         if (requestParameters['pageable'] == null) {
@@ -171,6 +168,30 @@ export class CRMAccountsApi extends runtime.BaseAPI {
 
         if (requestParameters['pageable'] != null) {
             queryParameters['pageable'] = requestParameters['pageable'];
+        }
+
+        if (requestParameters['name'] != null) {
+            queryParameters['name'] = requestParameters['name'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['partyType'] != null) {
+            queryParameters['partyType'] = requestParameters['partyType'];
+        }
+
+        if (requestParameters['customerNumber'] != null) {
+            queryParameters['customerNumber'] = requestParameters['customerNumber'];
+        }
+
+        if (requestParameters['sortField'] != null) {
+            queryParameters['sortField'] = requestParameters['sortField'];
+        }
+
+        if (requestParameters['sortOrder'] != null) {
+            queryParameters['sortOrder'] = requestParameters['sortOrder'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -194,8 +215,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Browse parties with paging and sorting. The service sorts by legalName ascending by default, appends partyId ascending as a stable tie-breaker whenever the requested sort list does not explicitly include partyId, and applies case-insensitive legalName sorting.
-     * Browse parties
+     * Returns a paged customer directory that unifies commercial parties and standalone individual customers, with person names and contact points resolved from pos-people. Use this tool when listing or typeahead-filtering customers by name, status, party type, or customer number; do not use searchParties, which filters commercial parties only by structured criteria, and use getParty instead when the party id is already known. Preconditions: none; an empty page is returned when nothing matches, and a pos-people outage degrades person names to null rather than failing the request. Required inputs: none; page defaults to 0 with size 20, the name filter matches legal name, display name, or customer number case-insensitively, status matches ACTIVE, INACTIVE, ON_HOLD, or MERGED, sortField is name (default) or customerNumber, and sortOrder is asc (default) or desc with partyId as a stable tie-breaker. Emits a CUSTOMER_PARTY_BROWSE audit event; no state changes occur. Returns 200 with an empty results array rather than an error when no party matches the filters. 
+     * Browse Customer Directory
      */
     async browseParties(requestParameters: BrowsePartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchPartiesResponse> {
         const response = await this.browsePartiesRaw(requestParameters, initOverrides);
@@ -203,8 +224,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search for existing parties with a similar legal name to detect potential duplicates before creating a new commercial account.
-     * Check for duplicate commercial parties
+     * Checks for existing commercial parties whose legal name contains the supplied name, flagging case-insensitive exact matches as EXACT with score 1.0 and other containment matches as FUZZY with score 0.7. Use this tool before createCrmCommercialAccount to avoid creating a duplicate customer; do not use searchParties for this, which does not classify match strength or surface an exactMatchPartyId. Preconditions: none; the check reads existing commercial parties only. Required inputs: legalName as a query parameter with at least 2 non-whitespace characters; there is no request body. Emits a CUSTOMER_PARTY_DUPLICATE_CHECK audit event; no state changes occur. Returns 400 when legalName is blank or shorter than 2 characters after trimming, and 200 with duplicatesFound false when no similar party exists. 
+     * Check Commercial Party Duplicates
      */
     async checkPartyDuplicatesRaw(requestParameters: CheckPartyDuplicatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DuplicateCheckResponse>> {
         if (requestParameters['legalName'] == null) {
@@ -241,8 +262,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search for existing parties with a similar legal name to detect potential duplicates before creating a new commercial account.
-     * Check for duplicate commercial parties
+     * Checks for existing commercial parties whose legal name contains the supplied name, flagging case-insensitive exact matches as EXACT with score 1.0 and other containment matches as FUZZY with score 0.7. Use this tool before createCrmCommercialAccount to avoid creating a duplicate customer; do not use searchParties for this, which does not classify match strength or surface an exactMatchPartyId. Preconditions: none; the check reads existing commercial parties only. Required inputs: legalName as a query parameter with at least 2 non-whitespace characters; there is no request body. Emits a CUSTOMER_PARTY_DUPLICATE_CHECK audit event; no state changes occur. Returns 400 when legalName is blank or shorter than 2 characters after trimming, and 200 with duplicatesFound false when no similar party exists. 
+     * Check Commercial Party Duplicates
      */
     async checkPartyDuplicates(requestParameters: CheckPartyDuplicatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DuplicateCheckResponse> {
         const response = await this.checkPartyDuplicatesRaw(requestParameters, initOverrides);
@@ -250,10 +271,17 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new commercial party/account in the CRM system
-     * Create commercial account
+     * Creates a commercial party record with status ACTIVE and a generated customer number of the form CUST-XXXXXXXX. Use this tool when onboarding a new commercial customer; do not use searchParties or checkPartyDuplicates, which only look up existing parties, and run checkPartyDuplicates first to avoid creating a duplicate, because no uniqueness check is applied here. Preconditions: none beyond authorization; the service performs no duplicate detection on legalName. Required inputs: legalName (non-blank, max 255); partyType defaults to COMMERCIAL and must be PERSON, COMMERCIAL, or UNKNOWN when supplied; displayName, taxId, billingTermsId, and externalIdentifiers are optional. Emits a CUSTOMER_PARTY_CREATE event and publishes a party-changed customer fact. Returns 400 when legalName is missing or blank, or when partyType is not a recognized value. 
+     * Create Commercial Account
      */
-    async createCommercialAccountRaw(requestParameters: CreateCommercialAccountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateCommercialAccountResponse>> {
+    async createCrmCommercialAccountRaw(requestParameters: CreateCrmCommercialAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateCommercialAccountResponse>> {
+        if (requestParameters['createCommercialAccountRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createCommercialAccountRequest',
+                'Required parameter "createCommercialAccountRequest" was null or undefined when calling createCrmCommercialAccount().'
+            );
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -280,23 +308,30 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new commercial party/account in the CRM system
-     * Create commercial account
+     * Creates a commercial party record with status ACTIVE and a generated customer number of the form CUST-XXXXXXXX. Use this tool when onboarding a new commercial customer; do not use searchParties or checkPartyDuplicates, which only look up existing parties, and run checkPartyDuplicates first to avoid creating a duplicate, because no uniqueness check is applied here. Preconditions: none beyond authorization; the service performs no duplicate detection on legalName. Required inputs: legalName (non-blank, max 255); partyType defaults to COMMERCIAL and must be PERSON, COMMERCIAL, or UNKNOWN when supplied; displayName, taxId, billingTermsId, and externalIdentifiers are optional. Emits a CUSTOMER_PARTY_CREATE event and publishes a party-changed customer fact. Returns 400 when legalName is missing or blank, or when partyType is not a recognized value. 
+     * Create Commercial Account
      */
-    async createCommercialAccount(requestParameters: CreateCommercialAccountOperationRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateCommercialAccountResponse> {
-        const response = await this.createCommercialAccountRaw(requestParameters, initOverrides);
+    async createCrmCommercialAccount(requestParameters: CreateCrmCommercialAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateCommercialAccountResponse> {
+        const response = await this.createCrmCommercialAccountRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Associate a new vehicle with a party/customer
-     * Create vehicle for party
+     * Associates a vehicle VIN with a commercial party by appending it to the party\'s owned VIN list. Use this tool when recording that a commercial account operates a vehicle; do not use it to change vehicle details, and note the VIN list is account-level rather than a full vehicle record. Preconditions: a commercial party must exist for the supplied partyId, and the VIN must not already be associated with that party. Required inputs: partyId (UUID) as a path parameter and vinNumber (max 17 characters) in the body; unitNumber, description, licensePlate, and licensePlateRegion are optional. Emits a CUSTOMER_VEHICLE_CREATE event and republishes the party-changed customer fact. Returns 404 when the party does not exist, 409 when the VIN is already associated with the party, and 400 when vinNumber is missing or blank. 
+     * Associate Vehicle With Party
      */
     async createVehicleForPartyRaw(requestParameters: CreateVehicleForPartyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreateVehicleForPartyResponse>> {
         if (requestParameters['partyId'] == null) {
             throw new runtime.RequiredError(
                 'partyId',
                 'Required parameter "partyId" was null or undefined when calling createVehicleForParty().'
+            );
+        }
+
+        if (requestParameters['createVehicleForPartyRequest'] == null) {
+            throw new runtime.RequiredError(
+                'createVehicleForPartyRequest',
+                'Required parameter "createVehicleForPartyRequest" was null or undefined when calling createVehicleForParty().'
             );
         }
 
@@ -326,8 +361,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Associate a new vehicle with a party/customer
-     * Create vehicle for party
+     * Associates a vehicle VIN with a commercial party by appending it to the party\'s owned VIN list. Use this tool when recording that a commercial account operates a vehicle; do not use it to change vehicle details, and note the VIN list is account-level rather than a full vehicle record. Preconditions: a commercial party must exist for the supplied partyId, and the VIN must not already be associated with that party. Required inputs: partyId (UUID) as a path parameter and vinNumber (max 17 characters) in the body; unitNumber, description, licensePlate, and licensePlateRegion are optional. Emits a CUSTOMER_VEHICLE_CREATE event and republishes the party-changed customer fact. Returns 404 when the party does not exist, 409 when the VIN is already associated with the party, and 400 when vinNumber is missing or blank. 
+     * Associate Vehicle With Party
      */
     async createVehicleForParty(requestParameters: CreateVehicleForPartyOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreateVehicleForPartyResponse> {
         const response = await this.createVehicleForPartyRaw(requestParameters, initOverrides);
@@ -335,8 +370,51 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the tier level for a specific account
-     * Get account tier
+     * Returns a legacy account-scoped communication-preference projection for a commercial party in which every channel currently reports the placeholder value N/A. Use this tool only for the legacy accounts-scoped path; use getCommunicationPreferences instead, which reads the persisted per-party preference record with real channel values and consent flags. Preconditions: a commercial party must exist for the supplied partyId. Required inputs: partyId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no commercial party exists for the supplied partyId. 
+     * Get Account Communication Preferences
+     */
+    async getAccountCommunicationPreferencesRaw(requestParameters: GetAccountCommunicationPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetCommunicationPreferencesResponse>> {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError(
+                'partyId',
+                'Required parameter "partyId" was null or undefined when calling getAccountCommunicationPreferences().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:contact_preference:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetCommunicationPreferencesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a legacy account-scoped communication-preference projection for a commercial party in which every channel currently reports the placeholder value N/A. Use this tool only for the legacy accounts-scoped path; use getCommunicationPreferences instead, which reads the persisted per-party preference record with real channel values and consent flags. Preconditions: a commercial party must exist for the supplied partyId. Required inputs: partyId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no commercial party exists for the supplied partyId. 
+     * Get Account Communication Preferences
+     */
+    async getAccountCommunicationPreferences(requestParameters: GetAccountCommunicationPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetCommunicationPreferencesResponse> {
+        const response = await this.getAccountCommunicationPreferencesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the currently assigned tier for a commercial account, including who assigned it, when, and whether a manual override is active; unassigned accounts report STANDARD. Use this tool when the stored tier of a known commercial account is needed; do not use resolveAccountTier, which recomputes a recommended tier from revenue and contract inputs. Preconditions: a commercial party must exist for the accountId; person parties have no tier. Required inputs: accountId (UUID) as a path parameter; there is no request body. Emits a CUSTOMER_ACCOUNT_TIER_GET audit event; no state changes occur. Returns 404 when no commercial account exists for the supplied accountId. 
+     * Get Account Tier
      */
     async getAccountTierRaw(requestParameters: GetAccountTierRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetAccountTierResponse>> {
         if (requestParameters['accountId'] == null) {
@@ -369,8 +447,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the tier level for a specific account
-     * Get account tier
+     * Returns the currently assigned tier for a commercial account, including who assigned it, when, and whether a manual override is active; unassigned accounts report STANDARD. Use this tool when the stored tier of a known commercial account is needed; do not use resolveAccountTier, which recomputes a recommended tier from revenue and contract inputs. Preconditions: a commercial party must exist for the accountId; person parties have no tier. Required inputs: accountId (UUID) as a path parameter; there is no request body. Emits a CUSTOMER_ACCOUNT_TIER_GET audit event; no state changes occur. Returns 404 when no commercial account exists for the supplied accountId. 
+     * Get Account Tier
      */
     async getAccountTier(requestParameters: GetAccountTierRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetAccountTierResponse> {
         const response = await this.getAccountTierRaw(requestParameters, initOverrides);
@@ -378,94 +456,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve communication preferences and consent flags for a party
-     * Get communication preferences
-     */
-    async getCommunicationPreferences1Raw(requestParameters: GetCommunicationPreferences1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetCommunicationPreferencesResponse>> {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError(
-                'partyId',
-                'Required parameter "partyId" was null or undefined when calling getCommunicationPreferences1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:contact_preference:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/communicationPreferences`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetCommunicationPreferencesResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve communication preferences and consent flags for a party
-     * Get communication preferences
-     */
-    async getCommunicationPreferences1(requestParameters: GetCommunicationPreferences1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetCommunicationPreferencesResponse> {
-        const response = await this.getCommunicationPreferences1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve all contacts for a party including their role assignments
-     * Get contacts with roles
-     */
-    async getContactsWithRoles1Raw(requestParameters: GetContactsWithRoles1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetContactsWithRolesResponse>> {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError(
-                'partyId',
-                'Required parameter "partyId" was null or undefined when calling getContactsWithRoles1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:contact:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/contacts`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => GetContactsWithRolesResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve all contacts for a party including their role assignments
-     * Get contacts with roles
-     */
-    async getContactsWithRoles1(requestParameters: GetContactsWithRoles1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetContactsWithRolesResponse> {
-        const response = await this.getContactsWithRoles1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve details for a specific party by ID
-     * Get party details
+     * Returns the identity projection of a single party, resolving commercial parties first and falling back to person parties, whose display name is resolved from the person directory. Use this tool when a party id is already known; use browseParties or searchParties instead when locating a party by name, status, or customer number. Preconditions: a commercial or person party must exist for the supplied partyId. Required inputs: partyId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when neither a commercial nor a person party exists for the supplied partyId. 
+     * Get Party Details
      */
     async getPartyRaw(requestParameters: GetPartyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetPartyResponse>> {
         if (requestParameters['partyId'] == null) {
@@ -498,8 +490,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve details for a specific party by ID
-     * Get party details
+     * Returns the identity projection of a single party, resolving commercial parties first and falling back to person parties, whose display name is resolved from the person directory. Use this tool when a party id is already known; use browseParties or searchParties instead when locating a party by name, status, or customer number. Preconditions: a commercial or person party must exist for the supplied partyId. Required inputs: partyId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when neither a commercial nor a person party exists for the supplied partyId. 
+     * Get Party Details
      */
     async getParty(requestParameters: GetPartyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetPartyResponse> {
         const response = await this.getPartyRaw(requestParameters, initOverrides);
@@ -507,8 +499,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the reference list of all available billing terms. This is a static reference endpoint; it does not vary per party or account.
-     * List billing terms
+     * Returns the static reference list of billing term options: NET_30, NET_60, NET_90, COD, and PREPAID, each with a display label and net-day count. Use this tool when populating a billing-terms dropdown before createCrmCommercialAccount or upsertPartyBillingRules; do not use upsertPartyBillingRules to discover valid terms, which writes configuration rather than listing options. Preconditions: none; the list is compiled into the service and identical for every caller. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only reference lookup. Returns 200 with the full five-entry list in every successful call; there are no business error responses. 
+     * List Billing Term Options
      */
     async listBillingTermsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<BillingTermsRef>>> {
         const queryParameters: any = {};
@@ -534,8 +526,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the reference list of all available billing terms. This is a static reference endpoint; it does not vary per party or account.
-     * List billing terms
+     * Returns the static reference list of billing term options: NET_30, NET_60, NET_90, COD, and PREPAID, each with a display label and net-day count. Use this tool when populating a billing-terms dropdown before createCrmCommercialAccount or upsertPartyBillingRules; do not use upsertPartyBillingRules to discover valid terms, which writes configuration rather than listing options. Preconditions: none; the list is compiled into the service and identical for every caller. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only reference lookup. Returns 200 with the full five-entry list in every successful call; there are no business error responses. 
+     * List Billing Term Options
      */
     async listBillingTerms(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<BillingTermsRef>> {
         const response = await this.listBillingTermsRaw(initOverrides);
@@ -543,14 +535,21 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Merge multiple parties into a single party record
-     * Merge parties
+     * Merges one duplicate commercial party into a surviving party: relationships are reassigned to the survivor, external identifiers and vehicle VINs are copied over, and the losing party\'s status is set to MERGED. Use this tool when checkPartyDuplicates has confirmed two records represent the same customer; do not use createCrmCommercialAccount to work around duplicates, and note the merge is not reversible through this API. Preconditions: both the surviving party (path) and losing party (body) must exist as commercial parties and must be different records. Required inputs: partyId of the survivor as a path parameter, plus losingPartyId (UUID string) and a justification of up to 1000 characters in the body. Emits a CUSTOMER_PARTY_MERGE event and republishes customer facts for both parties and for contacts whose account linkage moved. Returns 404 when either party cannot be found, and 400 when losingPartyId or justification is missing, losingPartyId is not a valid UUID, or both ids refer to the same party. 
+     * Merge Duplicate Commercial Parties
      */
     async mergePartiesRaw(requestParameters: MergePartiesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<MergePartiesResponse>> {
         if (requestParameters['partyId'] == null) {
             throw new runtime.RequiredError(
                 'partyId',
                 'Required parameter "partyId" was null or undefined when calling mergeParties().'
+            );
+        }
+
+        if (requestParameters['mergePartiesRequest'] == null) {
+            throw new runtime.RequiredError(
+                'mergePartiesRequest',
+                'Required parameter "mergePartiesRequest" was null or undefined when calling mergeParties().'
             );
         }
 
@@ -580,8 +579,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Merge multiple parties into a single party record
-     * Merge parties
+     * Merges one duplicate commercial party into a surviving party: relationships are reassigned to the survivor, external identifiers and vehicle VINs are copied over, and the losing party\'s status is set to MERGED. Use this tool when checkPartyDuplicates has confirmed two records represent the same customer; do not use createCrmCommercialAccount to work around duplicates, and note the merge is not reversible through this API. Preconditions: both the surviving party (path) and losing party (body) must exist as commercial parties and must be different records. Required inputs: partyId of the survivor as a path parameter, plus losingPartyId (UUID string) and a justification of up to 1000 characters in the body. Emits a CUSTOMER_PARTY_MERGE event and republishes customer facts for both parties and for contacts whose account linkage moved. Returns 404 when either party cannot be found, and 400 when losingPartyId or justification is missing, losingPartyId is not a valid UUID, or both ids refer to the same party. 
+     * Merge Duplicate Commercial Parties
      */
     async mergeParties(requestParameters: MergePartiesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MergePartiesResponse> {
         const response = await this.mergePartiesRaw(requestParameters, initOverrides);
@@ -589,8 +588,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolve or compute the account tier based on business rules
-     * Resolve account tier
+     * Computes the recommended tier for a commercial account from annual revenue, active contract count, and account age thresholds, and optionally applies it to the account. Use this tool when a tier recommendation or recalculation is needed; do not use getAccountTier, which only reads the stored tier without recomputing it. Preconditions: a commercial party must exist for the accountId; when applyTier is true, a manual tier override on the account blocks application unless forceRecalculation is also true. Required inputs: accountId (UUID string); annualRevenue, activeContractCount, and accountAgeMonths are optional scoring inputs, and applyTier and forceRecalculation both default to false, so the default call is a dry run. Emits a CUSTOMER_ACCOUNT_TIER_RESOLVE event; when the tier is applied the account record is updated with assignedBy SYSTEM and a customer fact is republished. Returns 404 when the account does not exist or the accountId is not a valid UUID. 
+     * Resolve Account Tier
      */
     async resolveAccountTierRaw(requestParameters: ResolveAccountTierOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ResolveAccountTierResponse>> {
         if (requestParameters['resolveAccountTierRequest'] == null) {
@@ -626,8 +625,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolve or compute the account tier based on business rules
-     * Resolve account tier
+     * Computes the recommended tier for a commercial account from annual revenue, active contract count, and account age thresholds, and optionally applies it to the account. Use this tool when a tier recommendation or recalculation is needed; do not use getAccountTier, which only reads the stored tier without recomputing it. Preconditions: a commercial party must exist for the accountId; when applyTier is true, a manual tier override on the account blocks application unless forceRecalculation is also true. Required inputs: accountId (UUID string); annualRevenue, activeContractCount, and accountAgeMonths are optional scoring inputs, and applyTier and forceRecalculation both default to false, so the default call is a dry run. Emits a CUSTOMER_ACCOUNT_TIER_RESOLVE event; when the tier is applied the account record is updated with assignedBy SYSTEM and a customer fact is republished. Returns 404 when the account does not exist or the accountId is not a valid UUID. 
+     * Resolve Account Tier
      */
     async resolveAccountTier(requestParameters: ResolveAccountTierOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ResolveAccountTierResponse> {
         const response = await this.resolveAccountTierRaw(requestParameters, initOverrides);
@@ -635,8 +634,54 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search for parties based on various criteria
-     * Search parties
+     * Batch-resolves party ids to display names for both commercial and person parties, for sibling services such as pos-invoice that store only the party id. Use this tool when enriching rows that already carry party ids; do not use getParty, which returns the full identity projection for a single party per call. Preconditions: none; unknown or unresolvable ids are silently omitted from the response rather than causing an error. Required inputs: partyIds, a non-empty list of up to 200 UUIDs; null entries and duplicates are dropped before resolution. Emits a CUSTOMER_PARTY_RESOLVE audit event; no state changes occur. Returns 400 when partyIds is empty or exceeds 200 entries, and 200 with a possibly shorter list than requested when some ids cannot be resolved. 
+     * Resolve Party Display Names
+     */
+    async resolvePartyNamesRaw(requestParameters: ResolvePartyNamesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PartyNameRef>>> {
+        if (requestParameters['partyNameResolveRequest'] == null) {
+            throw new runtime.RequiredError(
+                'partyNameResolveRequest',
+                'Required parameter "partyNameResolveRequest" was null or undefined when calling resolvePartyNames().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:party:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/accounts/parties:resolve`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PartyNameResolveRequestToJSON(requestParameters['partyNameResolveRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PartyNameRefFromJSON));
+    }
+
+    /**
+     * Batch-resolves party ids to display names for both commercial and person parties, for sibling services such as pos-invoice that store only the party id. Use this tool when enriching rows that already carry party ids; do not use getParty, which returns the full identity projection for a single party per call. Preconditions: none; unknown or unresolvable ids are silently omitted from the response rather than causing an error. Required inputs: partyIds, a non-empty list of up to 200 UUIDs; null entries and duplicates are dropped before resolution. Emits a CUSTOMER_PARTY_RESOLVE audit event; no state changes occur. Returns 400 when partyIds is empty or exceeds 200 entries, and 200 with a possibly shorter list than requested when some ids cannot be resolved. 
+     * Resolve Party Display Names
+     */
+    async resolvePartyNames(requestParameters: ResolvePartyNamesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PartyNameRef>> {
+        const response = await this.resolvePartyNamesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Searches commercial party records by structured criteria such as name, tax id, party type, and status, returning all matches in a single unpaged result set. Use this tool when filtering commercial parties by structured attributes like taxId; use browseParties instead for the paged, unified directory that also includes individual customers, and checkPartyDuplicates for pre-create duplicate detection by legal name. Preconditions: none; an omitted or empty body matches every commercial party. Required inputs: none; name, email, phone, taxId, partyType, and status are all optional filters, and the pageNumber and pageSize fields are accepted but not applied, so the full match list is always returned. Emits a CUSTOMER_PARTY_SEARCH audit event; no state changes occur. Returns 200 with an empty results array rather than an error when no party matches. 
+     * Search Commercial Parties
      */
     async searchPartiesRaw(requestParameters: SearchPartiesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchPartiesResponse>> {
         const queryParameters: any = {};
@@ -665,8 +710,8 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search for parties based on various criteria
-     * Search parties
+     * Searches commercial party records by structured criteria such as name, tax id, party type, and status, returning all matches in a single unpaged result set. Use this tool when filtering commercial parties by structured attributes like taxId; use browseParties instead for the paged, unified directory that also includes individual customers, and checkPartyDuplicates for pre-create duplicate detection by legal name. Preconditions: none; an omitted or empty body matches every commercial party. Required inputs: none; name, email, phone, taxId, partyType, and status are all optional filters, and the pageNumber and pageSize fields are accepted but not applied, so the full match list is always returned. Emits a CUSTOMER_PARTY_SEARCH audit event; no state changes occur. Returns 200 with an empty results array rather than an error when no party matches. 
+     * Search Commercial Parties
      */
     async searchParties(requestParameters: SearchPartiesOperationRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchPartiesResponse> {
         const response = await this.searchPartiesRaw(requestParameters, initOverrides);
@@ -674,120 +719,21 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assign or update role assignments for a specific contact within a party
-     * Update contact roles
+     * Acknowledges an account-scoped communication-preference submission for a commercial party without persisting any preference values; this legacy path only validates the party and returns SUCCESS. Use this tool only for the legacy accounts-scoped path; use upsertCommunicationPreferences instead, which actually stores channel preferences and consent flags per party. Preconditions: a commercial party must exist for the supplied partyId. Required inputs: partyId (UUID) as a path parameter and a non-null JSON body; the preference fields themselves are accepted but not stored. Emits a CUSTOMER_COMMUNICATION_PREFERENCE_UPSERT audit event; no preference record is written. Returns 404 when no commercial party exists for the supplied partyId, and 400 when the request body is missing. 
+     * Upsert Account Communication Preferences
      */
-    async updateContactRoles1Raw(requestParameters: UpdateContactRoles1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UpdateContactRolesResponse>> {
+    async upsertAccountCommunicationPreferencesRaw(requestParameters: UpsertAccountCommunicationPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UpsertCommunicationPreferencesResponse>> {
         if (requestParameters['partyId'] == null) {
             throw new runtime.RequiredError(
                 'partyId',
-                'Required parameter "partyId" was null or undefined when calling updateContactRoles1().'
+                'Required parameter "partyId" was null or undefined when calling upsertAccountCommunicationPreferences().'
             );
         }
 
-        if (requestParameters['contactId'] == null) {
+        if (requestParameters['upsertCommunicationPreferencesRequest'] == null) {
             throw new runtime.RequiredError(
-                'contactId',
-                'Required parameter "contactId" was null or undefined when calling updateContactRoles1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:contact_role:assign"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/contacts/{contactId}/roles`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))).replace(`{${"contactId"}}`, encodeURIComponent(String(requestParameters['contactId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateContactRolesRequestToJSON(requestParameters['updateContactRolesRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => UpdateContactRolesResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Assign or update role assignments for a specific contact within a party
-     * Update contact roles
-     */
-    async updateContactRoles1(requestParameters: UpdateContactRoles1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UpdateContactRolesResponse> {
-        const response = await this.updateContactRoles1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Create or update the billing rules configuration for a commercial party.
-     * Upsert billing rules for a party
-     */
-    async upsertBillingRulesRaw(requestParameters: UpsertBillingRulesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillingRuleRef>> {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError(
-                'partyId',
-                'Required parameter "partyId" was null or undefined when calling upsertBillingRules().'
-            );
-        }
-
-        if (requestParameters['upsertBillingRulesRequest'] == null) {
-            throw new runtime.RequiredError(
-                'upsertBillingRulesRequest',
-                'Required parameter "upsertBillingRulesRequest" was null or undefined when calling upsertBillingRules().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["crm:billing_rules:edit"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/crm/accounts/parties/{partyId}/billing-rules`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpsertBillingRulesRequestToJSON(requestParameters['upsertBillingRulesRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => BillingRuleRefFromJSON(jsonValue));
-    }
-
-    /**
-     * Create or update the billing rules configuration for a commercial party.
-     * Upsert billing rules for a party
-     */
-    async upsertBillingRules(requestParameters: UpsertBillingRulesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillingRuleRef> {
-        const response = await this.upsertBillingRulesRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Set or update communication preferences and consent flags for a party
-     * Create or update communication preferences
-     */
-    async upsertCommunicationPreferences1Raw(requestParameters: UpsertCommunicationPreferences1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UpsertCommunicationPreferencesResponse>> {
-        if (requestParameters['partyId'] == null) {
-            throw new runtime.RequiredError(
-                'partyId',
-                'Required parameter "partyId" was null or undefined when calling upsertCommunicationPreferences1().'
+                'upsertCommunicationPreferencesRequest',
+                'Required parameter "upsertCommunicationPreferencesRequest" was null or undefined when calling upsertAccountCommunicationPreferences().'
             );
         }
 
@@ -817,11 +763,64 @@ export class CRMAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Set or update communication preferences and consent flags for a party
-     * Create or update communication preferences
+     * Acknowledges an account-scoped communication-preference submission for a commercial party without persisting any preference values; this legacy path only validates the party and returns SUCCESS. Use this tool only for the legacy accounts-scoped path; use upsertCommunicationPreferences instead, which actually stores channel preferences and consent flags per party. Preconditions: a commercial party must exist for the supplied partyId. Required inputs: partyId (UUID) as a path parameter and a non-null JSON body; the preference fields themselves are accepted but not stored. Emits a CUSTOMER_COMMUNICATION_PREFERENCE_UPSERT audit event; no preference record is written. Returns 404 when no commercial party exists for the supplied partyId, and 400 when the request body is missing. 
+     * Upsert Account Communication Preferences
      */
-    async upsertCommunicationPreferences1(requestParameters: UpsertCommunicationPreferences1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UpsertCommunicationPreferencesResponse> {
-        const response = await this.upsertCommunicationPreferences1Raw(requestParameters, initOverrides);
+    async upsertAccountCommunicationPreferences(requestParameters: UpsertAccountCommunicationPreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UpsertCommunicationPreferencesResponse> {
+        const response = await this.upsertAccountCommunicationPreferencesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates or replaces the embedded billing-rules configuration on a commercial party, covering PO requirement, tax exemption, credit hold, auto-pay, payment terms, credit limit, currency, and invoice delivery method. Use this tool when configuring how a commercial account is billed; do not use createCrmCommercialAccount, which only sets billingTermsId at creation and cannot change billing flags afterwards. Preconditions: a commercial party must exist for the supplied partyId; the whole rules block is replaced on every call rather than patched field by field. Required inputs: partyId (UUID) as a path parameter; boolean flags poRequired, taxExempt, creditHold, and autoPayEnabled default to false when omitted, and paymentTerms, creditLimit, currency, and invoiceDeliveryMethod (EMAIL, MAIL, PORTAL) are optional. Emits a CUSTOMER_BILLING_RULES_UPSERT event; the rules are stored on the party record itself. Returns 404 when no commercial party exists for the supplied partyId. 
+     * Upsert Party Billing Rules
+     */
+    async upsertPartyBillingRulesRaw(requestParameters: UpsertPartyBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillingRuleRef>> {
+        if (requestParameters['partyId'] == null) {
+            throw new runtime.RequiredError(
+                'partyId',
+                'Required parameter "partyId" was null or undefined when calling upsertPartyBillingRules().'
+            );
+        }
+
+        if (requestParameters['upsertBillingRulesRequest'] == null) {
+            throw new runtime.RequiredError(
+                'upsertBillingRulesRequest',
+                'Required parameter "upsertBillingRulesRequest" was null or undefined when calling upsertPartyBillingRules().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["crm:billing_rules:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/accounts/parties/{partyId}/billing-rules`.replace(`{${"partyId"}}`, encodeURIComponent(String(requestParameters['partyId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpsertBillingRulesRequestToJSON(requestParameters['upsertBillingRulesRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BillingRuleRefFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates or replaces the embedded billing-rules configuration on a commercial party, covering PO requirement, tax exemption, credit hold, auto-pay, payment terms, credit limit, currency, and invoice delivery method. Use this tool when configuring how a commercial account is billed; do not use createCrmCommercialAccount, which only sets billingTermsId at creation and cannot change billing flags afterwards. Preconditions: a commercial party must exist for the supplied partyId; the whole rules block is replaced on every call rather than patched field by field. Required inputs: partyId (UUID) as a path parameter; boolean flags poRequired, taxExempt, creditHold, and autoPayEnabled default to false when omitted, and paymentTerms, creditLimit, currency, and invoiceDeliveryMethod (EMAIL, MAIL, PORTAL) are optional. Emits a CUSTOMER_BILLING_RULES_UPSERT event; the rules are stored on the party record itself. Returns 404 when no commercial party exists for the supplied partyId. 
+     * Upsert Party Billing Rules
+     */
+    async upsertPartyBillingRules(requestParameters: UpsertPartyBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillingRuleRef> {
+        const response = await this.upsertPartyBillingRulesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

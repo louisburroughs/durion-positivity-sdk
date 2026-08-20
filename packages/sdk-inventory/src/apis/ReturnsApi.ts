@@ -48,8 +48,8 @@ export interface SubmitReturnToStockRequest {
 export class ReturnsApi extends runtime.BaseAPI {
 
     /**
-     * Returns reason codes available for inventory returns.
-     * List return reason codes
+     * Returns the fixed catalog of return reason codes: DAMAGED, WRONG_ITEM, EXCESS and DEFECTIVE, each with a description and category. Use this tool to populate the reasonCode of return lines before submitReturnToStock; do not use listReturnableItems, which lists what can be returned rather than why. Preconditions: none; the list is static in the service and takes no filters. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full code list on every call, so callers can cache it per session. 
+     * List Return Reason Codes
      */
     async listReturnReasonCodesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReasonCodeDto>>> {
         const queryParameters: any = {};
@@ -75,8 +75,8 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns reason codes available for inventory returns.
-     * List return reason codes
+     * Returns the fixed catalog of return reason codes: DAMAGED, WRONG_ITEM, EXCESS and DEFECTIVE, each with a description and category. Use this tool to populate the reasonCode of return lines before submitReturnToStock; do not use listReturnableItems, which lists what can be returned rather than why. Preconditions: none; the list is static in the service and takes no filters. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the full code list on every call, so callers can cache it per session. 
+     * List Return Reason Codes
      */
     async listReturnReasonCodes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReasonCodeDto>> {
         const response = await this.listReturnReasonCodesRaw(initOverrides);
@@ -84,8 +84,8 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns items that can be returned to stock for a workorder.
-     * List returnable items
+     * Returns the items eligible to be returned to stock for a workorder, with the quantity still returnable per item. Use this tool to build a return before submitReturnToStock; use listReturnReasonCodes instead for the reason codes a return line must carry. Preconditions: none checked; the current implementation is a placeholder that echoes a single stub item with quantityReturnable 0 for any workorderId until a returnable-item source-of-record exists. Required inputs: workorderId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when workorderId is missing or not a valid UUID. 
+     * List Returnable Items
      */
     async listReturnableItemsRaw(requestParameters: ListReturnableItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReturnableItemDto>>> {
         if (requestParameters['workorderId'] == null) {
@@ -122,8 +122,8 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns items that can be returned to stock for a workorder.
-     * List returnable items
+     * Returns the items eligible to be returned to stock for a workorder, with the quantity still returnable per item. Use this tool to build a return before submitReturnToStock; use listReturnReasonCodes instead for the reason codes a return line must carry. Preconditions: none checked; the current implementation is a placeholder that echoes a single stub item with quantityReturnable 0 for any workorderId until a returnable-item source-of-record exists. Required inputs: workorderId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when workorderId is missing or not a valid UUID. 
+     * List Returnable Items
      */
     async listReturnableItems(requestParameters: ListReturnableItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReturnableItemDto>> {
         const response = await this.listReturnableItemsRaw(requestParameters, initOverrides);
@@ -131,8 +131,8 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits inventory returns to stock.
-     * Submit return to stock
+     * Accepts a return-to-stock submission for a workorder and acknowledges it with a generated returnId, the processed line count and a SUBMITTED status. Use this tool to hand back unused workorder parts; do not use receiveItemsIntoStaging or createGoodsReceipt, which receive vendor shipments rather than workorder returns. Preconditions: none checked by the current implementation; the call is an acknowledgement stub, so no return record is persisted, no ledger entry posts and on-hand stock does not change yet. Required inputs: workorderId (UUID) and lines (non-empty), each naming itemId (UUID), a positive quantity, a reasonCode from listReturnReasonCodes and a locationId; storageLocationId is optional. Emits an INVENTORY_RETURN_SUBMIT_TO_STOCK event; the 202 response signals acceptance of the submission, not completed stock movement. Returns 400 when workorderId is missing, lines is empty, a quantity is not positive or a reasonCode is blank. 
+     * Submit Return To Stock
      */
     async submitReturnToStockRaw(requestParameters: SubmitReturnToStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReturnSubmissionResultDto>> {
         if (requestParameters['returnSubmitRequest'] == null) {
@@ -168,8 +168,8 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits inventory returns to stock.
-     * Submit return to stock
+     * Accepts a return-to-stock submission for a workorder and acknowledges it with a generated returnId, the processed line count and a SUBMITTED status. Use this tool to hand back unused workorder parts; do not use receiveItemsIntoStaging or createGoodsReceipt, which receive vendor shipments rather than workorder returns. Preconditions: none checked by the current implementation; the call is an acknowledgement stub, so no return record is persisted, no ledger entry posts and on-hand stock does not change yet. Required inputs: workorderId (UUID) and lines (non-empty), each naming itemId (UUID), a positive quantity, a reasonCode from listReturnReasonCodes and a locationId; storageLocationId is optional. Emits an INVENTORY_RETURN_SUBMIT_TO_STOCK event; the 202 response signals acceptance of the submission, not completed stock movement. Returns 400 when workorderId is missing, lines is empty, a quantity is not positive or a reasonCode is blank. 
+     * Submit Return To Stock
      */
     async submitReturnToStock(requestParameters: SubmitReturnToStockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReturnSubmissionResultDto> {
         const response = await this.submitReturnToStockRaw(requestParameters, initOverrides);

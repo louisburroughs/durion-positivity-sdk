@@ -14,65 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * Putaway execution request payload
+ * Request to execute a putaway move from staging to storage, with optional business-rule overrides
  * @export
  * @interface PutawayExecutionRequest
  */
 export interface PutawayExecutionRequest {
     /**
-     * 
+     * Identifier of the supervisor who approved the override
      * @type {string}
      * @memberof PutawayExecutionRequest
      */
-    skuId?: string;
+    approvedBy?: string;
     /**
-     * 
+     * Identifier of the storage location the goods are moved to
      * @type {string}
      * @memberof PutawayExecutionRequest
      */
-    sourceLocationId?: string;
+    destinationLocationId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PutawayExecutionRequest
-     */
-    destinationLocationId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof PutawayExecutionRequest
-     */
-    quantity?: number;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PutawayExecutionRequest
-     */
-    overrideLocationCompatibility?: boolean;
-    /**
-     * 
+     * When true, bypasses the destination capacity check for this move
      * @type {boolean}
      * @memberof PutawayExecutionRequest
      */
     overrideCapacity?: boolean;
     /**
-     * 
-     * @type {string}
-     * @memberof PutawayExecutionRequest
-     */
-    overrideReasonCode?: PutawayExecutionRequestOverrideReasonCodeEnum;
-    /**
-     * 
+     * Free-text justification supporting the override
      * @type {string}
      * @memberof PutawayExecutionRequest
      */
     overrideJustification?: string;
     /**
-     * 
+     * When true, bypasses the location compatibility check for this move
+     * @type {boolean}
+     * @memberof PutawayExecutionRequest
+     */
+    overrideLocationCompatibility?: boolean;
+    /**
+     * Audit reason code justifying any applied override
      * @type {string}
      * @memberof PutawayExecutionRequest
      */
-    approvedBy?: string;
+    overrideReasonCode?: PutawayExecutionRequestOverrideReasonCodeEnum;
+    /**
+     * Quantity of units to move
+     * @type {number}
+     * @memberof PutawayExecutionRequest
+     */
+    quantity: number;
+    /**
+     * Identifier of the SKU being moved
+     * @type {string}
+     * @memberof PutawayExecutionRequest
+     */
+    skuId: string;
+    /**
+     * Identifier of the staging location the goods are moved from
+     * @type {string}
+     * @memberof PutawayExecutionRequest
+     */
+    sourceLocationId: string;
 }
 
 /**
@@ -92,6 +92,10 @@ export enum PutawayExecutionRequestOverrideReasonCodeEnum {
  * Check if a given object implements the PutawayExecutionRequest interface.
  */
 export function instanceOfPutawayExecutionRequest(value: object): boolean {
+    if (!('destinationLocationId' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('skuId' in value)) return false;
+    if (!('sourceLocationId' in value)) return false;
     return true;
 }
 
@@ -105,15 +109,15 @@ export function PutawayExecutionRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'skuId': json['skuId'] == null ? undefined : json['skuId'],
-        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
-        'destinationLocationId': json['destinationLocationId'] == null ? undefined : json['destinationLocationId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'overrideLocationCompatibility': json['overrideLocationCompatibility'] == null ? undefined : json['overrideLocationCompatibility'],
-        'overrideCapacity': json['overrideCapacity'] == null ? undefined : json['overrideCapacity'],
-        'overrideReasonCode': json['overrideReasonCode'] == null ? undefined : json['overrideReasonCode'],
-        'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
         'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
+        'destinationLocationId': json['destinationLocationId'],
+        'overrideCapacity': json['overrideCapacity'] == null ? undefined : json['overrideCapacity'],
+        'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
+        'overrideLocationCompatibility': json['overrideLocationCompatibility'] == null ? undefined : json['overrideLocationCompatibility'],
+        'overrideReasonCode': json['overrideReasonCode'] == null ? undefined : json['overrideReasonCode'],
+        'quantity': json['quantity'],
+        'skuId': json['skuId'],
+        'sourceLocationId': json['sourceLocationId'],
     };
 }
 
@@ -123,15 +127,15 @@ export function PutawayExecutionRequestToJSON(value?: PutawayExecutionRequest | 
     }
     return {
         
+        'approvedBy': value['approvedBy'],
+        'destinationLocationId': value['destinationLocationId'],
+        'overrideCapacity': value['overrideCapacity'],
+        'overrideJustification': value['overrideJustification'],
+        'overrideLocationCompatibility': value['overrideLocationCompatibility'],
+        'overrideReasonCode': value['overrideReasonCode'],
+        'quantity': value['quantity'],
         'skuId': value['skuId'],
         'sourceLocationId': value['sourceLocationId'],
-        'destinationLocationId': value['destinationLocationId'],
-        'quantity': value['quantity'],
-        'overrideLocationCompatibility': value['overrideLocationCompatibility'],
-        'overrideCapacity': value['overrideCapacity'],
-        'overrideReasonCode': value['overrideReasonCode'],
-        'overrideJustification': value['overrideJustification'],
-        'approvedBy': value['approvedBy'],
     };
 }
 

@@ -21,7 +21,7 @@ import {
 } from './LineItemApprovalDto';
 
 /**
- * Request to approve an estimate with customer signature
+ * Approval request with customer ID, signature capture, and optional selective line item approvals
  * @export
  * @interface ApproveEstimateRequest
  */
@@ -32,6 +32,24 @@ export interface ApproveEstimateRequest {
      * @memberof ApproveEstimateRequest
      */
     customerId: string;
+    /**
+     * Individual line item approvals/rejections. If omitted, all items are considered approved.
+     * @type {Array<LineItemApprovalDto>}
+     * @memberof ApproveEstimateRequest
+     */
+    lineItemApprovals?: Array<LineItemApprovalDto>;
+    /**
+     * Additional notes or comments
+     * @type {string}
+     * @memberof ApproveEstimateRequest
+     */
+    notes?: string;
+    /**
+     * Purchase order number (required when PO enforcement is enabled for the account)
+     * @type {string}
+     * @memberof ApproveEstimateRequest
+     */
+    purchaseOrderNumber?: string;
     /**
      * Base64-encoded signature image data (PNG format recommended)
      * @type {string}
@@ -50,24 +68,6 @@ export interface ApproveEstimateRequest {
      * @memberof ApproveEstimateRequest
      */
     signerName?: string;
-    /**
-     * Additional notes or comments
-     * @type {string}
-     * @memberof ApproveEstimateRequest
-     */
-    notes?: string;
-    /**
-     * Individual line item approvals/rejections. If omitted, all items are considered approved.
-     * @type {Array<LineItemApprovalDto>}
-     * @memberof ApproveEstimateRequest
-     */
-    lineItemApprovals?: Array<LineItemApprovalDto>;
-    /**
-     * Purchase order number (required when PO enforcement is enabled for the account)
-     * @type {string}
-     * @memberof ApproveEstimateRequest
-     */
-    purchaseOrderNumber?: string;
 }
 
 /**
@@ -89,12 +89,12 @@ export function ApproveEstimateRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'customerId': json['customerId'],
+        'lineItemApprovals': json['lineItemApprovals'] == null ? undefined : ((json['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoFromJSON)),
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'purchaseOrderNumber': json['purchaseOrderNumber'] == null ? undefined : json['purchaseOrderNumber'],
         'signatureData': json['signatureData'] == null ? undefined : json['signatureData'],
         'signatureMimeType': json['signatureMimeType'] == null ? undefined : json['signatureMimeType'],
         'signerName': json['signerName'] == null ? undefined : json['signerName'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
-        'lineItemApprovals': json['lineItemApprovals'] == null ? undefined : ((json['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoFromJSON)),
-        'purchaseOrderNumber': json['purchaseOrderNumber'] == null ? undefined : json['purchaseOrderNumber'],
     };
 }
 
@@ -105,12 +105,12 @@ export function ApproveEstimateRequestToJSON(value?: ApproveEstimateRequest | nu
     return {
         
         'customerId': value['customerId'],
+        'lineItemApprovals': value['lineItemApprovals'] == null ? undefined : ((value['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoToJSON)),
+        'notes': value['notes'],
+        'purchaseOrderNumber': value['purchaseOrderNumber'],
         'signatureData': value['signatureData'],
         'signatureMimeType': value['signatureMimeType'],
         'signerName': value['signerName'],
-        'notes': value['notes'],
-        'lineItemApprovals': value['lineItemApprovals'] == null ? undefined : ((value['lineItemApprovals'] as Array<any>).map(LineItemApprovalDtoToJSON)),
-        'purchaseOrderNumber': value['purchaseOrderNumber'],
     };
 }
 

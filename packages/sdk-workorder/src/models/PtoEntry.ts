@@ -14,41 +14,45 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Paid time off entry affecting technician availability
  * @export
  * @interface PtoEntry
  */
 export interface PtoEntry {
     /**
-     * 
-     * @type {string}
-     * @memberof PtoEntry
-     */
-    ptoId?: string;
-    /**
-     * 
+     * End timestamp of the PTO period
      * @type {Date}
      * @memberof PtoEntry
      */
-    start?: Date;
+    end: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof PtoEntry
-     */
-    end?: Date;
-    /**
-     * 
+     * Identifier of the PTO entry
      * @type {string}
      * @memberof PtoEntry
      */
-    ptoType?: string;
+    ptoId: string;
+    /**
+     * Type of paid time off
+     * @type {string}
+     * @memberof PtoEntry
+     */
+    ptoType: string;
+    /**
+     * Start timestamp of the PTO period
+     * @type {Date}
+     * @memberof PtoEntry
+     */
+    start: Date;
 }
 
 /**
  * Check if a given object implements the PtoEntry interface.
  */
 export function instanceOfPtoEntry(value: object): boolean {
+    if (!('end' in value)) return false;
+    if (!('ptoId' in value)) return false;
+    if (!('ptoType' in value)) return false;
+    if (!('start' in value)) return false;
     return true;
 }
 
@@ -62,10 +66,10 @@ export function PtoEntryFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'ptoId': json['ptoId'] == null ? undefined : json['ptoId'],
-        'start': json['start'] == null ? undefined : (new Date(json['start'])),
-        'end': json['end'] == null ? undefined : (new Date(json['end'])),
-        'ptoType': json['ptoType'] == null ? undefined : json['ptoType'],
+        'end': (new Date(json['end'])),
+        'ptoId': json['ptoId'],
+        'ptoType': json['ptoType'],
+        'start': (new Date(json['start'])),
     };
 }
 
@@ -75,10 +79,10 @@ export function PtoEntryToJSON(value?: PtoEntry | null): any {
     }
     return {
         
+        'end': ((value['end']).toISOString()),
         'ptoId': value['ptoId'],
-        'start': value['start'] == null ? undefined : ((value['start']).toISOString()),
-        'end': value['end'] == null ? undefined : ((value['end']).toISOString()),
         'ptoType': value['ptoType'],
+        'start': ((value['start']).toISOString()),
     };
 }
 

@@ -20,23 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ReplacementOption {
     /**
-     * Replacement option identifier
-     * @type {string}
+     * Replacement option effective instant
+     * @type {Date}
      * @memberof ReplacementOption
      */
-    replacementId?: string;
-    /**
-     * Replacement product identifier
-     * @type {string}
-     * @memberof ReplacementOption
-     */
-    replacementProductId?: string;
-    /**
-     * Display priority order
-     * @type {number}
-     * @memberof ReplacementOption
-     */
-    priorityOrder?: number;
+    effectiveAt?: Date;
     /**
      * Replacement notes
      * @type {string}
@@ -44,17 +32,31 @@ export interface ReplacementOption {
      */
     notes?: string;
     /**
-     * Replacement option effective instant
-     * @type {Date}
+     * Display priority order
+     * @type {number}
      * @memberof ReplacementOption
      */
-    effectiveAt?: Date;
+    priorityOrder?: number;
+    /**
+     * Replacement option identifier
+     * @type {string}
+     * @memberof ReplacementOption
+     */
+    replacementId: string;
+    /**
+     * Replacement product identifier
+     * @type {string}
+     * @memberof ReplacementOption
+     */
+    replacementProductId: string;
 }
 
 /**
  * Check if a given object implements the ReplacementOption interface.
  */
 export function instanceOfReplacementOption(value: object): boolean {
+    if (!('replacementId' in value)) return false;
+    if (!('replacementProductId' in value)) return false;
     return true;
 }
 
@@ -68,11 +70,11 @@ export function ReplacementOptionFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'replacementId': json['replacementId'] == null ? undefined : json['replacementId'],
-        'replacementProductId': json['replacementProductId'] == null ? undefined : json['replacementProductId'],
-        'priorityOrder': json['priorityOrder'] == null ? undefined : json['priorityOrder'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
         'effectiveAt': json['effectiveAt'] == null ? undefined : (new Date(json['effectiveAt'])),
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'priorityOrder': json['priorityOrder'] == null ? undefined : json['priorityOrder'],
+        'replacementId': json['replacementId'],
+        'replacementProductId': json['replacementProductId'],
     };
 }
 
@@ -82,11 +84,11 @@ export function ReplacementOptionToJSON(value?: ReplacementOption | null): any {
     }
     return {
         
+        'effectiveAt': value['effectiveAt'] == null ? undefined : ((value['effectiveAt']).toISOString()),
+        'notes': value['notes'],
+        'priorityOrder': value['priorityOrder'],
         'replacementId': value['replacementId'],
         'replacementProductId': value['replacementProductId'],
-        'priorityOrder': value['priorityOrder'],
-        'notes': value['notes'],
-        'effectiveAt': value['effectiveAt'] == null ? undefined : ((value['effectiveAt']).toISOString()),
     };
 }
 

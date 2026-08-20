@@ -24,19 +24,21 @@ export interface ProductSpecification {
      * @type {string}
      * @memberof ProductSpecification
      */
-    name?: string;
+    name: string;
     /**
      * Specification value
      * @type {string}
      * @memberof ProductSpecification
      */
-    value?: string;
+    value: string;
 }
 
 /**
  * Check if a given object implements the ProductSpecification interface.
  */
 export function instanceOfProductSpecification(value: object): boolean {
+    if (!('name' in value)) return false;
+    if (!('value' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function ProductSpecificationFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
-        'value': json['value'] == null ? undefined : json['value'],
+        'name': json['name'],
+        'value': json['value'],
     };
 }
 

@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   AdjustmentResponse,
+  ApiError,
   ApproveAdjustmentRequest,
   CreateAdjustmentRequest,
   RejectAdjustmentRequest,
@@ -23,6 +24,8 @@ import type {
 import {
     AdjustmentResponseFromJSON,
     AdjustmentResponseToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApproveAdjustmentRequestFromJSON,
     ApproveAdjustmentRequestToJSON,
     CreateAdjustmentRequestFromJSON,
@@ -31,25 +34,25 @@ import {
     RejectAdjustmentRequestToJSON,
 } from '../models/index';
 
-export interface ApproveAdjustmentOperationRequest {
+export interface ApproveCycleCountAdjustmentRequest {
     adjustmentId: string;
     approveAdjustmentRequest: ApproveAdjustmentRequest;
     xCorrelationId?: string;
 }
 
-export interface CreateAdjustmentOperationRequest {
+export interface CreateCycleCountAdjustmentRequest {
     createAdjustmentRequest: CreateAdjustmentRequest;
 }
 
-export interface GetAdjustmentRequest {
+export interface GetCycleCountAdjustmentRequest {
     adjustmentId: string;
 }
 
-export interface ListAdjustmentsRequest {
-    status?: ListAdjustmentsStatusEnum;
+export interface ListCycleCountAdjustmentsRequest {
+    status?: ListCycleCountAdjustmentsStatusEnum;
 }
 
-export interface RejectAdjustmentOperationRequest {
+export interface RejectCycleCountAdjustmentRequest {
     adjustmentId: string;
     rejectAdjustmentRequest: RejectAdjustmentRequest;
 }
@@ -60,21 +63,21 @@ export interface RejectAdjustmentOperationRequest {
 export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
 
     /**
-     * Approves a pending adjustment and posts it to the inventory ledger
+     * Approves a PENDING_APPROVAL cycle count adjustment and posts its COUNT_VARIANCE_IN or COUNT_VARIANCE_OUT entry to the inventory ledger, marking the linked task APPROVED. Use this tool after reviewing a pending adjustment; do not use rejectCycleCountAdjustment, which discards it without touching inventory. Preconditions: the adjustment must be in PENDING_APPROVAL; for a task-linked adjustment the conflict gate applies — a first approval that detects in-window stock movements flags the task CONFLICT and aborts, and re-approving a CONFLICT task recomputes the variance against current on-hand rather than the stale snapshot (a recomputed zero variance approves without posting anything). Required inputs: adjustmentId (UUID) path parameter; the body\'s approverUserId is legacy and ignored — the actor is resolved from the authenticated context; notes are optional, and an optional X-Correlation-Id header is propagated to the audit event. Emits an INVENTORY_CYCLE_COUNT_ADJUSTMENT_APPROVE event plus a MovementAdjusted audit event, and the posting changes on-hand immediately. Returns 400 when no adjustment exists for the id (the unknown id maps to a validation error, not 404), and 409 when the adjustment is not PENDING_APPROVAL or the conflict gate rejects the first approval (CYCLE_COUNT_CONFLICT). 
      * Approve adjustment
      */
-    async approveAdjustmentRaw(requestParameters: ApproveAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
+    async approveCycleCountAdjustmentRaw(requestParameters: ApproveCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
         if (requestParameters['adjustmentId'] == null) {
             throw new runtime.RequiredError(
                 'adjustmentId',
-                'Required parameter "adjustmentId" was null or undefined when calling approveAdjustment().'
+                'Required parameter "adjustmentId" was null or undefined when calling approveCycleCountAdjustment().'
             );
         }
 
         if (requestParameters['approveAdjustmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'approveAdjustmentRequest',
-                'Required parameter "approveAdjustmentRequest" was null or undefined when calling approveAdjustment().'
+                'Required parameter "approveAdjustmentRequest" was null or undefined when calling approveCycleCountAdjustment().'
             );
         }
 
@@ -108,19 +111,19 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves a pending adjustment and posts it to the inventory ledger
+     * Approves a PENDING_APPROVAL cycle count adjustment and posts its COUNT_VARIANCE_IN or COUNT_VARIANCE_OUT entry to the inventory ledger, marking the linked task APPROVED. Use this tool after reviewing a pending adjustment; do not use rejectCycleCountAdjustment, which discards it without touching inventory. Preconditions: the adjustment must be in PENDING_APPROVAL; for a task-linked adjustment the conflict gate applies — a first approval that detects in-window stock movements flags the task CONFLICT and aborts, and re-approving a CONFLICT task recomputes the variance against current on-hand rather than the stale snapshot (a recomputed zero variance approves without posting anything). Required inputs: adjustmentId (UUID) path parameter; the body\'s approverUserId is legacy and ignored — the actor is resolved from the authenticated context; notes are optional, and an optional X-Correlation-Id header is propagated to the audit event. Emits an INVENTORY_CYCLE_COUNT_ADJUSTMENT_APPROVE event plus a MovementAdjusted audit event, and the posting changes on-hand immediately. Returns 400 when no adjustment exists for the id (the unknown id maps to a validation error, not 404), and 409 when the adjustment is not PENDING_APPROVAL or the conflict gate rejects the first approval (CYCLE_COUNT_CONFLICT). 
      * Approve adjustment
      */
-    async approveAdjustment(requestParameters: ApproveAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
-        const response = await this.approveAdjustmentRaw(requestParameters, initOverrides);
+    async approveCycleCountAdjustment(requestParameters: ApproveCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
+        const response = await this.approveCycleCountAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns the count of adjustments awaiting approval
+     * Returns the number of cycle count adjustments awaiting approval, as a bare JSON number. Use this tool for dashboards and badge counts; use listPendingCycleCountAdjustments instead when the adjustments themselves are needed. Preconditions: none. Required inputs: none; there is no request body or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with 0 when nothing awaits approval, so zero is not an error condition. 
      * Count pending approvals
      */
-    async countPendingApprovalsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<number>> {
+    async countPendingCycleCountAdjustmentsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<number>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -148,23 +151,23 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the count of adjustments awaiting approval
+     * Returns the number of cycle count adjustments awaiting approval, as a bare JSON number. Use this tool for dashboards and badge counts; use listPendingCycleCountAdjustments instead when the adjustments themselves are needed. Preconditions: none. Required inputs: none; there is no request body or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with 0 when nothing awaits approval, so zero is not an error condition. 
      * Count pending approvals
      */
-    async countPendingApprovals(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<number> {
-        const response = await this.countPendingApprovalsRaw(initOverrides);
+    async countPendingCycleCountAdjustments(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<number> {
+        const response = await this.countPendingCycleCountAdjustmentsRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates a new adjustment from a cycle count. Automatically evaluates against approval thresholds.
+     * Creates an inventory adjustment from a cycle count variance and evaluates it against the configured approval thresholds: below all thresholds it is AUTO_APPROVED and its COUNT_VARIANCE_IN or COUNT_VARIANCE_OUT entry posts to the inventory ledger in the same transaction, otherwise it enters PENDING_APPROVAL with a required approval tier. Use this tool to settle a counted variance; do not use submitCycleCount, which only records a count, and do not use approveCycleCountAdjustment, which acts on an adjustment that already exists. Preconditions: countedQuantity must differ from quantityOnHandBefore (a zero variance is rejected), a supplied taskId must reference an existing cycle count task, and the auto-approve path additionally requires the linked task to have no unreviewed in-window stock movements. Required inputs: stockItemId (UUID), reasonCode, countedQuantity, quantityOnHandBefore, costAtTimeOfAdjustment and createdByUserId; taskId is optional but enables conflict detection; the posted unit cost prefers the costing engine\'s per-SKU running cost and falls back to costAtTimeOfAdjustment only for a SKU the engine has not costed. Emits an INVENTORY_CYCLE_COUNT_ADJUSTMENT_CREATE event, and an auto-approved posting changes on-hand immediately. Returns 400 when the counted quantity matches the system quantity, 404 when the referenced task does not exist, and 409 (CYCLE_COUNT_CONFLICT) when auto-approval detects in-window movements — the task is flagged CONFLICT and a reviewer must explicitly recount or approve with recomputation. 
      * Create cycle count adjustment
      */
-    async createAdjustmentRaw(requestParameters: CreateAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
+    async createCycleCountAdjustmentRaw(requestParameters: CreateCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
         if (requestParameters['createAdjustmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'createAdjustmentRequest',
-                'Required parameter "createAdjustmentRequest" was null or undefined when calling createAdjustment().'
+                'Required parameter "createAdjustmentRequest" was null or undefined when calling createCycleCountAdjustment().'
             );
         }
 
@@ -194,23 +197,23 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new adjustment from a cycle count. Automatically evaluates against approval thresholds.
+     * Creates an inventory adjustment from a cycle count variance and evaluates it against the configured approval thresholds: below all thresholds it is AUTO_APPROVED and its COUNT_VARIANCE_IN or COUNT_VARIANCE_OUT entry posts to the inventory ledger in the same transaction, otherwise it enters PENDING_APPROVAL with a required approval tier. Use this tool to settle a counted variance; do not use submitCycleCount, which only records a count, and do not use approveCycleCountAdjustment, which acts on an adjustment that already exists. Preconditions: countedQuantity must differ from quantityOnHandBefore (a zero variance is rejected), a supplied taskId must reference an existing cycle count task, and the auto-approve path additionally requires the linked task to have no unreviewed in-window stock movements. Required inputs: stockItemId (UUID), reasonCode, countedQuantity, quantityOnHandBefore, costAtTimeOfAdjustment and createdByUserId; taskId is optional but enables conflict detection; the posted unit cost prefers the costing engine\'s per-SKU running cost and falls back to costAtTimeOfAdjustment only for a SKU the engine has not costed. Emits an INVENTORY_CYCLE_COUNT_ADJUSTMENT_CREATE event, and an auto-approved posting changes on-hand immediately. Returns 400 when the counted quantity matches the system quantity, 404 when the referenced task does not exist, and 409 (CYCLE_COUNT_CONFLICT) when auto-approval detects in-window movements — the task is flagged CONFLICT and a reviewer must explicitly recount or approve with recomputation. 
      * Create cycle count adjustment
      */
-    async createAdjustment(requestParameters: CreateAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
-        const response = await this.createAdjustmentRaw(requestParameters, initOverrides);
+    async createCycleCountAdjustment(requestParameters: CreateCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
+        const response = await this.createCycleCountAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves details of a specific cycle count adjustment
+     * Returns one cycle count adjustment with its variance, cost snapshot, approval tier, lifecycle status and ledger-entry linkage. Use this tool when the adjustmentId is already known; use listCycleCountAdjustments instead to search by status. Preconditions: the adjustment must exist. Required inputs: adjustmentId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when no adjustment exists for the supplied id — the module maps the unknown-id lookup to a validation error rather than 404. 
      * Get adjustment details
      */
-    async getAdjustmentRaw(requestParameters: GetAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
+    async getCycleCountAdjustmentRaw(requestParameters: GetCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
         if (requestParameters['adjustmentId'] == null) {
             throw new runtime.RequiredError(
                 'adjustmentId',
-                'Required parameter "adjustmentId" was null or undefined when calling getAdjustment().'
+                'Required parameter "adjustmentId" was null or undefined when calling getCycleCountAdjustment().'
             );
         }
 
@@ -237,19 +240,19 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves details of a specific cycle count adjustment
+     * Returns one cycle count adjustment with its variance, cost snapshot, approval tier, lifecycle status and ledger-entry linkage. Use this tool when the adjustmentId is already known; use listCycleCountAdjustments instead to search by status. Preconditions: the adjustment must exist. Required inputs: adjustmentId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when no adjustment exists for the supplied id — the module maps the unknown-id lookup to a validation error rather than 404. 
      * Get adjustment details
      */
-    async getAdjustment(requestParameters: GetAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
-        const response = await this.getAdjustmentRaw(requestParameters, initOverrides);
+    async getCycleCountAdjustment(requestParameters: GetCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
+        const response = await this.getCycleCountAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Lists all adjustments matching the specified status
+     * Returns every cycle count adjustment in one lifecycle status. Use this tool to browse adjustments by status; do not use listPendingCycleCountAdjustments, which returns only the pending-approval subset without a parameter, or countPendingCycleCountAdjustments, which returns just their number. Preconditions: none. Required inputs: status is an optional query parameter (PENDING_APPROVAL, AUTO_APPROVED, APPROVED, POSTED, REJECTED or FAILED) and defaults to PENDING_APPROVAL when omitted; there is no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no adjustments match, so an empty result is not an error condition. 
      * List adjustments by status
      */
-    async listAdjustmentsRaw(requestParameters: ListAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AdjustmentResponse>>> {
+    async listCycleCountAdjustmentsRaw(requestParameters: ListCycleCountAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AdjustmentResponse>>> {
         const queryParameters: any = {};
 
         if (requestParameters['status'] != null) {
@@ -277,19 +280,19 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists all adjustments matching the specified status
+     * Returns every cycle count adjustment in one lifecycle status. Use this tool to browse adjustments by status; do not use listPendingCycleCountAdjustments, which returns only the pending-approval subset without a parameter, or countPendingCycleCountAdjustments, which returns just their number. Preconditions: none. Required inputs: status is an optional query parameter (PENDING_APPROVAL, AUTO_APPROVED, APPROVED, POSTED, REJECTED or FAILED) and defaults to PENDING_APPROVAL when omitted; there is no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no adjustments match, so an empty result is not an error condition. 
      * List adjustments by status
      */
-    async listAdjustments(requestParameters: ListAdjustmentsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AdjustmentResponse>> {
-        const response = await this.listAdjustmentsRaw(requestParameters, initOverrides);
+    async listCycleCountAdjustments(requestParameters: ListCycleCountAdjustmentsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AdjustmentResponse>> {
+        const response = await this.listCycleCountAdjustmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Lists all adjustments awaiting approval
+     * Returns every cycle count adjustment currently awaiting approval (status PENDING_APPROVAL). Use this tool to build an approval work queue; use countPendingCycleCountAdjustments instead when only the badge number is needed, and listCycleCountAdjustments to browse other statuses. Preconditions: none. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing awaits approval, so an empty result is not an error condition. 
      * List pending approvals
      */
-    async listPendingApprovalsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AdjustmentResponse>>> {
+    async listPendingCycleCountAdjustmentsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AdjustmentResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -313,30 +316,30 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists all adjustments awaiting approval
+     * Returns every cycle count adjustment currently awaiting approval (status PENDING_APPROVAL). Use this tool to build an approval work queue; use countPendingCycleCountAdjustments instead when only the badge number is needed, and listCycleCountAdjustments to browse other statuses. Preconditions: none. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing awaits approval, so an empty result is not an error condition. 
      * List pending approvals
      */
-    async listPendingApprovals(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AdjustmentResponse>> {
-        const response = await this.listPendingApprovalsRaw(initOverrides);
+    async listPendingCycleCountAdjustments(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AdjustmentResponse>> {
+        const response = await this.listPendingCycleCountAdjustmentsRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Rejects a pending adjustment with a reason. No inventory changes are made.
+     * Rejects a PENDING_APPROVAL cycle count adjustment with a recorded reason; rejection is final and no inventory or ledger change is made. Use this tool to discard a variance that should not post; do not use approveCycleCountAdjustment, which posts the variance to the ledger. Preconditions: the adjustment must be in PENDING_APPROVAL status. Required inputs: adjustmentId (UUID) path parameter plus rejectorUserId and rejectionReason in the body, both non-blank. Emits an INVENTORY_CYCLE_COUNT_ADJUSTMENT_REJECT event; the adjustment moves to REJECTED and its linked task is left untouched. Returns 400 when no adjustment exists for the id (mapped to a validation error, not 404), and 409 when the adjustment is not PENDING_APPROVAL. 
      * Reject adjustment
      */
-    async rejectAdjustmentRaw(requestParameters: RejectAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
+    async rejectCycleCountAdjustmentRaw(requestParameters: RejectCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AdjustmentResponse>> {
         if (requestParameters['adjustmentId'] == null) {
             throw new runtime.RequiredError(
                 'adjustmentId',
-                'Required parameter "adjustmentId" was null or undefined when calling rejectAdjustment().'
+                'Required parameter "adjustmentId" was null or undefined when calling rejectCycleCountAdjustment().'
             );
         }
 
         if (requestParameters['rejectAdjustmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'rejectAdjustmentRequest',
-                'Required parameter "rejectAdjustmentRequest" was null or undefined when calling rejectAdjustment().'
+                'Required parameter "rejectAdjustmentRequest" was null or undefined when calling rejectCycleCountAdjustment().'
             );
         }
 
@@ -366,11 +369,11 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Rejects a pending adjustment with a reason. No inventory changes are made.
+     * Rejects a PENDING_APPROVAL cycle count adjustment with a recorded reason; rejection is final and no inventory or ledger change is made. Use this tool to discard a variance that should not post; do not use approveCycleCountAdjustment, which posts the variance to the ledger. Preconditions: the adjustment must be in PENDING_APPROVAL status. Required inputs: adjustmentId (UUID) path parameter plus rejectorUserId and rejectionReason in the body, both non-blank. Emits an INVENTORY_CYCLE_COUNT_ADJUSTMENT_REJECT event; the adjustment moves to REJECTED and its linked task is left untouched. Returns 400 when no adjustment exists for the id (mapped to a validation error, not 404), and 409 when the adjustment is not PENDING_APPROVAL. 
      * Reject adjustment
      */
-    async rejectAdjustment(requestParameters: RejectAdjustmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
-        const response = await this.rejectAdjustmentRaw(requestParameters, initOverrides);
+    async rejectCycleCountAdjustment(requestParameters: RejectCycleCountAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AdjustmentResponse> {
+        const response = await this.rejectCycleCountAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -380,7 +383,7 @@ export class CycleCountAdjustmentsApi extends runtime.BaseAPI {
   * @export
   * @enum {string}
   */
-export enum ListAdjustmentsStatusEnum {
+export enum ListCycleCountAdjustmentsStatusEnum {
     PendingApproval = 'PENDING_APPROVAL',
     AutoApproved = 'AUTO_APPROVED',
     Approved = 'APPROVED',

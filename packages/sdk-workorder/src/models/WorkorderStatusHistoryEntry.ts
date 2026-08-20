@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderStatusHistoryEntry {
     /**
-     * Status reached at this point in history
-     * @type {string}
-     * @memberof WorkorderStatusHistoryEntry
-     */
-    status?: WorkorderStatusHistoryEntryStatusEnum;
-    /**
      * Timestamp when the status change occurred
      * @type {Date}
      * @memberof WorkorderStatusHistoryEntry
@@ -43,6 +37,12 @@ export interface WorkorderStatusHistoryEntry {
      * @memberof WorkorderStatusHistoryEntry
      */
     reason?: string;
+    /**
+     * Status reached at this point in history
+     * @type {string}
+     * @memberof WorkorderStatusHistoryEntry
+     */
+    status?: WorkorderStatusHistoryEntryStatusEnum;
 }
 
 /**
@@ -79,10 +79,10 @@ export function WorkorderStatusHistoryEntryFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'status': json['status'] == null ? undefined : json['status'],
         'changedAt': json['changedAt'] == null ? undefined : (new Date(json['changedAt'])),
         'changedBy': json['changedBy'] == null ? undefined : json['changedBy'],
         'reason': json['reason'] == null ? undefined : json['reason'],
+        'status': json['status'] == null ? undefined : json['status'],
     };
 }
 
@@ -92,10 +92,10 @@ export function WorkorderStatusHistoryEntryToJSON(value?: WorkorderStatusHistory
     }
     return {
         
-        'status': value['status'],
         'changedAt': value['changedAt'] == null ? undefined : ((value['changedAt']).toISOString()),
         'changedBy': value['changedBy'],
         'reason': value['reason'],
+        'status': value['status'],
     };
 }
 

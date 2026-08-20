@@ -31,44 +31,44 @@ import {
     RefundRequestToJSON,
 } from '../models/index';
 
-export interface GetByActorRequest {
+export interface GetAuditTrailByActorRequest {
     actorId: string;
     startDate: Date;
     endDate: Date;
 }
 
-export interface GetByDateRangeRequest {
+export interface GetAuditTrailByDateRangeRequest {
     startDate: Date;
     endDate: Date;
 }
 
-export interface GetByInvoiceIdRequest {
+export interface GetAuditTrailByInvoiceRequest {
     invoiceId: string;
 }
 
-export interface GetByOrderIdRequest {
+export interface GetAuditTrailByOrderRequest {
     orderId: string;
 }
 
-export interface GetByOrderId1Request {
+export interface GetAuditTrailByOrder1Request {
     orderId: string;
 }
 
-export interface GetByTypeRequest {
-    type: GetByTypeTypeEnum;
+export interface GetAuditTrailByTypeRequest {
+    type: GetAuditTrailByTypeTypeEnum;
     startDate: Date;
     endDate: Date;
 }
 
-export interface RecordCancellationRequest {
+export interface RecordCancellationAuditRequest {
     cancellationRequest: CancellationRequest;
 }
 
-export interface RecordPriceOverrideRequest {
+export interface RecordPriceOverrideAuditRequest {
     priceOverrideRequest: PriceOverrideRequest;
 }
 
-export interface RecordRefundRequest {
+export interface RecordRefundAuditRequest {
     refundRequest: RefundRequest;
 }
 
@@ -78,28 +78,28 @@ export interface RecordRefundRequest {
 export class AuditTrailApi extends runtime.BaseAPI {
 
     /**
-     * Retrieves audit trail entries for a specific actor (user) within a date range
-     * Get audit trail by actor
+     * Returns audit trail entries recorded by one actor (user) within a date range, across all exception types. Use this tool to review a specific user\'s overrides, refunds and cancellations; use getAuditTrailByType instead to slice by exception category. Preconditions: none; an unknown actor yields an empty list. Required inputs: actorId (user identifier string) as a path parameter plus startDate and endDate (ISO-8601 instants) as query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the dates cannot be parsed. 
+     * Get Audit Trail By Actor
      */
-    async getByActorRaw(requestParameters: GetByActorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async getAuditTrailByActorRaw(requestParameters: GetAuditTrailByActorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['actorId'] == null) {
             throw new runtime.RequiredError(
                 'actorId',
-                'Required parameter "actorId" was null or undefined when calling getByActor().'
+                'Required parameter "actorId" was null or undefined when calling getAuditTrailByActor().'
             );
         }
 
         if (requestParameters['startDate'] == null) {
             throw new runtime.RequiredError(
                 'startDate',
-                'Required parameter "startDate" was null or undefined when calling getByActor().'
+                'Required parameter "startDate" was null or undefined when calling getAuditTrailByActor().'
             );
         }
 
         if (requestParameters['endDate'] == null) {
             throw new runtime.RequiredError(
                 'endDate',
-                'Required parameter "endDate" was null or undefined when calling getByActor().'
+                'Required parameter "endDate" was null or undefined when calling getAuditTrailByActor().'
             );
         }
 
@@ -134,30 +134,30 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves audit trail entries for a specific actor (user) within a date range
-     * Get audit trail by actor
+     * Returns audit trail entries recorded by one actor (user) within a date range, across all exception types. Use this tool to review a specific user\'s overrides, refunds and cancellations; use getAuditTrailByType instead to slice by exception category. Preconditions: none; an unknown actor yields an empty list. Required inputs: actorId (user identifier string) as a path parameter plus startDate and endDate (ISO-8601 instants) as query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the dates cannot be parsed. 
+     * Get Audit Trail By Actor
      */
-    async getByActor(requestParameters: GetByActorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.getByActorRaw(requestParameters, initOverrides);
+    async getAuditTrailByActor(requestParameters: GetAuditTrailByActorRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.getAuditTrailByActorRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves all audit trail entries within a specified date range
-     * Get audit trail by date range
+     * Returns all audit trail entries of every exception type within a date range. Use this tool for a broad period review; use getAuditTrailByType or getAuditTrailByActor instead when a narrower slice is wanted. Preconditions: none; a quiet range yields an empty list. Required inputs: startDate and endDate (ISO-8601 instants) as query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the dates cannot be parsed. 
+     * Get Audit Trail By Date Range
      */
-    async getByDateRangeRaw(requestParameters: GetByDateRangeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async getAuditTrailByDateRangeRaw(requestParameters: GetAuditTrailByDateRangeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['startDate'] == null) {
             throw new runtime.RequiredError(
                 'startDate',
-                'Required parameter "startDate" was null or undefined when calling getByDateRange().'
+                'Required parameter "startDate" was null or undefined when calling getAuditTrailByDateRange().'
             );
         }
 
         if (requestParameters['endDate'] == null) {
             throw new runtime.RequiredError(
                 'endDate',
-                'Required parameter "endDate" was null or undefined when calling getByDateRange().'
+                'Required parameter "endDate" was null or undefined when calling getAuditTrailByDateRange().'
             );
         }
 
@@ -192,23 +192,23 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves all audit trail entries within a specified date range
-     * Get audit trail by date range
+     * Returns all audit trail entries of every exception type within a date range. Use this tool for a broad period review; use getAuditTrailByType or getAuditTrailByActor instead when a narrower slice is wanted. Preconditions: none; a quiet range yields an empty list. Required inputs: startDate and endDate (ISO-8601 instants) as query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the dates cannot be parsed. 
+     * Get Audit Trail By Date Range
      */
-    async getByDateRange(requestParameters: GetByDateRangeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.getByDateRangeRaw(requestParameters, initOverrides);
+    async getAuditTrailByDateRange(requestParameters: GetAuditTrailByDateRangeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.getAuditTrailByDateRangeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves all audit trail entries associated with a specific invoice
-     * Get audit trail for invoice
+     * Returns all audit trail entries recorded against one invoice, covering refunds and cancellations. Use this tool when the invoice id is known; use getAuditTrailByOrder for order-scoped entries instead. Preconditions: none; an invoice with no exceptions yields an empty list. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no audit entries exist for the invoice. 
+     * Get Audit Trail For Invoice
      */
-    async getByInvoiceIdRaw(requestParameters: GetByInvoiceIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async getAuditTrailByInvoiceRaw(requestParameters: GetAuditTrailByInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['invoiceId'] == null) {
             throw new runtime.RequiredError(
                 'invoiceId',
-                'Required parameter "invoiceId" was null or undefined when calling getByInvoiceId().'
+                'Required parameter "invoiceId" was null or undefined when calling getAuditTrailByInvoice().'
             );
         }
 
@@ -235,23 +235,23 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves all audit trail entries associated with a specific invoice
-     * Get audit trail for invoice
+     * Returns all audit trail entries recorded against one invoice, covering refunds and cancellations. Use this tool when the invoice id is known; use getAuditTrailByOrder for order-scoped entries instead. Preconditions: none; an invoice with no exceptions yields an empty list. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no audit entries exist for the invoice. 
+     * Get Audit Trail For Invoice
      */
-    async getByInvoiceId(requestParameters: GetByInvoiceIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.getByInvoiceIdRaw(requestParameters, initOverrides);
+    async getAuditTrailByInvoice(requestParameters: GetAuditTrailByInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.getAuditTrailByInvoiceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves all audit trail entries associated with a specific order
-     * Get audit trail for order
+     * Returns all audit trail entries recorded against one order, covering price overrides and cancellations. Use this tool when the order id is known; use getAuditTrailByType or getAuditTrailByDateRange instead for cross-document review. Preconditions: none; an order with no exceptions yields an empty list. Required inputs: orderId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no audit entries exist for the order. 
+     * Get Audit Trail For Order
      */
-    async getByOrderIdRaw(requestParameters: GetByOrderIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async getAuditTrailByOrderRaw(requestParameters: GetAuditTrailByOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['orderId'] == null) {
             throw new runtime.RequiredError(
                 'orderId',
-                'Required parameter "orderId" was null or undefined when calling getByOrderId().'
+                'Required parameter "orderId" was null or undefined when calling getAuditTrailByOrder().'
             );
         }
 
@@ -278,23 +278,23 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves all audit trail entries associated with a specific order
-     * Get audit trail for order
+     * Returns all audit trail entries recorded against one order, covering price overrides and cancellations. Use this tool when the order id is known; use getAuditTrailByType or getAuditTrailByDateRange instead for cross-document review. Preconditions: none; an order with no exceptions yields an empty list. Required inputs: orderId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no audit entries exist for the order. 
+     * Get Audit Trail For Order
      */
-    async getByOrderId(requestParameters: GetByOrderIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.getByOrderIdRaw(requestParameters, initOverrides);
+    async getAuditTrailByOrder(requestParameters: GetAuditTrailByOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.getAuditTrailByOrderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves all audit trail entries associated with a specific order
-     * Get audit trail for order
+     * Returns all audit trail entries recorded against one order, covering price overrides and cancellations. Use this tool when the order id is known; use getAuditTrailByType or getAuditTrailByDateRange instead for cross-document review. Preconditions: none; an order with no exceptions yields an empty list. Required inputs: orderId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no audit entries exist for the order. 
+     * Get Audit Trail For Order
      */
-    async getByOrderId1Raw(requestParameters: GetByOrderId1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async getAuditTrailByOrder1Raw(requestParameters: GetAuditTrailByOrder1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['orderId'] == null) {
             throw new runtime.RequiredError(
                 'orderId',
-                'Required parameter "orderId" was null or undefined when calling getByOrderId1().'
+                'Required parameter "orderId" was null or undefined when calling getAuditTrailByOrder1().'
             );
         }
 
@@ -321,37 +321,37 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves all audit trail entries associated with a specific order
-     * Get audit trail for order
+     * Returns all audit trail entries recorded against one order, covering price overrides and cancellations. Use this tool when the order id is known; use getAuditTrailByType or getAuditTrailByDateRange instead for cross-document review. Preconditions: none; an order with no exceptions yields an empty list. Required inputs: orderId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when no audit entries exist for the order. 
+     * Get Audit Trail For Order
      */
-    async getByOrderId1(requestParameters: GetByOrderId1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.getByOrderId1Raw(requestParameters, initOverrides);
+    async getAuditTrailByOrder1(requestParameters: GetAuditTrailByOrder1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.getAuditTrailByOrder1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieves audit trail entries filtered by exception type and date range
-     * Get audit trail by exception type
+     * Returns audit trail entries of one exception type (PRICE_OVERRIDE, REFUND or CANCELLATION) within a date range. Use this tool to review one exception category across documents; use getAuditTrailByActor instead when reviewing one user\'s activity. Preconditions: none; an empty range yields an empty list. Required inputs: type as a path parameter plus startDate and endDate (ISO-8601 instants) as query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the type or dates cannot be parsed. 
+     * Get Audit Trail By Exception Type
      */
-    async getByTypeRaw(requestParameters: GetByTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async getAuditTrailByTypeRaw(requestParameters: GetAuditTrailByTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['type'] == null) {
             throw new runtime.RequiredError(
                 'type',
-                'Required parameter "type" was null or undefined when calling getByType().'
+                'Required parameter "type" was null or undefined when calling getAuditTrailByType().'
             );
         }
 
         if (requestParameters['startDate'] == null) {
             throw new runtime.RequiredError(
                 'startDate',
-                'Required parameter "startDate" was null or undefined when calling getByType().'
+                'Required parameter "startDate" was null or undefined when calling getAuditTrailByType().'
             );
         }
 
         if (requestParameters['endDate'] == null) {
             throw new runtime.RequiredError(
                 'endDate',
-                'Required parameter "endDate" was null or undefined when calling getByType().'
+                'Required parameter "endDate" was null or undefined when calling getAuditTrailByType().'
             );
         }
 
@@ -386,23 +386,23 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves audit trail entries filtered by exception type and date range
-     * Get audit trail by exception type
+     * Returns audit trail entries of one exception type (PRICE_OVERRIDE, REFUND or CANCELLATION) within a date range. Use this tool to review one exception category across documents; use getAuditTrailByActor instead when reviewing one user\'s activity. Preconditions: none; an empty range yields an empty list. Required inputs: type as a path parameter plus startDate and endDate (ISO-8601 instants) as query parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the type or dates cannot be parsed. 
+     * Get Audit Trail By Exception Type
      */
-    async getByType(requestParameters: GetByTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.getByTypeRaw(requestParameters, initOverrides);
+    async getAuditTrailByType(requestParameters: GetAuditTrailByTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.getAuditTrailByTypeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates an audit trail entry for an order or invoice cancellation
-     * Record a cancellation
+     * Records an audit trail entry for an order or invoice cancellation, capturing before and after document snapshots. Use this tool when an order or invoice is cancelled upstream; do not use recordRefundAudit, which covers money returned on a retained document. Preconditions: none enforced beyond validation; either orderId or invoiceId should identify the cancelled document. Required inputs: cancellationType (ORDER_CANCELLED, INVOICE_CANCELLED or PAYMENT_FAILED), beforeSnapshot and afterSnapshot (JSON strings), actorRole and reason; orderId, invoiceId, actorId and partialPaymentInfo are optional. Emits an ACCOUNTING_AUDIT_CANCELLATION event. Returns 400 when required fields are missing. 
+     * Record Cancellation Audit Entry
      */
-    async recordCancellationRaw(requestParameters: RecordCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async recordCancellationAuditRaw(requestParameters: RecordCancellationAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['cancellationRequest'] == null) {
             throw new runtime.RequiredError(
                 'cancellationRequest',
-                'Required parameter "cancellationRequest" was null or undefined when calling recordCancellation().'
+                'Required parameter "cancellationRequest" was null or undefined when calling recordCancellationAudit().'
             );
         }
 
@@ -432,23 +432,23 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an audit trail entry for an order or invoice cancellation
-     * Record a cancellation
+     * Records an audit trail entry for an order or invoice cancellation, capturing before and after document snapshots. Use this tool when an order or invoice is cancelled upstream; do not use recordRefundAudit, which covers money returned on a retained document. Preconditions: none enforced beyond validation; either orderId or invoiceId should identify the cancelled document. Required inputs: cancellationType (ORDER_CANCELLED, INVOICE_CANCELLED or PAYMENT_FAILED), beforeSnapshot and afterSnapshot (JSON strings), actorRole and reason; orderId, invoiceId, actorId and partialPaymentInfo are optional. Emits an ACCOUNTING_AUDIT_CANCELLATION event. Returns 400 when required fields are missing. 
+     * Record Cancellation Audit Entry
      */
-    async recordCancellation(requestParameters: RecordCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.recordCancellationRaw(requestParameters, initOverrides);
+    async recordCancellationAudit(requestParameters: RecordCancellationAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.recordCancellationAuditRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates an audit trail entry for a price override exception with policy validation
-     * Record a price override
+     * Records an audit trail entry for a price override exception, validating the acting role\'s authorization level against the override amount before persisting. Use this tool when an order line price is overridden at the point of sale; do not use recordRefundAudit or recordCancellationAudit, which cover those other exception types. Preconditions: the actor\'s role must be authorized for the override delta; a denied authorization publishes an AuthorizationDenied event and records nothing. Required inputs: orderId (UUID), lineItemId (UUID), originalPrice, adjustedPrice, actorRole and reason; categoryCode is optional. Emits an ACCOUNTING_AUDIT_PRICE_OVERRIDE event. Returns 403 AUTHORIZATION_DENIED when the role\'s limit does not cover the override, and 400 when required fields are missing. 
+     * Record Price Override Audit Entry
      */
-    async recordPriceOverrideRaw(requestParameters: RecordPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async recordPriceOverrideAuditRaw(requestParameters: RecordPriceOverrideAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['priceOverrideRequest'] == null) {
             throw new runtime.RequiredError(
                 'priceOverrideRequest',
-                'Required parameter "priceOverrideRequest" was null or undefined when calling recordPriceOverride().'
+                'Required parameter "priceOverrideRequest" was null or undefined when calling recordPriceOverrideAudit().'
             );
         }
 
@@ -478,23 +478,23 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an audit trail entry for a price override exception with policy validation
-     * Record a price override
+     * Records an audit trail entry for a price override exception, validating the acting role\'s authorization level against the override amount before persisting. Use this tool when an order line price is overridden at the point of sale; do not use recordRefundAudit or recordCancellationAudit, which cover those other exception types. Preconditions: the actor\'s role must be authorized for the override delta; a denied authorization publishes an AuthorizationDenied event and records nothing. Required inputs: orderId (UUID), lineItemId (UUID), originalPrice, adjustedPrice, actorRole and reason; categoryCode is optional. Emits an ACCOUNTING_AUDIT_PRICE_OVERRIDE event. Returns 403 AUTHORIZATION_DENIED when the role\'s limit does not cover the override, and 400 when required fields are missing. 
+     * Record Price Override Audit Entry
      */
-    async recordPriceOverride(requestParameters: RecordPriceOverrideRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.recordPriceOverrideRaw(requestParameters, initOverrides);
+    async recordPriceOverrideAudit(requestParameters: RecordPriceOverrideAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.recordPriceOverrideAuditRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates an audit trail entry for a refund exception with policy validation and settlement handling
-     * Record a refund
+     * Records an audit trail entry for a refund exception, validating refund policy and settlement handling for the original payment before persisting. Use this tool when a customer refund is granted; do not use refundCustomerCredit, which actually moves money out of a standing credit, and do not use recordPriceOverrideAudit for price changes. Preconditions: the refund must pass the refund authorization policy for its type and amount; a denial records nothing. Required inputs: invoiceId (UUID), paymentId (UUID), refundType, refundAmount and originalPaymentStatus; actorId is optional. Emits an ACCOUNTING_AUDIT_REFUND event. Returns 403 AUTHORIZATION_DENIED when separate authorization is required and absent, and 400 when required fields are missing. 
+     * Record Refund Audit Entry
      */
-    async recordRefundRaw(requestParameters: RecordRefundRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
+    async recordRefundAuditRaw(requestParameters: RecordRefundAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditTrailResponse>> {
         if (requestParameters['refundRequest'] == null) {
             throw new runtime.RequiredError(
                 'refundRequest',
-                'Required parameter "refundRequest" was null or undefined when calling recordRefund().'
+                'Required parameter "refundRequest" was null or undefined when calling recordRefundAudit().'
             );
         }
 
@@ -524,11 +524,11 @@ export class AuditTrailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an audit trail entry for a refund exception with policy validation and settlement handling
-     * Record a refund
+     * Records an audit trail entry for a refund exception, validating refund policy and settlement handling for the original payment before persisting. Use this tool when a customer refund is granted; do not use refundCustomerCredit, which actually moves money out of a standing credit, and do not use recordPriceOverrideAudit for price changes. Preconditions: the refund must pass the refund authorization policy for its type and amount; a denial records nothing. Required inputs: invoiceId (UUID), paymentId (UUID), refundType, refundAmount and originalPaymentStatus; actorId is optional. Emits an ACCOUNTING_AUDIT_REFUND event. Returns 403 AUTHORIZATION_DENIED when separate authorization is required and absent, and 400 when required fields are missing. 
+     * Record Refund Audit Entry
      */
-    async recordRefund(requestParameters: RecordRefundRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
-        const response = await this.recordRefundRaw(requestParameters, initOverrides);
+    async recordRefundAudit(requestParameters: RecordRefundAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditTrailResponse> {
+        const response = await this.recordRefundAuditRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -538,7 +538,7 @@ export class AuditTrailApi extends runtime.BaseAPI {
   * @export
   * @enum {string}
   */
-export enum GetByTypeTypeEnum {
+export enum GetAuditTrailByTypeTypeEnum {
     PriceOverride = 'PRICE_OVERRIDE',
     Refund = 'REFUND',
     Cancellation = 'CANCELLATION'

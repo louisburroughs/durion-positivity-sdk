@@ -51,8 +51,8 @@ export interface UpdateUomConversionRequest {
 export class UOMConversionAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a new unit-of-measure conversion record.
-     * Create UOM conversion
+     * Creates a global, directional unit-of-measure conversion stating how many target units one source unit represents; codes are normalised to upper case and the factor stored at six decimal places. Use this tool for conversions that apply across the whole catalog; do not use addProductUom, which defines a conversion for a single product\'s own unit set. Preconditions: no active conversion may already exist for the same from and to code pair; a self-conversion (same code both sides) must carry factor 1. Required inputs: fromUomCode, toUomCode and a positive conversionFactor; createdBy is optional. Emits a CATALOG_UOM_CONVERSION_CREATE event; the reverse direction is derived at read time, not stored. Returns 409 when an active conversion already exists for the pair, and 400 when either code is blank, the factor is not positive, or a self-conversion factor is not 1. 
+     * Create UoM Conversion
      */
     async createUomConversionRaw(requestParameters: CreateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UomConversionDto>> {
         if (requestParameters['uomConversionCreateRequestDto'] == null) {
@@ -88,8 +88,8 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new unit-of-measure conversion record.
-     * Create UOM conversion
+     * Creates a global, directional unit-of-measure conversion stating how many target units one source unit represents; codes are normalised to upper case and the factor stored at six decimal places. Use this tool for conversions that apply across the whole catalog; do not use addProductUom, which defines a conversion for a single product\'s own unit set. Preconditions: no active conversion may already exist for the same from and to code pair; a self-conversion (same code both sides) must carry factor 1. Required inputs: fromUomCode, toUomCode and a positive conversionFactor; createdBy is optional. Emits a CATALOG_UOM_CONVERSION_CREATE event; the reverse direction is derived at read time, not stored. Returns 409 when an active conversion already exists for the pair, and 400 when either code is blank, the factor is not positive, or a self-conversion factor is not 1. 
+     * Create UoM Conversion
      */
     async createUomConversion(requestParameters: CreateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UomConversionDto> {
         const response = await this.createUomConversionRaw(requestParameters, initOverrides);
@@ -97,8 +97,8 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates a conversion so it is excluded from active conversion results.
-     * Deactivate conversion
+     * Marks a unit-of-measure conversion inactive so it disappears from listUomConversions and from factor lookups; the row is kept and remains readable by id. Use this tool to retire a conversion pair; do not use updateUomConversion, which changes the factor while keeping it active — there is no reactivation endpoint, so recreate the pair with createUomConversion if it is needed again. Preconditions: the conversion must exist; deactivating an already inactive conversion succeeds idempotently. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a CATALOG_UOM_CONVERSION_DEACTIVATE event; product-level UoM sets are unaffected. Returns 204 on success, and 404 when no conversion exists for the supplied id. 
+     * Deactivate UoM Conversion
      */
     async deactivateUomConversionRaw(requestParameters: DeactivateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -131,16 +131,16 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates a conversion so it is excluded from active conversion results.
-     * Deactivate conversion
+     * Marks a unit-of-measure conversion inactive so it disappears from listUomConversions and from factor lookups; the row is kept and remains readable by id. Use this tool to retire a conversion pair; do not use updateUomConversion, which changes the factor while keeping it active — there is no reactivation endpoint, so recreate the pair with createUomConversion if it is needed again. Preconditions: the conversion must exist; deactivating an already inactive conversion succeeds idempotently. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a CATALOG_UOM_CONVERSION_DEACTIVATE event; product-level UoM sets are unaffected. Returns 204 on success, and 404 when no conversion exists for the supplied id. 
+     * Deactivate UoM Conversion
      */
     async deactivateUomConversion(requestParameters: DeactivateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deactivateUomConversionRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieves a unit-of-measure conversion by its ID.
-     * Get conversion
+     * Returns one unit-of-measure conversion with its from and to codes, factor and active flag; inactive conversions are returned here even though listUomConversions hides them. Use this tool when the conversion id is already known; use listUomConversions instead to browse the active table. Preconditions: the conversion must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no conversion exists for the supplied id. 
+     * Get UoM Conversion by ID
      */
     async getUomConversionByIdRaw(requestParameters: GetUomConversionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UomConversionDto>> {
         if (requestParameters['id'] == null) {
@@ -173,8 +173,8 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a unit-of-measure conversion by its ID.
-     * Get conversion
+     * Returns one unit-of-measure conversion with its from and to codes, factor and active flag; inactive conversions are returned here even though listUomConversions hides them. Use this tool when the conversion id is already known; use listUomConversions instead to browse the active table. Preconditions: the conversion must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no conversion exists for the supplied id. 
+     * Get UoM Conversion by ID
      */
     async getUomConversionById(requestParameters: GetUomConversionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UomConversionDto> {
         const response = await this.getUomConversionByIdRaw(requestParameters, initOverrides);
@@ -182,8 +182,8 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all active unit-of-measure conversion records.
-     * List active conversions
+     * Returns every active unit-of-measure conversion in the global table; deactivated conversions are excluded. Use this tool to survey available conversions or find a conversion id; use getUomConversionById instead when the id is already known, and listProductUoms for a product\'s own unit set. Preconditions: none; the list is unfiltered and unpaged. Required inputs: none, and there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active conversions exist, so an empty result is not an error condition. 
+     * List Active UoM Conversions
      */
     async listUomConversionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UomConversionDto>>> {
         const queryParameters: any = {};
@@ -209,8 +209,8 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all active unit-of-measure conversion records.
-     * List active conversions
+     * Returns every active unit-of-measure conversion in the global table; deactivated conversions are excluded. Use this tool to survey available conversions or find a conversion id; use getUomConversionById instead when the id is already known, and listProductUoms for a product\'s own unit set. Preconditions: none; the list is unfiltered and unpaged. Required inputs: none, and there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active conversions exist, so an empty result is not an error condition. 
+     * List Active UoM Conversions
      */
     async listUomConversions(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UomConversionDto>> {
         const response = await this.listUomConversionsRaw(initOverrides);
@@ -218,8 +218,8 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates the conversion factor and mutable fields for an existing conversion.
-     * Update conversion factor
+     * Updates the factor of an existing unit-of-measure conversion; the from and to codes are immutable, so redefining a pair means deactivating this conversion and creating a new one. Use this tool to correct a factor; do not use createUomConversion, which adds a new pair, or deactivateUomConversion, which retires one. Preconditions: the conversion must exist; a self-conversion must keep factor 1. Required inputs: id (UUID) path parameter and a positive conversionFactor in the body, stored at six decimal places. Emits a CATALOG_UOM_CONVERSION_UPDATE event; derived inverse factors reflect the change immediately. Returns 404 when no conversion exists for the supplied id, and 400 when the factor is not positive or a self-conversion factor is not 1. 
+     * Update UoM Conversion Factor
      */
     async updateUomConversionRaw(requestParameters: UpdateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UomConversionDto>> {
         if (requestParameters['id'] == null) {
@@ -262,8 +262,8 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates the conversion factor and mutable fields for an existing conversion.
-     * Update conversion factor
+     * Updates the factor of an existing unit-of-measure conversion; the from and to codes are immutable, so redefining a pair means deactivating this conversion and creating a new one. Use this tool to correct a factor; do not use createUomConversion, which adds a new pair, or deactivateUomConversion, which retires one. Preconditions: the conversion must exist; a self-conversion must keep factor 1. Required inputs: id (UUID) path parameter and a positive conversionFactor in the body, stored at six decimal places. Emits a CATALOG_UOM_CONVERSION_UPDATE event; derived inverse factors reflect the change immediately. Returns 404 when no conversion exists for the supplied id, and 400 when the factor is not positive or a self-conversion factor is not 1. 
+     * Update UoM Conversion Factor
      */
     async updateUomConversion(requestParameters: UpdateUomConversionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UomConversionDto> {
         const response = await this.updateUomConversionRaw(requestParameters, initOverrides);

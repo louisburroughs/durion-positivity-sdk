@@ -16,14 +16,18 @@
 import * as runtime from '../runtime';
 import type {
   SubstituteLinkResponse,
+  SuggestSubstitutesRequest,
 } from '../models/index';
 import {
     SubstituteLinkResponseFromJSON,
     SubstituteLinkResponseToJSON,
+    SuggestSubstitutesRequestFromJSON,
+    SuggestSubstitutesRequestToJSON,
 } from '../models/index';
 
-export interface SuggestSubstitutesRequest {
+export interface SuggestWorkorderSubstitutesRequest {
     workorderId: string;
+    suggestSubstitutesRequest?: SuggestSubstitutesRequest;
 }
 
 /**
@@ -32,20 +36,22 @@ export interface SuggestSubstitutesRequest {
 export class SubstituteLinkAPIApi extends runtime.BaseAPI {
 
     /**
-     * Suggest substitute parts for a workorder based on the parts currently required
-     * Suggest workorder substitutes
+     * Suggests substitute parts for a workorder by returning the active substitute links of the part named in the request, ordered by ascending priority. Use this tool when a pick is short and a stand-in part is needed; do not use listSubstituteLinks, which is the catalog view keyed by product rather than a workorder suggestion. Preconditions: suggestions require a partId scope — without a body or partId the result is currently an empty list, because workorder-wide suggestions are not implemented. Required inputs: workorderId (UUID) as a path parameter; the body is optional and carries partId (UUID) to scope suggestions to that part\'s links. Emits a WORKORDER_SUBSTITUTE_SUGGEST audit event; no substitution is applied and no state changes — this is a read-only suggestion. Returns 200 with the suggested links, empty when no partId is given or no active links exist. 
+     * Suggest Substitute Parts for Workorder
      */
-    async suggestSubstitutesRaw(requestParameters: SuggestSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SubstituteLinkResponse>>> {
+    async suggestWorkorderSubstitutesRaw(requestParameters: SuggestWorkorderSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SubstituteLinkResponse>>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling suggestSubstitutes().'
+                'Required parameter "workorderId" was null or undefined when calling suggestWorkorderSubstitutes().'
             );
         }
 
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -60,17 +66,18 @@ export class SubstituteLinkAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: SuggestSubstitutesRequestToJSON(requestParameters['suggestSubstitutesRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SubstituteLinkResponseFromJSON));
     }
 
     /**
-     * Suggest substitute parts for a workorder based on the parts currently required
-     * Suggest workorder substitutes
+     * Suggests substitute parts for a workorder by returning the active substitute links of the part named in the request, ordered by ascending priority. Use this tool when a pick is short and a stand-in part is needed; do not use listSubstituteLinks, which is the catalog view keyed by product rather than a workorder suggestion. Preconditions: suggestions require a partId scope — without a body or partId the result is currently an empty list, because workorder-wide suggestions are not implemented. Required inputs: workorderId (UUID) as a path parameter; the body is optional and carries partId (UUID) to scope suggestions to that part\'s links. Emits a WORKORDER_SUBSTITUTE_SUGGEST audit event; no substitution is applied and no state changes — this is a read-only suggestion. Returns 200 with the suggested links, empty when no partId is given or no active links exist. 
+     * Suggest Substitute Parts for Workorder
      */
-    async suggestSubstitutes(requestParameters: SuggestSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SubstituteLinkResponse>> {
-        const response = await this.suggestSubstitutesRaw(requestParameters, initOverrides);
+    async suggestWorkorderSubstitutes(requestParameters: SuggestWorkorderSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SubstituteLinkResponse>> {
+        const response = await this.suggestWorkorderSubstitutesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

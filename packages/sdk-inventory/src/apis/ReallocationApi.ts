@@ -28,7 +28,7 @@ import {
     ReallocateResponseToJSON,
 } from '../models/index';
 
-export interface ReallocateOperationRequest {
+export interface ReallocateAllocationsRequest {
     reallocateRequest: ReallocateRequest;
 }
 
@@ -38,14 +38,14 @@ export interface ReallocateOperationRequest {
 export class ReallocationApi extends runtime.BaseAPI {
 
     /**
-     * Rebalances existing allocations for a stock item based on priority and available inventory
+     * Rebalances the allocated quantities of every reservation of one stock item, redistributing the reservations\' current total allocated pool by effective priority. Use this tool after a supply or priority change to re-decide which reservations hold stock; do not use promoteReservationAllocation, which hardens a single allocation, and do not use resolveShortage, which creates resolution artifacts for one short allocation. Preconditions: none beyond reservations existing for the stock item; the pool redistributed is the current total allocated quantity across those reservations, not ledger on-hand. Required inputs: stockItemId (UUID); triggerType (an AllocationAuditReasonCode name, falling back to MANUAL_OVERRIDE when absent or unrecognized) and triggerReferenceId are optional audit fields. Emits an INVENTORY_ALLOCATION_REALLOCATE event and writes one allocation-audit row per reservation; ordering is effective priority ascending (1 is critical, and priority ages one step per 24 hours after a 24-hour grace period), then due date, waiting-since, schedule start and creation time, each reservation receives its full required quantity or zero (no partial awards), and no ledger entries are written. Returns 400 when stockItemId is missing, and 200 with atpAfterReallocation (ledger on-hand minus total allocated) otherwise. 
      * Reallocate inventory allocations
      */
-    async reallocateRaw(requestParameters: ReallocateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReallocateResponse>> {
+    async reallocateAllocationsRaw(requestParameters: ReallocateAllocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReallocateResponse>> {
         if (requestParameters['reallocateRequest'] == null) {
             throw new runtime.RequiredError(
                 'reallocateRequest',
-                'Required parameter "reallocateRequest" was null or undefined when calling reallocate().'
+                'Required parameter "reallocateRequest" was null or undefined when calling reallocateAllocations().'
             );
         }
 
@@ -75,11 +75,11 @@ export class ReallocationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Rebalances existing allocations for a stock item based on priority and available inventory
+     * Rebalances the allocated quantities of every reservation of one stock item, redistributing the reservations\' current total allocated pool by effective priority. Use this tool after a supply or priority change to re-decide which reservations hold stock; do not use promoteReservationAllocation, which hardens a single allocation, and do not use resolveShortage, which creates resolution artifacts for one short allocation. Preconditions: none beyond reservations existing for the stock item; the pool redistributed is the current total allocated quantity across those reservations, not ledger on-hand. Required inputs: stockItemId (UUID); triggerType (an AllocationAuditReasonCode name, falling back to MANUAL_OVERRIDE when absent or unrecognized) and triggerReferenceId are optional audit fields. Emits an INVENTORY_ALLOCATION_REALLOCATE event and writes one allocation-audit row per reservation; ordering is effective priority ascending (1 is critical, and priority ages one step per 24 hours after a 24-hour grace period), then due date, waiting-since, schedule start and creation time, each reservation receives its full required quantity or zero (no partial awards), and no ledger entries are written. Returns 400 when stockItemId is missing, and 200 with atpAfterReallocation (ledger on-hand minus total allocated) otherwise. 
      * Reallocate inventory allocations
      */
-    async reallocate(requestParameters: ReallocateOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReallocateResponse> {
-        const response = await this.reallocateRaw(requestParameters, initOverrides);
+    async reallocateAllocations(requestParameters: ReallocateAllocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReallocateResponse> {
+        const response = await this.reallocateAllocationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

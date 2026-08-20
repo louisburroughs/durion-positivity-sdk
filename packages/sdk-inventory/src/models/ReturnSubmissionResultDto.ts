@@ -14,47 +14,52 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Outcome of a return submission, summarizing how many lines were processed
  * @export
  * @interface ReturnSubmissionResultDto
  */
 export interface ReturnSubmissionResultDto {
     /**
-     * 
-     * @type {string}
-     * @memberof ReturnSubmissionResultDto
-     */
-    returnId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReturnSubmissionResultDto
-     */
-    workorderId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ReturnSubmissionResultDto
-     */
-    processedLines?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReturnSubmissionResultDto
-     */
-    status?: string;
-    /**
-     * 
+     * Timestamp when the return was processed
      * @type {Date}
      * @memberof ReturnSubmissionResultDto
      */
-    processedAt?: Date;
+    processedAt: Date;
+    /**
+     * Number of return lines that were processed
+     * @type {number}
+     * @memberof ReturnSubmissionResultDto
+     */
+    processedLines: number;
+    /**
+     * Identifier of the created return record
+     * @type {string}
+     * @memberof ReturnSubmissionResultDto
+     */
+    returnId: string;
+    /**
+     * Status of the return submission
+     * @type {string}
+     * @memberof ReturnSubmissionResultDto
+     */
+    status: string;
+    /**
+     * Identifier of the workorder the return was submitted against
+     * @type {string}
+     * @memberof ReturnSubmissionResultDto
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the ReturnSubmissionResultDto interface.
  */
 export function instanceOfReturnSubmissionResultDto(value: object): boolean {
+    if (!('processedAt' in value)) return false;
+    if (!('processedLines' in value)) return false;
+    if (!('returnId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -68,11 +73,11 @@ export function ReturnSubmissionResultDtoFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'returnId': json['returnId'] == null ? undefined : json['returnId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'processedLines': json['processedLines'] == null ? undefined : json['processedLines'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'processedAt': json['processedAt'] == null ? undefined : (new Date(json['processedAt'])),
+        'processedAt': (new Date(json['processedAt'])),
+        'processedLines': json['processedLines'],
+        'returnId': json['returnId'],
+        'status': json['status'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -82,11 +87,11 @@ export function ReturnSubmissionResultDtoToJSON(value?: ReturnSubmissionResultDt
     }
     return {
         
-        'returnId': value['returnId'],
-        'workorderId': value['workorderId'],
+        'processedAt': ((value['processedAt']).toISOString()),
         'processedLines': value['processedLines'],
+        'returnId': value['returnId'],
         'status': value['status'],
-        'processedAt': value['processedAt'] == null ? undefined : ((value['processedAt']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

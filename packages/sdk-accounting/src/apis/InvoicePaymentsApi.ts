@@ -31,7 +31,7 @@ import {
     RegenerateInvoiceFromWorkorderRequestToJSON,
 } from '../models/index';
 
-export interface GetBillingRulesRequest {
+export interface GetAccountingBillingRulesRequest {
     customerId: string;
 }
 
@@ -49,14 +49,14 @@ export interface RegenerateInvoiceFromWorkorderOperationRequest {
 export class InvoicePaymentsApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve billing rules for a customer.
-     * Get billing rules
+     * Returns the billing rule references configured for a customer, fetched from the customer service. Use this tool to inspect how a customer is billed before generating or regenerating invoices; do not use regenerateInvoiceFromWorkorder, which performs the regeneration itself. Preconditions: the customer must exist in the customer service. Required inputs: customerId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection over a cross-service call. Returns 404 when the customer is not found, and 503 when the customer service is unavailable. 
+     * Get Customer Billing Rules
      */
-    async getBillingRulesRaw(requestParameters: GetBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillingRuleRefResponse>> {
+    async getAccountingBillingRulesRaw(requestParameters: GetAccountingBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillingRuleRefResponse>> {
         if (requestParameters['customerId'] == null) {
             throw new runtime.RequiredError(
                 'customerId',
-                'Required parameter "customerId" was null or undefined when calling getBillingRules().'
+                'Required parameter "customerId" was null or undefined when calling getAccountingBillingRules().'
             );
         }
 
@@ -83,17 +83,17 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve billing rules for a customer.
-     * Get billing rules
+     * Returns the billing rule references configured for a customer, fetched from the customer service. Use this tool to inspect how a customer is billed before generating or regenerating invoices; do not use regenerateInvoiceFromWorkorder, which performs the regeneration itself. Preconditions: the customer must exist in the customer service. Required inputs: customerId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection over a cross-service call. Returns 404 when the customer is not found, and 503 when the customer service is unavailable. 
+     * Get Customer Billing Rules
      */
-    async getBillingRules(requestParameters: GetBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillingRuleRefResponse> {
-        const response = await this.getBillingRulesRaw(requestParameters, initOverrides);
+    async getAccountingBillingRules(requestParameters: GetAccountingBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillingRuleRefResponse> {
+        const response = await this.getAccountingBillingRulesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve current payment status for an invoice.
-     * Get invoice status
+     * Returns the current payment status of an invoice as tracked by the accounting module\'s invoice replica. Use this tool to check whether an invoice is open, partially paid or paid before applying payments or credits; do not use applyPayment, which changes the status. Preconditions: the invoice must be known to the accounting module. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the invoice is not found, and 400 when the identifier is rejected by the status service. 
+     * Get Invoice Payment Status
      */
     async getInvoiceStatusRaw(requestParameters: GetInvoiceStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceStatusResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -126,8 +126,8 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve current payment status for an invoice.
-     * Get invoice status
+     * Returns the current payment status of an invoice as tracked by the accounting module\'s invoice replica. Use this tool to check whether an invoice is open, partially paid or paid before applying payments or credits; do not use applyPayment, which changes the status. Preconditions: the invoice must be known to the accounting module. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the invoice is not found, and 400 when the identifier is rejected by the status service. 
+     * Get Invoice Payment Status
      */
     async getInvoiceStatus(requestParameters: GetInvoiceStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceStatusResponse> {
         const response = await this.getInvoiceStatusRaw(requestParameters, initOverrides);
@@ -135,8 +135,8 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Regenerate an invoice from a workorder.
-     * Regenerate invoice from workorder
+     * Requests regeneration of an invoice from a completed workorder, either synchronously or via the asynchronous command path. Use this tool when an invoice must be rebuilt from its source workorder; do not use getInvoiceStatus, which only reads the current payment status. Preconditions: the workorder must exist and be in COMPLETED state. Required inputs: workorderId (UUID); idempotencyKey is optional and de-duplicates repeated regeneration commands. Emits an ACCOUNTING_INVOICE_REGENERATE event; on the async path the call returns 202 with status PENDING and the invoice arrives later via invoice.events.v1. Returns 202 when the command is accepted asynchronously, 404 when the workorder is not found, 409 when it is not COMPLETED, and 503 when the workorder service is unavailable. 
+     * Regenerate Invoice From Workorder
      */
     async regenerateInvoiceFromWorkorderRaw(requestParameters: RegenerateInvoiceFromWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceGenerationResponse>> {
         if (requestParameters['regenerateInvoiceFromWorkorderRequest'] == null) {
@@ -172,8 +172,8 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Regenerate an invoice from a workorder.
-     * Regenerate invoice from workorder
+     * Requests regeneration of an invoice from a completed workorder, either synchronously or via the asynchronous command path. Use this tool when an invoice must be rebuilt from its source workorder; do not use getInvoiceStatus, which only reads the current payment status. Preconditions: the workorder must exist and be in COMPLETED state. Required inputs: workorderId (UUID); idempotencyKey is optional and de-duplicates repeated regeneration commands. Emits an ACCOUNTING_INVOICE_REGENERATE event; on the async path the call returns 202 with status PENDING and the invoice arrives later via invoice.events.v1. Returns 202 when the command is accepted asynchronously, 404 when the workorder is not found, 409 when it is not COMPLETED, and 503 when the workorder service is unavailable. 
+     * Regenerate Invoice From Workorder
      */
     async regenerateInvoiceFromWorkorder(requestParameters: RegenerateInvoiceFromWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceGenerationResponse> {
         const response = await this.regenerateInvoiceFromWorkorderRaw(requestParameters, initOverrides);

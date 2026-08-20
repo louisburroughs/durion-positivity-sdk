@@ -20,11 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface ApprovedTimeExportResponse {
     /**
-     * Time entry identifier
+     * Approval timestamp
+     * @type {Date}
+     * @memberof ApprovedTimeExportResponse
+     */
+    approvedAt: Date;
+    /**
+     * Approver reference
      * @type {string}
      * @memberof ApprovedTimeExportResponse
      */
-    timeEntryId: string;
+    approvedBy: string;
     /**
      * Timekeeping employee identifier
      * @type {string}
@@ -38,18 +44,6 @@ export interface ApprovedTimeExportResponse {
      */
     employeeName: string;
     /**
-     * Timekeeping location identifier
-     * @type {string}
-     * @memberof ApprovedTimeExportResponse
-     */
-    locationId: string;
-    /**
-     * Location display name
-     * @type {string}
-     * @memberof ApprovedTimeExportResponse
-     */
-    locationName: string;
-    /**
      * Entry date (UTC)
      * @type {Date}
      * @memberof ApprovedTimeExportResponse
@@ -62,32 +56,38 @@ export interface ApprovedTimeExportResponse {
      */
     hoursWorked: number;
     /**
-     * Approval timestamp
-     * @type {Date}
-     * @memberof ApprovedTimeExportResponse
-     */
-    approvedAt: Date;
-    /**
-     * Approver reference
+     * Timekeeping location identifier
      * @type {string}
      * @memberof ApprovedTimeExportResponse
      */
-    approvedBy: string;
+    locationId: string;
+    /**
+     * Location display name
+     * @type {string}
+     * @memberof ApprovedTimeExportResponse
+     */
+    locationName: string;
+    /**
+     * Time entry identifier
+     * @type {string}
+     * @memberof ApprovedTimeExportResponse
+     */
+    timeEntryId: string;
 }
 
 /**
  * Check if a given object implements the ApprovedTimeExportResponse interface.
  */
 export function instanceOfApprovedTimeExportResponse(value: object): boolean {
-    if (!('timeEntryId' in value)) return false;
-    if (!('employeeId' in value)) return false;
-    if (!('employeeName' in value)) return false;
-    if (!('locationId' in value)) return false;
-    if (!('locationName' in value)) return false;
-    if (!('entryDate' in value)) return false;
-    if (!('hoursWorked' in value)) return false;
     if (!('approvedAt' in value)) return false;
     if (!('approvedBy' in value)) return false;
+    if (!('employeeId' in value)) return false;
+    if (!('employeeName' in value)) return false;
+    if (!('entryDate' in value)) return false;
+    if (!('hoursWorked' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('locationName' in value)) return false;
+    if (!('timeEntryId' in value)) return false;
     return true;
 }
 
@@ -101,15 +101,15 @@ export function ApprovedTimeExportResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'timeEntryId': json['timeEntryId'],
-        'employeeId': json['employeeId'],
-        'employeeName': json['employeeName'],
-        'locationId': json['locationId'],
-        'locationName': json['locationName'],
-        'entryDate': (new Date(json['entryDate'])),
-        'hoursWorked': json['hoursWorked'],
         'approvedAt': (new Date(json['approvedAt'])),
         'approvedBy': json['approvedBy'],
+        'employeeId': json['employeeId'],
+        'employeeName': json['employeeName'],
+        'entryDate': (new Date(json['entryDate'])),
+        'hoursWorked': json['hoursWorked'],
+        'locationId': json['locationId'],
+        'locationName': json['locationName'],
+        'timeEntryId': json['timeEntryId'],
     };
 }
 
@@ -119,15 +119,15 @@ export function ApprovedTimeExportResponseToJSON(value?: ApprovedTimeExportRespo
     }
     return {
         
-        'timeEntryId': value['timeEntryId'],
-        'employeeId': value['employeeId'],
-        'employeeName': value['employeeName'],
-        'locationId': value['locationId'],
-        'locationName': value['locationName'],
-        'entryDate': ((value['entryDate']).toISOString().substring(0,10)),
-        'hoursWorked': value['hoursWorked'],
         'approvedAt': ((value['approvedAt']).toISOString()),
         'approvedBy': value['approvedBy'],
+        'employeeId': value['employeeId'],
+        'employeeName': value['employeeName'],
+        'entryDate': ((value['entryDate']).toISOString().substring(0,10)),
+        'hoursWorked': value['hoursWorked'],
+        'locationId': value['locationId'],
+        'locationName': value['locationName'],
+        'timeEntryId': value['timeEntryId'],
     };
 }
 

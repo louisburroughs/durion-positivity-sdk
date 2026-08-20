@@ -14,49 +14,49 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Partial update payload for a storage location; null fields are left unchanged
  * @export
  * @interface StorageLocationPatchRequest
  */
 export interface StorageLocationPatchRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationPatchRequest
-     */
-    name?: string;
-    /**
-     * 
+     * Barcode identifying the storage location
      * @type {string}
      * @memberof StorageLocationPatchRequest
      */
     barcode?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationPatchRequest
-     */
-    status?: StorageLocationPatchRequestStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationPatchRequest
-     */
-    parentStorageLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StorageLocationPatchRequest
-     */
-    destinationStorageLocationId?: string;
-    /**
-     * 
+     * Capacity attributes of the storage location
      * @type {object}
      * @memberof StorageLocationPatchRequest
      */
     capacity?: object;
     /**
-     * 
+     * Identifier of the destination storage location for relocation operations
+     * @type {string}
+     * @memberof StorageLocationPatchRequest
+     */
+    destinationStorageLocationId?: string;
+    /**
+     * Display name of the storage location
+     * @type {string}
+     * @memberof StorageLocationPatchRequest
+     */
+    name?: string;
+    /**
+     * Identifier of the parent storage location
+     * @type {string}
+     * @memberof StorageLocationPatchRequest
+     */
+    parentStorageLocationId?: string;
+    /**
+     * Operational status of the storage location
+     * @type {string}
+     * @memberof StorageLocationPatchRequest
+     */
+    status?: StorageLocationPatchRequestStatusEnum;
+    /**
+     * Temperature attributes of the storage location
      * @type {object}
      * @memberof StorageLocationPatchRequest
      */
@@ -92,12 +92,12 @@ export function StorageLocationPatchRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
         'barcode': json['barcode'] == null ? undefined : json['barcode'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
-        'destinationStorageLocationId': json['destinationStorageLocationId'] == null ? undefined : json['destinationStorageLocationId'],
         'capacity': json['capacity'] == null ? undefined : json['capacity'],
+        'destinationStorageLocationId': json['destinationStorageLocationId'] == null ? undefined : json['destinationStorageLocationId'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
+        'status': json['status'] == null ? undefined : json['status'],
         'temperature': json['temperature'] == null ? undefined : json['temperature'],
     };
 }
@@ -108,12 +108,12 @@ export function StorageLocationPatchRequestToJSON(value?: StorageLocationPatchRe
     }
     return {
         
-        'name': value['name'],
         'barcode': value['barcode'],
-        'status': value['status'],
-        'parentStorageLocationId': value['parentStorageLocationId'],
-        'destinationStorageLocationId': value['destinationStorageLocationId'],
         'capacity': value['capacity'],
+        'destinationStorageLocationId': value['destinationStorageLocationId'],
+        'name': value['name'],
+        'parentStorageLocationId': value['parentStorageLocationId'],
+        'status': value['status'],
         'temperature': value['temperature'],
     };
 }

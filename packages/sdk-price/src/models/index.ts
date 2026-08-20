@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AddEligibilityRuleRequest';
+export * from './ApiError';
 export * from './ApplyPromotionRequest';
 export * from './ApplyPromotionResponse';
 export * from './BasePriceBulkIngestRecord';
@@ -13,6 +14,7 @@ export * from './EligibilityContext';
 export * from './EligibilityDecisionResponse';
 export * from './EligibilityRuleResponse';
 export * from './EstimateContext';
+export * from './FieldError';
 export * from './LineItemContext';
 export * from './MoneyAmount';
 export * from './PriceQuoteRequest';

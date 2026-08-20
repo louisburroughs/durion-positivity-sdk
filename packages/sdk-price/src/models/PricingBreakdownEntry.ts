@@ -27,35 +27,39 @@ import {
  */
 export interface PricingBreakdownEntry {
     /**
+     * 
+     * @type {MoneyAmount}
+     * @memberof PricingBreakdownEntry
+     */
+    adjustment: MoneyAmount;
+    /**
+     * 
+     * @type {MoneyAmount}
+     * @memberof PricingBreakdownEntry
+     */
+    resultingValue: MoneyAmount;
+    /**
      * Rule name
      * @type {string}
      * @memberof PricingBreakdownEntry
      */
-    ruleName?: string;
+    ruleName: string;
     /**
      * Rule category/type
      * @type {string}
      * @memberof PricingBreakdownEntry
      */
-    ruleType?: string;
-    /**
-     * 
-     * @type {MoneyAmount}
-     * @memberof PricingBreakdownEntry
-     */
-    adjustment?: MoneyAmount;
-    /**
-     * 
-     * @type {MoneyAmount}
-     * @memberof PricingBreakdownEntry
-     */
-    resultingValue?: MoneyAmount;
+    ruleType: string;
 }
 
 /**
  * Check if a given object implements the PricingBreakdownEntry interface.
  */
 export function instanceOfPricingBreakdownEntry(value: object): boolean {
+    if (!('adjustment' in value)) return false;
+    if (!('resultingValue' in value)) return false;
+    if (!('ruleName' in value)) return false;
+    if (!('ruleType' in value)) return false;
     return true;
 }
 
@@ -69,10 +73,10 @@ export function PricingBreakdownEntryFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'ruleName': json['ruleName'] == null ? undefined : json['ruleName'],
-        'ruleType': json['ruleType'] == null ? undefined : json['ruleType'],
-        'adjustment': json['adjustment'] == null ? undefined : MoneyAmountFromJSON(json['adjustment']),
-        'resultingValue': json['resultingValue'] == null ? undefined : MoneyAmountFromJSON(json['resultingValue']),
+        'adjustment': MoneyAmountFromJSON(json['adjustment']),
+        'resultingValue': MoneyAmountFromJSON(json['resultingValue']),
+        'ruleName': json['ruleName'],
+        'ruleType': json['ruleType'],
     };
 }
 
@@ -82,10 +86,10 @@ export function PricingBreakdownEntryToJSON(value?: PricingBreakdownEntry | null
     }
     return {
         
-        'ruleName': value['ruleName'],
-        'ruleType': value['ruleType'],
         'adjustment': MoneyAmountToJSON(value['adjustment']),
         'resultingValue': MoneyAmountToJSON(value['resultingValue']),
+        'ruleName': value['ruleName'],
+        'ruleType': value['ruleType'],
     };
 }
 

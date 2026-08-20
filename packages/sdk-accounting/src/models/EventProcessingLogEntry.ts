@@ -20,41 +20,45 @@ import { mapValues } from '../runtime';
  */
 export interface EventProcessingLogEntry {
     /**
-     * Unique identifier for this log entry
-     * @type {string}
-     * @memberof EventProcessingLogEntry
-     */
-    entryId?: string;
-    /**
-     * When this log entry was created
-     * @type {Date}
-     * @memberof EventProcessingLogEntry
-     */
-    occurredAt?: Date;
-    /**
-     * Severity level: INFO, WARN, or ERROR
-     * @type {string}
-     * @memberof EventProcessingLogEntry
-     */
-    severity?: string;
-    /**
-     * Human-readable log message
-     * @type {string}
-     * @memberof EventProcessingLogEntry
-     */
-    message?: string;
-    /**
      * Optional JSON context for debugging
      * @type {string}
      * @memberof EventProcessingLogEntry
      */
     contextJson?: string;
+    /**
+     * Unique identifier for this log entry
+     * @type {string}
+     * @memberof EventProcessingLogEntry
+     */
+    entryId: string;
+    /**
+     * Human-readable log message
+     * @type {string}
+     * @memberof EventProcessingLogEntry
+     */
+    message: string;
+    /**
+     * When this log entry was created (ISO 8601)
+     * @type {Date}
+     * @memberof EventProcessingLogEntry
+     */
+    occurredAt: Date;
+    /**
+     * Severity level: INFO, WARN, or ERROR
+     * @type {string}
+     * @memberof EventProcessingLogEntry
+     */
+    severity: string;
 }
 
 /**
  * Check if a given object implements the EventProcessingLogEntry interface.
  */
 export function instanceOfEventProcessingLogEntry(value: object): boolean {
+    if (!('entryId' in value)) return false;
+    if (!('message' in value)) return false;
+    if (!('occurredAt' in value)) return false;
+    if (!('severity' in value)) return false;
     return true;
 }
 
@@ -68,11 +72,11 @@ export function EventProcessingLogEntryFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'entryId': json['entryId'] == null ? undefined : json['entryId'],
-        'occurredAt': json['occurredAt'] == null ? undefined : (new Date(json['occurredAt'])),
-        'severity': json['severity'] == null ? undefined : json['severity'],
-        'message': json['message'] == null ? undefined : json['message'],
         'contextJson': json['contextJson'] == null ? undefined : json['contextJson'],
+        'entryId': json['entryId'],
+        'message': json['message'],
+        'occurredAt': (new Date(json['occurredAt'])),
+        'severity': json['severity'],
     };
 }
 
@@ -82,11 +86,11 @@ export function EventProcessingLogEntryToJSON(value?: EventProcessingLogEntry | 
     }
     return {
         
-        'entryId': value['entryId'],
-        'occurredAt': value['occurredAt'] == null ? undefined : ((value['occurredAt']).toISOString()),
-        'severity': value['severity'],
-        'message': value['message'],
         'contextJson': value['contextJson'],
+        'entryId': value['entryId'],
+        'message': value['message'],
+        'occurredAt': ((value['occurredAt']).toISOString()),
+        'severity': value['severity'],
     };
 }
 

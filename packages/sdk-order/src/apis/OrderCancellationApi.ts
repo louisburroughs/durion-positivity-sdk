@@ -30,7 +30,7 @@ export interface CancelOrderOperationRequest {
     cancelOrderRequest: CancelOrderRequest;
 }
 
-export interface RetryCancellationRequest {
+export interface RetryOrderCancellationRequest {
     orderId: string;
     idempotencyKey: string;
 }
@@ -41,8 +41,8 @@ export interface RetryCancellationRequest {
 export class OrderCancellationApi extends runtime.BaseAPI {
 
     /**
-     * Initiate cancellation for a sales order cart using the supplied cancellation context.
-     * Cancel order
+     * Runs the order cancellation saga: transitions the order through CANCEL_REQUESTED, cancels a linked workorder at pos-workexec when workOrderId is supplied, reverses every net-settled payment as refunds through pos-invoice, and finishes at CANCELLED, publishing an order-cancelled fact. Use this tool for DRAFT or QUOTED orders and to re-drive CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING orders from the start; do not use voidOrder, which is the terminal void for an unsettled PENDING_PAYMENT order, and do not use retryOrderCancellation, which re-runs only the billing leg from CANCEL_FAILED_BILLING. Preconditions: the order must be DRAFT, QUOTED, CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING, and settled payments require an invoice reference to refund against. Required inputs: cancellationReason; workOrderId is optional and triggers the workorder-cancellation leg, and idempotencyKey is optional (one is generated when absent) — replaying it against an already CANCELLED order returns the original result. Emits an ORDER_CART_CANCEL_REQUEST event; refunds are idempotent per payment intent at pos-invoice, and a failed leg parks the order at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING. Returns 201 when the cancellation completes (or already had for the replayed key), 404 when the order does not exist, and 409 when the current status is not cancellable or a workorder or payment-reversal leg fails. 
+     * Cancel a Sales Order
      */
     async cancelOrderRaw(requestParameters: CancelOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CancellationResponse>> {
         if (requestParameters['orderId'] == null) {
@@ -85,8 +85,8 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Initiate cancellation for a sales order cart using the supplied cancellation context.
-     * Cancel order
+     * Runs the order cancellation saga: transitions the order through CANCEL_REQUESTED, cancels a linked workorder at pos-workexec when workOrderId is supplied, reverses every net-settled payment as refunds through pos-invoice, and finishes at CANCELLED, publishing an order-cancelled fact. Use this tool for DRAFT or QUOTED orders and to re-drive CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING orders from the start; do not use voidOrder, which is the terminal void for an unsettled PENDING_PAYMENT order, and do not use retryOrderCancellation, which re-runs only the billing leg from CANCEL_FAILED_BILLING. Preconditions: the order must be DRAFT, QUOTED, CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING, and settled payments require an invoice reference to refund against. Required inputs: cancellationReason; workOrderId is optional and triggers the workorder-cancellation leg, and idempotencyKey is optional (one is generated when absent) — replaying it against an already CANCELLED order returns the original result. Emits an ORDER_CART_CANCEL_REQUEST event; refunds are idempotent per payment intent at pos-invoice, and a failed leg parks the order at CANCEL_FAILED_WORKEXEC or CANCEL_FAILED_BILLING. Returns 201 when the cancellation completes (or already had for the replayed key), 404 when the order does not exist, and 409 when the current status is not cancellable or a workorder or payment-reversal leg fails. 
+     * Cancel a Sales Order
      */
     async cancelOrder(requestParameters: CancelOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CancellationResponse> {
         const response = await this.cancelOrderRaw(requestParameters, initOverrides);
@@ -94,21 +94,21 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retry a previously failed order cancellation using the original idempotency key.
-     * Retry failed cancellation
+     * Retries the billing leg of a failed order cancellation, re-running the settled-payment reversals and completing the transition to CANCELLED. Use this tool after a cancellation parked at CANCEL_FAILED_BILLING; do not use cancelOrder, which starts the saga from the beginning and re-checks the workorder leg as well. Preconditions: the order must be in CANCEL_FAILED_BILLING. Required inputs: orderId (UUID) as a path parameter and idempotencyKey as a query parameter — the original cancellation key, from which per-intent refund idempotency at pos-invoice is derived. Emits an ORDER_CART_CANCEL_RETRY event; a retry that fails again transitions the order to CANCEL_REQUIRES_MANUAL_REVIEW and publishes a review-required fact instead of looping. Returns 200 when the cancellation completes on retry, 404 when the order does not exist, and 409 when the order is not in CANCEL_FAILED_BILLING or the reversal fails again. 
+     * Retry a Failed Cancellation
      */
-    async retryCancellationRaw(requestParameters: RetryCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CancellationResponse>> {
+    async retryOrderCancellationRaw(requestParameters: RetryOrderCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CancellationResponse>> {
         if (requestParameters['orderId'] == null) {
             throw new runtime.RequiredError(
                 'orderId',
-                'Required parameter "orderId" was null or undefined when calling retryCancellation().'
+                'Required parameter "orderId" was null or undefined when calling retryOrderCancellation().'
             );
         }
 
         if (requestParameters['idempotencyKey'] == null) {
             throw new runtime.RequiredError(
                 'idempotencyKey',
-                'Required parameter "idempotencyKey" was null or undefined when calling retryCancellation().'
+                'Required parameter "idempotencyKey" was null or undefined when calling retryOrderCancellation().'
             );
         }
 
@@ -139,11 +139,11 @@ export class OrderCancellationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retry a previously failed order cancellation using the original idempotency key.
-     * Retry failed cancellation
+     * Retries the billing leg of a failed order cancellation, re-running the settled-payment reversals and completing the transition to CANCELLED. Use this tool after a cancellation parked at CANCEL_FAILED_BILLING; do not use cancelOrder, which starts the saga from the beginning and re-checks the workorder leg as well. Preconditions: the order must be in CANCEL_FAILED_BILLING. Required inputs: orderId (UUID) as a path parameter and idempotencyKey as a query parameter — the original cancellation key, from which per-intent refund idempotency at pos-invoice is derived. Emits an ORDER_CART_CANCEL_RETRY event; a retry that fails again transitions the order to CANCEL_REQUIRES_MANUAL_REVIEW and publishes a review-required fact instead of looping. Returns 200 when the cancellation completes on retry, 404 when the order does not exist, and 409 when the order is not in CANCEL_FAILED_BILLING or the reversal fails again. 
+     * Retry a Failed Cancellation
      */
-    async retryCancellation(requestParameters: RetryCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CancellationResponse> {
-        const response = await this.retryCancellationRaw(requestParameters, initOverrides);
+    async retryOrderCancellation(requestParameters: RetryOrderCancellationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CancellationResponse> {
+        const response = await this.retryOrderCancellationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

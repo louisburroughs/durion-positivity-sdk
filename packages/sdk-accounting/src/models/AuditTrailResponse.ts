@@ -14,261 +14,205 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Audit trail entry describing a recorded accounting exception event
  * @export
  * @interface AuditTrailResponse
  */
 export interface AuditTrailResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    auditId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    exceptionType?: AuditTrailResponseExceptionTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    actorId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    actorRole?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AuditTrailResponse
-     */
-    timestamp?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    reason?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    authorizationLevel?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    policyVersion?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    orderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    lineItemId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof AuditTrailResponse
-     */
-    originalPrice?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof AuditTrailResponse
-     */
-    adjustedPrice?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    overrideAmountOrPercent?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    forbiddenCategoryCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    policyValidationResult?: AuditTrailResponsePolicyValidationResultEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    invoiceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    paymentId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    refundType?: AuditTrailResponseRefundTypeEnum;
-    /**
-     * 
-     * @type {number}
-     * @memberof AuditTrailResponse
-     */
-    refundAmount?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    originalPaymentStatus?: AuditTrailResponseOriginalPaymentStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    refundMethod?: AuditTrailResponseRefundMethodEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    linkedSourceIds?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    cancellationType?: AuditTrailResponseCancellationTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    beforeSnapshot?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    afterSnapshot?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    partialPaymentInfo?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AuditTrailResponse
-     */
-    glReversalStatus?: string;
-    /**
-     * 
+     * Accounting intent of the event
      * @type {string}
      * @memberof AuditTrailResponse
      */
     accountingIntent?: AuditTrailResponseAccountingIntentEnum;
     /**
-     * 
+     * Accounting status of the event
      * @type {string}
      * @memberof AuditTrailResponse
      */
     accountingStatus?: AuditTrailResponseAccountingStatusEnum;
     /**
-     * 
+     * Identifier of the actor who performed the action
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    actorId?: string;
+    /**
+     * Role of the actor who performed the action
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    actorRole?: string;
+    /**
+     * Adjusted price after override
+     * @type {number}
+     * @memberof AuditTrailResponse
+     */
+    adjustedPrice?: number;
+    /**
+     * Snapshot of state after the cancellation (JSON)
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    afterSnapshot?: string;
+    /**
+     * Unique identifier of the audit trail entry
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    auditId: string;
+    /**
+     * Authorization level applied to the action
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    authorizationLevel?: string;
+    /**
+     * Snapshot of state before the cancellation (JSON)
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    beforeSnapshot?: string;
+    /**
+     * Type of cancellation recorded
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    cancellationType?: AuditTrailResponseCancellationTypeEnum;
+    /**
+     * Category of exception recorded
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    exceptionType: AuditTrailResponseExceptionTypeEnum;
+    /**
+     * Expected accounting outcome description
      * @type {string}
      * @memberof AuditTrailResponse
      */
     expectedAccountingOutcome?: string;
     /**
-     * 
+     * Forbidden category code that was triggered, if any
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    forbiddenCategoryCode?: string;
+    /**
+     * Status of the GL reversal triggered by the cancellation
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    glReversalStatus?: string;
+    /**
+     * Identifier of the invoice associated with the event
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    invoiceId?: string;
+    /**
+     * Identifier of the line item associated with the event
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    lineItemId?: string;
+    /**
+     * Comma-separated linked source identifiers
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    linkedSourceIds?: string;
+    /**
+     * Identifier of the order associated with the event
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    orderId?: string;
+    /**
+     * Status of the original payment being refunded
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    originalPaymentStatus?: AuditTrailResponseOriginalPaymentStatusEnum;
+    /**
+     * Original price before override
+     * @type {number}
+     * @memberof AuditTrailResponse
+     */
+    originalPrice?: number;
+    /**
+     * Override expressed as an amount or percentage
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    overrideAmountOrPercent?: string;
+    /**
+     * Partial payment details captured at cancellation (JSON)
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    partialPaymentInfo?: string;
+    /**
+     * Identifier of the payment associated with the event
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    paymentId?: string;
+    /**
+     * Result of policy validation for the event
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    policyValidationResult?: AuditTrailResponsePolicyValidationResultEnum;
+    /**
+     * Version of the policy evaluated for the action
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    policyVersion?: string;
+    /**
+     * Reason captured for the action
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    reason?: string;
+    /**
+     * Refund amount
+     * @type {number}
+     * @memberof AuditTrailResponse
+     */
+    refundAmount?: number;
+    /**
+     * Method used to issue the refund
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    refundMethod?: AuditTrailResponseRefundMethodEnum;
+    /**
+     * Type of refund recorded
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    refundType?: AuditTrailResponseRefundTypeEnum;
+    /**
+     * Identifier of the source business document
+     * @type {string}
+     * @memberof AuditTrailResponse
+     */
+    sourceDocumentId?: string;
+    /**
+     * Identifier of the source accounting event
      * @type {string}
      * @memberof AuditTrailResponse
      */
     sourceEventId?: string;
     /**
-     * 
-     * @type {string}
+     * Timestamp when the audit event occurred (ISO 8601)
+     * @type {Date}
      * @memberof AuditTrailResponse
      */
-    sourceDocumentId?: string;
+    timestamp: Date;
 }
 
-/**
-* @export
-* @enum {string}
-*/
-export enum AuditTrailResponseExceptionTypeEnum {
-    PriceOverride = 'PRICE_OVERRIDE',
-    Refund = 'REFUND',
-    Cancellation = 'CANCELLATION'
-}
-/**
-* @export
-* @enum {string}
-*/
-export enum AuditTrailResponsePolicyValidationResultEnum {
-    Approved = 'APPROVED',
-    RejectedForbidden = 'REJECTED_FORBIDDEN',
-    RejectedThresholdExceeded = 'REJECTED_THRESHOLD_EXCEEDED'
-}
-/**
-* @export
-* @enum {string}
-*/
-export enum AuditTrailResponseRefundTypeEnum {
-    Reversal = 'REVERSAL',
-    CreditMemo = 'CREDIT_MEMO',
-    Adjustment = 'ADJUSTMENT'
-}
-/**
-* @export
-* @enum {string}
-*/
-export enum AuditTrailResponseOriginalPaymentStatusEnum {
-    Pending = 'PENDING',
-    Settled = 'SETTLED',
-    Failed = 'FAILED',
-    Authorized = 'AUTHORIZED'
-}
-/**
-* @export
-* @enum {string}
-*/
-export enum AuditTrailResponseRefundMethodEnum {
-    Void = 'VOID',
-    Chargeback = 'CHARGEBACK',
-    CashRefund = 'CASH_REFUND',
-    CreditMemo = 'CREDIT_MEMO'
-}
-/**
-* @export
-* @enum {string}
-*/
-export enum AuditTrailResponseCancellationTypeEnum {
-    OrderCancelled = 'ORDER_CANCELLED',
-    InvoiceCancelled = 'INVOICE_CANCELLED',
-    PaymentFailed = 'PAYMENT_FAILED'
-}
 /**
 * @export
 * @enum {string}
@@ -295,12 +239,71 @@ export enum AuditTrailResponseAccountingStatusEnum {
     OnHold = 'ON_HOLD',
     Disputed = 'DISPUTED'
 }
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditTrailResponseCancellationTypeEnum {
+    OrderCancelled = 'ORDER_CANCELLED',
+    InvoiceCancelled = 'INVOICE_CANCELLED',
+    PaymentFailed = 'PAYMENT_FAILED'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditTrailResponseExceptionTypeEnum {
+    PriceOverride = 'PRICE_OVERRIDE',
+    Refund = 'REFUND',
+    Cancellation = 'CANCELLATION'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditTrailResponseOriginalPaymentStatusEnum {
+    Pending = 'PENDING',
+    Settled = 'SETTLED',
+    Failed = 'FAILED',
+    Authorized = 'AUTHORIZED'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditTrailResponsePolicyValidationResultEnum {
+    Approved = 'APPROVED',
+    RejectedForbidden = 'REJECTED_FORBIDDEN',
+    RejectedThresholdExceeded = 'REJECTED_THRESHOLD_EXCEEDED'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditTrailResponseRefundMethodEnum {
+    Void = 'VOID',
+    Chargeback = 'CHARGEBACK',
+    CashRefund = 'CASH_REFUND',
+    CreditMemo = 'CREDIT_MEMO'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditTrailResponseRefundTypeEnum {
+    Reversal = 'REVERSAL',
+    CreditMemo = 'CREDIT_MEMO',
+    Adjustment = 'ADJUSTMENT'
+}
 
 
 /**
  * Check if a given object implements the AuditTrailResponse interface.
  */
 export function instanceOfAuditTrailResponse(value: object): boolean {
+    if (!('auditId' in value)) return false;
+    if (!('exceptionType' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -314,38 +317,38 @@ export function AuditTrailResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'auditId': json['auditId'] == null ? undefined : json['auditId'],
-        'exceptionType': json['exceptionType'] == null ? undefined : json['exceptionType'],
-        'actorId': json['actorId'] == null ? undefined : json['actorId'],
-        'actorRole': json['actorRole'] == null ? undefined : json['actorRole'],
-        'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
-        'reason': json['reason'] == null ? undefined : json['reason'],
-        'authorizationLevel': json['authorizationLevel'] == null ? undefined : json['authorizationLevel'],
-        'policyVersion': json['policyVersion'] == null ? undefined : json['policyVersion'],
-        'orderId': json['orderId'] == null ? undefined : json['orderId'],
-        'lineItemId': json['lineItemId'] == null ? undefined : json['lineItemId'],
-        'originalPrice': json['originalPrice'] == null ? undefined : json['originalPrice'],
-        'adjustedPrice': json['adjustedPrice'] == null ? undefined : json['adjustedPrice'],
-        'overrideAmountOrPercent': json['overrideAmountOrPercent'] == null ? undefined : json['overrideAmountOrPercent'],
-        'forbiddenCategoryCode': json['forbiddenCategoryCode'] == null ? undefined : json['forbiddenCategoryCode'],
-        'policyValidationResult': json['policyValidationResult'] == null ? undefined : json['policyValidationResult'],
-        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
-        'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
-        'refundType': json['refundType'] == null ? undefined : json['refundType'],
-        'refundAmount': json['refundAmount'] == null ? undefined : json['refundAmount'],
-        'originalPaymentStatus': json['originalPaymentStatus'] == null ? undefined : json['originalPaymentStatus'],
-        'refundMethod': json['refundMethod'] == null ? undefined : json['refundMethod'],
-        'linkedSourceIds': json['linkedSourceIds'] == null ? undefined : json['linkedSourceIds'],
-        'cancellationType': json['cancellationType'] == null ? undefined : json['cancellationType'],
-        'beforeSnapshot': json['beforeSnapshot'] == null ? undefined : json['beforeSnapshot'],
-        'afterSnapshot': json['afterSnapshot'] == null ? undefined : json['afterSnapshot'],
-        'partialPaymentInfo': json['partialPaymentInfo'] == null ? undefined : json['partialPaymentInfo'],
-        'glReversalStatus': json['glReversalStatus'] == null ? undefined : json['glReversalStatus'],
         'accountingIntent': json['accountingIntent'] == null ? undefined : json['accountingIntent'],
         'accountingStatus': json['accountingStatus'] == null ? undefined : json['accountingStatus'],
+        'actorId': json['actorId'] == null ? undefined : json['actorId'],
+        'actorRole': json['actorRole'] == null ? undefined : json['actorRole'],
+        'adjustedPrice': json['adjustedPrice'] == null ? undefined : json['adjustedPrice'],
+        'afterSnapshot': json['afterSnapshot'] == null ? undefined : json['afterSnapshot'],
+        'auditId': json['auditId'],
+        'authorizationLevel': json['authorizationLevel'] == null ? undefined : json['authorizationLevel'],
+        'beforeSnapshot': json['beforeSnapshot'] == null ? undefined : json['beforeSnapshot'],
+        'cancellationType': json['cancellationType'] == null ? undefined : json['cancellationType'],
+        'exceptionType': json['exceptionType'],
         'expectedAccountingOutcome': json['expectedAccountingOutcome'] == null ? undefined : json['expectedAccountingOutcome'],
-        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
+        'forbiddenCategoryCode': json['forbiddenCategoryCode'] == null ? undefined : json['forbiddenCategoryCode'],
+        'glReversalStatus': json['glReversalStatus'] == null ? undefined : json['glReversalStatus'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
+        'lineItemId': json['lineItemId'] == null ? undefined : json['lineItemId'],
+        'linkedSourceIds': json['linkedSourceIds'] == null ? undefined : json['linkedSourceIds'],
+        'orderId': json['orderId'] == null ? undefined : json['orderId'],
+        'originalPaymentStatus': json['originalPaymentStatus'] == null ? undefined : json['originalPaymentStatus'],
+        'originalPrice': json['originalPrice'] == null ? undefined : json['originalPrice'],
+        'overrideAmountOrPercent': json['overrideAmountOrPercent'] == null ? undefined : json['overrideAmountOrPercent'],
+        'partialPaymentInfo': json['partialPaymentInfo'] == null ? undefined : json['partialPaymentInfo'],
+        'paymentId': json['paymentId'] == null ? undefined : json['paymentId'],
+        'policyValidationResult': json['policyValidationResult'] == null ? undefined : json['policyValidationResult'],
+        'policyVersion': json['policyVersion'] == null ? undefined : json['policyVersion'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'refundAmount': json['refundAmount'] == null ? undefined : json['refundAmount'],
+        'refundMethod': json['refundMethod'] == null ? undefined : json['refundMethod'],
+        'refundType': json['refundType'] == null ? undefined : json['refundType'],
         'sourceDocumentId': json['sourceDocumentId'] == null ? undefined : json['sourceDocumentId'],
+        'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
+        'timestamp': (new Date(json['timestamp'])),
     };
 }
 
@@ -355,38 +358,38 @@ export function AuditTrailResponseToJSON(value?: AuditTrailResponse | null): any
     }
     return {
         
-        'auditId': value['auditId'],
-        'exceptionType': value['exceptionType'],
-        'actorId': value['actorId'],
-        'actorRole': value['actorRole'],
-        'timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
-        'reason': value['reason'],
-        'authorizationLevel': value['authorizationLevel'],
-        'policyVersion': value['policyVersion'],
-        'orderId': value['orderId'],
-        'lineItemId': value['lineItemId'],
-        'originalPrice': value['originalPrice'],
-        'adjustedPrice': value['adjustedPrice'],
-        'overrideAmountOrPercent': value['overrideAmountOrPercent'],
-        'forbiddenCategoryCode': value['forbiddenCategoryCode'],
-        'policyValidationResult': value['policyValidationResult'],
-        'invoiceId': value['invoiceId'],
-        'paymentId': value['paymentId'],
-        'refundType': value['refundType'],
-        'refundAmount': value['refundAmount'],
-        'originalPaymentStatus': value['originalPaymentStatus'],
-        'refundMethod': value['refundMethod'],
-        'linkedSourceIds': value['linkedSourceIds'],
-        'cancellationType': value['cancellationType'],
-        'beforeSnapshot': value['beforeSnapshot'],
-        'afterSnapshot': value['afterSnapshot'],
-        'partialPaymentInfo': value['partialPaymentInfo'],
-        'glReversalStatus': value['glReversalStatus'],
         'accountingIntent': value['accountingIntent'],
         'accountingStatus': value['accountingStatus'],
+        'actorId': value['actorId'],
+        'actorRole': value['actorRole'],
+        'adjustedPrice': value['adjustedPrice'],
+        'afterSnapshot': value['afterSnapshot'],
+        'auditId': value['auditId'],
+        'authorizationLevel': value['authorizationLevel'],
+        'beforeSnapshot': value['beforeSnapshot'],
+        'cancellationType': value['cancellationType'],
+        'exceptionType': value['exceptionType'],
         'expectedAccountingOutcome': value['expectedAccountingOutcome'],
-        'sourceEventId': value['sourceEventId'],
+        'forbiddenCategoryCode': value['forbiddenCategoryCode'],
+        'glReversalStatus': value['glReversalStatus'],
+        'invoiceId': value['invoiceId'],
+        'lineItemId': value['lineItemId'],
+        'linkedSourceIds': value['linkedSourceIds'],
+        'orderId': value['orderId'],
+        'originalPaymentStatus': value['originalPaymentStatus'],
+        'originalPrice': value['originalPrice'],
+        'overrideAmountOrPercent': value['overrideAmountOrPercent'],
+        'partialPaymentInfo': value['partialPaymentInfo'],
+        'paymentId': value['paymentId'],
+        'policyValidationResult': value['policyValidationResult'],
+        'policyVersion': value['policyVersion'],
+        'reason': value['reason'],
+        'refundAmount': value['refundAmount'],
+        'refundMethod': value['refundMethod'],
+        'refundType': value['refundType'],
         'sourceDocumentId': value['sourceDocumentId'],
+        'sourceEventId': value['sourceEventId'],
+        'timestamp': ((value['timestamp']).toISOString()),
     };
 }
 

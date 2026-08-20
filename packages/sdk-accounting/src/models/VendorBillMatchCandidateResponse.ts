@@ -14,83 +14,86 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Vendor bill match candidate presented for manual selection during ambiguous matching
  * @export
  * @interface VendorBillMatchCandidateResponse
  */
 export interface VendorBillMatchCandidateResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof VendorBillMatchCandidateResponse
-     */
-    candidateId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VendorBillMatchCandidateResponse
-     */
-    invoiceEventId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VendorBillMatchCandidateResponse
-     */
-    vendorBillId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VendorBillMatchCandidateResponse
-     */
-    vendorId?: string;
-    /**
-     * 
+     * Bill number for display
      * @type {string}
      * @memberof VendorBillMatchCandidateResponse
      */
     billNumber?: string;
     /**
-     * 
+     * Total amount of the candidate bill
      * @type {number}
      * @memberof VendorBillMatchCandidateResponse
      */
     billTotalAmount?: number;
     /**
-     * 
+     * Candidate record identifier (used for selection)
+     * @type {string}
+     * @memberof VendorBillMatchCandidateResponse
+     */
+    candidateId: string;
+    /**
+     * Timestamp when the candidate record was created (ISO 8601)
+     * @type {Date}
+     * @memberof VendorBillMatchCandidateResponse
+     */
+    createdAt?: Date;
+    /**
+     * Identifier of the invoice event that triggered the ambiguous match
+     * @type {string}
+     * @memberof VendorBillMatchCandidateResponse
+     */
+    invoiceEventId: string;
+    /**
+     * Composite match score (0-100)
      * @type {number}
      * @memberof VendorBillMatchCandidateResponse
      */
     matchScore?: number;
     /**
-     * 
-     * @type {string}
-     * @memberof VendorBillMatchCandidateResponse
-     */
-    scoreBreakdown?: string;
-    /**
-     * 
+     * Whether this candidate has been resolved
      * @type {boolean}
      * @memberof VendorBillMatchCandidateResponse
      */
     resolved?: boolean;
     /**
-     * 
+     * Human-readable breakdown of the match score
+     * @type {string}
+     * @memberof VendorBillMatchCandidateResponse
+     */
+    scoreBreakdown?: string;
+    /**
+     * Whether this candidate was the selected one
      * @type {boolean}
      * @memberof VendorBillMatchCandidateResponse
      */
     selected?: boolean;
     /**
-     * 
-     * @type {Date}
+     * Identifier of the candidate vendor bill
+     * @type {string}
      * @memberof VendorBillMatchCandidateResponse
      */
-    createdAt?: Date;
+    vendorBillId: string;
+    /**
+     * Identifier of the vendor
+     * @type {string}
+     * @memberof VendorBillMatchCandidateResponse
+     */
+    vendorId?: string;
 }
 
 /**
  * Check if a given object implements the VendorBillMatchCandidateResponse interface.
  */
 export function instanceOfVendorBillMatchCandidateResponse(value: object): boolean {
+    if (!('candidateId' in value)) return false;
+    if (!('invoiceEventId' in value)) return false;
+    if (!('vendorBillId' in value)) return false;
     return true;
 }
 
@@ -104,17 +107,17 @@ export function VendorBillMatchCandidateResponseFromJSONTyped(json: any, ignoreD
     }
     return {
         
-        'candidateId': json['candidateId'] == null ? undefined : json['candidateId'],
-        'invoiceEventId': json['invoiceEventId'] == null ? undefined : json['invoiceEventId'],
-        'vendorBillId': json['vendorBillId'] == null ? undefined : json['vendorBillId'],
-        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
         'billNumber': json['billNumber'] == null ? undefined : json['billNumber'],
         'billTotalAmount': json['billTotalAmount'] == null ? undefined : json['billTotalAmount'],
-        'matchScore': json['matchScore'] == null ? undefined : json['matchScore'],
-        'scoreBreakdown': json['scoreBreakdown'] == null ? undefined : json['scoreBreakdown'],
-        'resolved': json['resolved'] == null ? undefined : json['resolved'],
-        'selected': json['selected'] == null ? undefined : json['selected'],
+        'candidateId': json['candidateId'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'invoiceEventId': json['invoiceEventId'],
+        'matchScore': json['matchScore'] == null ? undefined : json['matchScore'],
+        'resolved': json['resolved'] == null ? undefined : json['resolved'],
+        'scoreBreakdown': json['scoreBreakdown'] == null ? undefined : json['scoreBreakdown'],
+        'selected': json['selected'] == null ? undefined : json['selected'],
+        'vendorBillId': json['vendorBillId'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
     };
 }
 
@@ -124,17 +127,17 @@ export function VendorBillMatchCandidateResponseToJSON(value?: VendorBillMatchCa
     }
     return {
         
-        'candidateId': value['candidateId'],
-        'invoiceEventId': value['invoiceEventId'],
-        'vendorBillId': value['vendorBillId'],
-        'vendorId': value['vendorId'],
         'billNumber': value['billNumber'],
         'billTotalAmount': value['billTotalAmount'],
-        'matchScore': value['matchScore'],
-        'scoreBreakdown': value['scoreBreakdown'],
-        'resolved': value['resolved'],
-        'selected': value['selected'],
+        'candidateId': value['candidateId'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'invoiceEventId': value['invoiceEventId'],
+        'matchScore': value['matchScore'],
+        'resolved': value['resolved'],
+        'scoreBreakdown': value['scoreBreakdown'],
+        'selected': value['selected'],
+        'vendorBillId': value['vendorBillId'],
+        'vendorId': value['vendorId'],
     };
 }
 

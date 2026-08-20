@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single product and quantity line for a putaway tasks generation request
  * @export
  * @interface PutawayLineItemRequest
  */
 export interface PutawayLineItemRequest {
     /**
-     * 
+     * Identifier of the product to be put away
      * @type {string}
      * @memberof PutawayLineItemRequest
      */
     productId: string;
     /**
-     * 
+     * Quantity of the product to be put away
      * @type {number}
      * @memberof PutawayLineItemRequest
      */

@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Summary of one mechanic included in an assignment response
  * @export
  * @interface AssignedMechanicInfo
  */
 export interface AssignedMechanicInfo {
     /**
-     * 
+     * Mechanic identifier
      * @type {string}
      * @memberof AssignedMechanicInfo
      */
-    mechanicId?: string;
+    mechanicId: string;
     /**
-     * 
+     * Role of the mechanic in the assignment
      * @type {string}
      * @memberof AssignedMechanicInfo
      */
-    role?: AssignedMechanicInfoRoleEnum;
+    role: AssignedMechanicInfoRoleEnum;
 }
 
 /**
@@ -47,6 +47,8 @@ export enum AssignedMechanicInfoRoleEnum {
  * Check if a given object implements the AssignedMechanicInfo interface.
  */
 export function instanceOfAssignedMechanicInfo(value: object): boolean {
+    if (!('mechanicId' in value)) return false;
+    if (!('role' in value)) return false;
     return true;
 }
 
@@ -60,8 +62,8 @@ export function AssignedMechanicInfoFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
-        'role': json['role'] == null ? undefined : json['role'],
+        'mechanicId': json['mechanicId'],
+        'role': json['role'],
     };
 }
 

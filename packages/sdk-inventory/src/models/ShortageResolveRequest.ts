@@ -14,49 +14,95 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to resolve an inventory shortage by executing a chosen option
  * @export
  * @interface ShortageResolveRequest
  */
 export interface ShortageResolveRequest {
     /**
-     * 
+     * Identifier of the allocation to resolve
      * @type {string}
      * @memberof ShortageResolveRequest
      */
     allocationId: string;
     /**
-     * 
+     * Retry-safe idempotency key; a replay with the same key returns the original result
      * @type {string}
      * @memberof ShortageResolveRequest
      */
-    allocationLineId?: string;
+    idempotencyKey: string;
     /**
-     * 
+     * Site the demand is short at (required for BACKORDER / TRANSFER_IN)
      * @type {string}
      * @memberof ShortageResolveRequest
      */
-    resolution: string;
+    locationId?: string;
     /**
-     * 
+     * Optional free-text notes explaining the resolution
+     * @type {string}
+     * @memberof ShortageResolveRequest
+     */
+    notes?: string;
+    /**
+     * The resolution option to execute
+     * @type {string}
+     * @memberof ShortageResolveRequest
+     */
+    optionType: ShortageResolveRequestOptionTypeEnum;
+    /**
+     * Quantity that is short and to be resolved
+     * @type {number}
+     * @memberof ShortageResolveRequest
+     */
+    shortQuantity: number;
+    /**
+     * SKU / stock-item identifier that is short
+     * @type {string}
+     * @memberof ShortageResolveRequest
+     */
+    sku: string;
+    /**
+     * Source site to pull surplus from; required when optionType is TRANSFER_IN
+     * @type {string}
+     * @memberof ShortageResolveRequest
+     */
+    sourceLocationId?: string;
+    /**
+     * Substitute SKU to reserve; required when optionType is SUBSTITUTE
      * @type {string}
      * @memberof ShortageResolveRequest
      */
     substituteSku?: string;
     /**
-     * 
+     * Workorder line whose demand was short (required for BACKORDER / SUBSTITUTE / CANCEL_LINE)
      * @type {string}
      * @memberof ShortageResolveRequest
      */
-    notes?: string;
+    workorderLineId?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ShortageResolveRequestOptionTypeEnum {
+    Backorder = 'BACKORDER',
+    Substitute = 'SUBSTITUTE',
+    TransferIn = 'TRANSFER_IN',
+    EmergencyPurchase = 'EMERGENCY_PURCHASE',
+    CancelLine = 'CANCEL_LINE'
+}
+
 
 /**
  * Check if a given object implements the ShortageResolveRequest interface.
  */
 export function instanceOfShortageResolveRequest(value: object): boolean {
     if (!('allocationId' in value)) return false;
-    if (!('resolution' in value)) return false;
+    if (!('idempotencyKey' in value)) return false;
+    if (!('optionType' in value)) return false;
+    if (!('shortQuantity' in value)) return false;
+    if (!('sku' in value)) return false;
     return true;
 }
 
@@ -71,10 +117,15 @@ export function ShortageResolveRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'allocationId': json['allocationId'],
-        'allocationLineId': json['allocationLineId'] == null ? undefined : json['allocationLineId'],
-        'resolution': json['resolution'],
-        'substituteSku': json['substituteSku'] == null ? undefined : json['substituteSku'],
+        'idempotencyKey': json['idempotencyKey'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'optionType': json['optionType'],
+        'shortQuantity': json['shortQuantity'],
+        'sku': json['sku'],
+        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
+        'substituteSku': json['substituteSku'] == null ? undefined : json['substituteSku'],
+        'workorderLineId': json['workorderLineId'] == null ? undefined : json['workorderLineId'],
     };
 }
 
@@ -85,10 +136,15 @@ export function ShortageResolveRequestToJSON(value?: ShortageResolveRequest | nu
     return {
         
         'allocationId': value['allocationId'],
-        'allocationLineId': value['allocationLineId'],
-        'resolution': value['resolution'],
-        'substituteSku': value['substituteSku'],
+        'idempotencyKey': value['idempotencyKey'],
+        'locationId': value['locationId'],
         'notes': value['notes'],
+        'optionType': value['optionType'],
+        'shortQuantity': value['shortQuantity'],
+        'sku': value['sku'],
+        'sourceLocationId': value['sourceLocationId'],
+        'substituteSku': value['substituteSku'],
+        'workorderLineId': value['workorderLineId'],
     };
 }
 

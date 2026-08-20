@@ -20,59 +20,67 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderCapabilities {
     /**
-     * User can start workorder
-     * @type {boolean}
-     * @memberof WorkorderCapabilities
-     */
-    canStart?: boolean;
-    /**
      * User can approve workorder
      * @type {boolean}
      * @memberof WorkorderCapabilities
      */
-    canApprove?: boolean;
+    canApprove: boolean;
     /**
      * User can assign/reassign technicians
      * @type {boolean}
      * @memberof WorkorderCapabilities
      */
-    canAssignTechnician?: boolean;
-    /**
-     * User can record labor entries
-     * @type {boolean}
-     * @memberof WorkorderCapabilities
-     */
-    canRecordLabor?: boolean;
-    /**
-     * User can record parts usage
-     * @type {boolean}
-     * @memberof WorkorderCapabilities
-     */
-    canRecordPartsUsage?: boolean;
-    /**
-     * User can view financial data
-     * @type {boolean}
-     * @memberof WorkorderCapabilities
-     */
-    canViewFinancials?: boolean;
-    /**
-     * User can edit workorder
-     * @type {boolean}
-     * @memberof WorkorderCapabilities
-     */
-    canEditWorkorder?: boolean;
+    canAssignTechnician: boolean;
     /**
      * User can delete workorder
      * @type {boolean}
      * @memberof WorkorderCapabilities
      */
-    canDeleteWorkorder?: boolean;
+    canDeleteWorkorder: boolean;
+    /**
+     * User can edit workorder
+     * @type {boolean}
+     * @memberof WorkorderCapabilities
+     */
+    canEditWorkorder: boolean;
+    /**
+     * User can record labor entries
+     * @type {boolean}
+     * @memberof WorkorderCapabilities
+     */
+    canRecordLabor: boolean;
+    /**
+     * User can record parts usage
+     * @type {boolean}
+     * @memberof WorkorderCapabilities
+     */
+    canRecordPartsUsage: boolean;
+    /**
+     * User can start workorder
+     * @type {boolean}
+     * @memberof WorkorderCapabilities
+     */
+    canStart: boolean;
+    /**
+     * User can view financial data
+     * @type {boolean}
+     * @memberof WorkorderCapabilities
+     */
+    canViewFinancials: boolean;
 }
 
 /**
  * Check if a given object implements the WorkorderCapabilities interface.
  */
 export function instanceOfWorkorderCapabilities(value: object): boolean {
+    if (!('canApprove' in value)) return false;
+    if (!('canAssignTechnician' in value)) return false;
+    if (!('canDeleteWorkorder' in value)) return false;
+    if (!('canEditWorkorder' in value)) return false;
+    if (!('canRecordLabor' in value)) return false;
+    if (!('canRecordPartsUsage' in value)) return false;
+    if (!('canStart' in value)) return false;
+    if (!('canViewFinancials' in value)) return false;
     return true;
 }
 
@@ -86,14 +94,14 @@ export function WorkorderCapabilitiesFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'canStart': json['canStart'] == null ? undefined : json['canStart'],
-        'canApprove': json['canApprove'] == null ? undefined : json['canApprove'],
-        'canAssignTechnician': json['canAssignTechnician'] == null ? undefined : json['canAssignTechnician'],
-        'canRecordLabor': json['canRecordLabor'] == null ? undefined : json['canRecordLabor'],
-        'canRecordPartsUsage': json['canRecordPartsUsage'] == null ? undefined : json['canRecordPartsUsage'],
-        'canViewFinancials': json['canViewFinancials'] == null ? undefined : json['canViewFinancials'],
-        'canEditWorkorder': json['canEditWorkorder'] == null ? undefined : json['canEditWorkorder'],
-        'canDeleteWorkorder': json['canDeleteWorkorder'] == null ? undefined : json['canDeleteWorkorder'],
+        'canApprove': json['canApprove'],
+        'canAssignTechnician': json['canAssignTechnician'],
+        'canDeleteWorkorder': json['canDeleteWorkorder'],
+        'canEditWorkorder': json['canEditWorkorder'],
+        'canRecordLabor': json['canRecordLabor'],
+        'canRecordPartsUsage': json['canRecordPartsUsage'],
+        'canStart': json['canStart'],
+        'canViewFinancials': json['canViewFinancials'],
     };
 }
 
@@ -103,14 +111,14 @@ export function WorkorderCapabilitiesToJSON(value?: WorkorderCapabilities | null
     }
     return {
         
-        'canStart': value['canStart'],
         'canApprove': value['canApprove'],
         'canAssignTechnician': value['canAssignTechnician'],
+        'canDeleteWorkorder': value['canDeleteWorkorder'],
+        'canEditWorkorder': value['canEditWorkorder'],
         'canRecordLabor': value['canRecordLabor'],
         'canRecordPartsUsage': value['canRecordPartsUsage'],
+        'canStart': value['canStart'],
         'canViewFinancials': value['canViewFinancials'],
-        'canEditWorkorder': value['canEditWorkorder'],
-        'canDeleteWorkorder': value['canDeleteWorkorder'],
     };
 }
 

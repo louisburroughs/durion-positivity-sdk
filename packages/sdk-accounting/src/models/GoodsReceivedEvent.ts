@@ -27,11 +27,23 @@ import {
  */
 export interface GoodsReceivedEvent {
     /**
+     * Optional dimensional context for GL mapping
+     * @type {{ [key: string]: string; }}
+     * @memberof GoodsReceivedEvent
+     */
+    dimensions?: { [key: string]: string; };
+    /**
      * Event UUID (idempotency key)
      * @type {string}
      * @memberof GoodsReceivedEvent
      */
     eventId: string;
+    /**
+     * Line items received
+     * @type {Array<ReceivedLineItem>}
+     * @memberof GoodsReceivedEvent
+     */
+    lineItems: Array<ReceivedLineItem>;
     /**
      * Organization UUID
      * @type {string}
@@ -45,6 +57,12 @@ export interface GoodsReceivedEvent {
      */
     purchaseOrderId: string;
     /**
+     * Date goods were received
+     * @type {Date}
+     * @memberof GoodsReceivedEvent
+     */
+    receivedDate: Date;
+    /**
      * Vendor UUID
      * @type {string}
      * @memberof GoodsReceivedEvent
@@ -56,24 +74,6 @@ export interface GoodsReceivedEvent {
      * @memberof GoodsReceivedEvent
      */
     vendorName?: string;
-    /**
-     * Date goods were received
-     * @type {Date}
-     * @memberof GoodsReceivedEvent
-     */
-    receivedDate: Date;
-    /**
-     * Line items received
-     * @type {Array<ReceivedLineItem>}
-     * @memberof GoodsReceivedEvent
-     */
-    lineItems: Array<ReceivedLineItem>;
-    /**
-     * Optional dimensional context for GL mapping
-     * @type {{ [key: string]: string; }}
-     * @memberof GoodsReceivedEvent
-     */
-    dimensions?: { [key: string]: string; };
 }
 
 /**
@@ -81,11 +81,11 @@ export interface GoodsReceivedEvent {
  */
 export function instanceOfGoodsReceivedEvent(value: object): boolean {
     if (!('eventId' in value)) return false;
+    if (!('lineItems' in value)) return false;
     if (!('organizationId' in value)) return false;
     if (!('purchaseOrderId' in value)) return false;
-    if (!('vendorId' in value)) return false;
     if (!('receivedDate' in value)) return false;
-    if (!('lineItems' in value)) return false;
+    if (!('vendorId' in value)) return false;
     return true;
 }
 
@@ -99,14 +99,14 @@ export function GoodsReceivedEventFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
         'eventId': json['eventId'],
+        'lineItems': ((json['lineItems'] as Array<any>).map(ReceivedLineItemFromJSON)),
         'organizationId': json['organizationId'],
         'purchaseOrderId': json['purchaseOrderId'],
+        'receivedDate': (new Date(json['receivedDate'])),
         'vendorId': json['vendorId'],
         'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
-        'receivedDate': (new Date(json['receivedDate'])),
-        'lineItems': ((json['lineItems'] as Array<any>).map(ReceivedLineItemFromJSON)),
-        'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
     };
 }
 
@@ -116,14 +116,14 @@ export function GoodsReceivedEventToJSON(value?: GoodsReceivedEvent | null): any
     }
     return {
         
+        'dimensions': value['dimensions'],
         'eventId': value['eventId'],
+        'lineItems': ((value['lineItems'] as Array<any>).map(ReceivedLineItemToJSON)),
         'organizationId': value['organizationId'],
         'purchaseOrderId': value['purchaseOrderId'],
+        'receivedDate': ((value['receivedDate']).toISOString()),
         'vendorId': value['vendorId'],
         'vendorName': value['vendorName'],
-        'receivedDate': ((value['receivedDate']).toISOString()),
-        'lineItems': ((value['lineItems'] as Array<any>).map(ReceivedLineItemToJSON)),
-        'dimensions': value['dimensions'],
     };
 }
 

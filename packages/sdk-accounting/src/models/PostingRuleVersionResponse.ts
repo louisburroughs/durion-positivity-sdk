@@ -14,65 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single version of a posting rule set
  * @export
  * @interface PostingRuleVersionResponse
  */
 export interface PostingRuleVersionResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleVersionResponse
-     */
-    versionId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleVersionResponse
-     */
-    postingRuleSetId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostingRuleVersionResponse
-     */
-    versionNumber?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleVersionResponse
-     */
-    state?: PostingRuleVersionResponseStateEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleVersionResponse
-     */
-    rulesDefinition?: string;
-    /**
-     * 
+     * Timestamp when the version was created (ISO 8601)
      * @type {Date}
      * @memberof PostingRuleVersionResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Identifier of the user who created the version
      * @type {string}
      * @memberof PostingRuleVersionResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Timestamp when the version was last modified (ISO 8601)
      * @type {Date}
      * @memberof PostingRuleVersionResponse
      */
     modifiedAt?: Date;
     /**
-     * 
+     * Identifier of the user who last modified the version
      * @type {string}
      * @memberof PostingRuleVersionResponse
      */
     modifiedBy?: string;
+    /**
+     * Identifier of the owning posting rule set
+     * @type {string}
+     * @memberof PostingRuleVersionResponse
+     */
+    postingRuleSetId: string;
+    /**
+     * Serialized rules definition (JSON) for this version
+     * @type {string}
+     * @memberof PostingRuleVersionResponse
+     */
+    rulesDefinition?: string;
+    /**
+     * Lifecycle state of the version
+     * @type {string}
+     * @memberof PostingRuleVersionResponse
+     */
+    state?: PostingRuleVersionResponseStateEnum;
+    /**
+     * Unique identifier of the rule version
+     * @type {string}
+     * @memberof PostingRuleVersionResponse
+     */
+    versionId: string;
+    /**
+     * Sequential version number within the rule set
+     * @type {number}
+     * @memberof PostingRuleVersionResponse
+     */
+    versionNumber?: number;
 }
 
 /**
@@ -90,6 +90,8 @@ export enum PostingRuleVersionResponseStateEnum {
  * Check if a given object implements the PostingRuleVersionResponse interface.
  */
 export function instanceOfPostingRuleVersionResponse(value: object): boolean {
+    if (!('postingRuleSetId' in value)) return false;
+    if (!('versionId' in value)) return false;
     return true;
 }
 
@@ -103,15 +105,15 @@ export function PostingRuleVersionResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'versionId': json['versionId'] == null ? undefined : json['versionId'],
-        'postingRuleSetId': json['postingRuleSetId'] == null ? undefined : json['postingRuleSetId'],
-        'versionNumber': json['versionNumber'] == null ? undefined : json['versionNumber'],
-        'state': json['state'] == null ? undefined : json['state'],
-        'rulesDefinition': json['rulesDefinition'] == null ? undefined : json['rulesDefinition'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
         'modifiedBy': json['modifiedBy'] == null ? undefined : json['modifiedBy'],
+        'postingRuleSetId': json['postingRuleSetId'],
+        'rulesDefinition': json['rulesDefinition'] == null ? undefined : json['rulesDefinition'],
+        'state': json['state'] == null ? undefined : json['state'],
+        'versionId': json['versionId'],
+        'versionNumber': json['versionNumber'] == null ? undefined : json['versionNumber'],
     };
 }
 
@@ -121,15 +123,15 @@ export function PostingRuleVersionResponseToJSON(value?: PostingRuleVersionRespo
     }
     return {
         
-        'versionId': value['versionId'],
-        'postingRuleSetId': value['postingRuleSetId'],
-        'versionNumber': value['versionNumber'],
-        'state': value['state'],
-        'rulesDefinition': value['rulesDefinition'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
         'modifiedBy': value['modifiedBy'],
+        'postingRuleSetId': value['postingRuleSetId'],
+        'rulesDefinition': value['rulesDefinition'],
+        'state': value['state'],
+        'versionId': value['versionId'],
+        'versionNumber': value['versionNumber'],
     };
 }
 

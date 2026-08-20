@@ -14,65 +14,77 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of processing a refund against an invoice payment
  * @export
  * @interface RefundPaymentResponse
  */
 export interface RefundPaymentResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof RefundPaymentResponse
-     */
-    refundId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RefundPaymentResponse
-     */
-    invoiceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RefundPaymentResponse
-     */
-    paymentIntentId?: string;
-    /**
-     * 
+     * Refunded amount
      * @type {number}
      * @memberof RefundPaymentResponse
      */
     amount?: number;
     /**
-     * 
+     * Timestamp when the refund completed
+     * @type {Date}
+     * @memberof RefundPaymentResponse
+     */
+    completedAt?: Date;
+    /**
+     * Optional correlation id to an external record (e.g. a warranty claim settlement)
      * @type {string}
      * @memberof RefundPaymentResponse
      */
-    reason?: RefundPaymentResponseReasonEnum;
+    externalReference?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof RefundPaymentResponse
-     */
-    notes?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RefundPaymentResponse
-     */
-    status?: RefundPaymentResponseStatusEnum;
-    /**
-     * 
+     * Gateway reference identifier for the refund
      * @type {string}
      * @memberof RefundPaymentResponse
      */
     gatewayReference?: string;
     /**
-     * 
-     * @type {Date}
+     * Identifier of the invoice being refunded; absent for party-anchored standalone refunds
+     * @type {string}
      * @memberof RefundPaymentResponse
      */
-    completedAt?: Date;
+    invoiceId?: string;
+    /**
+     * Free-text notes accompanying the refund
+     * @type {string}
+     * @memberof RefundPaymentResponse
+     */
+    notes?: string;
+    /**
+     * Customer party associated with the refund — the anchor for standalone refunds, derived from the invoice for invoice- and payment-anchored refunds
+     * @type {string}
+     * @memberof RefundPaymentResponse
+     */
+    partyId?: string;
+    /**
+     * Identifier of the originating payment intent; absent for standalone refunds
+     * @type {string}
+     * @memberof RefundPaymentResponse
+     */
+    paymentIntentId?: string;
+    /**
+     * Reason for the refund
+     * @type {string}
+     * @memberof RefundPaymentResponse
+     */
+    reason?: RefundPaymentResponseReasonEnum;
+    /**
+     * Unique identifier of the refund
+     * @type {string}
+     * @memberof RefundPaymentResponse
+     */
+    refundId: string;
+    /**
+     * Current status of the refund
+     * @type {string}
+     * @memberof RefundPaymentResponse
+     */
+    status: RefundPaymentResponseStatusEnum;
 }
 
 /**
@@ -105,6 +117,8 @@ export enum RefundPaymentResponseStatusEnum {
  * Check if a given object implements the RefundPaymentResponse interface.
  */
 export function instanceOfRefundPaymentResponse(value: object): boolean {
+    if (!('refundId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -118,15 +132,17 @@ export function RefundPaymentResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'refundId': json['refundId'] == null ? undefined : json['refundId'],
-        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
-        'paymentIntentId': json['paymentIntentId'] == null ? undefined : json['paymentIntentId'],
         'amount': json['amount'] == null ? undefined : json['amount'],
-        'reason': json['reason'] == null ? undefined : json['reason'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'gatewayReference': json['gatewayReference'] == null ? undefined : json['gatewayReference'],
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
+        'externalReference': json['externalReference'] == null ? undefined : json['externalReference'],
+        'gatewayReference': json['gatewayReference'] == null ? undefined : json['gatewayReference'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'partyId': json['partyId'] == null ? undefined : json['partyId'],
+        'paymentIntentId': json['paymentIntentId'] == null ? undefined : json['paymentIntentId'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
+        'refundId': json['refundId'],
+        'status': json['status'],
     };
 }
 
@@ -136,15 +152,17 @@ export function RefundPaymentResponseToJSON(value?: RefundPaymentResponse | null
     }
     return {
         
-        'refundId': value['refundId'],
-        'invoiceId': value['invoiceId'],
-        'paymentIntentId': value['paymentIntentId'],
         'amount': value['amount'],
-        'reason': value['reason'],
-        'notes': value['notes'],
-        'status': value['status'],
-        'gatewayReference': value['gatewayReference'],
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
+        'externalReference': value['externalReference'],
+        'gatewayReference': value['gatewayReference'],
+        'invoiceId': value['invoiceId'],
+        'notes': value['notes'],
+        'partyId': value['partyId'],
+        'paymentIntentId': value['paymentIntentId'],
+        'reason': value['reason'],
+        'refundId': value['refundId'],
+        'status': value['status'],
     };
 }
 

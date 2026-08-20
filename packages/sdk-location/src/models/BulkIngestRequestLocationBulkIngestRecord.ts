@@ -21,35 +21,35 @@ import {
 } from './LocationBulkIngestRecord';
 
 /**
- * 
+ * Generic bulk ingest request: a batch of records for a job scoped to a location
  * @export
  * @interface BulkIngestRequestLocationBulkIngestRecord
  */
 export interface BulkIngestRequestLocationBulkIngestRecord {
     /**
-     * 
+     * Identifier of the bulk ingest job
      * @type {string}
      * @memberof BulkIngestRequestLocationBulkIngestRecord
      */
     jobId: string;
     /**
-     * 
+     * Location the records are ingested for
      * @type {string}
      * @memberof BulkIngestRequestLocationBulkIngestRecord
      */
     locationId: string;
     /**
-     * 
-     * @type {Array<LocationBulkIngestRecord>}
-     * @memberof BulkIngestRequestLocationBulkIngestRecord
-     */
-    records: Array<LocationBulkIngestRecord>;
-    /**
-     * 
+     * Identifier of the operator submitting the batch
      * @type {string}
      * @memberof BulkIngestRequestLocationBulkIngestRecord
      */
     operatorId?: string;
+    /**
+     * The records to ingest (at least one); shape depends on the target domain
+     * @type {Array<LocationBulkIngestRecord>}
+     * @memberof BulkIngestRequestLocationBulkIngestRecord
+     */
+    records: Array<LocationBulkIngestRecord>;
 }
 
 /**
@@ -74,8 +74,8 @@ export function BulkIngestRequestLocationBulkIngestRecordFromJSONTyped(json: any
         
         'jobId': json['jobId'],
         'locationId': json['locationId'],
-        'records': ((json['records'] as Array<any>).map(LocationBulkIngestRecordFromJSON)),
         'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
+        'records': ((json['records'] as Array<any>).map(LocationBulkIngestRecordFromJSON)),
     };
 }
 
@@ -87,8 +87,8 @@ export function BulkIngestRequestLocationBulkIngestRecordToJSON(value?: BulkInge
         
         'jobId': value['jobId'],
         'locationId': value['locationId'],
-        'records': ((value['records'] as Array<any>).map(LocationBulkIngestRecordToJSON)),
         'operatorId': value['operatorId'],
+        'records': ((value['records'] as Array<any>).map(LocationBulkIngestRecordToJSON)),
     };
 }
 

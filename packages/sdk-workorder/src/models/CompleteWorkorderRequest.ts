@@ -20,18 +20,18 @@ import { mapValues } from '../runtime';
  */
 export interface CompleteWorkorderRequest {
     /**
+     * Optional completion notes recorded for closeout
+     * @type {string}
+     * @memberof CompleteWorkorderRequest
+     */
+    completionNotes?: string;
+    /**
      * Deprecated. Actor identity is resolved from authenticated security context.
      * @type {string}
      * @memberof CompleteWorkorderRequest
      * @deprecated
      */
     userId?: string;
-    /**
-     * Optional completion notes recorded for closeout
-     * @type {string}
-     * @memberof CompleteWorkorderRequest
-     */
-    completionNotes?: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function CompleteWorkorderRequestFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'userId': json['userId'] == null ? undefined : json['userId'],
         'completionNotes': json['completionNotes'] == null ? undefined : json['completionNotes'],
+        'userId': json['userId'] == null ? undefined : json['userId'],
     };
 }
 
@@ -62,8 +62,8 @@ export function CompleteWorkorderRequestToJSON(value?: CompleteWorkorderRequest 
     }
     return {
         
-        'userId': value['userId'],
         'completionNotes': value['completionNotes'],
+        'userId': value['userId'],
     };
 }
 

@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * Tier resolution request
+ * Request to compute account tier based on business rules
  * @export
  * @interface ResolveAccountTierRequest
  */
 export interface ResolveAccountTierRequest {
     /**
+     * Account age in months
+     * @type {number}
+     * @memberof ResolveAccountTierRequest
+     */
+    accountAgeMonths?: number;
+    /**
      * Account/party identifier
      * @type {string}
      * @memberof ResolveAccountTierRequest
      */
-    accountId?: string;
-    /**
-     * Annual revenue or spending for tier calculation
-     * @type {number}
-     * @memberof ResolveAccountTierRequest
-     */
-    annualRevenue?: number;
+    accountId: string;
     /**
      * Number of active contracts or subscriptions
      * @type {number}
@@ -38,11 +38,11 @@ export interface ResolveAccountTierRequest {
      */
     activeContractCount?: number;
     /**
-     * Account age in months
+     * Annual revenue or spending for tier calculation
      * @type {number}
      * @memberof ResolveAccountTierRequest
      */
-    accountAgeMonths?: number;
+    annualRevenue?: number;
     /**
      * Whether to apply the resolved tier or just return the recommendation
      * @type {boolean}
@@ -61,6 +61,7 @@ export interface ResolveAccountTierRequest {
  * Check if a given object implements the ResolveAccountTierRequest interface.
  */
 export function instanceOfResolveAccountTierRequest(value: object): boolean {
+    if (!('accountId' in value)) return false;
     return true;
 }
 
@@ -74,10 +75,10 @@ export function ResolveAccountTierRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'accountId': json['accountId'] == null ? undefined : json['accountId'],
-        'annualRevenue': json['annualRevenue'] == null ? undefined : json['annualRevenue'],
-        'activeContractCount': json['activeContractCount'] == null ? undefined : json['activeContractCount'],
         'accountAgeMonths': json['accountAgeMonths'] == null ? undefined : json['accountAgeMonths'],
+        'accountId': json['accountId'],
+        'activeContractCount': json['activeContractCount'] == null ? undefined : json['activeContractCount'],
+        'annualRevenue': json['annualRevenue'] == null ? undefined : json['annualRevenue'],
         'applyTier': json['applyTier'] == null ? undefined : json['applyTier'],
         'forceRecalculation': json['forceRecalculation'] == null ? undefined : json['forceRecalculation'],
     };
@@ -89,10 +90,10 @@ export function ResolveAccountTierRequestToJSON(value?: ResolveAccountTierReques
     }
     return {
         
-        'accountId': value['accountId'],
-        'annualRevenue': value['annualRevenue'],
-        'activeContractCount': value['activeContractCount'],
         'accountAgeMonths': value['accountAgeMonths'],
+        'accountId': value['accountId'],
+        'activeContractCount': value['activeContractCount'],
+        'annualRevenue': value['annualRevenue'],
         'applyTier': value['applyTier'],
         'forceRecalculation': value['forceRecalculation'],
     };

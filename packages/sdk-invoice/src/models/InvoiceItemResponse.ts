@@ -14,43 +14,49 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single line item on an invoice
  * @export
  * @interface InvoiceItemResponse
  */
 export interface InvoiceItemResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof InvoiceItemResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof InvoiceItemResponse
-     */
-    description?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof InvoiceItemResponse
-     */
-    quantity?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof InvoiceItemResponse
-     */
-    unitPrice?: number;
-    /**
-     * 
+     * Extended amount (quantity x unit price)
      * @type {number}
      * @memberof InvoiceItemResponse
      */
     amount?: number;
     /**
-     * 
+     * Description of the line item
+     * @type {string}
+     * @memberof InvoiceItemResponse
+     */
+    description?: string;
+    /**
+     * Unique identifier of the invoice line item
+     * @type {string}
+     * @memberof InvoiceItemResponse
+     */
+    id?: string;
+    /**
+     * Quantity billed
+     * @type {number}
+     * @memberof InvoiceItemResponse
+     */
+    quantity?: number;
+    /**
+     * Line item type (e.g. PART, LABOR, FEE, TAX)
+     * @type {string}
+     * @memberof InvoiceItemResponse
+     */
+    type?: string;
+    /**
+     * Price per unit
+     * @type {number}
+     * @memberof InvoiceItemResponse
+     */
+    unitPrice?: number;
+    /**
+     * Identifier of the source workorder item
      * @type {string}
      * @memberof InvoiceItemResponse
      */
@@ -74,11 +80,12 @@ export function InvoiceItemResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
         'amount': json['amount'] == null ? undefined : json['amount'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'type': json['type'] == null ? undefined : json['type'],
+        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
         'workorderItemId': json['workorderItemId'] == null ? undefined : json['workorderItemId'],
     };
 }
@@ -89,11 +96,12 @@ export function InvoiceItemResponseToJSON(value?: InvoiceItemResponse | null): a
     }
     return {
         
-        'id': value['id'],
-        'description': value['description'],
-        'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
         'amount': value['amount'],
+        'description': value['description'],
+        'id': value['id'],
+        'quantity': value['quantity'],
+        'type': value['type'],
+        'unitPrice': value['unitPrice'],
         'workorderItemId': value['workorderItemId'],
     };
 }

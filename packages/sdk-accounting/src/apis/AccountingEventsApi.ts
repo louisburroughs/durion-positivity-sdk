@@ -43,7 +43,7 @@ import {
     ReprocessingAttemptHistoryResponseToJSON,
 } from '../models/index';
 
-export interface GetEventRequest {
+export interface GetAccountingEventRequest {
     eventId: string;
 }
 
@@ -51,7 +51,7 @@ export interface GetEventProcessingLogRequest {
     eventId: string;
 }
 
-export interface GetReprocessingHistoryRequest {
+export interface GetEventReprocessingHistoryRequest {
     eventId: string;
 }
 
@@ -74,12 +74,12 @@ export interface ReprocessSuspendedEventRequest {
     reprocessEventRequest: ReprocessEventRequest;
 }
 
-export interface RetryEventProcessingRequest {
+export interface RetryAccountingEventRequest {
     eventId: string;
     body?: object;
 }
 
-export interface SubmitEventRequest {
+export interface SubmitAccountingEventRequest {
     accountingEventSubmitRequest: AccountingEventSubmitRequest;
 }
 
@@ -89,14 +89,14 @@ export interface SubmitEventRequest {
 export class AccountingEventsApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve details for an accounting event.
-     * Get event
+     * Returns one ingested accounting event with its payload, processing status and idempotency outcome. Use this tool when the event id is already known; use listAccountingEvents instead when searching by type, status or time range. Preconditions: the event must exist. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 EVENT_NOT_FOUND when no accounting event exists for the supplied id. 
+     * Get Accounting Event
      */
-    async getEventRaw(requestParameters: GetEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
+    async getAccountingEventRaw(requestParameters: GetAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
-                'Required parameter "eventId" was null or undefined when calling getEvent().'
+                'Required parameter "eventId" was null or undefined when calling getAccountingEvent().'
             );
         }
 
@@ -123,17 +123,17 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve details for an accounting event.
-     * Get event
+     * Returns one ingested accounting event with its payload, processing status and idempotency outcome. Use this tool when the event id is already known; use listAccountingEvents instead when searching by type, status or time range. Preconditions: the event must exist. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 EVENT_NOT_FOUND when no accounting event exists for the supplied id. 
+     * Get Accounting Event
      */
-    async getEvent(requestParameters: GetEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
-        const response = await this.getEventRaw(requestParameters, initOverrides);
+    async getAccountingEvent(requestParameters: GetAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
+        const response = await this.getAccountingEventRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns the current event envelope schema contract for SDK validation.
-     * Get event envelope contract
+     * Returns the current accounting event envelope schema contract, which SDKs use to validate events before submission. Use this tool to fetch the authoritative envelope shape before calling submitAccountingEvent; do not use submitAccountingEvent itself to probe validation rules. Preconditions: none. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the contract document. 
+     * Get Event Envelope Contract
      */
     async getEventContractRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventEnvelopeContract>> {
         const queryParameters: any = {};
@@ -159,8 +159,8 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current event envelope schema contract for SDK validation.
-     * Get event envelope contract
+     * Returns the current accounting event envelope schema contract, which SDKs use to validate events before submission. Use this tool to fetch the authoritative envelope shape before calling submitAccountingEvent; do not use submitAccountingEvent itself to probe validation rules. Preconditions: none. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the contract document. 
+     * Get Event Envelope Contract
      */
     async getEventContract(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventEnvelopeContract> {
         const response = await this.getEventContractRaw(initOverrides);
@@ -168,8 +168,8 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the structured processing audit log for an accounting event. Returns an empty list if the event has no processing log.
-     * Get event processing log
+     * Returns the structured, step-by-step processing audit log for one accounting event, covering rule matching, mapping resolution and posting outcomes. Use this tool to diagnose why an event suspended or failed; use getEventReprocessingHistory instead for the list of manual reprocessing attempts. Preconditions: none; an event with no log yields an empty list. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the event has no processing log. 
+     * Get Event Processing Log
      */
     async getEventProcessingLogRaw(requestParameters: GetEventProcessingLogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventProcessingLogEntry>>> {
         if (requestParameters['eventId'] == null) {
@@ -202,8 +202,8 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve the structured processing audit log for an accounting event. Returns an empty list if the event has no processing log.
-     * Get event processing log
+     * Returns the structured, step-by-step processing audit log for one accounting event, covering rule matching, mapping resolution and posting outcomes. Use this tool to diagnose why an event suspended or failed; use getEventReprocessingHistory instead for the list of manual reprocessing attempts. Preconditions: none; an event with no log yields an empty list. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the event has no processing log. 
+     * Get Event Processing Log
      */
     async getEventProcessingLog(requestParameters: GetEventProcessingLogRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventProcessingLogEntry>> {
         const response = await this.getEventProcessingLogRaw(requestParameters, initOverrides);
@@ -211,14 +211,14 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all reprocessing attempts for a suspended accounting event. Returns an empty list if the event does not exist or has no reprocessing history.
-     * Get reprocessing history
+     * Returns every recorded reprocessing attempt for an accounting event, including who triggered each attempt and its outcome. Use this tool when auditing a suspended event\'s correction history; use getEventProcessingLog instead for the step-by-step pipeline log of a single run. Preconditions: none; an unknown event yields an empty list rather than an error. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the event does not exist or was never reprocessed. 
+     * Get Event Reprocessing History
      */
-    async getReprocessingHistoryRaw(requestParameters: GetReprocessingHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReprocessingAttemptHistoryResponse>>> {
+    async getEventReprocessingHistoryRaw(requestParameters: GetEventReprocessingHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ReprocessingAttemptHistoryResponse>>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
-                'Required parameter "eventId" was null or undefined when calling getReprocessingHistory().'
+                'Required parameter "eventId" was null or undefined when calling getEventReprocessingHistory().'
             );
         }
 
@@ -245,17 +245,17 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all reprocessing attempts for a suspended accounting event. Returns an empty list if the event does not exist or has no reprocessing history.
-     * Get reprocessing history
+     * Returns every recorded reprocessing attempt for an accounting event, including who triggered each attempt and its outcome. Use this tool when auditing a suspended event\'s correction history; use getEventProcessingLog instead for the step-by-step pipeline log of a single run. Preconditions: none; an unknown event yields an empty list rather than an error. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the event does not exist or was never reprocessed. 
+     * Get Event Reprocessing History
      */
-    async getReprocessingHistory(requestParameters: GetReprocessingHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReprocessingAttemptHistoryResponse>> {
-        const response = await this.getReprocessingHistoryRaw(requestParameters, initOverrides);
+    async getEventReprocessingHistory(requestParameters: GetEventReprocessingHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ReprocessingAttemptHistoryResponse>> {
+        const response = await this.getEventReprocessingHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve paginated accounting events with optional filters.
-     * List accounting events
+     * Lists ingested accounting events as a paginated projection with rich optional filters: organization, event type, idempotency outcome, received-at range, event id, ingestion id, domain key, invoice id and processing status. Use this tool to monitor or triage the event pipeline; do not use getAccountingEvent, which fetches one event by its known id. Preconditions: none beyond the caller holding accounting:events:view; an unrecognized status value is silently ignored rather than rejected. Required inputs: none; all filters are optional and the page defaults to 20 items sorted by receivedAt descending. Emits an ACCOUNTING_EVENT_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
+     * List Accounting Events
      */
     async listAccountingEventsRaw(requestParameters: ListAccountingEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageAccountingEventResponse>> {
         if (requestParameters['pageable'] == null) {
@@ -332,8 +332,8 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated accounting events with optional filters.
-     * List accounting events
+     * Lists ingested accounting events as a paginated projection with rich optional filters: organization, event type, idempotency outcome, received-at range, event id, ingestion id, domain key, invoice id and processing status. Use this tool to monitor or triage the event pipeline; do not use getAccountingEvent, which fetches one event by its known id. Preconditions: none beyond the caller holding accounting:events:view; an unrecognized status value is silently ignored rather than rejected. Required inputs: none; all filters are optional and the page defaults to 20 items sorted by receivedAt descending. Emits an ACCOUNTING_EVENT_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
+     * List Accounting Events
      */
     async listAccountingEvents(requestParameters: ListAccountingEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageAccountingEventResponse> {
         const response = await this.listAccountingEventsRaw(requestParameters, initOverrides);
@@ -341,8 +341,8 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reprocess a SUSPENDED accounting event after mapping/rule correction. Idempotent - returns 409 Conflict if already PROCESSED.
-     * Reprocess suspended event
+     * Reprocesses a SUSPENDED accounting event after a mapping or rule correction, recording an audited reprocessing attempt with the triggering user. Use this tool once the underlying mapping gap is fixed; do not use retryAccountingEvent, which is the unaudited retry for transient failures. Preconditions: the event must exist and be SUSPENDED; an event already PROCESSED is rejected to preserve idempotency. Required inputs: eventId (UUID) as a path parameter and triggeredByUserId in the body; mappingVersionToUse and reprocessingNotes are optional. Emits an ACCOUNTING_EVENT_REPROCESS event; a successful synchronous outcome returns 200 with status PROCESSED while 202 means processing continues. Returns 404 EVENT_NOT_FOUND when the event does not exist, 409 when it is already PROCESSED, and 400 when the request is invalid. 
+     * Reprocess Suspended Event
      */
     async reprocessSuspendedEventRaw(requestParameters: ReprocessSuspendedEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
         if (requestParameters['eventId'] == null) {
@@ -385,8 +385,8 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reprocess a SUSPENDED accounting event after mapping/rule correction. Idempotent - returns 409 Conflict if already PROCESSED.
-     * Reprocess suspended event
+     * Reprocesses a SUSPENDED accounting event after a mapping or rule correction, recording an audited reprocessing attempt with the triggering user. Use this tool once the underlying mapping gap is fixed; do not use retryAccountingEvent, which is the unaudited retry for transient failures. Preconditions: the event must exist and be SUSPENDED; an event already PROCESSED is rejected to preserve idempotency. Required inputs: eventId (UUID) as a path parameter and triggeredByUserId in the body; mappingVersionToUse and reprocessingNotes are optional. Emits an ACCOUNTING_EVENT_REPROCESS event; a successful synchronous outcome returns 200 with status PROCESSED while 202 means processing continues. Returns 404 EVENT_NOT_FOUND when the event does not exist, 409 when it is already PROCESSED, and 400 when the request is invalid. 
+     * Reprocess Suspended Event
      */
     async reprocessSuspendedEvent(requestParameters: ReprocessSuspendedEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
         const response = await this.reprocessSuspendedEventRaw(requestParameters, initOverrides);
@@ -394,14 +394,14 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retry processing for a failed accounting event.
-     * Retry event processing
+     * Re-runs pipeline processing for a failed accounting event using its original payload and the current rules. Use this tool for transient failures; do not use reprocessSuspendedEvent, which is the audited path for SUSPENDED events after a mapping or rule correction. Preconditions: the event must exist and be in a retryable failed state. Required inputs: eventId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_EVENT_RETRY event and returns 202 while processing continues asynchronously. Returns 404 EVENT_NOT_FOUND when the event does not exist. 
+     * Retry Accounting Event Processing
      */
-    async retryEventProcessingRaw(requestParameters: RetryEventProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
+    async retryAccountingEventRaw(requestParameters: RetryAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
-                'Required parameter "eventId" was null or undefined when calling retryEventProcessing().'
+                'Required parameter "eventId" was null or undefined when calling retryAccountingEvent().'
             );
         }
 
@@ -431,23 +431,23 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retry processing for a failed accounting event.
-     * Retry event processing
+     * Re-runs pipeline processing for a failed accounting event using its original payload and the current rules. Use this tool for transient failures; do not use reprocessSuspendedEvent, which is the audited path for SUSPENDED events after a mapping or rule correction. Preconditions: the event must exist and be in a retryable failed state. Required inputs: eventId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_EVENT_RETRY event and returns 202 while processing continues asynchronously. Returns 404 EVENT_NOT_FOUND when the event does not exist. 
+     * Retry Accounting Event Processing
      */
-    async retryEventProcessing(requestParameters: RetryEventProcessingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
-        const response = await this.retryEventProcessingRaw(requestParameters, initOverrides);
+    async retryAccountingEvent(requestParameters: RetryAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
+        const response = await this.retryAccountingEventRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Submit a new accounting event for processing.
-     * Submit event
+     * Submits a business event into the accounting pipeline, where the posting engine converts it into journal entries via published posting rules or default GL mappings. Use this tool to feed source-system activity into the ledger; do not use createJournalEntry, which bypasses the rules engine for manual entries, and use resolveTestMapping to preview the rules first. Preconditions: no event with the same eventId may already be ingested; duplicates are rejected rather than reprocessed. Required inputs: eventType (max 100 chars), organizationId (UUID) and payload (JSON object); eventId, sourceSystem and transactionDate (ISO-8601) are optional, eventId being generated when omitted. Emits an ACCOUNTING_EVENT_SUBMIT event and returns 202 while processing continues asynchronously; callers poll getAccountingEvent for the outcome. Returns 409 DUPLICATE_EVENT when the eventId was already ingested, and 400 when required fields are missing or the transactionDate is not valid ISO-8601. 
+     * Submit Accounting Event
      */
-    async submitEventRaw(requestParameters: SubmitEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
+    async submitAccountingEventRaw(requestParameters: SubmitAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
         if (requestParameters['accountingEventSubmitRequest'] == null) {
             throw new runtime.RequiredError(
                 'accountingEventSubmitRequest',
-                'Required parameter "accountingEventSubmitRequest" was null or undefined when calling submitEvent().'
+                'Required parameter "accountingEventSubmitRequest" was null or undefined when calling submitAccountingEvent().'
             );
         }
 
@@ -477,11 +477,11 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit a new accounting event for processing.
-     * Submit event
+     * Submits a business event into the accounting pipeline, where the posting engine converts it into journal entries via published posting rules or default GL mappings. Use this tool to feed source-system activity into the ledger; do not use createJournalEntry, which bypasses the rules engine for manual entries, and use resolveTestMapping to preview the rules first. Preconditions: no event with the same eventId may already be ingested; duplicates are rejected rather than reprocessed. Required inputs: eventType (max 100 chars), organizationId (UUID) and payload (JSON object); eventId, sourceSystem and transactionDate (ISO-8601) are optional, eventId being generated when omitted. Emits an ACCOUNTING_EVENT_SUBMIT event and returns 202 while processing continues asynchronously; callers poll getAccountingEvent for the outcome. Returns 409 DUPLICATE_EVENT when the eventId was already ingested, and 400 when required fields are missing or the transactionDate is not valid ISO-8601. 
+     * Submit Accounting Event
      */
-    async submitEvent(requestParameters: SubmitEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
-        const response = await this.submitEventRaw(requestParameters, initOverrides);
+    async submitAccountingEvent(requestParameters: SubmitAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
+        const response = await this.submitAccountingEventRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

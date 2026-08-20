@@ -25,13 +25,6 @@ import {
     AttendanceDiscrepancyReportResponseToJSON,
 } from '../models/index';
 
-export interface GetApprovedTimeForExportRequest {
-    startDate: Date;
-    endDate: Date;
-    locationId: Array<string>;
-    xCorrelationId?: string;
-}
-
 export interface GetAttendanceDiscrepancyReportRequest {
     startDate: Date;
     endDate: Date;
@@ -42,87 +35,21 @@ export interface GetAttendanceDiscrepancyReportRequest {
     xCorrelationId?: string;
 }
 
+export interface ListApprovedTimeForExportRequest {
+    startDate: Date;
+    endDate: Date;
+    locationId: Array<string>;
+    xCorrelationId?: string;
+}
+
 /**
  * 
  */
 export class PeopleReportsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Returns People-domain approved time rows for a date range and one or more locations. This endpoint is the stable source-data read contract for accounting export workflows.
-     * Get approved time entries for accounting export
-     */
-    async getApprovedTimeForExportRaw(requestParameters: GetApprovedTimeForExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ApprovedTimeExportResponse>>> {
-        if (requestParameters['startDate'] == null) {
-            throw new runtime.RequiredError(
-                'startDate',
-                'Required parameter "startDate" was null or undefined when calling getApprovedTimeForExport().'
-            );
-        }
-
-        if (requestParameters['endDate'] == null) {
-            throw new runtime.RequiredError(
-                'endDate',
-                'Required parameter "endDate" was null or undefined when calling getApprovedTimeForExport().'
-            );
-        }
-
-        if (requestParameters['locationId'] == null) {
-            throw new runtime.RequiredError(
-                'locationId',
-                'Required parameter "locationId" was null or undefined when calling getApprovedTimeForExport().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['startDate'] != null) {
-            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
-        }
-
-        if (requestParameters['locationId'] != null) {
-            queryParameters['locationId'] = requestParameters['locationId'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (requestParameters['xCorrelationId'] != null) {
-            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
-        }
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:time:export:read", "accounting:time:export"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/people/reports/approvedTime`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ApprovedTimeExportResponseFromJSON));
-    }
-
-    /**
-     * Returns People-domain approved time rows for a date range and one or more locations. This endpoint is the stable source-data read contract for accounting export workflows.
-     * Get approved time entries for accounting export
-     */
-    async getApprovedTimeForExport(requestParameters: GetApprovedTimeForExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ApprovedTimeExportResponse>> {
-        const response = await this.getApprovedTimeForExportRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Generates a per-technician, per-location, per-day discrepancy report based on attendance and approved job time totals.
-     * Get attendance and job time discrepancy report
+     * Generates a per-technician, per-location, per-day report comparing attendance minutes from time entries with job minutes from the workorder job-time replica. Use this tool to spot technicians whose clocked attendance diverges from booked job time; use listApprovedTimeForExport instead for the raw approved rows consumed by accounting export. Preconditions: attendance comes from local time entries and job minutes from the ext_workorder_job_time replica, so very recent workorder activity may not be reflected yet. Required inputs: startDate and endDate (inclusive, yyyy-MM-dd) and timezone (IANA, used to bucket minutes into local days); locationId and technicianIds are optional filters, and flaggedOnly defaults to false. Emits a REPORT_ATTENDANCE_VS_JOBTIME_GENERATED audit event but changes no state; rows are flagged when the absolute discrepancy exceeds the location\'s configured threshold minutes. Returns 400 when endDate is before startDate or timezone is not a valid IANA zone. 
+     * Get Attendance Versus Job Time Discrepancy Report
      */
     async getAttendanceDiscrepancyReportRaw(requestParameters: GetAttendanceDiscrepancyReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AttendanceDiscrepancyReportResponse>>> {
         if (requestParameters['startDate'] == null) {
@@ -197,11 +124,84 @@ export class PeopleReportsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates a per-technician, per-location, per-day discrepancy report based on attendance and approved job time totals.
-     * Get attendance and job time discrepancy report
+     * Generates a per-technician, per-location, per-day report comparing attendance minutes from time entries with job minutes from the workorder job-time replica. Use this tool to spot technicians whose clocked attendance diverges from booked job time; use listApprovedTimeForExport instead for the raw approved rows consumed by accounting export. Preconditions: attendance comes from local time entries and job minutes from the ext_workorder_job_time replica, so very recent workorder activity may not be reflected yet. Required inputs: startDate and endDate (inclusive, yyyy-MM-dd) and timezone (IANA, used to bucket minutes into local days); locationId and technicianIds are optional filters, and flaggedOnly defaults to false. Emits a REPORT_ATTENDANCE_VS_JOBTIME_GENERATED audit event but changes no state; rows are flagged when the absolute discrepancy exceeds the location\'s configured threshold minutes. Returns 400 when endDate is before startDate or timezone is not a valid IANA zone. 
+     * Get Attendance Versus Job Time Discrepancy Report
      */
     async getAttendanceDiscrepancyReport(requestParameters: GetAttendanceDiscrepancyReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AttendanceDiscrepancyReportResponse>> {
         const response = await this.getAttendanceDiscrepancyReportRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns APPROVED time-entry rows with worked hours, approval metadata, and resolved employee and location names for a date range and one or more locations. Use this tool as the stable source-data read for accounting time-export workflows; use getAttendanceDiscrepancyReport instead for variance analysis between attendance and job time. Preconditions: every supplied locationId must resolve to an active location; rows missing approval or attendance timestamps are silently excluded. Required inputs: startDate and endDate (inclusive, yyyy-MM-dd, evaluated in UTC) and one or more locationId query parameters. Emits a PEOPLE_TIME_APPROVED_EXPORT_READ audit event but changes no state; this is a read-only projection sorted by entry date then time entry id. Returns 400 when endDate is before startDate, when no locationId is supplied, or when a locationId is unknown or inactive. 
+     * List Approved Time For Accounting Export
+     */
+    async listApprovedTimeForExportRaw(requestParameters: ListApprovedTimeForExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ApprovedTimeExportResponse>>> {
+        if (requestParameters['startDate'] == null) {
+            throw new runtime.RequiredError(
+                'startDate',
+                'Required parameter "startDate" was null or undefined when calling listApprovedTimeForExport().'
+            );
+        }
+
+        if (requestParameters['endDate'] == null) {
+            throw new runtime.RequiredError(
+                'endDate',
+                'Required parameter "endDate" was null or undefined when calling listApprovedTimeForExport().'
+            );
+        }
+
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling listApprovedTimeForExport().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['startDate'] != null) {
+            queryParameters['startDate'] = (requestParameters['startDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['endDate'] != null) {
+            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xCorrelationId'] != null) {
+            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:time:export:read", "accounting:time:export"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/reports/approvedTime`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ApprovedTimeExportResponseFromJSON));
+    }
+
+    /**
+     * Returns APPROVED time-entry rows with worked hours, approval metadata, and resolved employee and location names for a date range and one or more locations. Use this tool as the stable source-data read for accounting time-export workflows; use getAttendanceDiscrepancyReport instead for variance analysis between attendance and job time. Preconditions: every supplied locationId must resolve to an active location; rows missing approval or attendance timestamps are silently excluded. Required inputs: startDate and endDate (inclusive, yyyy-MM-dd, evaluated in UTC) and one or more locationId query parameters. Emits a PEOPLE_TIME_APPROVED_EXPORT_READ audit event but changes no state; this is a read-only projection sorted by entry date then time entry id. Returns 400 when endDate is before startDate, when no locationId is supplied, or when a locationId is unknown or inactive. 
+     * List Approved Time For Accounting Export
+     */
+    async listApprovedTimeForExport(requestParameters: ListApprovedTimeForExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ApprovedTimeExportResponse>> {
+        const response = await this.listApprovedTimeForExportRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

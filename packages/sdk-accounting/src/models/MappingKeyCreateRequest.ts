@@ -14,44 +14,44 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a new mapping key
  * @export
  * @interface MappingKeyCreateRequest
  */
 export interface MappingKeyCreateRequest {
     /**
-     * 
+     * Identifier of the user creating the mapping key
      * @type {string}
      * @memberof MappingKeyCreateRequest
      */
-    postingCategoryId: string;
+    createdBy: string;
     /**
-     * 
-     * @type {string}
-     * @memberof MappingKeyCreateRequest
-     */
-    keyName: string;
-    /**
-     * 
+     * Optional description of the mapping key
      * @type {string}
      * @memberof MappingKeyCreateRequest
      */
     description?: string;
     /**
-     * 
+     * Name of the mapping key
      * @type {string}
      * @memberof MappingKeyCreateRequest
      */
-    createdBy: string;
+    keyName: string;
+    /**
+     * Identifier of the posting category this mapping key belongs to
+     * @type {string}
+     * @memberof MappingKeyCreateRequest
+     */
+    postingCategoryId: string;
 }
 
 /**
  * Check if a given object implements the MappingKeyCreateRequest interface.
  */
 export function instanceOfMappingKeyCreateRequest(value: object): boolean {
-    if (!('postingCategoryId' in value)) return false;
-    if (!('keyName' in value)) return false;
     if (!('createdBy' in value)) return false;
+    if (!('keyName' in value)) return false;
+    if (!('postingCategoryId' in value)) return false;
     return true;
 }
 
@@ -65,10 +65,10 @@ export function MappingKeyCreateRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'postingCategoryId': json['postingCategoryId'],
-        'keyName': json['keyName'],
-        'description': json['description'] == null ? undefined : json['description'],
         'createdBy': json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'keyName': json['keyName'],
+        'postingCategoryId': json['postingCategoryId'],
     };
 }
 
@@ -78,10 +78,10 @@ export function MappingKeyCreateRequestToJSON(value?: MappingKeyCreateRequest | 
     }
     return {
         
-        'postingCategoryId': value['postingCategoryId'],
-        'keyName': value['keyName'],
-        'description': value['description'],
         'createdBy': value['createdBy'],
+        'description': value['description'],
+        'keyName': value['keyName'],
+        'postingCategoryId': value['postingCategoryId'],
     };
 }
 

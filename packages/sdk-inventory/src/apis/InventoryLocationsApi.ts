@@ -17,17 +17,26 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   LocationInventoryInquiryResponse,
+  LocationInventoryItemsResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
     LocationInventoryInquiryResponseFromJSON,
     LocationInventoryInquiryResponseToJSON,
+    LocationInventoryItemsResponseFromJSON,
+    LocationInventoryItemsResponseToJSON,
 } from '../models/index';
 
 export interface GetLocationInventoryRequest {
     locationId: string;
     sku?: string;
+    asOf?: Date;
+}
+
+export interface ListLocationInventoryItemsRequest {
+    locationId: string;
+    asOf?: Date;
 }
 
 /**
@@ -36,7 +45,7 @@ export interface GetLocationInventoryRequest {
 export class InventoryLocationsApi extends runtime.BaseAPI {
 
     /**
-     * Returns on-hand quantity aggregated for a storage location.
+     * Returns the aggregated on-hand quantity for one storage location, optionally filtered to a single SKU, or the historical on-hand as of a past instant by direct ledger aggregation. Use this tool for a quantity summary of one location; use listLocationInventoryItems instead for the per-SKU contents, and use getSiteInventoryRollup for hierarchy subtotals across a whole site. Preconditions: none for the current view; an asOf query additionally requires the inventory:ledger:view authority. Required inputs: locationId (UUID) path parameter; sku and asOf (ISO-8601 instant) are optional, and with asOf the availableToPromiseQuantity is null because historical allocation state is not reliably reconstructable from ATP-neutral ledger events. No events are emitted and no state changes; this is a read-only projection. Returns 422 with AS_OF_IN_FUTURE when asOf lies in the future, 403 when asOf is used without inventory:ledger:view, and 400 for an invalid location identifier. 
      * Get location inventory summary
      */
     async getLocationInventoryRaw(requestParameters: GetLocationInventoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationInventoryInquiryResponse>> {
@@ -51,6 +60,10 @@ export class InventoryLocationsApi extends runtime.BaseAPI {
 
         if (requestParameters['sku'] != null) {
             queryParameters['sku'] = requestParameters['sku'];
+        }
+
+        if (requestParameters['asOf'] != null) {
+            queryParameters['asOf'] = (requestParameters['asOf'] as any).toISOString();
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -74,11 +87,58 @@ export class InventoryLocationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns on-hand quantity aggregated for a storage location.
+     * Returns the aggregated on-hand quantity for one storage location, optionally filtered to a single SKU, or the historical on-hand as of a past instant by direct ledger aggregation. Use this tool for a quantity summary of one location; use listLocationInventoryItems instead for the per-SKU contents, and use getSiteInventoryRollup for hierarchy subtotals across a whole site. Preconditions: none for the current view; an asOf query additionally requires the inventory:ledger:view authority. Required inputs: locationId (UUID) path parameter; sku and asOf (ISO-8601 instant) are optional, and with asOf the availableToPromiseQuantity is null because historical allocation state is not reliably reconstructable from ATP-neutral ledger events. No events are emitted and no state changes; this is a read-only projection. Returns 422 with AS_OF_IN_FUTURE when asOf lies in the future, 403 when asOf is used without inventory:ledger:view, and 400 for an invalid location identifier. 
      * Get location inventory summary
      */
     async getLocationInventory(requestParameters: GetLocationInventoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationInventoryInquiryResponse> {
         const response = await this.getLocationInventoryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the stock items with positive on-hand at one storage location, or the historical contents as of a past instant by direct ledger aggregation. Use this tool to see what a location holds per SKU; use getLocationInventory instead for the aggregated quantity summary of the location. Preconditions: none for the current view; an asOf query additionally requires the inventory:ledger:view authority. Required inputs: locationId (UUID) path parameter; asOf (ISO-8601 instant) is optional. No events are emitted and no state changes; this is a read-only projection. Returns 422 with AS_OF_IN_FUTURE when asOf lies in the future, 403 when asOf is used without inventory:ledger:view, and 400 for an invalid location identifier. 
+     * List location inventory contents
+     */
+    async listLocationInventoryItemsRaw(requestParameters: ListLocationInventoryItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationInventoryItemsResponse>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling listLocationInventoryItems().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['asOf'] != null) {
+            queryParameters['asOf'] = (requestParameters['asOf'] as any).toISOString();
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:on_hand:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/locations/{locationId}/inventory-items`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => LocationInventoryItemsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the stock items with positive on-hand at one storage location, or the historical contents as of a past instant by direct ledger aggregation. Use this tool to see what a location holds per SKU; use getLocationInventory instead for the aggregated quantity summary of the location. Preconditions: none for the current view; an asOf query additionally requires the inventory:ledger:view authority. Required inputs: locationId (UUID) path parameter; asOf (ISO-8601 instant) is optional. No events are emitted and no state changes; this is a read-only projection. Returns 422 with AS_OF_IN_FUTURE when asOf lies in the future, 403 when asOf is used without inventory:ledger:view, and 400 for an invalid location identifier. 
+     * List location inventory contents
+     */
+    async listLocationInventoryItems(requestParameters: ListLocationInventoryItemsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationInventoryItemsResponse> {
+        const response = await this.listLocationInventoryItemsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

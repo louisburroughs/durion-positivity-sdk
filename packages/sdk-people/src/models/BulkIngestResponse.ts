@@ -21,41 +21,45 @@ import {
 } from './BulkIngestResult';
 
 /**
- * 
+ * Summary outcome of a bulk ingest job: per-record results plus aggregate counts
  * @export
  * @interface BulkIngestResponse
  */
 export interface BulkIngestResponse {
     /**
-     * 
+     * Number of records that failed ingest
      * @type {number}
      * @memberof BulkIngestResponse
      */
-    totalSubmitted?: number;
+    failureCount: number;
     /**
-     * 
-     * @type {number}
-     * @memberof BulkIngestResponse
-     */
-    successCount?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof BulkIngestResponse
-     */
-    failureCount?: number;
-    /**
-     * 
+     * Per-record outcomes in submission order
      * @type {Array<BulkIngestResult>}
      * @memberof BulkIngestResponse
      */
-    results?: Array<BulkIngestResult>;
+    results: Array<BulkIngestResult>;
+    /**
+     * Number of records ingested successfully
+     * @type {number}
+     * @memberof BulkIngestResponse
+     */
+    successCount: number;
+    /**
+     * Total number of records submitted in the batch
+     * @type {number}
+     * @memberof BulkIngestResponse
+     */
+    totalSubmitted: number;
 }
 
 /**
  * Check if a given object implements the BulkIngestResponse interface.
  */
 export function instanceOfBulkIngestResponse(value: object): boolean {
+    if (!('failureCount' in value)) return false;
+    if (!('results' in value)) return false;
+    if (!('successCount' in value)) return false;
+    if (!('totalSubmitted' in value)) return false;
     return true;
 }
 
@@ -69,10 +73,10 @@ export function BulkIngestResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'totalSubmitted': json['totalSubmitted'] == null ? undefined : json['totalSubmitted'],
-        'successCount': json['successCount'] == null ? undefined : json['successCount'],
-        'failureCount': json['failureCount'] == null ? undefined : json['failureCount'],
-        'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(BulkIngestResultFromJSON)),
+        'failureCount': json['failureCount'],
+        'results': ((json['results'] as Array<any>).map(BulkIngestResultFromJSON)),
+        'successCount': json['successCount'],
+        'totalSubmitted': json['totalSubmitted'],
     };
 }
 
@@ -82,10 +86,10 @@ export function BulkIngestResponseToJSON(value?: BulkIngestResponse | null): any
     }
     return {
         
-        'totalSubmitted': value['totalSubmitted'],
-        'successCount': value['successCount'],
         'failureCount': value['failureCount'],
-        'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(BulkIngestResultToJSON)),
+        'results': ((value['results'] as Array<any>).map(BulkIngestResultToJSON)),
+        'successCount': value['successCount'],
+        'totalSubmitted': value['totalSubmitted'],
     };
 }
 

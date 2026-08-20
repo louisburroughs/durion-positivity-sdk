@@ -28,16 +28,16 @@ import {
     TimeEntryAdjustmentResponseToJSON,
 } from '../models/index';
 
-export interface ApproveAdjustmentRequest {
+export interface ApproveTimeEntryAdjustmentRequest {
     adjustmentId: string;
     xCorrelationId?: string;
 }
 
-export interface CreateAdjustmentRequest {
+export interface CreateTimeEntryAdjustmentRequest {
     timeEntryAdjustmentRequest: TimeEntryAdjustmentRequest;
 }
 
-export interface ListForTimeEntryRequest {
+export interface ListTimeEntryAdjustmentsRequest {
     timeEntryId: string;
 }
 
@@ -47,14 +47,14 @@ export interface ListForTimeEntryRequest {
 export class PeopleTimeEntriesApi extends runtime.BaseAPI {
 
     /**
-     * Approve a pending time entry adjustment. Requires approval permissions.
-     * Approve a time entry adjustment
+     * Approves a time entry adjustment, stamping the deciding user and decision time and writing an ADJUSTMENT_APPROVED audit row. Use this tool to accept a proposed correction; do not use approveTimeEntriesBatch, which approves the time entries themselves rather than adjustments. Preconditions: the adjustment must exist; no status gate is enforced, so re-approving an already decided adjustment overwrites the previous decision. Required inputs: adjustmentId (UUID) path parameter; an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_ADJUSTMENT_APPROVE event; the underlying time entry\'s own timestamps are not recalculated by this call. Returns 404 when no adjustment exists for the supplied id. 
+     * Approve A Pending Time Entry Adjustment
      */
-    async approveAdjustmentRaw(requestParameters: ApproveAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async approveTimeEntryAdjustmentRaw(requestParameters: ApproveTimeEntryAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['adjustmentId'] == null) {
             throw new runtime.RequiredError(
                 'adjustmentId',
-                'Required parameter "adjustmentId" was null or undefined when calling approveAdjustment().'
+                'Required parameter "adjustmentId" was null or undefined when calling approveTimeEntryAdjustment().'
             );
         }
 
@@ -85,23 +85,23 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approve a pending time entry adjustment. Requires approval permissions.
-     * Approve a time entry adjustment
+     * Approves a time entry adjustment, stamping the deciding user and decision time and writing an ADJUSTMENT_APPROVED audit row. Use this tool to accept a proposed correction; do not use approveTimeEntriesBatch, which approves the time entries themselves rather than adjustments. Preconditions: the adjustment must exist; no status gate is enforced, so re-approving an already decided adjustment overwrites the previous decision. Required inputs: adjustmentId (UUID) path parameter; an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_ADJUSTMENT_APPROVE event; the underlying time entry\'s own timestamps are not recalculated by this call. Returns 404 when no adjustment exists for the supplied id. 
+     * Approve A Pending Time Entry Adjustment
      */
-    async approveAdjustment(requestParameters: ApproveAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
-        const response = await this.approveAdjustmentRaw(requestParameters, initOverrides);
+    async approveTimeEntryAdjustment(requestParameters: ApproveTimeEntryAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.approveTimeEntryAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Submit a request to adjust a time entry. The adjustment will be in PENDING status until approved.
-     * Create a time entry adjustment
+     * Creates a PENDING adjustment against a time entry, proposing either replacement start and end timestamps or a signed minutes delta. Use this tool when a recorded time entry needs correction before approval; do not use approveTimeEntryAdjustment, which decides an already proposed adjustment. Preconditions: the time entry must exist and be in PENDING_APPROVAL status; entries already approved or rejected cannot be adjusted. Required inputs: timeEntryId (UUID), reasonCode, and exactly one of the pair proposedStartAt plus proposedEndAt (ISO-8601 offset timestamps) or minutesDelta (positive adds, negative subtracts); notes and createdBy are optional. Emits a PEOPLE_TIME_ENTRY_ADJUSTMENT_CREATE event; the time entry itself is not modified until the adjustment is approved. Returns 404 when the time entry does not exist, 409 when the entry is not in PENDING_APPROVAL status, and 400 when reasonCode is missing or the proposed-times versus minutesDelta rule is violated. 
+     * Create A Pending Time Entry Adjustment
      */
-    async createAdjustmentRaw(requestParameters: CreateAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryAdjustmentResponse>> {
+    async createTimeEntryAdjustmentRaw(requestParameters: CreateTimeEntryAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryAdjustmentResponse>> {
         if (requestParameters['timeEntryAdjustmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryAdjustmentRequest',
-                'Required parameter "timeEntryAdjustmentRequest" was null or undefined when calling createAdjustment().'
+                'Required parameter "timeEntryAdjustmentRequest" was null or undefined when calling createTimeEntryAdjustment().'
             );
         }
 
@@ -131,23 +131,23 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submit a request to adjust a time entry. The adjustment will be in PENDING status until approved.
-     * Create a time entry adjustment
+     * Creates a PENDING adjustment against a time entry, proposing either replacement start and end timestamps or a signed minutes delta. Use this tool when a recorded time entry needs correction before approval; do not use approveTimeEntryAdjustment, which decides an already proposed adjustment. Preconditions: the time entry must exist and be in PENDING_APPROVAL status; entries already approved or rejected cannot be adjusted. Required inputs: timeEntryId (UUID), reasonCode, and exactly one of the pair proposedStartAt plus proposedEndAt (ISO-8601 offset timestamps) or minutesDelta (positive adds, negative subtracts); notes and createdBy are optional. Emits a PEOPLE_TIME_ENTRY_ADJUSTMENT_CREATE event; the time entry itself is not modified until the adjustment is approved. Returns 404 when the time entry does not exist, 409 when the entry is not in PENDING_APPROVAL status, and 400 when reasonCode is missing or the proposed-times versus minutesDelta rule is violated. 
+     * Create A Pending Time Entry Adjustment
      */
-    async createAdjustment(requestParameters: CreateAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryAdjustmentResponse> {
-        const response = await this.createAdjustmentRaw(requestParameters, initOverrides);
+    async createTimeEntryAdjustment(requestParameters: CreateTimeEntryAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryAdjustmentResponse> {
+        const response = await this.createTimeEntryAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all adjustments associated with a specific time entry.
-     * List adjustments for a time entry
+     * Lists all adjustments recorded against one time entry, in any status. Use this tool to review an entry\'s correction history; use createTimeEntryAdjustment instead to propose a new correction. Preconditions: none; an unknown timeEntryId simply yields no rows. Required inputs: timeEntryId (UUID) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the time entry has no adjustments. 
+     * List Adjustments For A Time Entry
      */
-    async listForTimeEntryRaw(requestParameters: ListForTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimeEntryAdjustment>>> {
+    async listTimeEntryAdjustmentsRaw(requestParameters: ListTimeEntryAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimeEntryAdjustment>>> {
         if (requestParameters['timeEntryId'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryId',
-                'Required parameter "timeEntryId" was null or undefined when calling listForTimeEntry().'
+                'Required parameter "timeEntryId" was null or undefined when calling listTimeEntryAdjustments().'
             );
         }
 
@@ -174,11 +174,11 @@ export class PeopleTimeEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all adjustments associated with a specific time entry.
-     * List adjustments for a time entry
+     * Lists all adjustments recorded against one time entry, in any status. Use this tool to review an entry\'s correction history; use createTimeEntryAdjustment instead to propose a new correction. Preconditions: none; an unknown timeEntryId simply yields no rows. Required inputs: timeEntryId (UUID) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the time entry has no adjustments. 
+     * List Adjustments For A Time Entry
      */
-    async listForTimeEntry(requestParameters: ListForTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimeEntryAdjustment>> {
-        const response = await this.listForTimeEntryRaw(requestParameters, initOverrides);
+    async listTimeEntryAdjustments(requestParameters: ListTimeEntryAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimeEntryAdjustment>> {
+        const response = await this.listTimeEntryAdjustmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

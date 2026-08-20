@@ -14,59 +14,81 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single line item on an advance shipping notice (ASN) response, describing one SKU and its shipped/received quantities
  * @export
  * @interface AsnLineResponse
  */
 export interface AsnLineResponse {
     /**
-     * 
+     * Unique identifier of the ASN line item
      * @type {string}
      * @memberof AsnLineResponse
      */
-    asnLineId?: string;
+    asnLineId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof AsnLineResponse
-     */
-    poId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AsnLineResponse
-     */
-    sku?: string;
-    /**
-     * 
+     * Effective base-per-document-unit conversion factor applied at derivation time
      * @type {number}
      * @memberof AsnLineResponse
      */
-    quantityShipped?: number;
+    conversionFactor?: number;
     /**
-     * 
+     * Quantity as keyed in documentUom; quantityShipped holds the derived base quantity
+     * @type {number}
+     * @memberof AsnLineResponse
+     */
+    documentQuantity?: number;
+    /**
+     * UoM the line was keyed in when it differed from the product's base UoM
+     * @type {string}
+     * @memberof AsnLineResponse
+     */
+    documentUom?: string;
+    /**
+     * Lot or batch number associated with the shipped product
+     * @type {string}
+     * @memberof AsnLineResponse
+     */
+    lotNumber?: string;
+    /**
+     * Identifier of the purchase order this ASN line is associated with
+     * @type {string}
+     * @memberof AsnLineResponse
+     */
+    poId: string;
+    /**
+     * Quantity of the SKU received against this ASN line so far
      * @type {number}
      * @memberof AsnLineResponse
      */
     quantityReceived?: number;
     /**
-     * 
+     * Quantity of the SKU declared as shipped on the ASN
+     * @type {number}
+     * @memberof AsnLineResponse
+     */
+    quantityShipped: number;
+    /**
+     * Stock keeping unit identifier for the shipped product
+     * @type {string}
+     * @memberof AsnLineResponse
+     */
+    sku: string;
+    /**
+     * Unit of measure for the shipped and received quantities
      * @type {string}
      * @memberof AsnLineResponse
      */
     unitOfMeasure?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AsnLineResponse
-     */
-    lotNumber?: string;
 }
 
 /**
  * Check if a given object implements the AsnLineResponse interface.
  */
 export function instanceOfAsnLineResponse(value: object): boolean {
+    if (!('asnLineId' in value)) return false;
+    if (!('poId' in value)) return false;
+    if (!('quantityShipped' in value)) return false;
+    if (!('sku' in value)) return false;
     return true;
 }
 
@@ -80,13 +102,16 @@ export function AsnLineResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'asnLineId': json['asnLineId'] == null ? undefined : json['asnLineId'],
-        'poId': json['poId'] == null ? undefined : json['poId'],
-        'sku': json['sku'] == null ? undefined : json['sku'],
-        'quantityShipped': json['quantityShipped'] == null ? undefined : json['quantityShipped'],
-        'quantityReceived': json['quantityReceived'] == null ? undefined : json['quantityReceived'],
-        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'asnLineId': json['asnLineId'],
+        'conversionFactor': json['conversionFactor'] == null ? undefined : json['conversionFactor'],
+        'documentQuantity': json['documentQuantity'] == null ? undefined : json['documentQuantity'],
+        'documentUom': json['documentUom'] == null ? undefined : json['documentUom'],
         'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
+        'poId': json['poId'],
+        'quantityReceived': json['quantityReceived'] == null ? undefined : json['quantityReceived'],
+        'quantityShipped': json['quantityShipped'],
+        'sku': json['sku'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
     };
 }
 
@@ -97,12 +122,15 @@ export function AsnLineResponseToJSON(value?: AsnLineResponse | null): any {
     return {
         
         'asnLineId': value['asnLineId'],
-        'poId': value['poId'],
-        'sku': value['sku'],
-        'quantityShipped': value['quantityShipped'],
-        'quantityReceived': value['quantityReceived'],
-        'unitOfMeasure': value['unitOfMeasure'],
+        'conversionFactor': value['conversionFactor'],
+        'documentQuantity': value['documentQuantity'],
+        'documentUom': value['documentUom'],
         'lotNumber': value['lotNumber'],
+        'poId': value['poId'],
+        'quantityReceived': value['quantityReceived'],
+        'quantityShipped': value['quantityShipped'],
+        'sku': value['sku'],
+        'unitOfMeasure': value['unitOfMeasure'],
     };
 }
 

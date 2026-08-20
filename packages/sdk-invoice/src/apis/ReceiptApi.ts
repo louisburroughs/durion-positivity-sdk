@@ -39,7 +39,13 @@ export interface GenerateReceiptOperationRequest {
     generateReceiptRequest: GenerateReceiptRequest;
 }
 
-export interface RecordPrintDeliveryRequest {
+export interface RecordReceiptEmailDeliveryRequest {
+    invoiceId: string;
+    receiptId: string;
+    emailDeliveryRequest: EmailDeliveryRequest;
+}
+
+export interface RecordReceiptPrintDeliveryRequest {
     invoiceId: string;
     receiptId: string;
     printDeliveryRequest: PrintDeliveryRequest;
@@ -51,20 +57,14 @@ export interface ReprintReceiptOperationRequest {
     reprintReceiptRequest: ReprintReceiptRequest;
 }
 
-export interface SendEmailReceiptRequest {
-    invoiceId: string;
-    receiptId: string;
-    emailDeliveryRequest: EmailDeliveryRequest;
-}
-
 /**
  * 
  */
 export class ReceiptApi extends runtime.BaseAPI {
 
     /**
-     * Generate a receipt for an invoice payment using the requested terminal and template
-     * Generate invoice receipt
+     * Generates a receipt record for an invoice payment, assigning a unique reference built from the invoice number, a UTC timestamp and a per-invoice sequence, with the cashier taken from the security context. Use this tool once per payment after tender; do not use reprintReceipt, which duplicates a receipt that already exists. Preconditions: the invoice and payment intent must exist, the intent must belong to the invoice, and the caller needs the GENERATE_RECEIPT authority. Required inputs: paymentIntentId (UUID), terminalId, templateId and templateVersion. Emits an INVOICE_RECEIPT_GENERATE event and stores the receipt in GENERATED status with a zero reprint count; the receipt also becomes a downloadable artifact of the invoice. Returns 201 with the receipt reference, 404 when the invoice or payment intent does not exist or the intent belongs to a different invoice, and 403 when the GENERATE_RECEIPT authority is missing. 
+     * Generate Receipt for Invoice Payment
      */
     async generateReceiptRaw(requestParameters: GenerateReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -107,8 +107,8 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generate a receipt for an invoice payment using the requested terminal and template
-     * Generate invoice receipt
+     * Generates a receipt record for an invoice payment, assigning a unique reference built from the invoice number, a UTC timestamp and a per-invoice sequence, with the cashier taken from the security context. Use this tool once per payment after tender; do not use reprintReceipt, which duplicates a receipt that already exists. Preconditions: the invoice and payment intent must exist, the intent must belong to the invoice, and the caller needs the GENERATE_RECEIPT authority. Required inputs: paymentIntentId (UUID), terminalId, templateId and templateVersion. Emits an INVOICE_RECEIPT_GENERATE event and stores the receipt in GENERATED status with a zero reprint count; the receipt also becomes a downloadable artifact of the invoice. Returns 201 with the receipt reference, 404 when the invoice or payment intent does not exist or the intent belongs to a different invoice, and 403 when the GENERATE_RECEIPT authority is missing. 
+     * Generate Receipt for Invoice Payment
      */
     async generateReceipt(requestParameters: GenerateReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptResponse> {
         const response = await this.generateReceiptRaw(requestParameters, initOverrides);
@@ -116,28 +116,87 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
-     * Record the delivery status for a printed receipt associated with an invoice
-     * Record printed receipt delivery
+     * Records the outcome of emailing a receipt to a customer, stamping the receipt\'s delivery method as EMAIL with the recipient address and the reported status; this endpoint records the attempt rather than dispatching the email itself. Use this tool after an email delivery attempt completes; do not use recordReceiptPrintDelivery, which records a terminal print outcome. Preconditions: the receipt must already exist via generateReceipt. Required inputs: receiptId (UUID) as a path parameter plus emailAddress and status (SUCCESS or FAILED) in the body. Emits an INVOICE_RECEIPT_EMAIL_DELIVERY event and overwrites the receipt\'s delivery method, address and status. Returns 200 with an empty body on success, and 404 when the receipt does not exist. 
+     * Record Emailed Receipt Delivery Status
      */
-    async recordPrintDeliveryRaw(requestParameters: RecordPrintDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async recordReceiptEmailDeliveryRaw(requestParameters: RecordReceiptEmailDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['invoiceId'] == null) {
             throw new runtime.RequiredError(
                 'invoiceId',
-                'Required parameter "invoiceId" was null or undefined when calling recordPrintDelivery().'
+                'Required parameter "invoiceId" was null or undefined when calling recordReceiptEmailDelivery().'
             );
         }
 
         if (requestParameters['receiptId'] == null) {
             throw new runtime.RequiredError(
                 'receiptId',
-                'Required parameter "receiptId" was null or undefined when calling recordPrintDelivery().'
+                'Required parameter "receiptId" was null or undefined when calling recordReceiptEmailDelivery().'
+            );
+        }
+
+        if (requestParameters['emailDeliveryRequest'] == null) {
+            throw new runtime.RequiredError(
+                'emailDeliveryRequest',
+                'Required parameter "emailDeliveryRequest" was null or undefined when calling recordReceiptEmailDelivery().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/receipts/{receiptId}/email`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))).replace(`{${"receiptId"}}`, encodeURIComponent(String(requestParameters['receiptId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: EmailDeliveryRequestToJSON(requestParameters['emailDeliveryRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Records the outcome of emailing a receipt to a customer, stamping the receipt\'s delivery method as EMAIL with the recipient address and the reported status; this endpoint records the attempt rather than dispatching the email itself. Use this tool after an email delivery attempt completes; do not use recordReceiptPrintDelivery, which records a terminal print outcome. Preconditions: the receipt must already exist via generateReceipt. Required inputs: receiptId (UUID) as a path parameter plus emailAddress and status (SUCCESS or FAILED) in the body. Emits an INVOICE_RECEIPT_EMAIL_DELIVERY event and overwrites the receipt\'s delivery method, address and status. Returns 200 with an empty body on success, and 404 when the receipt does not exist. 
+     * Record Emailed Receipt Delivery Status
+     */
+    async recordReceiptEmailDelivery(requestParameters: RecordReceiptEmailDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.recordReceiptEmailDeliveryRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Records the outcome of printing a receipt at the terminal, stamping the receipt\'s delivery method as PRINT with the reported status; the physical printing itself happens client-side, not here. Use this tool after the terminal reports its print result; do not use recordReceiptEmailDelivery, which records an email delivery attempt with its recipient address. Preconditions: the receipt must already exist via generateReceipt. Required inputs: receiptId (UUID) as a path parameter and status (SUCCESS or FAILED) in the body. Emits an INVOICE_RECEIPT_PRINT_DELIVERY event and overwrites the receipt\'s delivery method and status. Returns 200 with an empty body on success, and 404 when the receipt does not exist. 
+     * Record Printed Receipt Delivery Status
+     */
+    async recordReceiptPrintDeliveryRaw(requestParameters: RecordReceiptPrintDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling recordReceiptPrintDelivery().'
+            );
+        }
+
+        if (requestParameters['receiptId'] == null) {
+            throw new runtime.RequiredError(
+                'receiptId',
+                'Required parameter "receiptId" was null or undefined when calling recordReceiptPrintDelivery().'
             );
         }
 
         if (requestParameters['printDeliveryRequest'] == null) {
             throw new runtime.RequiredError(
                 'printDeliveryRequest',
-                'Required parameter "printDeliveryRequest" was null or undefined when calling recordPrintDelivery().'
+                'Required parameter "printDeliveryRequest" was null or undefined when calling recordReceiptPrintDelivery().'
             );
         }
 
@@ -167,16 +226,16 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
-     * Record the delivery status for a printed receipt associated with an invoice
-     * Record printed receipt delivery
+     * Records the outcome of printing a receipt at the terminal, stamping the receipt\'s delivery method as PRINT with the reported status; the physical printing itself happens client-side, not here. Use this tool after the terminal reports its print result; do not use recordReceiptEmailDelivery, which records an email delivery attempt with its recipient address. Preconditions: the receipt must already exist via generateReceipt. Required inputs: receiptId (UUID) as a path parameter and status (SUCCESS or FAILED) in the body. Emits an INVOICE_RECEIPT_PRINT_DELIVERY event and overwrites the receipt\'s delivery method and status. Returns 200 with an empty body on success, and 404 when the receipt does not exist. 
+     * Record Printed Receipt Delivery Status
      */
-    async recordPrintDelivery(requestParameters: RecordPrintDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.recordPrintDeliveryRaw(requestParameters, initOverrides);
+    async recordReceiptPrintDelivery(requestParameters: RecordReceiptPrintDeliveryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.recordReceiptPrintDeliveryRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Create a reprint of an existing receipt and record the reason for the reprint
-     * Reprint invoice receipt
+     * Records a reprint of an existing receipt, incrementing its reprint count and capturing the reason and the reprinting actor for audit. Use this tool when a customer needs a duplicate copy; do not use generateReceipt, which creates a new receipt for a payment that has none yet. Preconditions: the receipt must exist, and its reprint count must be below 5 unless the caller holds the SUPERVISOR_OVERRIDE authority. Required inputs: receiptId (UUID) as a path parameter and a non-blank reason in the body. Emits an INVOICE_RECEIPT_REPRINT event and updates the receipt\'s reprint count, last reprint reason and last reprinted-by. Returns 200 with the receipt, 404 when the receipt does not exist, and 409 when the reprint limit of 5 is exceeded without a supervisor override. 
+     * Reprint an Existing Receipt
      */
     async reprintReceiptRaw(requestParameters: ReprintReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -226,71 +285,12 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a reprint of an existing receipt and record the reason for the reprint
-     * Reprint invoice receipt
+     * Records a reprint of an existing receipt, incrementing its reprint count and capturing the reason and the reprinting actor for audit. Use this tool when a customer needs a duplicate copy; do not use generateReceipt, which creates a new receipt for a payment that has none yet. Preconditions: the receipt must exist, and its reprint count must be below 5 unless the caller holds the SUPERVISOR_OVERRIDE authority. Required inputs: receiptId (UUID) as a path parameter and a non-blank reason in the body. Emits an INVOICE_RECEIPT_REPRINT event and updates the receipt\'s reprint count, last reprint reason and last reprinted-by. Returns 200 with the receipt, 404 when the receipt does not exist, and 409 when the reprint limit of 5 is exceeded without a supervisor override. 
+     * Reprint an Existing Receipt
      */
     async reprintReceipt(requestParameters: ReprintReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptResponse> {
         const response = await this.reprintReceiptRaw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * Send an invoice receipt by email and record the delivery status for the attempt
-     * Email invoice receipt
-     */
-    async sendEmailReceiptRaw(requestParameters: SendEmailReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['invoiceId'] == null) {
-            throw new runtime.RequiredError(
-                'invoiceId',
-                'Required parameter "invoiceId" was null or undefined when calling sendEmailReceipt().'
-            );
-        }
-
-        if (requestParameters['receiptId'] == null) {
-            throw new runtime.RequiredError(
-                'receiptId',
-                'Required parameter "receiptId" was null or undefined when calling sendEmailReceipt().'
-            );
-        }
-
-        if (requestParameters['emailDeliveryRequest'] == null) {
-            throw new runtime.RequiredError(
-                'emailDeliveryRequest',
-                'Required parameter "emailDeliveryRequest" was null or undefined when calling sendEmailReceipt().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/invoices/{invoiceId}/receipts/{receiptId}/email`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))).replace(`{${"receiptId"}}`, encodeURIComponent(String(requestParameters['receiptId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: EmailDeliveryRequestToJSON(requestParameters['emailDeliveryRequest']),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Send an invoice receipt by email and record the delivery status for the attempt
-     * Email invoice receipt
-     */
-    async sendEmailReceipt(requestParameters: SendEmailReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.sendEmailReceiptRaw(requestParameters, initOverrides);
     }
 
 }

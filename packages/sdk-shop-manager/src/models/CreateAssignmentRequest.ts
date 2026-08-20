@@ -21,53 +21,55 @@ import {
 } from './MechanicAssignmentItem';
 
 /**
- * 
+ * Request to assign mechanics and an optional resource to an appointment
  * @export
  * @interface CreateAssignmentRequest
  */
 export interface CreateAssignmentRequest {
     /**
-     * 
+     * Appointment identifier the mechanics are assigned to
      * @type {string}
      * @memberof CreateAssignmentRequest
      */
-    appointmentId?: string;
+    appointmentId: string;
     /**
-     * 
+     * Mechanics to assign; at least one entry with role LEAD is required
      * @type {Array<MechanicAssignmentItem>}
      * @memberof CreateAssignmentRequest
      */
-    mechanics?: Array<MechanicAssignmentItem>;
+    mechanics: Array<MechanicAssignmentItem>;
     /**
-     * 
-     * @type {string}
-     * @memberof CreateAssignmentRequest
-     */
-    resourceId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateAssignmentRequest
-     */
-    resourceType?: string;
-    /**
-     * 
+     * When true, the caller asserts override authority for detected conflicts
      * @type {boolean}
      * @memberof CreateAssignmentRequest
      */
     override?: boolean;
     /**
-     * 
+     * Reason for overriding detected conflicts; required when override is true
      * @type {string}
      * @memberof CreateAssignmentRequest
      */
     overrideReason?: string;
+    /**
+     * Optional resource (bay or mobile unit) to associate with the assignment
+     * @type {string}
+     * @memberof CreateAssignmentRequest
+     */
+    resourceId?: string;
+    /**
+     * Type of the associated resource (e.g. BAY or MOBILE_UNIT)
+     * @type {string}
+     * @memberof CreateAssignmentRequest
+     */
+    resourceType?: string;
 }
 
 /**
  * Check if a given object implements the CreateAssignmentRequest interface.
  */
 export function instanceOfCreateAssignmentRequest(value: object): boolean {
+    if (!('appointmentId' in value)) return false;
+    if (!('mechanics' in value)) return false;
     return true;
 }
 
@@ -81,12 +83,12 @@ export function CreateAssignmentRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
-        'mechanics': json['mechanics'] == null ? undefined : ((json['mechanics'] as Array<any>).map(MechanicAssignmentItemFromJSON)),
-        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
-        'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
+        'appointmentId': json['appointmentId'],
+        'mechanics': ((json['mechanics'] as Array<any>).map(MechanicAssignmentItemFromJSON)),
         'override': json['override'] == null ? undefined : json['override'],
         'overrideReason': json['overrideReason'] == null ? undefined : json['overrideReason'],
+        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
+        'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
     };
 }
 
@@ -97,11 +99,11 @@ export function CreateAssignmentRequestToJSON(value?: CreateAssignmentRequest | 
     return {
         
         'appointmentId': value['appointmentId'],
-        'mechanics': value['mechanics'] == null ? undefined : ((value['mechanics'] as Array<any>).map(MechanicAssignmentItemToJSON)),
-        'resourceId': value['resourceId'],
-        'resourceType': value['resourceType'],
+        'mechanics': ((value['mechanics'] as Array<any>).map(MechanicAssignmentItemToJSON)),
         'override': value['override'],
         'overrideReason': value['overrideReason'],
+        'resourceId': value['resourceId'],
+        'resourceType': value['resourceType'],
     };
 }
 

@@ -61,8 +61,8 @@ export interface UpdatePostingCategoryRequest {
 export class PostingCategoriesApi extends runtime.BaseAPI {
 
     /**
-     * Create a new posting category.
-     * Create posting category
+     * Creates a posting category, the top level of the GL mapping taxonomy under which mapping keys are grouped. Use this tool when adding a new grouping to the taxonomy; do not use createMappingKey, which adds a key inside an existing category. Preconditions: no category with the same trimmed name may already exist. Required inputs: categoryName (max 100 chars, trimmed before the uniqueness check) and createdBy (max 50 chars); description is optional. Emits an ACCOUNTING_POSTING_CATEGORY_CREATE event. Returns 400 when a category with the same name already exists. 
+     * Create Posting Category
      */
     async createPostingCategoryRaw(requestParameters: CreatePostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingCategoryResponse>> {
         if (requestParameters['postingCategoryCreateRequest'] == null) {
@@ -98,8 +98,8 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new posting category.
-     * Create posting category
+     * Creates a posting category, the top level of the GL mapping taxonomy under which mapping keys are grouped. Use this tool when adding a new grouping to the taxonomy; do not use createMappingKey, which adds a key inside an existing category. Preconditions: no category with the same trimmed name may already exist. Required inputs: categoryName (max 100 chars, trimmed before the uniqueness check) and createdBy (max 50 chars); description is optional. Emits an ACCOUNTING_POSTING_CATEGORY_CREATE event. Returns 400 when a category with the same name already exists. 
+     * Create Posting Category
      */
     async createPostingCategory(requestParameters: CreatePostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingCategoryResponse> {
         const response = await this.createPostingCategoryRaw(requestParameters, initOverrides);
@@ -107,8 +107,8 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivate a posting category.
-     * Deactivate posting category
+     * Deactivates a posting category so it can no longer be used for new GL mappings; the record and its keys are retained. Use this tool to retire an unused category; do not use deactivateMappingKey, which retires a single key inside a category. Preconditions: the posting category must exist and have no active GL mappings attached. Required inputs: postingCategoryId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_CATEGORY_DEACTIVATE event. Returns 404 when the category does not exist, 409 when active GL mappings still reference it, and 204 with no body on success. 
+     * Deactivate Posting Category
      */
     async deactivatePostingCategoryRaw(requestParameters: DeactivatePostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['postingCategoryId'] == null) {
@@ -141,16 +141,16 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivate a posting category.
-     * Deactivate posting category
+     * Deactivates a posting category so it can no longer be used for new GL mappings; the record and its keys are retained. Use this tool to retire an unused category; do not use deactivateMappingKey, which retires a single key inside a category. Preconditions: the posting category must exist and have no active GL mappings attached. Required inputs: postingCategoryId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_CATEGORY_DEACTIVATE event. Returns 404 when the category does not exist, 409 when active GL mappings still reference it, and 204 with no body on success. 
+     * Deactivate Posting Category
      */
     async deactivatePostingCategory(requestParameters: DeactivatePostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deactivatePostingCategoryRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve a posting category by identifier.
-     * Get posting category
+     * Returns one posting category with its name, description and active flag. Use this tool when the category id is already known; use listPostingCategories instead when browsing or filtering. Preconditions: the posting category must exist. Required inputs: postingCategoryId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no posting category exists for the supplied id. 
+     * Get Posting Category
      */
     async getPostingCategoryRaw(requestParameters: GetPostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingCategoryResponse>> {
         if (requestParameters['postingCategoryId'] == null) {
@@ -183,8 +183,8 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a posting category by identifier.
-     * Get posting category
+     * Returns one posting category with its name, description and active flag. Use this tool when the category id is already known; use listPostingCategories instead when browsing or filtering. Preconditions: the posting category must exist. Required inputs: postingCategoryId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no posting category exists for the supplied id. 
+     * Get Posting Category
      */
     async getPostingCategory(requestParameters: GetPostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingCategoryResponse> {
         const response = await this.getPostingCategoryRaw(requestParameters, initOverrides);
@@ -192,8 +192,8 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated posting categories.
-     * List posting categories
+     * Lists posting categories as a paginated projection, optionally filtered by active flag. Use this tool when browsing the mapping taxonomy; do not use getPostingCategory, which fetches a single category by id. Preconditions: none beyond the caller holding accounting:posting-category:view. Required inputs: none; page defaults to 0, size to 20, sort to categoryName (an unsupported sort field silently falls back to categoryName), and isActive is an optional filter. Emits an ACCOUNTING_POSTING_CATEGORY_LIST audit event; no state changes. Returns 200 with an empty page when no categories exist. 
+     * List Posting Categories
      */
     async listPostingCategoriesRaw(requestParameters: ListPostingCategoriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingCategoryListResponse>> {
         if (requestParameters['sort'] == null) {
@@ -242,8 +242,8 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated posting categories.
-     * List posting categories
+     * Lists posting categories as a paginated projection, optionally filtered by active flag. Use this tool when browsing the mapping taxonomy; do not use getPostingCategory, which fetches a single category by id. Preconditions: none beyond the caller holding accounting:posting-category:view. Required inputs: none; page defaults to 0, size to 20, sort to categoryName (an unsupported sort field silently falls back to categoryName), and isActive is an optional filter. Emits an ACCOUNTING_POSTING_CATEGORY_LIST audit event; no state changes. Returns 200 with an empty page when no categories exist. 
+     * List Posting Categories
      */
     async listPostingCategories(requestParameters: ListPostingCategoriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingCategoryListResponse> {
         const response = await this.listPostingCategoriesRaw(requestParameters, initOverrides);
@@ -251,8 +251,8 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing posting category.
-     * Update posting category
+     * Renames a posting category or changes its description; mapping keys under it are unaffected. Use this tool to correct a category\'s name or description; do not use deactivatePostingCategory, which retires the category from future mapping use. Preconditions: the posting category must exist, and a changed name must not collide with another category. Required inputs: postingCategoryId (UUID) as a path parameter, categoryName (max 100 chars) and modifiedBy (max 50 chars); description is optional. Emits an ACCOUNTING_POSTING_CATEGORY_UPDATE event. Returns 404 when the category does not exist, and 400 when the new name already exists. 
+     * Update Posting Category
      */
     async updatePostingCategoryRaw(requestParameters: UpdatePostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingCategoryResponse>> {
         if (requestParameters['postingCategoryId'] == null) {
@@ -295,8 +295,8 @@ export class PostingCategoriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing posting category.
-     * Update posting category
+     * Renames a posting category or changes its description; mapping keys under it are unaffected. Use this tool to correct a category\'s name or description; do not use deactivatePostingCategory, which retires the category from future mapping use. Preconditions: the posting category must exist, and a changed name must not collide with another category. Required inputs: postingCategoryId (UUID) as a path parameter, categoryName (max 100 chars) and modifiedBy (max 50 chars); description is optional. Emits an ACCOUNTING_POSTING_CATEGORY_UPDATE event. Returns 404 when the category does not exist, and 400 when the new name already exists. 
+     * Update Posting Category
      */
     async updatePostingCategory(requestParameters: UpdatePostingCategoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingCategoryResponse> {
         const response = await this.updatePostingCategoryRaw(requestParameters, initOverrides);

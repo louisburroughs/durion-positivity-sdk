@@ -21,77 +21,81 @@ import {
 } from './ReceivingLineResponse';
 
 /**
- * 
+ * Inventory receiving session with its lines and source document context
  * @export
  * @interface ReceivingSessionResponse
  */
 export interface ReceivingSessionResponse {
     /**
-     * 
-     * @type {string}
+     * Timestamp when the receiving session was created
+     * @type {Date}
      * @memberof ReceivingSessionResponse
      */
-    sessionId?: string;
+    createdAt: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof ReceivingSessionResponse
-     */
-    sourceDocumentId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReceivingSessionResponse
-     */
-    sourceDocumentType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReceivingSessionResponse
-     */
-    supplierId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReceivingSessionResponse
-     */
-    shipmentReference?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReceivingSessionResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReceivingSessionResponse
-     */
-    entryMethod?: string;
-    /**
-     * 
+     * Identifier of the user who created the receiving session
      * @type {string}
      * @memberof ReceivingSessionResponse
      */
     createdByUserId?: string;
     /**
-     * 
-     * @type {Date}
+     * Method used to enter receiving lines, such as SCAN or MANUAL
+     * @type {string}
      * @memberof ReceivingSessionResponse
      */
-    createdAt?: Date;
+    entryMethod?: string;
     /**
-     * 
+     * Receiving lines belonging to the session
      * @type {Array<ReceivingLineResponse>}
      * @memberof ReceivingSessionResponse
      */
     lines?: Array<ReceivingLineResponse>;
+    /**
+     * Identifier of the receiving session
+     * @type {string}
+     * @memberof ReceivingSessionResponse
+     */
+    sessionId: string;
+    /**
+     * Carrier or shipment reference for the received goods
+     * @type {string}
+     * @memberof ReceivingSessionResponse
+     */
+    shipmentReference?: string;
+    /**
+     * Identifier of the source document the session receives against
+     * @type {string}
+     * @memberof ReceivingSessionResponse
+     */
+    sourceDocumentId: string;
+    /**
+     * Type of the source document, such as PURCHASE_ORDER or WORKORDER
+     * @type {string}
+     * @memberof ReceivingSessionResponse
+     */
+    sourceDocumentType?: string;
+    /**
+     * Status of the receiving session, such as IN_PROGRESS or COMPLETED
+     * @type {string}
+     * @memberof ReceivingSessionResponse
+     */
+    status: string;
+    /**
+     * Identifier of the supplier providing the received stock
+     * @type {string}
+     * @memberof ReceivingSessionResponse
+     */
+    supplierId?: string;
 }
 
 /**
  * Check if a given object implements the ReceivingSessionResponse interface.
  */
 export function instanceOfReceivingSessionResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('sessionId' in value)) return false;
+    if (!('sourceDocumentId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -105,16 +109,16 @@ export function ReceivingSessionResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'sessionId': json['sessionId'] == null ? undefined : json['sessionId'],
-        'sourceDocumentId': json['sourceDocumentId'] == null ? undefined : json['sourceDocumentId'],
-        'sourceDocumentType': json['sourceDocumentType'] == null ? undefined : json['sourceDocumentType'],
-        'supplierId': json['supplierId'] == null ? undefined : json['supplierId'],
-        'shipmentReference': json['shipmentReference'] == null ? undefined : json['shipmentReference'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'entryMethod': json['entryMethod'] == null ? undefined : json['entryMethod'],
+        'createdAt': (new Date(json['createdAt'])),
         'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'entryMethod': json['entryMethod'] == null ? undefined : json['entryMethod'],
         'lines': json['lines'] == null ? undefined : ((json['lines'] as Array<any>).map(ReceivingLineResponseFromJSON)),
+        'sessionId': json['sessionId'],
+        'shipmentReference': json['shipmentReference'] == null ? undefined : json['shipmentReference'],
+        'sourceDocumentId': json['sourceDocumentId'],
+        'sourceDocumentType': json['sourceDocumentType'] == null ? undefined : json['sourceDocumentType'],
+        'status': json['status'],
+        'supplierId': json['supplierId'] == null ? undefined : json['supplierId'],
     };
 }
 
@@ -124,16 +128,16 @@ export function ReceivingSessionResponseToJSON(value?: ReceivingSessionResponse 
     }
     return {
         
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdByUserId': value['createdByUserId'],
+        'entryMethod': value['entryMethod'],
+        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(ReceivingLineResponseToJSON)),
         'sessionId': value['sessionId'],
+        'shipmentReference': value['shipmentReference'],
         'sourceDocumentId': value['sourceDocumentId'],
         'sourceDocumentType': value['sourceDocumentType'],
-        'supplierId': value['supplierId'],
-        'shipmentReference': value['shipmentReference'],
         'status': value['status'],
-        'entryMethod': value['entryMethod'],
-        'createdByUserId': value['createdByUserId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(ReceivingLineResponseToJSON)),
+        'supplierId': value['supplierId'],
     };
 }
 

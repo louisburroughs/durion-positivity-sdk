@@ -14,57 +14,57 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a GL mapping
  * @export
  * @interface GLMappingCreateRequest
  */
 export interface GLMappingCreateRequest {
     /**
-     * 
-     * @type {string}
+     * Dimensional context for this mapping (businessUnitId, locationId, etc.)
+     * @type {{ [key: string]: string; }}
      * @memberof GLMappingCreateRequest
      */
-    sourceSystem: string;
+    dimensions?: { [key: string]: string; };
     /**
-     * 
-     * @type {string}
-     * @memberof GLMappingCreateRequest
-     */
-    externalCode: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GLMappingCreateRequest
-     */
-    glAccountId: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof GLMappingCreateRequest
-     */
-    effectiveStartDate: Date;
-    /**
-     * 
+     * Exclusive end of the mapping's temporal validity (open-ended when null)
      * @type {Date}
      * @memberof GLMappingCreateRequest
      */
     effectiveEndDate?: Date;
     /**
-     * 
-     * @type {{ [key: string]: string; }}
+     * Inclusive start of the mapping's temporal validity
+     * @type {Date}
      * @memberof GLMappingCreateRequest
      */
-    dimensions?: { [key: string]: string; };
+    effectiveStartDate: Date;
+    /**
+     * External code from the source system
+     * @type {string}
+     * @memberof GLMappingCreateRequest
+     */
+    externalCode: string;
+    /**
+     * GL account UUID this code maps to
+     * @type {string}
+     * @memberof GLMappingCreateRequest
+     */
+    glAccountId: string;
+    /**
+     * Source system identifier
+     * @type {string}
+     * @memberof GLMappingCreateRequest
+     */
+    sourceSystem: string;
 }
 
 /**
  * Check if a given object implements the GLMappingCreateRequest interface.
  */
 export function instanceOfGLMappingCreateRequest(value: object): boolean {
-    if (!('sourceSystem' in value)) return false;
+    if (!('effectiveStartDate' in value)) return false;
     if (!('externalCode' in value)) return false;
     if (!('glAccountId' in value)) return false;
-    if (!('effectiveStartDate' in value)) return false;
+    if (!('sourceSystem' in value)) return false;
     return true;
 }
 
@@ -78,12 +78,12 @@ export function GLMappingCreateRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'sourceSystem': json['sourceSystem'],
+        'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
+        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
+        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
         'externalCode': json['externalCode'],
         'glAccountId': json['glAccountId'],
-        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
-        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
-        'dimensions': json['dimensions'] == null ? undefined : json['dimensions'],
+        'sourceSystem': json['sourceSystem'],
     };
 }
 
@@ -93,12 +93,12 @@ export function GLMappingCreateRequestToJSON(value?: GLMappingCreateRequest | nu
     }
     return {
         
-        'sourceSystem': value['sourceSystem'],
+        'dimensions': value['dimensions'],
+        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
+        'effectiveStartDate': ((value['effectiveStartDate']).toISOString()),
         'externalCode': value['externalCode'],
         'glAccountId': value['glAccountId'],
-        'effectiveStartDate': ((value['effectiveStartDate']).toISOString()),
-        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
-        'dimensions': value['dimensions'],
+        'sourceSystem': value['sourceSystem'],
     };
 }
 

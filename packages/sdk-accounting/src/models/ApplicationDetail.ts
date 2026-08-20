@@ -14,47 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Details of a single invoice application
  * @export
  * @interface ApplicationDetail
  */
 export interface ApplicationDetail {
     /**
-     * 
-     * @type {string}
-     * @memberof ApplicationDetail
-     */
-    paymentApplicationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ApplicationDetail
-     */
-    invoiceId?: string;
-    /**
-     * 
+     * Amount applied to this invoice
      * @type {number}
      * @memberof ApplicationDetail
      */
     appliedAmount?: number;
     /**
-     * 
-     * @type {number}
-     * @memberof ApplicationDetail
-     */
-    invoiceBalanceBefore?: number;
-    /**
-     * 
+     * Invoice balance after this application
      * @type {number}
      * @memberof ApplicationDetail
      */
     invoiceBalanceAfter?: number;
     /**
-     * 
+     * Invoice balance before this application
+     * @type {number}
+     * @memberof ApplicationDetail
+     */
+    invoiceBalanceBefore?: number;
+    /**
+     * Identifier of the invoice the payment was applied to
+     * @type {string}
+     * @memberof ApplicationDetail
+     */
+    invoiceId?: string;
+    /**
+     * Invoice status after this application
      * @type {string}
      * @memberof ApplicationDetail
      */
     invoiceStatus?: ApplicationDetailInvoiceStatusEnum;
+    /**
+     * Identifier of the payment application record
+     * @type {string}
+     * @memberof ApplicationDetail
+     */
+    paymentApplicationId?: string;
 }
 
 /**
@@ -88,12 +88,12 @@ export function ApplicationDetailFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'paymentApplicationId': json['paymentApplicationId'] == null ? undefined : json['paymentApplicationId'],
-        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'appliedAmount': json['appliedAmount'] == null ? undefined : json['appliedAmount'],
-        'invoiceBalanceBefore': json['invoiceBalanceBefore'] == null ? undefined : json['invoiceBalanceBefore'],
         'invoiceBalanceAfter': json['invoiceBalanceAfter'] == null ? undefined : json['invoiceBalanceAfter'],
+        'invoiceBalanceBefore': json['invoiceBalanceBefore'] == null ? undefined : json['invoiceBalanceBefore'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'invoiceStatus': json['invoiceStatus'] == null ? undefined : json['invoiceStatus'],
+        'paymentApplicationId': json['paymentApplicationId'] == null ? undefined : json['paymentApplicationId'],
     };
 }
 
@@ -103,12 +103,12 @@ export function ApplicationDetailToJSON(value?: ApplicationDetail | null): any {
     }
     return {
         
-        'paymentApplicationId': value['paymentApplicationId'],
-        'invoiceId': value['invoiceId'],
         'appliedAmount': value['appliedAmount'],
-        'invoiceBalanceBefore': value['invoiceBalanceBefore'],
         'invoiceBalanceAfter': value['invoiceBalanceAfter'],
+        'invoiceBalanceBefore': value['invoiceBalanceBefore'],
+        'invoiceId': value['invoiceId'],
         'invoiceStatus': value['invoiceStatus'],
+        'paymentApplicationId': value['paymentApplicationId'],
     };
 }
 

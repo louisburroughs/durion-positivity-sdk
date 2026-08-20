@@ -14,59 +14,66 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Balance Sheet report response with assets, liabilities, and equity totals derived from POSTED journal entries
  * @export
  * @interface BalanceSheetReport
  */
 export interface BalanceSheetReport {
     /**
-     * 
+     * Date the balance sheet is reported as of
      * @type {Date}
      * @memberof BalanceSheetReport
      */
-    asOfDate?: Date;
+    asOfDate: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof BalanceSheetReport
-     */
-    generatedAt?: Date;
-    /**
-     * 
-     * @type {{ [key: string]: number; }}
-     * @memberof BalanceSheetReport
-     */
-    lineItems?: { [key: string]: number; };
-    /**
-     * 
-     * @type {number}
-     * @memberof BalanceSheetReport
-     */
-    totalAssets?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof BalanceSheetReport
-     */
-    totalLiabilities?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof BalanceSheetReport
-     */
-    totalEquity?: number;
-    /**
-     * 
+     * Whether the accounting equation balances (assets == liabilities + equity within tolerance)
      * @type {boolean}
      * @memberof BalanceSheetReport
      */
-    balanced?: boolean;
+    balanced: boolean;
+    /**
+     * Timestamp when the report was generated (ISO 8601)
+     * @type {Date}
+     * @memberof BalanceSheetReport
+     */
+    generatedAt: Date;
+    /**
+     * Map of balance sheet line codes to their amounts (e.g. BS_ASSETS_CURRENT_CASH)
+     * @type {{ [key: string]: number; }}
+     * @memberof BalanceSheetReport
+     */
+    lineItems: { [key: string]: number; };
+    /**
+     * Total assets (sum of all asset accounts)
+     * @type {number}
+     * @memberof BalanceSheetReport
+     */
+    totalAssets: number;
+    /**
+     * Total equity (sum of all equity accounts)
+     * @type {number}
+     * @memberof BalanceSheetReport
+     */
+    totalEquity: number;
+    /**
+     * Total liabilities (sum of all liability accounts)
+     * @type {number}
+     * @memberof BalanceSheetReport
+     */
+    totalLiabilities: number;
 }
 
 /**
  * Check if a given object implements the BalanceSheetReport interface.
  */
 export function instanceOfBalanceSheetReport(value: object): boolean {
+    if (!('asOfDate' in value)) return false;
+    if (!('balanced' in value)) return false;
+    if (!('generatedAt' in value)) return false;
+    if (!('lineItems' in value)) return false;
+    if (!('totalAssets' in value)) return false;
+    if (!('totalEquity' in value)) return false;
+    if (!('totalLiabilities' in value)) return false;
     return true;
 }
 
@@ -80,13 +87,13 @@ export function BalanceSheetReportFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'asOfDate': json['asOfDate'] == null ? undefined : (new Date(json['asOfDate'])),
-        'generatedAt': json['generatedAt'] == null ? undefined : (new Date(json['generatedAt'])),
-        'lineItems': json['lineItems'] == null ? undefined : json['lineItems'],
-        'totalAssets': json['totalAssets'] == null ? undefined : json['totalAssets'],
-        'totalLiabilities': json['totalLiabilities'] == null ? undefined : json['totalLiabilities'],
-        'totalEquity': json['totalEquity'] == null ? undefined : json['totalEquity'],
-        'balanced': json['balanced'] == null ? undefined : json['balanced'],
+        'asOfDate': (new Date(json['asOfDate'])),
+        'balanced': json['balanced'],
+        'generatedAt': (new Date(json['generatedAt'])),
+        'lineItems': json['lineItems'],
+        'totalAssets': json['totalAssets'],
+        'totalEquity': json['totalEquity'],
+        'totalLiabilities': json['totalLiabilities'],
     };
 }
 
@@ -96,13 +103,13 @@ export function BalanceSheetReportToJSON(value?: BalanceSheetReport | null): any
     }
     return {
         
-        'asOfDate': value['asOfDate'] == null ? undefined : ((value['asOfDate']).toISOString().substring(0,10)),
-        'generatedAt': value['generatedAt'] == null ? undefined : ((value['generatedAt']).toISOString()),
+        'asOfDate': ((value['asOfDate']).toISOString().substring(0,10)),
+        'balanced': value['balanced'],
+        'generatedAt': ((value['generatedAt']).toISOString()),
         'lineItems': value['lineItems'],
         'totalAssets': value['totalAssets'],
-        'totalLiabilities': value['totalLiabilities'],
         'totalEquity': value['totalEquity'],
-        'balanced': value['balanced'],
+        'totalLiabilities': value['totalLiabilities'],
     };
 }
 

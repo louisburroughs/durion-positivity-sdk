@@ -20,24 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderSnapshotResponse {
     /**
-     * Unique identifier for this snapshot record
-     * @type {string}
-     * @memberof WorkorderSnapshotResponse
-     */
-    id?: string;
-    /**
-     * ID of the work order
-     * @type {string}
-     * @memberof WorkorderSnapshotResponse
-     */
-    workorderId?: string;
-    /**
-     * Status of the work order at the time of this snapshot
-     * @type {string}
-     * @memberof WorkorderSnapshotResponse
-     */
-    status?: string;
-    /**
      * Timestamp when the snapshot was captured
      * @type {Date}
      * @memberof WorkorderSnapshotResponse
@@ -50,11 +32,17 @@ export interface WorkorderSnapshotResponse {
      */
     capturedBy?: string;
     /**
-     * Type of snapshot (e.g., MANUAL, AUTOMATIC, SYSTEM)
+     * Unique identifier for this snapshot record
      * @type {string}
      * @memberof WorkorderSnapshotResponse
      */
-    snapshotType?: string;
+    id?: string;
+    /**
+     * Reason for capturing the snapshot
+     * @type {string}
+     * @memberof WorkorderSnapshotResponse
+     */
+    reason?: string;
     /**
      * Snapshot data (typically JSON)
      * @type {string}
@@ -62,11 +50,23 @@ export interface WorkorderSnapshotResponse {
      */
     snapshotData?: string;
     /**
-     * Reason for capturing the snapshot
+     * Type of snapshot (e.g., MANUAL, AUTOMATIC, SYSTEM)
      * @type {string}
      * @memberof WorkorderSnapshotResponse
      */
-    reason?: string;
+    snapshotType?: string;
+    /**
+     * Status of the work order at the time of this snapshot
+     * @type {string}
+     * @memberof WorkorderSnapshotResponse
+     */
+    status?: string;
+    /**
+     * ID of the work order
+     * @type {string}
+     * @memberof WorkorderSnapshotResponse
+     */
+    workorderId?: string;
 }
 
 /**
@@ -86,14 +86,14 @@ export function WorkorderSnapshotResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'status': json['status'] == null ? undefined : json['status'],
         'capturedAt': json['capturedAt'] == null ? undefined : (new Date(json['capturedAt'])),
         'capturedBy': json['capturedBy'] == null ? undefined : json['capturedBy'],
-        'snapshotType': json['snapshotType'] == null ? undefined : json['snapshotType'],
-        'snapshotData': json['snapshotData'] == null ? undefined : json['snapshotData'],
+        'id': json['id'] == null ? undefined : json['id'],
         'reason': json['reason'] == null ? undefined : json['reason'],
+        'snapshotData': json['snapshotData'] == null ? undefined : json['snapshotData'],
+        'snapshotType': json['snapshotType'] == null ? undefined : json['snapshotType'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -103,14 +103,14 @@ export function WorkorderSnapshotResponseToJSON(value?: WorkorderSnapshotRespons
     }
     return {
         
-        'id': value['id'],
-        'workorderId': value['workorderId'],
-        'status': value['status'],
         'capturedAt': value['capturedAt'] == null ? undefined : ((value['capturedAt']).toISOString()),
         'capturedBy': value['capturedBy'],
-        'snapshotType': value['snapshotType'],
-        'snapshotData': value['snapshotData'],
+        'id': value['id'],
         'reason': value['reason'],
+        'snapshotData': value['snapshotData'],
+        'snapshotType': value['snapshotType'],
+        'status': value['status'],
+        'workorderId': value['workorderId'],
     };
 }
 

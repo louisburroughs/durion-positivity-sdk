@@ -14,53 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload representing a stored sale-restriction rule
  * @export
  * @interface RestrictionRuleResponse
  */
 export interface RestrictionRuleResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof RestrictionRuleResponse
-     */
-    ruleId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RestrictionRuleResponse
-     */
-    productId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RestrictionRuleResponse
-     */
-    locationTag?: RestrictionRuleResponseLocationTagEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof RestrictionRuleResponse
-     */
-    serviceTag?: RestrictionRuleResponseServiceTagEnum;
-    /**
-     * 
+     * Whether the restriction rule is currently active
      * @type {boolean}
      * @memberof RestrictionRuleResponse
      */
-    active?: boolean;
+    active: boolean;
     /**
-     * 
+     * Date the restriction rule becomes effective
      * @type {Date}
      * @memberof RestrictionRuleResponse
      */
-    effectiveFrom?: Date;
+    effectiveFrom: Date;
     /**
-     * 
+     * Optional date the restriction rule stops being effective
      * @type {Date}
      * @memberof RestrictionRuleResponse
      */
     effectiveTo?: Date;
+    /**
+     * Location scope tag for the restriction
+     * @type {string}
+     * @memberof RestrictionRuleResponse
+     */
+    locationTag: RestrictionRuleResponseLocationTagEnum;
+    /**
+     * Product the restriction rule applies to
+     * @type {string}
+     * @memberof RestrictionRuleResponse
+     */
+    productId: string;
+    /**
+     * Restriction rule identifier
+     * @type {string}
+     * @memberof RestrictionRuleResponse
+     */
+    ruleId: string;
+    /**
+     * Service channel scope tag for the restriction
+     * @type {string}
+     * @memberof RestrictionRuleResponse
+     */
+    serviceTag: RestrictionRuleResponseServiceTagEnum;
 }
 
 /**
@@ -92,6 +92,12 @@ export enum RestrictionRuleResponseServiceTagEnum {
  * Check if a given object implements the RestrictionRuleResponse interface.
  */
 export function instanceOfRestrictionRuleResponse(value: object): boolean {
+    if (!('active' in value)) return false;
+    if (!('effectiveFrom' in value)) return false;
+    if (!('locationTag' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('ruleId' in value)) return false;
+    if (!('serviceTag' in value)) return false;
     return true;
 }
 
@@ -105,13 +111,13 @@ export function RestrictionRuleResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'ruleId': json['ruleId'] == null ? undefined : json['ruleId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'locationTag': json['locationTag'] == null ? undefined : json['locationTag'],
-        'serviceTag': json['serviceTag'] == null ? undefined : json['serviceTag'],
-        'active': json['active'] == null ? undefined : json['active'],
-        'effectiveFrom': json['effectiveFrom'] == null ? undefined : (new Date(json['effectiveFrom'])),
+        'active': json['active'],
+        'effectiveFrom': (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
+        'locationTag': json['locationTag'],
+        'productId': json['productId'],
+        'ruleId': json['ruleId'],
+        'serviceTag': json['serviceTag'],
     };
 }
 
@@ -121,13 +127,13 @@ export function RestrictionRuleResponseToJSON(value?: RestrictionRuleResponse | 
     }
     return {
         
-        'ruleId': value['ruleId'],
-        'productId': value['productId'],
-        'locationTag': value['locationTag'],
-        'serviceTag': value['serviceTag'],
         'active': value['active'],
-        'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
+        'effectiveFrom': ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
+        'locationTag': value['locationTag'],
+        'productId': value['productId'],
+        'ruleId': value['ruleId'],
+        'serviceTag': value['serviceTag'],
     };
 }
 

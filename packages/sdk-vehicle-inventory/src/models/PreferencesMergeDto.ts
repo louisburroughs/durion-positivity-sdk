@@ -14,19 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to partially merge fields into existing vehicle care preferences
  * @export
  * @interface PreferencesMergeDto
  */
 export interface PreferencesMergeDto {
     /**
-     * 
+     * Subset of preference fields to merge into existing preferences
      * @type {object}
      * @memberof PreferencesMergeDto
      */
     partialPreferences?: object;
     /**
-     * 
+     * Structured service interval in whole months; null leaves the current value unchanged (#1175)
+     * @type {number}
+     * @memberof PreferencesMergeDto
+     */
+    serviceIntervalMonths?: number;
+    /**
+     * Identifier of the user updating the preferences
      * @type {string}
      * @memberof PreferencesMergeDto
      */
@@ -51,6 +57,7 @@ export function PreferencesMergeDtoFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'partialPreferences': json['partialPreferences'] == null ? undefined : json['partialPreferences'],
+        'serviceIntervalMonths': json['serviceIntervalMonths'] == null ? undefined : json['serviceIntervalMonths'],
         'updatedByUserId': json['updatedByUserId'] == null ? undefined : json['updatedByUserId'],
     };
 }
@@ -62,6 +69,7 @@ export function PreferencesMergeDtoToJSON(value?: PreferencesMergeDto | null): a
     return {
         
         'partialPreferences': value['partialPreferences'],
+        'serviceIntervalMonths': value['serviceIntervalMonths'],
         'updatedByUserId': value['updatedByUserId'],
     };
 }

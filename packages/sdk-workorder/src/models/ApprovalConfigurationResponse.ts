@@ -20,17 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ApprovalConfigurationResponse {
     /**
-     * Unique identifier for the configuration
+     * Approval method
      * @type {string}
      * @memberof ApprovalConfigurationResponse
      */
-    id?: string;
-    /**
-     * Location ID for this configuration (null = applies to all locations)
-     * @type {string}
-     * @memberof ApprovalConfigurationResponse
-     */
-    locationId?: string;
+    approvalMethod?: string;
     /**
      * Customer ID for this configuration (null = applies to all customers)
      * @type {string}
@@ -38,35 +32,42 @@ export interface ApprovalConfigurationResponse {
      */
     customerId?: string;
     /**
-     * Approval method
-     * @type {string}
-     * @memberof ApprovalConfigurationResponse
-     */
-    approvalMethod?: string;
-    /**
      * Number of days a declined estimate can be reopened
      * @type {number}
      * @memberof ApprovalConfigurationResponse
      */
     declineExpiryDays?: number;
     /**
-     * Whether signature is required
-     * @type {boolean}
+     * Unique identifier for the configuration
+     * @type {string}
      * @memberof ApprovalConfigurationResponse
      */
-    requireSignature?: boolean;
+    id: string;
+    /**
+     * Location ID for this configuration (null = applies to all locations)
+     * @type {string}
+     * @memberof ApprovalConfigurationResponse
+     */
+    locationId?: string;
     /**
      * Priority for configuration matching (0=default, 1=location-specific, 2=customer-specific)
      * @type {number}
      * @memberof ApprovalConfigurationResponse
      */
     priority?: number;
+    /**
+     * Whether signature is required
+     * @type {boolean}
+     * @memberof ApprovalConfigurationResponse
+     */
+    requireSignature?: boolean;
 }
 
 /**
  * Check if a given object implements the ApprovalConfigurationResponse interface.
  */
 export function instanceOfApprovalConfigurationResponse(value: object): boolean {
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -80,13 +81,13 @@ export function ApprovalConfigurationResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'approvalMethod': json['approvalMethod'] == null ? undefined : json['approvalMethod'],
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'declineExpiryDays': json['declineExpiryDays'] == null ? undefined : json['declineExpiryDays'],
-        'requireSignature': json['requireSignature'] == null ? undefined : json['requireSignature'],
+        'id': json['id'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'priority': json['priority'] == null ? undefined : json['priority'],
+        'requireSignature': json['requireSignature'] == null ? undefined : json['requireSignature'],
     };
 }
 
@@ -96,13 +97,13 @@ export function ApprovalConfigurationResponseToJSON(value?: ApprovalConfiguratio
     }
     return {
         
+        'approvalMethod': value['approvalMethod'],
+        'customerId': value['customerId'],
+        'declineExpiryDays': value['declineExpiryDays'],
         'id': value['id'],
         'locationId': value['locationId'],
-        'customerId': value['customerId'],
-        'approvalMethod': value['approvalMethod'],
-        'declineExpiryDays': value['declineExpiryDays'],
-        'requireSignature': value['requireSignature'],
         'priority': value['priority'],
+        'requireSignature': value['requireSignature'],
     };
 }
 

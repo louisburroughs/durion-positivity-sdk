@@ -14,53 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload describing a single line item to include when creating an advance shipping notice (ASN)
  * @export
  * @interface CreateAsnLineRequest
  */
 export interface CreateAsnLineRequest {
     /**
-     * 
+     * Quantity shipped expressed in documentUom; must be supplied together with documentUom
+     * @type {number}
+     * @memberof CreateAsnLineRequest
+     */
+    documentQuantity?: number;
+    /**
+     * Optional UoM the line is keyed in (e.g. CASE). When present, documentQuantity is converted to the product's base UoM at derivation time; a UoM with no conversion path is rejected with 422 UOM_CONVERSION_UNDEFINED
+     * @type {string}
+     * @memberof CreateAsnLineRequest
+     */
+    documentUom?: string;
+    /**
+     * Lot or batch number associated with the shipped product
+     * @type {string}
+     * @memberof CreateAsnLineRequest
+     */
+    lotNumber?: string;
+    /**
+     * Identifier of the purchase order this ASN line is associated with
      * @type {string}
      * @memberof CreateAsnLineRequest
      */
     poId: string;
     /**
-     * 
+     * Identifier of the specific purchase order line this ASN line fulfills
      * @type {string}
      * @memberof CreateAsnLineRequest
      */
     poLineId?: string;
     /**
-     * 
+     * Quantity of the SKU declared as shipped on the ASN, in the product's base UoM. Required unless documentUom/documentQuantity are supplied, in which case the base quantity is derived and this field is ignored
+     * @type {number}
+     * @memberof CreateAsnLineRequest
+     */
+    quantityShipped?: number;
+    /**
+     * Stock keeping unit identifier for the shipped product
      * @type {string}
      * @memberof CreateAsnLineRequest
      */
     sku: string;
     /**
-     * 
-     * @type {number}
-     * @memberof CreateAsnLineRequest
-     */
-    quantityShipped: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateAsnLineRequest
-     */
-    unitOfMeasure?: string;
-    /**
-     * 
+     * Unit cost of the product expressed in minor currency units (e.g. cents)
      * @type {number}
      * @memberof CreateAsnLineRequest
      */
     unitCostMinor?: number;
     /**
-     * 
+     * Unit of measure for the shipped quantity
      * @type {string}
      * @memberof CreateAsnLineRequest
      */
-    lotNumber?: string;
+    unitOfMeasure?: string;
 }
 
 /**
@@ -69,7 +81,6 @@ export interface CreateAsnLineRequest {
 export function instanceOfCreateAsnLineRequest(value: object): boolean {
     if (!('poId' in value)) return false;
     if (!('sku' in value)) return false;
-    if (!('quantityShipped' in value)) return false;
     return true;
 }
 
@@ -83,13 +94,15 @@ export function CreateAsnLineRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'documentQuantity': json['documentQuantity'] == null ? undefined : json['documentQuantity'],
+        'documentUom': json['documentUom'] == null ? undefined : json['documentUom'],
+        'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
         'poId': json['poId'],
         'poLineId': json['poLineId'] == null ? undefined : json['poLineId'],
+        'quantityShipped': json['quantityShipped'] == null ? undefined : json['quantityShipped'],
         'sku': json['sku'],
-        'quantityShipped': json['quantityShipped'],
-        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
         'unitCostMinor': json['unitCostMinor'] == null ? undefined : json['unitCostMinor'],
-        'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
     };
 }
 
@@ -99,13 +112,15 @@ export function CreateAsnLineRequestToJSON(value?: CreateAsnLineRequest | null):
     }
     return {
         
+        'documentQuantity': value['documentQuantity'],
+        'documentUom': value['documentUom'],
+        'lotNumber': value['lotNumber'],
         'poId': value['poId'],
         'poLineId': value['poLineId'],
-        'sku': value['sku'],
         'quantityShipped': value['quantityShipped'],
-        'unitOfMeasure': value['unitOfMeasure'],
+        'sku': value['sku'],
         'unitCostMinor': value['unitCostMinor'],
-        'lotNumber': value['lotNumber'],
+        'unitOfMeasure': value['unitOfMeasure'],
     };
 }
 

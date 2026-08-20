@@ -21,13 +21,13 @@ import {
 } from './RestrictionEvaluationItem';
 
 /**
- * 
+ * Batch request to evaluate sale-restriction rules for one or more product contexts
  * @export
  * @interface RestrictionEvaluationRequest
  */
 export interface RestrictionEvaluationRequest {
     /**
-     * 
+     * Product/context entries to evaluate; must contain at least one item
      * @type {Array<RestrictionEvaluationItem>}
      * @memberof RestrictionEvaluationRequest
      */

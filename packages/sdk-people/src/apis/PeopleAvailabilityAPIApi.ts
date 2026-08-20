@@ -17,17 +17,31 @@ import * as runtime from '../runtime';
 import type {
   PeopleAvailabilityResponse,
   PrimaryLocationResponse,
+  ProblemDetail,
+  StaffingAssignmentResponse,
 } from '../models/index';
 import {
     PeopleAvailabilityResponseFromJSON,
     PeopleAvailabilityResponseToJSON,
     PrimaryLocationResponseFromJSON,
     PrimaryLocationResponseToJSON,
+    ProblemDetailFromJSON,
+    ProblemDetailToJSON,
+    StaffingAssignmentResponseFromJSON,
+    StaffingAssignmentResponseToJSON,
 } from '../models/index';
 
-export interface GetPeopleAvailabilityRequest {
+export interface GetPersonPrimaryLocationRequest {
+    personId: string;
+}
+
+export interface ListPeopleAvailabilityRequest {
     locationId?: string;
     date?: Date;
+}
+
+export interface ListPersonLocationsRequest {
+    personId: string;
 }
 
 /**
@@ -36,10 +50,10 @@ export interface GetPeopleAvailabilityRequest {
 export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
 
     /**
-     * Resolve the authenticated user\'s primary active location from their staffing assignments.
-     * Get current user\'s primary location
+     * Resolves the authenticated caller\'s primary active location from their staffing assignments as of today. Use this tool when a UI or service needs the current user\'s home location; use listMyLocations instead to see every active assignment, and getPersonPrimaryLocation for a different person. Preconditions: the caller must be linked to a person, and that person must have an ACTIVE assignment flagged primary whose effective dates cover today. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 when the caller has no person link or no active assignment flagged as primary today. 
+     * Get Current User Primary Location
      */
-    async getCurrentUserPrimaryLocationRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PrimaryLocationResponse>> {
+    async getMyPrimaryLocationRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PrimaryLocationResponse>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -63,19 +77,98 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolve the authenticated user\'s primary active location from their staffing assignments.
-     * Get current user\'s primary location
+     * Resolves the authenticated caller\'s primary active location from their staffing assignments as of today. Use this tool when a UI or service needs the current user\'s home location; use listMyLocations instead to see every active assignment, and getPersonPrimaryLocation for a different person. Preconditions: the caller must be linked to a person, and that person must have an ACTIVE assignment flagged primary whose effective dates cover today. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 when the caller has no person link or no active assignment flagged as primary today. 
+     * Get Current User Primary Location
      */
-    async getCurrentUserPrimaryLocation(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PrimaryLocationResponse> {
-        const response = await this.getCurrentUserPrimaryLocationRaw(initOverrides);
+    async getMyPrimaryLocation(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PrimaryLocationResponse> {
+        const response = await this.getMyPrimaryLocationRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Return availability with optional locationId and date filters.
-     * Get people availability
+     * Resolves a person\'s primary active location from their staffing assignments as of today. Use this tool for service-to-service location resolution by person id; use getMyPrimaryLocation instead for the authenticated caller. Preconditions: the person must have an ACTIVE staffing assignment flagged primary whose effective dates cover today. Required inputs: personId (UUID) path parameter; there is no request body. Emits a PEOPLE_PERSON_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 when the person has no active assignment flagged as primary today. 
+     * Get Person Primary Location Assignment
      */
-    async getPeopleAvailabilityRaw(requestParameters: GetPeopleAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PeopleAvailabilityResponse>>> {
+    async getPersonPrimaryLocationRaw(requestParameters: GetPersonPrimaryLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PrimaryLocationResponse>> {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError(
+                'personId',
+                'Required parameter "personId" was null or undefined when calling getPersonPrimaryLocation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/{personId}/primary-location`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PrimaryLocationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Resolves a person\'s primary active location from their staffing assignments as of today. Use this tool for service-to-service location resolution by person id; use getMyPrimaryLocation instead for the authenticated caller. Preconditions: the person must have an ACTIVE staffing assignment flagged primary whose effective dates cover today. Required inputs: personId (UUID) path parameter; there is no request body. Emits a PEOPLE_PERSON_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 when the person has no active assignment flagged as primary today. 
+     * Get Person Primary Location Assignment
+     */
+    async getPersonPrimaryLocation(requestParameters: GetPersonPrimaryLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PrimaryLocationResponse> {
+        const response = await this.getPersonPrimaryLocationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists the authenticated caller\'s staffing assignments that are active today, primary first. Use this tool to populate a location switcher for the current user; use getMyPrimaryLocation instead when only the single primary location is needed. Preconditions: the caller must be linked to a person in the user-link replica; the link data is event-fed and can lag the link authority. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_ME_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, 404 when no person is linked to the current user, and 401 when the security context carries no username. 
+     * List Current User Active Location Assignments
+     */
+    async listMyLocationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StaffingAssignmentResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:availability:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/me/locations`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(StaffingAssignmentResponseFromJSON));
+    }
+
+    /**
+     * Lists the authenticated caller\'s staffing assignments that are active today, primary first. Use this tool to populate a location switcher for the current user; use getMyPrimaryLocation instead when only the single primary location is needed. Preconditions: the caller must be linked to a person in the user-link replica; the link data is event-fed and can lag the link authority. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_ME_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, 404 when no person is linked to the current user, and 401 when the security context carries no username. 
+     * List Current User Active Location Assignments
+     */
+    async listMyLocations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StaffingAssignmentResponse>> {
+        const response = await this.listMyLocationsRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists people with staffing assignments active on a given date, joined with identity fields from the person replica, one row per assignment. Use this tool to see who is available to work at a location on a date; use getPersonPrimaryLocation instead to resolve a single person\'s home location. Preconditions: when locationId is omitted the caller must be linked to a person with an active assignment, because the requester\'s own location becomes the filter. Required inputs: none are mandatory; locationId (UUID) defaults to the requester\'s location and date (yyyy-MM-dd) defaults to today. Emits a PEOPLE_AVAILABILITY_LIST audit event but changes no state; this is a read-only projection. Returns 404 when locationId is omitted and the requester has no active location assignment or no person link. 
+     * List People Availability For A Location
+     */
+    async listPeopleAvailabilityRaw(requestParameters: ListPeopleAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PeopleAvailabilityResponse>>> {
         const queryParameters: any = {};
 
         if (requestParameters['locationId'] != null) {
@@ -107,11 +200,54 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Return availability with optional locationId and date filters.
-     * Get people availability
+     * Lists people with staffing assignments active on a given date, joined with identity fields from the person replica, one row per assignment. Use this tool to see who is available to work at a location on a date; use getPersonPrimaryLocation instead to resolve a single person\'s home location. Preconditions: when locationId is omitted the caller must be linked to a person with an active assignment, because the requester\'s own location becomes the filter. Required inputs: none are mandatory; locationId (UUID) defaults to the requester\'s location and date (yyyy-MM-dd) defaults to today. Emits a PEOPLE_AVAILABILITY_LIST audit event but changes no state; this is a read-only projection. Returns 404 when locationId is omitted and the requester has no active location assignment or no person link. 
+     * List People Availability For A Location
      */
-    async getPeopleAvailability(requestParameters: GetPeopleAvailabilityRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PeopleAvailabilityResponse>> {
-        const response = await this.getPeopleAvailabilityRaw(requestParameters, initOverrides);
+    async listPeopleAvailability(requestParameters: ListPeopleAvailabilityRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PeopleAvailabilityResponse>> {
+        const response = await this.listPeopleAvailabilityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists a given person\'s staffing assignments that are active today, primary first. Use this tool when acting on another person by id; use listMyLocations instead for the authenticated caller, and listStaffingAssignments for full history including ended assignments. Preconditions: none beyond authentication; an unknown personId is not rejected. Required inputs: personId (UUID) path parameter; there is no request body. Emits a PEOPLE_PERSON_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, including when the personId is unknown. 
+     * List Person Active Location Assignments
+     */
+    async listPersonLocationsRaw(requestParameters: ListPersonLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StaffingAssignmentResponse>>> {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError(
+                'personId',
+                'Required parameter "personId" was null or undefined when calling listPersonLocations().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/{personId}/locations`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(StaffingAssignmentResponseFromJSON));
+    }
+
+    /**
+     * Lists a given person\'s staffing assignments that are active today, primary first. Use this tool when acting on another person by id; use listMyLocations instead for the authenticated caller, and listStaffingAssignments for full history including ended assignments. Preconditions: none beyond authentication; an unknown personId is not rejected. Required inputs: personId (UUID) path parameter; there is no request body. Emits a PEOPLE_PERSON_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, including when the personId is unknown. 
+     * List Person Active Location Assignments
+     */
+    async listPersonLocations(requestParameters: ListPersonLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StaffingAssignmentResponse>> {
+        const response = await this.listPersonLocationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

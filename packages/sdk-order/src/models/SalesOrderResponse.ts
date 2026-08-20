@@ -21,89 +21,193 @@ import {
 } from './SalesOrderLineResponse';
 
 /**
- * 
+ * Response representing a sales order and its lines
  * @export
  * @interface SalesOrderResponse
  */
 export interface SalesOrderResponse {
     /**
-     * 
-     * @type {string}
+     * Net settled amount (checkout onward)
+     * @type {number}
      * @memberof SalesOrderResponse
      */
-    orderId?: string;
+    amountPaid?: number;
     /**
-     * 
-     * @type {string}
+     * Outstanding balance (checkout onward)
+     * @type {number}
      * @memberof SalesOrderResponse
      */
-    customerId?: string;
+    balanceDue?: number;
     /**
-     * 
-     * @type {string}
-     * @memberof SalesOrderResponse
-     */
-    vehicleId?: string;
-    /**
-     * 
+     * Identifier of the clerk who owns the order
      * @type {string}
      * @memberof SalesOrderResponse
      */
     clerkId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof SalesOrderResponse
-     */
-    terminalId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SalesOrderResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof SalesOrderResponse
-     */
-    subtotal?: number;
-    /**
-     * 
+     * Timestamp when the order was created (ISO 8601)
      * @type {Date}
      * @memberof SalesOrderResponse
      */
     createdAt?: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof SalesOrderResponse
-     */
-    updatedAt?: Date;
-    /**
-     * 
+     * Identifier of the user who created the order
      * @type {string}
      * @memberof SalesOrderResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Identifier of the customer associated with the order
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    customerId?: string;
+    /**
+     * CRM validation state of the customer/vehicle references (VALIDATED or PENDING)
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    customerValidationStatus?: string;
+    /**
+     * Σ line discounts + allocated order discount
+     * @type {number}
+     * @memberof SalesOrderResponse
+     */
+    discountTotal?: number;
+    /**
+     * Order-level note
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    generalNote?: string;
+    /**
+     * subtotal − order discount + taxTotal
+     * @type {number}
+     * @memberof SalesOrderResponse
+     */
+    grandTotal?: number;
+    /**
+     * Invoice fronting this order, set at checkout
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    invoiceId?: string;
+    /**
+     * Human-facing invoice number
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    invoiceNumber?: string;
+    /**
+     * Parking label for resumable drafts
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    label?: string;
+    /**
+     * Lines belonging to the order
+     * @type {Array<SalesOrderLineResponse>}
+     * @memberof SalesOrderResponse
+     */
+    lines?: Array<SalesOrderLineResponse>;
+    /**
+     * Shop location the order belongs to
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    locationId?: string;
+    /**
+     * Order discount reason code
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    orderDiscountReasonCode?: string;
+    /**
+     * Order discount flavor (PERCENT or AMOUNT)
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    orderDiscountType?: string;
+    /**
+     * Order discount value per type
+     * @type {number}
+     * @memberof SalesOrderResponse
+     */
+    orderDiscountValue?: number;
+    /**
+     * Unique identifier of the order
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    orderId: string;
+    /**
+     * Human-facing order number assigned at creation
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    orderNumber?: string;
+    /**
+     * Quote validity horizon (QUOTED orders)
+     * @type {Date}
+     * @memberof SalesOrderResponse
+     */
+    quoteExpiresAt?: Date;
+    /**
+     * Current status of the order
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    status: string;
+    /**
+     * Σ line subtotals: post-line-discount, pre-order-discount, pre-tax
+     * @type {number}
+     * @memberof SalesOrderResponse
+     */
+    subtotal?: number;
+    /**
+     * True when mutations invalidated taxTotal; cleared by quote/checkout tax recompute
+     * @type {boolean}
+     * @memberof SalesOrderResponse
+     */
+    taxStale?: boolean;
+    /**
+     * Total tax (pos-tax authoritative)
+     * @type {number}
+     * @memberof SalesOrderResponse
+     */
+    taxTotal?: number;
+    /**
+     * Identifier of the terminal where the order was created
+     * @type {string}
+     * @memberof SalesOrderResponse
+     */
+    terminalId?: string;
+    /**
+     * Timestamp when the order was last updated (ISO 8601)
+     * @type {Date}
+     * @memberof SalesOrderResponse
+     */
+    updatedAt?: Date;
+    /**
+     * Identifier of the user who last updated the order
      * @type {string}
      * @memberof SalesOrderResponse
      */
     updatedBy?: string;
     /**
-     * 
-     * @type {Array<SalesOrderLineResponse>}
+     * Identifier of the vehicle associated with the order
+     * @type {string}
      * @memberof SalesOrderResponse
      */
-    lines?: Array<SalesOrderLineResponse>;
+    vehicleId?: string;
 }
 
 /**
  * Check if a given object implements the SalesOrderResponse interface.
  */
 export function instanceOfSalesOrderResponse(value: object): boolean {
+    if (!('orderId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -117,18 +221,35 @@ export function SalesOrderResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'orderId': json['orderId'] == null ? undefined : json['orderId'],
-        'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
+        'amountPaid': json['amountPaid'] == null ? undefined : json['amountPaid'],
+        'balanceDue': json['balanceDue'] == null ? undefined : json['balanceDue'],
         'clerkId': json['clerkId'] == null ? undefined : json['clerkId'],
-        'terminalId': json['terminalId'] == null ? undefined : json['terminalId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
+        'customerValidationStatus': json['customerValidationStatus'] == null ? undefined : json['customerValidationStatus'],
+        'discountTotal': json['discountTotal'] == null ? undefined : json['discountTotal'],
+        'generalNote': json['generalNote'] == null ? undefined : json['generalNote'],
+        'grandTotal': json['grandTotal'] == null ? undefined : json['grandTotal'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
+        'invoiceNumber': json['invoiceNumber'] == null ? undefined : json['invoiceNumber'],
+        'label': json['label'] == null ? undefined : json['label'],
         'lines': json['lines'] == null ? undefined : ((json['lines'] as Array<any>).map(SalesOrderLineResponseFromJSON)),
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'orderDiscountReasonCode': json['orderDiscountReasonCode'] == null ? undefined : json['orderDiscountReasonCode'],
+        'orderDiscountType': json['orderDiscountType'] == null ? undefined : json['orderDiscountType'],
+        'orderDiscountValue': json['orderDiscountValue'] == null ? undefined : json['orderDiscountValue'],
+        'orderId': json['orderId'],
+        'orderNumber': json['orderNumber'] == null ? undefined : json['orderNumber'],
+        'quoteExpiresAt': json['quoteExpiresAt'] == null ? undefined : (new Date(json['quoteExpiresAt'])),
+        'status': json['status'],
+        'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
+        'taxStale': json['taxStale'] == null ? undefined : json['taxStale'],
+        'taxTotal': json['taxTotal'] == null ? undefined : json['taxTotal'],
+        'terminalId': json['terminalId'] == null ? undefined : json['terminalId'],
+        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'updatedBy': json['updatedBy'] == null ? undefined : json['updatedBy'],
+        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
     };
 }
 
@@ -138,18 +259,35 @@ export function SalesOrderResponseToJSON(value?: SalesOrderResponse | null): any
     }
     return {
         
-        'orderId': value['orderId'],
-        'customerId': value['customerId'],
-        'vehicleId': value['vehicleId'],
+        'amountPaid': value['amountPaid'],
+        'balanceDue': value['balanceDue'],
         'clerkId': value['clerkId'],
-        'terminalId': value['terminalId'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
+        'customerId': value['customerId'],
+        'customerValidationStatus': value['customerValidationStatus'],
+        'discountTotal': value['discountTotal'],
+        'generalNote': value['generalNote'],
+        'grandTotal': value['grandTotal'],
+        'invoiceId': value['invoiceId'],
+        'invoiceNumber': value['invoiceNumber'],
+        'label': value['label'],
+        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(SalesOrderLineResponseToJSON)),
+        'locationId': value['locationId'],
+        'orderDiscountReasonCode': value['orderDiscountReasonCode'],
+        'orderDiscountType': value['orderDiscountType'],
+        'orderDiscountValue': value['orderDiscountValue'],
+        'orderId': value['orderId'],
+        'orderNumber': value['orderNumber'],
+        'quoteExpiresAt': value['quoteExpiresAt'] == null ? undefined : ((value['quoteExpiresAt']).toISOString()),
         'status': value['status'],
         'subtotal': value['subtotal'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'taxStale': value['taxStale'],
+        'taxTotal': value['taxTotal'],
+        'terminalId': value['terminalId'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
-        'createdBy': value['createdBy'],
         'updatedBy': value['updatedBy'],
-        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(SalesOrderLineResponseToJSON)),
+        'vehicleId': value['vehicleId'],
     };
 }
 

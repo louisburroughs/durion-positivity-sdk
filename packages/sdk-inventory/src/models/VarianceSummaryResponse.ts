@@ -14,53 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Summary of a quantity variance detected on a single receiving line
  * @export
  * @interface VarianceSummaryResponse
  */
 export interface VarianceSummaryResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof VarianceSummaryResponse
-     */
-    lineId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VarianceSummaryResponse
-     */
-    productId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof VarianceSummaryResponse
-     */
-    varianceType?: string;
-    /**
-     * 
+     * Quantity originally expected on the receiving line
      * @type {number}
      * @memberof VarianceSummaryResponse
      */
-    varianceQuantity?: number;
+    expectedQuantity: number;
     /**
-     * 
+     * Identifier of the receiving line that had a variance
+     * @type {string}
+     * @memberof VarianceSummaryResponse
+     */
+    lineId: string;
+    /**
+     * Identifier of the product on the receiving line
+     * @type {string}
+     * @memberof VarianceSummaryResponse
+     */
+    productId: string;
+    /**
+     * Quantity actually received on the line
      * @type {number}
      * @memberof VarianceSummaryResponse
      */
-    expectedQuantity?: number;
+    receivedQuantity: number;
     /**
-     * 
+     * UoM the line was keyed in when it differed from the product's base UoM; null means the product's base UoM
+     * @type {string}
+     * @memberof VarianceSummaryResponse
+     */
+    unitOfMeasure?: string;
+    /**
+     * Difference between received and expected quantity for the line
      * @type {number}
      * @memberof VarianceSummaryResponse
      */
-    receivedQuantity?: number;
+    varianceQuantity: number;
+    /**
+     * Type of variance detected, such as OVER or SHORT
+     * @type {string}
+     * @memberof VarianceSummaryResponse
+     */
+    varianceType: string;
 }
 
 /**
  * Check if a given object implements the VarianceSummaryResponse interface.
  */
 export function instanceOfVarianceSummaryResponse(value: object): boolean {
+    if (!('expectedQuantity' in value)) return false;
+    if (!('lineId' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('receivedQuantity' in value)) return false;
+    if (!('varianceQuantity' in value)) return false;
+    if (!('varianceType' in value)) return false;
     return true;
 }
 
@@ -74,12 +86,13 @@ export function VarianceSummaryResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'lineId': json['lineId'] == null ? undefined : json['lineId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'varianceType': json['varianceType'] == null ? undefined : json['varianceType'],
-        'varianceQuantity': json['varianceQuantity'] == null ? undefined : json['varianceQuantity'],
-        'expectedQuantity': json['expectedQuantity'] == null ? undefined : json['expectedQuantity'],
-        'receivedQuantity': json['receivedQuantity'] == null ? undefined : json['receivedQuantity'],
+        'expectedQuantity': json['expectedQuantity'],
+        'lineId': json['lineId'],
+        'productId': json['productId'],
+        'receivedQuantity': json['receivedQuantity'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'varianceQuantity': json['varianceQuantity'],
+        'varianceType': json['varianceType'],
     };
 }
 
@@ -89,12 +102,13 @@ export function VarianceSummaryResponseToJSON(value?: VarianceSummaryResponse | 
     }
     return {
         
+        'expectedQuantity': value['expectedQuantity'],
         'lineId': value['lineId'],
         'productId': value['productId'],
-        'varianceType': value['varianceType'],
-        'varianceQuantity': value['varianceQuantity'],
-        'expectedQuantity': value['expectedQuantity'],
         'receivedQuantity': value['receivedQuantity'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'varianceQuantity': value['varianceQuantity'],
+        'varianceType': value['varianceType'],
     };
 }
 

@@ -14,29 +14,35 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to refund a captured payment
  * @export
  * @interface RefundPaymentRequest
  */
 export interface RefundPaymentRequest {
     /**
-     * 
+     * Amount to refund from the captured payment
      * @type {number}
      * @memberof RefundPaymentRequest
      */
     amount: number;
     /**
-     * 
+     * Optional correlation id to an external record (e.g. a warranty claim settlement)
      * @type {string}
      * @memberof RefundPaymentRequest
      */
-    reason: RefundPaymentRequestReasonEnum;
+    externalReference?: string;
     /**
-     * 
+     * Optional free-text notes explaining the refund
      * @type {string}
      * @memberof RefundPaymentRequest
      */
     notes?: string;
+    /**
+     * Reason the payment is being refunded
+     * @type {string}
+     * @memberof RefundPaymentRequest
+     */
+    reason: RefundPaymentRequestReasonEnum;
 }
 
 /**
@@ -76,8 +82,9 @@ export function RefundPaymentRequestFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'amount': json['amount'],
-        'reason': json['reason'],
+        'externalReference': json['externalReference'] == null ? undefined : json['externalReference'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'reason': json['reason'],
     };
 }
 
@@ -88,8 +95,9 @@ export function RefundPaymentRequestToJSON(value?: RefundPaymentRequest | null):
     return {
         
         'amount': value['amount'],
-        'reason': value['reason'],
+        'externalReference': value['externalReference'],
         'notes': value['notes'],
+        'reason': value['reason'],
     };
 }
 

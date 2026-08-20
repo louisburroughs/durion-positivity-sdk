@@ -1,7 +1,5 @@
 ## @durion-sdk/internal@0.1.0-alpha
 
-> **internal-only** — This package is not published to any registry. It is consumed exclusively from within the monorepo. See ADR-0021 for the rationale behind keeping internal service clients isolated from the public `@durion-sdk/*` packages.
-
 This generator creates TypeScript/JavaScript client that utilizes [Fetch API](https://fetch.spec.whatwg.org/). The generated Node module can be used in the following environments:
 
 Environment

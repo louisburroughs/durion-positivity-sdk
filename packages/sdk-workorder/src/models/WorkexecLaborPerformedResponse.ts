@@ -24,55 +24,63 @@ export interface WorkexecLaborPerformedResponse {
      * @type {string}
      * @memberof WorkexecLaborPerformedResponse
      */
-    laborPerformedId?: string;
-    /**
-     * Workorder identifier
-     * @type {string}
-     * @memberof WorkexecLaborPerformedResponse
-     */
-    workorderId?: string;
-    /**
-     * Technician identifier
-     * @type {string}
-     * @memberof WorkexecLaborPerformedResponse
-     */
-    technicianId?: string;
+    laborPerformedId: string;
     /**
      * Timestamp when labor was performed
      * @type {Date}
      * @memberof WorkexecLaborPerformedResponse
      */
-    performedAt?: Date;
+    performedAt: Date;
     /**
      * Labor quantity
      * @type {number}
      * @memberof WorkexecLaborPerformedResponse
      */
-    quantity?: number;
-    /**
-     * Labor quantity unit
-     * @type {string}
-     * @memberof WorkexecLaborPerformedResponse
-     */
-    unit?: string;
-    /**
-     * Source system identifier
-     * @type {string}
-     * @memberof WorkexecLaborPerformedResponse
-     */
-    sourceSystem?: string;
+    quantity: number;
     /**
      * Source reference identifier
      * @type {string}
      * @memberof WorkexecLaborPerformedResponse
      */
-    sourceReferenceId?: string;
+    sourceReferenceId: string;
+    /**
+     * Source system identifier
+     * @type {string}
+     * @memberof WorkexecLaborPerformedResponse
+     */
+    sourceSystem: string;
+    /**
+     * Technician identifier
+     * @type {string}
+     * @memberof WorkexecLaborPerformedResponse
+     */
+    technicianId: string;
+    /**
+     * Labor quantity unit
+     * @type {string}
+     * @memberof WorkexecLaborPerformedResponse
+     */
+    unit: string;
+    /**
+     * Workorder identifier
+     * @type {string}
+     * @memberof WorkexecLaborPerformedResponse
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the WorkexecLaborPerformedResponse interface.
  */
 export function instanceOfWorkexecLaborPerformedResponse(value: object): boolean {
+    if (!('laborPerformedId' in value)) return false;
+    if (!('performedAt' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('sourceReferenceId' in value)) return false;
+    if (!('sourceSystem' in value)) return false;
+    if (!('technicianId' in value)) return false;
+    if (!('unit' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -86,14 +94,14 @@ export function WorkexecLaborPerformedResponseFromJSONTyped(json: any, ignoreDis
     }
     return {
         
-        'laborPerformedId': json['laborPerformedId'] == null ? undefined : json['laborPerformedId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
-        'performedAt': json['performedAt'] == null ? undefined : (new Date(json['performedAt'])),
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'unit': json['unit'] == null ? undefined : json['unit'],
-        'sourceSystem': json['sourceSystem'] == null ? undefined : json['sourceSystem'],
-        'sourceReferenceId': json['sourceReferenceId'] == null ? undefined : json['sourceReferenceId'],
+        'laborPerformedId': json['laborPerformedId'],
+        'performedAt': (new Date(json['performedAt'])),
+        'quantity': json['quantity'],
+        'sourceReferenceId': json['sourceReferenceId'],
+        'sourceSystem': json['sourceSystem'],
+        'technicianId': json['technicianId'],
+        'unit': json['unit'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -104,13 +112,13 @@ export function WorkexecLaborPerformedResponseToJSON(value?: WorkexecLaborPerfor
     return {
         
         'laborPerformedId': value['laborPerformedId'],
-        'workorderId': value['workorderId'],
-        'technicianId': value['technicianId'],
-        'performedAt': value['performedAt'] == null ? undefined : ((value['performedAt']).toISOString()),
+        'performedAt': ((value['performedAt']).toISOString()),
         'quantity': value['quantity'],
-        'unit': value['unit'],
-        'sourceSystem': value['sourceSystem'],
         'sourceReferenceId': value['sourceReferenceId'],
+        'sourceSystem': value['sourceSystem'],
+        'technicianId': value['technicianId'],
+        'unit': value['unit'],
+        'workorderId': value['workorderId'],
     };
 }
 

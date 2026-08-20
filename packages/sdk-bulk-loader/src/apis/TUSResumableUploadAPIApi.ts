@@ -15,29 +15,29 @@
 
 import * as runtime from '../runtime';
 
-export interface CreateUploadRequest {
+export interface AppendTusUploadChunkRequest {
+    uploadId: string;
+    uploadOffset: number;
+    contentLength: number;
+    tusResumable?: string;
+    contentType?: string;
+}
+
+export interface CancelTusUploadRequest {
+    uploadId: string;
+    tusResumable?: string;
+}
+
+export interface CreateTusUploadRequest {
     jobId: string;
     uploadLength: number;
     tusResumable?: string;
     uploadMetadata?: string;
 }
 
-export interface DeleteUploadRequest {
+export interface GetTusUploadOffsetRequest {
     uploadId: string;
     tusResumable?: string;
-}
-
-export interface GetOffsetRequest {
-    uploadId: string;
-    tusResumable?: string;
-}
-
-export interface UploadChunkRequest {
-    uploadId: string;
-    uploadOffset: number;
-    contentLength: number;
-    tusResumable?: string;
-    contentType?: string;
 }
 
 /**
@@ -46,216 +46,28 @@ export interface UploadChunkRequest {
 export class TUSResumableUploadAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a new TUS upload scoped to a bulk load job. Returns a Location header with the upload URL for subsequent HEAD and PATCH requests.
-     * Create a resumable upload
+     * Appends a contiguous byte range to an in-progress TUS upload and, when the final byte arrives, moves the finished file into job storage. Use this tool repeatedly to stream the file in chunks after createTusUpload; do not guess the offset after a failure, and call getTusUploadOffset instead to learn the server-side offset. Preconditions: the upload must exist, not be complete, and not be expired; the Upload-Offset header must exactly equal the server\'s current offset. Required inputs: uploadId (UUID) as a path parameter, a Content-Type of application/offset+octet-stream, Tus-Resumable, Upload-Offset and Content-Length headers, and the raw chunk bytes as the request body. Emits a BULK_LOADER_TUS_UPLOAD_CHUNK_APPEND event; when the new offset reaches Upload-Length the file is finalized into the job\'s storage and the job records the upload, moving a CREATED job to UPLOADING (finalization fails with 404 when the job is gone or 409 when it is terminal). Returns 204 with the new Upload-Offset header on success, 409 when the offset does not match or the upload is already complete, 410 when the upload has expired, 415 when the Content-Type is wrong, 412 when the TUS version is unsupported, and 404 when the upload does not exist. 
+     * Upload a Chunk
      */
-    async createUploadRaw(requestParameters: CreateUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['jobId'] == null) {
-            throw new runtime.RequiredError(
-                'jobId',
-                'Required parameter "jobId" was null or undefined when calling createUpload().'
-            );
-        }
-
-        if (requestParameters['uploadLength'] == null) {
-            throw new runtime.RequiredError(
-                'uploadLength',
-                'Required parameter "uploadLength" was null or undefined when calling createUpload().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (requestParameters['tusResumable'] != null) {
-            headerParameters['Tus-Resumable'] = String(requestParameters['tusResumable']);
-        }
-
-        if (requestParameters['uploadLength'] != null) {
-            headerParameters['Upload-Length'] = String(requestParameters['uploadLength']);
-        }
-
-        if (requestParameters['uploadMetadata'] != null) {
-            headerParameters['Upload-Metadata'] = String(requestParameters['uploadMetadata']);
-        }
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/bulk-jobs/{jobId}/tus`.replace(`{${"jobId"}}`, encodeURIComponent(String(requestParameters['jobId']))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Creates a new TUS upload scoped to a bulk load job. Returns a Location header with the upload URL for subsequent HEAD and PATCH requests.
-     * Create a resumable upload
-     */
-    async createUpload(requestParameters: CreateUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.createUploadRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Permanently deletes a TUS upload and its temporary file.
-     * Cancel an upload
-     */
-    async deleteUploadRaw(requestParameters: DeleteUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async appendTusUploadChunkRaw(requestParameters: AppendTusUploadChunkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['uploadId'] == null) {
             throw new runtime.RequiredError(
                 'uploadId',
-                'Required parameter "uploadId" was null or undefined when calling deleteUpload().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (requestParameters['tusResumable'] != null) {
-            headerParameters['Tus-Resumable'] = String(requestParameters['tusResumable']);
-        }
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/tus/{uploadId}`.replace(`{${"uploadId"}}`, encodeURIComponent(String(requestParameters['uploadId']))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Permanently deletes a TUS upload and its temporary file.
-     * Cancel an upload
-     */
-    async deleteUpload(requestParameters: DeleteUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteUploadRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Returns the current byte offset of a TUS upload for resumption.
-     * Get upload offset
-     */
-    async getOffsetRaw(requestParameters: GetOffsetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['uploadId'] == null) {
-            throw new runtime.RequiredError(
-                'uploadId',
-                'Required parameter "uploadId" was null or undefined when calling getOffset().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (requestParameters['tusResumable'] != null) {
-            headerParameters['Tus-Resumable'] = String(requestParameters['tusResumable']);
-        }
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/tus/{uploadId}`.replace(`{${"uploadId"}}`, encodeURIComponent(String(requestParameters['uploadId']))),
-            method: 'HEAD',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Returns the current byte offset of a TUS upload for resumption.
-     * Get upload offset
-     */
-    async getOffset(requestParameters: GetOffsetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.getOffsetRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * Returns supported TUS version, extensions, and max upload size. No authentication required.
-     * TUS server capabilities
-     */
-    async optionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/tus`,
-            method: 'OPTIONS',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Returns supported TUS version, extensions, and max upload size. No authentication required.
-     * TUS server capabilities
-     */
-    async options(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.optionsRaw(initOverrides);
-    }
-
-    /**
-     * Appends a byte range to an in-progress TUS upload. Content-Type must be application/offset+octet-stream. Upload-Offset must equal the current server-side offset.
-     * Upload a chunk
-     */
-    async uploadChunkRaw(requestParameters: UploadChunkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['uploadId'] == null) {
-            throw new runtime.RequiredError(
-                'uploadId',
-                'Required parameter "uploadId" was null or undefined when calling uploadChunk().'
+                'Required parameter "uploadId" was null or undefined when calling appendTusUploadChunk().'
             );
         }
 
         if (requestParameters['uploadOffset'] == null) {
             throw new runtime.RequiredError(
                 'uploadOffset',
-                'Required parameter "uploadOffset" was null or undefined when calling uploadChunk().'
+                'Required parameter "uploadOffset" was null or undefined when calling appendTusUploadChunk().'
             );
         }
 
         if (requestParameters['contentLength'] == null) {
             throw new runtime.RequiredError(
                 'contentLength',
-                'Required parameter "contentLength" was null or undefined when calling uploadChunk().'
+                'Required parameter "contentLength" was null or undefined when calling appendTusUploadChunk().'
             );
         }
 
@@ -298,11 +110,199 @@ export class TUSResumableUploadAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Appends a byte range to an in-progress TUS upload. Content-Type must be application/offset+octet-stream. Upload-Offset must equal the current server-side offset.
-     * Upload a chunk
+     * Appends a contiguous byte range to an in-progress TUS upload and, when the final byte arrives, moves the finished file into job storage. Use this tool repeatedly to stream the file in chunks after createTusUpload; do not guess the offset after a failure, and call getTusUploadOffset instead to learn the server-side offset. Preconditions: the upload must exist, not be complete, and not be expired; the Upload-Offset header must exactly equal the server\'s current offset. Required inputs: uploadId (UUID) as a path parameter, a Content-Type of application/offset+octet-stream, Tus-Resumable, Upload-Offset and Content-Length headers, and the raw chunk bytes as the request body. Emits a BULK_LOADER_TUS_UPLOAD_CHUNK_APPEND event; when the new offset reaches Upload-Length the file is finalized into the job\'s storage and the job records the upload, moving a CREATED job to UPLOADING (finalization fails with 404 when the job is gone or 409 when it is terminal). Returns 204 with the new Upload-Offset header on success, 409 when the offset does not match or the upload is already complete, 410 when the upload has expired, 415 when the Content-Type is wrong, 412 when the TUS version is unsupported, and 404 when the upload does not exist. 
+     * Upload a Chunk
      */
-    async uploadChunk(requestParameters: UploadChunkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.uploadChunkRaw(requestParameters, initOverrides);
+    async appendTusUploadChunk(requestParameters: AppendTusUploadChunkRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.appendTusUploadChunkRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Cancels a TUS upload session, permanently deleting both the session record and its temporary chunk file. Use this tool to abandon a partially transferred upload; do not use cancelBulkLoadJob, which cancels the bulk load job itself rather than an upload session. Preconditions: the upload session must exist and the caller must send a Tus-Resumable header of 1.0.0; a completed upload whose file has already been attached to the job is not detached by this call. Required inputs: uploadId (UUID) as a path parameter; there is no request body. Emits a BULK_LOADER_TUS_UPLOAD_CANCEL event and removes the temporary file; the deletion cannot be undone and the upload URL becomes invalid. Returns 204 on success, 404 when the upload does not exist, and 412 when the Tus-Resumable header is missing or not 1.0.0. 
+     * Cancel a Resumable Upload
+     */
+    async cancelTusUploadRaw(requestParameters: CancelTusUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['uploadId'] == null) {
+            throw new runtime.RequiredError(
+                'uploadId',
+                'Required parameter "uploadId" was null or undefined when calling cancelTusUpload().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['tusResumable'] != null) {
+            headerParameters['Tus-Resumable'] = String(requestParameters['tusResumable']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tus/{uploadId}`.replace(`{${"uploadId"}}`, encodeURIComponent(String(requestParameters['uploadId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Cancels a TUS upload session, permanently deleting both the session record and its temporary chunk file. Use this tool to abandon a partially transferred upload; do not use cancelBulkLoadJob, which cancels the bulk load job itself rather than an upload session. Preconditions: the upload session must exist and the caller must send a Tus-Resumable header of 1.0.0; a completed upload whose file has already been attached to the job is not detached by this call. Required inputs: uploadId (UUID) as a path parameter; there is no request body. Emits a BULK_LOADER_TUS_UPLOAD_CANCEL event and removes the temporary file; the deletion cannot be undone and the upload URL becomes invalid. Returns 204 on success, 404 when the upload does not exist, and 412 when the Tus-Resumable header is missing or not 1.0.0. 
+     * Cancel a Resumable Upload
+     */
+    async cancelTusUpload(requestParameters: CancelTusUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.cancelTusUploadRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates a resumable TUS upload session scoped to a bulk load job and returns its absolute upload URL in the Location header, rebuilt from the gateway\'s X-Forwarded headers so it reflects the public address. Use this tool to start uploading a large file in chunks; use uploadJobFile instead when the file is small enough for a single multipart request, and do not send file bytes here because chunks go to appendTusUploadChunk. Preconditions: the caller must send a Tus-Resumable header of 1.0.0; the job id is recorded but not validated here, so a wrong job id only fails later when the finished file is attached to the job. Required inputs: Upload-Length header with the total file size in bytes (server maximum 536870912 by default), and optionally Upload-Metadata with a base64-encoded filename field, without which the file is stored as upload.bin. Emits a BULK_LOADER_TUS_UPLOAD_CREATE event and creates an empty temp file; the session expires after 24 hours by default (see the Upload-Expires header) and expired incomplete uploads are cleaned up automatically. Returns 201 with Location, Upload-Offset and Upload-Expires headers, 412 when the Tus-Resumable header is missing or not 1.0.0, and 413 when Upload-Length exceeds the server maximum. 
+     * Create a Resumable Upload
+     */
+    async createTusUploadRaw(requestParameters: CreateTusUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['jobId'] == null) {
+            throw new runtime.RequiredError(
+                'jobId',
+                'Required parameter "jobId" was null or undefined when calling createTusUpload().'
+            );
+        }
+
+        if (requestParameters['uploadLength'] == null) {
+            throw new runtime.RequiredError(
+                'uploadLength',
+                'Required parameter "uploadLength" was null or undefined when calling createTusUpload().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['tusResumable'] != null) {
+            headerParameters['Tus-Resumable'] = String(requestParameters['tusResumable']);
+        }
+
+        if (requestParameters['uploadLength'] != null) {
+            headerParameters['Upload-Length'] = String(requestParameters['uploadLength']);
+        }
+
+        if (requestParameters['uploadMetadata'] != null) {
+            headerParameters['Upload-Metadata'] = String(requestParameters['uploadMetadata']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/bulk-jobs/{jobId}/tus`.replace(`{${"jobId"}}`, encodeURIComponent(String(requestParameters['jobId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Creates a resumable TUS upload session scoped to a bulk load job and returns its absolute upload URL in the Location header, rebuilt from the gateway\'s X-Forwarded headers so it reflects the public address. Use this tool to start uploading a large file in chunks; use uploadJobFile instead when the file is small enough for a single multipart request, and do not send file bytes here because chunks go to appendTusUploadChunk. Preconditions: the caller must send a Tus-Resumable header of 1.0.0; the job id is recorded but not validated here, so a wrong job id only fails later when the finished file is attached to the job. Required inputs: Upload-Length header with the total file size in bytes (server maximum 536870912 by default), and optionally Upload-Metadata with a base64-encoded filename field, without which the file is stored as upload.bin. Emits a BULK_LOADER_TUS_UPLOAD_CREATE event and creates an empty temp file; the session expires after 24 hours by default (see the Upload-Expires header) and expired incomplete uploads are cleaned up automatically. Returns 201 with Location, Upload-Offset and Upload-Expires headers, 412 when the Tus-Resumable header is missing or not 1.0.0, and 413 when Upload-Length exceeds the server maximum. 
+     * Create a Resumable Upload
+     */
+    async createTusUpload(requestParameters: CreateTusUploadRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.createTusUploadRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Advertises the TUS resumable-upload capabilities of this server, namely protocol version 1.0.0, the creation, termination and expiration extensions, and the maximum upload size. Use this tool during the tus client handshake to discover limits before creating an upload; do not use it to check the progress of an existing upload, which is getTusUploadOffset. Preconditions: none; this endpoint requires no authentication. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; the capabilities are returned in the Tus-Version, Tus-Max-Size and Tus-Extension response headers. Returns 204 in all cases, with the capability data carried in headers rather than a body. 
+     * Get TUS Server Capabilities
+     */
+    async getTusCapabilitiesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tus`,
+            method: 'OPTIONS',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Advertises the TUS resumable-upload capabilities of this server, namely protocol version 1.0.0, the creation, termination and expiration extensions, and the maximum upload size. Use this tool during the tus client handshake to discover limits before creating an upload; do not use it to check the progress of an existing upload, which is getTusUploadOffset. Preconditions: none; this endpoint requires no authentication. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; the capabilities are returned in the Tus-Version, Tus-Max-Size and Tus-Extension response headers. Returns 204 in all cases, with the capability data carried in headers rather than a body. 
+     * Get TUS Server Capabilities
+     */
+    async getTusCapabilities(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.getTusCapabilitiesRaw(initOverrides);
+    }
+
+    /**
+     * Returns the current byte offset of a TUS upload in the Upload-Offset response header so a client can resume where the last transfer stopped. Use this tool after an interrupted transfer to learn where to resume; do not use getTusCapabilities, which reports server-wide limits rather than per-upload progress. Preconditions: the upload session must exist and the caller must send a Tus-Resumable header of 1.0.0. Required inputs: uploadId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the response carries Upload-Offset, Upload-Length and Upload-Expires headers with an empty body. Returns 404 when the upload does not exist, and 412 when the Tus-Resumable header is missing or not 1.0.0. 
+     * Get Current Upload Offset
+     */
+    async getTusUploadOffsetRaw(requestParameters: GetTusUploadOffsetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['uploadId'] == null) {
+            throw new runtime.RequiredError(
+                'uploadId',
+                'Required parameter "uploadId" was null or undefined when calling getTusUploadOffset().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['tusResumable'] != null) {
+            headerParameters['Tus-Resumable'] = String(requestParameters['tusResumable']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["bulkImport:upload:execute", "permitAll"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tus/{uploadId}`.replace(`{${"uploadId"}}`, encodeURIComponent(String(requestParameters['uploadId']))),
+            method: 'HEAD',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Returns the current byte offset of a TUS upload in the Upload-Offset response header so a client can resume where the last transfer stopped. Use this tool after an interrupted transfer to learn where to resume; do not use getTusCapabilities, which reports server-wide limits rather than per-upload progress. Preconditions: the upload session must exist and the caller must send a Tus-Resumable header of 1.0.0. Required inputs: uploadId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; the response carries Upload-Offset, Upload-Length and Upload-Expires headers with an empty body. Returns 404 when the upload does not exist, and 412 when the Tus-Resumable header is missing or not 1.0.0. 
+     * Get Current Upload Offset
+     */
+    async getTusUploadOffset(requestParameters: GetTusUploadOffsetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.getTusUploadOffsetRaw(requestParameters, initOverrides);
     }
 
 }

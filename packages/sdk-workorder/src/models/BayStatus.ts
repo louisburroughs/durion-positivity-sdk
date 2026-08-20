@@ -14,47 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Current status of a service bay
  * @export
  * @interface BayStatus
  */
 export interface BayStatus {
     /**
-     * 
-     * @type {string}
-     * @memberof BayStatus
-     */
-    bayId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BayStatus
-     */
-    bayName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BayStatus
-     */
-    status?: string;
-    /**
-     * 
+     * Identifier of the workorder currently assigned to the bay
      * @type {string}
      * @memberof BayStatus
      */
     assignedWorkorderId?: string;
     /**
-     * 
+     * Whether the bay is currently available
      * @type {boolean}
      * @memberof BayStatus
      */
-    available?: boolean;
+    available: boolean;
+    /**
+     * Identifier of the bay
+     * @type {string}
+     * @memberof BayStatus
+     */
+    bayId: string;
+    /**
+     * Human-readable bay name
+     * @type {string}
+     * @memberof BayStatus
+     */
+    bayName?: string;
+    /**
+     * Operational status of the bay
+     * @type {string}
+     * @memberof BayStatus
+     */
+    status: string;
 }
 
 /**
  * Check if a given object implements the BayStatus interface.
  */
 export function instanceOfBayStatus(value: object): boolean {
+    if (!('available' in value)) return false;
+    if (!('bayId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function BayStatusFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'bayId': json['bayId'] == null ? undefined : json['bayId'],
-        'bayName': json['bayName'] == null ? undefined : json['bayName'],
-        'status': json['status'] == null ? undefined : json['status'],
         'assignedWorkorderId': json['assignedWorkorderId'] == null ? undefined : json['assignedWorkorderId'],
-        'available': json['available'] == null ? undefined : json['available'],
+        'available': json['available'],
+        'bayId': json['bayId'],
+        'bayName': json['bayName'] == null ? undefined : json['bayName'],
+        'status': json['status'],
     };
 }
 
@@ -82,11 +85,11 @@ export function BayStatusToJSON(value?: BayStatus | null): any {
     }
     return {
         
+        'assignedWorkorderId': value['assignedWorkorderId'],
+        'available': value['available'],
         'bayId': value['bayId'],
         'bayName': value['bayName'],
         'status': value['status'],
-        'assignedWorkorderId': value['assignedWorkorderId'],
-        'available': value['available'],
     };
 }
 

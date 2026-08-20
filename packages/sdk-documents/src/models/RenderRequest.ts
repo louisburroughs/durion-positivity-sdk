@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to render document content into a target output format
  * @export
  * @interface RenderRequest
  */
 export interface RenderRequest {
     /**
-     * 
+     * Raw content to be rendered into the target format
+     * @type {string}
+     * @memberof RenderRequest
+     */
+    content: string;
+    /**
+     * Target output format for the rendered document
      * @type {string}
      * @memberof RenderRequest
      */
     format: RenderRequestFormatEnum;
     /**
-     * 
+     * Optional identifier of the template to apply when rendering
      * @type {string}
      * @memberof RenderRequest
      */
     templateId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RenderRequest
-     */
-    content: string;
 }
 
 /**
@@ -56,8 +56,8 @@ export enum RenderRequestFormatEnum {
  * Check if a given object implements the RenderRequest interface.
  */
 export function instanceOfRenderRequest(value: object): boolean {
-    if (!('format' in value)) return false;
     if (!('content' in value)) return false;
+    if (!('format' in value)) return false;
     return true;
 }
 
@@ -71,9 +71,9 @@ export function RenderRequestFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
+        'content': json['content'],
         'format': json['format'],
         'templateId': json['templateId'] == null ? undefined : json['templateId'],
-        'content': json['content'],
     };
 }
 
@@ -83,9 +83,9 @@ export function RenderRequestToJSON(value?: RenderRequest | null): any {
     }
     return {
         
+        'content': value['content'],
         'format': value['format'],
         'templateId': value['templateId'],
-        'content': value['content'],
     };
 }
 

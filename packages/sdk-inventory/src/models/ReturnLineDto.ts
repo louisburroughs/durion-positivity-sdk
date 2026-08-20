@@ -14,37 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single line of a return submission: item, quantity, reason and disposition location
  * @export
  * @interface ReturnLineDto
  */
 export interface ReturnLineDto {
     /**
-     * 
+     * Identifier of the item being returned
      * @type {string}
      * @memberof ReturnLineDto
      */
     itemId: string;
     /**
-     * 
-     * @type {number}
-     * @memberof ReturnLineDto
-     */
-    quantity?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof ReturnLineDto
-     */
-    reasonCode: string;
-    /**
-     * 
+     * Identifier of the location the item is returned to
      * @type {string}
      * @memberof ReturnLineDto
      */
     locationId: string;
     /**
-     * 
+     * Quantity of the item being returned
+     * @type {number}
+     * @memberof ReturnLineDto
+     */
+    quantity: number;
+    /**
+     * Reason code explaining the return
+     * @type {string}
+     * @memberof ReturnLineDto
+     */
+    reasonCode: string;
+    /**
+     * Optional storage location within the location to receive the returned item
      * @type {string}
      * @memberof ReturnLineDto
      */
@@ -56,8 +56,9 @@ export interface ReturnLineDto {
  */
 export function instanceOfReturnLineDto(value: object): boolean {
     if (!('itemId' in value)) return false;
-    if (!('reasonCode' in value)) return false;
     if (!('locationId' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('reasonCode' in value)) return false;
     return true;
 }
 
@@ -72,9 +73,9 @@ export function ReturnLineDtoFromJSONTyped(json: any, ignoreDiscriminator: boole
     return {
         
         'itemId': json['itemId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'reasonCode': json['reasonCode'],
         'locationId': json['locationId'],
+        'quantity': json['quantity'],
+        'reasonCode': json['reasonCode'],
         'storageLocationId': json['storageLocationId'] == null ? undefined : json['storageLocationId'],
     };
 }
@@ -86,9 +87,9 @@ export function ReturnLineDtoToJSON(value?: ReturnLineDto | null): any {
     return {
         
         'itemId': value['itemId'],
+        'locationId': value['locationId'],
         'quantity': value['quantity'],
         'reasonCode': value['reasonCode'],
-        'locationId': value['locationId'],
         'storageLocationId': value['storageLocationId'],
     };
 }

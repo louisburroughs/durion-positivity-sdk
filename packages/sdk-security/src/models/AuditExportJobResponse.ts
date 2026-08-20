@@ -20,24 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface AuditExportJobResponse {
     /**
-     * Export job UUID
-     * @type {string}
-     * @memberof AuditExportJobResponse
-     */
-    jobId?: string;
-    /**
-     * Current status of the export job
-     * @type {string}
-     * @memberof AuditExportJobResponse
-     */
-    status?: AuditExportJobResponseStatusEnum;
-    /**
-     * Timestamp when the export was requested
-     * @type {Date}
-     * @memberof AuditExportJobResponse
-     */
-    requestedAt?: Date;
-    /**
      * Timestamp when the export completed (null if not yet complete)
      * @type {Date}
      * @memberof AuditExportJobResponse
@@ -55,6 +37,24 @@ export interface AuditExportJobResponse {
      * @memberof AuditExportJobResponse
      */
     errorMessage?: string;
+    /**
+     * Export job UUID
+     * @type {string}
+     * @memberof AuditExportJobResponse
+     */
+    jobId: string;
+    /**
+     * Timestamp when the export was requested
+     * @type {Date}
+     * @memberof AuditExportJobResponse
+     */
+    requestedAt: Date;
+    /**
+     * Current status of the export job
+     * @type {string}
+     * @memberof AuditExportJobResponse
+     */
+    status: AuditExportJobResponseStatusEnum;
 }
 
 /**
@@ -73,6 +73,9 @@ export enum AuditExportJobResponseStatusEnum {
  * Check if a given object implements the AuditExportJobResponse interface.
  */
 export function instanceOfAuditExportJobResponse(value: object): boolean {
+    if (!('jobId' in value)) return false;
+    if (!('requestedAt' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -86,12 +89,12 @@ export function AuditExportJobResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'jobId': json['jobId'] == null ? undefined : json['jobId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'requestedAt': json['requestedAt'] == null ? undefined : (new Date(json['requestedAt'])),
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
         'downloadUrl': json['downloadUrl'] == null ? undefined : json['downloadUrl'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
+        'jobId': json['jobId'],
+        'requestedAt': (new Date(json['requestedAt'])),
+        'status': json['status'],
     };
 }
 
@@ -101,12 +104,12 @@ export function AuditExportJobResponseToJSON(value?: AuditExportJobResponse | nu
     }
     return {
         
-        'jobId': value['jobId'],
-        'status': value['status'],
-        'requestedAt': value['requestedAt'] == null ? undefined : ((value['requestedAt']).toISOString()),
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
         'downloadUrl': value['downloadUrl'],
         'errorMessage': value['errorMessage'],
+        'jobId': value['jobId'],
+        'requestedAt': ((value['requestedAt']).toISOString()),
+        'status': value['status'],
     };
 }
 

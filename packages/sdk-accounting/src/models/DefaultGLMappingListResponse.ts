@@ -21,47 +21,52 @@ import {
 } from './DefaultGLMappingResponse';
 
 /**
- * 
+ * Paginated list of default GL account mappings
  * @export
  * @interface DefaultGLMappingListResponse
  */
 export interface DefaultGLMappingListResponse {
     /**
-     * 
+     * Default GL mappings on the current page
      * @type {Array<DefaultGLMappingResponse>}
      * @memberof DefaultGLMappingListResponse
      */
-    mappings?: Array<DefaultGLMappingResponse>;
+    mappings: Array<DefaultGLMappingResponse>;
     /**
-     * 
+     * Zero-based page index
      * @type {number}
      * @memberof DefaultGLMappingListResponse
      */
-    page?: number;
+    page: number;
     /**
-     * 
+     * Page size
      * @type {number}
      * @memberof DefaultGLMappingListResponse
      */
-    size?: number;
+    size: number;
     /**
-     * 
+     * Total number of matching mappings
      * @type {number}
      * @memberof DefaultGLMappingListResponse
      */
-    totalElements?: number;
+    totalElements: number;
     /**
-     * 
+     * Total number of pages
      * @type {number}
      * @memberof DefaultGLMappingListResponse
      */
-    totalPages?: number;
+    totalPages: number;
 }
 
 /**
  * Check if a given object implements the DefaultGLMappingListResponse interface.
  */
 export function instanceOfDefaultGLMappingListResponse(value: object): boolean {
+    if (!('mappings' in value)) return false;
+    if (!('page' in value)) return false;
+    if (!('size' in value)) return false;
+    if (!('totalElements' in value)) return false;
+    if (!('totalPages' in value)) return false;
     return true;
 }
 
@@ -75,11 +80,11 @@ export function DefaultGLMappingListResponseFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'mappings': json['mappings'] == null ? undefined : ((json['mappings'] as Array<any>).map(DefaultGLMappingResponseFromJSON)),
-        'page': json['page'] == null ? undefined : json['page'],
-        'size': json['size'] == null ? undefined : json['size'],
-        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
+        'mappings': ((json['mappings'] as Array<any>).map(DefaultGLMappingResponseFromJSON)),
+        'page': json['page'],
+        'size': json['size'],
+        'totalElements': json['totalElements'],
+        'totalPages': json['totalPages'],
     };
 }
 
@@ -89,7 +94,7 @@ export function DefaultGLMappingListResponseToJSON(value?: DefaultGLMappingListR
     }
     return {
         
-        'mappings': value['mappings'] == null ? undefined : ((value['mappings'] as Array<any>).map(DefaultGLMappingResponseToJSON)),
+        'mappings': ((value['mappings'] as Array<any>).map(DefaultGLMappingResponseToJSON)),
         'page': value['page'],
         'size': value['size'],
         'totalElements': value['totalElements'],

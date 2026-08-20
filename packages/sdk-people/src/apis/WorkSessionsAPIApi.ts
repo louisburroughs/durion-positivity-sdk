@@ -18,6 +18,7 @@ import type {
   BreakDto,
   WorkSessionDto,
   WorkSessionRequest,
+  WorkSessionSubmitRequest,
 } from '../models/index';
 import {
     BreakDtoFromJSON,
@@ -26,6 +27,8 @@ import {
     WorkSessionDtoToJSON,
     WorkSessionRequestFromJSON,
     WorkSessionRequestToJSON,
+    WorkSessionSubmitRequestFromJSON,
+    WorkSessionSubmitRequestToJSON,
 } from '../models/index';
 
 export interface StartWorkSessionRequest {
@@ -44,14 +47,19 @@ export interface StopWorkSessionBreakRequest {
     id: string;
 }
 
+export interface SubmitWorkSessionRequest {
+    id: string;
+    workSessionSubmitRequest: WorkSessionSubmitRequest;
+}
+
 /**
  * 
  */
 export class WorkSessionsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create/start a work session for a person.
-     * Start work session
+     * Starts a new ACTIVE work session for a person, stamping the start time from the server clock and the actor from the security context. Use this tool when a person clocks in for the day; do not use startWorkSessionBreak, which pauses an already running session. Preconditions: the person must exist in the identity replica, and the person must have no session that is still open. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored, because the recorded actor is always the authenticated username. Emits a PEOPLE_WORK_SESSION_START event. Returns 404 when the person is unknown, and 409 when an active session already exists for the person, including under concurrent start races. 
+     * Start A Work Session For Person
      */
     async startWorkSessionRaw(requestParameters: StartWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionDto>> {
         if (requestParameters['workSessionRequest'] == null) {
@@ -87,8 +95,8 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create/start a work session for a person.
-     * Start work session
+     * Starts a new ACTIVE work session for a person, stamping the start time from the server clock and the actor from the security context. Use this tool when a person clocks in for the day; do not use startWorkSessionBreak, which pauses an already running session. Preconditions: the person must exist in the identity replica, and the person must have no session that is still open. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored, because the recorded actor is always the authenticated username. Emits a PEOPLE_WORK_SESSION_START event. Returns 404 when the person is unknown, and 409 when an active session already exists for the person, including under concurrent start races. 
+     * Start A Work Session For Person
      */
     async startWorkSession(requestParameters: StartWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionDto> {
         const response = await this.startWorkSessionRaw(requestParameters, initOverrides);
@@ -96,8 +104,8 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start a break within an active work session.
-     * Start work session break
+     * Starts a break inside an active work session, stamping the start time from the server clock. Use this tool when a person pauses work; do not use stopWorkSession, which ends the whole session rather than pausing it. Preconditions: the session must exist and still be open, and no break may already be open on it. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Emits a PEOPLE_WORK_SESSION_BREAK_START event. Returns 404 when no open session exists for the id, and 409 when a break is already open, including under concurrent break-start races. 
+     * Start A Break In Work Session
      */
     async startWorkSessionBreakRaw(requestParameters: StartWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BreakDto>> {
         if (requestParameters['id'] == null) {
@@ -130,8 +138,8 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Start a break within an active work session.
-     * Start work session break
+     * Starts a break inside an active work session, stamping the start time from the server clock. Use this tool when a person pauses work; do not use stopWorkSession, which ends the whole session rather than pausing it. Preconditions: the session must exist and still be open, and no break may already be open on it. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Emits a PEOPLE_WORK_SESSION_BREAK_START event. Returns 404 when no open session exists for the id, and 409 when a break is already open, including under concurrent break-start races. 
+     * Start A Break In Work Session
      */
     async startWorkSessionBreak(requestParameters: StartWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BreakDto> {
         const response = await this.startWorkSessionBreakRaw(requestParameters, initOverrides);
@@ -139,8 +147,8 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop an active work session.
-     * Stop work session
+     * Stops a person\'s open work session, setting status ENDED and closing any break still open at the same timestamp. Use this tool when a person clocks out; do not use submitWorkSession, which sends an already ENDED session for approval. Preconditions: the person must have an open session; sessions are keyed by person here, not by session id. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored in favour of the authenticated username. Emits a PEOPLE_WORK_SESSION_STOP event. Returns 404 when no active session exists for the person. 
+     * Stop An Active Work Session
      */
     async stopWorkSessionRaw(requestParameters: StopWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionDto>> {
         if (requestParameters['workSessionRequest'] == null) {
@@ -176,8 +184,8 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Stop an active work session.
-     * Stop work session
+     * Stops a person\'s open work session, setting status ENDED and closing any break still open at the same timestamp. Use this tool when a person clocks out; do not use submitWorkSession, which sends an already ENDED session for approval. Preconditions: the person must have an open session; sessions are keyed by person here, not by session id. Required inputs: personId (UUID) in the body; the body\'s actor field is ignored in favour of the authenticated username. Emits a PEOPLE_WORK_SESSION_STOP event. Returns 404 when no active session exists for the person. 
+     * Stop An Active Work Session
      */
     async stopWorkSession(requestParameters: StopWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionDto> {
         const response = await this.stopWorkSessionRaw(requestParameters, initOverrides);
@@ -185,8 +193,8 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * End a break within a work session.
-     * Stop work session break
+     * Ends the open break on a work session, stamping the end time from the server clock. Use this tool when a person returns from a break; do not use stopWorkSession, which ends the session and auto-closes any open break itself. Preconditions: the session must have an open break with no recorded end time. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Emits a PEOPLE_WORK_SESSION_BREAK_STOP event. Returns 409 when no open break exists for the session, including when the session id itself is unknown. 
+     * Stop The Open Work Session Break
      */
     async stopWorkSessionBreakRaw(requestParameters: StopWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BreakDto>> {
         if (requestParameters['id'] == null) {
@@ -219,11 +227,64 @@ export class WorkSessionsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * End a break within a work session.
-     * Stop work session break
+     * Ends the open break on a work session, stamping the end time from the server clock. Use this tool when a person returns from a break; do not use stopWorkSession, which ends the session and auto-closes any open break itself. Preconditions: the session must have an open break with no recorded end time. Required inputs: the work session id (UUID) as the path parameter; there is no request body. Emits a PEOPLE_WORK_SESSION_BREAK_STOP event. Returns 409 when no open break exists for the session, including when the session id itself is unknown. 
+     * Stop The Open Work Session Break
      */
     async stopWorkSessionBreak(requestParameters: StopWorkSessionBreakRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BreakDto> {
         const response = await this.stopWorkSessionBreakRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Submits an ENDED work session for approval, recording billable and break minute totals and marking the session SUBMITTED. Use this tool after stopWorkSession has ended the session; do not use approveTimeEntriesBatch, which decides time entries, not work sessions. Preconditions: the session must exist and be in ENDED status; ACTIVE or already SUBMITTED sessions are rejected. Required inputs: the work session id (UUID) path parameter and a body with billableMinutes and breakMinutes (both zero or greater) and submittedAt (ISO-8601 instant). Emits a PEOPLE_WORK_SESSION_SUBMIT event. Returns 404 when the session does not exist, and 409 when the session is not in ENDED status. 
+     * Submit An Ended Work Session
+     */
+    async submitWorkSessionRaw(requestParameters: SubmitWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionDto>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling submitWorkSession().'
+            );
+        }
+
+        if (requestParameters['workSessionSubmitRequest'] == null) {
+            throw new runtime.RequiredError(
+                'workSessionSubmitRequest',
+                'Required parameter "workSessionSubmitRequest" was null or undefined when calling submitWorkSession().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/workSessions/{id}/submit`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: WorkSessionSubmitRequestToJSON(requestParameters['workSessionSubmitRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => WorkSessionDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Submits an ENDED work session for approval, recording billable and break minute totals and marking the session SUBMITTED. Use this tool after stopWorkSession has ended the session; do not use approveTimeEntriesBatch, which decides time entries, not work sessions. Preconditions: the session must exist and be in ENDED status; ACTIVE or already SUBMITTED sessions are rejected. Required inputs: the work session id (UUID) path parameter and a body with billableMinutes and breakMinutes (both zero or greater) and submittedAt (ISO-8601 instant). Emits a PEOPLE_WORK_SESSION_SUBMIT event. Returns 404 when the session does not exist, and 409 when the session is not in ENDED status. 
+     * Submit An Ended Work Session
+     */
+    async submitWorkSession(requestParameters: SubmitWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionDto> {
+        const response = await this.submitWorkSessionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

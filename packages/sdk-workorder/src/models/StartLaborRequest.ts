@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface StartLaborRequest {
     /**
-     * ID of the technician performing the work
-     * @type {string}
-     * @memberof StartLaborRequest
-     */
-    technicianId: string;
-    /**
      * Optional notes about the labor session
      * @type {string}
      * @memberof StartLaborRequest
      */
     notes?: string;
+    /**
+     * ID of the technician performing the work
+     * @type {string}
+     * @memberof StartLaborRequest
+     */
+    technicianId: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function StartLaborRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'technicianId': json['technicianId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'technicianId': json['technicianId'],
     };
 }
 
@@ -62,8 +62,8 @@ export function StartLaborRequestToJSON(value?: StartLaborRequest | null): any {
     }
     return {
         
-        'technicianId': value['technicianId'],
         'notes': value['notes'],
+        'technicianId': value['technicianId'],
     };
 }
 

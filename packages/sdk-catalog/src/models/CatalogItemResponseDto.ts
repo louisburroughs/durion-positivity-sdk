@@ -24,13 +24,19 @@ export interface CatalogItemResponseDto {
      * @type {string}
      * @memberof CatalogItemResponseDto
      */
-    id?: string;
+    id: string;
     /**
      * Item type
      * @type {string}
      * @memberof CatalogItemResponseDto
      */
-    itemType?: string;
+    itemType: string;
+    /**
+     * Long description
+     * @type {string}
+     * @memberof CatalogItemResponseDto
+     */
+    longDescription?: string;
     /**
      * Item name
      * @type {string}
@@ -43,18 +49,14 @@ export interface CatalogItemResponseDto {
      * @memberof CatalogItemResponseDto
      */
     shortDescription?: string;
-    /**
-     * Long description
-     * @type {string}
-     * @memberof CatalogItemResponseDto
-     */
-    longDescription?: string;
 }
 
 /**
  * Check if a given object implements the CatalogItemResponseDto interface.
  */
 export function instanceOfCatalogItemResponseDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('itemType' in value)) return false;
     return true;
 }
 
@@ -68,11 +70,11 @@ export function CatalogItemResponseDtoFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'itemType': json['itemType'] == null ? undefined : json['itemType'],
+        'id': json['id'],
+        'itemType': json['itemType'],
+        'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
         'name': json['name'] == null ? undefined : json['name'],
         'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
-        'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
     };
 }
 
@@ -84,9 +86,9 @@ export function CatalogItemResponseDtoToJSON(value?: CatalogItemResponseDto | nu
         
         'id': value['id'],
         'itemType': value['itemType'],
+        'longDescription': value['longDescription'],
         'name': value['name'],
         'shortDescription': value['shortDescription'],
-        'longDescription': value['longDescription'],
     };
 }
 

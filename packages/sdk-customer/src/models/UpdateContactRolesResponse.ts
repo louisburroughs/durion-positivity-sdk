@@ -14,47 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response after updating contact role assignments
  * @export
  * @interface UpdateContactRolesResponse
  */
 export interface UpdateContactRolesResponse {
     /**
-     * 
+     * Identifier of the contact that was updated
      * @type {string}
      * @memberof UpdateContactRolesResponse
      */
-    partyId?: string;
+    contactId: string;
     /**
-     * 
+     * Identifier of the party that owns the contact
      * @type {string}
      * @memberof UpdateContactRolesResponse
      */
-    contactId?: string;
+    partyId: string;
     /**
-     * 
+     * Update status (SUCCESS|CONFLICT)
      * @type {string}
      * @memberof UpdateContactRolesResponse
      */
-    version?: string;
+    status: string;
     /**
-     * 
-     * @type {string}
-     * @memberof UpdateContactRolesResponse
-     */
-    status?: string;
-    /**
-     * 
+     * Timestamp of update (ISO 8601)
      * @type {string}
      * @memberof UpdateContactRolesResponse
      */
     updatedAt?: string;
+    /**
+     * Updated version for optimistic locking conflict resolution
+     * @type {string}
+     * @memberof UpdateContactRolesResponse
+     */
+    version?: string;
 }
 
 /**
  * Check if a given object implements the UpdateContactRolesResponse interface.
  */
 export function instanceOfUpdateContactRolesResponse(value: object): boolean {
+    if (!('contactId' in value)) return false;
+    if (!('partyId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function UpdateContactRolesResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'contactId': json['contactId'] == null ? undefined : json['contactId'],
-        'version': json['version'] == null ? undefined : json['version'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'contactId': json['contactId'],
+        'partyId': json['partyId'],
+        'status': json['status'],
         'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
+        'version': json['version'] == null ? undefined : json['version'],
     };
 }
 
@@ -82,11 +85,11 @@ export function UpdateContactRolesResponseToJSON(value?: UpdateContactRolesRespo
     }
     return {
         
-        'partyId': value['partyId'],
         'contactId': value['contactId'],
-        'version': value['version'],
+        'partyId': value['partyId'],
         'status': value['status'],
         'updatedAt': value['updatedAt'],
+        'version': value['version'],
     };
 }
 

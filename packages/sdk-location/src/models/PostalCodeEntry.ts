@@ -14,29 +14,30 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A postal code entry within a service area
  * @export
  * @interface PostalCodeEntry
  */
 export interface PostalCodeEntry {
     /**
-     * 
-     * @type {string}
-     * @memberof PostalCodeEntry
-     */
-    postalCode?: string;
-    /**
-     * 
+     * ISO 3166-1 alpha-2 country code
      * @type {string}
      * @memberof PostalCodeEntry
      */
     countryCode?: string;
+    /**
+     * Postal or ZIP code
+     * @type {string}
+     * @memberof PostalCodeEntry
+     */
+    postalCode: string;
 }
 
 /**
  * Check if a given object implements the PostalCodeEntry interface.
  */
 export function instanceOfPostalCodeEntry(value: object): boolean {
+    if (!('postalCode' in value)) return false;
     return true;
 }
 
@@ -50,8 +51,8 @@ export function PostalCodeEntryFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
+        'postalCode': json['postalCode'],
     };
 }
 
@@ -61,8 +62,8 @@ export function PostalCodeEntryToJSON(value?: PostalCodeEntry | null): any {
     }
     return {
         
-        'postalCode': value['postalCode'],
         'countryCode': value['countryCode'],
+        'postalCode': value['postalCode'],
     };
 }
 

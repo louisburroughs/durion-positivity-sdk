@@ -25,11 +25,11 @@ import {
     SearchVehiclesResponseToJSON,
 } from '../models/index';
 
-export interface SearchRequest {
+export interface SearchVehiclesOperationRequest {
     searchVehiclesRequest: SearchVehiclesRequest;
 }
 
-export interface SearchByQueryRequest {
+export interface SearchVehiclesByQueryRequest {
     q: string;
     limit?: number;
     enableContains?: boolean;
@@ -41,14 +41,14 @@ export interface SearchByQueryRequest {
 export class VehicleSearchApi extends runtime.BaseAPI {
 
     /**
-     * Search for vehicles by VIN, license plate, unit number, or description. Results are ranked by relevance: exact match > prefix match > contains match.
+     * Searches vehicle registry records with a single free-text query, ranking exact matches ahead of prefix matches ahead of optional contains matches. Use this tool for vehicle discovery from a JSON body; use searchVehiclesByQuery for the query-parameter variant, and use getVehicleByVin instead when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape, with six or more alphanumeric characters searched as a VIN (seventeen as an exact VIN), shorter queries searched against license plates, and the remainder searched against unit number plus description. Required inputs: query (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, enableContainsMatching defaults to false, and cursor is reserved and currently ignored. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when the query is empty or shorter than the minimum for its inferred type. 
      * Search vehicles
      */
-    async searchRaw(requestParameters: SearchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchVehiclesResponse>> {
+    async searchVehiclesRaw(requestParameters: SearchVehiclesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchVehiclesResponse>> {
         if (requestParameters['searchVehiclesRequest'] == null) {
             throw new runtime.RequiredError(
                 'searchVehiclesRequest',
-                'Required parameter "searchVehiclesRequest" was null or undefined when calling search().'
+                'Required parameter "searchVehiclesRequest" was null or undefined when calling searchVehicles().'
             );
         }
 
@@ -78,23 +78,23 @@ export class VehicleSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Search for vehicles by VIN, license plate, unit number, or description. Results are ranked by relevance: exact match > prefix match > contains match.
+     * Searches vehicle registry records with a single free-text query, ranking exact matches ahead of prefix matches ahead of optional contains matches. Use this tool for vehicle discovery from a JSON body; use searchVehiclesByQuery for the query-parameter variant, and use getVehicleByVin instead when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape, with six or more alphanumeric characters searched as a VIN (seventeen as an exact VIN), shorter queries searched against license plates, and the remainder searched against unit number plus description. Required inputs: query (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, enableContainsMatching defaults to false, and cursor is reserved and currently ignored. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when the query is empty or shorter than the minimum for its inferred type. 
      * Search vehicles
      */
-    async search(requestParameters: SearchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchVehiclesResponse> {
-        const response = await this.searchRaw(requestParameters, initOverrides);
+    async searchVehicles(requestParameters: SearchVehiclesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchVehiclesResponse> {
+        const response = await this.searchVehiclesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Alternative search endpoint using query parameters. Useful for browser-based queries.
+     * Searches vehicle registry records using query parameters, applying the same ranking as searchVehicles with exact matches first, then prefix matches, then optional contains matches. Use this tool for browser-friendly or link-style searches; use searchVehicles instead when the client can send a JSON body, and use getVehicleByVin when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape exactly as in searchVehicles. Required inputs: q (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, and enableContains defaults to false. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when q is empty or shorter than the minimum for its inferred type. 
      * Search vehicles (query parameter)
      */
-    async searchByQueryRaw(requestParameters: SearchByQueryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchVehiclesResponse>> {
+    async searchVehiclesByQueryRaw(requestParameters: SearchVehiclesByQueryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchVehiclesResponse>> {
         if (requestParameters['q'] == null) {
             throw new runtime.RequiredError(
                 'q',
-                'Required parameter "q" was null or undefined when calling searchByQuery().'
+                'Required parameter "q" was null or undefined when calling searchVehiclesByQuery().'
             );
         }
 
@@ -133,11 +133,11 @@ export class VehicleSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Alternative search endpoint using query parameters. Useful for browser-based queries.
+     * Searches vehicle registry records using query parameters, applying the same ranking as searchVehicles with exact matches first, then prefix matches, then optional contains matches. Use this tool for browser-friendly or link-style searches; use searchVehicles instead when the client can send a JSON body, and use getVehicleByVin when the full 17-character VIN is already known. Preconditions: none beyond registry data existing; the match field is inferred from the query shape exactly as in searchVehicles. Required inputs: q (non-blank, at least 3 characters, or 6 when VIN-shaped); limit defaults to 25 and is capped at 50, and enableContains defaults to false. Emits a VEHICLE_SEARCH event; no vehicle state changes. Returns 200 with ranked results plus totalCount and hasMore, and 400 with a VALIDATION_ERROR ApiError when q is empty or shorter than the minimum for its inferred type. 
      * Search vehicles (query parameter)
      */
-    async searchByQuery(requestParameters: SearchByQueryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchVehiclesResponse> {
-        const response = await this.searchByQueryRaw(requestParameters, initOverrides);
+    async searchVehiclesByQuery(requestParameters: SearchVehiclesByQueryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchVehiclesResponse> {
+        const response = await this.searchVehiclesByQueryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

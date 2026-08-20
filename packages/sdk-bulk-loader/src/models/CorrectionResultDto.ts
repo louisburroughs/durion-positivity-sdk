@@ -24,19 +24,19 @@ export interface CorrectionResultDto {
      * @type {string}
      * @memberof CorrectionResultDto
      */
-    auditRecordId?: string;
-    /**
-     * Whether the correction was accepted or rejected
-     * @type {string}
-     * @memberof CorrectionResultDto
-     */
-    status?: CorrectionResultDtoStatusEnum;
+    auditRecordId: string;
     /**
      * Reason for rejection if status is REJECTED
      * @type {string}
      * @memberof CorrectionResultDto
      */
     rejectionReason?: string;
+    /**
+     * Whether the correction was accepted or rejected
+     * @type {string}
+     * @memberof CorrectionResultDto
+     */
+    status: CorrectionResultDtoStatusEnum;
 }
 
 /**
@@ -53,6 +53,8 @@ export enum CorrectionResultDtoStatusEnum {
  * Check if a given object implements the CorrectionResultDto interface.
  */
 export function instanceOfCorrectionResultDto(value: object): boolean {
+    if (!('auditRecordId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -66,9 +68,9 @@ export function CorrectionResultDtoFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'auditRecordId': json['auditRecordId'] == null ? undefined : json['auditRecordId'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'auditRecordId': json['auditRecordId'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
+        'status': json['status'],
     };
 }
 
@@ -79,8 +81,8 @@ export function CorrectionResultDtoToJSON(value?: CorrectionResultDto | null): a
     return {
         
         'auditRecordId': value['auditRecordId'],
-        'status': value['status'],
         'rejectionReason': value['rejectionReason'],
+        'status': value['status'],
     };
 }
 

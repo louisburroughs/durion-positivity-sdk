@@ -20,47 +20,23 @@ import { mapValues } from '../runtime';
  */
 export interface VendorBillSummaryResponse {
     /**
-     * Vendor bill UUID
-     * @type {string}
-     * @memberof VendorBillSummaryResponse
-     */
-    vendorBillId?: string;
-    /**
-     * Vendor UUID
-     * @type {string}
-     * @memberof VendorBillSummaryResponse
-     */
-    vendorId?: string;
-    /**
-     * Vendor name
-     * @type {string}
-     * @memberof VendorBillSummaryResponse
-     */
-    vendorName?: string;
-    /**
-     * Bill number
-     * @type {string}
-     * @memberof VendorBillSummaryResponse
-     */
-    billNumber?: string;
-    /**
      * Bill date
      * @type {Date}
      * @memberof VendorBillSummaryResponse
      */
     billDate?: Date;
     /**
+     * Bill number
+     * @type {string}
+     * @memberof VendorBillSummaryResponse
+     */
+    billNumber: string;
+    /**
      * Due date
      * @type {Date}
      * @memberof VendorBillSummaryResponse
      */
     dueDate?: Date;
-    /**
-     * Total bill amount
-     * @type {number}
-     * @memberof VendorBillSummaryResponse
-     */
-    totalAmount?: number;
     /**
      * Open/unpaid amount (eligible for payment)
      * @type {number}
@@ -72,7 +48,31 @@ export interface VendorBillSummaryResponse {
      * @type {string}
      * @memberof VendorBillSummaryResponse
      */
-    status?: VendorBillSummaryResponseStatusEnum;
+    status: VendorBillSummaryResponseStatusEnum;
+    /**
+     * Total bill amount
+     * @type {number}
+     * @memberof VendorBillSummaryResponse
+     */
+    totalAmount: number;
+    /**
+     * Vendor bill UUID
+     * @type {string}
+     * @memberof VendorBillSummaryResponse
+     */
+    vendorBillId: string;
+    /**
+     * Vendor UUID
+     * @type {string}
+     * @memberof VendorBillSummaryResponse
+     */
+    vendorId: string;
+    /**
+     * Vendor name
+     * @type {string}
+     * @memberof VendorBillSummaryResponse
+     */
+    vendorName?: string;
 }
 
 /**
@@ -93,6 +93,11 @@ export enum VendorBillSummaryResponseStatusEnum {
  * Check if a given object implements the VendorBillSummaryResponse interface.
  */
 export function instanceOfVendorBillSummaryResponse(value: object): boolean {
+    if (!('billNumber' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('totalAmount' in value)) return false;
+    if (!('vendorBillId' in value)) return false;
+    if (!('vendorId' in value)) return false;
     return true;
 }
 
@@ -106,15 +111,15 @@ export function VendorBillSummaryResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'vendorBillId': json['vendorBillId'] == null ? undefined : json['vendorBillId'],
-        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
-        'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
-        'billNumber': json['billNumber'] == null ? undefined : json['billNumber'],
         'billDate': json['billDate'] == null ? undefined : (new Date(json['billDate'])),
+        'billNumber': json['billNumber'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
-        'totalAmount': json['totalAmount'] == null ? undefined : json['totalAmount'],
         'openAmount': json['openAmount'] == null ? undefined : json['openAmount'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'status': json['status'],
+        'totalAmount': json['totalAmount'],
+        'vendorBillId': json['vendorBillId'],
+        'vendorId': json['vendorId'],
+        'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
     };
 }
 
@@ -124,15 +129,15 @@ export function VendorBillSummaryResponseToJSON(value?: VendorBillSummaryRespons
     }
     return {
         
+        'billDate': value['billDate'] == null ? undefined : ((value['billDate']).toISOString()),
+        'billNumber': value['billNumber'],
+        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
+        'openAmount': value['openAmount'],
+        'status': value['status'],
+        'totalAmount': value['totalAmount'],
         'vendorBillId': value['vendorBillId'],
         'vendorId': value['vendorId'],
         'vendorName': value['vendorName'],
-        'billNumber': value['billNumber'],
-        'billDate': value['billDate'] == null ? undefined : ((value['billDate']).toISOString()),
-        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
-        'totalAmount': value['totalAmount'],
-        'openAmount': value['openAmount'],
-        'status': value['status'],
     };
 }
 

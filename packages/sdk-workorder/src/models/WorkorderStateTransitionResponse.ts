@@ -20,23 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderStateTransitionResponse {
     /**
+     * The status the work order transitioned FROM
+     * @type {string}
+     * @memberof WorkorderStateTransitionResponse
+     */
+    fromStatus?: string;
+    /**
      * Unique identifier for this transition record
      * @type {string}
      * @memberof WorkorderStateTransitionResponse
      */
     id?: string;
     /**
-     * ID of the work order
+     * Additional metadata about the transition
      * @type {string}
      * @memberof WorkorderStateTransitionResponse
      */
-    workorderId?: string;
+    metadata?: string;
     /**
-     * The status the work order transitioned FROM
+     * Reason for the transition
      * @type {string}
      * @memberof WorkorderStateTransitionResponse
      */
-    fromStatus?: string;
+    reason?: string;
     /**
      * The status the work order transitioned TO
      * @type {string}
@@ -56,17 +62,11 @@ export interface WorkorderStateTransitionResponse {
      */
     transitionedBy?: string;
     /**
-     * Reason for the transition
+     * ID of the work order
      * @type {string}
      * @memberof WorkorderStateTransitionResponse
      */
-    reason?: string;
-    /**
-     * Additional metadata about the transition
-     * @type {string}
-     * @memberof WorkorderStateTransitionResponse
-     */
-    metadata?: string;
+    workorderId?: string;
 }
 
 /**
@@ -86,14 +86,14 @@ export function WorkorderStateTransitionResponseFromJSONTyped(json: any, ignoreD
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
         'fromStatus': json['fromStatus'] == null ? undefined : json['fromStatus'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'metadata': json['metadata'] == null ? undefined : json['metadata'],
+        'reason': json['reason'] == null ? undefined : json['reason'],
         'toStatus': json['toStatus'] == null ? undefined : json['toStatus'],
         'transitionedAt': json['transitionedAt'] == null ? undefined : (new Date(json['transitionedAt'])),
         'transitionedBy': json['transitionedBy'] == null ? undefined : json['transitionedBy'],
-        'reason': json['reason'] == null ? undefined : json['reason'],
-        'metadata': json['metadata'] == null ? undefined : json['metadata'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -103,14 +103,14 @@ export function WorkorderStateTransitionResponseToJSON(value?: WorkorderStateTra
     }
     return {
         
-        'id': value['id'],
-        'workorderId': value['workorderId'],
         'fromStatus': value['fromStatus'],
+        'id': value['id'],
+        'metadata': value['metadata'],
+        'reason': value['reason'],
         'toStatus': value['toStatus'],
         'transitionedAt': value['transitionedAt'] == null ? undefined : ((value['transitionedAt']).toISOString()),
         'transitionedBy': value['transitionedBy'],
-        'reason': value['reason'],
-        'metadata': value['metadata'],
+        'workorderId': value['workorderId'],
     };
 }
 

@@ -14,35 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * Conflict override request payload
+ * Request to bypass a scheduling conflict with manager permission
  * @export
  * @interface ConflictOverrideRequest
  */
 export interface ConflictOverrideRequest {
     /**
-     * 
+     * Appointment identifier whose conflict is being overridden
      * @type {string}
      * @memberof ConflictOverrideRequest
      */
-    appointmentId?: string;
+    appointmentId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ConflictOverrideRequest
-     */
-    overrideReason?: string;
-    /**
-     * 
+     * Optional JSON string describing the conflict being overridden
      * @type {string}
      * @memberof ConflictOverrideRequest
      */
     conflictDetails?: string;
+    /**
+     * Non-blank reason justifying the override
+     * @type {string}
+     * @memberof ConflictOverrideRequest
+     */
+    overrideReason: string;
 }
 
 /**
  * Check if a given object implements the ConflictOverrideRequest interface.
  */
 export function instanceOfConflictOverrideRequest(value: object): boolean {
+    if (!('appointmentId' in value)) return false;
+    if (!('overrideReason' in value)) return false;
     return true;
 }
 
@@ -56,9 +58,9 @@ export function ConflictOverrideRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
-        'overrideReason': json['overrideReason'] == null ? undefined : json['overrideReason'],
+        'appointmentId': json['appointmentId'],
         'conflictDetails': json['conflictDetails'] == null ? undefined : json['conflictDetails'],
+        'overrideReason': json['overrideReason'],
     };
 }
 
@@ -69,8 +71,8 @@ export function ConflictOverrideRequestToJSON(value?: ConflictOverrideRequest | 
     return {
         
         'appointmentId': value['appointmentId'],
-        'overrideReason': value['overrideReason'],
         'conflictDetails': value['conflictDetails'],
+        'overrideReason': value['overrideReason'],
     };
 }
 

@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Vehicle creation request
+ * Request payload for creating a vehicle record.
  * @export
  * @interface CreateVehicleRequest
  */
@@ -26,23 +26,11 @@ export interface CreateVehicleRequest {
      */
     accountId: string;
     /**
-     * Vehicle VIN.
+     * Human-readable vehicle description. Optional; stored as empty when omitted.
      * @type {string}
      * @memberof CreateVehicleRequest
      */
-    vin: string;
-    /**
-     * Fleet/unit number.
-     * @type {string}
-     * @memberof CreateVehicleRequest
-     */
-    unitNumber: string;
-    /**
-     * Human-readable vehicle description.
-     * @type {string}
-     * @memberof CreateVehicleRequest
-     */
-    description: string;
+    description?: string;
     /**
      * License plate value.
      * @type {string}
@@ -55,12 +43,6 @@ export interface CreateVehicleRequest {
      * @memberof CreateVehicleRequest
      */
     licensePlateJurisdiction?: string;
-    /**
-     * Model year.
-     * @type {number}
-     * @memberof CreateVehicleRequest
-     */
-    year?: number;
     /**
      * Vehicle make.
      * @type {string}
@@ -79,6 +61,24 @@ export interface CreateVehicleRequest {
      * @memberof CreateVehicleRequest
      */
     trim?: string;
+    /**
+     * Fleet/unit number. Optional; stored as empty when omitted.
+     * @type {string}
+     * @memberof CreateVehicleRequest
+     */
+    unitNumber?: string;
+    /**
+     * Vehicle VIN.
+     * @type {string}
+     * @memberof CreateVehicleRequest
+     */
+    vin: string;
+    /**
+     * Model year.
+     * @type {number}
+     * @memberof CreateVehicleRequest
+     */
+    year?: number;
 }
 
 /**
@@ -87,8 +87,6 @@ export interface CreateVehicleRequest {
 export function instanceOfCreateVehicleRequest(value: object): boolean {
     if (!('accountId' in value)) return false;
     if (!('vin' in value)) return false;
-    if (!('unitNumber' in value)) return false;
-    if (!('description' in value)) return false;
     return true;
 }
 
@@ -103,15 +101,15 @@ export function CreateVehicleRequestFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'accountId': json['accountId'],
-        'vin': json['vin'],
-        'unitNumber': json['unitNumber'],
-        'description': json['description'],
+        'description': json['description'] == null ? undefined : json['description'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
-        'year': json['year'] == null ? undefined : json['year'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
         'trim': json['trim'] == null ? undefined : json['trim'],
+        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'vin': json['vin'],
+        'year': json['year'] == null ? undefined : json['year'],
     };
 }
 
@@ -122,15 +120,15 @@ export function CreateVehicleRequestToJSON(value?: CreateVehicleRequest | null):
     return {
         
         'accountId': value['accountId'],
-        'vin': value['vin'],
-        'unitNumber': value['unitNumber'],
         'description': value['description'],
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],
-        'year': value['year'],
         'make': value['make'],
         'model': value['model'],
         'trim': value['trim'],
+        'unitNumber': value['unitNumber'],
+        'vin': value['vin'],
+        'year': value['year'],
     };
 }
 

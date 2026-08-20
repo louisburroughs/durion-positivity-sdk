@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for partial update of an estimate line item
+ * Updated item fields
  * @export
  * @interface UpdateEstimateItemRequest
  */
@@ -32,17 +32,23 @@ export interface UpdateEstimateItemRequest {
      */
     quantity?: number;
     /**
+     * Updated tax code
+     * @type {string}
+     * @memberof UpdateEstimateItemRequest
+     */
+    taxCode?: string;
+    /**
      * Updated unit price
      * @type {number}
      * @memberof UpdateEstimateItemRequest
      */
     unitPrice?: number;
     /**
-     * Updated tax code
+     * Updated unit quantity is expressed in, for PART items only. Omit to leave the item's unit unchanged, like every other field on this partial-update request. Rejected on a LABOR item.
      * @type {string}
      * @memberof UpdateEstimateItemRequest
      */
-    taxCode?: string;
+    uomCode?: string;
 }
 
 /**
@@ -64,8 +70,9 @@ export function UpdateEstimateItemRequestFromJSONTyped(json: any, ignoreDiscrimi
         
         'description': json['description'] == null ? undefined : json['description'],
         'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
         'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
+        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
+        'uomCode': json['uomCode'] == null ? undefined : json['uomCode'],
     };
 }
 
@@ -77,8 +84,9 @@ export function UpdateEstimateItemRequestToJSON(value?: UpdateEstimateItemReques
         
         'description': value['description'],
         'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
         'taxCode': value['taxCode'],
+        'unitPrice': value['unitPrice'],
+        'uomCode': value['uomCode'],
     };
 }
 

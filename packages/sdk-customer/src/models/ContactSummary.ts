@@ -33,41 +33,35 @@ import {
 } from './PhoneNumberDTO';
 
 /**
- * 
+ * Contact summary surfaced in a CRM snapshot
  * @export
  * @interface ContactSummary
  */
 export interface ContactSummary {
     /**
-     * 
+     * Identifier of the contact
      * @type {string}
      * @memberof ContactSummary
      */
-    contactId?: string;
+    contactId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ContactSummary
-     */
-    name?: string;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ContactSummary
-     */
-    roles?: Array<string>;
-    /**
-     * 
-     * @type {Array<PhoneNumberDTO>}
-     * @memberof ContactSummary
-     */
-    phoneNumbers?: Array<PhoneNumberDTO>;
-    /**
-     * 
+     * Email addresses for this contact
      * @type {Array<EmailAddressDTO>}
      * @memberof ContactSummary
      */
-    emailAddresses?: Array<EmailAddressDTO>;
+    emailAddresses: Array<EmailAddressDTO>;
+    /**
+     * Contact display name
+     * @type {string}
+     * @memberof ContactSummary
+     */
+    name: string;
+    /**
+     * Phone numbers for this contact
+     * @type {Array<PhoneNumberDTO>}
+     * @memberof ContactSummary
+     */
+    phoneNumbers: Array<PhoneNumberDTO>;
     /**
      * 
      * @type {ContactPreferences}
@@ -80,12 +74,23 @@ export interface ContactSummary {
      * @memberof ContactSummary
      */
     primary?: boolean;
+    /**
+     * Roles assigned to this contact
+     * @type {Array<string>}
+     * @memberof ContactSummary
+     */
+    roles: Array<string>;
 }
 
 /**
  * Check if a given object implements the ContactSummary interface.
  */
 export function instanceOfContactSummary(value: object): boolean {
+    if (!('contactId' in value)) return false;
+    if (!('emailAddresses' in value)) return false;
+    if (!('name' in value)) return false;
+    if (!('phoneNumbers' in value)) return false;
+    if (!('roles' in value)) return false;
     return true;
 }
 
@@ -99,13 +104,13 @@ export function ContactSummaryFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'contactId': json['contactId'] == null ? undefined : json['contactId'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'roles': json['roles'] == null ? undefined : json['roles'],
-        'phoneNumbers': json['phoneNumbers'] == null ? undefined : ((json['phoneNumbers'] as Array<any>).map(PhoneNumberDTOFromJSON)),
-        'emailAddresses': json['emailAddresses'] == null ? undefined : ((json['emailAddresses'] as Array<any>).map(EmailAddressDTOFromJSON)),
+        'contactId': json['contactId'],
+        'emailAddresses': ((json['emailAddresses'] as Array<any>).map(EmailAddressDTOFromJSON)),
+        'name': json['name'],
+        'phoneNumbers': ((json['phoneNumbers'] as Array<any>).map(PhoneNumberDTOFromJSON)),
         'preferences': json['preferences'] == null ? undefined : ContactPreferencesFromJSON(json['preferences']),
         'primary': json['primary'] == null ? undefined : json['primary'],
+        'roles': json['roles'],
     };
 }
 
@@ -116,12 +121,12 @@ export function ContactSummaryToJSON(value?: ContactSummary | null): any {
     return {
         
         'contactId': value['contactId'],
+        'emailAddresses': ((value['emailAddresses'] as Array<any>).map(EmailAddressDTOToJSON)),
         'name': value['name'],
-        'roles': value['roles'],
-        'phoneNumbers': value['phoneNumbers'] == null ? undefined : ((value['phoneNumbers'] as Array<any>).map(PhoneNumberDTOToJSON)),
-        'emailAddresses': value['emailAddresses'] == null ? undefined : ((value['emailAddresses'] as Array<any>).map(EmailAddressDTOToJSON)),
+        'phoneNumbers': ((value['phoneNumbers'] as Array<any>).map(PhoneNumberDTOToJSON)),
         'preferences': ContactPreferencesToJSON(value['preferences']),
         'primary': value['primary'],
+        'roles': value['roles'],
     };
 }
 

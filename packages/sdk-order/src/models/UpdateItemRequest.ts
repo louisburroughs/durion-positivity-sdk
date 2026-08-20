@@ -14,23 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for updating an existing cart item line
  * @export
  * @interface UpdateItemRequest
  */
 export interface UpdateItemRequest {
     /**
-     * 
+     * Updated quantity for the item line
      * @type {number}
      * @memberof UpdateItemRequest
      */
-    quantity?: number;
+    quantity: number;
 }
 
 /**
  * Check if a given object implements the UpdateItemRequest interface.
  */
 export function instanceOfUpdateItemRequest(value: object): boolean {
+    if (!('quantity' in value)) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function UpdateItemRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'quantity': json['quantity'],
     };
 }
 

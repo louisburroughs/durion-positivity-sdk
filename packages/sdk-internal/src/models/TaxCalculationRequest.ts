@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CustomerExemption } from './CustomerExemption';
+import {
+    CustomerExemptionFromJSON,
+    CustomerExemptionFromJSONTyped,
+    CustomerExemptionToJSON,
+} from './CustomerExemption';
 import type { TaxAddress } from './TaxAddress';
 import {
     TaxAddressFromJSON,
@@ -33,17 +39,35 @@ import {
  */
 export interface TaxCalculationRequest {
     /**
-     * Line items to calculate tax for
-     * @type {Array<TaxLineItem>}
+     * 
+     * @type {string}
      * @memberof TaxCalculationRequest
      */
-    lineItems: Array<TaxLineItem>;
+    address?: string;
+    /**
+     * Calculation direction: SALE (default) or REFUND. REFUND amounts are positive and priced at the supplied transactionDate (the original sale date); callers negate at posting. Finalized-invoice credits must use the stored breakdown, not REFUND recompute.
+     * @type {string}
+     * @memberof TaxCalculationRequest
+     */
+    calculationType?: TaxCalculationRequestCalculationTypeEnum;
     /**
      * 
-     * @type {TaxAddress}
+     * @type {string}
      * @memberof TaxCalculationRequest
      */
-    destinationAddress: TaxAddress;
+    city?: string;
+    /**
+     * True when this calculation will be finalized (committed) rather than a throwaway estimate; requires referenceId to be present
+     * @type {boolean}
+     * @memberof TaxCalculationRequest
+     */
+    committable?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof TaxCalculationRequest
+     */
+    countryCode?: string;
     /**
      * Transaction currency in ISO 4217 alpha-3 format
      * @type {string}
@@ -51,11 +75,11 @@ export interface TaxCalculationRequest {
      */
     currencyCode?: string;
     /**
-     * BCP 47 locale tag for localization preferences
-     * @type {string}
+     * 
+     * @type {CustomerExemption}
      * @memberof TaxCalculationRequest
      */
-    locale?: string;
+    customerExemption?: CustomerExemption;
     /**
      * Optional customer identifier for exemption and tax profile lookups
      * @type {string}
@@ -63,11 +87,35 @@ export interface TaxCalculationRequest {
      */
     customerId?: string;
     /**
-     * Optional transaction date/time in ISO 8601 format
+     * 
+     * @type {TaxAddress}
+     * @memberof TaxCalculationRequest
+     */
+    destinationAddress: TaxAddress;
+    /**
+     * Line items to calculate tax for
+     * @type {Array<TaxLineItem>}
+     * @memberof TaxCalculationRequest
+     */
+    lineItems: Array<TaxLineItem>;
+    /**
+     * BCP 47 locale tag for localization preferences
      * @type {string}
      * @memberof TaxCalculationRequest
      */
-    transactionDate?: string;
+    locale?: string;
+    /**
+     * Optional reference to the original sale transaction being refunded
+     * @type {string}
+     * @memberof TaxCalculationRequest
+     */
+    originalReferenceId?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof TaxCalculationRequest
+     */
+    postalCode?: string;
     /**
      * Optional reference identifier for the source transaction
      * @type {string}
@@ -85,33 +133,23 @@ export interface TaxCalculationRequest {
      * @type {string}
      * @memberof TaxCalculationRequest
      */
-    address?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TaxCalculationRequest
-     */
-    countryCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TaxCalculationRequest
-     */
-    postalCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TaxCalculationRequest
-     */
     stateCode?: string;
     /**
-     * 
+     * Optional transaction date/time in ISO 8601 format
      * @type {string}
      * @memberof TaxCalculationRequest
      */
-    city?: string;
+    transactionDate?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum TaxCalculationRequestCalculationTypeEnum {
+    Sale = 'SALE',
+    Refund = 'REFUND'
+}
 /**
 * @export
 * @enum {string}
@@ -130,8 +168,8 @@ export enum TaxCalculationRequestReferenceTypeEnum {
  * Check if a given object implements the TaxCalculationRequest interface.
  */
 export function instanceOfTaxCalculationRequest(value: object): boolean {
-    if (!('lineItems' in value)) return false;
     if (!('destinationAddress' in value)) return false;
+    if (!('lineItems' in value)) return false;
     return true;
 }
 
@@ -145,19 +183,23 @@ export function TaxCalculationRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'lineItems': ((json['lineItems'] as Array<any>).map(TaxLineItemFromJSON)),
-        'destinationAddress': TaxAddressFromJSON(json['destinationAddress']),
+        'address': json['address'] == null ? undefined : json['address'],
+        'calculationType': json['calculationType'] == null ? undefined : json['calculationType'],
+        'city': json['city'] == null ? undefined : json['city'],
+        'committable': json['committable'] == null ? undefined : json['committable'],
+        'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
         'currencyCode': json['currencyCode'] == null ? undefined : json['currencyCode'],
-        'locale': json['locale'] == null ? undefined : json['locale'],
+        'customerExemption': json['customerExemption'] == null ? undefined : CustomerExemptionFromJSON(json['customerExemption']),
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
-        'transactionDate': json['transactionDate'] == null ? undefined : json['transactionDate'],
+        'destinationAddress': TaxAddressFromJSON(json['destinationAddress']),
+        'lineItems': ((json['lineItems'] as Array<any>).map(TaxLineItemFromJSON)),
+        'locale': json['locale'] == null ? undefined : json['locale'],
+        'originalReferenceId': json['originalReferenceId'] == null ? undefined : json['originalReferenceId'],
+        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'referenceId': json['referenceId'] == null ? undefined : json['referenceId'],
         'referenceType': json['referenceType'] == null ? undefined : json['referenceType'],
-        'address': json['address'] == null ? undefined : json['address'],
-        'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
-        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'stateCode': json['stateCode'] == null ? undefined : json['stateCode'],
-        'city': json['city'] == null ? undefined : json['city'],
+        'transactionDate': json['transactionDate'] == null ? undefined : json['transactionDate'],
     };
 }
 
@@ -167,19 +209,23 @@ export function TaxCalculationRequestToJSON(value?: TaxCalculationRequest | null
     }
     return {
         
-        'lineItems': ((value['lineItems'] as Array<any>).map(TaxLineItemToJSON)),
-        'destinationAddress': TaxAddressToJSON(value['destinationAddress']),
+        'address': value['address'],
+        'calculationType': value['calculationType'],
+        'city': value['city'],
+        'committable': value['committable'],
+        'countryCode': value['countryCode'],
         'currencyCode': value['currencyCode'],
-        'locale': value['locale'],
+        'customerExemption': CustomerExemptionToJSON(value['customerExemption']),
         'customerId': value['customerId'],
-        'transactionDate': value['transactionDate'],
+        'destinationAddress': TaxAddressToJSON(value['destinationAddress']),
+        'lineItems': ((value['lineItems'] as Array<any>).map(TaxLineItemToJSON)),
+        'locale': value['locale'],
+        'originalReferenceId': value['originalReferenceId'],
+        'postalCode': value['postalCode'],
         'referenceId': value['referenceId'],
         'referenceType': value['referenceType'],
-        'address': value['address'],
-        'countryCode': value['countryCode'],
-        'postalCode': value['postalCode'],
         'stateCode': value['stateCode'],
-        'city': value['city'],
+        'transactionDate': value['transactionDate'],
     };
 }
 

@@ -43,7 +43,7 @@ import {
     PricingSnapshotRequestToJSON,
 } from '../models/index';
 
-export interface CreateEventRequest {
+export interface CreateAuditEventRequest {
     auditLogEventRequest: AuditLogEventRequest;
 }
 
@@ -51,7 +51,7 @@ export interface CreatePricingSnapshotRequest {
     pricingSnapshotRequest: PricingSnapshotRequest;
 }
 
-export interface GetEventRequest {
+export interface GetAuditEventRequest {
     eventId: string;
 }
 
@@ -81,14 +81,14 @@ export interface SearchAuditEventsRequest {
 export class AuditApi extends runtime.BaseAPI {
 
     /**
-     * Creates an immutable audit event record and returns the generated event identifier.
-     * Create audit event
+     * Records an immutable audit event and returns the generated event id and server timestamp. Use this tool to persist a write-once audit fact; do not use createPricingSnapshot, which records a pricing rule trace, and note that updates and deletes of audit events are rejected with 405 by design. Preconditions: the caller must hold security:audit:create; the actor is resolved server-side from the security context, so any actorId in the body is ignored. Required inputs: eventType, entityId, entityType, oldValue, and newValue (empty strings are accepted, null is not); context is optional and stored as serialized JSON. Emits a SECURITY_AUDIT_EVENT_CREATE event; the stored record can never be modified or deleted. Returns 400 when any required field is missing or a value cannot be serialized to JSON. 
+     * Record an Immutable Audit Event
      */
-    async createEventRaw(requestParameters: CreateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditEventCreatedResponse>> {
+    async createAuditEventRaw(requestParameters: CreateAuditEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditEventCreatedResponse>> {
         if (requestParameters['auditLogEventRequest'] == null) {
             throw new runtime.RequiredError(
                 'auditLogEventRequest',
-                'Required parameter "auditLogEventRequest" was null or undefined when calling createEvent().'
+                'Required parameter "auditLogEventRequest" was null or undefined when calling createAuditEvent().'
             );
         }
 
@@ -118,17 +118,17 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an immutable audit event record and returns the generated event identifier.
-     * Create audit event
+     * Records an immutable audit event and returns the generated event id and server timestamp. Use this tool to persist a write-once audit fact; do not use createPricingSnapshot, which records a pricing rule trace, and note that updates and deletes of audit events are rejected with 405 by design. Preconditions: the caller must hold security:audit:create; the actor is resolved server-side from the security context, so any actorId in the body is ignored. Required inputs: eventType, entityId, entityType, oldValue, and newValue (empty strings are accepted, null is not); context is optional and stored as serialized JSON. Emits a SECURITY_AUDIT_EVENT_CREATE event; the stored record can never be modified or deleted. Returns 400 when any required field is missing or a value cannot be serialized to JSON. 
+     * Record an Immutable Audit Event
      */
-    async createEvent(requestParameters: CreateEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditEventCreatedResponse> {
-        const response = await this.createEventRaw(requestParameters, initOverrides);
+    async createAuditEvent(requestParameters: CreateAuditEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditEventCreatedResponse> {
+        const response = await this.createAuditEventRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates an immutable pricing snapshot record for later audit and traceability.
-     * Create pricing snapshot
+     * Records an immutable pricing snapshot with its ordered rule-evaluation trace and returns the generated snapshot id. Use this tool to preserve how a price was computed for later audit; do not use createAuditEvent, which records generic entity-change events without a rule trace. Preconditions: the caller must hold security:audit:create; the snapshot is write-once and cannot be modified afterwards. Required inputs: quoteContext, finalPrice, and evaluationSteps, where every step needs ruleId, status, inputs, and outputs; evaluationSteps may be an empty list but not null. Emits a SECURITY_AUDIT_PRICING_SNAPSHOT_CREATE event. Returns 400 when quoteContext, finalPrice, evaluationSteps, or any per-step field is missing, or when a JSON field cannot be serialized. 
+     * Record an Immutable Pricing Snapshot
      */
     async createPricingSnapshotRaw(requestParameters: CreatePricingSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PricingSnapshotCreatedResponse>> {
         if (requestParameters['pricingSnapshotRequest'] == null) {
@@ -164,8 +164,8 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an immutable pricing snapshot record for later audit and traceability.
-     * Create pricing snapshot
+     * Records an immutable pricing snapshot with its ordered rule-evaluation trace and returns the generated snapshot id. Use this tool to preserve how a price was computed for later audit; do not use createAuditEvent, which records generic entity-change events without a rule trace. Preconditions: the caller must hold security:audit:create; the snapshot is write-once and cannot be modified afterwards. Required inputs: quoteContext, finalPrice, and evaluationSteps, where every step needs ruleId, status, inputs, and outputs; evaluationSteps may be an empty list but not null. Emits a SECURITY_AUDIT_PRICING_SNAPSHOT_CREATE event. Returns 400 when quoteContext, finalPrice, evaluationSteps, or any per-step field is missing, or when a JSON field cannot be serialized. 
+     * Record an Immutable Pricing Snapshot
      */
     async createPricingSnapshot(requestParameters: CreatePricingSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PricingSnapshotCreatedResponse> {
         const response = await this.createPricingSnapshotRaw(requestParameters, initOverrides);
@@ -173,49 +173,14 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Audit events are immutable and cannot be deleted once recorded.
-     * Delete audit events not allowed
+     * Returns a previously recorded audit event by its event id. Use this tool when the event id is known; use searchAuditEvents instead to filter by time window, actor, event type, or aggregate. Preconditions: the caller must hold security:audit:view and the event must exist. Required inputs: eventId (UUID) as a path parameter. No events are emitted and no state changes; audit records are immutable. Returns 404 when no audit event exists for the supplied id. 
+     * Get One Audit Event by Id
      */
-    async deleteNotAllowedRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/audit/events/**`,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Audit events are immutable and cannot be deleted once recorded.
-     * Delete audit events not allowed
-     */
-    async deleteNotAllowed(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteNotAllowedRaw(initOverrides);
-    }
-
-    /**
-     * Returns a previously recorded audit event by its event identifier.
-     * Get audit event
-     */
-    async getEventRaw(requestParameters: GetEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditLogEventDto>> {
+    async getAuditEventRaw(requestParameters: GetAuditEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditLogEventDto>> {
         if (requestParameters['eventId'] == null) {
             throw new runtime.RequiredError(
                 'eventId',
-                'Required parameter "eventId" was null or undefined when calling getEvent().'
+                'Required parameter "eventId" was null or undefined when calling getAuditEvent().'
             );
         }
 
@@ -242,17 +207,17 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a previously recorded audit event by its event identifier.
-     * Get audit event
+     * Returns a previously recorded audit event by its event id. Use this tool when the event id is known; use searchAuditEvents instead to filter by time window, actor, event type, or aggregate. Preconditions: the caller must hold security:audit:view and the event must exist. Required inputs: eventId (UUID) as a path parameter. No events are emitted and no state changes; audit records are immutable. Returns 404 when no audit event exists for the supplied id. 
+     * Get One Audit Event by Id
      */
-    async getEvent(requestParameters: GetEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditLogEventDto> {
-        const response = await this.getEventRaw(requestParameters, initOverrides);
+    async getAuditEvent(requestParameters: GetAuditEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditLogEventDto> {
+        const response = await this.getAuditEventRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns an immutable pricing snapshot by its snapshot identifier.
-     * Get pricing snapshot
+     * Returns an immutable pricing snapshot with its rule-evaluation steps ordered by rule id. Use this tool when the snapshot id is known; use searchAuditEvents instead for general audit queries, since snapshots have no search endpoint. Preconditions: the caller must hold security:audit:view and the snapshot must exist. Required inputs: snapshotId (UUID) as a path parameter. No events are emitted and no state changes; snapshots are read-only after creation. Returns 400 with INVALID_REQUEST, not 404, when no snapshot exists for the supplied id; callers must treat that 400 as a miss. 
+     * Get One Pricing Snapshot by Id
      */
     async getPricingSnapshotRaw(requestParameters: GetPricingSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PricingSnapshotDto>> {
         if (requestParameters['snapshotId'] == null) {
@@ -285,8 +250,8 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns an immutable pricing snapshot by its snapshot identifier.
-     * Get pricing snapshot
+     * Returns an immutable pricing snapshot with its rule-evaluation steps ordered by rule id. Use this tool when the snapshot id is known; use searchAuditEvents instead for general audit queries, since snapshots have no search endpoint. Preconditions: the caller must hold security:audit:view and the snapshot must exist. Required inputs: snapshotId (UUID) as a path parameter. No events are emitted and no state changes; snapshots are read-only after creation. Returns 400 with INVALID_REQUEST, not 404, when no snapshot exists for the supplied id; callers must treat that 400 as a miss. 
+     * Get One Pricing Snapshot by Id
      */
     async getPricingSnapshot(requestParameters: GetPricingSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PricingSnapshotDto> {
         const response = await this.getPricingSnapshotRaw(requestParameters, initOverrides);
@@ -294,8 +259,78 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches audit events using rich filter criteria with pagination support.
-     * Search audit events
+     * Rejects every attempt to delete audit events, unconditionally answering 405 Method Not Allowed. Use this tool never; audit events are write-once, so use createAuditEvent to record facts and searchAuditEvents to read them instead. Preconditions: none that permit success; the operation fails by design for any path under the audit events resource. Required inputs: none are honored; the request is rejected regardless of path or payload. No events are emitted and no state changes; the endpoint exists only to make immutability explicit. Returns 405 in all cases. 
+     * Reject Audit Event Deletion
+     */
+    async rejectAuditEventDeleteRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/events/**`,
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Rejects every attempt to delete audit events, unconditionally answering 405 Method Not Allowed. Use this tool never; audit events are write-once, so use createAuditEvent to record facts and searchAuditEvents to read them instead. Preconditions: none that permit success; the operation fails by design for any path under the audit events resource. Required inputs: none are honored; the request is rejected regardless of path or payload. No events are emitted and no state changes; the endpoint exists only to make immutability explicit. Returns 405 in all cases. 
+     * Reject Audit Event Deletion
+     */
+    async rejectAuditEventDelete(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.rejectAuditEventDeleteRaw(initOverrides);
+    }
+
+    /**
+     * Rejects every attempt to modify audit events, unconditionally answering 405 Method Not Allowed. Use this tool never; audit events are write-once, so record a new fact with createAuditEvent instead of editing an existing one. Preconditions: none that permit success; the operation fails by design for any path under the audit events resource. Required inputs: none are honored; the request is rejected regardless of path or payload. No events are emitted and no state changes; the endpoint exists only to make immutability explicit. Returns 405 in all cases. 
+     * Reject Audit Event Modification
+     */
+    async rejectAuditEventUpdateRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/events/**`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Rejects every attempt to modify audit events, unconditionally answering 405 Method Not Allowed. Use this tool never; audit events are write-once, so record a new fact with createAuditEvent instead of editing an existing one. Preconditions: none that permit success; the operation fails by design for any path under the audit events resource. Required inputs: none are honored; the request is rejected regardless of path or payload. No events are emitted and no state changes; the endpoint exists only to make immutability explicit. Returns 405 in all cases. 
+     * Reject Audit Event Modification
+     */
+    async rejectAuditEventUpdate(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.rejectAuditEventUpdateRaw(initOverrides);
+    }
+
+    /**
+     * Searches audit events with pagination, filtering by time window, actor, event type, and aggregate identifier. Use this tool to query the audit trail; use getAuditEvent instead when the event id is known, and requestAuditExport for bulk extraction as a file. Preconditions: the caller must hold security:audit:view; when both bounds are given, fromDate must be strictly before toDate (fromDate inclusive, toDate exclusive). Required inputs: none are mandatory; fromDate, toDate, actorId, eventType, and aggregateId are applied as filters, while workorderId, movementId, productId, sku, correlationId, reasonCode, pageToken, and locationIds are accepted for contract compatibility but not yet applied. No events are emitted and no state changes; this is a read-only projection. Returns 400 when fromDate is not before toDate or a parameter fails type conversion. 
+     * Search Audit Events With Filters
      */
     async searchAuditEventsRaw(requestParameters: SearchAuditEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageAuditLogEventDto>> {
         const queryParameters: any = {};
@@ -373,47 +408,12 @@ export class AuditApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches audit events using rich filter criteria with pagination support.
-     * Search audit events
+     * Searches audit events with pagination, filtering by time window, actor, event type, and aggregate identifier. Use this tool to query the audit trail; use getAuditEvent instead when the event id is known, and requestAuditExport for bulk extraction as a file. Preconditions: the caller must hold security:audit:view; when both bounds are given, fromDate must be strictly before toDate (fromDate inclusive, toDate exclusive). Required inputs: none are mandatory; fromDate, toDate, actorId, eventType, and aggregateId are applied as filters, while workorderId, movementId, productId, sku, correlationId, reasonCode, pageToken, and locationIds are accepted for contract compatibility but not yet applied. No events are emitted and no state changes; this is a read-only projection. Returns 400 when fromDate is not before toDate or a parameter fails type conversion. 
+     * Search Audit Events With Filters
      */
     async searchAuditEvents(requestParameters: SearchAuditEventsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageAuditLogEventDto> {
         const response = await this.searchAuditEventsRaw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * Audit events are immutable and cannot be modified after creation.
-     * Update audit events not allowed
-     */
-    async updateNotAllowedRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/audit/events/**`,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Audit events are immutable and cannot be modified after creation.
-     * Update audit events not allowed
-     */
-    async updateNotAllowed(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.updateNotAllowedRaw(initOverrides);
     }
 
 }

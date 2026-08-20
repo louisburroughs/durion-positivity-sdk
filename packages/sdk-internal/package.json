@@ -1,6 +1,5 @@
 {
   "name": "@durion-sdk/internal",
-  "private": true,
   "version": "0.1.0-alpha",
   "description": "OpenAPI client for @durion-sdk/internal",
   "author": "OpenAPI-Generator",

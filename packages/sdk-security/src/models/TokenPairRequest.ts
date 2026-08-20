@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface TokenPairRequest {
     /**
-     * User identifier (subject claim)
-     * @type {string}
-     * @memberof TokenPairRequest
-     */
-    subject: string;
-    /**
      * Optional set of role names to include in token
      * @type {Set<string>}
      * @memberof TokenPairRequest
      */
     roles?: Set<string>;
+    /**
+     * User identifier (subject claim)
+     * @type {string}
+     * @memberof TokenPairRequest
+     */
+    subject: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function TokenPairRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'subject': json['subject'],
         'roles': json['roles'] == null ? undefined : json['roles'],
+        'subject': json['subject'],
     };
 }
 
@@ -62,8 +62,8 @@ export function TokenPairRequestToJSON(value?: TokenPairRequest | null): any {
     }
     return {
         
-        'subject': value['subject'],
         'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
+        'subject': value['subject'],
     };
 }
 

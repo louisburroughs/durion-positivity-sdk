@@ -20,23 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface ReceivedLineItem {
     /**
+     * Product description
+     * @type {string}
+     * @memberof ReceivedLineItem
+     */
+    description: string;
+    /**
      * 
      * @type {boolean}
      * @memberof ReceivedLineItem
      */
     inventoryItem?: boolean;
     /**
+     * Is this an inventory item (true) or expense item (false)
+     * @type {boolean}
+     * @memberof ReceivedLineItem
+     */
+    isInventoryItem?: boolean;
+    /**
      * Product/SKU UUID
      * @type {string}
      * @memberof ReceivedLineItem
      */
     productId: string;
-    /**
-     * Product description
-     * @type {string}
-     * @memberof ReceivedLineItem
-     */
-    description: string;
     /**
      * Quantity received
      * @type {number}
@@ -49,20 +55,14 @@ export interface ReceivedLineItem {
      * @memberof ReceivedLineItem
      */
     unitPrice: number;
-    /**
-     * Is this an inventory item (true) or expense item (false)
-     * @type {boolean}
-     * @memberof ReceivedLineItem
-     */
-    isInventoryItem?: boolean;
 }
 
 /**
  * Check if a given object implements the ReceivedLineItem interface.
  */
 export function instanceOfReceivedLineItem(value: object): boolean {
-    if (!('productId' in value)) return false;
     if (!('description' in value)) return false;
+    if (!('productId' in value)) return false;
     if (!('quantity' in value)) return false;
     if (!('unitPrice' in value)) return false;
     return true;
@@ -78,12 +78,12 @@ export function ReceivedLineItemFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'inventoryItem': json['inventoryItem'] == null ? undefined : json['inventoryItem'],
-        'productId': json['productId'],
         'description': json['description'],
+        'inventoryItem': json['inventoryItem'] == null ? undefined : json['inventoryItem'],
+        'isInventoryItem': json['isInventoryItem'] == null ? undefined : json['isInventoryItem'],
+        'productId': json['productId'],
         'quantity': json['quantity'],
         'unitPrice': json['unitPrice'],
-        'isInventoryItem': json['isInventoryItem'] == null ? undefined : json['isInventoryItem'],
     };
 }
 
@@ -93,12 +93,12 @@ export function ReceivedLineItemToJSON(value?: ReceivedLineItem | null): any {
     }
     return {
         
-        'inventoryItem': value['inventoryItem'],
-        'productId': value['productId'],
         'description': value['description'],
+        'inventoryItem': value['inventoryItem'],
+        'isInventoryItem': value['isInventoryItem'],
+        'productId': value['productId'],
         'quantity': value['quantity'],
         'unitPrice': value['unitPrice'],
-        'isInventoryItem': value['isInventoryItem'],
     };
 }
 

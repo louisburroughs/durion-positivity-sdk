@@ -14,83 +14,140 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response representing a single line on a sales order
  * @export
  * @interface SalesOrderLineResponse
  */
 export interface SalesOrderLineResponse {
     /**
-     * 
+     * Customer-visible line note
      * @type {string}
      * @memberof SalesOrderLineResponse
      */
-    orderLineId?: string;
+    customerNote?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof SalesOrderLineResponse
-     */
-    itemSku?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SalesOrderLineResponse
-     */
-    itemDescription?: string;
-    /**
-     * 
+     * Line discount plus this line's pro-rata share of the order discount
      * @type {number}
      * @memberof SalesOrderLineResponse
      */
-    quantity?: number;
+    discountAmount?: number;
     /**
-     * 
+     * Line-level discount percent (0-100)
      * @type {number}
      * @memberof SalesOrderLineResponse
      */
-    unitPrice?: number;
+    discountPercent?: number;
     /**
-     * 
+     * Fulfillment status of the line
      * @type {string}
      * @memberof SalesOrderLineResponse
      */
     fulfillmentStatus?: string;
     /**
-     * 
+     * Shop-internal line note
+     * @type {string}
+     * @memberof SalesOrderLineResponse
+     */
+    internalNote?: string;
+    /**
+     * Human-readable description of the line item
+     * @type {string}
+     * @memberof SalesOrderLineResponse
+     */
+    itemDescription?: string;
+    /**
+     * Stock keeping unit identifying the line item
+     * @type {string}
+     * @memberof SalesOrderLineResponse
+     */
+    itemSku: string;
+    /**
+     * Extended amount post-line-discount, pre-order-discount, pre-tax
+     * @type {number}
+     * @memberof SalesOrderLineResponse
+     */
+    lineSubtotal?: number;
+    /**
+     * lineSubtotal minus order-discount allocation plus taxAmount
+     * @type {number}
+     * @memberof SalesOrderLineResponse
+     */
+    lineTotal?: number;
+    /**
+     * Unique identifier of the order line
+     * @type {string}
+     * @memberof SalesOrderLineResponse
+     */
+    orderLineId: string;
+    /**
+     * Source of the line price (e.g. CATALOG, MANUAL, OVERRIDE)
      * @type {string}
      * @memberof SalesOrderLineResponse
      */
     priceSource?: string;
     /**
-     * 
+     * Quantity of the item on the line
+     * @type {number}
+     * @memberof SalesOrderLineResponse
+     */
+    quantity: number;
+    /**
+     * Reason code associated with a manual price or special handling
      * @type {string}
      * @memberof SalesOrderLineResponse
      */
     reasonCode?: string;
     /**
-     * 
-     * @type {string}
+     * Explicit source-document returnability flag (imported lines only; null for counter lines)
+     * @type {boolean}
      * @memberof SalesOrderLineResponse
      */
-    sourceType?: string;
+    returnable?: boolean;
     /**
-     * 
+     * Captured lot/serial numbers for tracked products
+     * @type {Array<string>}
+     * @memberof SalesOrderLineResponse
+     */
+    serialNumbers?: Array<string>;
+    /**
+     * Identifier of the originating source record
      * @type {string}
      * @memberof SalesOrderLineResponse
      */
     sourceId?: string;
     /**
-     * 
+     * Identifier of the originating source line
      * @type {string}
      * @memberof SalesOrderLineResponse
      */
     sourceLineId?: string;
+    /**
+     * Type classification of the line's originating source
+     * @type {string}
+     * @memberof SalesOrderLineResponse
+     */
+    sourceType?: string;
+    /**
+     * Tax for this line (pos-tax authoritative)
+     * @type {number}
+     * @memberof SalesOrderLineResponse
+     */
+    taxAmount?: number;
+    /**
+     * Unit price applied to the line
+     * @type {number}
+     * @memberof SalesOrderLineResponse
+     */
+    unitPrice?: number;
 }
 
 /**
  * Check if a given object implements the SalesOrderLineResponse interface.
  */
 export function instanceOfSalesOrderLineResponse(value: object): boolean {
+    if (!('itemSku' in value)) return false;
+    if (!('orderLineId' in value)) return false;
+    if (!('quantity' in value)) return false;
     return true;
 }
 
@@ -104,17 +161,26 @@ export function SalesOrderLineResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'orderLineId': json['orderLineId'] == null ? undefined : json['orderLineId'],
-        'itemSku': json['itemSku'] == null ? undefined : json['itemSku'],
-        'itemDescription': json['itemDescription'] == null ? undefined : json['itemDescription'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
+        'customerNote': json['customerNote'] == null ? undefined : json['customerNote'],
+        'discountAmount': json['discountAmount'] == null ? undefined : json['discountAmount'],
+        'discountPercent': json['discountPercent'] == null ? undefined : json['discountPercent'],
         'fulfillmentStatus': json['fulfillmentStatus'] == null ? undefined : json['fulfillmentStatus'],
+        'internalNote': json['internalNote'] == null ? undefined : json['internalNote'],
+        'itemDescription': json['itemDescription'] == null ? undefined : json['itemDescription'],
+        'itemSku': json['itemSku'],
+        'lineSubtotal': json['lineSubtotal'] == null ? undefined : json['lineSubtotal'],
+        'lineTotal': json['lineTotal'] == null ? undefined : json['lineTotal'],
+        'orderLineId': json['orderLineId'],
         'priceSource': json['priceSource'] == null ? undefined : json['priceSource'],
+        'quantity': json['quantity'],
         'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'sourceType': json['sourceType'] == null ? undefined : json['sourceType'],
+        'returnable': json['returnable'] == null ? undefined : json['returnable'],
+        'serialNumbers': json['serialNumbers'] == null ? undefined : json['serialNumbers'],
         'sourceId': json['sourceId'] == null ? undefined : json['sourceId'],
         'sourceLineId': json['sourceLineId'] == null ? undefined : json['sourceLineId'],
+        'sourceType': json['sourceType'] == null ? undefined : json['sourceType'],
+        'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
+        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
     };
 }
 
@@ -124,17 +190,26 @@ export function SalesOrderLineResponseToJSON(value?: SalesOrderLineResponse | nu
     }
     return {
         
-        'orderLineId': value['orderLineId'],
-        'itemSku': value['itemSku'],
-        'itemDescription': value['itemDescription'],
-        'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
+        'customerNote': value['customerNote'],
+        'discountAmount': value['discountAmount'],
+        'discountPercent': value['discountPercent'],
         'fulfillmentStatus': value['fulfillmentStatus'],
+        'internalNote': value['internalNote'],
+        'itemDescription': value['itemDescription'],
+        'itemSku': value['itemSku'],
+        'lineSubtotal': value['lineSubtotal'],
+        'lineTotal': value['lineTotal'],
+        'orderLineId': value['orderLineId'],
         'priceSource': value['priceSource'],
+        'quantity': value['quantity'],
         'reasonCode': value['reasonCode'],
-        'sourceType': value['sourceType'],
+        'returnable': value['returnable'],
+        'serialNumbers': value['serialNumbers'],
         'sourceId': value['sourceId'],
         'sourceLineId': value['sourceLineId'],
+        'sourceType': value['sourceType'],
+        'taxAmount': value['taxAmount'],
+        'unitPrice': value['unitPrice'],
     };
 }
 

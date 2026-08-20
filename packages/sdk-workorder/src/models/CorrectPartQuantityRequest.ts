@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface CorrectPartQuantityRequest {
     /**
-     * Workorder part identifier
-     * @type {string}
-     * @memberof CorrectPartQuantityRequest
-     */
-    workorderPartId: string;
-    /**
      * Corrected authorized quantity
      * @type {number}
      * @memberof CorrectPartQuantityRequest
      */
     newQuantity: number;
+    /**
+     * Optional correction notes
+     * @type {string}
+     * @memberof CorrectPartQuantityRequest
+     */
+    notes?: string;
     /**
      * Audit reason for correction
      * @type {string}
@@ -38,20 +38,26 @@ export interface CorrectPartQuantityRequest {
      */
     reason: string;
     /**
-     * Optional correction notes
+     * Unit newQuantity is expressed in. Omit to leave the part's existing unit unchanged. Converted to base and validated against the product's catalog divisibility.
      * @type {string}
      * @memberof CorrectPartQuantityRequest
      */
-    notes?: string;
+    uomCode?: string;
+    /**
+     * Workorder part identifier
+     * @type {string}
+     * @memberof CorrectPartQuantityRequest
+     */
+    workorderPartId: string;
 }
 
 /**
  * Check if a given object implements the CorrectPartQuantityRequest interface.
  */
 export function instanceOfCorrectPartQuantityRequest(value: object): boolean {
-    if (!('workorderPartId' in value)) return false;
     if (!('newQuantity' in value)) return false;
     if (!('reason' in value)) return false;
+    if (!('workorderPartId' in value)) return false;
     return true;
 }
 
@@ -65,10 +71,11 @@ export function CorrectPartQuantityRequestFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'workorderPartId': json['workorderPartId'],
         'newQuantity': json['newQuantity'],
-        'reason': json['reason'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'reason': json['reason'],
+        'uomCode': json['uomCode'] == null ? undefined : json['uomCode'],
+        'workorderPartId': json['workorderPartId'],
     };
 }
 
@@ -78,10 +85,11 @@ export function CorrectPartQuantityRequestToJSON(value?: CorrectPartQuantityRequ
     }
     return {
         
-        'workorderPartId': value['workorderPartId'],
         'newQuantity': value['newQuantity'],
-        'reason': value['reason'],
         'notes': value['notes'],
+        'reason': value['reason'],
+        'uomCode': value['uomCode'],
+        'workorderPartId': value['workorderPartId'],
     };
 }
 

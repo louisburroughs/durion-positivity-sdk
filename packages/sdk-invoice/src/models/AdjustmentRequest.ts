@@ -14,35 +14,41 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to apply a monetary adjustment to an invoice
  * @export
  * @interface AdjustmentRequest
  */
 export interface AdjustmentRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentRequest
-     */
-    type: AdjustmentRequestTypeEnum;
-    /**
-     * 
+     * Adjustment amount (must be greater than zero)
      * @type {number}
      * @memberof AdjustmentRequest
      */
     amount: number;
     /**
-     * 
+     * Identifier of the actor who authorized the adjustment
+     * @type {string}
+     * @memberof AdjustmentRequest
+     */
+    authorizedBy: string;
+    /**
+     * Optional correlation id to an external record (e.g. a warranty claim code)
+     * @type {string}
+     * @memberof AdjustmentRequest
+     */
+    externalReference?: string;
+    /**
+     * Business reason justifying the adjustment
      * @type {string}
      * @memberof AdjustmentRequest
      */
     reason: string;
     /**
-     * 
+     * Type of adjustment applied to the invoice
      * @type {string}
      * @memberof AdjustmentRequest
      */
-    authorizedBy: string;
+    type: AdjustmentRequestTypeEnum;
 }
 
 /**
@@ -52,7 +58,8 @@ export interface AdjustmentRequest {
 export enum AdjustmentRequestTypeEnum {
     Discount = 'DISCOUNT',
     Fee = 'FEE',
-    Correction = 'CORRECTION'
+    Correction = 'CORRECTION',
+    Warranty = 'WARRANTY'
 }
 
 
@@ -60,10 +67,10 @@ export enum AdjustmentRequestTypeEnum {
  * Check if a given object implements the AdjustmentRequest interface.
  */
 export function instanceOfAdjustmentRequest(value: object): boolean {
-    if (!('type' in value)) return false;
     if (!('amount' in value)) return false;
-    if (!('reason' in value)) return false;
     if (!('authorizedBy' in value)) return false;
+    if (!('reason' in value)) return false;
+    if (!('type' in value)) return false;
     return true;
 }
 
@@ -77,10 +84,11 @@ export function AdjustmentRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'type': json['type'],
         'amount': json['amount'],
-        'reason': json['reason'],
         'authorizedBy': json['authorizedBy'],
+        'externalReference': json['externalReference'] == null ? undefined : json['externalReference'],
+        'reason': json['reason'],
+        'type': json['type'],
     };
 }
 
@@ -90,10 +98,11 @@ export function AdjustmentRequestToJSON(value?: AdjustmentRequest | null): any {
     }
     return {
         
-        'type': value['type'],
         'amount': value['amount'],
-        'reason': value['reason'],
         'authorizedBy': value['authorizedBy'],
+        'externalReference': value['externalReference'],
+        'reason': value['reason'],
+        'type': value['type'],
     };
 }
 

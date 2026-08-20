@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Location type classification reference
  * @export
  * @interface LocationTypeDTO
  */
 export interface LocationTypeDTO {
     /**
-     * 
+     * Description of the location type
+     * @type {string}
+     * @memberof LocationTypeDTO
+     */
+    description?: string;
+    /**
+     * Unique identifier of the location type
      * @type {string}
      * @memberof LocationTypeDTO
      */
     id?: string;
     /**
-     * 
+     * Name of the location type
      * @type {string}
      * @memberof LocationTypeDTO
      */
     name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationTypeDTO
-     */
-    description?: string;
 }
 
 /**
@@ -56,9 +56,9 @@ export function LocationTypeDTOFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
+        'description': json['description'] == null ? undefined : json['description'],
         'id': json['id'] == null ? undefined : json['id'],
         'name': json['name'] == null ? undefined : json['name'],
-        'description': json['description'] == null ? undefined : json['description'],
     };
 }
 
@@ -68,9 +68,9 @@ export function LocationTypeDTOToJSON(value?: LocationTypeDTO | null): any {
     }
     return {
         
+        'description': value['description'],
         'id': value['id'],
         'name': value['name'],
-        'description': value['description'],
     };
 }
 

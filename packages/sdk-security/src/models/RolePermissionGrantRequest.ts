@@ -14,23 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to grant or revoke a single permission on a role
  * @export
  * @interface RolePermissionGrantRequest
  */
 export interface RolePermissionGrantRequest {
     /**
-     * 
+     * Permission key in format domain:resource:action
      * @type {string}
      * @memberof RolePermissionGrantRequest
      */
-    permission?: string;
+    permission: string;
 }
 
 /**
  * Check if a given object implements the RolePermissionGrantRequest interface.
  */
 export function instanceOfRolePermissionGrantRequest(value: object): boolean {
+    if (!('permission' in value)) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function RolePermissionGrantRequestFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'permission': json['permission'] == null ? undefined : json['permission'],
+        'permission': json['permission'],
     };
 }
 

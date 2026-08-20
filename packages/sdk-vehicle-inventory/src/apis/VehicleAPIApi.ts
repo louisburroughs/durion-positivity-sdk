@@ -25,36 +25,36 @@ import {
     VehicleLegacyResponseToJSON,
 } from '../models/index';
 
-interface CreateVehicleRequest {
+export interface CreateVehicleLegacyRequest {
     vehicleLegacyRequest: VehicleLegacyRequest;
 }
 
-export interface CreateVehicleByVINRequest {
+export interface CreateVehicleLegacyByVinRequest {
     vehicleLegacyRequest: VehicleLegacyRequest;
 }
 
-export interface DeleteVehicleRequest {
+export interface DeleteVehicleLegacyRequest {
     id: string;
 }
 
-export interface DeleteVehicleByVINRequest {
+export interface DeleteVehicleLegacyByVinRequest {
     vin: string;
 }
 
-export interface GetVehicleRequest {
+export interface GetVehicleLegacyRequest {
     id: string;
 }
 
-export interface GetVehicleByVINRequest {
+export interface GetVehicleLegacyByVinRequest {
     vin: string;
 }
 
-interface UpdateVehicleRequest {
+export interface UpdateVehicleLegacyRequest {
     id: string;
     vehicleLegacyRequest: VehicleLegacyRequest;
 }
 
-export interface UpdateVehicleByVINRequest {
+export interface UpdateVehicleLegacyByVinRequest {
     vin: string;
     vehicleLegacyRequest: VehicleLegacyRequest;
 }
@@ -65,14 +65,14 @@ export interface UpdateVehicleByVINRequest {
 export class VehicleAPIApi extends runtime.BaseAPI {
 
     /**
-     * Add a new vehicle to the inventory.
+     * Creates a vehicle in the legacy vehicle store, persisting make, model, year and an optional VIN without enforcing VIN uniqueness. Use this tool only when maintaining the legacy CRUD surface under /v1/vehicles-legacy; do not use it for registry vehicles, which createVehicle owns and which replicate to consumer services. Preconditions: none beyond an authenticated caller; duplicate VINs are accepted because the legacy store has no uniqueness check. Required inputs: make, model and year (year between 1886 and the current year plus one); vin is optional on this operation but must not be blank when present, and vehicleType is optional and limited to CAR, VAN, COMMERCIAL_TRUCK, PASSENGER_TRUCK or TRUCK. Emits a VEHICLE_CREATE event; no replica fact is published, because the legacy store does not feed the vehicle.events.v1 stream. Returns 200 with the stored vehicle, and 400 with a VALIDATION_ERROR ApiError when make, model or year is missing, year is out of range, vin is blank or vehicleType is unsupported. 
      * Create a new vehicle
      */
-    async createVehicleRaw(requestParameters: CreateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
+    async createVehicleLegacyRaw(requestParameters: CreateVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
         if (requestParameters['vehicleLegacyRequest'] == null) {
             throw new runtime.RequiredError(
                 'vehicleLegacyRequest',
-                'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicle().'
+                'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicleLegacy().'
             );
         }
 
@@ -102,23 +102,23 @@ export class VehicleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Add a new vehicle to the inventory.
+     * Creates a vehicle in the legacy vehicle store, persisting make, model, year and an optional VIN without enforcing VIN uniqueness. Use this tool only when maintaining the legacy CRUD surface under /v1/vehicles-legacy; do not use it for registry vehicles, which createVehicle owns and which replicate to consumer services. Preconditions: none beyond an authenticated caller; duplicate VINs are accepted because the legacy store has no uniqueness check. Required inputs: make, model and year (year between 1886 and the current year plus one); vin is optional on this operation but must not be blank when present, and vehicleType is optional and limited to CAR, VAN, COMMERCIAL_TRUCK, PASSENGER_TRUCK or TRUCK. Emits a VEHICLE_CREATE event; no replica fact is published, because the legacy store does not feed the vehicle.events.v1 stream. Returns 200 with the stored vehicle, and 400 with a VALIDATION_ERROR ApiError when make, model or year is missing, year is out of range, vin is blank or vehicleType is unsupported. 
      * Create a new vehicle
      */
-    async createVehicle(requestParameters: CreateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
-        const response = await this.createVehicleRaw(requestParameters, initOverrides);
+    async createVehicleLegacy(requestParameters: CreateVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
+        const response = await this.createVehicleLegacyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Add a new vehicle to the inventory using its VIN.
+     * Creates a vehicle in the legacy vehicle store with the VIN treated as mandatory, trimming the supplied value before storing it. Use this tool when the VIN is the identifying field for a legacy record; do not use createVehicleLegacy, which accepts a missing VIN, and do not use createVehicle, which writes the registry store. Preconditions: none beyond an authenticated caller; the VIN is not checked for uniqueness or 17-character format by this legacy surface. Required inputs: make, model, year and vin in the body (year between 1886 and the current year plus one); vehicleType is optional and limited to CAR, VAN, COMMERCIAL_TRUCK, PASSENGER_TRUCK or TRUCK. Emits a VEHICLE_CREATE event; no replica fact is published from the legacy surface. Returns 200 with the stored vehicle, and 400 with a VALIDATION_ERROR ApiError when make, model, year or vin is missing or invalid. 
      * Create vehicle by VIN
      */
-    async createVehicleByVINRaw(requestParameters: CreateVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
+    async createVehicleLegacyByVinRaw(requestParameters: CreateVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
         if (requestParameters['vehicleLegacyRequest'] == null) {
             throw new runtime.RequiredError(
                 'vehicleLegacyRequest',
-                'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicleByVIN().'
+                'Required parameter "vehicleLegacyRequest" was null or undefined when calling createVehicleLegacyByVin().'
             );
         }
 
@@ -148,23 +148,23 @@ export class VehicleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Add a new vehicle to the inventory using its VIN.
+     * Creates a vehicle in the legacy vehicle store with the VIN treated as mandatory, trimming the supplied value before storing it. Use this tool when the VIN is the identifying field for a legacy record; do not use createVehicleLegacy, which accepts a missing VIN, and do not use createVehicle, which writes the registry store. Preconditions: none beyond an authenticated caller; the VIN is not checked for uniqueness or 17-character format by this legacy surface. Required inputs: make, model, year and vin in the body (year between 1886 and the current year plus one); vehicleType is optional and limited to CAR, VAN, COMMERCIAL_TRUCK, PASSENGER_TRUCK or TRUCK. Emits a VEHICLE_CREATE event; no replica fact is published from the legacy surface. Returns 200 with the stored vehicle, and 400 with a VALIDATION_ERROR ApiError when make, model, year or vin is missing or invalid. 
      * Create vehicle by VIN
      */
-    async createVehicleByVIN(requestParameters: CreateVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
-        const response = await this.createVehicleByVINRaw(requestParameters, initOverrides);
+    async createVehicleLegacyByVin(requestParameters: CreateVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
+        const response = await this.createVehicleLegacyByVinRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Delete a vehicle from the inventory by its ID.
+     * Permanently deletes a vehicle from the legacy vehicle store; the row is removed rather than deactivated. Use this tool to purge a legacy record by id; do not use deleteVehicle, which soft-deactivates a registry vehicle and keeps it readable. Preconditions: the vehicle must exist in the legacy store; deletion is not recoverable through this API. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a VEHICLE_DELETE event; no replica fact is published from the legacy surface. Returns 204 on successful deletion, and 404 with an empty body when the id is unknown. 
      * Delete vehicle by ID
      */
-    async deleteVehicleRaw(requestParameters: DeleteVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteVehicleLegacyRaw(requestParameters: DeleteVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling deleteVehicle().'
+                'Required parameter "id" was null or undefined when calling deleteVehicleLegacy().'
             );
         }
 
@@ -191,22 +191,22 @@ export class VehicleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a vehicle from the inventory by its ID.
+     * Permanently deletes a vehicle from the legacy vehicle store; the row is removed rather than deactivated. Use this tool to purge a legacy record by id; do not use deleteVehicle, which soft-deactivates a registry vehicle and keeps it readable. Preconditions: the vehicle must exist in the legacy store; deletion is not recoverable through this API. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a VEHICLE_DELETE event; no replica fact is published from the legacy surface. Returns 204 on successful deletion, and 404 with an empty body when the id is unknown. 
      * Delete vehicle by ID
      */
-    async deleteVehicle(requestParameters: DeleteVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteVehicleRaw(requestParameters, initOverrides);
+    async deleteVehicleLegacy(requestParameters: DeleteVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteVehicleLegacyRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Delete a vehicle from the inventory by its VIN.
+     * Permanently deletes a vehicle from the legacy vehicle store located by VIN; the row is removed rather than deactivated. Use this tool to purge a legacy record when only the VIN is known; use deleteVehicleLegacy instead when the id is known, and do not use deleteVehicle, which soft-deactivates registry vehicles. Preconditions: a vehicle with the trimmed VIN must exist in the legacy store; deletion is not recoverable through this API. Required inputs: vin as a non-blank path parameter; there is no request body. Emits a VEHICLE_DELETE event; no replica fact is published from the legacy surface. Returns 204 on successful deletion, and 404 with an empty body when no legacy vehicle carries the VIN. 
      * Delete vehicle by VIN
      */
-    async deleteVehicleByVINRaw(requestParameters: DeleteVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteVehicleLegacyByVinRaw(requestParameters: DeleteVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['vin'] == null) {
             throw new runtime.RequiredError(
                 'vin',
-                'Required parameter "vin" was null or undefined when calling deleteVehicleByVIN().'
+                'Required parameter "vin" was null or undefined when calling deleteVehicleLegacyByVin().'
             );
         }
 
@@ -233,18 +233,104 @@ export class VehicleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete a vehicle from the inventory by its VIN.
+     * Permanently deletes a vehicle from the legacy vehicle store located by VIN; the row is removed rather than deactivated. Use this tool to purge a legacy record when only the VIN is known; use deleteVehicleLegacy instead when the id is known, and do not use deleteVehicle, which soft-deactivates registry vehicles. Preconditions: a vehicle with the trimmed VIN must exist in the legacy store; deletion is not recoverable through this API. Required inputs: vin as a non-blank path parameter; there is no request body. Emits a VEHICLE_DELETE event; no replica fact is published from the legacy surface. Returns 204 on successful deletion, and 404 with an empty body when no legacy vehicle carries the VIN. 
      * Delete vehicle by VIN
      */
-    async deleteVehicleByVIN(requestParameters: DeleteVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteVehicleByVINRaw(requestParameters, initOverrides);
+    async deleteVehicleLegacyByVin(requestParameters: DeleteVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteVehicleLegacyByVinRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve a list of all vehicles in the inventory.
+     * Returns a single vehicle from the legacy vehicle store by its UUID primary key. Use this tool when the legacy vehicle id is already known; use getVehicleLegacyByVin instead when only the VIN is known, and do not use getVehicle, which reads the separate registry store. Preconditions: the vehicle must exist in the legacy store; legacy deletes are hard deletes, so a deleted vehicle is gone rather than flagged inactive. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no legacy vehicle exists for the supplied id. 
+     * Get vehicle by ID
+     */
+    async getVehicleLegacyRaw(requestParameters: GetVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling getVehicleLegacy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleLegacyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a single vehicle from the legacy vehicle store by its UUID primary key. Use this tool when the legacy vehicle id is already known; use getVehicleLegacyByVin instead when only the VIN is known, and do not use getVehicle, which reads the separate registry store. Preconditions: the vehicle must exist in the legacy store; legacy deletes are hard deletes, so a deleted vehicle is gone rather than flagged inactive. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no legacy vehicle exists for the supplied id. 
+     * Get vehicle by ID
+     */
+    async getVehicleLegacy(requestParameters: GetVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
+        const response = await this.getVehicleLegacyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a single vehicle from the legacy vehicle store by VIN, trimming the supplied value before the lookup. Use this tool when only the VIN of a legacy record is known; use getVehicleLegacy instead when the id is known, and do not use getVehicleByVin, which reads the registry store with normalized VINs. Preconditions: the vehicle must exist in the legacy store; the lookup is an exact match on the trimmed VIN, not a normalized or partial match. Required inputs: vin as a non-blank path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no legacy vehicle carries the VIN, and 400 with a VALIDATION_ERROR ApiError when the VIN is blank. 
+     * Get vehicle by VIN
+     */
+    async getVehicleLegacyByVinRaw(requestParameters: GetVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
+        if (requestParameters['vin'] == null) {
+            throw new runtime.RequiredError(
+                'vin',
+                'Required parameter "vin" was null or undefined when calling getVehicleLegacyByVin().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleLegacyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a single vehicle from the legacy vehicle store by VIN, trimming the supplied value before the lookup. Use this tool when only the VIN of a legacy record is known; use getVehicleLegacy instead when the id is known, and do not use getVehicleByVin, which reads the registry store with normalized VINs. Preconditions: the vehicle must exist in the legacy store; the lookup is an exact match on the trimmed VIN, not a normalized or partial match. Required inputs: vin as a non-blank path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no legacy vehicle carries the VIN, and 400 with a VALIDATION_ERROR ApiError when the VIN is blank. 
+     * Get vehicle by VIN
+     */
+    async getVehicleLegacyByVin(requestParameters: GetVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
+        const response = await this.getVehicleLegacyByVinRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every vehicle in the legacy vehicle store as a flat list with no paging or filtering. Use this tool to enumerate the legacy store; do not use searchVehicles, which queries the registry store, and prefer getVehicleLegacy when a specific id is already known. Preconditions: none; an empty store simply yields an empty list. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 in all cases, including an empty JSON array when the store holds no vehicles. 
      * Get all vehicles
      */
-    async getAllVehiclesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VehicleLegacyResponse>>> {
+    async listVehiclesLegacyRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VehicleLegacyResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -268,116 +354,30 @@ export class VehicleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a list of all vehicles in the inventory.
+     * Returns every vehicle in the legacy vehicle store as a flat list with no paging or filtering. Use this tool to enumerate the legacy store; do not use searchVehicles, which queries the registry store, and prefer getVehicleLegacy when a specific id is already known. Preconditions: none; an empty store simply yields an empty list. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 in all cases, including an empty JSON array when the store holds no vehicles. 
      * Get all vehicles
      */
-    async getAllVehicles(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VehicleLegacyResponse>> {
-        const response = await this.getAllVehiclesRaw(initOverrides);
+    async listVehiclesLegacy(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VehicleLegacyResponse>> {
+        const response = await this.listVehiclesLegacyRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve a vehicle by its unique ID.
-     * Get vehicle by ID
-     */
-    async getVehicleRaw(requestParameters: GetVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling getVehicle().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleLegacyResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve a vehicle by its unique ID.
-     * Get vehicle by ID
-     */
-    async getVehicle(requestParameters: GetVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
-        const response = await this.getVehicleRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve a vehicle by its VIN.
-     * Get vehicle by VIN
-     */
-    async getVehicleByVINRaw(requestParameters: GetVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
-        if (requestParameters['vin'] == null) {
-            throw new runtime.RequiredError(
-                'vin',
-                'Required parameter "vin" was null or undefined when calling getVehicleByVIN().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/vehicles-legacy/vin/{vin}`.replace(`{${"vin"}}`, encodeURIComponent(String(requestParameters['vin']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleLegacyResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve a vehicle by its VIN.
-     * Get vehicle by VIN
-     */
-    async getVehicleByVIN(requestParameters: GetVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
-        const response = await this.getVehicleByVINRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Update an existing vehicle\'s details by its ID.
+     * Replaces the core fields of an existing legacy vehicle identified by its UUID, applying make, model, year, VIN and vehicleType from the request. Use this tool to correct a legacy record by id; use updateVehicleLegacyByVin instead when only the VIN is known, and do not use updateVehicle, which patches registry vehicles field by field. Preconditions: the vehicle must already exist in the legacy store; the request is a full replacement of core fields rather than a partial patch. Required inputs: id (UUID) as a path parameter plus make, model and year in the body (year between 1886 and the current year plus one); vin and vehicleType are optional. Emits a VEHICLE_UPDATE event; no replica fact is published from the legacy surface. Returns 404 with an empty body when the id is unknown, and 400 with a VALIDATION_ERROR ApiError when make, model or year is missing or invalid. 
      * Update vehicle by ID
      */
-    async updateVehicleRaw(requestParameters: UpdateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
+    async updateVehicleLegacyRaw(requestParameters: UpdateVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling updateVehicle().'
+                'Required parameter "id" was null or undefined when calling updateVehicleLegacy().'
             );
         }
 
         if (requestParameters['vehicleLegacyRequest'] == null) {
             throw new runtime.RequiredError(
                 'vehicleLegacyRequest',
-                'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicle().'
+                'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicleLegacy().'
             );
         }
 
@@ -407,30 +407,30 @@ export class VehicleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing vehicle\'s details by its ID.
+     * Replaces the core fields of an existing legacy vehicle identified by its UUID, applying make, model, year, VIN and vehicleType from the request. Use this tool to correct a legacy record by id; use updateVehicleLegacyByVin instead when only the VIN is known, and do not use updateVehicle, which patches registry vehicles field by field. Preconditions: the vehicle must already exist in the legacy store; the request is a full replacement of core fields rather than a partial patch. Required inputs: id (UUID) as a path parameter plus make, model and year in the body (year between 1886 and the current year plus one); vin and vehicleType are optional. Emits a VEHICLE_UPDATE event; no replica fact is published from the legacy surface. Returns 404 with an empty body when the id is unknown, and 400 with a VALIDATION_ERROR ApiError when make, model or year is missing or invalid. 
      * Update vehicle by ID
      */
-    async updateVehicle(requestParameters: UpdateVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
-        const response = await this.updateVehicleRaw(requestParameters, initOverrides);
+    async updateVehicleLegacy(requestParameters: UpdateVehicleLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
+        const response = await this.updateVehicleLegacyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Update an existing vehicle\'s details by its VIN.
+     * Replaces the core fields of an existing legacy vehicle located by VIN, applying make, model, year and vehicleType from the request. Use this tool to correct a legacy record when only the VIN is known; use updateVehicleLegacy instead when the id is known, and do not use updateVehicle, which patches registry vehicles. Preconditions: a vehicle with the trimmed VIN must already exist in the legacy store; the request fully replaces core fields rather than patching them. Required inputs: vin as a path parameter plus make, model and year in the body (year between 1886 and the current year plus one); vehicleType is optional. Emits a VEHICLE_UPDATE event; no replica fact is published from the legacy surface. Returns 404 with an empty body when no legacy vehicle carries the VIN, and 400 with a VALIDATION_ERROR ApiError when a required body field is missing or invalid. 
      * Update vehicle by VIN
      */
-    async updateVehicleByVINRaw(requestParameters: UpdateVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
+    async updateVehicleLegacyByVinRaw(requestParameters: UpdateVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleLegacyResponse>> {
         if (requestParameters['vin'] == null) {
             throw new runtime.RequiredError(
                 'vin',
-                'Required parameter "vin" was null or undefined when calling updateVehicleByVIN().'
+                'Required parameter "vin" was null or undefined when calling updateVehicleLegacyByVin().'
             );
         }
 
         if (requestParameters['vehicleLegacyRequest'] == null) {
             throw new runtime.RequiredError(
                 'vehicleLegacyRequest',
-                'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicleByVIN().'
+                'Required parameter "vehicleLegacyRequest" was null or undefined when calling updateVehicleLegacyByVin().'
             );
         }
 
@@ -460,11 +460,11 @@ export class VehicleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing vehicle\'s details by its VIN.
+     * Replaces the core fields of an existing legacy vehicle located by VIN, applying make, model, year and vehicleType from the request. Use this tool to correct a legacy record when only the VIN is known; use updateVehicleLegacy instead when the id is known, and do not use updateVehicle, which patches registry vehicles. Preconditions: a vehicle with the trimmed VIN must already exist in the legacy store; the request fully replaces core fields rather than patching them. Required inputs: vin as a path parameter plus make, model and year in the body (year between 1886 and the current year plus one); vehicleType is optional. Emits a VEHICLE_UPDATE event; no replica fact is published from the legacy surface. Returns 404 with an empty body when no legacy vehicle carries the VIN, and 400 with a VALIDATION_ERROR ApiError when a required body field is missing or invalid. 
      * Update vehicle by VIN
      */
-    async updateVehicleByVIN(requestParameters: UpdateVehicleByVINRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
-        const response = await this.updateVehicleByVINRaw(requestParameters, initOverrides);
+    async updateVehicleLegacyByVin(requestParameters: UpdateVehicleLegacyByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleLegacyResponse> {
+        const response = await this.updateVehicleLegacyByVinRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

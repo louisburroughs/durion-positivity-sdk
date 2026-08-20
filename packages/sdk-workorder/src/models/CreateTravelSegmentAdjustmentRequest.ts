@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload to adjust a travel segment's recorded times
  * @export
  * @interface CreateTravelSegmentAdjustmentRequest
  */
 export interface CreateTravelSegmentAdjustmentRequest {
     /**
-     * 
-     * @type {Date}
-     * @memberof CreateTravelSegmentAdjustmentRequest
-     */
-    adjustedStartAt?: Date;
-    /**
-     * 
+     * Adjusted travel segment end timestamp
      * @type {Date}
      * @memberof CreateTravelSegmentAdjustmentRequest
      */
     adjustedEndAt?: Date;
     /**
-     * 
+     * Adjusted travel segment start timestamp
+     * @type {Date}
+     * @memberof CreateTravelSegmentAdjustmentRequest
+     */
+    adjustedStartAt?: Date;
+    /**
+     * Reason justifying the travel segment time adjustment
      * @type {string}
      * @memberof CreateTravelSegmentAdjustmentRequest
      */
@@ -57,8 +57,8 @@ export function CreateTravelSegmentAdjustmentRequestFromJSONTyped(json: any, ign
     }
     return {
         
-        'adjustedStartAt': json['adjustedStartAt'] == null ? undefined : (new Date(json['adjustedStartAt'])),
         'adjustedEndAt': json['adjustedEndAt'] == null ? undefined : (new Date(json['adjustedEndAt'])),
+        'adjustedStartAt': json['adjustedStartAt'] == null ? undefined : (new Date(json['adjustedStartAt'])),
         'adjustmentReason': json['adjustmentReason'],
     };
 }
@@ -69,8 +69,8 @@ export function CreateTravelSegmentAdjustmentRequestToJSON(value?: CreateTravelS
     }
     return {
         
-        'adjustedStartAt': value['adjustedStartAt'] == null ? undefined : ((value['adjustedStartAt']).toISOString()),
         'adjustedEndAt': value['adjustedEndAt'] == null ? undefined : ((value['adjustedEndAt']).toISOString()),
+        'adjustedStartAt': value['adjustedStartAt'] == null ? undefined : ((value['adjustedStartAt']).toISOString()),
         'adjustmentReason': value['adjustmentReason'],
     };
 }

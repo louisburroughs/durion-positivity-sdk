@@ -15,15 +15,21 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   JournalEntryCreateRequest,
+  JournalEntryPostRequest,
   JournalEntryResponse,
   JournalEntryReversalRequest,
   JournalEntryTraceabilityResponse,
   PagedResponseJournalEntryResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     JournalEntryCreateRequestFromJSON,
     JournalEntryCreateRequestToJSON,
+    JournalEntryPostRequestFromJSON,
+    JournalEntryPostRequestToJSON,
     JournalEntryResponseFromJSON,
     JournalEntryResponseToJSON,
     JournalEntryReversalRequestFromJSON,
@@ -42,7 +48,7 @@ export interface GetJournalEntryRequest {
     journalEntryId: string;
 }
 
-export interface GetJournalTraceabilityRequest {
+export interface GetJournalEntryTraceabilityRequest {
     journalEntryId: string;
 }
 
@@ -50,11 +56,12 @@ export interface ListJournalEntriesRequest {
     sort: string;
     page?: number;
     size?: number;
+    entryNumber?: string;
 }
 
 export interface PostJournalEntryRequest {
     journalEntryId: string;
-    body?: object;
+    journalEntryPostRequest?: JournalEntryPostRequest;
 }
 
 export interface ReverseJournalEntryRequest {
@@ -73,8 +80,8 @@ export interface UpdateJournalEntryRequest {
 export class JournalEntriesApi extends runtime.BaseAPI {
 
     /**
-     * Create a new journal entry.
-     * Create journal entry
+     * Creates a balanced journal entry in DRAFT status; nothing hits the general ledger until the entry is posted. Use this tool to stage a manual entry for review; do not use postJournalEntry, which finalizes an existing draft, and note that system event-driven entries are created by the posting engine, not this operation. Preconditions: total debits must equal total credits across the lines, and every glAccountId must reference a GL account active on the transaction date. Required inputs: transactionDate and at least one line with glAccountId (UUID) and a debitAmount or creditAmount; description (max 500), sourceEventId, sourceEventType and dimensions are optional. Emits an ACCOUNTING_JOURNAL_ENTRY_CREATE event; GL balances are unchanged until posting. Returns 400 when the entry is unbalanced or a GL account is missing or inactive on the transaction date. 
+     * Create Journal Entry
      */
     async createJournalEntryRaw(requestParameters: CreateJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JournalEntryResponse>> {
         if (requestParameters['journalEntryCreateRequest'] == null) {
@@ -110,8 +117,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new journal entry.
-     * Create journal entry
+     * Creates a balanced journal entry in DRAFT status; nothing hits the general ledger until the entry is posted. Use this tool to stage a manual entry for review; do not use postJournalEntry, which finalizes an existing draft, and note that system event-driven entries are created by the posting engine, not this operation. Preconditions: total debits must equal total credits across the lines, and every glAccountId must reference a GL account active on the transaction date. Required inputs: transactionDate and at least one line with glAccountId (UUID) and a debitAmount or creditAmount; description (max 500), sourceEventId, sourceEventType and dimensions are optional. Emits an ACCOUNTING_JOURNAL_ENTRY_CREATE event; GL balances are unchanged until posting. Returns 400 when the entry is unbalanced or a GL account is missing or inactive on the transaction date. 
+     * Create Journal Entry
      */
     async createJournalEntry(requestParameters: CreateJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JournalEntryResponse> {
         const response = await this.createJournalEntryRaw(requestParameters, initOverrides);
@@ -119,8 +126,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a journal entry by identifier.
-     * Get journal entry
+     * Returns one journal entry with its lines, status (DRAFT, POSTED or REVERSED), entry type and posting metadata. Use this tool when the journal entry id is already known; use listJournalEntries instead when searching by entry number or browsing. Preconditions: the journal entry must exist. Required inputs: journalEntryId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 with code VALIDATION_ERROR when no journal entry exists for the supplied id (this module maps entry not-found to 400, not 404). 
+     * Get Journal Entry
      */
     async getJournalEntryRaw(requestParameters: GetJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JournalEntryResponse>> {
         if (requestParameters['journalEntryId'] == null) {
@@ -153,8 +160,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a journal entry by identifier.
-     * Get journal entry
+     * Returns one journal entry with its lines, status (DRAFT, POSTED or REVERSED), entry type and posting metadata. Use this tool when the journal entry id is already known; use listJournalEntries instead when searching by entry number or browsing. Preconditions: the journal entry must exist. Required inputs: journalEntryId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 with code VALIDATION_ERROR when no journal entry exists for the supplied id (this module maps entry not-found to 400, not 404). 
+     * Get Journal Entry
      */
     async getJournalEntry(requestParameters: GetJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JournalEntryResponse> {
         const response = await this.getJournalEntryRaw(requestParameters, initOverrides);
@@ -162,14 +169,14 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Trace a journal entry across related records.
-     * Get journal traceability
+     * Returns the traceability chain for a journal entry: its source event, posting rule set and version, and any reversal relationships. Use this tool when auditing where an entry came from; use getJournalEntry instead for the entry\'s lines and amounts. Preconditions: the journal entry must exist; system-generated entries carry source-event links while manual entries may not. Required inputs: journalEntryId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 with code VALIDATION_ERROR when no journal entry exists for the supplied id. 
+     * Get Journal Entry Traceability
      */
-    async getJournalTraceabilityRaw(requestParameters: GetJournalTraceabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JournalEntryTraceabilityResponse>> {
+    async getJournalEntryTraceabilityRaw(requestParameters: GetJournalEntryTraceabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JournalEntryTraceabilityResponse>> {
         if (requestParameters['journalEntryId'] == null) {
             throw new runtime.RequiredError(
                 'journalEntryId',
-                'Required parameter "journalEntryId" was null or undefined when calling getJournalTraceability().'
+                'Required parameter "journalEntryId" was null or undefined when calling getJournalEntryTraceability().'
             );
         }
 
@@ -196,17 +203,17 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Trace a journal entry across related records.
-     * Get journal traceability
+     * Returns the traceability chain for a journal entry: its source event, posting rule set and version, and any reversal relationships. Use this tool when auditing where an entry came from; use getJournalEntry instead for the entry\'s lines and amounts. Preconditions: the journal entry must exist; system-generated entries carry source-event links while manual entries may not. Required inputs: journalEntryId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 with code VALIDATION_ERROR when no journal entry exists for the supplied id. 
+     * Get Journal Entry Traceability
      */
-    async getJournalTraceability(requestParameters: GetJournalTraceabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JournalEntryTraceabilityResponse> {
-        const response = await this.getJournalTraceabilityRaw(requestParameters, initOverrides);
+    async getJournalEntryTraceability(requestParameters: GetJournalEntryTraceabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JournalEntryTraceabilityResponse> {
+        const response = await this.getJournalEntryTraceabilityRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve paginated journal entries.
-     * List journal entries
+     * Lists journal entries of every status as a paginated projection, optionally filtered by the exact posted-entry number. Use this tool when browsing or searching entries; do not use getJournalEntry, which retrieves one entry by its known id. Preconditions: none beyond the caller holding accounting:je:view. Required inputs: none; page defaults to 0, size to 20, sort to createdAt descending, and entryNumber (format JE-{YYYYMM}-{seq}, assigned only at posting) is an optional exact-match filter that never matches unposted entries. Emits an ACCOUNTING_JOURNAL_ENTRY_LIST audit event; no accounting state changes. Returns 400 when the sort property is not one of the supported fields. 
+     * List Journal Entries
      */
     async listJournalEntriesRaw(requestParameters: ListJournalEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseJournalEntryResponse>> {
         if (requestParameters['sort'] == null) {
@@ -230,6 +237,10 @@ export class JournalEntriesApi extends runtime.BaseAPI {
             queryParameters['sort'] = requestParameters['sort'];
         }
 
+        if (requestParameters['entryNumber'] != null) {
+            queryParameters['entryNumber'] = requestParameters['entryNumber'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.accessToken) {
@@ -251,8 +262,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve paginated journal entries.
-     * List journal entries
+     * Lists journal entries of every status as a paginated projection, optionally filtered by the exact posted-entry number. Use this tool when browsing or searching entries; do not use getJournalEntry, which retrieves one entry by its known id. Preconditions: none beyond the caller holding accounting:je:view. Required inputs: none; page defaults to 0, size to 20, sort to createdAt descending, and entryNumber (format JE-{YYYYMM}-{seq}, assigned only at posting) is an optional exact-match filter that never matches unposted entries. Emits an ACCOUNTING_JOURNAL_ENTRY_LIST audit event; no accounting state changes. Returns 400 when the sort property is not one of the supported fields. 
+     * List Journal Entries
      */
     async listJournalEntries(requestParameters: ListJournalEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseJournalEntryResponse> {
         const response = await this.listJournalEntriesRaw(requestParameters, initOverrides);
@@ -260,8 +271,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Post a draft journal entry to the ledger.
-     * Post journal entry
+     * Posts a DRAFT journal entry to the general ledger (DRAFT to POSTED), assigning its entryNumber (JE-{YYYYMM}-{seq}) and updating GL balances; the entry is immutable afterwards. Use this tool to finalize a balanced draft; do not use reverseJournalEntry, which backs out an entry that is already POSTED. Preconditions: the entry must exist in DRAFT status, debits must equal credits, every line\'s GL account must be active on the transaction date, and the transaction date must clear the accounting-period gate. Required inputs: journalEntryId (UUID) as a path parameter; the body is optional and carries only overrideJustification (max 500 chars), which together with the accounting:period:override permission allows posting into a CLOSED period with the override audit-logged; a date before the org hard-lock date is never overridable. Emits an ACCOUNTING_JOURNAL_ENTRY_POST event and returns the posted entry. Returns 409 ENTRY_ALREADY_POSTED when the entry is already POSTED or REVERSED, 422 UNBALANCED_ENTRY when debits do not equal credits, 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for period-gate failures, and 400 when no entry exists for the id. 
+     * Post Journal Entry
      */
     async postJournalEntryRaw(requestParameters: PostJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JournalEntryResponse>> {
         if (requestParameters['journalEntryId'] == null) {
@@ -290,15 +301,15 @@ export class JournalEntriesApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['body'] as any,
+            body: JournalEntryPostRequestToJSON(requestParameters['journalEntryPostRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => JournalEntryResponseFromJSON(jsonValue));
     }
 
     /**
-     * Post a draft journal entry to the ledger.
-     * Post journal entry
+     * Posts a DRAFT journal entry to the general ledger (DRAFT to POSTED), assigning its entryNumber (JE-{YYYYMM}-{seq}) and updating GL balances; the entry is immutable afterwards. Use this tool to finalize a balanced draft; do not use reverseJournalEntry, which backs out an entry that is already POSTED. Preconditions: the entry must exist in DRAFT status, debits must equal credits, every line\'s GL account must be active on the transaction date, and the transaction date must clear the accounting-period gate. Required inputs: journalEntryId (UUID) as a path parameter; the body is optional and carries only overrideJustification (max 500 chars), which together with the accounting:period:override permission allows posting into a CLOSED period with the override audit-logged; a date before the org hard-lock date is never overridable. Emits an ACCOUNTING_JOURNAL_ENTRY_POST event and returns the posted entry. Returns 409 ENTRY_ALREADY_POSTED when the entry is already POSTED or REVERSED, 422 UNBALANCED_ENTRY when debits do not equal credits, 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for period-gate failures, and 400 when no entry exists for the id. 
+     * Post Journal Entry
      */
     async postJournalEntry(requestParameters: PostJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JournalEntryResponse> {
         const response = await this.postJournalEntryRaw(requestParameters, initOverrides);
@@ -306,8 +317,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reverse a posted journal entry.
-     * Reverse journal entry
+     * Reverses a POSTED journal entry by creating and immediately posting an inverse entry (debits and credits swapped) with its own entryNumber, transitioning the original POSTED to REVERSED. Use this tool to back out an incorrect posted entry; do not use it on DRAFT entries, which updateJournalEntry can still edit, and do not use postJournalEntry, which finalizes drafts. Preconditions: the entry must exist in POSTED status, and the resolved reversal date must clear the accounting-period gate. Required inputs: a non-blank reason (recorded on the reversal entry and audit trail); reversalDate is optional and defaults to the original transaction date when that period is OPEN, otherwise today; overrideJustification with the accounting:period:override permission allows reversing into a CLOSED period, but never before the hard-lock date. Emits an ACCOUNTING_JOURNAL_ENTRY_REVERSE event and returns the posted reversal entry. Returns 409 JE_ALREADY_REVERSED when the entry was already reversed (including a lost concurrent-reversal race), 409 JE_NOT_POSTED when it is DRAFT or PENDING, 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for period-gate failures, and 400 when the reason is blank or the entry does not exist. 
+     * Reverse Journal Entry
      */
     async reverseJournalEntryRaw(requestParameters: ReverseJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JournalEntryResponse>> {
         if (requestParameters['journalEntryId'] == null) {
@@ -350,8 +361,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reverse a posted journal entry.
-     * Reverse journal entry
+     * Reverses a POSTED journal entry by creating and immediately posting an inverse entry (debits and credits swapped) with its own entryNumber, transitioning the original POSTED to REVERSED. Use this tool to back out an incorrect posted entry; do not use it on DRAFT entries, which updateJournalEntry can still edit, and do not use postJournalEntry, which finalizes drafts. Preconditions: the entry must exist in POSTED status, and the resolved reversal date must clear the accounting-period gate. Required inputs: a non-blank reason (recorded on the reversal entry and audit trail); reversalDate is optional and defaults to the original transaction date when that period is OPEN, otherwise today; overrideJustification with the accounting:period:override permission allows reversing into a CLOSED period, but never before the hard-lock date. Emits an ACCOUNTING_JOURNAL_ENTRY_REVERSE event and returns the posted reversal entry. Returns 409 JE_ALREADY_REVERSED when the entry was already reversed (including a lost concurrent-reversal race), 409 JE_NOT_POSTED when it is DRAFT or PENDING, 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED for period-gate failures, and 400 when the reason is blank or the entry does not exist. 
+     * Reverse Journal Entry
      */
     async reverseJournalEntry(requestParameters: ReverseJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JournalEntryResponse> {
         const response = await this.reverseJournalEntryRaw(requestParameters, initOverrides);
@@ -359,8 +370,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing journal entry.
-     * Update journal entry
+     * Replaces the description and lines of a journal entry that is still in DRAFT status; posted entries are immutable. Use this tool to correct a draft before posting; do not use it on a POSTED entry, which only reverseJournalEntry can back out. Preconditions: the entry must exist in DRAFT status, and the replacement lines must remain balanced. Required inputs: journalEntryId (UUID) as a path parameter plus the full replacement body (same shape as createJournalEntry); supplied lines replace the existing line set wholesale. Emits an ACCOUNTING_JOURNAL_ENTRY_UPDATE event; GL balances are unchanged because drafts are not yet in the ledger. Returns 409 when the entry is no longer DRAFT, and 400 when the updated entry is unbalanced or the entry id does not exist. 
+     * Update Journal Entry
      */
     async updateJournalEntryRaw(requestParameters: UpdateJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<JournalEntryResponse>> {
         if (requestParameters['journalEntryId'] == null) {
@@ -403,8 +414,8 @@ export class JournalEntriesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update an existing journal entry.
-     * Update journal entry
+     * Replaces the description and lines of a journal entry that is still in DRAFT status; posted entries are immutable. Use this tool to correct a draft before posting; do not use it on a POSTED entry, which only reverseJournalEntry can back out. Preconditions: the entry must exist in DRAFT status, and the replacement lines must remain balanced. Required inputs: journalEntryId (UUID) as a path parameter plus the full replacement body (same shape as createJournalEntry); supplied lines replace the existing line set wholesale. Emits an ACCOUNTING_JOURNAL_ENTRY_UPDATE event; GL balances are unchanged because drafts are not yet in the ledger. Returns 409 when the entry is no longer DRAFT, and 400 when the updated entry is unbalanced or the entry id does not exist. 
+     * Update Journal Entry
      */
     async updateJournalEntry(requestParameters: UpdateJournalEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<JournalEntryResponse> {
         const response = await this.updateJournalEntryRaw(requestParameters, initOverrides);

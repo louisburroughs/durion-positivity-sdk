@@ -14,41 +14,44 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a cycle count plan scheduling counts across a location and zones
  * @export
  * @interface CreateCycleCountPlanRequest
  */
 export interface CreateCycleCountPlanRequest {
     /**
-     * 
+     * Identifier of the location the plan applies to
      * @type {string}
      * @memberof CreateCycleCountPlanRequest
      */
-    locationId?: string;
+    locationId: string;
     /**
-     * 
+     * Human-readable name for the cycle count plan
+     * @type {string}
+     * @memberof CreateCycleCountPlanRequest
+     */
+    planName: string;
+    /**
+     * Date on which the cycle count is scheduled to occur
+     * @type {Date}
+     * @memberof CreateCycleCountPlanRequest
+     */
+    scheduledDate: Date;
+    /**
+     * Identifiers of the zones within the location to include in the plan
      * @type {Array<string>}
      * @memberof CreateCycleCountPlanRequest
      */
     zoneIds?: Array<string>;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateCycleCountPlanRequest
-     */
-    planName?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof CreateCycleCountPlanRequest
-     */
-    scheduledDate?: Date;
 }
 
 /**
  * Check if a given object implements the CreateCycleCountPlanRequest interface.
  */
 export function instanceOfCreateCycleCountPlanRequest(value: object): boolean {
+    if (!('locationId' in value)) return false;
+    if (!('planName' in value)) return false;
+    if (!('scheduledDate' in value)) return false;
     return true;
 }
 
@@ -62,10 +65,10 @@ export function CreateCycleCountPlanRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'locationId': json['locationId'],
+        'planName': json['planName'],
+        'scheduledDate': (new Date(json['scheduledDate'])),
         'zoneIds': json['zoneIds'] == null ? undefined : json['zoneIds'],
-        'planName': json['planName'] == null ? undefined : json['planName'],
-        'scheduledDate': json['scheduledDate'] == null ? undefined : (new Date(json['scheduledDate'])),
     };
 }
 
@@ -76,9 +79,9 @@ export function CreateCycleCountPlanRequestToJSON(value?: CreateCycleCountPlanRe
     return {
         
         'locationId': value['locationId'],
-        'zoneIds': value['zoneIds'],
         'planName': value['planName'],
-        'scheduledDate': value['scheduledDate'] == null ? undefined : ((value['scheduledDate']).toISOString().substring(0,10)),
+        'scheduledDate': ((value['scheduledDate']).toISOString().substring(0,10)),
+        'zoneIds': value['zoneIds'],
     };
 }
 

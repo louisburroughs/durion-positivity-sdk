@@ -14,59 +14,65 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a new inventory adjustment from a cycle count variance
  * @export
  * @interface CreateAdjustmentRequest
  */
 export interface CreateAdjustmentRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateAdjustmentRequest
-     */
-    stockItemId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateAdjustmentRequest
-     */
-    reasonCode: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof CreateAdjustmentRequest
-     */
-    countedQuantity: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof CreateAdjustmentRequest
-     */
-    quantityOnHandBefore: number;
-    /**
-     * 
+     * Unit cost to capture at the time of the adjustment
      * @type {number}
      * @memberof CreateAdjustmentRequest
      */
     costAtTimeOfAdjustment: number;
     /**
-     * 
+     * Quantity physically counted by the auditor
+     * @type {number}
+     * @memberof CreateAdjustmentRequest
+     */
+    countedQuantity: number;
+    /**
+     * Identifier of the user creating the adjustment
      * @type {string}
      * @memberof CreateAdjustmentRequest
      */
     createdByUserId: string;
+    /**
+     * Quantity on hand recorded before the count was applied
+     * @type {number}
+     * @memberof CreateAdjustmentRequest
+     */
+    quantityOnHandBefore: number;
+    /**
+     * Reason code explaining why the adjustment is being made
+     * @type {string}
+     * @memberof CreateAdjustmentRequest
+     */
+    reasonCode: string;
+    /**
+     * Identifier of the stock item being adjusted
+     * @type {string}
+     * @memberof CreateAdjustmentRequest
+     */
+    stockItemId: string;
+    /**
+     * Cycle count task this adjustment settles, if created from a task. Enables approval-time conflict detection and variance recomputation against current on-hand.
+     * @type {string}
+     * @memberof CreateAdjustmentRequest
+     */
+    taskId?: string;
 }
 
 /**
  * Check if a given object implements the CreateAdjustmentRequest interface.
  */
 export function instanceOfCreateAdjustmentRequest(value: object): boolean {
-    if (!('stockItemId' in value)) return false;
-    if (!('reasonCode' in value)) return false;
-    if (!('countedQuantity' in value)) return false;
-    if (!('quantityOnHandBefore' in value)) return false;
     if (!('costAtTimeOfAdjustment' in value)) return false;
+    if (!('countedQuantity' in value)) return false;
     if (!('createdByUserId' in value)) return false;
+    if (!('quantityOnHandBefore' in value)) return false;
+    if (!('reasonCode' in value)) return false;
+    if (!('stockItemId' in value)) return false;
     return true;
 }
 
@@ -80,12 +86,13 @@ export function CreateAdjustmentRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'stockItemId': json['stockItemId'],
-        'reasonCode': json['reasonCode'],
-        'countedQuantity': json['countedQuantity'],
-        'quantityOnHandBefore': json['quantityOnHandBefore'],
         'costAtTimeOfAdjustment': json['costAtTimeOfAdjustment'],
+        'countedQuantity': json['countedQuantity'],
         'createdByUserId': json['createdByUserId'],
+        'quantityOnHandBefore': json['quantityOnHandBefore'],
+        'reasonCode': json['reasonCode'],
+        'stockItemId': json['stockItemId'],
+        'taskId': json['taskId'] == null ? undefined : json['taskId'],
     };
 }
 
@@ -95,12 +102,13 @@ export function CreateAdjustmentRequestToJSON(value?: CreateAdjustmentRequest | 
     }
     return {
         
-        'stockItemId': value['stockItemId'],
-        'reasonCode': value['reasonCode'],
-        'countedQuantity': value['countedQuantity'],
-        'quantityOnHandBefore': value['quantityOnHandBefore'],
         'costAtTimeOfAdjustment': value['costAtTimeOfAdjustment'],
+        'countedQuantity': value['countedQuantity'],
         'createdByUserId': value['createdByUserId'],
+        'quantityOnHandBefore': value['quantityOnHandBefore'],
+        'reasonCode': value['reasonCode'],
+        'stockItemId': value['stockItemId'],
+        'taskId': value['taskId'],
     };
 }
 

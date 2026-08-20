@@ -20,6 +20,7 @@ import type {
   StorageLocationPatchRequest,
   StorageLocationRequest,
   StorageLocationResponse,
+  StorageLocationTopologyResponse,
 } from '../models/index';
 import {
     PageStorageLocationResponseFromJSON,
@@ -32,26 +33,32 @@ import {
     StorageLocationRequestToJSON,
     StorageLocationResponseFromJSON,
     StorageLocationResponseToJSON,
+    StorageLocationTopologyResponseFromJSON,
+    StorageLocationTopologyResponseToJSON,
 } from '../models/index';
 
-export interface Create2Request {
+export interface CreateStorageLocationRequest {
     siteId: string;
     storageLocationRequest: StorageLocationRequest;
 }
 
-export interface GetRequest {
+export interface GetStorageLocationRequest {
     siteId: string;
     storageLocationId: string;
 }
 
-export interface List2Request {
+export interface GetStorageLocationTopologyRequest {
     siteId: string;
-    pageable: Pageable;
-    type?: List2TypeEnum;
-    status?: List2StatusEnum;
 }
 
-export interface Patch2Request {
+export interface ListStorageLocationsRequest {
+    siteId: string;
+    pageable: Pageable;
+    type?: ListStorageLocationsTypeEnum;
+    status?: ListStorageLocationsStatusEnum;
+}
+
+export interface PatchStorageLocationRequest {
     siteId: string;
     storageLocationId: string;
     storageLocationPatchRequest: StorageLocationPatchRequest;
@@ -63,21 +70,21 @@ export interface Patch2Request {
 export class StorageLocationAPIApi extends runtime.BaseAPI {
 
     /**
-     * Create a storage location within a site using the provided topology and status details
-     * Create storage location
+     * Creates a storage location (FLOOR, SHELF, BIN, CAGE or TRUCK) inside a site, always starting in ACTIVE status. Use this tool when adding storage topology to a site; do not use patchStorageLocation, which modifies an existing node, and use createBay for vehicle service bays rather than inventory storage. Preconditions: the site must exist, the name must be unique within the site (case-insensitive), any barcode must be unique within the site, and a parentStorageLocationId must reference a storage location of the same site. Required inputs: name and type; barcode, parentStorageLocationId, capacity and temperature (free-form JSON objects) are optional. Emits a LOCATION_STORAGE_LOCATION_CREATE event and publishes a storage-location fact for replica consumers. Returns 404 when the site does not exist, 409 when the name or barcode is already used in the site, and 400 when the parent storage location is unknown or belongs to a different site. 
+     * Create a Storage Location Within Site
      */
-    async create2Raw(requestParameters: Create2Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StorageLocationResponse>> {
+    async createStorageLocationRaw(requestParameters: CreateStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StorageLocationResponse>> {
         if (requestParameters['siteId'] == null) {
             throw new runtime.RequiredError(
                 'siteId',
-                'Required parameter "siteId" was null or undefined when calling create2().'
+                'Required parameter "siteId" was null or undefined when calling createStorageLocation().'
             );
         }
 
         if (requestParameters['storageLocationRequest'] == null) {
             throw new runtime.RequiredError(
                 'storageLocationRequest',
-                'Required parameter "storageLocationRequest" was null or undefined when calling create2().'
+                'Required parameter "storageLocationRequest" was null or undefined when calling createStorageLocation().'
             );
         }
 
@@ -107,30 +114,30 @@ export class StorageLocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a storage location within a site using the provided topology and status details
-     * Create storage location
+     * Creates a storage location (FLOOR, SHELF, BIN, CAGE or TRUCK) inside a site, always starting in ACTIVE status. Use this tool when adding storage topology to a site; do not use patchStorageLocation, which modifies an existing node, and use createBay for vehicle service bays rather than inventory storage. Preconditions: the site must exist, the name must be unique within the site (case-insensitive), any barcode must be unique within the site, and a parentStorageLocationId must reference a storage location of the same site. Required inputs: name and type; barcode, parentStorageLocationId, capacity and temperature (free-form JSON objects) are optional. Emits a LOCATION_STORAGE_LOCATION_CREATE event and publishes a storage-location fact for replica consumers. Returns 404 when the site does not exist, 409 when the name or barcode is already used in the site, and 400 when the parent storage location is unknown or belongs to a different site. 
+     * Create a Storage Location Within Site
      */
-    async create2(requestParameters: Create2Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StorageLocationResponse> {
-        const response = await this.create2Raw(requestParameters, initOverrides);
+    async createStorageLocation(requestParameters: CreateStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StorageLocationResponse> {
+        const response = await this.createStorageLocationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve a single storage location for a site by its storage location identifier
-     * Get storage location
+     * Returns a single storage location of a site, including capacity and temperature attributes and its parent reference. Use this tool when the storage location id and its site are both known; use validateStorageLocation instead when only existence, active state and site ownership must be checked without knowing the site. Preconditions: the storage location must exist and belong to the supplied site. Required inputs: siteId and storageLocationId (UUIDs) as path parameters. Emits a LOCATION_STORAGE_LOCATION_GET event; no state changes. Returns 404 when no storage location with that id exists under the site. 
+     * Get a Storage Location by Identifier
      */
-    async getRaw(requestParameters: GetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StorageLocationResponse>> {
+    async getStorageLocationRaw(requestParameters: GetStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StorageLocationResponse>> {
         if (requestParameters['siteId'] == null) {
             throw new runtime.RequiredError(
                 'siteId',
-                'Required parameter "siteId" was null or undefined when calling get().'
+                'Required parameter "siteId" was null or undefined when calling getStorageLocation().'
             );
         }
 
         if (requestParameters['storageLocationId'] == null) {
             throw new runtime.RequiredError(
                 'storageLocationId',
-                'Required parameter "storageLocationId" was null or undefined when calling get().'
+                'Required parameter "storageLocationId" was null or undefined when calling getStorageLocation().'
             );
         }
 
@@ -157,30 +164,73 @@ export class StorageLocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a single storage location for a site by its storage location identifier
-     * Get storage location
+     * Returns a single storage location of a site, including capacity and temperature attributes and its parent reference. Use this tool when the storage location id and its site are both known; use validateStorageLocation instead when only existence, active state and site ownership must be checked without knowing the site. Preconditions: the storage location must exist and belong to the supplied site. Required inputs: siteId and storageLocationId (UUIDs) as path parameters. Emits a LOCATION_STORAGE_LOCATION_GET event; no state changes. Returns 404 when no storage location with that id exists under the site. 
+     * Get a Storage Location by Identifier
      */
-    async get(requestParameters: GetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StorageLocationResponse> {
-        const response = await this.getRaw(requestParameters, initOverrides);
+    async getStorageLocation(requestParameters: GetStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StorageLocationResponse> {
+        const response = await this.getStorageLocationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * List storage locations for a site with optional type and status filtering
-     * List storage locations
+     * Returns every storage location of a site, regardless of status, as a flat unpaginated list with id, name, type, status and parentStorageLocationId. Use this tool when a rollup or topology consumer needs the whole storage tree in one call; use listStorageLocations instead for paginated, filtered browsing. Preconditions: the site must exist. Required inputs: siteId (UUID) as a path parameter; there is no filtering. Emits a LOCATION_STORAGE_LOCATION_TOPOLOGY event; no state changes. Returns 404 when the site does not exist. 
+     * Get Full Storage Location Topology
      */
-    async list2Raw(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageStorageLocationResponse>> {
+    async getStorageLocationTopologyRaw(requestParameters: GetStorageLocationTopologyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StorageLocationTopologyResponse>>> {
         if (requestParameters['siteId'] == null) {
             throw new runtime.RequiredError(
                 'siteId',
-                'Required parameter "siteId" was null or undefined when calling list2().'
+                'Required parameter "siteId" was null or undefined when calling getStorageLocationTopology().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/{siteId}/storage-locations/topology`.replace(`{${"siteId"}}`, encodeURIComponent(String(requestParameters['siteId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(StorageLocationTopologyResponseFromJSON));
+    }
+
+    /**
+     * Returns every storage location of a site, regardless of status, as a flat unpaginated list with id, name, type, status and parentStorageLocationId. Use this tool when a rollup or topology consumer needs the whole storage tree in one call; use listStorageLocations instead for paginated, filtered browsing. Preconditions: the site must exist. Required inputs: siteId (UUID) as a path parameter; there is no filtering. Emits a LOCATION_STORAGE_LOCATION_TOPOLOGY event; no state changes. Returns 404 when the site does not exist. 
+     * Get Full Storage Location Topology
+     */
+    async getStorageLocationTopology(requestParameters: GetStorageLocationTopologyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StorageLocationTopologyResponse>> {
+        const response = await this.getStorageLocationTopologyRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists the storage locations of a site as a page, optionally filtered by type and status. Use this tool for paginated browsing; use getStorageLocationTopology instead when the complete unpaginated hierarchy of the site is needed. Preconditions: none; an unknown site id yields an empty page rather than an error. Required inputs: siteId (UUID) as a path parameter; type (FLOOR, SHELF, BIN, CAGE, TRUCK) and status (ACTIVE, INACTIVE, MAINTENANCE, QUARANTINED) filters are optional, and standard page, size and sort parameters control paging. Emits a LOCATION_STORAGE_LOCATION_LIST event; no state changes. Returns 200 with a page of storage locations regardless of whether any match the filters. 
+     * List Storage Locations of a Site
+     */
+    async listStorageLocationsRaw(requestParameters: ListStorageLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageStorageLocationResponse>> {
+        if (requestParameters['siteId'] == null) {
+            throw new runtime.RequiredError(
+                'siteId',
+                'Required parameter "siteId" was null or undefined when calling listStorageLocations().'
             );
         }
 
         if (requestParameters['pageable'] == null) {
             throw new runtime.RequiredError(
                 'pageable',
-                'Required parameter "pageable" was null or undefined when calling list2().'
+                'Required parameter "pageable" was null or undefined when calling listStorageLocations().'
             );
         }
 
@@ -219,37 +269,37 @@ export class StorageLocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * List storage locations for a site with optional type and status filtering
-     * List storage locations
+     * Lists the storage locations of a site as a page, optionally filtered by type and status. Use this tool for paginated browsing; use getStorageLocationTopology instead when the complete unpaginated hierarchy of the site is needed. Preconditions: none; an unknown site id yields an empty page rather than an error. Required inputs: siteId (UUID) as a path parameter; type (FLOOR, SHELF, BIN, CAGE, TRUCK) and status (ACTIVE, INACTIVE, MAINTENANCE, QUARANTINED) filters are optional, and standard page, size and sort parameters control paging. Emits a LOCATION_STORAGE_LOCATION_LIST event; no state changes. Returns 200 with a page of storage locations regardless of whether any match the filters. 
+     * List Storage Locations of a Site
      */
-    async list2(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageStorageLocationResponse> {
-        const response = await this.list2Raw(requestParameters, initOverrides);
+    async listStorageLocations(requestParameters: ListStorageLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageStorageLocationResponse> {
+        const response = await this.listStorageLocationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Patch an existing storage location for a site using the provided partial updates
-     * Patch storage location
+     * Applies a partial update to a storage location, covering rename, barcode, reparenting, capacity, temperature and status transitions. Use this tool for all storage-location mutations after creation, including deactivation; do not use createStorageLocation, which adds a new node. Preconditions: the storage location must exist in the site; a new name or barcode must be unique within the site, a new parent must belong to the same site without creating a cycle, and deactivating a node that still holds on-hand stock requires a destinationStorageLocationId naming an ACTIVE storage location of the same site to receive the transferred inventory. Required inputs: siteId and storageLocationId (UUIDs) as path parameters and a body with at least one field; status accepts ACTIVE, INACTIVE, MAINTENANCE or QUARANTINED. Emits a LOCATION_STORAGE_LOCATION_UPDATE event, publishes a storage-location fact, and on deactivation with stock triggers an atomic inventory transfer to the destination. Returns 404 when the storage location or transfer destination does not exist, 409 when the name or barcode collides or the new parent would create a cycle, 400 when the parent is unknown or in another site, and 422 when deactivation needs a destination that is missing, inactive or the node itself. 
+     * Patch Fields of a Storage Location
      */
-    async patch2Raw(requestParameters: Patch2Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StorageLocationResponse>> {
+    async patchStorageLocationRaw(requestParameters: PatchStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StorageLocationResponse>> {
         if (requestParameters['siteId'] == null) {
             throw new runtime.RequiredError(
                 'siteId',
-                'Required parameter "siteId" was null or undefined when calling patch2().'
+                'Required parameter "siteId" was null or undefined when calling patchStorageLocation().'
             );
         }
 
         if (requestParameters['storageLocationId'] == null) {
             throw new runtime.RequiredError(
                 'storageLocationId',
-                'Required parameter "storageLocationId" was null or undefined when calling patch2().'
+                'Required parameter "storageLocationId" was null or undefined when calling patchStorageLocation().'
             );
         }
 
         if (requestParameters['storageLocationPatchRequest'] == null) {
             throw new runtime.RequiredError(
                 'storageLocationPatchRequest',
-                'Required parameter "storageLocationPatchRequest" was null or undefined when calling patch2().'
+                'Required parameter "storageLocationPatchRequest" was null or undefined when calling patchStorageLocation().'
             );
         }
 
@@ -279,11 +329,11 @@ export class StorageLocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Patch an existing storage location for a site using the provided partial updates
-     * Patch storage location
+     * Applies a partial update to a storage location, covering rename, barcode, reparenting, capacity, temperature and status transitions. Use this tool for all storage-location mutations after creation, including deactivation; do not use createStorageLocation, which adds a new node. Preconditions: the storage location must exist in the site; a new name or barcode must be unique within the site, a new parent must belong to the same site without creating a cycle, and deactivating a node that still holds on-hand stock requires a destinationStorageLocationId naming an ACTIVE storage location of the same site to receive the transferred inventory. Required inputs: siteId and storageLocationId (UUIDs) as path parameters and a body with at least one field; status accepts ACTIVE, INACTIVE, MAINTENANCE or QUARANTINED. Emits a LOCATION_STORAGE_LOCATION_UPDATE event, publishes a storage-location fact, and on deactivation with stock triggers an atomic inventory transfer to the destination. Returns 404 when the storage location or transfer destination does not exist, 409 when the name or barcode collides or the new parent would create a cycle, 400 when the parent is unknown or in another site, and 422 when deactivation needs a destination that is missing, inactive or the node itself. 
+     * Patch Fields of a Storage Location
      */
-    async patch2(requestParameters: Patch2Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StorageLocationResponse> {
-        const response = await this.patch2Raw(requestParameters, initOverrides);
+    async patchStorageLocation(requestParameters: PatchStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StorageLocationResponse> {
+        const response = await this.patchStorageLocationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -293,7 +343,7 @@ export class StorageLocationAPIApi extends runtime.BaseAPI {
   * @export
   * @enum {string}
   */
-export enum List2TypeEnum {
+export enum ListStorageLocationsTypeEnum {
     Floor = 'FLOOR',
     Shelf = 'SHELF',
     Bin = 'BIN',
@@ -304,7 +354,7 @@ export enum List2TypeEnum {
   * @export
   * @enum {string}
   */
-export enum List2StatusEnum {
+export enum ListStorageLocationsStatusEnum {
     Active = 'ACTIVE',
     Inactive = 'INACTIVE',
     Maintenance = 'MAINTENANCE',

@@ -14,37 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single record within a bulk inventory ingest request
  * @export
  * @interface InventoryBulkIngestRecord
  */
 export interface InventoryBulkIngestRecord {
     /**
-     * 
-     * @type {string}
-     * @memberof InventoryBulkIngestRecord
-     */
-    sku: string;
-    /**
-     * 
+     * Identifier of the location the quantity applies to
      * @type {string}
      * @memberof InventoryBulkIngestRecord
      */
     locationId?: string;
     /**
-     * 
+     * Quantity to ingest for the product (non-negative)
      * @type {number}
      * @memberof InventoryBulkIngestRecord
      */
     quantity: number;
     /**
-     * 
+     * Optional reason code explaining the ingest
      * @type {string}
      * @memberof InventoryBulkIngestRecord
      */
     reasonCode?: string;
     /**
-     * 
+     * Stock-keeping unit of the product being ingested
+     * @type {string}
+     * @memberof InventoryBulkIngestRecord
+     */
+    sku: string;
+    /**
+     * Optional unit of measure code for the quantity (e.g. EACH, KG)
      * @type {string}
      * @memberof InventoryBulkIngestRecord
      */
@@ -55,8 +55,8 @@ export interface InventoryBulkIngestRecord {
  * Check if a given object implements the InventoryBulkIngestRecord interface.
  */
 export function instanceOfInventoryBulkIngestRecord(value: object): boolean {
-    if (!('sku' in value)) return false;
     if (!('quantity' in value)) return false;
+    if (!('sku' in value)) return false;
     return true;
 }
 
@@ -70,10 +70,10 @@ export function InventoryBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'sku': json['sku'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'quantity': json['quantity'],
         'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'sku': json['sku'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
     };
 }
@@ -84,10 +84,10 @@ export function InventoryBulkIngestRecordToJSON(value?: InventoryBulkIngestRecor
     }
     return {
         
-        'sku': value['sku'],
         'locationId': value['locationId'],
         'quantity': value['quantity'],
         'reasonCode': value['reasonCode'],
+        'sku': value['sku'],
         'unitOfMeasure': value['unitOfMeasure'],
     };
 }

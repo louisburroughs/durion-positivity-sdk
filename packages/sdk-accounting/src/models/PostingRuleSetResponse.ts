@@ -21,71 +21,72 @@ import {
 } from './PostingRuleVersionResponse';
 
 /**
- * 
+ * Posting rule set with its versions and audit metadata
  * @export
  * @interface PostingRuleSetResponse
  */
 export interface PostingRuleSetResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleSetResponse
-     */
-    postingRuleSetId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleSetResponse
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleSetResponse
-     */
-    eventType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleSetResponse
-     */
-    description?: string;
-    /**
-     * 
-     * @type {Array<PostingRuleVersionResponse>}
-     * @memberof PostingRuleSetResponse
-     */
-    versions?: Array<PostingRuleVersionResponse>;
-    /**
-     * 
+     * Timestamp when the rule set was created (ISO 8601)
      * @type {Date}
      * @memberof PostingRuleSetResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Identifier of the user who created the rule set
      * @type {string}
      * @memberof PostingRuleSetResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Human-readable description of the rule set
+     * @type {string}
+     * @memberof PostingRuleSetResponse
+     */
+    description?: string;
+    /**
+     * Accounting event type the rule set applies to
+     * @type {string}
+     * @memberof PostingRuleSetResponse
+     */
+    eventType?: string;
+    /**
+     * Timestamp when the rule set was last modified (ISO 8601)
      * @type {Date}
      * @memberof PostingRuleSetResponse
      */
     modifiedAt?: Date;
     /**
-     * 
+     * Identifier of the user who last modified the rule set
      * @type {string}
      * @memberof PostingRuleSetResponse
      */
     modifiedBy?: string;
+    /**
+     * Display name of the posting rule set
+     * @type {string}
+     * @memberof PostingRuleSetResponse
+     */
+    name?: string;
+    /**
+     * Unique identifier of the posting rule set
+     * @type {string}
+     * @memberof PostingRuleSetResponse
+     */
+    postingRuleSetId: string;
+    /**
+     * Versions belonging to this posting rule set
+     * @type {Array<PostingRuleVersionResponse>}
+     * @memberof PostingRuleSetResponse
+     */
+    versions?: Array<PostingRuleVersionResponse>;
 }
 
 /**
  * Check if a given object implements the PostingRuleSetResponse interface.
  */
 export function instanceOfPostingRuleSetResponse(value: object): boolean {
+    if (!('postingRuleSetId' in value)) return false;
     return true;
 }
 
@@ -99,15 +100,15 @@ export function PostingRuleSetResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'postingRuleSetId': json['postingRuleSetId'] == null ? undefined : json['postingRuleSetId'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'versions': json['versions'] == null ? undefined : ((json['versions'] as Array<any>).map(PostingRuleVersionResponseFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'eventType': json['eventType'] == null ? undefined : json['eventType'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
         'modifiedBy': json['modifiedBy'] == null ? undefined : json['modifiedBy'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'postingRuleSetId': json['postingRuleSetId'],
+        'versions': json['versions'] == null ? undefined : ((json['versions'] as Array<any>).map(PostingRuleVersionResponseFromJSON)),
     };
 }
 
@@ -117,15 +118,15 @@ export function PostingRuleSetResponseToJSON(value?: PostingRuleSetResponse | nu
     }
     return {
         
-        'postingRuleSetId': value['postingRuleSetId'],
-        'name': value['name'],
-        'eventType': value['eventType'],
-        'description': value['description'],
-        'versions': value['versions'] == null ? undefined : ((value['versions'] as Array<any>).map(PostingRuleVersionResponseToJSON)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'description': value['description'],
+        'eventType': value['eventType'],
         'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
         'modifiedBy': value['modifiedBy'],
+        'name': value['name'],
+        'postingRuleSetId': value['postingRuleSetId'],
+        'versions': value['versions'] == null ? undefined : ((value['versions'] as Array<any>).map(PostingRuleVersionResponseToJSON)),
     };
 }
 

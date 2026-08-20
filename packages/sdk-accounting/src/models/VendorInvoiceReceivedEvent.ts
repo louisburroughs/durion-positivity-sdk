@@ -27,11 +27,35 @@ import {
  */
 export interface VendorInvoiceReceivedEvent {
     /**
+     * Invoice due date
+     * @type {Date}
+     * @memberof VendorInvoiceReceivedEvent
+     */
+    dueDate?: Date;
+    /**
      * Event UUID (idempotency key)
      * @type {string}
      * @memberof VendorInvoiceReceivedEvent
      */
     eventId: string;
+    /**
+     * Invoice date
+     * @type {Date}
+     * @memberof VendorInvoiceReceivedEvent
+     */
+    invoiceDate: Date;
+    /**
+     * Vendor invoice number
+     * @type {string}
+     * @memberof VendorInvoiceReceivedEvent
+     */
+    invoiceReference: string;
+    /**
+     * Invoice line items
+     * @type {Array<InvoiceLineItem>}
+     * @memberof VendorInvoiceReceivedEvent
+     */
+    lineItems: Array<InvoiceLineItem>;
     /**
      * Organization UUID
      * @type {string}
@@ -44,30 +68,6 @@ export interface VendorInvoiceReceivedEvent {
      * @memberof VendorInvoiceReceivedEvent
      */
     vendorId: string;
-    /**
-     * Vendor invoice number
-     * @type {string}
-     * @memberof VendorInvoiceReceivedEvent
-     */
-    invoiceReference: string;
-    /**
-     * Invoice date
-     * @type {Date}
-     * @memberof VendorInvoiceReceivedEvent
-     */
-    invoiceDate: Date;
-    /**
-     * Invoice due date
-     * @type {Date}
-     * @memberof VendorInvoiceReceivedEvent
-     */
-    dueDate?: Date;
-    /**
-     * Invoice line items
-     * @type {Array<InvoiceLineItem>}
-     * @memberof VendorInvoiceReceivedEvent
-     */
-    lineItems: Array<InvoiceLineItem>;
 }
 
 /**
@@ -75,11 +75,11 @@ export interface VendorInvoiceReceivedEvent {
  */
 export function instanceOfVendorInvoiceReceivedEvent(value: object): boolean {
     if (!('eventId' in value)) return false;
+    if (!('invoiceDate' in value)) return false;
+    if (!('invoiceReference' in value)) return false;
+    if (!('lineItems' in value)) return false;
     if (!('organizationId' in value)) return false;
     if (!('vendorId' in value)) return false;
-    if (!('invoiceReference' in value)) return false;
-    if (!('invoiceDate' in value)) return false;
-    if (!('lineItems' in value)) return false;
     return true;
 }
 
@@ -93,13 +93,13 @@ export function VendorInvoiceReceivedEventFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
+        'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'eventId': json['eventId'],
+        'invoiceDate': (new Date(json['invoiceDate'])),
+        'invoiceReference': json['invoiceReference'],
+        'lineItems': ((json['lineItems'] as Array<any>).map(InvoiceLineItemFromJSON)),
         'organizationId': json['organizationId'],
         'vendorId': json['vendorId'],
-        'invoiceReference': json['invoiceReference'],
-        'invoiceDate': (new Date(json['invoiceDate'])),
-        'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
-        'lineItems': ((json['lineItems'] as Array<any>).map(InvoiceLineItemFromJSON)),
     };
 }
 
@@ -109,13 +109,13 @@ export function VendorInvoiceReceivedEventToJSON(value?: VendorInvoiceReceivedEv
     }
     return {
         
+        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'eventId': value['eventId'],
+        'invoiceDate': ((value['invoiceDate']).toISOString()),
+        'invoiceReference': value['invoiceReference'],
+        'lineItems': ((value['lineItems'] as Array<any>).map(InvoiceLineItemToJSON)),
         'organizationId': value['organizationId'],
         'vendorId': value['vendorId'],
-        'invoiceReference': value['invoiceReference'],
-        'invoiceDate': ((value['invoiceDate']).toISOString()),
-        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
-        'lineItems': ((value['lineItems'] as Array<any>).map(InvoiceLineItemToJSON)),
     };
 }
 

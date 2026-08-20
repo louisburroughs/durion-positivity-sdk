@@ -20,35 +20,35 @@ import { mapValues } from '../runtime';
  */
 export interface DimensionDto {
     /**
-     * Dimension identifier
-     * @type {string}
-     * @memberof DimensionDto
-     */
-    id?: string;
-    /**
-     * Dimension type
-     * @type {string}
-     * @memberof DimensionDto
-     */
-    dimensionType?: DimensionDtoDimensionTypeEnum;
-    /**
      * Dimension description
      * @type {string}
      * @memberof DimensionDto
      */
     description?: string;
     /**
-     * Unit of measure
+     * Dimension type
      * @type {string}
      * @memberof DimensionDto
      */
-    unitOfMeasure?: string;
+    dimensionType: DimensionDtoDimensionTypeEnum;
     /**
      * Dimension value
      * @type {number}
      * @memberof DimensionDto
      */
-    dimensionValue?: number;
+    dimensionValue: number;
+    /**
+     * Dimension identifier
+     * @type {string}
+     * @memberof DimensionDto
+     */
+    id: string;
+    /**
+     * Unit of measure
+     * @type {string}
+     * @memberof DimensionDto
+     */
+    unitOfMeasure?: string;
 }
 
 /**
@@ -85,6 +85,9 @@ export enum DimensionDtoDimensionTypeEnum {
  * Check if a given object implements the DimensionDto interface.
  */
 export function instanceOfDimensionDto(value: object): boolean {
+    if (!('dimensionType' in value)) return false;
+    if (!('dimensionValue' in value)) return false;
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -98,11 +101,11 @@ export function DimensionDtoFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'dimensionType': json['dimensionType'] == null ? undefined : json['dimensionType'],
         'description': json['description'] == null ? undefined : json['description'],
+        'dimensionType': json['dimensionType'],
+        'dimensionValue': json['dimensionValue'],
+        'id': json['id'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
-        'dimensionValue': json['dimensionValue'] == null ? undefined : json['dimensionValue'],
     };
 }
 
@@ -112,11 +115,11 @@ export function DimensionDtoToJSON(value?: DimensionDto | null): any {
     }
     return {
         
-        'id': value['id'],
-        'dimensionType': value['dimensionType'],
         'description': value['description'],
-        'unitOfMeasure': value['unitOfMeasure'],
+        'dimensionType': value['dimensionType'],
         'dimensionValue': value['dimensionValue'],
+        'id': value['id'],
+        'unitOfMeasure': value['unitOfMeasure'],
     };
 }
 

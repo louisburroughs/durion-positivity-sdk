@@ -14,47 +14,49 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Per-record outcome of a bulk ingest submission
  * @export
  * @interface BulkIngestResult
  */
 export interface BulkIngestResult {
     /**
-     * 
-     * @type {number}
-     * @memberof BulkIngestResult
-     */
-    rowIndex?: number;
-    /**
-     * 
+     * Identifier of the entity created/updated for this record, when successful
      * @type {string}
      * @memberof BulkIngestResult
      */
     entityId?: string;
     /**
-     * 
-     * @type {boolean}
-     * @memberof BulkIngestResult
-     */
-    success?: boolean;
-    /**
-     * 
+     * Machine-readable error code when the record failed
      * @type {string}
      * @memberof BulkIngestResult
      */
     errorCode?: string;
     /**
-     * 
+     * Human-readable error detail when the record failed
      * @type {string}
      * @memberof BulkIngestResult
      */
     errorMessage?: string;
+    /**
+     * Zero-based index of the record within the submitted batch
+     * @type {number}
+     * @memberof BulkIngestResult
+     */
+    rowIndex: number;
+    /**
+     * Whether this record was ingested successfully
+     * @type {boolean}
+     * @memberof BulkIngestResult
+     */
+    success: boolean;
 }
 
 /**
  * Check if a given object implements the BulkIngestResult interface.
  */
 export function instanceOfBulkIngestResult(value: object): boolean {
+    if (!('rowIndex' in value)) return false;
+    if (!('success' in value)) return false;
     return true;
 }
 
@@ -68,11 +70,11 @@ export function BulkIngestResultFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'rowIndex': json['rowIndex'] == null ? undefined : json['rowIndex'],
         'entityId': json['entityId'] == null ? undefined : json['entityId'],
-        'success': json['success'] == null ? undefined : json['success'],
         'errorCode': json['errorCode'] == null ? undefined : json['errorCode'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
+        'rowIndex': json['rowIndex'],
+        'success': json['success'],
     };
 }
 
@@ -82,11 +84,11 @@ export function BulkIngestResultToJSON(value?: BulkIngestResult | null): any {
     }
     return {
         
-        'rowIndex': value['rowIndex'],
         'entityId': value['entityId'],
-        'success': value['success'],
         'errorCode': value['errorCode'],
         'errorMessage': value['errorMessage'],
+        'rowIndex': value['rowIndex'],
+        'success': value['success'],
     };
 }
 

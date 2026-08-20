@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  InvoiceRefundResponse,
   RefundPaymentRequest,
   RefundPaymentResponse,
   VoidPaymentRequest,
 } from '../models/index';
 import {
+    InvoiceRefundResponseFromJSON,
+    InvoiceRefundResponseToJSON,
     RefundPaymentRequestFromJSON,
     RefundPaymentRequestToJSON,
     RefundPaymentResponseFromJSON,
@@ -27,6 +30,10 @@ import {
     VoidPaymentRequestFromJSON,
     VoidPaymentRequestToJSON,
 } from '../models/index';
+
+export interface ListInvoiceRefundsRequest {
+    invoiceId: string;
+}
 
 export interface RefundPaymentOperationRequest {
     invoiceId: string;
@@ -46,8 +53,51 @@ export interface VoidPaymentOperationRequest {
 export class PaymentReversalApi extends runtime.BaseAPI {
 
     /**
-     * Create a refund for a captured invoice payment and record the refund details
-     * Refund captured payment
+     * Returns every refund record anchored to the invoice — refunds of captured payment intents and standalone invoice-anchored refunds alike — for warranty-settlement reconciliation. Use this tool to reconcile what has already been returned before issuing another refund; do not use refundPayment or createStandaloneInvoiceRefund, which create refunds rather than list them. Preconditions: the invoice must exist; the caller needs the invoice:manage authority. Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_REFUND_LIST audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
+     * List Refunds for an Invoice
+     */
+    async listInvoiceRefundsRaw(requestParameters: ListInvoiceRefundsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<InvoiceRefundResponse>>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling listInvoiceRefunds().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/refunds`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(InvoiceRefundResponseFromJSON));
+    }
+
+    /**
+     * Returns every refund record anchored to the invoice — refunds of captured payment intents and standalone invoice-anchored refunds alike — for warranty-settlement reconciliation. Use this tool to reconcile what has already been returned before issuing another refund; do not use refundPayment or createStandaloneInvoiceRefund, which create refunds rather than list them. Preconditions: the invoice must exist; the caller needs the invoice:manage authority. Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_REFUND_LIST audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
+     * List Refunds for an Invoice
+     */
+    async listInvoiceRefunds(requestParameters: ListInvoiceRefundsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<InvoiceRefundResponse>> {
+        const response = await this.listInvoiceRefundsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Refunds all or part of a CAPTURED invoice payment through the gateway and records the refund against the payment intent. Use this tool when the original card payment lives in this system; do not use voidPayment, which releases an uncaptured hold, and use createStandaloneInvoiceRefund instead when the original payment is not on file. Preconditions: the payment intent must belong to the invoice and be CAPTURED, the caller needs the REFUND_PAYMENT authority, less than 180 days may have elapsed since capture unless the caller holds SUPERVISOR_OVERRIDE, and cumulative refunds may not exceed the captured amount. Required inputs: amount (positive) and reason (a RefundReason such as CUSTOMER_RETURN or SERVICE_ERROR); notes and externalReference are optional, and a retry replaying the same externalReference returns the existing refund instead of paying twice. Emits an INVOICE_PAYMENT_REFUND event and publishes a payment-refunded notification on success; a gateway failure is persisted as a FAILED refund record, so callers must read the returned status rather than treating 201 as completed. Returns 201 with the refund record, 404 when the intent does not exist under the invoice, 409 when the intent is not CAPTURED, and 422 when the 180-day window has expired or the amount exceeds the remaining refundable balance. 
+     * Refund a Captured Payment
      */
     async refundPaymentRaw(requestParameters: RefundPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RefundPaymentResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -97,8 +147,8 @@ export class PaymentReversalApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a refund for a captured invoice payment and record the refund details
-     * Refund captured payment
+     * Refunds all or part of a CAPTURED invoice payment through the gateway and records the refund against the payment intent. Use this tool when the original card payment lives in this system; do not use voidPayment, which releases an uncaptured hold, and use createStandaloneInvoiceRefund instead when the original payment is not on file. Preconditions: the payment intent must belong to the invoice and be CAPTURED, the caller needs the REFUND_PAYMENT authority, less than 180 days may have elapsed since capture unless the caller holds SUPERVISOR_OVERRIDE, and cumulative refunds may not exceed the captured amount. Required inputs: amount (positive) and reason (a RefundReason such as CUSTOMER_RETURN or SERVICE_ERROR); notes and externalReference are optional, and a retry replaying the same externalReference returns the existing refund instead of paying twice. Emits an INVOICE_PAYMENT_REFUND event and publishes a payment-refunded notification on success; a gateway failure is persisted as a FAILED refund record, so callers must read the returned status rather than treating 201 as completed. Returns 201 with the refund record, 404 when the intent does not exist under the invoice, 409 when the intent is not CAPTURED, and 422 when the 180-day window has expired or the amount exceeds the remaining refundable balance. 
+     * Refund a Captured Payment
      */
     async refundPayment(requestParameters: RefundPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RefundPaymentResponse> {
         const response = await this.refundPaymentRaw(requestParameters, initOverrides);
@@ -106,8 +156,8 @@ export class PaymentReversalApi extends runtime.BaseAPI {
     }
 
     /**
-     * Void a previously authorized invoice payment before it is captured
-     * Void authorized payment
+     * Voids a previously authorized invoice payment hold at the gateway before it is captured, releasing the customer\'s funds without any money movement. Use this tool on an AUTHORIZED hold; do not use refundPayment, which returns funds from a payment that was already CAPTURED. Preconditions: the payment intent must belong to the invoice and be AUTHORIZED, the caller needs the VOID_PAYMENT authority, and less than 24 hours may have elapsed since authorization unless the caller also holds SUPERVISOR_OVERRIDE. Required inputs: reason (CUSTOMER_REQUEST, DUPLICATE_AUTHORIZATION, ENTRY_ERROR, FRAUD_PREVENTION, MANAGER_DISCRETION or OTHER); notes are optional free text. Emits an INVOICE_PAYMENT_VOID event, moves the intent to VOIDED, and publishes a payment-voided notification. Returns 200 with an empty body on success, 404 when the intent does not exist under the invoice, 409 when the intent is not AUTHORIZED, 422 when the 24-hour void window has expired, and 500 when the gateway rejects the void. 
+     * Void Authorized Payment Hold
      */
     async voidPaymentRaw(requestParameters: VoidPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['invoiceId'] == null) {
@@ -157,8 +207,8 @@ export class PaymentReversalApi extends runtime.BaseAPI {
     }
 
     /**
-     * Void a previously authorized invoice payment before it is captured
-     * Void authorized payment
+     * Voids a previously authorized invoice payment hold at the gateway before it is captured, releasing the customer\'s funds without any money movement. Use this tool on an AUTHORIZED hold; do not use refundPayment, which returns funds from a payment that was already CAPTURED. Preconditions: the payment intent must belong to the invoice and be AUTHORIZED, the caller needs the VOID_PAYMENT authority, and less than 24 hours may have elapsed since authorization unless the caller also holds SUPERVISOR_OVERRIDE. Required inputs: reason (CUSTOMER_REQUEST, DUPLICATE_AUTHORIZATION, ENTRY_ERROR, FRAUD_PREVENTION, MANAGER_DISCRETION or OTHER); notes are optional free text. Emits an INVOICE_PAYMENT_VOID event, moves the intent to VOIDED, and publishes a payment-voided notification. Returns 200 with an empty body on success, 404 when the intent does not exist under the invoice, 409 when the intent is not AUTHORIZED, 422 when the 24-hour void window has expired, and 500 when the gateway rejects the void. 
+     * Void Authorized Payment Hold
      */
     async voidPayment(requestParameters: VoidPaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.voidPaymentRaw(requestParameters, initOverrides);

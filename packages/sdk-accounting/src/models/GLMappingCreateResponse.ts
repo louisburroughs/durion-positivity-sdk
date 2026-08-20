@@ -21,7 +21,7 @@ import {
 } from './GLMappingResponse';
 
 /**
- * 
+ * Wrapper response for GL mapping creation
  * @export
  * @interface GLMappingCreateResponse
  */
@@ -31,13 +31,14 @@ export interface GLMappingCreateResponse {
      * @type {GLMappingResponse}
      * @memberof GLMappingCreateResponse
      */
-    mapping?: GLMappingResponse;
+    mapping: GLMappingResponse;
 }
 
 /**
  * Check if a given object implements the GLMappingCreateResponse interface.
  */
 export function instanceOfGLMappingCreateResponse(value: object): boolean {
+    if (!('mapping' in value)) return false;
     return true;
 }
 
@@ -51,7 +52,7 @@ export function GLMappingCreateResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'mapping': json['mapping'] == null ? undefined : GLMappingResponseFromJSON(json['mapping']),
+        'mapping': GLMappingResponseFromJSON(json['mapping']),
     };
 }
 

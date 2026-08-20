@@ -43,7 +43,7 @@ export interface ReversePaymentApplicationRequest {
     paymentApplicationReversalRequest: PaymentApplicationReversalRequest;
 }
 
-export interface VoidPaymentRequest {
+export interface VoidPaymentApplicationRequest {
     paymentId: string;
     body?: object;
 }
@@ -54,8 +54,8 @@ export interface VoidPaymentRequest {
 export class PaymentApplicationsApi extends runtime.BaseAPI {
 
     /**
-     * Apply a payment to an invoice and update its status.
-     * Apply payment
+     * Applies a receivable payment to one or more invoices atomically, updating each invoice\'s balance and status and reducing the payment\'s unapplied amount. Use this tool to settle invoices from an available payment; do not use applyCustomerCredit, which draws down a standing credit rather than a payment. Preconditions: the payment must be AVAILABLE with sufficient unapplied funds, and every target invoice must be applicable (not paid in full, voided or cancelled); an overpayment creates a CustomerCredit for the excess. Required inputs: paymentId (UUID) as a path parameter, applicationRequestId (max 100 chars, the idempotency key) and a non-empty applications list of invoiceId plus amountToApply (min 0.01); allocationStrategy is optional, CALLER_ORDER when omitted or OLDEST_FIRST to allocate by ascending invoice date. Emits an ACCOUNTING_PAYMENT_APPLY event; the application is atomic across all invoices and idempotent on applicationRequestId. Returns 404 when the payment is not found, 400 for insufficient funds, 409 for a currency mismatch or an inapplicable invoice, and 503 when the invoice service is unreachable. 
+     * Apply Payment To Invoices
      */
     async applyPaymentRaw(requestParameters: ApplyPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaymentApplicationResponse>> {
         if (requestParameters['paymentId'] == null) {
@@ -98,8 +98,8 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Apply a payment to an invoice and update its status.
-     * Apply payment
+     * Applies a receivable payment to one or more invoices atomically, updating each invoice\'s balance and status and reducing the payment\'s unapplied amount. Use this tool to settle invoices from an available payment; do not use applyCustomerCredit, which draws down a standing credit rather than a payment. Preconditions: the payment must be AVAILABLE with sufficient unapplied funds, and every target invoice must be applicable (not paid in full, voided or cancelled); an overpayment creates a CustomerCredit for the excess. Required inputs: paymentId (UUID) as a path parameter, applicationRequestId (max 100 chars, the idempotency key) and a non-empty applications list of invoiceId plus amountToApply (min 0.01); allocationStrategy is optional, CALLER_ORDER when omitted or OLDEST_FIRST to allocate by ascending invoice date. Emits an ACCOUNTING_PAYMENT_APPLY event; the application is atomic across all invoices and idempotent on applicationRequestId. Returns 404 when the payment is not found, 400 for insufficient funds, 409 for a currency mismatch or an inapplicable invoice, and 503 when the invoice service is unreachable. 
+     * Apply Payment To Invoices
      */
     async applyPayment(requestParameters: ApplyPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaymentApplicationResponse> {
         const response = await this.applyPaymentRaw(requestParameters, initOverrides);
@@ -107,8 +107,8 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reverse a previously applied payment.
-     * Reverse payment
+     * Reverses every application of a receivable payment as new compensating records, restoring each invoice\'s balance and the payment\'s unapplied amount. Use this tool to back out a whole applied payment, which is also the required path for multi-invoice applications; do not use reversePaymentApplication, which reverses one single-invoice application, and do not use voidPaymentApplication, which only handles never-applied payments. Preconditions: the payment must exist and have at least one application; already-reversed applications are skipped rather than double-reversed. Required inputs: paymentId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail. Emits an ACCOUNTING_PAYMENT_REVERSE event; reversals are new records, never deletions. Returns 404 when the payment is not found, 409 when it has no applications to reverse, and 204 with no body on success. 
+     * Reverse Payment
      */
     async reversePaymentRaw(requestParameters: ReversePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['paymentId'] == null) {
@@ -151,16 +151,16 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reverse a previously applied payment.
-     * Reverse payment
+     * Reverses every application of a receivable payment as new compensating records, restoring each invoice\'s balance and the payment\'s unapplied amount. Use this tool to back out a whole applied payment, which is also the required path for multi-invoice applications; do not use reversePaymentApplication, which reverses one single-invoice application, and do not use voidPaymentApplication, which only handles never-applied payments. Preconditions: the payment must exist and have at least one application; already-reversed applications are skipped rather than double-reversed. Required inputs: paymentId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail. Emits an ACCOUNTING_PAYMENT_REVERSE event; reversals are new records, never deletions. Returns 404 when the payment is not found, 409 when it has no applications to reverse, and 204 with no body on success. 
+     * Reverse Payment
      */
     async reversePayment(requestParameters: ReversePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.reversePaymentRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Reverse a payment application with compensating transaction (no deletion).
-     * Reverse payment application
+     * Reverses one payment application as a new compensating record, restoring the invoice\'s balance and the payment\'s unapplied amount. Use this tool for an application that settled a single invoice; do not use it on an application created by a multi-invoice apply request, which must be reversed as a whole via reversePayment. Preconditions: the application must exist, must not already be reversed, and must not belong to a multi-application request. Required inputs: applicationId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail; the caller needs accounting:payment:reverse or an ACCOUNTING_ADMIN or AR_MANAGER authority. Emits an ACCOUNTING_PAYMENT_APPLICATION_REVERSE event; the reversal is a new record, not a deletion. Returns 404 when the application is not found, 409 when it is already reversed, 422 WHOLE_REQUEST_REVERSAL_REQUIRED when it belongs to a multi-application request, and 204 with no body on success. 
+     * Reverse Payment Application
      */
     async reversePaymentApplicationRaw(requestParameters: ReversePaymentApplicationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['applicationId'] == null) {
@@ -203,22 +203,22 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reverse a payment application with compensating transaction (no deletion).
-     * Reverse payment application
+     * Reverses one payment application as a new compensating record, restoring the invoice\'s balance and the payment\'s unapplied amount. Use this tool for an application that settled a single invoice; do not use it on an application created by a multi-invoice apply request, which must be reversed as a whole via reversePayment. Preconditions: the application must exist, must not already be reversed, and must not belong to a multi-application request. Required inputs: applicationId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail; the caller needs accounting:payment:reverse or an ACCOUNTING_ADMIN or AR_MANAGER authority. Emits an ACCOUNTING_PAYMENT_APPLICATION_REVERSE event; the reversal is a new record, not a deletion. Returns 404 when the application is not found, 409 when it is already reversed, 422 WHOLE_REQUEST_REVERSAL_REQUIRED when it belongs to a multi-application request, and 204 with no body on success. 
+     * Reverse Payment Application
      */
     async reversePaymentApplication(requestParameters: ReversePaymentApplicationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.reversePaymentApplicationRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Void a payment before settlement.
-     * Void payment
+     * Voids a receivable payment that has not been applied to any invoice, zeroing its unapplied amount so it can never be applied. Use this tool for a payment recorded in error before any application; do not use reversePayment, which backs out a payment whose applications already exist. Preconditions: the payment must exist and have no invoice applications; voiding an already-voided payment is a no-op. Required inputs: paymentId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_PAYMENT_VOID event. Returns 404 when the payment is not found, 409 when invoice applications already exist (reverse those first), and 204 with no body on success. 
+     * Void Payment
      */
-    async voidPaymentRaw(requestParameters: VoidPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async voidPaymentApplicationRaw(requestParameters: VoidPaymentApplicationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['paymentId'] == null) {
             throw new runtime.RequiredError(
                 'paymentId',
-                'Required parameter "paymentId" was null or undefined when calling voidPayment().'
+                'Required parameter "paymentId" was null or undefined when calling voidPaymentApplication().'
             );
         }
 
@@ -248,11 +248,11 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Void a payment before settlement.
-     * Void payment
+     * Voids a receivable payment that has not been applied to any invoice, zeroing its unapplied amount so it can never be applied. Use this tool for a payment recorded in error before any application; do not use reversePayment, which backs out a payment whose applications already exist. Preconditions: the payment must exist and have no invoice applications; voiding an already-voided payment is a no-op. Required inputs: paymentId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_PAYMENT_VOID event. Returns 404 when the payment is not found, 409 when invoice applications already exist (reverse those first), and 204 with no body on success. 
+     * Void Payment
      */
-    async voidPayment(requestParameters: VoidPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.voidPaymentRaw(requestParameters, initOverrides);
+    async voidPaymentApplication(requestParameters: VoidPaymentApplicationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.voidPaymentApplicationRaw(requestParameters, initOverrides);
     }
 
 }

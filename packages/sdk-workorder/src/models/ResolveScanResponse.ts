@@ -14,53 +14,56 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of resolving a scanned SKU and location against a pick task
  * @export
  * @interface ResolveScanResponse
  */
 export interface ResolveScanResponse {
     /**
-     * 
+     * Human-readable status describing the match outcome
      * @type {string}
      * @memberof ResolveScanResponse
      */
-    pickTaskId?: string;
+    matchStatus?: string;
     /**
-     * 
+     * Whether the scan matched the expected SKU and location for the pick task
+     * @type {boolean}
+     * @memberof ResolveScanResponse
+     */
+    matched: boolean;
+    /**
+     * Identifier of the pick list containing the resolved task
      * @type {string}
      * @memberof ResolveScanResponse
      */
-    pickListId?: string;
+    pickListId: string;
     /**
-     * 
+     * Identifier of the pick task the scan resolved against
      * @type {string}
      * @memberof ResolveScanResponse
      */
-    resolvedSkuId?: string;
+    pickTaskId: string;
     /**
-     * 
+     * Identifier of the location resolved for the scan
      * @type {string}
      * @memberof ResolveScanResponse
      */
     resolvedLocationId?: string;
     /**
-     * 
-     * @type {boolean}
-     * @memberof ResolveScanResponse
-     */
-    matched?: boolean;
-    /**
-     * 
+     * Identifier of the SKU resolved for the scan (may differ from scanned SKU after substitution)
      * @type {string}
      * @memberof ResolveScanResponse
      */
-    matchStatus?: string;
+    resolvedSkuId?: string;
 }
 
 /**
  * Check if a given object implements the ResolveScanResponse interface.
  */
 export function instanceOfResolveScanResponse(value: object): boolean {
+    if (!('matched' in value)) return false;
+    if (!('pickListId' in value)) return false;
+    if (!('pickTaskId' in value)) return false;
     return true;
 }
 
@@ -74,12 +77,12 @@ export function ResolveScanResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'pickTaskId': json['pickTaskId'] == null ? undefined : json['pickTaskId'],
-        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
-        'resolvedSkuId': json['resolvedSkuId'] == null ? undefined : json['resolvedSkuId'],
-        'resolvedLocationId': json['resolvedLocationId'] == null ? undefined : json['resolvedLocationId'],
-        'matched': json['matched'] == null ? undefined : json['matched'],
         'matchStatus': json['matchStatus'] == null ? undefined : json['matchStatus'],
+        'matched': json['matched'],
+        'pickListId': json['pickListId'],
+        'pickTaskId': json['pickTaskId'],
+        'resolvedLocationId': json['resolvedLocationId'] == null ? undefined : json['resolvedLocationId'],
+        'resolvedSkuId': json['resolvedSkuId'] == null ? undefined : json['resolvedSkuId'],
     };
 }
 
@@ -89,12 +92,12 @@ export function ResolveScanResponseToJSON(value?: ResolveScanResponse | null): a
     }
     return {
         
-        'pickTaskId': value['pickTaskId'],
-        'pickListId': value['pickListId'],
-        'resolvedSkuId': value['resolvedSkuId'],
-        'resolvedLocationId': value['resolvedLocationId'],
-        'matched': value['matched'],
         'matchStatus': value['matchStatus'],
+        'matched': value['matched'],
+        'pickListId': value['pickListId'],
+        'pickTaskId': value['pickTaskId'],
+        'resolvedLocationId': value['resolvedLocationId'],
+        'resolvedSkuId': value['resolvedSkuId'],
     };
 }
 

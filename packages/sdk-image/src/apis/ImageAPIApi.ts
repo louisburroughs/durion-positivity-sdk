@@ -14,6 +14,19 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  ApiError,
+  StoreImageRequest,
+  StoredImage,
+} from '../models/index';
+import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
+    StoreImageRequestFromJSON,
+    StoreImageRequestToJSON,
+    StoredImageFromJSON,
+    StoredImageToJSON,
+} from '../models/index';
 
 export interface GetImageByFilenameRequest {
     filename: string;
@@ -23,13 +36,17 @@ export interface GetImageByIdRequest {
     id: number;
 }
 
+export interface StoreImageOperationRequest {
+    storeImageRequest: StoreImageRequest;
+}
+
 /**
  * 
  */
 export class ImageAPIApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve an image file by its filename.
+     * Returns the stored image file matching a filename as a binary attachment. Use this tool when only the filename is known, such as a reference embedded in catalog data; use getImageById instead when the numeric id is available, because filenames are not guaranteed unique over time. Preconditions: an image record with that exact filename must exist and its backing file must still be present on disk. Required inputs: filename path parameter, matched exactly including extension; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record matches the filename or the backing file is missing from storage. 
      * Get image by filename
      */
     async getImageByFilenameRaw(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -55,7 +72,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve an image file by its filename.
+     * Returns the stored image file matching a filename as a binary attachment. Use this tool when only the filename is known, such as a reference embedded in catalog data; use getImageById instead when the numeric id is available, because filenames are not guaranteed unique over time. Preconditions: an image record with that exact filename must exist and its backing file must still be present on disk. Required inputs: filename path parameter, matched exactly including extension; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record matches the filename or the backing file is missing from storage. 
      * Get image by filename
      */
     async getImageByFilename(requestParameters: GetImageByFilenameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -64,7 +81,7 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve an image file by its unique database ID.
+     * Returns the stored image file for a numeric image id as a binary attachment. Use this tool when the image\'s database id is already known; use getImageByFilename instead when only the filename is known. Preconditions: the image record must exist and its backing file must still be present on disk. Required inputs: id (numeric database id) path parameter; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record has that id or the backing file is missing from storage. 
      * Get image by ID
      */
     async getImageByIdRaw(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -90,11 +107,49 @@ export class ImageAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve an image file by its unique database ID.
+     * Returns the stored image file for a numeric image id as a binary attachment. Use this tool when the image\'s database id is already known; use getImageByFilename instead when only the filename is known. Preconditions: the image record must exist and its backing file must still be present on disk. Required inputs: id (numeric database id) path parameter; there is no request body and no resizing or format options. No events are emitted and no state changes; this is a read-only file retrieval. Returns 404 when no image record has that id or the backing file is missing from storage. 
      * Get image by ID
      */
     async getImageById(requestParameters: GetImageByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
         const response = await this.getImageByIdRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Stores image bytes and returns a reference to them, or returns the reference already held when the same bytes from the same origin have been stored before. Use this tool when ingesting artwork that must not depend on a third party to render, such as manufacturer marketing images; do not use it to register an image that already lives somewhere this service can read, because that needs no copy. Preconditions: the content must not be empty, because an empty body is a failed download and storing one would stop it ever being retried. Required inputs: filename, contentType and content as base64; sourceUri and context are optional, and sourceUri is kept as provenance rather than as a render source. No events are emitted. Returns 200 with the reference, whose newlyStored flag says whether this call did the storing or found the bytes already held, and 400 when the content is empty. 
+     * Store An Image
+     */
+    async storeImageRaw(requestParameters: StoreImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StoredImage>> {
+        if (requestParameters['storeImageRequest'] == null) {
+            throw new runtime.RequiredError(
+                'storeImageRequest',
+                'Required parameter "storeImageRequest" was null or undefined when calling storeImage().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/v1/images`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: StoreImageRequestToJSON(requestParameters['storeImageRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => StoredImageFromJSON(jsonValue));
+    }
+
+    /**
+     * Stores image bytes and returns a reference to them, or returns the reference already held when the same bytes from the same origin have been stored before. Use this tool when ingesting artwork that must not depend on a third party to render, such as manufacturer marketing images; do not use it to register an image that already lives somewhere this service can read, because that needs no copy. Preconditions: the content must not be empty, because an empty body is a failed download and storing one would stop it ever being retried. Required inputs: filename, contentType and content as base64; sourceUri and context are optional, and sourceUri is kept as provenance rather than as a render source. No events are emitted. Returns 200 with the reference, whose newlyStored flag says whether this call did the storing or found the bytes already held, and 400 when the content is empty. 
+     * Store An Image
+     */
+    async storeImage(requestParameters: StoreImageOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StoredImage> {
+        const response = await this.storeImageRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

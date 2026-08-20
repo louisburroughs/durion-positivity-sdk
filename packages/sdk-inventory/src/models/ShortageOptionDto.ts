@@ -14,53 +14,81 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A computed option for resolving an inventory shortage on an allocation
  * @export
  * @interface ShortageOptionDto
  */
 export interface ShortageOptionDto {
     /**
-     * 
+     * Identifier of the allocation the option applies to
      * @type {string}
      * @memberof ShortageOptionDto
      */
-    allocationId?: string;
+    allocationId: string;
     /**
-     * 
+     * Quantity available toward the shortage for SUBSTITUTE / TRANSFER_IN options
+     * @type {number}
+     * @memberof ShortageOptionDto
+     */
+    availableQuantity?: number;
+    /**
+     * Per-unit cost delta versus the original SKU, when computable (positive = costs more)
+     * @type {number}
+     * @memberof ShortageOptionDto
+     */
+    costDelta?: number;
+    /**
+     * Human-readable description of the resolution option
      * @type {string}
      * @memberof ShortageOptionDto
      */
-    allocationLineId?: string;
+    description: string;
     /**
-     * 
+     * Estimated date the shortage would be resolved via this option
+     * @type {Date}
+     * @memberof ShortageOptionDto
+     */
+    expectedResolutionDate?: Date;
+    /**
+     * The computed resolution strategy
      * @type {string}
      * @memberof ShortageOptionDto
      */
-    resolution?: string;
+    optionType: ShortageOptionDtoOptionTypeEnum;
     /**
-     * 
+     * Source site surplus can be pulled from, when the option is TRANSFER_IN
      * @type {string}
      * @memberof ShortageOptionDto
      */
-    description?: string;
+    sourceLocationId?: string;
     /**
-     * 
+     * Substitute stock-keeping unit offered, when the option is SUBSTITUTE
      * @type {string}
      * @memberof ShortageOptionDto
      */
     substituteSku?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ShortageOptionDto
-     */
-    estimatedDays?: number;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ShortageOptionDtoOptionTypeEnum {
+    Backorder = 'BACKORDER',
+    Substitute = 'SUBSTITUTE',
+    TransferIn = 'TRANSFER_IN',
+    EmergencyPurchase = 'EMERGENCY_PURCHASE',
+    CancelLine = 'CANCEL_LINE'
+}
+
 
 /**
  * Check if a given object implements the ShortageOptionDto interface.
  */
 export function instanceOfShortageOptionDto(value: object): boolean {
+    if (!('allocationId' in value)) return false;
+    if (!('description' in value)) return false;
+    if (!('optionType' in value)) return false;
     return true;
 }
 
@@ -74,12 +102,14 @@ export function ShortageOptionDtoFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'allocationId': json['allocationId'] == null ? undefined : json['allocationId'],
-        'allocationLineId': json['allocationLineId'] == null ? undefined : json['allocationLineId'],
-        'resolution': json['resolution'] == null ? undefined : json['resolution'],
-        'description': json['description'] == null ? undefined : json['description'],
+        'allocationId': json['allocationId'],
+        'availableQuantity': json['availableQuantity'] == null ? undefined : json['availableQuantity'],
+        'costDelta': json['costDelta'] == null ? undefined : json['costDelta'],
+        'description': json['description'],
+        'expectedResolutionDate': json['expectedResolutionDate'] == null ? undefined : (new Date(json['expectedResolutionDate'])),
+        'optionType': json['optionType'],
+        'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
         'substituteSku': json['substituteSku'] == null ? undefined : json['substituteSku'],
-        'estimatedDays': json['estimatedDays'] == null ? undefined : json['estimatedDays'],
     };
 }
 
@@ -90,11 +120,13 @@ export function ShortageOptionDtoToJSON(value?: ShortageOptionDto | null): any {
     return {
         
         'allocationId': value['allocationId'],
-        'allocationLineId': value['allocationLineId'],
-        'resolution': value['resolution'],
+        'availableQuantity': value['availableQuantity'],
+        'costDelta': value['costDelta'],
         'description': value['description'],
+        'expectedResolutionDate': value['expectedResolutionDate'] == null ? undefined : ((value['expectedResolutionDate']).toISOString().substring(0,10)),
+        'optionType': value['optionType'],
+        'sourceLocationId': value['sourceLocationId'],
         'substituteSku': value['substituteSku'],
-        'estimatedDays': value['estimatedDays'],
     };
 }
 

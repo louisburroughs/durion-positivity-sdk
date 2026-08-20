@@ -14,59 +14,66 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Income statement (Profit & Loss) report built from POSTED journal entries
  * @export
  * @interface IncomeStatementReport
  */
 export interface IncomeStatementReport {
     /**
-     * 
+     * Report period end date (inclusive)
      * @type {Date}
      * @memberof IncomeStatementReport
      */
-    startDate?: Date;
+    endDate: Date;
     /**
-     * 
+     * Timestamp when the report was generated
      * @type {Date}
      * @memberof IncomeStatementReport
      */
-    endDate?: Date;
+    generatedAt: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof IncomeStatementReport
-     */
-    generatedAt?: Date;
-    /**
-     * 
+     * Map of statement line codes to amounts (e.g. PL_REVENUE_SALES, PL_EXPENSE_SALARIES)
      * @type {{ [key: string]: number; }}
      * @memberof IncomeStatementReport
      */
-    lineItems?: { [key: string]: number; };
+    lineItems: { [key: string]: number; };
     /**
-     * 
+     * Net income (total revenue minus total expenses); positive is profit, negative is loss
      * @type {number}
      * @memberof IncomeStatementReport
      */
-    totalRevenue?: number;
+    netIncome: number;
     /**
-     * 
+     * Report period start date (inclusive)
+     * @type {Date}
+     * @memberof IncomeStatementReport
+     */
+    startDate: Date;
+    /**
+     * Total expenses (sum of all expense accounts)
      * @type {number}
      * @memberof IncomeStatementReport
      */
-    totalExpenses?: number;
+    totalExpenses: number;
     /**
-     * 
+     * Total revenue (sum of all revenue accounts)
      * @type {number}
      * @memberof IncomeStatementReport
      */
-    netIncome?: number;
+    totalRevenue: number;
 }
 
 /**
  * Check if a given object implements the IncomeStatementReport interface.
  */
 export function instanceOfIncomeStatementReport(value: object): boolean {
+    if (!('endDate' in value)) return false;
+    if (!('generatedAt' in value)) return false;
+    if (!('lineItems' in value)) return false;
+    if (!('netIncome' in value)) return false;
+    if (!('startDate' in value)) return false;
+    if (!('totalExpenses' in value)) return false;
+    if (!('totalRevenue' in value)) return false;
     return true;
 }
 
@@ -80,13 +87,13 @@ export function IncomeStatementReportFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'startDate': json['startDate'] == null ? undefined : (new Date(json['startDate'])),
-        'endDate': json['endDate'] == null ? undefined : (new Date(json['endDate'])),
-        'generatedAt': json['generatedAt'] == null ? undefined : (new Date(json['generatedAt'])),
-        'lineItems': json['lineItems'] == null ? undefined : json['lineItems'],
-        'totalRevenue': json['totalRevenue'] == null ? undefined : json['totalRevenue'],
-        'totalExpenses': json['totalExpenses'] == null ? undefined : json['totalExpenses'],
-        'netIncome': json['netIncome'] == null ? undefined : json['netIncome'],
+        'endDate': (new Date(json['endDate'])),
+        'generatedAt': (new Date(json['generatedAt'])),
+        'lineItems': json['lineItems'],
+        'netIncome': json['netIncome'],
+        'startDate': (new Date(json['startDate'])),
+        'totalExpenses': json['totalExpenses'],
+        'totalRevenue': json['totalRevenue'],
     };
 }
 
@@ -96,13 +103,13 @@ export function IncomeStatementReportToJSON(value?: IncomeStatementReport | null
     }
     return {
         
-        'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString().substring(0,10)),
-        'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString().substring(0,10)),
-        'generatedAt': value['generatedAt'] == null ? undefined : ((value['generatedAt']).toISOString()),
+        'endDate': ((value['endDate']).toISOString().substring(0,10)),
+        'generatedAt': ((value['generatedAt']).toISOString()),
         'lineItems': value['lineItems'],
-        'totalRevenue': value['totalRevenue'],
-        'totalExpenses': value['totalExpenses'],
         'netIncome': value['netIncome'],
+        'startDate': ((value['startDate']).toISOString().substring(0,10)),
+        'totalExpenses': value['totalExpenses'],
+        'totalRevenue': value['totalRevenue'],
     };
 }
 

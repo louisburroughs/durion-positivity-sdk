@@ -20,23 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface PromotionOfferResponse {
     /**
-     * Promotion offer identifier
-     * @type {string}
+     * Record creation timestamp
+     * @type {Date}
      * @memberof PromotionOfferResponse
      */
-    promotionOfferId?: string;
+    createdAt?: Date;
     /**
-     * Unique promotion code
+     * User that created the record
      * @type {string}
      * @memberof PromotionOfferResponse
      */
-    promoCode?: string;
-    /**
-     * Promotion display name
-     * @type {string}
-     * @memberof PromotionOfferResponse
-     */
-    name?: string;
+    createdBy?: string;
     /**
      * Optional promotion description
      * @type {string}
@@ -48,43 +42,49 @@ export interface PromotionOfferResponse {
      * @type {string}
      * @memberof PromotionOfferResponse
      */
-    discountType?: PromotionOfferResponseDiscountTypeEnum;
+    discountType: PromotionOfferResponseDiscountTypeEnum;
     /**
      * Discount value based on discount type
      * @type {number}
      * @memberof PromotionOfferResponse
      */
-    discountValue?: number;
-    /**
-     * Promotion validity start date
-     * @type {Date}
-     * @memberof PromotionOfferResponse
-     */
-    startDate?: Date;
+    discountValue: number;
     /**
      * Promotion validity end date
      * @type {Date}
      * @memberof PromotionOfferResponse
      */
-    endDate?: Date;
+    endDate: Date;
     /**
-     * Optional usage limit
-     * @type {number}
+     * Promotion display name
+     * @type {string}
      * @memberof PromotionOfferResponse
      */
-    usageLimit?: number;
+    name: string;
     /**
-     * Number of times the promotion has been applied
-     * @type {number}
+     * Unique promotion code
+     * @type {string}
      * @memberof PromotionOfferResponse
      */
-    usageCount?: number;
+    promoCode: string;
+    /**
+     * Promotion offer identifier
+     * @type {string}
+     * @memberof PromotionOfferResponse
+     */
+    promotionOfferId: string;
+    /**
+     * Promotion validity start date
+     * @type {Date}
+     * @memberof PromotionOfferResponse
+     */
+    startDate: Date;
     /**
      * Current promotion status
      * @type {string}
      * @memberof PromotionOfferResponse
      */
-    status?: PromotionOfferResponseStatusEnum;
+    status: PromotionOfferResponseStatusEnum;
     /**
      * Optional store code scope
      * @type {string}
@@ -92,23 +92,23 @@ export interface PromotionOfferResponse {
      */
     storeCode?: string;
     /**
-     * Record creation timestamp
-     * @type {Date}
-     * @memberof PromotionOfferResponse
-     */
-    createdAt?: Date;
-    /**
      * Record last update timestamp
      * @type {Date}
      * @memberof PromotionOfferResponse
      */
     updatedAt?: Date;
     /**
-     * User that created the record
-     * @type {string}
+     * Number of times the promotion has been applied
+     * @type {number}
      * @memberof PromotionOfferResponse
      */
-    createdBy?: string;
+    usageCount: number;
+    /**
+     * Optional usage limit
+     * @type {number}
+     * @memberof PromotionOfferResponse
+     */
+    usageLimit?: number;
 }
 
 /**
@@ -136,6 +136,15 @@ export enum PromotionOfferResponseStatusEnum {
  * Check if a given object implements the PromotionOfferResponse interface.
  */
 export function instanceOfPromotionOfferResponse(value: object): boolean {
+    if (!('discountType' in value)) return false;
+    if (!('discountValue' in value)) return false;
+    if (!('endDate' in value)) return false;
+    if (!('name' in value)) return false;
+    if (!('promoCode' in value)) return false;
+    if (!('promotionOfferId' in value)) return false;
+    if (!('startDate' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('usageCount' in value)) return false;
     return true;
 }
 
@@ -149,21 +158,21 @@ export function PromotionOfferResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'promotionOfferId': json['promotionOfferId'] == null ? undefined : json['promotionOfferId'],
-        'promoCode': json['promoCode'] == null ? undefined : json['promoCode'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'discountType': json['discountType'] == null ? undefined : json['discountType'],
-        'discountValue': json['discountValue'] == null ? undefined : json['discountValue'],
-        'startDate': json['startDate'] == null ? undefined : (new Date(json['startDate'])),
-        'endDate': json['endDate'] == null ? undefined : (new Date(json['endDate'])),
-        'usageLimit': json['usageLimit'] == null ? undefined : json['usageLimit'],
-        'usageCount': json['usageCount'] == null ? undefined : json['usageCount'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'storeCode': json['storeCode'] == null ? undefined : json['storeCode'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'discountType': json['discountType'],
+        'discountValue': json['discountValue'],
+        'endDate': (new Date(json['endDate'])),
+        'name': json['name'],
+        'promoCode': json['promoCode'],
+        'promotionOfferId': json['promotionOfferId'],
+        'startDate': (new Date(json['startDate'])),
+        'status': json['status'],
+        'storeCode': json['storeCode'] == null ? undefined : json['storeCode'],
+        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'usageCount': json['usageCount'],
+        'usageLimit': json['usageLimit'] == null ? undefined : json['usageLimit'],
     };
 }
 
@@ -173,21 +182,21 @@ export function PromotionOfferResponseToJSON(value?: PromotionOfferResponse | nu
     }
     return {
         
-        'promotionOfferId': value['promotionOfferId'],
-        'promoCode': value['promoCode'],
-        'name': value['name'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt'] as any).toISOString()),
+        'createdBy': value['createdBy'],
         'description': value['description'],
         'discountType': value['discountType'],
         'discountValue': value['discountValue'],
-        'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString().substring(0,10)),
-        'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString().substring(0,10)),
-        'usageLimit': value['usageLimit'],
-        'usageCount': value['usageCount'],
+        'endDate': ((value['endDate']).toISOString().substring(0,10)),
+        'name': value['name'],
+        'promoCode': value['promoCode'],
+        'promotionOfferId': value['promotionOfferId'],
+        'startDate': ((value['startDate']).toISOString().substring(0,10)),
         'status': value['status'],
         'storeCode': value['storeCode'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt'] as any).toISOString()),
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt'] as any).toISOString()),
-        'createdBy': value['createdBy'],
+        'usageCount': value['usageCount'],
+        'usageLimit': value['usageLimit'],
     };
 }
 

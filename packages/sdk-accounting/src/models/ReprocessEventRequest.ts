@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to reprocess a suspended accounting event
  * @export
  * @interface ReprocessEventRequest
  */
 export interface ReprocessEventRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof ReprocessEventRequest
-     */
-    triggeredByUserId: string;
-    /**
-     * 
+     * Specific mapping version to use; defaults to latest when omitted
      * @type {string}
      * @memberof ReprocessEventRequest
      */
     mappingVersionToUse?: string;
     /**
-     * 
+     * Optional notes about why reprocessing is being triggered
      * @type {string}
      * @memberof ReprocessEventRequest
      */
     reprocessingNotes?: string;
+    /**
+     * Identifier of the user triggering the reprocessing (required for audit trail)
+     * @type {string}
+     * @memberof ReprocessEventRequest
+     */
+    triggeredByUserId: string;
 }
 
 /**
@@ -57,9 +57,9 @@ export function ReprocessEventRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'triggeredByUserId': json['triggeredByUserId'],
         'mappingVersionToUse': json['mappingVersionToUse'] == null ? undefined : json['mappingVersionToUse'],
         'reprocessingNotes': json['reprocessingNotes'] == null ? undefined : json['reprocessingNotes'],
+        'triggeredByUserId': json['triggeredByUserId'],
     };
 }
 
@@ -69,9 +69,9 @@ export function ReprocessEventRequestToJSON(value?: ReprocessEventRequest | null
     }
     return {
         
-        'triggeredByUserId': value['triggeredByUserId'],
         'mappingVersionToUse': value['mappingVersionToUse'],
         'reprocessingNotes': value['reprocessingNotes'],
+        'triggeredByUserId': value['triggeredByUserId'],
     };
 }
 

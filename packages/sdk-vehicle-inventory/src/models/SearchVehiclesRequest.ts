@@ -14,41 +14,42 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for searching vehicles by free-text query with optional pagination
  * @export
  * @interface SearchVehiclesRequest
  */
 export interface SearchVehiclesRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof SearchVehiclesRequest
-     */
-    query?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof SearchVehiclesRequest
-     */
-    limit?: number;
-    /**
-     * 
+     * Opaque pagination cursor for retrieving subsequent result pages (reserved for future use)
      * @type {string}
      * @memberof SearchVehiclesRequest
      */
     cursor?: string;
     /**
-     * 
+     * When true, enables substring (contains) matching; defaults to false for strict matching
      * @type {boolean}
      * @memberof SearchVehiclesRequest
      */
     enableContainsMatching?: boolean;
+    /**
+     * Maximum number of results to return; defaults to 25 when omitted
+     * @type {number}
+     * @memberof SearchVehiclesRequest
+     */
+    limit?: number;
+    /**
+     * Free-text search query matched against VIN, unit number, plate, and description
+     * @type {string}
+     * @memberof SearchVehiclesRequest
+     */
+    query: string;
 }
 
 /**
  * Check if a given object implements the SearchVehiclesRequest interface.
  */
 export function instanceOfSearchVehiclesRequest(value: object): boolean {
+    if (!('query' in value)) return false;
     return true;
 }
 
@@ -62,10 +63,10 @@ export function SearchVehiclesRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'query': json['query'] == null ? undefined : json['query'],
-        'limit': json['limit'] == null ? undefined : json['limit'],
         'cursor': json['cursor'] == null ? undefined : json['cursor'],
         'enableContainsMatching': json['enableContainsMatching'] == null ? undefined : json['enableContainsMatching'],
+        'limit': json['limit'] == null ? undefined : json['limit'],
+        'query': json['query'],
     };
 }
 
@@ -75,10 +76,10 @@ export function SearchVehiclesRequestToJSON(value?: SearchVehiclesRequest | null
     }
     return {
         
-        'query': value['query'],
-        'limit': value['limit'],
         'cursor': value['cursor'],
         'enableContainsMatching': value['enableContainsMatching'],
+        'limit': value['limit'],
+        'query': value['query'],
     };
 }
 

@@ -14,45 +14,77 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to submit a recount for a cycle count task, including the caller's permission context
  * @export
  * @interface SubmitRecountRequest
  */
 export interface SubmitRecountRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof SubmitRecountRequest
-     */
-    taskId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SubmitRecountRequest
-     */
-    auditorId: string;
-    /**
-     * 
+     * Quantity physically measured on the recount, in unitOfMeasure (or the product's base UoM when unitOfMeasure is omitted). Converted to base UoM before variance is computed.
      * @type {number}
      * @memberof SubmitRecountRequest
      */
     actualQuantity: number;
     /**
-     * 
+     * Identifier of the auditor submitting the recount
+     * @type {string}
+     * @memberof SubmitRecountRequest
+     */
+    auditorId: string;
+    /**
+     * How the quantity was obtained. Defaults to MANUAL_COUNT.
+     * @type {string}
+     * @memberof SubmitRecountRequest
+     */
+    measurementMethod?: SubmitRecountRequestMeasurementMethodEnum;
+    /**
+     * Permission context authorizing the recount; one of TRIGGER_RECOUNT_SELF or TRIGGER_RECOUNT_ANY
      * @type {string}
      * @memberof SubmitRecountRequest
      */
     permission: string;
+    /**
+     * Identifier of the cycle count task being recounted
+     * @type {string}
+     * @memberof SubmitRecountRequest
+     */
+    taskId: string;
+    /**
+     * Unit the quantity was physically measured in. Omit for the product's base UoM.
+     * @type {string}
+     * @memberof SubmitRecountRequest
+     */
+    unitOfMeasure?: string;
+    /**
+     * Reason for the variance, if already known at submission time. Optional.
+     * @type {string}
+     * @memberof SubmitRecountRequest
+     */
+    varianceReason?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum SubmitRecountRequestMeasurementMethodEnum {
+    ManualCount = 'MANUAL_COUNT',
+    Dip = 'DIP',
+    Gauge = 'GAUGE',
+    Scale = 'SCALE',
+    Meter = 'METER',
+    Sensor = 'SENSOR'
+}
+
 
 /**
  * Check if a given object implements the SubmitRecountRequest interface.
  */
 export function instanceOfSubmitRecountRequest(value: object): boolean {
-    if (!('taskId' in value)) return false;
-    if (!('auditorId' in value)) return false;
     if (!('actualQuantity' in value)) return false;
+    if (!('auditorId' in value)) return false;
     if (!('permission' in value)) return false;
+    if (!('taskId' in value)) return false;
     return true;
 }
 
@@ -66,10 +98,13 @@ export function SubmitRecountRequestFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'taskId': json['taskId'],
-        'auditorId': json['auditorId'],
         'actualQuantity': json['actualQuantity'],
+        'auditorId': json['auditorId'],
+        'measurementMethod': json['measurementMethod'] == null ? undefined : json['measurementMethod'],
         'permission': json['permission'],
+        'taskId': json['taskId'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'varianceReason': json['varianceReason'] == null ? undefined : json['varianceReason'],
     };
 }
 
@@ -79,10 +114,13 @@ export function SubmitRecountRequestToJSON(value?: SubmitRecountRequest | null):
     }
     return {
         
-        'taskId': value['taskId'],
-        'auditorId': value['auditorId'],
         'actualQuantity': value['actualQuantity'],
+        'auditorId': value['auditorId'],
+        'measurementMethod': value['measurementMethod'],
         'permission': value['permission'],
+        'taskId': value['taskId'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'varianceReason': value['varianceReason'],
     };
 }
 

@@ -37,7 +37,7 @@ export interface ConsumePartsRequest {
     idempotencyKey?: string;
 }
 
-export interface GetUsageHistoryRequest {
+export interface GetPartsUsageHistoryRequest {
     workorderId: string;
     partLineId?: string;
 }
@@ -60,8 +60,8 @@ export interface ReturnPartsRequest {
 export class WorkorderPartsUsageApi extends runtime.BaseAPI {
 
     /**
-     * Record actual consumption of parts. Quantity consumed cannot exceed quantity issued.
-     * Consume parts on workorder
+     * Records actual consumption of an issued part, incrementing the line\'s quantityConsumed and writing a CONSUME usage event. Use this tool when a part is actually installed on the vehicle; do not use issueParts, which only reserves quantity, or returnParts, which sends unused quantity back. Preconditions: the part must belong to the workorder and cumulative consumption must not exceed the quantity already issued. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_CONSUME event and marks the workorder fact changed. Returns 201 with the CONSUME event, 400 when the quantity is not positive, exceeds the issued quantity, or the part cannot be found, 404 when the workorder does not exist, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Record Part Consumption on Workorder
      */
     async consumePartsRaw(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -108,8 +108,8 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Record actual consumption of parts. Quantity consumed cannot exceed quantity issued.
-     * Consume parts on workorder
+     * Records actual consumption of an issued part, incrementing the line\'s quantityConsumed and writing a CONSUME usage event. Use this tool when a part is actually installed on the vehicle; do not use issueParts, which only reserves quantity, or returnParts, which sends unused quantity back. Preconditions: the part must belong to the workorder and cumulative consumption must not exceed the quantity already issued. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_CONSUME event and marks the workorder fact changed. Returns 201 with the CONSUME event, 400 when the quantity is not positive, exceeds the issued quantity, or the part cannot be found, 404 when the workorder does not exist, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Record Part Consumption on Workorder
      */
     async consumeParts(requestParameters: ConsumePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
         const response = await this.consumePartsRaw(requestParameters, initOverrides);
@@ -117,14 +117,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve usage history (issue, consume, return events) for parts on the workorder
-     * Get parts usage history
+     * Returns the ISSUE, CONSUME, and RETURN usage events for a workorder\'s parts, either for the whole workorder or filtered to one part line. Use this tool when auditing how part quantities moved; use getPartAdjustmentHistory instead for substitutions, corrections, and reasoned returns from the adjustment flow. Preconditions: when partLineId is supplied, the part must belong to the workorder. Required inputs: workorderId (UUID) as a path parameter; partLineId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the events, 400 when the filtered part cannot be found, 404 when the workorder does not exist, and 409 when the filtered part belongs to a different workorder. 
+     * Get Parts Usage History
      */
-    async getUsageHistoryRaw(requestParameters: GetUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
+    async getPartsUsageHistoryRaw(requestParameters: GetPartsUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
-                'Required parameter "workorderId" was null or undefined when calling getUsageHistory().'
+                'Required parameter "workorderId" was null or undefined when calling getPartsUsageHistory().'
             );
         }
 
@@ -155,17 +155,17 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve usage history (issue, consume, return events) for parts on the workorder
-     * Get parts usage history
+     * Returns the ISSUE, CONSUME, and RETURN usage events for a workorder\'s parts, either for the whole workorder or filtered to one part line. Use this tool when auditing how part quantities moved; use getPartAdjustmentHistory instead for substitutions, corrections, and reasoned returns from the adjustment flow. Preconditions: when partLineId is supplied, the part must belong to the workorder. Required inputs: workorderId (UUID) as a path parameter; partLineId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the events, 400 when the filtered part cannot be found, 404 when the workorder does not exist, and 409 when the filtered part belongs to a different workorder. 
+     * Get Parts Usage History
      */
-    async getUsageHistory(requestParameters: GetUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
-        const response = await this.getUsageHistoryRaw(requestParameters, initOverrides);
+    async getPartsUsageHistory(requestParameters: GetPartsUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
+        const response = await this.getPartsUsageHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Issue parts from inventory, reserving them for consumption on the workorder
-     * Issue parts to workorder
+     * Issues a quantity of a part line to the workorder, incrementing the line\'s quantityIssued and recording an ISSUE usage event with the acting user. Use this tool when stock is handed to the job; do not use consumeParts, which records actual installation against previously issued quantity. Preconditions: the workorder and part line must exist, the part must belong to the workorder, and the caller must have an authenticated username. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit) and travels with the reservation request; an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_ISSUE event and marks the workorder fact changed for downstream replication. Returns 201 with the ISSUE event, 400 when the quantity is not positive or the part cannot be found, 404 when the workorder does not exist, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Issue Parts to Workorder
      */
     async issuePartsRaw(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -212,8 +212,8 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Issue parts from inventory, reserving them for consumption on the workorder
-     * Issue parts to workorder
+     * Issues a quantity of a part line to the workorder, incrementing the line\'s quantityIssued and recording an ISSUE usage event with the acting user. Use this tool when stock is handed to the job; do not use consumeParts, which records actual installation against previously issued quantity. Preconditions: the workorder and part line must exist, the part must belong to the workorder, and the caller must have an authenticated username. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit) and travels with the reservation request; an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_ISSUE event and marks the workorder fact changed for downstream replication. Returns 201 with the ISSUE event, 400 when the quantity is not positive or the part cannot be found, 404 when the workorder does not exist, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Issue Parts to Workorder
      */
     async issueParts(requestParameters: IssuePartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
         const response = await this.issuePartsRaw(requestParameters, initOverrides);
@@ -221,8 +221,8 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Return unused parts after partial consumption or service completion
-     * Return unused parts to inventory
+     * Returns unused issued quantity of a part line to inventory, incrementing quantityReturned and writing a RETURN usage event. Use this tool for the normal return of leftover stock after partial consumption; do not use returnUnusedPartQuantity, which is the adjustment-flow return that also records a reason. Preconditions: the part must belong to the workorder, and the return cannot exceed the available quantity — issued minus consumed minus already returned. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_RETURN event and marks the workorder fact changed. Returns 201 with the RETURN event, 400 when the quantity is not positive, exceeds the available quantity, or the part cannot be found, 404 when the workorder does not exist, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Return Unused Parts to Inventory
      */
     async returnPartsRaw(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -269,8 +269,8 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
     }
 
     /**
-     * Return unused parts after partial consumption or service completion
-     * Return unused parts to inventory
+     * Returns unused issued quantity of a part line to inventory, incrementing quantityReturned and writing a RETURN usage event. Use this tool for the normal return of leftover stock after partial consumption; do not use returnUnusedPartQuantity, which is the adjustment-flow return that also records a reason. Preconditions: the part must belong to the workorder, and the return cannot exceed the available quantity — issued minus consumed minus already returned. Required inputs: workorderId (UUID) as a path parameter, plus workorderPartId (UUID) and a positive quantity in the body; uomCode is the optional unit quantity is expressed in (omit for the product\'s base unit); an Idempotency-Key header makes retries return the original usage event. Emits a WORKORDER_PART_RETURN event and marks the workorder fact changed. Returns 201 with the RETURN event, 400 when the quantity is not positive, exceeds the available quantity, or the part cannot be found, 404 when the workorder does not exist, 422 when uomCode has no conversion row for the product or the converted quantity exceeds its declared decimal scale, and 409 when the part belongs to a different workorder. 
+     * Return Unused Parts to Inventory
      */
     async returnParts(requestParameters: ReturnPartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
         const response = await this.returnPartsRaw(requestParameters, initOverrides);

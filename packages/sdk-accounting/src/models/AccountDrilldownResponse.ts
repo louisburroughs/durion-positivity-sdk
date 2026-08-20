@@ -14,41 +14,45 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * GL account contribution to a financial statement line
  * @export
  * @interface AccountDrilldownResponse
  */
 export interface AccountDrilldownResponse {
     /**
-     * 
+     * Identifier of the GL account
      * @type {string}
      * @memberof AccountDrilldownResponse
      */
-    accountId?: string;
+    accountId: string;
     /**
-     * 
+     * Name of the GL account
      * @type {string}
      * @memberof AccountDrilldownResponse
      */
-    accountName?: string;
+    accountName: string;
     /**
-     * 
+     * Account balance for the period (sum of POSTED journal lines within the date range)
      * @type {number}
      * @memberof AccountDrilldownResponse
      */
-    balance?: number;
+    balance: number;
     /**
-     * 
+     * Statement line code this account contributes to
      * @type {string}
      * @memberof AccountDrilldownResponse
      */
-    statementLineCode?: string;
+    statementLineCode: string;
 }
 
 /**
  * Check if a given object implements the AccountDrilldownResponse interface.
  */
 export function instanceOfAccountDrilldownResponse(value: object): boolean {
+    if (!('accountId' in value)) return false;
+    if (!('accountName' in value)) return false;
+    if (!('balance' in value)) return false;
+    if (!('statementLineCode' in value)) return false;
     return true;
 }
 
@@ -62,10 +66,10 @@ export function AccountDrilldownResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'accountId': json['accountId'] == null ? undefined : json['accountId'],
-        'accountName': json['accountName'] == null ? undefined : json['accountName'],
-        'balance': json['balance'] == null ? undefined : json['balance'],
-        'statementLineCode': json['statementLineCode'] == null ? undefined : json['statementLineCode'],
+        'accountId': json['accountId'],
+        'accountName': json['accountName'],
+        'balance': json['balance'],
+        'statementLineCode': json['statementLineCode'],
     };
 }
 

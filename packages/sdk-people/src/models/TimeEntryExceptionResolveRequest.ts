@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to resolve a time entry exception
  * @export
  * @interface TimeEntryExceptionResolveRequest
  */

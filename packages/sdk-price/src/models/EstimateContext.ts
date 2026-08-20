@@ -27,11 +27,11 @@ import {
  */
 export interface EstimateContext {
     /**
-     * Estimate identifier
-     * @type {string}
+     * Promotion codes already applied to this estimate
+     * @type {Array<string>}
      * @memberof EstimateContext
      */
-    estimateId: string;
+    appliedPromoCodes?: Array<string>;
     /**
      * Customer identifier
      * @type {string}
@@ -39,11 +39,11 @@ export interface EstimateContext {
      */
     customerId: string;
     /**
-     * Optional vehicle identifier for vehicle-specific eligibility checks
+     * Estimate identifier
      * @type {string}
      * @memberof EstimateContext
      */
-    vehicleId?: string;
+    estimateId: string;
     /**
      * Line items included in the estimate
      * @type {Array<LineItemContext>}
@@ -57,19 +57,19 @@ export interface EstimateContext {
      */
     subtotal: number;
     /**
-     * Promotion codes already applied to this estimate
-     * @type {Array<string>}
+     * Optional vehicle identifier for vehicle-specific eligibility checks
+     * @type {string}
      * @memberof EstimateContext
      */
-    appliedPromoCodes?: Array<string>;
+    vehicleId?: string;
 }
 
 /**
  * Check if a given object implements the EstimateContext interface.
  */
 export function instanceOfEstimateContext(value: object): boolean {
-    if (!('estimateId' in value)) return false;
     if (!('customerId' in value)) return false;
+    if (!('estimateId' in value)) return false;
     if (!('lineItems' in value)) return false;
     if (!('subtotal' in value)) return false;
     return true;
@@ -85,12 +85,12 @@ export function EstimateContextFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'estimateId': json['estimateId'],
+        'appliedPromoCodes': json['appliedPromoCodes'] == null ? undefined : json['appliedPromoCodes'],
         'customerId': json['customerId'],
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
+        'estimateId': json['estimateId'],
         'lineItems': ((json['lineItems'] as Array<any>).map(LineItemContextFromJSON)),
         'subtotal': json['subtotal'],
-        'appliedPromoCodes': json['appliedPromoCodes'] == null ? undefined : json['appliedPromoCodes'],
+        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
     };
 }
 
@@ -100,12 +100,12 @@ export function EstimateContextToJSON(value?: EstimateContext | null): any {
     }
     return {
         
-        'estimateId': value['estimateId'],
+        'appliedPromoCodes': value['appliedPromoCodes'],
         'customerId': value['customerId'],
-        'vehicleId': value['vehicleId'],
+        'estimateId': value['estimateId'],
         'lineItems': ((value['lineItems'] as Array<any>).map(LineItemContextToJSON)),
         'subtotal': value['subtotal'],
-        'appliedPromoCodes': value['appliedPromoCodes'],
+        'vehicleId': value['vehicleId'],
     };
 }
 

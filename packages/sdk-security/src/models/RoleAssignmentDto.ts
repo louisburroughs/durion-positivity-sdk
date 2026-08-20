@@ -14,83 +14,83 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A role assignment binding a user to a role within a scope
  * @export
  * @interface RoleAssignmentDto
  */
 export interface RoleAssignmentDto {
     /**
-     * 
-     * @type {string}
-     * @memberof RoleAssignmentDto
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RoleAssignmentDto
-     */
-    userId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RoleAssignmentDto
-     */
-    roleId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RoleAssignmentDto
-     */
-    scopeType?: RoleAssignmentDtoScopeTypeEnum;
-    /**
-     * 
-     * @type {Set<string>}
-     * @memberof RoleAssignmentDto
-     */
-    scopeLocationIds?: Set<string>;
-    /**
-     * 
-     * @type {Date}
-     * @memberof RoleAssignmentDto
-     */
-    effectiveStartDate?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof RoleAssignmentDto
-     */
-    effectiveEndDate?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof RoleAssignmentDto
-     */
-    revokedAt?: Date;
-    /**
-     * 
+     * Creation timestamp
      * @type {Date}
      * @memberof RoleAssignmentDto
      */
     createdAt?: Date;
     /**
-     * 
+     * Actor that created the assignment
      * @type {string}
      * @memberof RoleAssignmentDto
      */
     createdBy?: string;
     /**
-     * 
+     * Exclusive end of the effective window
+     * @type {Date}
+     * @memberof RoleAssignmentDto
+     */
+    effectiveEndDate?: Date;
+    /**
+     * Inclusive start of the effective window
+     * @type {Date}
+     * @memberof RoleAssignmentDto
+     */
+    effectiveStartDate?: Date;
+    /**
+     * Role assignment identifier
+     * @type {string}
+     * @memberof RoleAssignmentDto
+     */
+    id: string;
+    /**
+     * Last-modified timestamp
      * @type {Date}
      * @memberof RoleAssignmentDto
      */
     lastModifiedAt?: Date;
     /**
-     * 
+     * Actor that last modified the assignment
      * @type {string}
      * @memberof RoleAssignmentDto
      */
     lastModifiedBy?: string;
+    /**
+     * Timestamp at which the assignment was revoked
+     * @type {Date}
+     * @memberof RoleAssignmentDto
+     */
+    revokedAt?: Date;
+    /**
+     * Identifier of the assigned role
+     * @type {string}
+     * @memberof RoleAssignmentDto
+     */
+    roleId: string;
+    /**
+     * Location identifiers the assignment applies to when scopeType is LOCATION
+     * @type {Set<string>}
+     * @memberof RoleAssignmentDto
+     */
+    scopeLocationIds?: Set<string>;
+    /**
+     * Scope type that constrains the assignment
+     * @type {string}
+     * @memberof RoleAssignmentDto
+     */
+    scopeType: RoleAssignmentDtoScopeTypeEnum;
+    /**
+     * Identifier of the user the role is assigned to
+     * @type {string}
+     * @memberof RoleAssignmentDto
+     */
+    userId: string;
 }
 
 /**
@@ -107,6 +107,10 @@ export enum RoleAssignmentDtoScopeTypeEnum {
  * Check if a given object implements the RoleAssignmentDto interface.
  */
 export function instanceOfRoleAssignmentDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('roleId' in value)) return false;
+    if (!('scopeType' in value)) return false;
+    if (!('userId' in value)) return false;
     return true;
 }
 
@@ -120,18 +124,18 @@ export function RoleAssignmentDtoFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'userId': json['userId'] == null ? undefined : json['userId'],
-        'roleId': json['roleId'] == null ? undefined : json['roleId'],
-        'scopeType': json['scopeType'] == null ? undefined : json['scopeType'],
-        'scopeLocationIds': json['scopeLocationIds'] == null ? undefined : json['scopeLocationIds'],
-        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
-        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
-        'revokedAt': json['revokedAt'] == null ? undefined : (new Date(json['revokedAt'])),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
+        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
+        'id': json['id'],
         'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
+        'revokedAt': json['revokedAt'] == null ? undefined : (new Date(json['revokedAt'])),
+        'roleId': json['roleId'],
+        'scopeLocationIds': json['scopeLocationIds'] == null ? undefined : json['scopeLocationIds'],
+        'scopeType': json['scopeType'],
+        'userId': json['userId'],
     };
 }
 
@@ -141,18 +145,18 @@ export function RoleAssignmentDtoToJSON(value?: RoleAssignmentDto | null): any {
     }
     return {
         
-        'id': value['id'],
-        'userId': value['userId'],
-        'roleId': value['roleId'],
-        'scopeType': value['scopeType'],
-        'scopeLocationIds': value['scopeLocationIds'] == null ? undefined : Array.from(value['scopeLocationIds'] as Set<any>),
-        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
-        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
-        'revokedAt': value['revokedAt'] == null ? undefined : ((value['revokedAt']).toISOString()),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
+        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
+        'id': value['id'],
         'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'lastModifiedBy': value['lastModifiedBy'],
+        'revokedAt': value['revokedAt'] == null ? undefined : ((value['revokedAt']).toISOString()),
+        'roleId': value['roleId'],
+        'scopeLocationIds': value['scopeLocationIds'] == null ? undefined : Array.from(value['scopeLocationIds'] as Set<any>),
+        'scopeType': value['scopeType'],
+        'userId': value['userId'],
     };
 }
 

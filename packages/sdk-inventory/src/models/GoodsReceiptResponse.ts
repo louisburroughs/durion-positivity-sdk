@@ -21,71 +21,76 @@ import {
 } from './GoodsReceiptLineResponse';
 
 /**
- * 
+ * Goods receipt representing inventory received against a purchase order, including its received line items and accrued totals
  * @export
  * @interface GoodsReceiptResponse
  */
 export interface GoodsReceiptResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof GoodsReceiptResponse
-     */
-    receiptId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GoodsReceiptResponse
-     */
-    receiptNumber?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GoodsReceiptResponse
-     */
-    poId?: string;
-    /**
-     * 
+     * Identifier of the advance shipping notice (ASN) this receipt fulfilled, if applicable
      * @type {string}
      * @memberof GoodsReceiptResponse
      */
     asnId?: string;
     /**
-     * 
-     * @type {string}
+     * Timestamp when the goods receipt was created
+     * @type {Date}
      * @memberof GoodsReceiptResponse
      */
-    locationId?: string;
+    createdAt: Date;
     /**
-     * 
-     * @type {number}
-     * @memberof GoodsReceiptResponse
-     */
-    totalAccruedAmountMinor?: number;
-    /**
-     * 
+     * Identifier of the user who recorded the goods receipt
      * @type {string}
      * @memberof GoodsReceiptResponse
      */
     createdBy?: string;
     /**
-     * 
-     * @type {Date}
-     * @memberof GoodsReceiptResponse
-     */
-    createdAt?: Date;
-    /**
-     * 
+     * Received line items detailing the SKUs and quantities in this goods receipt
      * @type {Array<GoodsReceiptLineResponse>}
      * @memberof GoodsReceiptResponse
      */
     lines?: Array<GoodsReceiptLineResponse>;
+    /**
+     * Identifier of the location where the goods were received into inventory
+     * @type {string}
+     * @memberof GoodsReceiptResponse
+     */
+    locationId: string;
+    /**
+     * Identifier of the purchase order the goods were received against
+     * @type {string}
+     * @memberof GoodsReceiptResponse
+     */
+    poId: string;
+    /**
+     * Unique identifier of the goods receipt
+     * @type {string}
+     * @memberof GoodsReceiptResponse
+     */
+    receiptId: string;
+    /**
+     * Human-readable reference number assigned to the goods receipt
+     * @type {string}
+     * @memberof GoodsReceiptResponse
+     */
+    receiptNumber: string;
+    /**
+     * Total accrued cost for the goods receipt expressed in minor currency units (e.g. cents)
+     * @type {number}
+     * @memberof GoodsReceiptResponse
+     */
+    totalAccruedAmountMinor?: number;
 }
 
 /**
  * Check if a given object implements the GoodsReceiptResponse interface.
  */
 export function instanceOfGoodsReceiptResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('poId' in value)) return false;
+    if (!('receiptId' in value)) return false;
+    if (!('receiptNumber' in value)) return false;
     return true;
 }
 
@@ -99,15 +104,15 @@ export function GoodsReceiptResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'receiptId': json['receiptId'] == null ? undefined : json['receiptId'],
-        'receiptNumber': json['receiptNumber'] == null ? undefined : json['receiptNumber'],
-        'poId': json['poId'] == null ? undefined : json['poId'],
         'asnId': json['asnId'] == null ? undefined : json['asnId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'totalAccruedAmountMinor': json['totalAccruedAmountMinor'] == null ? undefined : json['totalAccruedAmountMinor'],
+        'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'lines': json['lines'] == null ? undefined : ((json['lines'] as Array<any>).map(GoodsReceiptLineResponseFromJSON)),
+        'locationId': json['locationId'],
+        'poId': json['poId'],
+        'receiptId': json['receiptId'],
+        'receiptNumber': json['receiptNumber'],
+        'totalAccruedAmountMinor': json['totalAccruedAmountMinor'] == null ? undefined : json['totalAccruedAmountMinor'],
     };
 }
 
@@ -117,15 +122,15 @@ export function GoodsReceiptResponseToJSON(value?: GoodsReceiptResponse | null):
     }
     return {
         
+        'asnId': value['asnId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
+        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(GoodsReceiptLineResponseToJSON)),
+        'locationId': value['locationId'],
+        'poId': value['poId'],
         'receiptId': value['receiptId'],
         'receiptNumber': value['receiptNumber'],
-        'poId': value['poId'],
-        'asnId': value['asnId'],
-        'locationId': value['locationId'],
         'totalAccruedAmountMinor': value['totalAccruedAmountMinor'],
-        'createdBy': value['createdBy'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'lines': value['lines'] == null ? undefined : ((value['lines'] as Array<any>).map(GoodsReceiptLineResponseToJSON)),
     };
 }
 

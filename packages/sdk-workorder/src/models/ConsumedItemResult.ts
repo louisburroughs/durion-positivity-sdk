@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Outcome of consuming a single picked item
  * @export
  * @interface ConsumedItemResult
  */
 export interface ConsumedItemResult {
     /**
-     * 
+     * Identifier of the pick task consumed
      * @type {string}
      * @memberof ConsumedItemResult
      */
-    pickTaskId?: string;
+    pickTaskId: string;
     /**
-     * 
+     * Quantity actually consumed
      * @type {number}
      * @memberof ConsumedItemResult
      */
-    quantityConsumed?: number;
+    quantityConsumed: number;
     /**
-     * 
+     * Outcome status for the item
      * @type {string}
      * @memberof ConsumedItemResult
      */
-    status?: ConsumedItemResultStatusEnum;
+    status: ConsumedItemResultStatusEnum;
 }
 
 /**
@@ -44,6 +44,7 @@ export interface ConsumedItemResult {
 * @enum {string}
 */
 export enum ConsumedItemResultStatusEnum {
+    Pending = 'PENDING',
     Success = 'SUCCESS',
     Partial = 'PARTIAL',
     Failed = 'FAILED'
@@ -54,6 +55,9 @@ export enum ConsumedItemResultStatusEnum {
  * Check if a given object implements the ConsumedItemResult interface.
  */
 export function instanceOfConsumedItemResult(value: object): boolean {
+    if (!('pickTaskId' in value)) return false;
+    if (!('quantityConsumed' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -67,9 +71,9 @@ export function ConsumedItemResultFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'pickTaskId': json['pickTaskId'] == null ? undefined : json['pickTaskId'],
-        'quantityConsumed': json['quantityConsumed'] == null ? undefined : json['quantityConsumed'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'pickTaskId': json['pickTaskId'],
+        'quantityConsumed': json['quantityConsumed'],
+        'status': json['status'],
     };
 }
 

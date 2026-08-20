@@ -20,23 +20,25 @@ import { mapValues } from '../runtime';
  */
 export interface EventSummaryResponse {
     /**
-     * Event type identifier
-     * @type {string}
-     * @memberof EventSummaryResponse
-     */
-    eventTypeId?: string;
-    /**
      * Number of events of this type in the timeframe
      * @type {number}
      * @memberof EventSummaryResponse
      */
-    count?: number;
+    count: number;
+    /**
+     * Event type identifier
+     * @type {string}
+     * @memberof EventSummaryResponse
+     */
+    eventTypeId: string;
 }
 
 /**
  * Check if a given object implements the EventSummaryResponse interface.
  */
 export function instanceOfEventSummaryResponse(value: object): boolean {
+    if (!('count' in value)) return false;
+    if (!('eventTypeId' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function EventSummaryResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'eventTypeId': json['eventTypeId'] == null ? undefined : json['eventTypeId'],
-        'count': json['count'] == null ? undefined : json['count'],
+        'count': json['count'],
+        'eventTypeId': json['eventTypeId'],
     };
 }
 
@@ -61,8 +63,8 @@ export function EventSummaryResponseToJSON(value?: EventSummaryResponse | null):
     }
     return {
         
-        'eventTypeId': value['eventTypeId'],
         'count': value['count'],
+        'eventTypeId': value['eventTypeId'],
     };
 }
 

@@ -21,35 +21,35 @@ import {
 } from './BasePriceBulkIngestRecord';
 
 /**
- * 
+ * Generic bulk ingest request: a batch of records for a job scoped to a location
  * @export
  * @interface BulkIngestRequestBasePriceBulkIngestRecord
  */
 export interface BulkIngestRequestBasePriceBulkIngestRecord {
     /**
-     * 
+     * Identifier of the bulk ingest job
      * @type {string}
      * @memberof BulkIngestRequestBasePriceBulkIngestRecord
      */
     jobId: string;
     /**
-     * 
+     * Location the records are ingested for
      * @type {string}
      * @memberof BulkIngestRequestBasePriceBulkIngestRecord
      */
     locationId: string;
     /**
-     * 
-     * @type {Array<BasePriceBulkIngestRecord>}
-     * @memberof BulkIngestRequestBasePriceBulkIngestRecord
-     */
-    records: Array<BasePriceBulkIngestRecord>;
-    /**
-     * 
+     * Identifier of the operator submitting the batch
      * @type {string}
      * @memberof BulkIngestRequestBasePriceBulkIngestRecord
      */
     operatorId?: string;
+    /**
+     * The records to ingest (at least one); shape depends on the target domain
+     * @type {Array<BasePriceBulkIngestRecord>}
+     * @memberof BulkIngestRequestBasePriceBulkIngestRecord
+     */
+    records: Array<BasePriceBulkIngestRecord>;
 }
 
 /**
@@ -74,8 +74,8 @@ export function BulkIngestRequestBasePriceBulkIngestRecordFromJSONTyped(json: an
         
         'jobId': json['jobId'],
         'locationId': json['locationId'],
-        'records': ((json['records'] as Array<any>).map(BasePriceBulkIngestRecordFromJSON)),
         'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
+        'records': ((json['records'] as Array<any>).map(BasePriceBulkIngestRecordFromJSON)),
     };
 }
 
@@ -87,8 +87,8 @@ export function BulkIngestRequestBasePriceBulkIngestRecordToJSON(value?: BulkIng
         
         'jobId': value['jobId'],
         'locationId': value['locationId'],
-        'records': ((value['records'] as Array<any>).map(BasePriceBulkIngestRecordToJSON)),
         'operatorId': value['operatorId'],
+        'records': ((value['records'] as Array<any>).map(BasePriceBulkIngestRecordToJSON)),
     };
 }
 

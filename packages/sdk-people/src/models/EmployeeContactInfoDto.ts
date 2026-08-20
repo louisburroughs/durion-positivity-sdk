@@ -27,35 +27,11 @@ import {
 } from './EmployeeEmergencyContactDto';
 
 /**
- * 
+ * Contact information for an employee
  * @export
  * @interface EmployeeContactInfoDto
  */
 export interface EmployeeContactInfoDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeContactInfoDto
-     */
-    primaryEmail?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeContactInfoDto
-     */
-    primaryPhone?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeContactInfoDto
-     */
-    secondaryEmail?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeContactInfoDto
-     */
-    secondaryPhone?: string;
     /**
      * 
      * @type {EmployeeAddressDto}
@@ -68,6 +44,30 @@ export interface EmployeeContactInfoDto {
      * @memberof EmployeeContactInfoDto
      */
     emergencyContact?: EmployeeEmergencyContactDto;
+    /**
+     * Primary email address
+     * @type {string}
+     * @memberof EmployeeContactInfoDto
+     */
+    primaryEmail?: string;
+    /**
+     * Primary phone number
+     * @type {string}
+     * @memberof EmployeeContactInfoDto
+     */
+    primaryPhone?: string;
+    /**
+     * Secondary email address
+     * @type {string}
+     * @memberof EmployeeContactInfoDto
+     */
+    secondaryEmail?: string;
+    /**
+     * Secondary phone number
+     * @type {string}
+     * @memberof EmployeeContactInfoDto
+     */
+    secondaryPhone?: string;
 }
 
 /**
@@ -87,12 +87,12 @@ export function EmployeeContactInfoDtoFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'address': json['address'] == null ? undefined : EmployeeAddressDtoFromJSON(json['address']),
+        'emergencyContact': json['emergencyContact'] == null ? undefined : EmployeeEmergencyContactDtoFromJSON(json['emergencyContact']),
         'primaryEmail': json['primaryEmail'] == null ? undefined : json['primaryEmail'],
         'primaryPhone': json['primaryPhone'] == null ? undefined : json['primaryPhone'],
         'secondaryEmail': json['secondaryEmail'] == null ? undefined : json['secondaryEmail'],
         'secondaryPhone': json['secondaryPhone'] == null ? undefined : json['secondaryPhone'],
-        'address': json['address'] == null ? undefined : EmployeeAddressDtoFromJSON(json['address']),
-        'emergencyContact': json['emergencyContact'] == null ? undefined : EmployeeEmergencyContactDtoFromJSON(json['emergencyContact']),
     };
 }
 
@@ -102,12 +102,12 @@ export function EmployeeContactInfoDtoToJSON(value?: EmployeeContactInfoDto | nu
     }
     return {
         
+        'address': EmployeeAddressDtoToJSON(value['address']),
+        'emergencyContact': EmployeeEmergencyContactDtoToJSON(value['emergencyContact']),
         'primaryEmail': value['primaryEmail'],
         'primaryPhone': value['primaryPhone'],
         'secondaryEmail': value['secondaryEmail'],
         'secondaryPhone': value['secondaryPhone'],
-        'address': EmployeeAddressDtoToJSON(value['address']),
-        'emergencyContact': EmployeeEmergencyContactDtoToJSON(value['emergencyContact']),
     };
 }
 

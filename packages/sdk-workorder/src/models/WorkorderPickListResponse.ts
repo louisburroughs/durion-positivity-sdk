@@ -14,59 +14,66 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response describing a workorder pick list
  * @export
  * @interface WorkorderPickListResponse
  */
 export interface WorkorderPickListResponse {
     /**
-     * 
+     * Timestamp the pick list was created
+     * @type {Date}
+     * @memberof WorkorderPickListResponse
+     */
+    createdAt: Date;
+    /**
+     * Timestamp the pick list is due
+     * @type {Date}
+     * @memberof WorkorderPickListResponse
+     */
+    dueAt: Date;
+    /**
+     * Pick list identifier
      * @type {string}
      * @memberof WorkorderPickListResponse
      */
-    pickListId?: string;
+    pickListId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof WorkorderPickListResponse
-     */
-    workorderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WorkorderPickListResponse
-     */
-    status?: string;
-    /**
-     * 
+     * Priority ordering of the pick list
      * @type {number}
      * @memberof WorkorderPickListResponse
      */
-    priority?: number;
+    priority: number;
     /**
-     * 
+     * Status of the pick list
+     * @type {string}
+     * @memberof WorkorderPickListResponse
+     */
+    status: string;
+    /**
+     * Timestamp the pick list was last updated
      * @type {Date}
      * @memberof WorkorderPickListResponse
      */
-    dueAt?: Date;
+    updatedAt: Date;
     /**
-     * 
-     * @type {Date}
+     * Identifier of the workorder the pick list belongs to
+     * @type {string}
      * @memberof WorkorderPickListResponse
      */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof WorkorderPickListResponse
-     */
-    updatedAt?: Date;
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the WorkorderPickListResponse interface.
  */
 export function instanceOfWorkorderPickListResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('dueAt' in value)) return false;
+    if (!('pickListId' in value)) return false;
+    if (!('priority' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('updatedAt' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -80,13 +87,13 @@ export function WorkorderPickListResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'priority': json['priority'] == null ? undefined : json['priority'],
-        'dueAt': json['dueAt'] == null ? undefined : (new Date(json['dueAt'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'createdAt': (new Date(json['createdAt'])),
+        'dueAt': (new Date(json['dueAt'])),
+        'pickListId': json['pickListId'],
+        'priority': json['priority'],
+        'status': json['status'],
+        'updatedAt': (new Date(json['updatedAt'])),
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -96,13 +103,13 @@ export function WorkorderPickListResponseToJSON(value?: WorkorderPickListRespons
     }
     return {
         
+        'createdAt': ((value['createdAt']).toISOString()),
+        'dueAt': ((value['dueAt']).toISOString()),
         'pickListId': value['pickListId'],
-        'workorderId': value['workorderId'],
-        'status': value['status'],
         'priority': value['priority'],
-        'dueAt': value['dueAt'] == null ? undefined : ((value['dueAt']).toISOString()),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'status': value['status'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

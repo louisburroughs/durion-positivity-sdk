@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AppointmentCreateRequest,
   AppointmentResponse,
   CancelAppointmentRequest,
   RescheduleAppointmentRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AppointmentCreateRequestFromJSON,
     AppointmentCreateRequestToJSON,
     AppointmentResponseFromJSON,
@@ -42,7 +45,7 @@ export interface CreateAppointmentRequest {
     xCorrelationId?: string;
 }
 
-export interface GetAppointmentRequest {
+export interface GetAppointmentByIdRequest {
     appointmentId: string;
     xCorrelationId?: string;
 }
@@ -58,8 +61,8 @@ export interface RescheduleAppointmentOperationRequest {
 export class AppointmentsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Cancel a scheduled appointment
-     * Cancel appointment
+     * Cancels a scheduled appointment, setting its status to CANCELLED with the supplied reason code and recording the cancellation in the appointment audit trail. Use this tool when a booked visit will not happen; do not use rescheduleAppointment, which keeps the appointment alive at a new time. Preconditions: the appointment must exist and be in SCHEDULED status; appointments that are already checked in, in progress, completed or cancelled are rejected. Required inputs: cancellationReason (CUSTOMER_REQUEST, TECHNICIAN_UNAVAILABLE, WEATHER, VEHICLE_NOT_READY or OTHER); notes is optional free text up to 1000 characters. Emits a SHOPMGR_APPOINTMENT_CANCEL event; a downstream workorder cancellation notification is additionally published only when the appointment carries a workorderLinkRef. Returns 404 when the appointment does not exist, and 409 when the appointment is not in SCHEDULED status. 
+     * Cancel a Scheduled Appointment With Reason
      */
     async cancelAppointmentRaw(requestParameters: CancelAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AppointmentResponse>> {
         if (requestParameters['appointmentId'] == null) {
@@ -102,8 +105,8 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Cancel a scheduled appointment
-     * Cancel appointment
+     * Cancels a scheduled appointment, setting its status to CANCELLED with the supplied reason code and recording the cancellation in the appointment audit trail. Use this tool when a booked visit will not happen; do not use rescheduleAppointment, which keeps the appointment alive at a new time. Preconditions: the appointment must exist and be in SCHEDULED status; appointments that are already checked in, in progress, completed or cancelled are rejected. Required inputs: cancellationReason (CUSTOMER_REQUEST, TECHNICIAN_UNAVAILABLE, WEATHER, VEHICLE_NOT_READY or OTHER); notes is optional free text up to 1000 characters. Emits a SHOPMGR_APPOINTMENT_CANCEL event; a downstream workorder cancellation notification is additionally published only when the appointment carries a workorderLinkRef. Returns 404 when the appointment does not exist, and 409 when the appointment is not in SCHEDULED status. 
+     * Cancel a Scheduled Appointment With Reason
      */
     async cancelAppointment(requestParameters: CancelAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AppointmentResponse> {
         const response = await this.cancelAppointmentRaw(requestParameters, initOverrides);
@@ -111,8 +114,8 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new appointment
-     * Create appointment
+     * Creates a shop appointment that reserves a time window for a customer\'s vehicle at a location, optionally against a specific bay or mobile-unit resource and optionally linked to an originating estimate or work order. Use this tool when booking new shop work; do not use rescheduleAppointment, which moves the time window of an appointment that already exists. Preconditions: the customer and vehicle must exist in the local CRM replicas and the vehicle must belong to the customer; the requested window must not overlap another SCHEDULED appointment on the same resource at the location; when sourceType (ESTIMATE or WORK_ORDER) is set, sourceId is required, the source must be eligible for scheduling, and no appointment may already exist for that source. Required inputs: crmCustomerId, crmVehicleId and locationId (UUIDs), startAt and endAt (UTC instants, startAt before endAt) and at least one serviceRequestIds entry; an optional Idempotency-Key header (non-blank, max 128 characters) makes retries safe and replays the original response only when the retried request matches the stored appointment\'s scheduling fields. Emits a SHOPMGR_APPOINTMENT_CREATE event and persists customer and vehicle snapshots on the appointment, which is created in SCHEDULED status. Returns 400 when the slot is already booked, the idempotency key was reused with a different request, or sourceId is missing for a supplied sourceType; 404 when the customer or vehicle is unknown; 409 when the vehicle does not belong to the customer; and 422 when the source estimate or work order is not eligible for scheduling. 
+     * Create a New Shop Appointment
      */
     async createAppointmentRaw(requestParameters: CreateAppointmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AppointmentResponse>> {
         if (requestParameters['appointmentCreateRequest'] == null) {
@@ -156,8 +159,8 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new appointment
-     * Create appointment
+     * Creates a shop appointment that reserves a time window for a customer\'s vehicle at a location, optionally against a specific bay or mobile-unit resource and optionally linked to an originating estimate or work order. Use this tool when booking new shop work; do not use rescheduleAppointment, which moves the time window of an appointment that already exists. Preconditions: the customer and vehicle must exist in the local CRM replicas and the vehicle must belong to the customer; the requested window must not overlap another SCHEDULED appointment on the same resource at the location; when sourceType (ESTIMATE or WORK_ORDER) is set, sourceId is required, the source must be eligible for scheduling, and no appointment may already exist for that source. Required inputs: crmCustomerId, crmVehicleId and locationId (UUIDs), startAt and endAt (UTC instants, startAt before endAt) and at least one serviceRequestIds entry; an optional Idempotency-Key header (non-blank, max 128 characters) makes retries safe and replays the original response only when the retried request matches the stored appointment\'s scheduling fields. Emits a SHOPMGR_APPOINTMENT_CREATE event and persists customer and vehicle snapshots on the appointment, which is created in SCHEDULED status. Returns 400 when the slot is already booked, the idempotency key was reused with a different request, or sourceId is missing for a supplied sourceType; 404 when the customer or vehicle is unknown; 409 when the vehicle does not belong to the customer; and 422 when the source estimate or work order is not eligible for scheduling. 
+     * Create a New Shop Appointment
      */
     async createAppointment(requestParameters: CreateAppointmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AppointmentResponse> {
         const response = await this.createAppointmentRaw(requestParameters, initOverrides);
@@ -165,14 +168,14 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve an appointment by ID
-     * Load appointment
+     * Returns the full appointment record, including status, time window, service request ids and the customer and vehicle snapshots captured at booking. Use this tool when the appointment id is already known; use viewSchedule instead to browse appointments by location and date. Preconditions: the appointment must exist; appointmentId must be a UUID in canonical text form. Required inputs: appointmentId as a path parameter; there is no request body and no filtering. No events are emitted and no state changes; this is a read-only projection. Returns 400 when appointmentId is not a valid UUID, and 404 when no appointment exists for the supplied id. 
+     * Get an Appointment by Its ID
      */
-    async getAppointmentRaw(requestParameters: GetAppointmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AppointmentResponse>> {
+    async getAppointmentByIdRaw(requestParameters: GetAppointmentByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AppointmentResponse>> {
         if (requestParameters['appointmentId'] == null) {
             throw new runtime.RequiredError(
                 'appointmentId',
-                'Required parameter "appointmentId" was null or undefined when calling getAppointment().'
+                'Required parameter "appointmentId" was null or undefined when calling getAppointmentById().'
             );
         }
 
@@ -203,17 +206,17 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve an appointment by ID
-     * Load appointment
+     * Returns the full appointment record, including status, time window, service request ids and the customer and vehicle snapshots captured at booking. Use this tool when the appointment id is already known; use viewSchedule instead to browse appointments by location and date. Preconditions: the appointment must exist; appointmentId must be a UUID in canonical text form. Required inputs: appointmentId as a path parameter; there is no request body and no filtering. No events are emitted and no state changes; this is a read-only projection. Returns 400 when appointmentId is not a valid UUID, and 404 when no appointment exists for the supplied id. 
+     * Get an Appointment by Its ID
      */
-    async getAppointment(requestParameters: GetAppointmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AppointmentResponse> {
-        const response = await this.getAppointmentRaw(requestParameters, initOverrides);
+    async getAppointmentById(requestParameters: GetAppointmentByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AppointmentResponse> {
+        const response = await this.getAppointmentByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Reschedule an existing appointment
-     * Reschedule appointment
+     * Moves an existing appointment to a new time window while preserving its resource, customer and service requests, recording the change in reschedule history and the appointment audit trail. Use this tool when a booked appointment must change times; do not use cancelAppointment, which terminates the appointment instead of moving it, and do not use createAppointment for a visit that is not yet booked. Preconditions: the appointment must exist and be in SCHEDULED, CHECKED_IN or WAITING_FOR_PARTS status; completed, cancelled and other statuses cannot be rescheduled. Required inputs: newStartAt and newEndAt (UTC instants, newStartAt before newEndAt) and a reason code; rescheduleReasonNotes (max 1000 characters) is mandatory when reason is OTHER, and notifyCustomer defaults to true. Emits a SHOPMGR_APPOINTMENT_RESCHEDULE event; a downstream workorder reschedule notification is additionally published only when the appointment carries a workorderLinkRef. Returns 400 when the time window is invalid or notes are missing for reason OTHER, 404 when the appointment does not exist, and 409 when the appointment status does not permit rescheduling. 
+     * Move an Appointment to a New Time Window
      */
     async rescheduleAppointmentRaw(requestParameters: RescheduleAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AppointmentResponse>> {
         if (requestParameters['appointmentId'] == null) {
@@ -256,8 +259,8 @@ export class AppointmentsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reschedule an existing appointment
-     * Reschedule appointment
+     * Moves an existing appointment to a new time window while preserving its resource, customer and service requests, recording the change in reschedule history and the appointment audit trail. Use this tool when a booked appointment must change times; do not use cancelAppointment, which terminates the appointment instead of moving it, and do not use createAppointment for a visit that is not yet booked. Preconditions: the appointment must exist and be in SCHEDULED, CHECKED_IN or WAITING_FOR_PARTS status; completed, cancelled and other statuses cannot be rescheduled. Required inputs: newStartAt and newEndAt (UTC instants, newStartAt before newEndAt) and a reason code; rescheduleReasonNotes (max 1000 characters) is mandatory when reason is OTHER, and notifyCustomer defaults to true. Emits a SHOPMGR_APPOINTMENT_RESCHEDULE event; a downstream workorder reschedule notification is additionally published only when the appointment carries a workorderLinkRef. Returns 400 when the time window is invalid or notes are missing for reason OTHER, 404 when the appointment does not exist, and 409 when the appointment status does not permit rescheduling. 
+     * Move an Appointment to a New Time Window
      */
     async rescheduleAppointment(requestParameters: RescheduleAppointmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AppointmentResponse> {
         const response = await this.rescheduleAppointmentRaw(requestParameters, initOverrides);

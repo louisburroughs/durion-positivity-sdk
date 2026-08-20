@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface LineItemContext {
     /**
-     * Product SKU or identifier
-     * @type {string}
-     * @memberof LineItemContext
-     */
-    sku: string;
-    /**
      * Line item quantity
      * @type {number}
      * @memberof LineItemContext
      */
     quantity: number;
+    /**
+     * Product SKU or identifier
+     * @type {string}
+     * @memberof LineItemContext
+     */
+    sku: string;
     /**
      * Line item unit price
      * @type {number}
@@ -43,8 +43,8 @@ export interface LineItemContext {
  * Check if a given object implements the LineItemContext interface.
  */
 export function instanceOfLineItemContext(value: object): boolean {
-    if (!('sku' in value)) return false;
     if (!('quantity' in value)) return false;
+    if (!('sku' in value)) return false;
     if (!('unitPrice' in value)) return false;
     return true;
 }
@@ -59,8 +59,8 @@ export function LineItemContextFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'sku': json['sku'],
         'quantity': json['quantity'],
+        'sku': json['sku'],
         'unitPrice': json['unitPrice'],
     };
 }
@@ -71,8 +71,8 @@ export function LineItemContextToJSON(value?: LineItemContext | null): any {
     }
     return {
         
-        'sku': value['sku'],
         'quantity': value['quantity'],
+        'sku': value['sku'],
         'unitPrice': value['unitPrice'],
     };
 }

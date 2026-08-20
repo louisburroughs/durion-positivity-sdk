@@ -24,7 +24,7 @@ export interface IndividualDetails {
      * @type {string}
      * @memberof IndividualDetails
      */
-    displayName?: string;
+    displayName: string;
     /**
      * Primary email address
      * @type {string}
@@ -43,6 +43,7 @@ export interface IndividualDetails {
  * Check if a given object implements the IndividualDetails interface.
  */
 export function instanceOfIndividualDetails(value: object): boolean {
+    if (!('displayName' in value)) return false;
     return true;
 }
 
@@ -56,7 +57,7 @@ export function IndividualDetailsFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'displayName': json['displayName'],
         'email': json['email'] == null ? undefined : json['email'],
         'phone': json['phone'] == null ? undefined : json['phone'],
     };

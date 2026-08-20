@@ -20,29 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface VendorBillResponse {
     /**
-     * Vendor bill UUID
+     * Approval justification (if status = APPROVED)
      * @type {string}
      * @memberof VendorBillResponse
      */
-    vendorBillId?: string;
-    /**
-     * Vendor UUID
-     * @type {string}
-     * @memberof VendorBillResponse
-     */
-    vendorId?: string;
-    /**
-     * Vendor name
-     * @type {string}
-     * @memberof VendorBillResponse
-     */
-    vendorName?: string;
-    /**
-     * Bill number
-     * @type {string}
-     * @memberof VendorBillResponse
-     */
-    billNumber?: string;
+    approvalJustification?: string;
     /**
      * Bill date
      * @type {Date}
@@ -50,23 +32,35 @@ export interface VendorBillResponse {
      */
     billDate?: Date;
     /**
+     * Bill number
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    billNumber: string;
+    /**
+     * Created timestamp
+     * @type {Date}
+     * @memberof VendorBillResponse
+     */
+    createdAt: Date;
+    /**
+     * Created by user
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    createdBy?: string;
+    /**
      * Due date
      * @type {Date}
      * @memberof VendorBillResponse
      */
     dueDate?: Date;
     /**
-     * Total bill amount
-     * @type {number}
-     * @memberof VendorBillResponse
-     */
-    totalAmount?: number;
-    /**
-     * Bill status
+     * Journal entry ID (if GL posted)
      * @type {string}
      * @memberof VendorBillResponse
      */
-    status?: VendorBillResponseStatusEnum;
+    journalEntryId?: string;
     /**
      * Origin event ID (for traceability)
      * @type {string}
@@ -80,41 +74,47 @@ export interface VendorBillResponse {
      */
     originEventType?: string;
     /**
-     * Journal entry ID (if GL posted)
-     * @type {string}
-     * @memberof VendorBillResponse
-     */
-    journalEntryId?: string;
-    /**
      * Payment transaction ID (if paid)
      * @type {string}
      * @memberof VendorBillResponse
      */
     paymentTransactionId?: string;
     /**
-     * Created timestamp
-     * @type {Date}
-     * @memberof VendorBillResponse
-     */
-    createdAt?: Date;
-    /**
-     * Created by user
-     * @type {string}
-     * @memberof VendorBillResponse
-     */
-    createdBy?: string;
-    /**
-     * Approval justification (if status = APPROVED)
-     * @type {string}
-     * @memberof VendorBillResponse
-     */
-    approvalJustification?: string;
-    /**
      * Rejection reason (if status = REJECTED)
      * @type {string}
      * @memberof VendorBillResponse
      */
     rejectionReason?: string;
+    /**
+     * Bill status
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    status: VendorBillResponseStatusEnum;
+    /**
+     * Total bill amount
+     * @type {number}
+     * @memberof VendorBillResponse
+     */
+    totalAmount: number;
+    /**
+     * Vendor bill UUID
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    vendorBillId: string;
+    /**
+     * Vendor UUID
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    vendorId: string;
+    /**
+     * Vendor name
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    vendorName?: string;
 }
 
 /**
@@ -135,6 +135,12 @@ export enum VendorBillResponseStatusEnum {
  * Check if a given object implements the VendorBillResponse interface.
  */
 export function instanceOfVendorBillResponse(value: object): boolean {
+    if (!('billNumber' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('totalAmount' in value)) return false;
+    if (!('vendorBillId' in value)) return false;
+    if (!('vendorId' in value)) return false;
     return true;
 }
 
@@ -148,22 +154,22 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'vendorBillId': json['vendorBillId'] == null ? undefined : json['vendorBillId'],
-        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
-        'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
-        'billNumber': json['billNumber'] == null ? undefined : json['billNumber'],
+        'approvalJustification': json['approvalJustification'] == null ? undefined : json['approvalJustification'],
         'billDate': json['billDate'] == null ? undefined : (new Date(json['billDate'])),
+        'billNumber': json['billNumber'],
+        'createdAt': (new Date(json['createdAt'])),
+        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
-        'totalAmount': json['totalAmount'] == null ? undefined : json['totalAmount'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'originEventId': json['originEventId'] == null ? undefined : json['originEventId'],
         'originEventType': json['originEventType'] == null ? undefined : json['originEventType'],
-        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'paymentTransactionId': json['paymentTransactionId'] == null ? undefined : json['paymentTransactionId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
-        'approvalJustification': json['approvalJustification'] == null ? undefined : json['approvalJustification'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
+        'status': json['status'],
+        'totalAmount': json['totalAmount'],
+        'vendorBillId': json['vendorBillId'],
+        'vendorId': json['vendorId'],
+        'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
     };
 }
 
@@ -173,22 +179,22 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
     }
     return {
         
+        'approvalJustification': value['approvalJustification'],
+        'billDate': value['billDate'] == null ? undefined : ((value['billDate']).toISOString()),
+        'billNumber': value['billNumber'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdBy': value['createdBy'],
+        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
+        'journalEntryId': value['journalEntryId'],
+        'originEventId': value['originEventId'],
+        'originEventType': value['originEventType'],
+        'paymentTransactionId': value['paymentTransactionId'],
+        'rejectionReason': value['rejectionReason'],
+        'status': value['status'],
+        'totalAmount': value['totalAmount'],
         'vendorBillId': value['vendorBillId'],
         'vendorId': value['vendorId'],
         'vendorName': value['vendorName'],
-        'billNumber': value['billNumber'],
-        'billDate': value['billDate'] == null ? undefined : ((value['billDate']).toISOString()),
-        'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
-        'totalAmount': value['totalAmount'],
-        'status': value['status'],
-        'originEventId': value['originEventId'],
-        'originEventType': value['originEventType'],
-        'journalEntryId': value['journalEntryId'],
-        'paymentTransactionId': value['paymentTransactionId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'createdBy': value['createdBy'],
-        'approvalJustification': value['approvalJustification'],
-        'rejectionReason': value['rejectionReason'],
     };
 }
 

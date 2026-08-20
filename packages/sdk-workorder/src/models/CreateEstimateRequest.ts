@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for creating an estimate
+ * Estimate creation request with customer and vehicle IDs
  * @export
  * @interface CreateEstimateRequest
  */
 export interface CreateEstimateRequest {
     /**
-     * Customer identifier
-     * @type {string}
+     * List of CRM contact identifiers (may be empty)
+     * @type {Array<string>}
      * @memberof CreateEstimateRequest
      */
-    customerId: string;
+    crmContactIds: Array<string>;
     /**
-     * Vehicle identifier
+     * CRM party identifier (UUIDv7 string)
      * @type {string}
      * @memberof CreateEstimateRequest
      */
-    vehicleId: string;
+    crmPartyId: string;
     /**
-     * Optional location identifier; defaults from session when omitted
+     * CRM vehicle identifier (UUIDv7 string)
      * @type {string}
      * @memberof CreateEstimateRequest
      */
-    locationId?: string;
+    crmVehicleId: string;
     /**
      * Optional currency code; defaults when omitted
      * @type {string}
@@ -44,11 +44,17 @@ export interface CreateEstimateRequest {
      */
     currencyUomId?: string;
     /**
-     * Optional tax region identifier; defaults when omitted
+     * Customer identifier
      * @type {string}
      * @memberof CreateEstimateRequest
      */
-    taxRegionId?: string;
+    customerId: string;
+    /**
+     * Optional location identifier; defaults from session when omitted
+     * @type {string}
+     * @memberof CreateEstimateRequest
+     */
+    locationId?: string;
     /**
      * Optional subtotal amount before tax
      * @type {number}
@@ -68,34 +74,22 @@ export interface CreateEstimateRequest {
      */
     total?: number;
     /**
-     * CRM party identifier (UUIDv7 string)
+     * Vehicle identifier
      * @type {string}
      * @memberof CreateEstimateRequest
      */
-    crmPartyId: string;
-    /**
-     * CRM vehicle identifier (UUIDv7 string)
-     * @type {string}
-     * @memberof CreateEstimateRequest
-     */
-    crmVehicleId: string;
-    /**
-     * List of CRM contact identifiers (may be empty)
-     * @type {Array<string>}
-     * @memberof CreateEstimateRequest
-     */
-    crmContactIds: Array<string>;
+    vehicleId: string;
 }
 
 /**
  * Check if a given object implements the CreateEstimateRequest interface.
  */
 export function instanceOfCreateEstimateRequest(value: object): boolean {
-    if (!('customerId' in value)) return false;
-    if (!('vehicleId' in value)) return false;
+    if (!('crmContactIds' in value)) return false;
     if (!('crmPartyId' in value)) return false;
     if (!('crmVehicleId' in value)) return false;
-    if (!('crmContactIds' in value)) return false;
+    if (!('customerId' in value)) return false;
+    if (!('vehicleId' in value)) return false;
     return true;
 }
 
@@ -109,17 +103,16 @@ export function CreateEstimateRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'customerId': json['customerId'],
-        'vehicleId': json['vehicleId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'crmContactIds': json['crmContactIds'],
+        'crmPartyId': json['crmPartyId'],
+        'crmVehicleId': json['crmVehicleId'],
         'currencyUomId': json['currencyUomId'] == null ? undefined : json['currencyUomId'],
-        'taxRegionId': json['taxRegionId'] == null ? undefined : json['taxRegionId'],
+        'customerId': json['customerId'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
         'taxAmount': json['taxAmount'] == null ? undefined : json['taxAmount'],
         'total': json['total'] == null ? undefined : json['total'],
-        'crmPartyId': json['crmPartyId'],
-        'crmVehicleId': json['crmVehicleId'],
-        'crmContactIds': json['crmContactIds'],
+        'vehicleId': json['vehicleId'],
     };
 }
 
@@ -129,17 +122,16 @@ export function CreateEstimateRequestToJSON(value?: CreateEstimateRequest | null
     }
     return {
         
-        'customerId': value['customerId'],
-        'vehicleId': value['vehicleId'],
-        'locationId': value['locationId'],
+        'crmContactIds': value['crmContactIds'],
+        'crmPartyId': value['crmPartyId'],
+        'crmVehicleId': value['crmVehicleId'],
         'currencyUomId': value['currencyUomId'],
-        'taxRegionId': value['taxRegionId'],
+        'customerId': value['customerId'],
+        'locationId': value['locationId'],
         'subtotal': value['subtotal'],
         'taxAmount': value['taxAmount'],
         'total': value['total'],
-        'crmPartyId': value['crmPartyId'],
-        'crmVehicleId': value['crmVehicleId'],
-        'crmContactIds': value['crmContactIds'],
+        'vehicleId': value['vehicleId'],
     };
 }
 

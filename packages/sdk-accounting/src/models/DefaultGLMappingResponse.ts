@@ -14,107 +14,111 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response describing a default GL account mapping
  * @export
  * @interface DefaultGLMappingResponse
  */
 export interface DefaultGLMappingResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    mappingId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    eventType?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    organizationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    debitAccountId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    debitAccountCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    debitAccountName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    creditAccountId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    creditAccountCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    creditAccountName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DefaultGLMappingResponse
-     */
-    description?: string;
-    /**
-     * 
+     * Whether the mapping is active
      * @type {boolean}
      * @memberof DefaultGLMappingResponse
      */
     active?: boolean;
     /**
-     * 
+     * Timestamp when the mapping was created (ISO 8601)
      * @type {Date}
      * @memberof DefaultGLMappingResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Identifier of the user who created the mapping
      * @type {string}
      * @memberof DefaultGLMappingResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Account code of the credit GL account
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    creditAccountCode?: string;
+    /**
+     * Identifier of the GL account to credit
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    creditAccountId: string;
+    /**
+     * Account name of the credit GL account
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    creditAccountName?: string;
+    /**
+     * Account code of the debit GL account
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    debitAccountCode?: string;
+    /**
+     * Identifier of the GL account to debit
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    debitAccountId: string;
+    /**
+     * Account name of the debit GL account
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    debitAccountName?: string;
+    /**
+     * Optional description of the mapping
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    description?: string;
+    /**
+     * Accounting event type the mapping applies to
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    eventType: string;
+    /**
+     * Unique identifier of the mapping
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    mappingId: string;
+    /**
+     * Timestamp when the mapping was last modified (ISO 8601)
      * @type {Date}
      * @memberof DefaultGLMappingResponse
      */
     modifiedAt?: Date;
     /**
-     * 
+     * Identifier of the user who last modified the mapping
      * @type {string}
      * @memberof DefaultGLMappingResponse
      */
     modifiedBy?: string;
+    /**
+     * Organization scope for the mapping; null for the global default
+     * @type {string}
+     * @memberof DefaultGLMappingResponse
+     */
+    organizationId?: string;
 }
 
 /**
  * Check if a given object implements the DefaultGLMappingResponse interface.
  */
 export function instanceOfDefaultGLMappingResponse(value: object): boolean {
+    if (!('creditAccountId' in value)) return false;
+    if (!('debitAccountId' in value)) return false;
+    if (!('eventType' in value)) return false;
+    if (!('mappingId' in value)) return false;
     return true;
 }
 
@@ -128,21 +132,21 @@ export function DefaultGLMappingResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'mappingId': json['mappingId'] == null ? undefined : json['mappingId'],
-        'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'organizationId': json['organizationId'] == null ? undefined : json['organizationId'],
-        'debitAccountId': json['debitAccountId'] == null ? undefined : json['debitAccountId'],
-        'debitAccountCode': json['debitAccountCode'] == null ? undefined : json['debitAccountCode'],
-        'debitAccountName': json['debitAccountName'] == null ? undefined : json['debitAccountName'],
-        'creditAccountId': json['creditAccountId'] == null ? undefined : json['creditAccountId'],
-        'creditAccountCode': json['creditAccountCode'] == null ? undefined : json['creditAccountCode'],
-        'creditAccountName': json['creditAccountName'] == null ? undefined : json['creditAccountName'],
-        'description': json['description'] == null ? undefined : json['description'],
         'active': json['active'] == null ? undefined : json['active'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'creditAccountCode': json['creditAccountCode'] == null ? undefined : json['creditAccountCode'],
+        'creditAccountId': json['creditAccountId'],
+        'creditAccountName': json['creditAccountName'] == null ? undefined : json['creditAccountName'],
+        'debitAccountCode': json['debitAccountCode'] == null ? undefined : json['debitAccountCode'],
+        'debitAccountId': json['debitAccountId'],
+        'debitAccountName': json['debitAccountName'] == null ? undefined : json['debitAccountName'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'eventType': json['eventType'],
+        'mappingId': json['mappingId'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
         'modifiedBy': json['modifiedBy'] == null ? undefined : json['modifiedBy'],
+        'organizationId': json['organizationId'] == null ? undefined : json['organizationId'],
     };
 }
 
@@ -152,21 +156,21 @@ export function DefaultGLMappingResponseToJSON(value?: DefaultGLMappingResponse 
     }
     return {
         
-        'mappingId': value['mappingId'],
-        'eventType': value['eventType'],
-        'organizationId': value['organizationId'],
-        'debitAccountId': value['debitAccountId'],
-        'debitAccountCode': value['debitAccountCode'],
-        'debitAccountName': value['debitAccountName'],
-        'creditAccountId': value['creditAccountId'],
-        'creditAccountCode': value['creditAccountCode'],
-        'creditAccountName': value['creditAccountName'],
-        'description': value['description'],
         'active': value['active'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'creditAccountCode': value['creditAccountCode'],
+        'creditAccountId': value['creditAccountId'],
+        'creditAccountName': value['creditAccountName'],
+        'debitAccountCode': value['debitAccountCode'],
+        'debitAccountId': value['debitAccountId'],
+        'debitAccountName': value['debitAccountName'],
+        'description': value['description'],
+        'eventType': value['eventType'],
+        'mappingId': value['mappingId'],
         'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
         'modifiedBy': value['modifiedBy'],
+        'organizationId': value['organizationId'],
     };
 }
 

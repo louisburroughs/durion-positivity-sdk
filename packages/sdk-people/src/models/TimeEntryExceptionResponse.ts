@@ -26,17 +26,17 @@ export interface TimeEntryExceptionResponse {
      */
     exceptionId?: string;
     /**
-     * Indicates whether the operation was successful
-     * @type {boolean}
-     * @memberof TimeEntryExceptionResponse
-     */
-    success: boolean;
-    /**
      * Human-readable message describing the outcome
      * @type {string}
      * @memberof TimeEntryExceptionResponse
      */
     message?: string;
+    /**
+     * Indicates whether the operation was successful
+     * @type {boolean}
+     * @memberof TimeEntryExceptionResponse
+     */
+    success: boolean;
 }
 
 /**
@@ -58,8 +58,8 @@ export function TimeEntryExceptionResponseFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'exceptionId': json['exceptionId'] == null ? undefined : json['exceptionId'],
-        'success': json['success'],
         'message': json['message'] == null ? undefined : json['message'],
+        'success': json['success'],
     };
 }
 
@@ -70,8 +70,8 @@ export function TimeEntryExceptionResponseToJSON(value?: TimeEntryExceptionRespo
     return {
         
         'exceptionId': value['exceptionId'],
-        'success': value['success'],
         'message': value['message'],
+        'success': value['success'],
     };
 }
 

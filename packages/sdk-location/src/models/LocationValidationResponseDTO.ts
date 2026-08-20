@@ -14,35 +14,38 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Validation result for a location lookup
  * @export
  * @interface LocationValidationResponseDTO
  */
 export interface LocationValidationResponseDTO {
     /**
-     * 
+     * Whether the location is active
+     * @type {boolean}
+     * @memberof LocationValidationResponseDTO
+     */
+    active: boolean;
+    /**
+     * Whether the location exists
+     * @type {boolean}
+     * @memberof LocationValidationResponseDTO
+     */
+    _exists: boolean;
+    /**
+     * Identifier of the location that was validated
      * @type {string}
      * @memberof LocationValidationResponseDTO
      */
-    locationId?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof LocationValidationResponseDTO
-     */
-    _exists?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof LocationValidationResponseDTO
-     */
-    active?: boolean;
+    locationId: string;
 }
 
 /**
  * Check if a given object implements the LocationValidationResponseDTO interface.
  */
 export function instanceOfLocationValidationResponseDTO(value: object): boolean {
+    if (!('active' in value)) return false;
+    if (!('_exists' in value)) return false;
+    if (!('locationId' in value)) return false;
     return true;
 }
 
@@ -56,9 +59,9 @@ export function LocationValidationResponseDTOFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        '_exists': json['exists'] == null ? undefined : json['exists'],
-        'active': json['active'] == null ? undefined : json['active'],
+        'active': json['active'],
+        '_exists': json['exists'],
+        'locationId': json['locationId'],
     };
 }
 
@@ -68,9 +71,9 @@ export function LocationValidationResponseDTOToJSON(value?: LocationValidationRe
     }
     return {
         
-        'locationId': value['locationId'],
-        'exists': value['_exists'],
         'active': value['active'],
+        'exists': value['_exists'],
+        'locationId': value['locationId'],
     };
 }
 

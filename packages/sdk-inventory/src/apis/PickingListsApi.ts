@@ -26,7 +26,7 @@ export interface ConfirmPickingListRequest {
 export class PickingListsApi extends runtime.BaseAPI {
 
     /**
-     * Confirms a picking list and commits consumption. Stub implementation.
+     * Rejects picking-list confirmation with 501 NOT_IMPLEMENTED; this legacy pickingLists path has no backing implementation and commits nothing. Use this tool for nothing; confirm individual picks with confirmPickTask on the pick-lists path and commit consumption with consumePickedItems instead — do not expect this stub to change any state. Preconditions: none are evaluated. Required inputs: id path parameter; any request body is ignored. Emits an INVENTORY_PICKING_LIST_CONFIRM event recording the rejected attempt; no inventory state changes. Returns 501 for every call. 
      * Confirm picking list
      */
     async confirmPickingListRaw(requestParameters: ConfirmPickingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -63,7 +63,7 @@ export class PickingListsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Confirms a picking list and commits consumption. Stub implementation.
+     * Rejects picking-list confirmation with 501 NOT_IMPLEMENTED; this legacy pickingLists path has no backing implementation and commits nothing. Use this tool for nothing; confirm individual picks with confirmPickTask on the pick-lists path and commit consumption with consumePickedItems instead — do not expect this stub to change any state. Preconditions: none are evaluated. Required inputs: id path parameter; any request body is ignored. Emits an INVENTORY_PICKING_LIST_CONFIRM event recording the rejected attempt; no inventory state changes. Returns 501 for every call. 
      * Confirm picking list
      */
     async confirmPickingList(requestParameters: ConfirmPickingListRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

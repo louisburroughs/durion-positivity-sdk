@@ -21,47 +21,89 @@ import {
 } from './DuplicateCandidate';
 
 /**
- * 
+ * Response after creating a commercial account
  * @export
  * @interface CreateCommercialAccountResponse
  */
 export interface CreateCommercialAccountResponse {
     /**
-     * 
+     * Billing terms identifier associated with the account, if set
      * @type {string}
      * @memberof CreateCommercialAccountResponse
      */
-    partyId?: string;
+    billingTermsId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CreateCommercialAccountResponse
-     */
-    legalName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateCommercialAccountResponse
-     */
-    status?: string;
-    /**
-     * 
+     * Timestamp of creation
      * @type {Date}
      * @memberof CreateCommercialAccountResponse
      */
-    createdAt?: Date;
+    createdAt: Date;
     /**
-     * 
+     * Human-readable customer/account number (party number) for display and lookup
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     */
+    customerNumber: string;
+    /**
+     * Display name of the account, if provided (falls back to legal name in UI)
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     */
+    displayName?: string;
+    /**
+     * List of duplicate candidates found during creation. If present, frontend should prompt user for confirmation. Contains summary fields only (partyId, legalName, matchReason).
      * @type {Array<DuplicateCandidate>}
      * @memberof CreateCommercialAccountResponse
      */
     duplicateCandidates?: Array<DuplicateCandidate>;
+    /**
+     * Legal name of created party
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     */
+    legalName: string;
+    /**
+     * Newly created party ID (canonical CRM identifier)
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     */
+    partyId: string;
+    /**
+     * Party type discriminator
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     */
+    partyType?: string;
+    /**
+     * Legacy free-text address for display, if available. Superseded by the structured postal address in pos-people-contact (FI-4).
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     * @deprecated
+     */
+    primaryAddress?: string;
+    /**
+     * Status (ACTIVE|PENDING|SUSPENDED)
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     */
+    status: string;
+    /**
+     * Tax identifier, if provided
+     * @type {string}
+     * @memberof CreateCommercialAccountResponse
+     */
+    taxId?: string;
 }
 
 /**
  * Check if a given object implements the CreateCommercialAccountResponse interface.
  */
 export function instanceOfCreateCommercialAccountResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('customerNumber' in value)) return false;
+    if (!('legalName' in value)) return false;
+    if (!('partyId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -75,11 +117,17 @@ export function CreateCommercialAccountResponseFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'legalName': json['legalName'] == null ? undefined : json['legalName'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'billingTermsId': json['billingTermsId'] == null ? undefined : json['billingTermsId'],
+        'createdAt': (new Date(json['createdAt'])),
+        'customerNumber': json['customerNumber'],
+        'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'duplicateCandidates': json['duplicateCandidates'] == null ? undefined : ((json['duplicateCandidates'] as Array<any>).map(DuplicateCandidateFromJSON)),
+        'legalName': json['legalName'],
+        'partyId': json['partyId'],
+        'partyType': json['partyType'] == null ? undefined : json['partyType'],
+        'primaryAddress': json['primaryAddress'] == null ? undefined : json['primaryAddress'],
+        'status': json['status'],
+        'taxId': json['taxId'] == null ? undefined : json['taxId'],
     };
 }
 
@@ -89,11 +137,17 @@ export function CreateCommercialAccountResponseToJSON(value?: CreateCommercialAc
     }
     return {
         
-        'partyId': value['partyId'],
-        'legalName': value['legalName'],
-        'status': value['status'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'billingTermsId': value['billingTermsId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'customerNumber': value['customerNumber'],
+        'displayName': value['displayName'],
         'duplicateCandidates': value['duplicateCandidates'] == null ? undefined : ((value['duplicateCandidates'] as Array<any>).map(DuplicateCandidateToJSON)),
+        'legalName': value['legalName'],
+        'partyId': value['partyId'],
+        'partyType': value['partyType'],
+        'primaryAddress': value['primaryAddress'],
+        'status': value['status'],
+        'taxId': value['taxId'],
     };
 }
 

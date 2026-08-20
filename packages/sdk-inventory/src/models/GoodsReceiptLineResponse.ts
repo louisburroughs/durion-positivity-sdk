@@ -14,53 +14,74 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single received line item on a goods receipt response, describing one SKU, its received quantity, and accrued cost
  * @export
  * @interface GoodsReceiptLineResponse
  */
 export interface GoodsReceiptLineResponse {
     /**
-     * 
+     * Effective base-per-document-unit conversion factor applied at posting time
+     * @type {number}
+     * @memberof GoodsReceiptLineResponse
+     */
+    conversionFactor?: number;
+    /**
+     * Quantity as keyed in documentUom; quantityReceived holds the derived base quantity
+     * @type {number}
+     * @memberof GoodsReceiptLineResponse
+     */
+    documentQuantity?: number;
+    /**
+     * UoM the line was keyed in when it differed from the product's base UoM
      * @type {string}
      * @memberof GoodsReceiptLineResponse
      */
-    receiptLineId?: string;
+    documentUom?: string;
     /**
-     * 
+     * Total accrued cost for this line expressed in minor currency units (quantity multiplied by unit cost)
+     * @type {number}
+     * @memberof GoodsReceiptLineResponse
+     */
+    lineAccruedAmountMinor?: number;
+    /**
+     * Identifier of the purchase order line this receipt line fulfills
      * @type {string}
      * @memberof GoodsReceiptLineResponse
      */
     poLineId?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof GoodsReceiptLineResponse
-     */
-    sku?: string;
-    /**
-     * 
+     * Quantity of the SKU received in this goods receipt
      * @type {number}
      * @memberof GoodsReceiptLineResponse
      */
-    quantityReceived?: number;
+    quantityReceived: number;
     /**
-     * 
+     * Unique identifier of the goods receipt line
+     * @type {string}
+     * @memberof GoodsReceiptLineResponse
+     */
+    receiptLineId: string;
+    /**
+     * Stock keeping unit identifier for the received product
+     * @type {string}
+     * @memberof GoodsReceiptLineResponse
+     */
+    sku: string;
+    /**
+     * Unit cost of the received product expressed in minor currency units (e.g. cents)
      * @type {number}
      * @memberof GoodsReceiptLineResponse
      */
     unitCostMinor?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof GoodsReceiptLineResponse
-     */
-    lineAccruedAmountMinor?: number;
 }
 
 /**
  * Check if a given object implements the GoodsReceiptLineResponse interface.
  */
 export function instanceOfGoodsReceiptLineResponse(value: object): boolean {
+    if (!('quantityReceived' in value)) return false;
+    if (!('receiptLineId' in value)) return false;
+    if (!('sku' in value)) return false;
     return true;
 }
 
@@ -74,12 +95,15 @@ export function GoodsReceiptLineResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'receiptLineId': json['receiptLineId'] == null ? undefined : json['receiptLineId'],
-        'poLineId': json['poLineId'] == null ? undefined : json['poLineId'],
-        'sku': json['sku'] == null ? undefined : json['sku'],
-        'quantityReceived': json['quantityReceived'] == null ? undefined : json['quantityReceived'],
-        'unitCostMinor': json['unitCostMinor'] == null ? undefined : json['unitCostMinor'],
+        'conversionFactor': json['conversionFactor'] == null ? undefined : json['conversionFactor'],
+        'documentQuantity': json['documentQuantity'] == null ? undefined : json['documentQuantity'],
+        'documentUom': json['documentUom'] == null ? undefined : json['documentUom'],
         'lineAccruedAmountMinor': json['lineAccruedAmountMinor'] == null ? undefined : json['lineAccruedAmountMinor'],
+        'poLineId': json['poLineId'] == null ? undefined : json['poLineId'],
+        'quantityReceived': json['quantityReceived'],
+        'receiptLineId': json['receiptLineId'],
+        'sku': json['sku'],
+        'unitCostMinor': json['unitCostMinor'] == null ? undefined : json['unitCostMinor'],
     };
 }
 
@@ -89,12 +113,15 @@ export function GoodsReceiptLineResponseToJSON(value?: GoodsReceiptLineResponse 
     }
     return {
         
-        'receiptLineId': value['receiptLineId'],
-        'poLineId': value['poLineId'],
-        'sku': value['sku'],
-        'quantityReceived': value['quantityReceived'],
-        'unitCostMinor': value['unitCostMinor'],
+        'conversionFactor': value['conversionFactor'],
+        'documentQuantity': value['documentQuantity'],
+        'documentUom': value['documentUom'],
         'lineAccruedAmountMinor': value['lineAccruedAmountMinor'],
+        'poLineId': value['poLineId'],
+        'quantityReceived': value['quantityReceived'],
+        'receiptLineId': value['receiptLineId'],
+        'sku': value['sku'],
+        'unitCostMinor': value['unitCostMinor'],
     };
 }
 

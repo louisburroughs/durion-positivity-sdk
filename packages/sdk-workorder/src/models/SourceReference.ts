@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * External source system reference metadata
  * @export
  * @interface SourceReference
  */
 export interface SourceReference {
     /**
-     * 
-     * @type {string}
-     * @memberof SourceReference
-     */
-    system: string;
-    /**
-     * 
+     * Reference identifier of the record in the source system
      * @type {string}
      * @memberof SourceReference
      */
     sourceReferenceId: string;
+    /**
+     * Identifier of the originating external system
+     * @type {string}
+     * @memberof SourceReference
+     */
+    system: string;
 }
 
 /**
  * Check if a given object implements the SourceReference interface.
  */
 export function instanceOfSourceReference(value: object): boolean {
-    if (!('system' in value)) return false;
     if (!('sourceReferenceId' in value)) return false;
+    if (!('system' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function SourceReferenceFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'system': json['system'],
         'sourceReferenceId': json['sourceReferenceId'],
+        'system': json['system'],
     };
 }
 
@@ -63,8 +63,8 @@ export function SourceReferenceToJSON(value?: SourceReference | null): any {
     }
     return {
         
-        'system': value['system'],
         'sourceReferenceId': value['sourceReferenceId'],
+        'system': value['system'],
     };
 }
 

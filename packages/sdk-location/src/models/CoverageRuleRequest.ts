@@ -14,53 +14,55 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload defining a coverage rule for a mobile unit
  * @export
  * @interface CoverageRuleRequest
  */
 export interface CoverageRuleRequest {
     /**
-     * 
-     * @type {string}
+     * Maximum service distance in kilometres covered by the rule
+     * @type {number}
      * @memberof CoverageRuleRequest
      */
-    serviceAreaId?: string;
+    maxDistance?: number;
     /**
-     * 
-     * @type {string}
-     * @memberof CoverageRuleRequest
-     */
-    ruleType?: string;
-    /**
-     * 
+     * Evaluation priority of the rule (lower is evaluated first)
      * @type {number}
      * @memberof CoverageRuleRequest
      */
     priority?: number;
     /**
-     * 
+     * Type of coverage rule
+     * @type {string}
+     * @memberof CoverageRuleRequest
+     */
+    ruleType: string;
+    /**
+     * Identifier of the service area this rule applies to
+     * @type {string}
+     * @memberof CoverageRuleRequest
+     */
+    serviceAreaId: string;
+    /**
+     * Date from which the rule is effective
      * @type {Date}
      * @memberof CoverageRuleRequest
      */
     validFrom?: Date;
     /**
-     * 
+     * Date until which the rule is effective
      * @type {Date}
      * @memberof CoverageRuleRequest
      */
     validTo?: Date;
-    /**
-     * 
-     * @type {number}
-     * @memberof CoverageRuleRequest
-     */
-    maxDistance?: number;
 }
 
 /**
  * Check if a given object implements the CoverageRuleRequest interface.
  */
 export function instanceOfCoverageRuleRequest(value: object): boolean {
+    if (!('ruleType' in value)) return false;
+    if (!('serviceAreaId' in value)) return false;
     return true;
 }
 
@@ -74,12 +76,12 @@ export function CoverageRuleRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'serviceAreaId': json['serviceAreaId'] == null ? undefined : json['serviceAreaId'],
-        'ruleType': json['ruleType'] == null ? undefined : json['ruleType'],
+        'maxDistance': json['maxDistance'] == null ? undefined : json['maxDistance'],
         'priority': json['priority'] == null ? undefined : json['priority'],
+        'ruleType': json['ruleType'],
+        'serviceAreaId': json['serviceAreaId'],
         'validFrom': json['validFrom'] == null ? undefined : (new Date(json['validFrom'])),
         'validTo': json['validTo'] == null ? undefined : (new Date(json['validTo'])),
-        'maxDistance': json['maxDistance'] == null ? undefined : json['maxDistance'],
     };
 }
 
@@ -89,12 +91,12 @@ export function CoverageRuleRequestToJSON(value?: CoverageRuleRequest | null): a
     }
     return {
         
-        'serviceAreaId': value['serviceAreaId'],
-        'ruleType': value['ruleType'],
+        'maxDistance': value['maxDistance'],
         'priority': value['priority'],
+        'ruleType': value['ruleType'],
+        'serviceAreaId': value['serviceAreaId'],
         'validFrom': value['validFrom'] == null ? undefined : ((value['validFrom']).toISOString().substring(0,10)),
         'validTo': value['validTo'] == null ? undefined : ((value['validTo']).toISOString().substring(0,10)),
-        'maxDistance': value['maxDistance'],
     };
 }
 

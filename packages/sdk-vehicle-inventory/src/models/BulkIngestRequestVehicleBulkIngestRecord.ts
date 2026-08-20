@@ -21,35 +21,35 @@ import {
 } from './VehicleBulkIngestRecord';
 
 /**
- * 
+ * Generic bulk ingest request: a batch of records for a job scoped to a location
  * @export
  * @interface BulkIngestRequestVehicleBulkIngestRecord
  */
 export interface BulkIngestRequestVehicleBulkIngestRecord {
     /**
-     * 
+     * Identifier of the bulk ingest job
      * @type {string}
      * @memberof BulkIngestRequestVehicleBulkIngestRecord
      */
     jobId: string;
     /**
-     * 
+     * Location the records are ingested for
      * @type {string}
      * @memberof BulkIngestRequestVehicleBulkIngestRecord
      */
     locationId: string;
     /**
-     * 
-     * @type {Array<VehicleBulkIngestRecord>}
-     * @memberof BulkIngestRequestVehicleBulkIngestRecord
-     */
-    records: Array<VehicleBulkIngestRecord>;
-    /**
-     * 
+     * Identifier of the operator submitting the batch
      * @type {string}
      * @memberof BulkIngestRequestVehicleBulkIngestRecord
      */
     operatorId?: string;
+    /**
+     * The records to ingest (at least one); shape depends on the target domain
+     * @type {Array<VehicleBulkIngestRecord>}
+     * @memberof BulkIngestRequestVehicleBulkIngestRecord
+     */
+    records: Array<VehicleBulkIngestRecord>;
 }
 
 /**
@@ -74,8 +74,8 @@ export function BulkIngestRequestVehicleBulkIngestRecordFromJSONTyped(json: any,
         
         'jobId': json['jobId'],
         'locationId': json['locationId'],
-        'records': ((json['records'] as Array<any>).map(VehicleBulkIngestRecordFromJSON)),
         'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
+        'records': ((json['records'] as Array<any>).map(VehicleBulkIngestRecordFromJSON)),
     };
 }
 
@@ -87,8 +87,8 @@ export function BulkIngestRequestVehicleBulkIngestRecordToJSON(value?: BulkInges
         
         'jobId': value['jobId'],
         'locationId': value['locationId'],
-        'records': ((value['records'] as Array<any>).map(VehicleBulkIngestRecordToJSON)),
         'operatorId': value['operatorId'],
+        'records': ((value['records'] as Array<any>).map(VehicleBulkIngestRecordToJSON)),
     };
 }
 

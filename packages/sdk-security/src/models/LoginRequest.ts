@@ -20,25 +20,25 @@ import { mapValues } from '../runtime';
  */
 export interface LoginRequest {
     /**
-     * The user's login username
-     * @type {string}
-     * @memberof LoginRequest
-     */
-    username: string;
-    /**
      * The user's login password
      * @type {string}
      * @memberof LoginRequest
      */
     password: string;
+    /**
+     * The user's login username
+     * @type {string}
+     * @memberof LoginRequest
+     */
+    username: string;
 }
 
 /**
  * Check if a given object implements the LoginRequest interface.
  */
 export function instanceOfLoginRequest(value: object): boolean {
-    if (!('username' in value)) return false;
     if (!('password' in value)) return false;
+    if (!('username' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function LoginRequestFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'username': json['username'],
         'password': json['password'],
+        'username': json['username'],
     };
 }
 
@@ -63,8 +63,8 @@ export function LoginRequestToJSON(value?: LoginRequest | null): any {
     }
     return {
         
-        'username': value['username'],
         'password': value['password'],
+        'username': value['username'],
     };
 }
 

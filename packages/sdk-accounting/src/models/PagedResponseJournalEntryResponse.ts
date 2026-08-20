@@ -21,7 +21,7 @@ import {
 } from './JournalEntryResponse';
 
 /**
- * 
+ * Generic paginated list response wrapper
  * @export
  * @interface PagedResponseJournalEntryResponse
  */
@@ -31,21 +31,27 @@ export interface PagedResponseJournalEntryResponse {
      * @type {Array<JournalEntryResponse>}
      * @memberof PagedResponseJournalEntryResponse
      */
-    items?: Array<JournalEntryResponse>;
+    content?: Array<JournalEntryResponse>;
     /**
-     * 
+     * Items on the current page
+     * @type {Array<JournalEntryResponse>}
+     * @memberof PagedResponseJournalEntryResponse
+     */
+    items: Array<JournalEntryResponse>;
+    /**
+     * Zero-based index of the current page
      * @type {number}
      * @memberof PagedResponseJournalEntryResponse
      */
     pageNumber?: number;
     /**
-     * 
+     * Number of items per page
      * @type {number}
      * @memberof PagedResponseJournalEntryResponse
      */
     pageSize?: number;
     /**
-     * 
+     * Total number of items matching the query
      * @type {number}
      * @memberof PagedResponseJournalEntryResponse
      */
@@ -55,25 +61,20 @@ export interface PagedResponseJournalEntryResponse {
      * @type {number}
      * @memberof PagedResponseJournalEntryResponse
      */
-    totalPages?: number;
+    totalElements?: number;
     /**
-     * 
-     * @type {Array<JournalEntryResponse>}
-     * @memberof PagedResponseJournalEntryResponse
-     */
-    content?: Array<JournalEntryResponse>;
-    /**
-     * 
+     * Total number of pages available
      * @type {number}
      * @memberof PagedResponseJournalEntryResponse
      */
-    totalElements?: number;
+    totalPages?: number;
 }
 
 /**
  * Check if a given object implements the PagedResponseJournalEntryResponse interface.
  */
 export function instanceOfPagedResponseJournalEntryResponse(value: object): boolean {
+    if (!('items' in value)) return false;
     return true;
 }
 
@@ -87,13 +88,13 @@ export function PagedResponseJournalEntryResponseFromJSONTyped(json: any, ignore
     }
     return {
         
-        'items': json['items'] == null ? undefined : ((json['items'] as Array<any>).map(JournalEntryResponseFromJSON)),
+        'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(JournalEntryResponseFromJSON)),
+        'items': ((json['items'] as Array<any>).map(JournalEntryResponseFromJSON)),
         'pageNumber': json['pageNumber'] == null ? undefined : json['pageNumber'],
         'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
         'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(JournalEntryResponseFromJSON)),
         'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
+        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
     };
 }
 
@@ -103,13 +104,13 @@ export function PagedResponseJournalEntryResponseToJSON(value?: PagedResponseJou
     }
     return {
         
-        'items': value['items'] == null ? undefined : ((value['items'] as Array<any>).map(JournalEntryResponseToJSON)),
+        'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(JournalEntryResponseToJSON)),
+        'items': ((value['items'] as Array<any>).map(JournalEntryResponseToJSON)),
         'pageNumber': value['pageNumber'],
         'pageSize': value['pageSize'],
         'totalCount': value['totalCount'],
-        'totalPages': value['totalPages'],
-        'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(JournalEntryResponseToJSON)),
         'totalElements': value['totalElements'],
+        'totalPages': value['totalPages'],
     };
 }
 

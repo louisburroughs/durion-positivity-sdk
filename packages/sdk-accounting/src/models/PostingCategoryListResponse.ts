@@ -21,37 +21,37 @@ import {
 } from './PostingCategoryResponse';
 
 /**
- * 
+ * Paginated list of posting categories
  * @export
  * @interface PostingCategoryListResponse
  */
 export interface PostingCategoryListResponse {
     /**
-     * 
-     * @type {Array<PostingCategoryResponse>}
-     * @memberof PostingCategoryListResponse
-     */
-    results?: Array<PostingCategoryResponse>;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostingCategoryListResponse
-     */
-    totalCount?: number;
-    /**
-     * 
+     * Zero-based index of the current page
      * @type {number}
      * @memberof PostingCategoryListResponse
      */
     pageNumber?: number;
     /**
-     * 
+     * Number of items per page
      * @type {number}
      * @memberof PostingCategoryListResponse
      */
     pageSize?: number;
     /**
-     * 
+     * Posting categories on the current page
+     * @type {Array<PostingCategoryResponse>}
+     * @memberof PostingCategoryListResponse
+     */
+    results: Array<PostingCategoryResponse>;
+    /**
+     * Total number of posting categories matching the query
+     * @type {number}
+     * @memberof PostingCategoryListResponse
+     */
+    totalCount?: number;
+    /**
+     * Total number of pages available
      * @type {number}
      * @memberof PostingCategoryListResponse
      */
@@ -62,6 +62,7 @@ export interface PostingCategoryListResponse {
  * Check if a given object implements the PostingCategoryListResponse interface.
  */
 export function instanceOfPostingCategoryListResponse(value: object): boolean {
+    if (!('results' in value)) return false;
     return true;
 }
 
@@ -75,10 +76,10 @@ export function PostingCategoryListResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(PostingCategoryResponseFromJSON)),
-        'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
         'pageNumber': json['pageNumber'] == null ? undefined : json['pageNumber'],
         'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
+        'results': ((json['results'] as Array<any>).map(PostingCategoryResponseFromJSON)),
+        'totalCount': json['totalCount'] == null ? undefined : json['totalCount'],
         'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
     };
 }
@@ -89,10 +90,10 @@ export function PostingCategoryListResponseToJSON(value?: PostingCategoryListRes
     }
     return {
         
-        'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(PostingCategoryResponseToJSON)),
-        'totalCount': value['totalCount'],
         'pageNumber': value['pageNumber'],
         'pageSize': value['pageSize'],
+        'results': ((value['results'] as Array<any>).map(PostingCategoryResponseToJSON)),
+        'totalCount': value['totalCount'],
         'totalPages': value['totalPages'],
     };
 }

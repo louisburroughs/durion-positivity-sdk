@@ -20,59 +20,65 @@ import { mapValues } from '../runtime';
  */
 export interface PricingSnapshotResponse {
     /**
-     * Snapshot identifier
-     * @type {string}
-     * @memberof PricingSnapshotResponse
-     */
-    snapshotId?: string;
-    /**
-     * Snapshot creation timestamp
-     * @type {Date}
-     * @memberof PricingSnapshotResponse
-     */
-    createdAt?: Date;
-    /**
-     * Optional source context
-     * @type {string}
-     * @memberof PricingSnapshotResponse
-     */
-    sourceContext?: string;
-    /**
-     * Identifier of the quoted item
-     * @type {string}
-     * @memberof PricingSnapshotResponse
-     */
-    itemIdentifier?: string;
-    /**
-     * Quoted quantity
-     * @type {number}
-     * @memberof PricingSnapshotResponse
-     */
-    quantity?: number;
-    /**
-     * Serialized prices payload
-     * @type {string}
-     * @memberof PricingSnapshotResponse
-     */
-    prices?: string;
-    /**
      * Serialized applied-rule details
      * @type {string}
      * @memberof PricingSnapshotResponse
      */
     appliedRules?: string;
     /**
+     * Snapshot creation timestamp
+     * @type {Date}
+     * @memberof PricingSnapshotResponse
+     */
+    createdAt: Date;
+    /**
+     * Identifier of the quoted item
+     * @type {string}
+     * @memberof PricingSnapshotResponse
+     */
+    itemIdentifier: string;
+    /**
      * Pricing policy version used
      * @type {string}
      * @memberof PricingSnapshotResponse
      */
-    policyVersion?: string;
+    policyVersion: string;
+    /**
+     * Serialized prices payload
+     * @type {string}
+     * @memberof PricingSnapshotResponse
+     */
+    prices: string;
+    /**
+     * Quoted quantity
+     * @type {number}
+     * @memberof PricingSnapshotResponse
+     */
+    quantity: number;
+    /**
+     * Snapshot identifier
+     * @type {string}
+     * @memberof PricingSnapshotResponse
+     */
+    snapshotId: string;
+    /**
+     * Optional source context
+     * @type {string}
+     * @memberof PricingSnapshotResponse
+     */
+    sourceContext?: string;
 }
 
 /**
  * Check if a given object implements the PricingSnapshotResponse interface.
  */
 export function instanceOfPricingSnapshotResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('itemIdentifier' in value)) return false;
+    if (!('policyVersion' in value)) return false;
+    if (!('prices' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('snapshotId' in value)) return false;
     return true;
 }
 
@@ -86,14 +92,14 @@ export function PricingSnapshotResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'snapshotId': json['snapshotId'] == null ? undefined : json['snapshotId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'sourceContext': json['sourceContext'] == null ? undefined : json['sourceContext'],
-        'itemIdentifier': json['itemIdentifier'] == null ? undefined : json['itemIdentifier'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'prices': json['prices'] == null ? undefined : json['prices'],
         'appliedRules': json['appliedRules'] == null ? undefined : json['appliedRules'],
-        'policyVersion': json['policyVersion'] == null ? undefined : json['policyVersion'],
+        'createdAt': (new Date(json['createdAt'])),
+        'itemIdentifier': json['itemIdentifier'],
+        'policyVersion': json['policyVersion'],
+        'prices': json['prices'],
+        'quantity': json['quantity'],
+        'snapshotId': json['snapshotId'],
+        'sourceContext': json['sourceContext'] == null ? undefined : json['sourceContext'],
     };
 }
 
@@ -103,14 +109,14 @@ export function PricingSnapshotResponseToJSON(value?: PricingSnapshotResponse | 
     }
     return {
         
-        'snapshotId': value['snapshotId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'sourceContext': value['sourceContext'],
-        'itemIdentifier': value['itemIdentifier'],
-        'quantity': value['quantity'],
-        'prices': value['prices'],
         'appliedRules': value['appliedRules'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'itemIdentifier': value['itemIdentifier'],
         'policyVersion': value['policyVersion'],
+        'prices': value['prices'],
+        'quantity': value['quantity'],
+        'snapshotId': value['snapshotId'],
+        'sourceContext': value['sourceContext'],
     };
 }
 

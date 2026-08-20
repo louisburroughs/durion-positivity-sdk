@@ -14,145 +14,165 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of a cycle count inventory adjustment, including approval state and posting outcome
  * @export
  * @interface AdjustmentResponse
  */
 export interface AdjustmentResponse {
     /**
-     * 
+     * Unique identifier of the adjustment record
      * @type {string}
      * @memberof AdjustmentResponse
      */
-    adjustmentId?: string;
+    adjustmentId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    stockItemId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    reasonCode?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof AdjustmentResponse
-     */
-    quantityChange?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof AdjustmentResponse
-     */
-    costAtTimeOfAdjustment?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof AdjustmentResponse
-     */
-    quantityOnHandBefore?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof AdjustmentResponse
-     */
-    countedQuantity?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    status?: AdjustmentResponseStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    requiredApprovalTier?: AdjustmentResponseRequiredApprovalTierEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    createdByUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    approvedByUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    rejectedByUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AdjustmentResponse
-     */
-    rejectionReason?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AdjustmentResponse
-     */
-    createdAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AdjustmentResponse
-     */
-    updatedAt?: Date;
-    /**
-     * 
+     * Timestamp when the adjustment was approved, if approved
      * @type {Date}
      * @memberof AdjustmentResponse
      */
     approvedAt?: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof AdjustmentResponse
-     */
-    rejectedAt?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof AdjustmentResponse
-     */
-    postedAt?: Date;
-    /**
-     * 
+     * Identifier of the user who approved the adjustment, if approved
      * @type {string}
      * @memberof AdjustmentResponse
      */
-    ledgerEntryId?: string;
+    approvedByUserId?: string;
     /**
-     * 
+     * Unit cost captured at the moment the adjustment was created
+     * @type {number}
+     * @memberof AdjustmentResponse
+     */
+    costAtTimeOfAdjustment: number;
+    /**
+     * Quantity physically counted by the auditor
+     * @type {number}
+     * @memberof AdjustmentResponse
+     */
+    countedQuantity: number;
+    /**
+     * Timestamp when the adjustment was created
+     * @type {Date}
+     * @memberof AdjustmentResponse
+     */
+    createdAt: Date;
+    /**
+     * Identifier of the user who created the adjustment
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    createdByUserId: string;
+    /**
+     * Error message describing why processing failed, if the adjustment failed
      * @type {string}
      * @memberof AdjustmentResponse
      */
     errorMessage?: string;
     /**
-     * 
+     * Identifier of the inventory ledger entry created when the adjustment was posted
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    ledgerEntryId?: string;
+    /**
+     * Timestamp when the adjustment was posted to the inventory ledger, if posted
+     * @type {Date}
+     * @memberof AdjustmentResponse
+     */
+    postedAt?: Date;
+    /**
+     * Net change in quantity on hand resulting from the adjustment (may be negative)
      * @type {number}
      * @memberof AdjustmentResponse
      */
-    varianceValue?: number;
+    quantityChange: number;
     /**
-     * 
+     * Quantity on hand recorded before the count was applied
+     * @type {number}
+     * @memberof AdjustmentResponse
+     */
+    quantityOnHandBefore: number;
+    /**
+     * Reason code explaining why the adjustment was made
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    reasonCode: string;
+    /**
+     * Timestamp when the adjustment was rejected, if rejected
+     * @type {Date}
+     * @memberof AdjustmentResponse
+     */
+    rejectedAt?: Date;
+    /**
+     * Identifier of the user who rejected the adjustment, if rejected
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    rejectedByUserId?: string;
+    /**
+     * Free-text reason supplied when the adjustment was rejected
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    rejectionReason?: string;
+    /**
+     * Approval tier required to authorize the adjustment, when manual approval applies
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    requiredApprovalTier?: AdjustmentResponseRequiredApprovalTierEnum;
+    /**
+     * Current lifecycle status of the adjustment
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    status: AdjustmentResponseStatusEnum;
+    /**
+     * Identifier of the stock item the adjustment applies to
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    stockItemId: string;
+    /**
+     * Cycle count task this adjustment settles, if created from a task
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    taskId?: string;
+    /**
+     * The stock item's base unit of measure, when stockItemId resolves to a catalog product with a declared UoM; null otherwise
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    unitOfMeasure?: string;
+    /**
+     * Timestamp when the adjustment was last updated
+     * @type {Date}
+     * @memberof AdjustmentResponse
+     */
+    updatedAt: Date;
+    /**
+     * Variance expressed as a percentage of expected quantity on hand
      * @type {number}
      * @memberof AdjustmentResponse
      */
     variancePercentage?: number;
+    /**
+     * Monetary value of the counted variance
+     * @type {number}
+     * @memberof AdjustmentResponse
+     */
+    varianceValue?: number;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum AdjustmentResponseRequiredApprovalTierEnum {
+    _1Manager = 'TIER_1_MANAGER',
+    _2Director = 'TIER_2_DIRECTOR'
+}
 /**
 * @export
 * @enum {string}
@@ -165,20 +185,23 @@ export enum AdjustmentResponseStatusEnum {
     Rejected = 'REJECTED',
     Failed = 'FAILED'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum AdjustmentResponseRequiredApprovalTierEnum {
-    _1Manager = 'TIER_1_MANAGER',
-    _2Director = 'TIER_2_DIRECTOR'
-}
 
 
 /**
  * Check if a given object implements the AdjustmentResponse interface.
  */
 export function instanceOfAdjustmentResponse(value: object): boolean {
+    if (!('adjustmentId' in value)) return false;
+    if (!('costAtTimeOfAdjustment' in value)) return false;
+    if (!('countedQuantity' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('createdByUserId' in value)) return false;
+    if (!('quantityChange' in value)) return false;
+    if (!('quantityOnHandBefore' in value)) return false;
+    if (!('reasonCode' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('stockItemId' in value)) return false;
+    if (!('updatedAt' in value)) return false;
     return true;
 }
 
@@ -192,28 +215,30 @@ export function AdjustmentResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'adjustmentId': json['adjustmentId'] == null ? undefined : json['adjustmentId'],
-        'stockItemId': json['stockItemId'] == null ? undefined : json['stockItemId'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'quantityChange': json['quantityChange'] == null ? undefined : json['quantityChange'],
-        'costAtTimeOfAdjustment': json['costAtTimeOfAdjustment'] == null ? undefined : json['costAtTimeOfAdjustment'],
-        'quantityOnHandBefore': json['quantityOnHandBefore'] == null ? undefined : json['quantityOnHandBefore'],
-        'countedQuantity': json['countedQuantity'] == null ? undefined : json['countedQuantity'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'requiredApprovalTier': json['requiredApprovalTier'] == null ? undefined : json['requiredApprovalTier'],
-        'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
+        'adjustmentId': json['adjustmentId'],
+        'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedByUserId': json['approvedByUserId'] == null ? undefined : json['approvedByUserId'],
+        'costAtTimeOfAdjustment': json['costAtTimeOfAdjustment'],
+        'countedQuantity': json['countedQuantity'],
+        'createdAt': (new Date(json['createdAt'])),
+        'createdByUserId': json['createdByUserId'],
+        'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
+        'ledgerEntryId': json['ledgerEntryId'] == null ? undefined : json['ledgerEntryId'],
+        'postedAt': json['postedAt'] == null ? undefined : (new Date(json['postedAt'])),
+        'quantityChange': json['quantityChange'],
+        'quantityOnHandBefore': json['quantityOnHandBefore'],
+        'reasonCode': json['reasonCode'],
+        'rejectedAt': json['rejectedAt'] == null ? undefined : (new Date(json['rejectedAt'])),
         'rejectedByUserId': json['rejectedByUserId'] == null ? undefined : json['rejectedByUserId'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
-        'rejectedAt': json['rejectedAt'] == null ? undefined : (new Date(json['rejectedAt'])),
-        'postedAt': json['postedAt'] == null ? undefined : (new Date(json['postedAt'])),
-        'ledgerEntryId': json['ledgerEntryId'] == null ? undefined : json['ledgerEntryId'],
-        'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
-        'varianceValue': json['varianceValue'] == null ? undefined : json['varianceValue'],
+        'requiredApprovalTier': json['requiredApprovalTier'] == null ? undefined : json['requiredApprovalTier'],
+        'status': json['status'],
+        'stockItemId': json['stockItemId'],
+        'taskId': json['taskId'] == null ? undefined : json['taskId'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'updatedAt': (new Date(json['updatedAt'])),
         'variancePercentage': json['variancePercentage'] == null ? undefined : json['variancePercentage'],
+        'varianceValue': json['varianceValue'] == null ? undefined : json['varianceValue'],
     };
 }
 
@@ -224,27 +249,29 @@ export function AdjustmentResponseToJSON(value?: AdjustmentResponse | null): any
     return {
         
         'adjustmentId': value['adjustmentId'],
-        'stockItemId': value['stockItemId'],
-        'reasonCode': value['reasonCode'],
-        'quantityChange': value['quantityChange'],
-        'costAtTimeOfAdjustment': value['costAtTimeOfAdjustment'],
-        'quantityOnHandBefore': value['quantityOnHandBefore'],
-        'countedQuantity': value['countedQuantity'],
-        'status': value['status'],
-        'requiredApprovalTier': value['requiredApprovalTier'],
-        'createdByUserId': value['createdByUserId'],
+        'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
         'approvedByUserId': value['approvedByUserId'],
+        'costAtTimeOfAdjustment': value['costAtTimeOfAdjustment'],
+        'countedQuantity': value['countedQuantity'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'createdByUserId': value['createdByUserId'],
+        'errorMessage': value['errorMessage'],
+        'ledgerEntryId': value['ledgerEntryId'],
+        'postedAt': value['postedAt'] == null ? undefined : ((value['postedAt']).toISOString()),
+        'quantityChange': value['quantityChange'],
+        'quantityOnHandBefore': value['quantityOnHandBefore'],
+        'reasonCode': value['reasonCode'],
+        'rejectedAt': value['rejectedAt'] == null ? undefined : ((value['rejectedAt']).toISOString()),
         'rejectedByUserId': value['rejectedByUserId'],
         'rejectionReason': value['rejectionReason'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
-        'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
-        'rejectedAt': value['rejectedAt'] == null ? undefined : ((value['rejectedAt']).toISOString()),
-        'postedAt': value['postedAt'] == null ? undefined : ((value['postedAt']).toISOString()),
-        'ledgerEntryId': value['ledgerEntryId'],
-        'errorMessage': value['errorMessage'],
-        'varianceValue': value['varianceValue'],
+        'requiredApprovalTier': value['requiredApprovalTier'],
+        'status': value['status'],
+        'stockItemId': value['stockItemId'],
+        'taskId': value['taskId'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
         'variancePercentage': value['variancePercentage'],
+        'varianceValue': value['varianceValue'],
     };
 }
 

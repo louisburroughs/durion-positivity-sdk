@@ -14,59 +14,83 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Read-only view of on-hand and available-to-promise quantities for a product at a specific location scope
  * @export
  * @interface AvailabilityView
  */
 export interface AvailabilityView {
     /**
-     * 
+     * Net allocated quantity (ALLOCATION_CREATED minus ALLOCATION_RELEASED)
+     * @type {number}
+     * @memberof AvailabilityView
+     */
+    allocatedQuantity: number;
+    /**
+     * Available-to-promise quantity, equal to onHandQuantity minus allocatedQuantity
+     * @type {number}
+     * @memberof AvailabilityView
+     */
+    availableToPromiseQuantity: number;
+    /**
+     * Open expected supply: approved purchase-order open line quantity plus un-received ASN remainder. Site-level when a location scope is given. Bounded by the 'horizon' query parameter when present (documents without an expected date are excluded from horizon-bounded results). Omitted for as-of (historical) requests.
+     * @type {number}
+     * @memberof AvailabilityView
+     */
+    incomingQty?: number;
+    /**
+     * Location identifier for the scope of this availability view
      * @type {string}
      * @memberof AvailabilityView
      */
-    productSku?: string;
+    locationId: string;
     /**
-     * 
+     * Net on-hand quantity (sum of affectsOnHand ledger entries)
+     * @type {number}
+     * @memberof AvailabilityView
+     */
+    onHandQuantity: number;
+    /**
+     * Open expected demand not yet decremented from on-hand: unallocated reservation remainders plus released-not-picked pick-task remainders. Reservation demand carries no site and is included in every scope. Omitted for as-of (historical) requests.
+     * @type {number}
+     * @memberof AvailabilityView
+     */
+    outgoingQty?: number;
+    /**
+     * Stock-keeping unit identifier of the product
      * @type {string}
      * @memberof AvailabilityView
      */
-    locationId?: string;
+    productSku: string;
     /**
-     * 
+     * Projected availability: onHandQuantity + incomingQty - outgoingQty. Omitted for as-of (historical) requests.
+     * @type {number}
+     * @memberof AvailabilityView
+     */
+    projectedAvailable?: number;
+    /**
+     * Optional storage sub-location identifier; null when scoped to the full location
      * @type {string}
      * @memberof AvailabilityView
      */
     storageLocationId?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof AvailabilityView
-     */
-    onHandQuantity?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof AvailabilityView
-     */
-    allocatedQuantity?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof AvailabilityView
-     */
-    availableToPromiseQuantity?: number;
-    /**
-     * 
+     * Unit of measure code for the quantities (e.g. EACH, KG)
      * @type {string}
      * @memberof AvailabilityView
      */
-    unitOfMeasure?: string;
+    unitOfMeasure: string;
 }
 
 /**
  * Check if a given object implements the AvailabilityView interface.
  */
 export function instanceOfAvailabilityView(value: object): boolean {
+    if (!('allocatedQuantity' in value)) return false;
+    if (!('availableToPromiseQuantity' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('onHandQuantity' in value)) return false;
+    if (!('productSku' in value)) return false;
+    if (!('unitOfMeasure' in value)) return false;
     return true;
 }
 
@@ -80,13 +104,16 @@ export function AvailabilityViewFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'productSku': json['productSku'] == null ? undefined : json['productSku'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'allocatedQuantity': json['allocatedQuantity'],
+        'availableToPromiseQuantity': json['availableToPromiseQuantity'],
+        'incomingQty': json['incomingQty'] == null ? undefined : json['incomingQty'],
+        'locationId': json['locationId'],
+        'onHandQuantity': json['onHandQuantity'],
+        'outgoingQty': json['outgoingQty'] == null ? undefined : json['outgoingQty'],
+        'productSku': json['productSku'],
+        'projectedAvailable': json['projectedAvailable'] == null ? undefined : json['projectedAvailable'],
         'storageLocationId': json['storageLocationId'] == null ? undefined : json['storageLocationId'],
-        'onHandQuantity': json['onHandQuantity'] == null ? undefined : json['onHandQuantity'],
-        'allocatedQuantity': json['allocatedQuantity'] == null ? undefined : json['allocatedQuantity'],
-        'availableToPromiseQuantity': json['availableToPromiseQuantity'] == null ? undefined : json['availableToPromiseQuantity'],
-        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'unitOfMeasure': json['unitOfMeasure'],
     };
 }
 
@@ -96,12 +123,15 @@ export function AvailabilityViewToJSON(value?: AvailabilityView | null): any {
     }
     return {
         
-        'productSku': value['productSku'],
-        'locationId': value['locationId'],
-        'storageLocationId': value['storageLocationId'],
-        'onHandQuantity': value['onHandQuantity'],
         'allocatedQuantity': value['allocatedQuantity'],
         'availableToPromiseQuantity': value['availableToPromiseQuantity'],
+        'incomingQty': value['incomingQty'],
+        'locationId': value['locationId'],
+        'onHandQuantity': value['onHandQuantity'],
+        'outgoingQty': value['outgoingQty'],
+        'productSku': value['productSku'],
+        'projectedAvailable': value['projectedAvailable'],
+        'storageLocationId': value['storageLocationId'],
         'unitOfMeasure': value['unitOfMeasure'],
     };
 }

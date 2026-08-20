@@ -14,59 +14,61 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response returned after starting work on a workorder
  * @export
  * @interface WorkorderStartResponse
  */
 export interface WorkorderStartResponse {
     /**
-     * 
+     * Workorder status after the start transition
      * @type {string}
      * @memberof WorkorderStartResponse
      */
-    workorderId?: string;
+    currentStatus: string;
     /**
-     * 
+     * Human-readable message describing the start outcome
+     * @type {string}
+     * @memberof WorkorderStartResponse
+     */
+    message?: string;
+    /**
+     * Operational context version for optimistic concurrency
      * @type {string}
      * @memberof WorkorderStartResponse
      */
     operationalContextVersion?: string;
     /**
-     * 
-     * @type {Date}
-     * @memberof WorkorderStartResponse
-     */
-    workStartedAt?: Date;
-    /**
-     * 
+     * Workorder status prior to the start transition
      * @type {string}
      * @memberof WorkorderStartResponse
      */
     previousStatus?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof WorkorderStartResponse
-     */
-    currentStatus?: string;
-    /**
-     * 
+     * Timestamp when the status transition occurred
      * @type {Date}
      * @memberof WorkorderStartResponse
      */
     transitionedAt?: Date;
     /**
-     * 
+     * Timestamp when work was started on the workorder
+     * @type {Date}
+     * @memberof WorkorderStartResponse
+     */
+    workStartedAt?: Date;
+    /**
+     * Unique identifier of the workorder that was started
      * @type {string}
      * @memberof WorkorderStartResponse
      */
-    message?: string;
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the WorkorderStartResponse interface.
  */
 export function instanceOfWorkorderStartResponse(value: object): boolean {
+    if (!('currentStatus' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -80,13 +82,13 @@ export function WorkorderStartResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'operationalContextVersion': json['operationalContextVersion'] == null ? undefined : json['operationalContextVersion'],
-        'workStartedAt': json['workStartedAt'] == null ? undefined : (new Date(json['workStartedAt'])),
-        'previousStatus': json['previousStatus'] == null ? undefined : json['previousStatus'],
-        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
-        'transitionedAt': json['transitionedAt'] == null ? undefined : (new Date(json['transitionedAt'])),
+        'currentStatus': json['currentStatus'],
         'message': json['message'] == null ? undefined : json['message'],
+        'operationalContextVersion': json['operationalContextVersion'] == null ? undefined : json['operationalContextVersion'],
+        'previousStatus': json['previousStatus'] == null ? undefined : json['previousStatus'],
+        'transitionedAt': json['transitionedAt'] == null ? undefined : (new Date(json['transitionedAt'])),
+        'workStartedAt': json['workStartedAt'] == null ? undefined : (new Date(json['workStartedAt'])),
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -96,13 +98,13 @@ export function WorkorderStartResponseToJSON(value?: WorkorderStartResponse | nu
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'operationalContextVersion': value['operationalContextVersion'],
-        'workStartedAt': value['workStartedAt'] == null ? undefined : ((value['workStartedAt']).toISOString()),
-        'previousStatus': value['previousStatus'],
         'currentStatus': value['currentStatus'],
-        'transitionedAt': value['transitionedAt'] == null ? undefined : ((value['transitionedAt']).toISOString()),
         'message': value['message'],
+        'operationalContextVersion': value['operationalContextVersion'],
+        'previousStatus': value['previousStatus'],
+        'transitionedAt': value['transitionedAt'] == null ? undefined : ((value['transitionedAt']).toISOString()),
+        'workStartedAt': value['workStartedAt'] == null ? undefined : ((value['workStartedAt']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

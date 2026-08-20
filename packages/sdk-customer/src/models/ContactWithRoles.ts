@@ -21,59 +21,72 @@ import {
 } from './AssignedRole';
 
 /**
- * 
+ * A single contact with its assigned roles
  * @export
  * @interface ContactWithRoles
  */
 export interface ContactWithRoles {
     /**
-     * 
+     * Contact point identifier (person/contact)
      * @type {string}
      * @memberof ContactWithRoles
      */
-    contactId?: string;
+    contactId: string;
     /**
-     * 
+     * Contact name
      * @type {string}
      * @memberof ContactWithRoles
      */
-    contactName?: string;
+    contactName: string;
     /**
-     * 
+     * Email address
      * @type {string}
      * @memberof ContactWithRoles
      */
     email?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ContactWithRoles
-     */
-    phone?: string;
-    /**
-     * 
+     * Whether the contact has at least one primary email on file
      * @type {boolean}
      * @memberof ContactWithRoles
      */
     hasPrimaryEmail?: boolean;
     /**
-     * 
+     * Invoice delivery method for this contact
+     * @type {string}
+     * @memberof ContactWithRoles
+     */
+    invoiceDeliveryMethod?: ContactWithRolesInvoiceDeliveryMethodEnum;
+    /**
+     * Phone number
+     * @type {string}
+     * @memberof ContactWithRoles
+     */
+    phone?: string;
+    /**
+     * Assigned roles for this contact
      * @type {Array<AssignedRole>}
      * @memberof ContactWithRoles
      */
     roles?: Array<AssignedRole>;
-    /**
-     * 
-     * @type {string}
-     * @memberof ContactWithRoles
-     */
-    invoiceDeliveryMethod?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ContactWithRolesInvoiceDeliveryMethodEnum {
+    Email = 'EMAIL',
+    Phone = 'PHONE',
+    None = 'NONE'
+}
+
 
 /**
  * Check if a given object implements the ContactWithRoles interface.
  */
 export function instanceOfContactWithRoles(value: object): boolean {
+    if (!('contactId' in value)) return false;
+    if (!('contactName' in value)) return false;
     return true;
 }
 
@@ -87,13 +100,13 @@ export function ContactWithRolesFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'contactId': json['contactId'] == null ? undefined : json['contactId'],
-        'contactName': json['contactName'] == null ? undefined : json['contactName'],
+        'contactId': json['contactId'],
+        'contactName': json['contactName'],
         'email': json['email'] == null ? undefined : json['email'],
-        'phone': json['phone'] == null ? undefined : json['phone'],
         'hasPrimaryEmail': json['hasPrimaryEmail'] == null ? undefined : json['hasPrimaryEmail'],
-        'roles': json['roles'] == null ? undefined : ((json['roles'] as Array<any>).map(AssignedRoleFromJSON)),
         'invoiceDeliveryMethod': json['invoiceDeliveryMethod'] == null ? undefined : json['invoiceDeliveryMethod'],
+        'phone': json['phone'] == null ? undefined : json['phone'],
+        'roles': json['roles'] == null ? undefined : ((json['roles'] as Array<any>).map(AssignedRoleFromJSON)),
     };
 }
 
@@ -106,10 +119,10 @@ export function ContactWithRolesToJSON(value?: ContactWithRoles | null): any {
         'contactId': value['contactId'],
         'contactName': value['contactName'],
         'email': value['email'],
-        'phone': value['phone'],
         'hasPrimaryEmail': value['hasPrimaryEmail'],
-        'roles': value['roles'] == null ? undefined : ((value['roles'] as Array<any>).map(AssignedRoleToJSON)),
         'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],
+        'phone': value['phone'],
+        'roles': value['roles'] == null ? undefined : ((value['roles'] as Array<any>).map(AssignedRoleToJSON)),
     };
 }
 

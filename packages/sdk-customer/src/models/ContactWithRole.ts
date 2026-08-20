@@ -27,30 +27,6 @@ import {
  */
 export interface ContactWithRole {
     /**
-     * Relationship ID
-     * @type {string}
-     * @memberof ContactWithRole
-     */
-    relationshipId?: string;
-    /**
-     * Individual person ID
-     * @type {string}
-     * @memberof ContactWithRole
-     */
-    individualId?: string;
-    /**
-     * Roles assigned to this contact
-     * @type {Set<string>}
-     * @memberof ContactWithRole
-     */
-    roles?: Set<ContactWithRoleRolesEnum>;
-    /**
-     * Status of the relationship
-     * @type {string}
-     * @memberof ContactWithRole
-     */
-    status?: string;
-    /**
      * Effective start date
      * @type {Date}
      * @memberof ContactWithRole
@@ -69,11 +45,35 @@ export interface ContactWithRole {
      */
     individual?: IndividualDetails;
     /**
+     * Individual person ID
+     * @type {string}
+     * @memberof ContactWithRole
+     */
+    individualId: string;
+    /**
      * 
      * @type {boolean}
      * @memberof ContactWithRole
      */
     primaryBilling?: boolean;
+    /**
+     * Relationship ID
+     * @type {string}
+     * @memberof ContactWithRole
+     */
+    relationshipId: string;
+    /**
+     * Roles assigned to this contact
+     * @type {Set<string>}
+     * @memberof ContactWithRole
+     */
+    roles?: Set<ContactWithRoleRolesEnum>;
+    /**
+     * Status of the relationship
+     * @type {string}
+     * @memberof ContactWithRole
+     */
+    status: string;
 }
 
 /**
@@ -93,6 +93,9 @@ export enum ContactWithRoleRolesEnum {
  * Check if a given object implements the ContactWithRole interface.
  */
 export function instanceOfContactWithRole(value: object): boolean {
+    if (!('individualId' in value)) return false;
+    if (!('relationshipId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -106,14 +109,14 @@ export function ContactWithRoleFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'relationshipId': json['relationshipId'] == null ? undefined : json['relationshipId'],
-        'individualId': json['individualId'] == null ? undefined : json['individualId'],
-        'roles': json['roles'] == null ? undefined : json['roles'],
-        'status': json['status'] == null ? undefined : json['status'],
         'effectiveFrom': json['effectiveFrom'] == null ? undefined : (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'individual': json['individual'] == null ? undefined : IndividualDetailsFromJSON(json['individual']),
+        'individualId': json['individualId'],
         'primaryBilling': json['primaryBilling'] == null ? undefined : json['primaryBilling'],
+        'relationshipId': json['relationshipId'],
+        'roles': json['roles'] == null ? undefined : json['roles'],
+        'status': json['status'],
     };
 }
 
@@ -123,14 +126,14 @@ export function ContactWithRoleToJSON(value?: ContactWithRole | null): any {
     }
     return {
         
-        'relationshipId': value['relationshipId'],
-        'individualId': value['individualId'],
-        'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
-        'status': value['status'],
         'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'individual': IndividualDetailsToJSON(value['individual']),
+        'individualId': value['individualId'],
         'primaryBilling': value['primaryBilling'],
+        'relationshipId': value['relationshipId'],
+        'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
+        'status': value['status'],
     };
 }
 

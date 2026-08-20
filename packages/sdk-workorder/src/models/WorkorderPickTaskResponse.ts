@@ -14,77 +14,87 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response describing a single pick task within a pick list
  * @export
  * @interface WorkorderPickTaskResponse
  */
 export interface WorkorderPickTaskResponse {
     /**
-     * 
+     * Identifier of the location to pick from
      * @type {string}
      * @memberof WorkorderPickTaskResponse
      */
-    pickTaskId?: string;
+    locationId: string;
     /**
-     * 
+     * Identifier of the pick list the task belongs to
      * @type {string}
      * @memberof WorkorderPickTaskResponse
      */
-    pickListId?: string;
+    pickListId: string;
     /**
-     * 
+     * Pick task identifier
      * @type {string}
      * @memberof WorkorderPickTaskResponse
      */
-    skuId?: string;
+    pickTaskId: string;
     /**
-     * 
+     * Quantity already picked
+     * @type {number}
+     * @memberof WorkorderPickTaskResponse
+     */
+    pickedQty: number;
+    /**
+     * Quantity remaining to pick
+     * @type {number}
+     * @memberof WorkorderPickTaskResponse
+     */
+    remainingQty: number;
+    /**
+     * Quantity required to pick
+     * @type {number}
+     * @memberof WorkorderPickTaskResponse
+     */
+    requiredQty: number;
+    /**
+     * Identifier of the SKU to pick
      * @type {string}
      * @memberof WorkorderPickTaskResponse
      */
-    locationId?: string;
+    skuId: string;
     /**
-     * 
+     * Sort order of the pick task within the list
      * @type {number}
      * @memberof WorkorderPickTaskResponse
      */
-    requiredQty?: number;
+    sortOrder: number;
     /**
-     * 
-     * @type {number}
-     * @memberof WorkorderPickTaskResponse
-     */
-    pickedQty?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof WorkorderPickTaskResponse
-     */
-    remainingQty?: number;
-    /**
-     * 
+     * Status of the pick task
      * @type {string}
      * @memberof WorkorderPickTaskResponse
      */
-    status?: string;
+    status: string;
     /**
-     * 
+     * Optimistic-locking version of the pick task
      * @type {number}
      * @memberof WorkorderPickTaskResponse
      */
-    sortOrder?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof WorkorderPickTaskResponse
-     */
-    version?: number;
+    version: number;
 }
 
 /**
  * Check if a given object implements the WorkorderPickTaskResponse interface.
  */
 export function instanceOfWorkorderPickTaskResponse(value: object): boolean {
+    if (!('locationId' in value)) return false;
+    if (!('pickListId' in value)) return false;
+    if (!('pickTaskId' in value)) return false;
+    if (!('pickedQty' in value)) return false;
+    if (!('remainingQty' in value)) return false;
+    if (!('requiredQty' in value)) return false;
+    if (!('skuId' in value)) return false;
+    if (!('sortOrder' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -98,16 +108,16 @@ export function WorkorderPickTaskResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'pickTaskId': json['pickTaskId'] == null ? undefined : json['pickTaskId'],
-        'pickListId': json['pickListId'] == null ? undefined : json['pickListId'],
-        'skuId': json['skuId'] == null ? undefined : json['skuId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'requiredQty': json['requiredQty'] == null ? undefined : json['requiredQty'],
-        'pickedQty': json['pickedQty'] == null ? undefined : json['pickedQty'],
-        'remainingQty': json['remainingQty'] == null ? undefined : json['remainingQty'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'sortOrder': json['sortOrder'] == null ? undefined : json['sortOrder'],
-        'version': json['version'] == null ? undefined : json['version'],
+        'locationId': json['locationId'],
+        'pickListId': json['pickListId'],
+        'pickTaskId': json['pickTaskId'],
+        'pickedQty': json['pickedQty'],
+        'remainingQty': json['remainingQty'],
+        'requiredQty': json['requiredQty'],
+        'skuId': json['skuId'],
+        'sortOrder': json['sortOrder'],
+        'status': json['status'],
+        'version': json['version'],
     };
 }
 
@@ -117,15 +127,15 @@ export function WorkorderPickTaskResponseToJSON(value?: WorkorderPickTaskRespons
     }
     return {
         
-        'pickTaskId': value['pickTaskId'],
-        'pickListId': value['pickListId'],
-        'skuId': value['skuId'],
         'locationId': value['locationId'],
-        'requiredQty': value['requiredQty'],
+        'pickListId': value['pickListId'],
+        'pickTaskId': value['pickTaskId'],
         'pickedQty': value['pickedQty'],
         'remainingQty': value['remainingQty'],
-        'status': value['status'],
+        'requiredQty': value['requiredQty'],
+        'skuId': value['skuId'],
         'sortOrder': value['sortOrder'],
+        'status': value['status'],
         'version': value['version'],
     };
 }

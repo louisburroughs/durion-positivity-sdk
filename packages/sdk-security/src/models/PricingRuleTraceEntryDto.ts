@@ -14,47 +14,50 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single rule-evaluation step recorded in a pricing snapshot trace
  * @export
  * @interface PricingRuleTraceEntryDto
  */
 export interface PricingRuleTraceEntryDto {
     /**
-     * 
+     * Trace entry identifier
      * @type {string}
      * @memberof PricingRuleTraceEntryDto
      */
-    id?: string;
+    id: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PricingRuleTraceEntryDto
-     */
-    ruleId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PricingRuleTraceEntryDto
-     */
-    status?: string;
-    /**
-     * 
+     * Serialized inputs supplied to the rule
      * @type {string}
      * @memberof PricingRuleTraceEntryDto
      */
     inputs?: string;
     /**
-     * 
+     * Serialized outputs produced by the rule
      * @type {string}
      * @memberof PricingRuleTraceEntryDto
      */
     outputs?: string;
+    /**
+     * Identifier of the evaluated rule
+     * @type {string}
+     * @memberof PricingRuleTraceEntryDto
+     */
+    ruleId: string;
+    /**
+     * Evaluation status of the rule
+     * @type {string}
+     * @memberof PricingRuleTraceEntryDto
+     */
+    status: string;
 }
 
 /**
  * Check if a given object implements the PricingRuleTraceEntryDto interface.
  */
 export function instanceOfPricingRuleTraceEntryDto(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('ruleId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -68,11 +71,11 @@ export function PricingRuleTraceEntryDtoFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'ruleId': json['ruleId'] == null ? undefined : json['ruleId'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'id': json['id'],
         'inputs': json['inputs'] == null ? undefined : json['inputs'],
         'outputs': json['outputs'] == null ? undefined : json['outputs'],
+        'ruleId': json['ruleId'],
+        'status': json['status'],
     };
 }
 
@@ -83,10 +86,10 @@ export function PricingRuleTraceEntryDtoToJSON(value?: PricingRuleTraceEntryDto 
     return {
         
         'id': value['id'],
-        'ruleId': value['ruleId'],
-        'status': value['status'],
         'inputs': value['inputs'],
         'outputs': value['outputs'],
+        'ruleId': value['ruleId'],
+        'status': value['status'],
     };
 }
 

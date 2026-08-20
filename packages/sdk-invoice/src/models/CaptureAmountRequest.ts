@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to capture all or part of an authorized payment hold
  * @export
  * @interface CaptureAmountRequest
  */
 export interface CaptureAmountRequest {
     /**
-     * 
+     * Amount to capture from the authorized hold
      * @type {number}
      * @memberof CaptureAmountRequest
      */
     amount: number;
     /**
-     * 
+     * Idempotency key ensuring the capture is processed at most once
      * @type {string}
      * @memberof CaptureAmountRequest
      */

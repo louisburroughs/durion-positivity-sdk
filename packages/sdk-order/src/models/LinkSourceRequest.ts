@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for linking an order to an originating source
  * @export
  * @interface LinkSourceRequest
  */
 export interface LinkSourceRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof LinkSourceRequest
-     */
-    sourceType: string;
-    /**
-     * 
+     * Identifier of the originating source record
      * @type {string}
      * @memberof LinkSourceRequest
      */
     sourceId: string;
+    /**
+     * Type classification of the originating source
+     * @type {string}
+     * @memberof LinkSourceRequest
+     */
+    sourceType: string;
 }
 
 /**
  * Check if a given object implements the LinkSourceRequest interface.
  */
 export function instanceOfLinkSourceRequest(value: object): boolean {
-    if (!('sourceType' in value)) return false;
     if (!('sourceId' in value)) return false;
+    if (!('sourceType' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function LinkSourceRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'sourceType': json['sourceType'],
         'sourceId': json['sourceId'],
+        'sourceType': json['sourceType'],
     };
 }
 
@@ -63,8 +63,8 @@ export function LinkSourceRequestToJSON(value?: LinkSourceRequest | null): any {
     }
     return {
         
-        'sourceType': value['sourceType'],
         'sourceId': value['sourceId'],
+        'sourceType': value['sourceType'],
     };
 }
 

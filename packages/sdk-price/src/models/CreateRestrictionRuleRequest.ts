@@ -14,53 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload to create a product sale-restriction rule
  * @export
  * @interface CreateRestrictionRuleRequest
  */
 export interface CreateRestrictionRuleRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateRestrictionRuleRequest
-     */
-    productId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateRestrictionRuleRequest
-     */
-    locationTag: CreateRestrictionRuleRequestLocationTagEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateRestrictionRuleRequest
-     */
-    serviceTag: CreateRestrictionRuleRequestServiceTagEnum;
-    /**
-     * 
+     * Date the restriction rule becomes effective
      * @type {Date}
      * @memberof CreateRestrictionRuleRequest
      */
     effectiveFrom: Date;
     /**
-     * 
+     * Optional date the restriction rule stops being effective
      * @type {Date}
      * @memberof CreateRestrictionRuleRequest
      */
     effectiveTo?: Date;
     /**
-     * 
+     * Location scope tag for the restriction
+     * @type {string}
+     * @memberof CreateRestrictionRuleRequest
+     */
+    locationTag: CreateRestrictionRuleRequestLocationTagEnum;
+    /**
+     * Whether the restriction can be overridden with authorization
+     * @type {boolean}
+     * @memberof CreateRestrictionRuleRequest
+     */
+    overrideable: boolean;
+    /**
+     * Optional pricing policy version associated with the rule
      * @type {number}
      * @memberof CreateRestrictionRuleRequest
      */
     policyVersion?: number;
     /**
-     * 
-     * @type {boolean}
+     * Product the restriction rule applies to
+     * @type {string}
      * @memberof CreateRestrictionRuleRequest
      */
-    overrideable?: boolean;
+    productId: string;
+    /**
+     * Service channel scope tag for the restriction
+     * @type {string}
+     * @memberof CreateRestrictionRuleRequest
+     */
+    serviceTag: CreateRestrictionRuleRequestServiceTagEnum;
 }
 
 /**
@@ -92,10 +92,11 @@ export enum CreateRestrictionRuleRequestServiceTagEnum {
  * Check if a given object implements the CreateRestrictionRuleRequest interface.
  */
 export function instanceOfCreateRestrictionRuleRequest(value: object): boolean {
-    if (!('productId' in value)) return false;
-    if (!('locationTag' in value)) return false;
-    if (!('serviceTag' in value)) return false;
     if (!('effectiveFrom' in value)) return false;
+    if (!('locationTag' in value)) return false;
+    if (!('overrideable' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('serviceTag' in value)) return false;
     return true;
 }
 
@@ -109,13 +110,13 @@ export function CreateRestrictionRuleRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'productId': json['productId'],
-        'locationTag': json['locationTag'],
-        'serviceTag': json['serviceTag'],
         'effectiveFrom': (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
+        'locationTag': json['locationTag'],
+        'overrideable': json['overrideable'],
         'policyVersion': json['policyVersion'] == null ? undefined : json['policyVersion'],
-        'overrideable': json['overrideable'] == null ? undefined : json['overrideable'],
+        'productId': json['productId'],
+        'serviceTag': json['serviceTag'],
     };
 }
 
@@ -125,13 +126,13 @@ export function CreateRestrictionRuleRequestToJSON(value?: CreateRestrictionRule
     }
     return {
         
-        'productId': value['productId'],
-        'locationTag': value['locationTag'],
-        'serviceTag': value['serviceTag'],
         'effectiveFrom': ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
-        'policyVersion': value['policyVersion'],
+        'locationTag': value['locationTag'],
         'overrideable': value['overrideable'],
+        'policyVersion': value['policyVersion'],
+        'productId': value['productId'],
+        'serviceTag': value['serviceTag'],
     };
 }
 

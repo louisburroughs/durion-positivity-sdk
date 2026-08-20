@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of generating a payment receipt
  * @export
  * @interface ReceiptResponse
  */
 export interface ReceiptResponse {
     /**
-     * 
+     * Unique identifier of the generated receipt
      * @type {string}
      * @memberof ReceiptResponse
      */
-    receiptId?: string;
+    receiptId: string;
     /**
-     * 
+     * Human-readable receipt reference
      * @type {string}
      * @memberof ReceiptResponse
      */
     reference?: string;
     /**
-     * 
+     * Current status of the receipt
      * @type {string}
      * @memberof ReceiptResponse
      */
-    status?: ReceiptResponseStatusEnum;
+    status: ReceiptResponseStatusEnum;
 }
 
 /**
@@ -52,6 +52,8 @@ export enum ReceiptResponseStatusEnum {
  * Check if a given object implements the ReceiptResponse interface.
  */
 export function instanceOfReceiptResponse(value: object): boolean {
+    if (!('receiptId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -65,9 +67,9 @@ export function ReceiptResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'receiptId': json['receiptId'] == null ? undefined : json['receiptId'],
+        'receiptId': json['receiptId'],
         'reference': json['reference'] == null ? undefined : json['reference'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'status': json['status'],
     };
 }
 

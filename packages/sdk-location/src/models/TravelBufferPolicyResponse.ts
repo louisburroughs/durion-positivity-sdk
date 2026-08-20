@@ -14,49 +14,49 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing a travel buffer policy
  * @export
  * @interface TravelBufferPolicyResponse
  */
 export interface TravelBufferPolicyResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof TravelBufferPolicyResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TravelBufferPolicyResponse
-     */
-    name?: string;
-    /**
-     * 
+     * Type of buffer the policy applies
      * @type {string}
      * @memberof TravelBufferPolicyResponse
      */
     bufferType?: string;
     /**
-     * 
+     * Numeric value of the buffer (interpretation depends on buffer type)
      * @type {number}
      * @memberof TravelBufferPolicyResponse
      */
     bufferValue?: number;
     /**
-     * 
-     * @type {string}
-     * @memberof TravelBufferPolicyResponse
-     */
-    notes?: string;
-    /**
-     * 
+     * Timestamp when the policy was created (ISO 8601)
      * @type {Date}
      * @memberof TravelBufferPolicyResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Unique identifier of the travel buffer policy
+     * @type {string}
+     * @memberof TravelBufferPolicyResponse
+     */
+    id: string;
+    /**
+     * Display name of the travel buffer policy
+     * @type {string}
+     * @memberof TravelBufferPolicyResponse
+     */
+    name?: string;
+    /**
+     * Free-text notes about the policy
+     * @type {string}
+     * @memberof TravelBufferPolicyResponse
+     */
+    notes?: string;
+    /**
+     * Timestamp when the policy was last updated (ISO 8601)
      * @type {Date}
      * @memberof TravelBufferPolicyResponse
      */
@@ -67,6 +67,7 @@ export interface TravelBufferPolicyResponse {
  * Check if a given object implements the TravelBufferPolicyResponse interface.
  */
 export function instanceOfTravelBufferPolicyResponse(value: object): boolean {
+    if (!('id' in value)) return false;
     return true;
 }
 
@@ -80,12 +81,12 @@ export function TravelBufferPolicyResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
         'bufferType': json['bufferType'] == null ? undefined : json['bufferType'],
         'bufferValue': json['bufferValue'] == null ? undefined : json['bufferValue'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'id': json['id'],
+        'name': json['name'] == null ? undefined : json['name'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -96,12 +97,12 @@ export function TravelBufferPolicyResponseToJSON(value?: TravelBufferPolicyRespo
     }
     return {
         
-        'id': value['id'],
-        'name': value['name'],
         'bufferType': value['bufferType'],
         'bufferValue': value['bufferValue'],
-        'notes': value['notes'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'id': value['id'],
+        'name': value['name'],
+        'notes': value['notes'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }

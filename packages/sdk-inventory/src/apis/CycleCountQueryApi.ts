@@ -15,25 +15,35 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CountEntryResponse,
   CycleCountTaskResponse,
+  InterferingMovementResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CountEntryResponseFromJSON,
     CountEntryResponseToJSON,
     CycleCountTaskResponseFromJSON,
     CycleCountTaskResponseToJSON,
+    InterferingMovementResponseFromJSON,
+    InterferingMovementResponseToJSON,
 } from '../models/index';
 
-export interface GetAuditorTasksRequest {
-    auditorId: string;
-}
-
-export interface GetCountHistoryRequest {
+export interface GetCycleCountTaskRequest {
     taskId: string;
 }
 
-export interface GetTaskRequest {
+export interface ListCycleCountAuditorTasksRequest {
+    auditorId: string;
+}
+
+export interface ListCycleCountHistoryRequest {
+    taskId: string;
+}
+
+export interface ListCycleCountInterferingMovementsRequest {
     taskId: string;
 }
 
@@ -43,100 +53,14 @@ export interface GetTaskRequest {
 export class CycleCountQueryApi extends runtime.BaseAPI {
 
     /**
-     * Retrieves all cycle count tasks assigned to a specific auditor.
-     * Get tasks assigned to an auditor
-     */
-    async getAuditorTasksRaw(requestParameters: GetAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountTaskResponse>> {
-        if (requestParameters['auditorId'] == null) {
-            throw new runtime.RequiredError(
-                'auditorId',
-                'Required parameter "auditorId" was null or undefined when calling getAuditorTasks().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/inventory/cycleCount/auditor/{auditorId}/tasks`.replace(`{${"auditorId"}}`, encodeURIComponent(String(requestParameters['auditorId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => CycleCountTaskResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieves all cycle count tasks assigned to a specific auditor.
-     * Get tasks assigned to an auditor
-     */
-    async getAuditorTasks(requestParameters: GetAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountTaskResponse> {
-        const response = await this.getAuditorTasksRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieves all count entries (original + recounts) for a task, ordered by sequence.
-     * Get count history for a task
-     */
-    async getCountHistoryRaw(requestParameters: GetCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CountEntryResponse>> {
-        if (requestParameters['taskId'] == null) {
-            throw new runtime.RequiredError(
-                'taskId',
-                'Required parameter "taskId" was null or undefined when calling getCountHistory().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/inventory/cycleCount/task/{taskId}/history`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => CountEntryResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieves all count entries (original + recounts) for a task, ordered by sequence.
-     * Get count history for a task
-     */
-    async getCountHistory(requestParameters: GetCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CountEntryResponse> {
-        const response = await this.getCountHistoryRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieves details of a specific cycle count task.
+     * Returns one cycle count task with its expected-quantity snapshot, assigned auditor, lifecycle status, and count-entry bookkeeping. Use this tool when the taskId is already known; use listCycleCountAuditorTasks instead to discover the tasks assigned to an auditor. Preconditions: the task must exist. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no cycle count task exists for the supplied id. 
      * Get cycle count task details
      */
-    async getTaskRaw(requestParameters: GetTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountTaskResponse>> {
+    async getCycleCountTaskRaw(requestParameters: GetCycleCountTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountTaskResponse>> {
         if (requestParameters['taskId'] == null) {
             throw new runtime.RequiredError(
                 'taskId',
-                'Required parameter "taskId" was null or undefined when calling getTask().'
+                'Required parameter "taskId" was null or undefined when calling getCycleCountTask().'
             );
         }
 
@@ -163,11 +87,140 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves details of a specific cycle count task.
+     * Returns one cycle count task with its expected-quantity snapshot, assigned auditor, lifecycle status, and count-entry bookkeeping. Use this tool when the taskId is already known; use listCycleCountAuditorTasks instead to discover the tasks assigned to an auditor. Preconditions: the task must exist. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no cycle count task exists for the supplied id. 
      * Get cycle count task details
      */
-    async getTask(requestParameters: GetTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountTaskResponse> {
-        const response = await this.getTaskRaw(requestParameters, initOverrides);
+    async getCycleCountTask(requestParameters: GetCycleCountTaskRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountTaskResponse> {
+        const response = await this.getCycleCountTaskRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every cycle count task assigned to one auditor, regardless of task status. Use this tool to build an auditor\'s work queue and discover taskIds; use getCycleCountTask instead when the taskId is already known. Preconditions: none; an auditor with no assignments yields an empty array. Required inputs: auditorId (string) as a path parameter; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the auditor has no tasks, so an empty result is not an error condition. 
+     * Get tasks assigned to an auditor
+     */
+    async listCycleCountAuditorTasksRaw(requestParameters: ListCycleCountAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountTaskResponse>> {
+        if (requestParameters['auditorId'] == null) {
+            throw new runtime.RequiredError(
+                'auditorId',
+                'Required parameter "auditorId" was null or undefined when calling listCycleCountAuditorTasks().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/cycleCount/auditor/{auditorId}/tasks`.replace(`{${"auditorId"}}`, encodeURIComponent(String(requestParameters['auditorId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CycleCountTaskResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns every cycle count task assigned to one auditor, regardless of task status. Use this tool to build an auditor\'s work queue and discover taskIds; use getCycleCountTask instead when the taskId is already known. Preconditions: none; an auditor with no assignments yields an empty array. Required inputs: auditorId (string) as a path parameter; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the auditor has no tasks, so an empty result is not an error condition. 
+     * Get tasks assigned to an auditor
+     */
+    async listCycleCountAuditorTasks(requestParameters: ListCycleCountAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountTaskResponse> {
+        const response = await this.listCycleCountAuditorTasksRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every count entry recorded for a cycle count task — the original count and any recounts — ordered by recount sequence number. Use this tool to review how counted quantities and variances evolved across recounts; use listCycleCountInterferingMovements instead for the stock movements that made the task\'s snapshot stale. Preconditions: none are enforced; an unknown taskId yields an empty array rather than 404. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the task has no counts or the id is unknown, so an empty result is not an error condition. 
+     * Get count history for a task
+     */
+    async listCycleCountHistoryRaw(requestParameters: ListCycleCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CountEntryResponse>> {
+        if (requestParameters['taskId'] == null) {
+            throw new runtime.RequiredError(
+                'taskId',
+                'Required parameter "taskId" was null or undefined when calling listCycleCountHistory().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/cycleCount/task/{taskId}/history`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CountEntryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns every count entry recorded for a cycle count task — the original count and any recounts — ordered by recount sequence number. Use this tool to review how counted quantities and variances evolved across recounts; use listCycleCountInterferingMovements instead for the stock movements that made the task\'s snapshot stale. Preconditions: none are enforced; an unknown taskId yields an empty array rather than 404. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the task has no counts or the id is unknown, so an empty result is not an error condition. 
+     * Get count history for a task
+     */
+    async listCycleCountHistory(requestParameters: ListCycleCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CountEntryResponse> {
+        const response = await this.listCycleCountHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the on-hand-affecting ledger entries for the task\'s SKU recorded between task creation and now — the movements that make the task\'s expected-quantity snapshot stale and drive its CONFLICT status. Use this tool when a count or adjustment reports CONFLICT and the reviewer must choose between a recount and approving with the variance recomputed; use listCycleCountHistory instead for the count entries themselves. Preconditions: the task must exist; movements are never frozen during counts, so entries listed here are legitimate operations, not errors. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no cycle count task exists for the supplied id. 
+     * List interfering movements for a cycle count task
+     */
+    async listCycleCountInterferingMovementsRaw(requestParameters: ListCycleCountInterferingMovementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<InterferingMovementResponse>>> {
+        if (requestParameters['taskId'] == null) {
+            throw new runtime.RequiredError(
+                'taskId',
+                'Required parameter "taskId" was null or undefined when calling listCycleCountInterferingMovements().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:cycle_count:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/cycleCount/task/{taskId}/interfering-movements`.replace(`{${"taskId"}}`, encodeURIComponent(String(requestParameters['taskId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(InterferingMovementResponseFromJSON));
+    }
+
+    /**
+     * Returns the on-hand-affecting ledger entries for the task\'s SKU recorded between task creation and now — the movements that make the task\'s expected-quantity snapshot stale and drive its CONFLICT status. Use this tool when a count or adjustment reports CONFLICT and the reviewer must choose between a recount and approving with the variance recomputed; use listCycleCountHistory instead for the count entries themselves. Preconditions: the task must exist; movements are never frozen during counts, so entries listed here are legitimate operations, not errors. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no cycle count task exists for the supplied id. 
+     * List interfering movements for a cycle count task
+     */
+    async listCycleCountInterferingMovements(requestParameters: ListCycleCountInterferingMovementsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<InterferingMovementResponse>> {
+        const response = await this.listCycleCountInterferingMovementsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -26,17 +26,17 @@ export interface ServiceDto {
      */
     id?: string;
     /**
-     * Service name
-     * @type {string}
-     * @memberof ServiceDto
-     */
-    name?: string;
-    /**
      * Long service description
      * @type {string}
      * @memberof ServiceDto
      */
     longDescription?: string;
+    /**
+     * Service name
+     * @type {string}
+     * @memberof ServiceDto
+     */
+    name?: string;
     /**
      * Short service description
      * @type {string}
@@ -63,8 +63,8 @@ export function ServiceDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
         'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
+        'name': json['name'] == null ? undefined : json['name'],
         'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
     };
 }
@@ -76,8 +76,8 @@ export function ServiceDtoToJSON(value?: ServiceDto | null): any {
     return {
         
         'id': value['id'],
-        'name': value['name'],
         'longDescription': value['longDescription'],
+        'name': value['name'],
         'shortDescription': value['shortDescription'],
     };
 }

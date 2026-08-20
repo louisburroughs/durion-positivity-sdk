@@ -14,149 +14,163 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Detailed view of a price override including approval workflow state
  * @export
  * @interface PriceOverrideDetail
  */
 export interface PriceOverrideDetail {
     /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    overrideId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    orderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    orderLineId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    productId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideDetail
-     */
-    originalPrice?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideDetail
-     */
-    overridePrice?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideDetail
-     */
-    discountAmount?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideDetail
-     */
-    discountPercentage?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    reasonCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    justification?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    status?: string;
-    /**
-     * 
+     * Whether the override affects sales commission
      * @type {boolean}
      * @memberof PriceOverrideDetail
      */
-    requiresApproval?: boolean;
+    affectsCommission: boolean;
     /**
-     * 
-     * @type {boolean}
-     * @memberof PriceOverrideDetail
-     */
-    affectsCommission?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    requestedByUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    approvedByUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    rejectedByUserId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideDetail
-     */
-    rejectionReason?: string;
-    /**
-     * 
+     * Timestamp when the override was applied to the line, if applied
      * @type {Date}
      * @memberof PriceOverrideDetail
      */
-    createdAt?: Date;
+    appliedAt?: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof PriceOverrideDetail
-     */
-    updatedAt?: Date;
-    /**
-     * 
+     * Timestamp when the override was approved, if approved
      * @type {Date}
      * @memberof PriceOverrideDetail
      */
     approvedAt?: Date;
     /**
-     * 
+     * Identifier of the user who approved the override, if approved
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    approvedByUserId?: string;
+    /**
+     * Timestamp when the override was created
+     * @type {Date}
+     * @memberof PriceOverrideDetail
+     */
+    createdAt: Date;
+    /**
+     * Absolute discount amount granted by the override
+     * @type {number}
+     * @memberof PriceOverrideDetail
+     */
+    discountAmount: number;
+    /**
+     * Discount expressed as a percentage of the original price
+     * @type {number}
+     * @memberof PriceOverrideDetail
+     */
+    discountPercentage: number;
+    /**
+     * Free-text justification supporting the override
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    justification?: string;
+    /**
+     * Identifier of the order the override applies to
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    orderId: string;
+    /**
+     * Identifier of the order line the override applies to
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    orderLineId: string;
+    /**
+     * Original price before the override
+     * @type {number}
+     * @memberof PriceOverrideDetail
+     */
+    originalPrice: number;
+    /**
+     * Unique identifier of the price override
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    overrideId: string;
+    /**
+     * Overridden price applied to the line
+     * @type {number}
+     * @memberof PriceOverrideDetail
+     */
+    overridePrice: number;
+    /**
+     * Identifier of the product on the overridden line
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    productId: string;
+    /**
+     * Reason code supplied for the override
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    reasonCode: string;
+    /**
+     * Timestamp when the override was rejected, if rejected
      * @type {Date}
      * @memberof PriceOverrideDetail
      */
     rejectedAt?: Date;
     /**
-     * 
+     * Identifier of the user who rejected the override, if rejected
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    rejectedByUserId?: string;
+    /**
+     * Reason the override was rejected, if rejected
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    rejectionReason?: string;
+    /**
+     * Identifier of the user who requested the override
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    requestedByUserId: string;
+    /**
+     * Whether the override required approval
+     * @type {boolean}
+     * @memberof PriceOverrideDetail
+     */
+    requiresApproval: boolean;
+    /**
+     * Current override status (e.g. APPROVED, PENDING_APPROVAL, REJECTED)
+     * @type {string}
+     * @memberof PriceOverrideDetail
+     */
+    status: string;
+    /**
+     * Timestamp when the override was last updated
      * @type {Date}
      * @memberof PriceOverrideDetail
      */
-    appliedAt?: Date;
+    updatedAt?: Date;
 }
 
 /**
  * Check if a given object implements the PriceOverrideDetail interface.
  */
 export function instanceOfPriceOverrideDetail(value: object): boolean {
+    if (!('affectsCommission' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('discountAmount' in value)) return false;
+    if (!('discountPercentage' in value)) return false;
+    if (!('orderId' in value)) return false;
+    if (!('orderLineId' in value)) return false;
+    if (!('originalPrice' in value)) return false;
+    if (!('overrideId' in value)) return false;
+    if (!('overridePrice' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('reasonCode' in value)) return false;
+    if (!('requestedByUserId' in value)) return false;
+    if (!('requiresApproval' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -170,28 +184,28 @@ export function PriceOverrideDetailFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'overrideId': json['overrideId'] == null ? undefined : json['overrideId'],
-        'orderId': json['orderId'] == null ? undefined : json['orderId'],
-        'orderLineId': json['orderLineId'] == null ? undefined : json['orderLineId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'originalPrice': json['originalPrice'] == null ? undefined : json['originalPrice'],
-        'overridePrice': json['overridePrice'] == null ? undefined : json['overridePrice'],
-        'discountAmount': json['discountAmount'] == null ? undefined : json['discountAmount'],
-        'discountPercentage': json['discountPercentage'] == null ? undefined : json['discountPercentage'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
-        'justification': json['justification'] == null ? undefined : json['justification'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'requiresApproval': json['requiresApproval'] == null ? undefined : json['requiresApproval'],
-        'affectsCommission': json['affectsCommission'] == null ? undefined : json['affectsCommission'],
-        'requestedByUserId': json['requestedByUserId'] == null ? undefined : json['requestedByUserId'],
+        'affectsCommission': json['affectsCommission'],
+        'appliedAt': json['appliedAt'] == null ? undefined : (new Date(json['appliedAt'])),
+        'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
         'approvedByUserId': json['approvedByUserId'] == null ? undefined : json['approvedByUserId'],
+        'createdAt': (new Date(json['createdAt'])),
+        'discountAmount': json['discountAmount'],
+        'discountPercentage': json['discountPercentage'],
+        'justification': json['justification'] == null ? undefined : json['justification'],
+        'orderId': json['orderId'],
+        'orderLineId': json['orderLineId'],
+        'originalPrice': json['originalPrice'],
+        'overrideId': json['overrideId'],
+        'overridePrice': json['overridePrice'],
+        'productId': json['productId'],
+        'reasonCode': json['reasonCode'],
+        'rejectedAt': json['rejectedAt'] == null ? undefined : (new Date(json['rejectedAt'])),
         'rejectedByUserId': json['rejectedByUserId'] == null ? undefined : json['rejectedByUserId'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'requestedByUserId': json['requestedByUserId'],
+        'requiresApproval': json['requiresApproval'],
+        'status': json['status'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'approvedAt': json['approvedAt'] == null ? undefined : (new Date(json['approvedAt'])),
-        'rejectedAt': json['rejectedAt'] == null ? undefined : (new Date(json['rejectedAt'])),
-        'appliedAt': json['appliedAt'] == null ? undefined : (new Date(json['appliedAt'])),
     };
 }
 
@@ -201,28 +215,28 @@ export function PriceOverrideDetailToJSON(value?: PriceOverrideDetail | null): a
     }
     return {
         
-        'overrideId': value['overrideId'],
-        'orderId': value['orderId'],
-        'orderLineId': value['orderLineId'],
-        'productId': value['productId'],
-        'originalPrice': value['originalPrice'],
-        'overridePrice': value['overridePrice'],
+        'affectsCommission': value['affectsCommission'],
+        'appliedAt': value['appliedAt'] == null ? undefined : ((value['appliedAt']).toISOString()),
+        'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
+        'approvedByUserId': value['approvedByUserId'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'discountAmount': value['discountAmount'],
         'discountPercentage': value['discountPercentage'],
-        'reasonCode': value['reasonCode'],
         'justification': value['justification'],
-        'status': value['status'],
-        'requiresApproval': value['requiresApproval'],
-        'affectsCommission': value['affectsCommission'],
-        'requestedByUserId': value['requestedByUserId'],
-        'approvedByUserId': value['approvedByUserId'],
+        'orderId': value['orderId'],
+        'orderLineId': value['orderLineId'],
+        'originalPrice': value['originalPrice'],
+        'overrideId': value['overrideId'],
+        'overridePrice': value['overridePrice'],
+        'productId': value['productId'],
+        'reasonCode': value['reasonCode'],
+        'rejectedAt': value['rejectedAt'] == null ? undefined : ((value['rejectedAt']).toISOString()),
         'rejectedByUserId': value['rejectedByUserId'],
         'rejectionReason': value['rejectionReason'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'requestedByUserId': value['requestedByUserId'],
+        'requiresApproval': value['requiresApproval'],
+        'status': value['status'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
-        'approvedAt': value['approvedAt'] == null ? undefined : ((value['approvedAt']).toISOString()),
-        'rejectedAt': value['rejectedAt'] == null ? undefined : ((value['rejectedAt']).toISOString()),
-        'appliedAt': value['appliedAt'] == null ? undefined : ((value['appliedAt']).toISOString()),
     };
 }
 

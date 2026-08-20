@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CountResponse,
   SubmitCountRequest,
   SubmitRecountRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CountResponseFromJSON,
     CountResponseToJSON,
     SubmitCountRequestFromJSON,
@@ -28,11 +31,11 @@ import {
     SubmitRecountRequestToJSON,
 } from '../models/index';
 
-export interface SubmitCountOperationRequest {
+export interface SubmitCycleCountRequest {
     submitCountRequest: SubmitCountRequest;
 }
 
-export interface SubmitRecountOperationRequest {
+export interface SubmitCycleCountRecountRequest {
     submitRecountRequest: SubmitRecountRequest;
 }
 
@@ -42,14 +45,14 @@ export interface SubmitRecountOperationRequest {
 export class CycleCountOperationsApi extends runtime.BaseAPI {
 
     /**
-     * Records the actual quantity counted by an auditor. Calculates variance and updates task status.
+     * Records the auditor\'s initial physical count for an ASSIGNED cycle count task, computes the variance against the task\'s expected-quantity snapshot, and moves the task to COUNTED_PENDING_REVIEW — or to CONFLICT when on-hand-affecting stock movements occurred during the count window. Use this tool for the first count of a task; do not use submitCycleCountRecount, which records a follow-up count, and do not use createCycleCountAdjustment, which posts the settled variance to the ledger. Preconditions: the task must exist and be in ASSIGNED status; stock movements are never frozen during counts, so a CONFLICT outcome is expected behaviour, not an error. Required inputs: taskId (UUID), auditorId, and actualQuantity (integer, zero or positive). Emits an INVENTORY_CYCLE_COUNT_SUBMIT event; a count entry is recorded but no ledger posting or on-hand change happens here. Returns 404 when the task does not exist, 409 when the task is not in ASSIGNED status, and 400 when actualQuantity is negative. 
      * Submit a count for a cycle count task
      */
-    async submitCountRaw(requestParameters: SubmitCountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CountResponse>> {
+    async submitCycleCountRaw(requestParameters: SubmitCycleCountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CountResponse>> {
         if (requestParameters['submitCountRequest'] == null) {
             throw new runtime.RequiredError(
                 'submitCountRequest',
-                'Required parameter "submitCountRequest" was null or undefined when calling submitCount().'
+                'Required parameter "submitCountRequest" was null or undefined when calling submitCycleCount().'
             );
         }
 
@@ -79,23 +82,23 @@ export class CycleCountOperationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records the actual quantity counted by an auditor. Calculates variance and updates task status.
+     * Records the auditor\'s initial physical count for an ASSIGNED cycle count task, computes the variance against the task\'s expected-quantity snapshot, and moves the task to COUNTED_PENDING_REVIEW — or to CONFLICT when on-hand-affecting stock movements occurred during the count window. Use this tool for the first count of a task; do not use submitCycleCountRecount, which records a follow-up count, and do not use createCycleCountAdjustment, which posts the settled variance to the ledger. Preconditions: the task must exist and be in ASSIGNED status; stock movements are never frozen during counts, so a CONFLICT outcome is expected behaviour, not an error. Required inputs: taskId (UUID), auditorId, and actualQuantity (integer, zero or positive). Emits an INVENTORY_CYCLE_COUNT_SUBMIT event; a count entry is recorded but no ledger posting or on-hand change happens here. Returns 404 when the task does not exist, 409 when the task is not in ASSIGNED status, and 400 when actualQuantity is negative. 
      * Submit a count for a cycle count task
      */
-    async submitCount(requestParameters: SubmitCountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CountResponse> {
-        const response = await this.submitCountRaw(requestParameters, initOverrides);
+    async submitCycleCount(requestParameters: SubmitCycleCountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CountResponse> {
+        const response = await this.submitCycleCountRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Records a recount with permission validation and limit enforcement. Maximum 2 recounts allowed (3 total counts).
+     * Records a recount for a cycle count task, appending a new count entry with a recomputed variance and re-running conflict detection against the task\'s count window. Use this tool when a prior count is disputed or a conflict forces recounting; do not use submitCycleCount, which records the first count of a task. Preconditions: the task must exist and hold fewer than 3 total counts (the original plus 2 recounts — an attempt beyond the limit flags the task REQUIRES_INVESTIGATION); permission TRIGGER_RECOUNT_SELF covers only the first recount by the original auditor, while TRIGGER_RECOUNT_ANY (manager) covers any recount. Required inputs: taskId (UUID), auditorId, actualQuantity (zero or positive), and permission (TRIGGER_RECOUNT_SELF or TRIGGER_RECOUNT_ANY). Emits an INVENTORY_CYCLE_COUNT_RECOUNT event; a task already in CONFLICT stays CONFLICT while in-window movements remain, because the expected-quantity snapshot is still stale. Returns 404 when the task does not exist, 400 when the recount limit is already reached (RECOUNT_LIMIT_EXCEEDED) or actualQuantity is negative, and 403 when the permission context does not authorize this recount. 
      * Submit a recount for a cycle count task
      */
-    async submitRecountRaw(requestParameters: SubmitRecountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CountResponse>> {
+    async submitCycleCountRecountRaw(requestParameters: SubmitCycleCountRecountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CountResponse>> {
         if (requestParameters['submitRecountRequest'] == null) {
             throw new runtime.RequiredError(
                 'submitRecountRequest',
-                'Required parameter "submitRecountRequest" was null or undefined when calling submitRecount().'
+                'Required parameter "submitRecountRequest" was null or undefined when calling submitCycleCountRecount().'
             );
         }
 
@@ -125,11 +128,11 @@ export class CycleCountOperationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a recount with permission validation and limit enforcement. Maximum 2 recounts allowed (3 total counts).
+     * Records a recount for a cycle count task, appending a new count entry with a recomputed variance and re-running conflict detection against the task\'s count window. Use this tool when a prior count is disputed or a conflict forces recounting; do not use submitCycleCount, which records the first count of a task. Preconditions: the task must exist and hold fewer than 3 total counts (the original plus 2 recounts — an attempt beyond the limit flags the task REQUIRES_INVESTIGATION); permission TRIGGER_RECOUNT_SELF covers only the first recount by the original auditor, while TRIGGER_RECOUNT_ANY (manager) covers any recount. Required inputs: taskId (UUID), auditorId, actualQuantity (zero or positive), and permission (TRIGGER_RECOUNT_SELF or TRIGGER_RECOUNT_ANY). Emits an INVENTORY_CYCLE_COUNT_RECOUNT event; a task already in CONFLICT stays CONFLICT while in-window movements remain, because the expected-quantity snapshot is still stale. Returns 404 when the task does not exist, 400 when the recount limit is already reached (RECOUNT_LIMIT_EXCEEDED) or actualQuantity is negative, and 403 when the permission context does not authorize this recount. 
      * Submit a recount for a cycle count task
      */
-    async submitRecount(requestParameters: SubmitRecountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CountResponse> {
-        const response = await this.submitRecountRaw(requestParameters, initOverrides);
+    async submitCycleCountRecount(requestParameters: SubmitCycleCountRecountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CountResponse> {
+        const response = await this.submitCycleCountRecountRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

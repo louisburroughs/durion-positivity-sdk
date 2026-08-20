@@ -14,35 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * Merge request with source party IDs
+ * Request to merge a duplicate (losing) party into a survivor party
  * @export
  * @interface MergePartiesRequest
  */
 export interface MergePartiesRequest {
     /**
-     * 
+     * Justification for the merge
+     * @type {string}
+     * @memberof MergePartiesRequest
+     */
+    justification: string;
+    /**
+     * ID of the party to be merged away (losing party)
+     * @type {string}
+     * @memberof MergePartiesRequest
+     */
+    losingPartyId: string;
+    /**
+     * ID of the party to merge into (survivor party). Sourced from the URL path.
      * @type {string}
      * @memberof MergePartiesRequest
      */
     survivorPartyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MergePartiesRequest
-     */
-    losingPartyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MergePartiesRequest
-     */
-    justification?: string;
 }
 
 /**
  * Check if a given object implements the MergePartiesRequest interface.
  */
 export function instanceOfMergePartiesRequest(value: object): boolean {
+    if (!('justification' in value)) return false;
+    if (!('losingPartyId' in value)) return false;
     return true;
 }
 
@@ -56,9 +58,9 @@ export function MergePartiesRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'justification': json['justification'],
+        'losingPartyId': json['losingPartyId'],
         'survivorPartyId': json['survivorPartyId'] == null ? undefined : json['survivorPartyId'],
-        'losingPartyId': json['losingPartyId'] == null ? undefined : json['losingPartyId'],
-        'justification': json['justification'] == null ? undefined : json['justification'],
     };
 }
 
@@ -68,9 +70,9 @@ export function MergePartiesRequestToJSON(value?: MergePartiesRequest | null): a
     }
     return {
         
-        'survivorPartyId': value['survivorPartyId'],
-        'losingPartyId': value['losingPartyId'],
         'justification': value['justification'],
+        'losingPartyId': value['losingPartyId'],
+        'survivorPartyId': value['survivorPartyId'],
     };
 }
 

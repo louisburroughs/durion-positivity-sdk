@@ -32,8 +32,8 @@ export interface ValidateStorageLocationRequest {
 export class StorageLocationValidationControllerApi extends runtime.BaseAPI {
 
     /**
-     * Returns existence, active status, and site ownership for a storage location ID.
-     * Validate storage location reference
+     * Returns existence, active status, owning site id and maximum unit capacity for a storage location id without requiring the site to be known. Use this tool for inter-service reference validation before storing a storageLocationId; use getStorageLocation instead when the full record is needed and the site id is known. Preconditions: none; unknown ids are a valid input. Required inputs: storageLocationId (UUID) as a path parameter. Emits a LOCATION_STORAGE_LOCATION_VALIDATE event; no state changes. Returns 200 always, with exists=false and a null siteId when the id is unknown, and 400 when the path value is not a valid UUID. 
+     * Validate Storage Location Reference State
      */
     async validateStorageLocationRaw(requestParameters: ValidateStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StorageLocationValidationResponseDTO>> {
         if (requestParameters['storageLocationId'] == null) {
@@ -66,8 +66,8 @@ export class StorageLocationValidationControllerApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns existence, active status, and site ownership for a storage location ID.
-     * Validate storage location reference
+     * Returns existence, active status, owning site id and maximum unit capacity for a storage location id without requiring the site to be known. Use this tool for inter-service reference validation before storing a storageLocationId; use getStorageLocation instead when the full record is needed and the site id is known. Preconditions: none; unknown ids are a valid input. Required inputs: storageLocationId (UUID) as a path parameter. Emits a LOCATION_STORAGE_LOCATION_VALIDATE event; no state changes. Returns 200 always, with exists=false and a null siteId when the id is unknown, and 400 when the path value is not a valid UUID. 
+     * Validate Storage Location Reference State
      */
     async validateStorageLocation(requestParameters: ValidateStorageLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StorageLocationValidationResponseDTO> {
         const response = await this.validateStorageLocationRaw(requestParameters, initOverrides);

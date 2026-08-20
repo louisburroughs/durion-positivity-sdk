@@ -14,59 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of cross-docking received stock against a workorder line
  * @export
  * @interface CrossDockResponse
  */
 export interface CrossDockResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof CrossDockResponse
-     */
-    lineId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CrossDockResponse
-     */
-    workorderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CrossDockResponse
-     */
-    workorderLineId?: string;
-    /**
-     * 
+     * Quantity of stock that was cross-docked
      * @type {number}
      * @memberof CrossDockResponse
      */
-    crossDockedQuantity?: number;
+    crossDockedQuantity: number;
     /**
-     * 
+     * Identifiers of the inventory ledger entries created by the cross-dock
      * @type {Array<string>}
      * @memberof CrossDockResponse
      */
     ledgerEntryIds?: Array<string>;
     /**
-     * 
+     * Identifier of the receiving line that was cross-docked
      * @type {string}
      * @memberof CrossDockResponse
      */
-    sessionStatus?: string;
+    lineId: string;
     /**
-     * 
+     * Status of the receiving line after the cross-dock
      * @type {string}
      * @memberof CrossDockResponse
      */
-    lineStatus?: string;
+    lineStatus: string;
+    /**
+     * Status of the receiving session after the cross-dock
+     * @type {string}
+     * @memberof CrossDockResponse
+     */
+    sessionStatus: string;
+    /**
+     * UoM crossDockedQuantity was keyed in when it differed from the product's base UoM; null means the product's base UoM
+     * @type {string}
+     * @memberof CrossDockResponse
+     */
+    unitOfMeasure?: string;
+    /**
+     * Identifier of the workorder the stock was cross-docked to
+     * @type {string}
+     * @memberof CrossDockResponse
+     */
+    workorderId: string;
+    /**
+     * Identifier of the workorder line the stock fulfilled
+     * @type {string}
+     * @memberof CrossDockResponse
+     */
+    workorderLineId: string;
 }
 
 /**
  * Check if a given object implements the CrossDockResponse interface.
  */
 export function instanceOfCrossDockResponse(value: object): boolean {
+    if (!('crossDockedQuantity' in value)) return false;
+    if (!('lineId' in value)) return false;
+    if (!('lineStatus' in value)) return false;
+    if (!('sessionStatus' in value)) return false;
+    if (!('workorderId' in value)) return false;
+    if (!('workorderLineId' in value)) return false;
     return true;
 }
 
@@ -80,13 +92,14 @@ export function CrossDockResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'lineId': json['lineId'] == null ? undefined : json['lineId'],
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'workorderLineId': json['workorderLineId'] == null ? undefined : json['workorderLineId'],
-        'crossDockedQuantity': json['crossDockedQuantity'] == null ? undefined : json['crossDockedQuantity'],
+        'crossDockedQuantity': json['crossDockedQuantity'],
         'ledgerEntryIds': json['ledgerEntryIds'] == null ? undefined : json['ledgerEntryIds'],
-        'sessionStatus': json['sessionStatus'] == null ? undefined : json['sessionStatus'],
-        'lineStatus': json['lineStatus'] == null ? undefined : json['lineStatus'],
+        'lineId': json['lineId'],
+        'lineStatus': json['lineStatus'],
+        'sessionStatus': json['sessionStatus'],
+        'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
+        'workorderId': json['workorderId'],
+        'workorderLineId': json['workorderLineId'],
     };
 }
 
@@ -96,13 +109,14 @@ export function CrossDockResponseToJSON(value?: CrossDockResponse | null): any {
     }
     return {
         
-        'lineId': value['lineId'],
-        'workorderId': value['workorderId'],
-        'workorderLineId': value['workorderLineId'],
         'crossDockedQuantity': value['crossDockedQuantity'],
         'ledgerEntryIds': value['ledgerEntryIds'],
-        'sessionStatus': value['sessionStatus'],
+        'lineId': value['lineId'],
         'lineStatus': value['lineStatus'],
+        'sessionStatus': value['sessionStatus'],
+        'unitOfMeasure': value['unitOfMeasure'],
+        'workorderId': value['workorderId'],
+        'workorderLineId': value['workorderLineId'],
     };
 }
 

@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single invoice application within a payment application request
  * @export
  * @interface InvoiceApplication
  */
 export interface InvoiceApplication {
     /**
-     * 
-     * @type {string}
-     * @memberof InvoiceApplication
-     */
-    invoiceId: string;
-    /**
-     * 
+     * Amount of the payment to apply to this invoice
      * @type {number}
      * @memberof InvoiceApplication
      */
     amountToApply: number;
+    /**
+     * Identifier of the invoice the payment is applied to
+     * @type {string}
+     * @memberof InvoiceApplication
+     */
+    invoiceId: string;
 }
 
 /**
  * Check if a given object implements the InvoiceApplication interface.
  */
 export function instanceOfInvoiceApplication(value: object): boolean {
-    if (!('invoiceId' in value)) return false;
     if (!('amountToApply' in value)) return false;
+    if (!('invoiceId' in value)) return false;
     return true;
 }
 
@@ -52,8 +52,8 @@ export function InvoiceApplicationFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'invoiceId': json['invoiceId'],
         'amountToApply': json['amountToApply'],
+        'invoiceId': json['invoiceId'],
     };
 }
 
@@ -63,8 +63,8 @@ export function InvoiceApplicationToJSON(value?: InvoiceApplication | null): any
     }
     return {
         
-        'invoiceId': value['invoiceId'],
         'amountToApply': value['amountToApply'],
+        'invoiceId': value['invoiceId'],
     };
 }
 

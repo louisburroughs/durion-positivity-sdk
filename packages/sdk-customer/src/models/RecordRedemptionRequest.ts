@@ -14,77 +14,83 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to record a promotion redemption for a customer
  * @export
  * @interface RecordRedemptionRequest
  */
 export interface RecordRedemptionRequest {
     /**
-     * 
+     * Campaign code that drove the redemption, when the offer was reached through a campaign
      * @type {string}
      * @memberof RecordRedemptionRequest
      */
-    promotionId: string;
+    campaignCode?: string;
     /**
-     * 
+     * Identifier of the customer redeeming the promotion
      * @type {string}
      * @memberof RecordRedemptionRequest
      */
     customerId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof RecordRedemptionRequest
-     */
-    workorderId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof RecordRedemptionRequest
-     */
-    invoiceId?: string;
-    /**
-     * 
+     * Discount amount to record for the redemption
      * @type {number}
      * @memberof RecordRedemptionRequest
      */
     discountAmount: number;
     /**
-     * 
+     * Type of discount being recorded
      * @type {string}
      * @memberof RecordRedemptionRequest
      */
     discountType: string;
     /**
-     * 
+     * Identifier of the invoice the redemption applies to, if any
+     * @type {string}
+     * @memberof RecordRedemptionRequest
+     */
+    invoiceId?: string;
+    /**
+     * Promotion code being redeemed
      * @type {string}
      * @memberof RecordRedemptionRequest
      */
     promotionCode: string;
     /**
-     * 
+     * Identifier of the promotion being redeemed
+     * @type {string}
+     * @memberof RecordRedemptionRequest
+     */
+    promotionId: string;
+    /**
+     * Whether the redemption is being recorded over the configured usage limit
      * @type {boolean}
      * @memberof RecordRedemptionRequest
      */
     recordedOverLimit?: boolean;
     /**
-     * 
+     * Timestamp when the redemption occurred
      * @type {Date}
      * @memberof RecordRedemptionRequest
      */
     redemptionTimestamp?: Date;
+    /**
+     * Identifier of the workorder the redemption applies to
+     * @type {string}
+     * @memberof RecordRedemptionRequest
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the RecordRedemptionRequest interface.
  */
 export function instanceOfRecordRedemptionRequest(value: object): boolean {
-    if (!('promotionId' in value)) return false;
     if (!('customerId' in value)) return false;
-    if (!('workorderId' in value)) return false;
     if (!('discountAmount' in value)) return false;
     if (!('discountType' in value)) return false;
     if (!('promotionCode' in value)) return false;
+    if (!('promotionId' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -98,15 +104,16 @@ export function RecordRedemptionRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'promotionId': json['promotionId'],
+        'campaignCode': json['campaignCode'] == null ? undefined : json['campaignCode'],
         'customerId': json['customerId'],
-        'workorderId': json['workorderId'],
-        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'discountAmount': json['discountAmount'],
         'discountType': json['discountType'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'promotionCode': json['promotionCode'],
+        'promotionId': json['promotionId'],
         'recordedOverLimit': json['recordedOverLimit'] == null ? undefined : json['recordedOverLimit'],
         'redemptionTimestamp': json['redemptionTimestamp'] == null ? undefined : (new Date(json['redemptionTimestamp'])),
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -116,15 +123,16 @@ export function RecordRedemptionRequestToJSON(value?: RecordRedemptionRequest | 
     }
     return {
         
-        'promotionId': value['promotionId'],
+        'campaignCode': value['campaignCode'],
         'customerId': value['customerId'],
-        'workorderId': value['workorderId'],
-        'invoiceId': value['invoiceId'],
         'discountAmount': value['discountAmount'],
         'discountType': value['discountType'],
+        'invoiceId': value['invoiceId'],
         'promotionCode': value['promotionCode'],
+        'promotionId': value['promotionId'],
         'recordedOverLimit': value['recordedOverLimit'],
         'redemptionTimestamp': value['redemptionTimestamp'] == null ? undefined : ((value['redemptionTimestamp']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

@@ -24,7 +24,6 @@ import {
 
 export interface GetWorkorderDetailRequest {
     workorderId: string;
-    xAuthorities?: string;
 }
 
 /**
@@ -33,8 +32,8 @@ export interface GetWorkorderDetailRequest {
 export class WorkorderDetailApi extends runtime.BaseAPI {
 
     /**
-     * Returns comprehensive workorder detail. Financial fields are conditionally included based on user authorities. Capability flags indicate which actions the user can perform.
-     * Get workorder detail with role-based visibility
+     * Returns the comprehensive workorder detail view — services with labor totals, parts, current technician assignment, derived started/in-progress/completed flags, and capability flags for the calling user. Use this tool when rendering a workorder screen tailored to the caller\'s role; do not use getWorkorder, which returns the raw workorder without capability flags or authority-based field filtering. Preconditions: the workorder must exist; financial fields (estimatedTotal, laborTotal, partsTotal) are included only when the caller\'s authorities grant financial visibility. Required inputs: workorderId (UUID) as a path parameter; authorities are read from the security context, not from parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 with code INVALID_ARGUMENT when no workorder exists for the id — the not-found case surfaces as 400 rather than 404 in this operation. 
+     * Get Workorder Detail With Visibility
      */
     async getWorkorderDetailRaw(requestParameters: GetWorkorderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderDetailResponse>> {
         if (requestParameters['workorderId'] == null) {
@@ -47,10 +46,6 @@ export class WorkorderDetailApi extends runtime.BaseAPI {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
-
-        if (requestParameters['xAuthorities'] != null) {
-            headerParameters['X-Authorities'] = String(requestParameters['xAuthorities']);
-        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -71,8 +66,8 @@ export class WorkorderDetailApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns comprehensive workorder detail. Financial fields are conditionally included based on user authorities. Capability flags indicate which actions the user can perform.
-     * Get workorder detail with role-based visibility
+     * Returns the comprehensive workorder detail view — services with labor totals, parts, current technician assignment, derived started/in-progress/completed flags, and capability flags for the calling user. Use this tool when rendering a workorder screen tailored to the caller\'s role; do not use getWorkorder, which returns the raw workorder without capability flags or authority-based field filtering. Preconditions: the workorder must exist; financial fields (estimatedTotal, laborTotal, partsTotal) are included only when the caller\'s authorities grant financial visibility. Required inputs: workorderId (UUID) as a path parameter; authorities are read from the security context, not from parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 with code INVALID_ARGUMENT when no workorder exists for the id — the not-found case surfaces as 400 rather than 404 in this operation. 
+     * Get Workorder Detail With Visibility
      */
     async getWorkorderDetail(requestParameters: GetWorkorderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderDetailResponse> {
         const response = await this.getWorkorderDetailRaw(requestParameters, initOverrides);

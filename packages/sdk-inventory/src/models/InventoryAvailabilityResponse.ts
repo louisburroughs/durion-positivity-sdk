@@ -20,11 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface InventoryAvailabilityResponse {
     /**
-     * Product identifier
-     * @type {string}
+     * Total quantity allocated (hard commitments)
+     * @type {number}
      * @memberof InventoryAvailabilityResponse
      */
-    productId: string;
+    allocatedQty: number;
+    /**
+     * Timestamp when this calculation was performed
+     * @type {Date}
+     * @memberof InventoryAvailabilityResponse
+     */
+    asOfTimestamp: Date;
+    /**
+     * Available-to-promise quantity (On-Hand - Allocations)
+     * @type {number}
+     * @memberof InventoryAvailabilityResponse
+     */
+    atpQty: number;
+    /**
+     * Expected receipts quantity (optional, not included in ATP for v1)
+     * @type {number}
+     * @memberof InventoryAvailabilityResponse
+     */
+    expectedReceiptsQty?: number;
     /**
      * Location identifier
      * @type {string}
@@ -38,48 +56,30 @@ export interface InventoryAvailabilityResponse {
      */
     onHandQty: number;
     /**
-     * Total quantity allocated (hard commitments)
-     * @type {number}
+     * Product identifier
+     * @type {string}
      * @memberof InventoryAvailabilityResponse
      */
-    allocatedQty: number;
-    /**
-     * Available-to-promise quantity (On-Hand - Allocations)
-     * @type {number}
-     * @memberof InventoryAvailabilityResponse
-     */
-    atpQty: number;
+    productId: string;
     /**
      * Base unit of measure for all quantities
      * @type {string}
      * @memberof InventoryAvailabilityResponse
      */
     uom: string;
-    /**
-     * Timestamp when this calculation was performed
-     * @type {Date}
-     * @memberof InventoryAvailabilityResponse
-     */
-    asOfTimestamp: Date;
-    /**
-     * Expected receipts quantity (optional, not included in ATP for v1)
-     * @type {number}
-     * @memberof InventoryAvailabilityResponse
-     */
-    expectedReceiptsQty?: number;
 }
 
 /**
  * Check if a given object implements the InventoryAvailabilityResponse interface.
  */
 export function instanceOfInventoryAvailabilityResponse(value: object): boolean {
-    if (!('productId' in value)) return false;
+    if (!('allocatedQty' in value)) return false;
+    if (!('asOfTimestamp' in value)) return false;
+    if (!('atpQty' in value)) return false;
     if (!('locationId' in value)) return false;
     if (!('onHandQty' in value)) return false;
-    if (!('allocatedQty' in value)) return false;
-    if (!('atpQty' in value)) return false;
+    if (!('productId' in value)) return false;
     if (!('uom' in value)) return false;
-    if (!('asOfTimestamp' in value)) return false;
     return true;
 }
 
@@ -93,14 +93,14 @@ export function InventoryAvailabilityResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'productId': json['productId'],
+        'allocatedQty': json['allocatedQty'],
+        'asOfTimestamp': (new Date(json['asOfTimestamp'])),
+        'atpQty': json['atpQty'],
+        'expectedReceiptsQty': json['expectedReceiptsQty'] == null ? undefined : json['expectedReceiptsQty'],
         'locationId': json['locationId'],
         'onHandQty': json['onHandQty'],
-        'allocatedQty': json['allocatedQty'],
-        'atpQty': json['atpQty'],
+        'productId': json['productId'],
         'uom': json['uom'],
-        'asOfTimestamp': (new Date(json['asOfTimestamp'])),
-        'expectedReceiptsQty': json['expectedReceiptsQty'] == null ? undefined : json['expectedReceiptsQty'],
     };
 }
 
@@ -110,14 +110,14 @@ export function InventoryAvailabilityResponseToJSON(value?: InventoryAvailabilit
     }
     return {
         
-        'productId': value['productId'],
+        'allocatedQty': value['allocatedQty'],
+        'asOfTimestamp': ((value['asOfTimestamp']).toISOString()),
+        'atpQty': value['atpQty'],
+        'expectedReceiptsQty': value['expectedReceiptsQty'],
         'locationId': value['locationId'],
         'onHandQty': value['onHandQty'],
-        'allocatedQty': value['allocatedQty'],
-        'atpQty': value['atpQty'],
+        'productId': value['productId'],
         'uom': value['uom'],
-        'asOfTimestamp': ((value['asOfTimestamp']).toISOString()),
-        'expectedReceiptsQty': value['expectedReceiptsQty'],
     };
 }
 

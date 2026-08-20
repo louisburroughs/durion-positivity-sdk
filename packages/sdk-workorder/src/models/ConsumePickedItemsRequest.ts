@@ -21,13 +21,13 @@ import {
 } from './ConsumeItem';
 
 /**
- * 
+ * Request to consume previously picked items into a workorder
  * @export
  * @interface ConsumePickedItemsRequest
  */
 export interface ConsumePickedItemsRequest {
     /**
-     * 
+     * Items to consume
      * @type {Array<ConsumeItem>}
      * @memberof ConsumePickedItemsRequest
      */

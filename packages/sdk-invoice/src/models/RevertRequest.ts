@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for reverting a finalized invoice back to DRAFT
  * @export
  * @interface RevertRequest
  */
 export interface RevertRequest {
     /**
-     * 
+     * Manager approval code authorizing the reversion
      * @type {string}
      * @memberof RevertRequest
      */
     managerApprovalCode: string;
     /**
-     * 
+     * Reason the invoice is being reverted
      * @type {string}
      * @memberof RevertRequest
      */

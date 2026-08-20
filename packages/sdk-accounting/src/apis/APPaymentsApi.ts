@@ -31,15 +31,15 @@ import {
     PageableToJSON,
 } from '../models/index';
 
-export interface ExecutePaymentRequest {
+export interface ExecuteApPaymentRequest {
     executeAPPaymentRequest: ExecuteAPPaymentRequest;
 }
 
-export interface GetPaymentRequest {
+export interface GetApPaymentRequest {
     paymentId: string;
 }
 
-export interface GetPaymentByRefRequest {
+export interface GetApPaymentByRefRequest {
     paymentRef: string;
 }
 
@@ -54,14 +54,14 @@ export interface ListApBillsRequest {
 export class APPaymentsApi extends runtime.BaseAPI {
 
     /**
-     * Execute a vendor payment with optional explicit allocations to bills. Idempotent using paymentRef: same ref + same payload returns existing payment; same ref + different payload yields 409 conflict.
-     * Execute vendor payment
+     * Executes an AP vendor payment through the payment gateway, optionally allocating it across approved vendor bills, and posts the corresponding GL entries. Use this tool to pay a vendor; do not use applyPayment, which is the AR-side application of customer payments to invoices, and use listApBills first to find APPROVED bills to allocate against. Preconditions: every allocated bill must exist, be APPROVED and belong to the vendor, and the allocation total must not exceed the gross amount. Required inputs: vendorId (UUID), grossAmount (min 0.01), currency (3-char ISO code), paymentRef (max 100 chars, the idempotency key) and paymentMethod (e.g. ACH, CHECK); feeAmount, netAmount, paymentSource, memo and explicit allocations are optional. Emits an AP_PAYMENT_EXECUTE event; the call is idempotent on paymentRef, replaying the same ref with the same payload as a 200 instead of paying twice. Returns 200 on an idempotent replay, 409 IDEMPOTENCY_CONFLICT when the paymentRef exists with a different payload, 400 when a bill is missing, unapproved or over-allocated, and 500 PAYMENT_GATEWAY_FAILURE when the gateway cannot be reached. 
+     * Execute Vendor Payment
      */
-    async executePaymentRaw(requestParameters: ExecutePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
+    async executeApPaymentRaw(requestParameters: ExecuteApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
         if (requestParameters['executeAPPaymentRequest'] == null) {
             throw new runtime.RequiredError(
                 'executeAPPaymentRequest',
-                'Required parameter "executeAPPaymentRequest" was null or undefined when calling executePayment().'
+                'Required parameter "executeAPPaymentRequest" was null or undefined when calling executeApPayment().'
             );
         }
 
@@ -91,23 +91,23 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Execute a vendor payment with optional explicit allocations to bills. Idempotent using paymentRef: same ref + same payload returns existing payment; same ref + different payload yields 409 conflict.
-     * Execute vendor payment
+     * Executes an AP vendor payment through the payment gateway, optionally allocating it across approved vendor bills, and posts the corresponding GL entries. Use this tool to pay a vendor; do not use applyPayment, which is the AR-side application of customer payments to invoices, and use listApBills first to find APPROVED bills to allocate against. Preconditions: every allocated bill must exist, be APPROVED and belong to the vendor, and the allocation total must not exceed the gross amount. Required inputs: vendorId (UUID), grossAmount (min 0.01), currency (3-char ISO code), paymentRef (max 100 chars, the idempotency key) and paymentMethod (e.g. ACH, CHECK); feeAmount, netAmount, paymentSource, memo and explicit allocations are optional. Emits an AP_PAYMENT_EXECUTE event; the call is idempotent on paymentRef, replaying the same ref with the same payload as a 200 instead of paying twice. Returns 200 on an idempotent replay, 409 IDEMPOTENCY_CONFLICT when the paymentRef exists with a different payload, 400 when a bill is missing, unapproved or over-allocated, and 500 PAYMENT_GATEWAY_FAILURE when the gateway cannot be reached. 
+     * Execute Vendor Payment
      */
-    async executePayment(requestParameters: ExecutePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
-        const response = await this.executePaymentRaw(requestParameters, initOverrides);
+    async executeApPayment(requestParameters: ExecuteApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
+        const response = await this.executeApPaymentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve AP payment details including allocations and GL posting status.
-     * Get payment details
+     * Returns one AP payment with its bill allocations and GL posting status. Use this tool when the payment id is already known; use getApPaymentByRef instead when only the idempotency reference is available. Preconditions: the payment must exist. Required inputs: paymentId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no AP payment exists for the supplied id. 
+     * Get AP Payment Details
      */
-    async getPaymentRaw(requestParameters: GetPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
+    async getApPaymentRaw(requestParameters: GetApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
         if (requestParameters['paymentId'] == null) {
             throw new runtime.RequiredError(
                 'paymentId',
-                'Required parameter "paymentId" was null or undefined when calling getPayment().'
+                'Required parameter "paymentId" was null or undefined when calling getApPayment().'
             );
         }
 
@@ -134,23 +134,23 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve AP payment details including allocations and GL posting status.
-     * Get payment details
+     * Returns one AP payment with its bill allocations and GL posting status. Use this tool when the payment id is already known; use getApPaymentByRef instead when only the idempotency reference is available. Preconditions: the payment must exist. Required inputs: paymentId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no AP payment exists for the supplied id. 
+     * Get AP Payment Details
      */
-    async getPayment(requestParameters: GetPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
-        const response = await this.getPaymentRaw(requestParameters, initOverrides);
+    async getApPayment(requestParameters: GetApPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
+        const response = await this.getApPaymentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve AP payment details by paymentRef (idempotency key).
-     * Get payment by reference
+     * Returns one AP payment looked up by its paymentRef, the caller-chosen idempotency key supplied at execution time. Use this tool to check whether a payment reference was already executed before retrying executeApPayment; use getApPayment instead when the payment UUID is known. Preconditions: a payment must have been executed with this paymentRef. Required inputs: paymentRef (1-100 chars, no newlines) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no AP payment exists for the supplied reference. 
+     * Get AP Payment By Reference
      */
-    async getPaymentByRefRaw(requestParameters: GetPaymentByRefRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
+    async getApPaymentByRefRaw(requestParameters: GetApPaymentByRefRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<APPaymentResponse>> {
         if (requestParameters['paymentRef'] == null) {
             throw new runtime.RequiredError(
                 'paymentRef',
-                'Required parameter "paymentRef" was null or undefined when calling getPaymentByRef().'
+                'Required parameter "paymentRef" was null or undefined when calling getApPaymentByRef().'
             );
         }
 
@@ -177,17 +177,17 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve AP payment details by paymentRef (idempotency key).
-     * Get payment by reference
+     * Returns one AP payment looked up by its paymentRef, the caller-chosen idempotency key supplied at execution time. Use this tool to check whether a payment reference was already executed before retrying executeApPayment; use getApPayment instead when the payment UUID is known. Preconditions: a payment must have been executed with this paymentRef. Required inputs: paymentRef (1-100 chars, no newlines) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no AP payment exists for the supplied reference. 
+     * Get AP Payment By Reference
      */
-    async getPaymentByRef(requestParameters: GetPaymentByRefRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
-        const response = await this.getPaymentByRefRaw(requestParameters, initOverrides);
+    async getApPaymentByRef(requestParameters: GetApPaymentByRefRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<APPaymentResponse> {
+        const response = await this.getApPaymentByRefRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID. Sort order is server-controlled.
-     * List eligible vendor bills
+     * Lists vendor bills eligible for payment, meaning those in APPROVED status, ordered by due date oldest first with nulls last, then bill date, then bill id. Use this tool to pick bills before calling executeApPayment; do not use listVendorBills on the vendor-bill API, which returns bills of every status. Preconditions: none; the sort order is server-controlled and cannot be overridden. Required inputs: none; vendorId (UUID) is an optional filter and page size defaults to 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the vendor id is malformed. 
+     * List Eligible Vendor Bills
      */
     async listApBillsRaw(requestParameters: ListApBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageVendorBillSummaryResponse>> {
         if (requestParameters['pageable'] == null) {
@@ -228,8 +228,8 @@ export class APPaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get eligible vendor bills for payment (status = APPROVED). Bills are ordered by due date (oldest first, nulls last), then bill date, then bill ID. Sort order is server-controlled.
-     * List eligible vendor bills
+     * Lists vendor bills eligible for payment, meaning those in APPROVED status, ordered by due date oldest first with nulls last, then bill date, then bill id. Use this tool to pick bills before calling executeApPayment; do not use listVendorBills on the vendor-bill API, which returns bills of every status. Preconditions: none; the sort order is server-controlled and cannot be overridden. Required inputs: none; vendorId (UUID) is an optional filter and page size defaults to 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the vendor id is malformed. 
+     * List Eligible Vendor Bills
      */
     async listApBills(requestParameters: ListApBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillSummaryResponse> {
         const response = await this.listApBillsRaw(requestParameters, initOverrides);

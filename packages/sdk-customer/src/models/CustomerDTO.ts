@@ -14,17 +14,11 @@
 
 import { mapValues } from '../runtime';
 /**
- * Customer object to be created
+ * Customer data transfer object for API operations
  * @export
  * @interface CustomerDTO
  */
 export interface CustomerDTO {
-    /**
-     * Unique identifier of the customer
-     * @type {string}
-     * @memberof CustomerDTO
-     */
-    id?: string;
     /**
      * Unique customer number
      * @type {string}
@@ -32,55 +26,54 @@ export interface CustomerDTO {
      */
     customerNumber?: string;
     /**
-     * Last name of the customer
-     * @type {string}
-     * @memberof CustomerDTO
-     */
-    lastName: string;
-    /**
-     * First name of the customer
-     * @type {string}
-     * @memberof CustomerDTO
-     */
-    firstName: string;
-    /**
-     * Phone number of the customer
-     * @type {string}
-     * @memberof CustomerDTO
-     */
-    phoneNumber?: string;
-    /**
-     * Email address of the customer
-     * @type {string}
-     * @memberof CustomerDTO
-     */
-    email?: string;
-    /**
-     * Primary address label or identifier for the customer
-     * @type {string}
-     * @memberof CustomerDTO
-     */
-    primaryAddress?: string;
-    /**
-     * List of vehicle VINs associated with the customer
-     * @type {Array<string>}
-     * @memberof CustomerDTO
-     */
-    vehicleVins?: Array<string>;
-    /**
      * Type of customer (e.g., 'retail', 'commercial')
      * @type {string}
      * @memberof CustomerDTO
      */
     customerType?: string;
+    /**
+     * First name of the customer. For a commercial party (customerType=COMMERCIAL), this field carries the organization's display name instead. Required when creating a customer (POST); optional on update (PUT), where an absent value leaves the existing name unchanged.
+     * @type {string}
+     * @memberof CustomerDTO
+     */
+    firstName?: string;
+    /**
+     * Unique identifier of the customer
+     * @type {string}
+     * @memberof CustomerDTO
+     */
+    id?: string;
+    /**
+     * Last name of the customer. For a commercial party (customerType=COMMERCIAL), this field carries the organization's legal/registered name instead. Required when creating a customer (POST); optional on update (PUT), where an absent value leaves the existing name unchanged.
+     * @type {string}
+     * @memberof CustomerDTO
+     */
+    lastName?: string;
+    /**
+     * CRM party identifier. Equal to id; exposed explicitly so callers can pass it to the CRM snapshot endpoints (GET /v1/crm/snapshot/party/{partyId}) without assuming the id mapping.
+     * @type {string}
+     * @memberof CustomerDTO
+     */
+    partyId?: string;
+    /**
+     * Legacy free-text address label. Superseded by the structured postal address in pos-people-contact (FI-4); retained for display compatibility.
+     * @type {string}
+     * @memberof CustomerDTO
+     * @deprecated
+     */
+    primaryAddress?: string;
+    /**
+     * List of vehicle VINs associated with the customer. Omitting this field on an update leaves the customer's existing VINs unchanged; sending an empty list clears them.
+     * @type {Array<string>}
+     * @memberof CustomerDTO
+     */
+    vehicleVins?: Array<string>;
 }
 
 /**
  * Check if a given object implements the CustomerDTO interface.
  */
 export function instanceOfCustomerDTO(value: object): boolean {
-    if (!('lastName' in value)) return false;
-    if (!('firstName' in value)) return false;
     return true;
 }
 
@@ -94,15 +87,14 @@ export function CustomerDTOFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
         'customerNumber': json['customerNumber'] == null ? undefined : json['customerNumber'],
-        'lastName': json['lastName'],
-        'firstName': json['firstName'],
-        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
-        'email': json['email'] == null ? undefined : json['email'],
+        'customerType': json['customerType'] == null ? undefined : json['customerType'],
+        'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'id': json['id'] == null ? undefined : json['id'],
+        'lastName': json['lastName'] == null ? undefined : json['lastName'],
+        'partyId': json['partyId'] == null ? undefined : json['partyId'],
         'primaryAddress': json['primaryAddress'] == null ? undefined : json['primaryAddress'],
         'vehicleVins': json['vehicleVins'] == null ? undefined : json['vehicleVins'],
-        'customerType': json['customerType'] == null ? undefined : json['customerType'],
     };
 }
 
@@ -112,15 +104,14 @@ export function CustomerDTOToJSON(value?: CustomerDTO | null): any {
     }
     return {
         
-        'id': value['id'],
         'customerNumber': value['customerNumber'],
-        'lastName': value['lastName'],
+        'customerType': value['customerType'],
         'firstName': value['firstName'],
-        'phoneNumber': value['phoneNumber'],
-        'email': value['email'],
+        'id': value['id'],
+        'lastName': value['lastName'],
+        'partyId': value['partyId'],
         'primaryAddress': value['primaryAddress'],
         'vehicleVins': value['vehicleVins'],
-        'customerType': value['customerType'],
     };
 }
 

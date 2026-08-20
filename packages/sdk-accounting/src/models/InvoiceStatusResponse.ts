@@ -14,53 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Invoice payment status response
  * @export
  * @interface InvoiceStatusResponse
  */
 export interface InvoiceStatusResponse {
     /**
-     * 
+     * Invoice UUID
      * @type {string}
      * @memberof InvoiceStatusResponse
      */
-    invoiceId?: string;
+    invoiceId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof InvoiceStatusResponse
-     */
-    status?: InvoiceStatusResponseStatusEnum;
-    /**
-     * 
-     * @type {number}
-     * @memberof InvoiceStatusResponse
-     */
-    totalPaid?: number;
-    /**
-     * 
+     * Total invoice amount
      * @type {number}
      * @memberof InvoiceStatusResponse
      */
     invoiceTotal?: number;
     /**
-     * 
-     * @type {number}
+     * Last updated timestamp
+     * @type {Date}
      * @memberof InvoiceStatusResponse
      */
-    remainingBalance?: number;
+    lastUpdated?: Date;
     /**
-     * 
+     * Reference of the latest payment transaction
      * @type {string}
      * @memberof InvoiceStatusResponse
      */
     latestTransactionReference?: string;
     /**
-     * 
-     * @type {Date}
+     * Remaining balance (invoice total minus total paid)
+     * @type {number}
      * @memberof InvoiceStatusResponse
      */
-    lastUpdated?: Date;
+    remainingBalance?: number;
+    /**
+     * Payment status of the invoice
+     * @type {string}
+     * @memberof InvoiceStatusResponse
+     */
+    status: InvoiceStatusResponseStatusEnum;
+    /**
+     * Total amount paid to date
+     * @type {number}
+     * @memberof InvoiceStatusResponse
+     */
+    totalPaid?: number;
 }
 
 /**
@@ -80,6 +80,8 @@ export enum InvoiceStatusResponseStatusEnum {
  * Check if a given object implements the InvoiceStatusResponse interface.
  */
 export function instanceOfInvoiceStatusResponse(value: object): boolean {
+    if (!('invoiceId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -93,13 +95,13 @@ export function InvoiceStatusResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'totalPaid': json['totalPaid'] == null ? undefined : json['totalPaid'],
+        'invoiceId': json['invoiceId'],
         'invoiceTotal': json['invoiceTotal'] == null ? undefined : json['invoiceTotal'],
-        'remainingBalance': json['remainingBalance'] == null ? undefined : json['remainingBalance'],
-        'latestTransactionReference': json['latestTransactionReference'] == null ? undefined : json['latestTransactionReference'],
         'lastUpdated': json['lastUpdated'] == null ? undefined : (new Date(json['lastUpdated'])),
+        'latestTransactionReference': json['latestTransactionReference'] == null ? undefined : json['latestTransactionReference'],
+        'remainingBalance': json['remainingBalance'] == null ? undefined : json['remainingBalance'],
+        'status': json['status'],
+        'totalPaid': json['totalPaid'] == null ? undefined : json['totalPaid'],
     };
 }
 
@@ -110,12 +112,12 @@ export function InvoiceStatusResponseToJSON(value?: InvoiceStatusResponse | null
     return {
         
         'invoiceId': value['invoiceId'],
+        'invoiceTotal': value['invoiceTotal'],
+        'lastUpdated': value['lastUpdated'] == null ? undefined : ((value['lastUpdated']).toISOString()),
+        'latestTransactionReference': value['latestTransactionReference'],
+        'remainingBalance': value['remainingBalance'],
         'status': value['status'],
         'totalPaid': value['totalPaid'],
-        'invoiceTotal': value['invoiceTotal'],
-        'remainingBalance': value['remainingBalance'],
-        'latestTransactionReference': value['latestTransactionReference'],
-        'lastUpdated': value['lastUpdated'] == null ? undefined : ((value['lastUpdated']).toISOString()),
     };
 }
 

@@ -34,27 +34,27 @@ import {
     UpdateHintRequestToJSON,
 } from '../models/index';
 
-export interface CreateHintOperationRequest {
+export interface CreateVehicleHintRequest {
     createHintRequest: CreateHintRequest;
 }
 
-export interface DeleteHintRequest {
+export interface DeleteVehicleHintRequest {
     hintId: string;
 }
 
-export interface FilterProductsOperationRequest {
+export interface FilterProductsByVehicleAttributesRequest {
     filterProductsRequest: FilterProductsRequest;
 }
 
-export interface GetHintRequest {
+export interface GetVehicleHintRequest {
     hintId: string;
 }
 
-export interface GetHintsByProductIdRequest {
+export interface ListVehicleHintsByProductRequest {
     productId: string;
 }
 
-export interface UpdateHintOperationRequest {
+export interface UpdateVehicleHintRequest {
     hintId: string;
     updateHintRequest: UpdateHintRequest;
 }
@@ -65,14 +65,14 @@ export interface UpdateHintOperationRequest {
 export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
 
     /**
-     * Create a new hint with fitment tags for a product
-     * Create a vehicle applicability hint
+     * Creates a vehicle applicability hint that attaches a set of fitment tags to one product, making the product discoverable through filterProductsByVehicleAttributes. Use this tool when declaring which vehicles a product fits for the first time; do not use updateVehicleHint, which replaces the tags on a hint that already exists. Preconditions: none are checked against other services; productId is stored as given and is not verified against the catalog, so callers must supply a valid product id themselves. Required inputs: productId (UUID) and fitmentTags, a non-empty list of tagType/tagValue pairs; tagType is one of MAKE, MODEL, YEAR_RANGE, TIRE_SIZE, AXLE_POSITION, ENGINE_SIZE or TRIM_LEVEL, tagValue is at most 120 characters, and YEAR_RANGE values use \"2018-2022\" or a single year like \"2020\". Emits a VEHICLE_HINT_CREATED event and persists the hint with its tags in one transaction. Returns 201 with the stored hint on success; because productId is not validated, an unknown product id still returns 201 rather than 404. 
+     * Create Vehicle Applicability Hint
      */
-    async createHintRaw(requestParameters: CreateHintOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HintResponse>> {
+    async createVehicleHintRaw(requestParameters: CreateVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HintResponse>> {
         if (requestParameters['createHintRequest'] == null) {
             throw new runtime.RequiredError(
                 'createHintRequest',
-                'Required parameter "createHintRequest" was null or undefined when calling createHint().'
+                'Required parameter "createHintRequest" was null or undefined when calling createVehicleHint().'
             );
         }
 
@@ -102,23 +102,23 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new hint with fitment tags for a product
-     * Create a vehicle applicability hint
+     * Creates a vehicle applicability hint that attaches a set of fitment tags to one product, making the product discoverable through filterProductsByVehicleAttributes. Use this tool when declaring which vehicles a product fits for the first time; do not use updateVehicleHint, which replaces the tags on a hint that already exists. Preconditions: none are checked against other services; productId is stored as given and is not verified against the catalog, so callers must supply a valid product id themselves. Required inputs: productId (UUID) and fitmentTags, a non-empty list of tagType/tagValue pairs; tagType is one of MAKE, MODEL, YEAR_RANGE, TIRE_SIZE, AXLE_POSITION, ENGINE_SIZE or TRIM_LEVEL, tagValue is at most 120 characters, and YEAR_RANGE values use \"2018-2022\" or a single year like \"2020\". Emits a VEHICLE_HINT_CREATED event and persists the hint with its tags in one transaction. Returns 201 with the stored hint on success; because productId is not validated, an unknown product id still returns 201 rather than 404. 
+     * Create Vehicle Applicability Hint
      */
-    async createHint(requestParameters: CreateHintOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HintResponse> {
-        const response = await this.createHintRaw(requestParameters, initOverrides);
+    async createVehicleHint(requestParameters: CreateVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HintResponse> {
+        const response = await this.createVehicleHintRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Remove a hint and all its associated tags
-     * Delete a vehicle applicability hint
+     * Deletes a vehicle applicability hint together with all fitment tags attached to it, removing those match criteria from product filtering. Use this tool when a hint\'s vehicle coverage should no longer apply to the product at all; do not use updateVehicleHint, which keeps the hint and replaces its tags instead. Preconditions: the hint must exist under the supplied hintId. Required inputs: hintId (UUID) as a path parameter; there is no request body. Emits a VEHICLE_HINT_DELETED event; the delete is permanent, with no soft-delete or restore. Returns 204 on successful deletion, and 404 when no hint exists for the supplied id. 
+     * Delete Vehicle Applicability Hint
      */
-    async deleteHintRaw(requestParameters: DeleteHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteVehicleHintRaw(requestParameters: DeleteVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['hintId'] == null) {
             throw new runtime.RequiredError(
                 'hintId',
-                'Required parameter "hintId" was null or undefined when calling deleteHint().'
+                'Required parameter "hintId" was null or undefined when calling deleteVehicleHint().'
             );
         }
 
@@ -145,22 +145,22 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Remove a hint and all its associated tags
-     * Delete a vehicle applicability hint
+     * Deletes a vehicle applicability hint together with all fitment tags attached to it, removing those match criteria from product filtering. Use this tool when a hint\'s vehicle coverage should no longer apply to the product at all; do not use updateVehicleHint, which keeps the hint and replaces its tags instead. Preconditions: the hint must exist under the supplied hintId. Required inputs: hintId (UUID) as a path parameter; there is no request body. Emits a VEHICLE_HINT_DELETED event; the delete is permanent, with no soft-delete or restore. Returns 204 on successful deletion, and 404 when no hint exists for the supplied id. 
+     * Delete Vehicle Applicability Hint
      */
-    async deleteHint(requestParameters: DeleteHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteHintRaw(requestParameters, initOverrides);
+    async deleteVehicleHint(requestParameters: DeleteVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteVehicleHintRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Find products that match the provided vehicle attributes
-     * Filter products by vehicle attributes
+     * Finds product ids whose applicability hints are compatible with a supplied set of vehicle attributes such as make, model and year. Use this tool to answer which products fit a given vehicle; use listVehicleHintsByProduct instead to go the other direction, from a product to its vehicle coverage. Preconditions: hints must already exist, and attribute keys must match tag types case-insensitively (make, model, year_range, tire_size, axle_position, engine_size, trim_level); unknown keys are ignored rather than rejected. Required inputs: vehicleAttributes, a non-empty map of attribute name to value; value matching is case-insensitive, a hint that lacks a given tag type is treated as compatible with that attribute, and a year value like \"2020\" matches YEAR_RANGE tags stored as \"2018-2022\" or as a single year. Emits a FITMENT_PRODUCTS_FILTER event; no hint or product records are modified. Returns 200 with the matching productIds and their count, which may be empty, and 400 when vehicleAttributes is missing, empty, or contains blank keys or values. 
+     * Filter Products by Vehicle Attributes
      */
-    async filterProductsRaw(requestParameters: FilterProductsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FilterProductsResponse>> {
+    async filterProductsByVehicleAttributesRaw(requestParameters: FilterProductsByVehicleAttributesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<FilterProductsResponse>> {
         if (requestParameters['filterProductsRequest'] == null) {
             throw new runtime.RequiredError(
                 'filterProductsRequest',
-                'Required parameter "filterProductsRequest" was null or undefined when calling filterProducts().'
+                'Required parameter "filterProductsRequest" was null or undefined when calling filterProductsByVehicleAttributes().'
             );
         }
 
@@ -190,23 +190,23 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Find products that match the provided vehicle attributes
-     * Filter products by vehicle attributes
+     * Finds product ids whose applicability hints are compatible with a supplied set of vehicle attributes such as make, model and year. Use this tool to answer which products fit a given vehicle; use listVehicleHintsByProduct instead to go the other direction, from a product to its vehicle coverage. Preconditions: hints must already exist, and attribute keys must match tag types case-insensitively (make, model, year_range, tire_size, axle_position, engine_size, trim_level); unknown keys are ignored rather than rejected. Required inputs: vehicleAttributes, a non-empty map of attribute name to value; value matching is case-insensitive, a hint that lacks a given tag type is treated as compatible with that attribute, and a year value like \"2020\" matches YEAR_RANGE tags stored as \"2018-2022\" or as a single year. Emits a FITMENT_PRODUCTS_FILTER event; no hint or product records are modified. Returns 200 with the matching productIds and their count, which may be empty, and 400 when vehicleAttributes is missing, empty, or contains blank keys or values. 
+     * Filter Products by Vehicle Attributes
      */
-    async filterProducts(requestParameters: FilterProductsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FilterProductsResponse> {
-        const response = await this.filterProductsRaw(requestParameters, initOverrides);
+    async filterProductsByVehicleAttributes(requestParameters: FilterProductsByVehicleAttributesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<FilterProductsResponse> {
+        const response = await this.filterProductsByVehicleAttributesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve a hint by its ID
-     * Get a vehicle applicability hint
+     * Returns one vehicle applicability hint, including its productId, fitment tags and audit fields. Use this tool when the hintId is already known; use listVehicleHintsByProduct instead to find all hints attached to a product. Preconditions: the hint must exist under the supplied hintId. Required inputs: hintId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the hint, and 404 when no hint exists for the supplied id. 
+     * Get Vehicle Applicability Hint
      */
-    async getHintRaw(requestParameters: GetHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HintResponse>> {
+    async getVehicleHintRaw(requestParameters: GetVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HintResponse>> {
         if (requestParameters['hintId'] == null) {
             throw new runtime.RequiredError(
                 'hintId',
-                'Required parameter "hintId" was null or undefined when calling getHint().'
+                'Required parameter "hintId" was null or undefined when calling getVehicleHint().'
             );
         }
 
@@ -233,23 +233,23 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a hint by its ID
-     * Get a vehicle applicability hint
+     * Returns one vehicle applicability hint, including its productId, fitment tags and audit fields. Use this tool when the hintId is already known; use listVehicleHintsByProduct instead to find all hints attached to a product. Preconditions: the hint must exist under the supplied hintId. Required inputs: hintId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the hint, and 404 when no hint exists for the supplied id. 
+     * Get Vehicle Applicability Hint
      */
-    async getHint(requestParameters: GetHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HintResponse> {
-        const response = await this.getHintRaw(requestParameters, initOverrides);
+    async getVehicleHint(requestParameters: GetVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HintResponse> {
+        const response = await this.getVehicleHintRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all hints associated with a specific product
-     * Get hints by product ID
+     * Returns every vehicle applicability hint recorded for one product, each with its full fitment tag list. Use this tool to review a product\'s declared vehicle coverage; use getVehicleHint instead when a specific hintId is already known. Preconditions: none; an unknown productId or one without hints simply yields an empty list rather than an error. Required inputs: productId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the hint list, which is empty when the product has no hints. 
+     * List Hints for a Product
      */
-    async getHintsByProductIdRaw(requestParameters: GetHintsByProductIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<HintResponse>>> {
+    async listVehicleHintsByProductRaw(requestParameters: ListVehicleHintsByProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<HintResponse>>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
-                'Required parameter "productId" was null or undefined when calling getHintsByProductId().'
+                'Required parameter "productId" was null or undefined when calling listVehicleHintsByProduct().'
             );
         }
 
@@ -276,30 +276,30 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all hints associated with a specific product
-     * Get hints by product ID
+     * Returns every vehicle applicability hint recorded for one product, each with its full fitment tag list. Use this tool to review a product\'s declared vehicle coverage; use getVehicleHint instead when a specific hintId is already known. Preconditions: none; an unknown productId or one without hints simply yields an empty list rather than an error. Required inputs: productId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the hint list, which is empty when the product has no hints. 
+     * List Hints for a Product
      */
-    async getHintsByProductId(requestParameters: GetHintsByProductIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<HintResponse>> {
-        const response = await this.getHintsByProductIdRaw(requestParameters, initOverrides);
+    async listVehicleHintsByProduct(requestParameters: ListVehicleHintsByProductRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<HintResponse>> {
+        const response = await this.listVehicleHintsByProductRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Update the fitment tags for an existing hint
-     * Update a vehicle applicability hint
+     * Replaces the full set of fitment tags on an existing vehicle applicability hint; the previous tags are deleted and the submitted list becomes the hint\'s only tags. Use this tool to correct or extend the vehicles a product fits; do not use createVehicleHint, which adds a second hint to the product instead of changing this one. Preconditions: the hint must already exist under the supplied hintId; the owning productId cannot be changed here. Required inputs: hintId (UUID) as a path parameter and fitmentTags, a non-empty list of tagType/tagValue pairs; the list is a full replacement, so tags to keep must be resubmitted. Emits a VEHICLE_HINT_UPDATED event and records the caller as updatedBy. Returns 200 with the updated hint, and 404 when no hint exists for the supplied id. 
+     * Update Vehicle Applicability Hint
      */
-    async updateHintRaw(requestParameters: UpdateHintOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HintResponse>> {
+    async updateVehicleHintRaw(requestParameters: UpdateVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<HintResponse>> {
         if (requestParameters['hintId'] == null) {
             throw new runtime.RequiredError(
                 'hintId',
-                'Required parameter "hintId" was null or undefined when calling updateHint().'
+                'Required parameter "hintId" was null or undefined when calling updateVehicleHint().'
             );
         }
 
         if (requestParameters['updateHintRequest'] == null) {
             throw new runtime.RequiredError(
                 'updateHintRequest',
-                'Required parameter "updateHintRequest" was null or undefined when calling updateHint().'
+                'Required parameter "updateHintRequest" was null or undefined when calling updateVehicleHint().'
             );
         }
 
@@ -329,11 +329,11 @@ export class VehicleApplicabilityHintsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the fitment tags for an existing hint
-     * Update a vehicle applicability hint
+     * Replaces the full set of fitment tags on an existing vehicle applicability hint; the previous tags are deleted and the submitted list becomes the hint\'s only tags. Use this tool to correct or extend the vehicles a product fits; do not use createVehicleHint, which adds a second hint to the product instead of changing this one. Preconditions: the hint must already exist under the supplied hintId; the owning productId cannot be changed here. Required inputs: hintId (UUID) as a path parameter and fitmentTags, a non-empty list of tagType/tagValue pairs; the list is a full replacement, so tags to keep must be resubmitted. Emits a VEHICLE_HINT_UPDATED event and records the caller as updatedBy. Returns 200 with the updated hint, and 404 when no hint exists for the supplied id. 
+     * Update Vehicle Applicability Hint
      */
-    async updateHint(requestParameters: UpdateHintOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HintResponse> {
-        const response = await this.updateHintRaw(requestParameters, initOverrides);
+    async updateVehicleHint(requestParameters: UpdateVehicleHintRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HintResponse> {
+        const response = await this.updateVehicleHintRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

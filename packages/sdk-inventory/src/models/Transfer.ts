@@ -21,23 +21,23 @@ import {
 } from './MovedItem';
 
 /**
- * 
+ * Details of inventory moved from the deactivated location to the destination location
  * @export
  * @interface Transfer
  */
 export interface Transfer {
     /**
-     * 
-     * @type {Array<MovedItem>}
-     * @memberof Transfer
-     */
-    movedItems?: Array<MovedItem>;
-    /**
-     * 
+     * Timestamp when the inventory was moved
      * @type {Date}
      * @memberof Transfer
      */
     movedAt?: Date;
+    /**
+     * Items moved as part of the transfer
+     * @type {Array<MovedItem>}
+     * @memberof Transfer
+     */
+    movedItems?: Array<MovedItem>;
 }
 
 /**
@@ -57,8 +57,8 @@ export function TransferFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     }
     return {
         
-        'movedItems': json['movedItems'] == null ? undefined : ((json['movedItems'] as Array<any>).map(MovedItemFromJSON)),
         'movedAt': json['movedAt'] == null ? undefined : (new Date(json['movedAt'])),
+        'movedItems': json['movedItems'] == null ? undefined : ((json['movedItems'] as Array<any>).map(MovedItemFromJSON)),
     };
 }
 
@@ -68,8 +68,8 @@ export function TransferToJSON(value?: Transfer | null): any {
     }
     return {
         
-        'movedItems': value['movedItems'] == null ? undefined : ((value['movedItems'] as Array<any>).map(MovedItemToJSON)),
         'movedAt': value['movedAt'] == null ? undefined : ((value['movedAt']).toISOString()),
+        'movedItems': value['movedItems'] == null ? undefined : ((value['movedItems'] as Array<any>).map(MovedItemToJSON)),
     };
 }
 

@@ -25,7 +25,7 @@ import {
     BulkIngestResponseToJSON,
 } from '../models/index';
 
-export interface BulkIngestRequest {
+export interface BulkIngestInventoryAdjustmentsRequest {
     bulkIngestRequestInventoryBulkIngestRecord: BulkIngestRequestInventoryBulkIngestRecord;
 }
 
@@ -35,14 +35,14 @@ export interface BulkIngestRequest {
 export class InventoryBulkIngestAPIApi extends runtime.BaseAPI {
 
     /**
-     * Processes a batch of inventory adjustment records and creates adjustment requests for each accepted row.
+     * Processes a batch of inventory adjustment records, creating one PENDING adjustment request per accepted row for the normal approval flow rather than posting stock changes directly. Use this tool for bulk imports such as cycle-count loads; do not use createAdjustmentRequest, which files a single interactive adjustment, and do not expect on-hand to change until each request is approved. Preconditions: none beyond authentication; rows are processed independently, so one bad row fails only itself. Required inputs: jobId (UUID), locationId (UUID) and at least one record with sku and a non-negative quantity; a record-level locationId overrides the batch location, reasonCode defaults to CYCLE_COUNT_ADJUSTMENT, and operatorId attributes the rows when a service account submits the batch. Emits an INVENTORY_BULK_INGEST event; each accepted row persists a PENDING adjustment request attributed to the resolved actor. Returns 200 with per-row results — failed rows carry errorCode INVENTORY_INGEST_FAILED and the failure message — and 400 when the envelope itself is invalid because jobId, locationId or records are missing. 
      * Bulk ingest inventory adjustments
      */
-    async bulkIngestRaw(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
+    async bulkIngestInventoryAdjustmentsRaw(requestParameters: BulkIngestInventoryAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BulkIngestResponse>> {
         if (requestParameters['bulkIngestRequestInventoryBulkIngestRecord'] == null) {
             throw new runtime.RequiredError(
                 'bulkIngestRequestInventoryBulkIngestRecord',
-                'Required parameter "bulkIngestRequestInventoryBulkIngestRecord" was null or undefined when calling bulkIngest().'
+                'Required parameter "bulkIngestRequestInventoryBulkIngestRecord" was null or undefined when calling bulkIngestInventoryAdjustments().'
             );
         }
 
@@ -72,11 +72,11 @@ export class InventoryBulkIngestAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Processes a batch of inventory adjustment records and creates adjustment requests for each accepted row.
+     * Processes a batch of inventory adjustment records, creating one PENDING adjustment request per accepted row for the normal approval flow rather than posting stock changes directly. Use this tool for bulk imports such as cycle-count loads; do not use createAdjustmentRequest, which files a single interactive adjustment, and do not expect on-hand to change until each request is approved. Preconditions: none beyond authentication; rows are processed independently, so one bad row fails only itself. Required inputs: jobId (UUID), locationId (UUID) and at least one record with sku and a non-negative quantity; a record-level locationId overrides the batch location, reasonCode defaults to CYCLE_COUNT_ADJUSTMENT, and operatorId attributes the rows when a service account submits the batch. Emits an INVENTORY_BULK_INGEST event; each accepted row persists a PENDING adjustment request attributed to the resolved actor. Returns 200 with per-row results — failed rows carry errorCode INVENTORY_INGEST_FAILED and the failure message — and 400 when the envelope itself is invalid because jobId, locationId or records are missing. 
      * Bulk ingest inventory adjustments
      */
-    async bulkIngest(requestParameters: BulkIngestRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
-        const response = await this.bulkIngestRaw(requestParameters, initOverrides);
+    async bulkIngestInventoryAdjustments(requestParameters: BulkIngestInventoryAdjustmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BulkIngestResponse> {
+        const response = await this.bulkIngestInventoryAdjustmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

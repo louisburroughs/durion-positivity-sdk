@@ -14,38 +14,44 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to confirm a pick task by recording the scanned SKU, scanned location, and quantity picked
  * @export
  * @interface ConfirmPickTaskRequest
  */
 export interface ConfirmPickTaskRequest {
     /**
-     * 
+     * Lot number the units were picked from. Required (422 LOT_NUMBER_REQUIRED) when the SKU is LOT-tracked; must reference an existing (422 LOT_UNKNOWN) ACTIVE (422 LOT_NOT_AVAILABLE) lot. May differ from the task's advisory suggestedLotNumber. Ignored for untracked SKUs
      * @type {string}
      * @memberof ConfirmPickTaskRequest
      */
-    scannedSkuId: string;
+    lotNumber?: string;
     /**
-     * 
+     * Quantity of units actually picked at the scanned location
+     * @type {number}
+     * @memberof ConfirmPickTaskRequest
+     */
+    quantityPicked: number;
+    /**
+     * Identifier of the bin or shelf location scanned during the pick
      * @type {string}
      * @memberof ConfirmPickTaskRequest
      */
     scannedLocationId: string;
     /**
-     * 
-     * @type {number}
+     * Identifier of the SKU scanned by the picker
+     * @type {string}
      * @memberof ConfirmPickTaskRequest
      */
-    quantityPicked: number;
+    scannedSkuId: string;
 }
 
 /**
  * Check if a given object implements the ConfirmPickTaskRequest interface.
  */
 export function instanceOfConfirmPickTaskRequest(value: object): boolean {
-    if (!('scannedSkuId' in value)) return false;
-    if (!('scannedLocationId' in value)) return false;
     if (!('quantityPicked' in value)) return false;
+    if (!('scannedLocationId' in value)) return false;
+    if (!('scannedSkuId' in value)) return false;
     return true;
 }
 
@@ -59,9 +65,10 @@ export function ConfirmPickTaskRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'scannedSkuId': json['scannedSkuId'],
-        'scannedLocationId': json['scannedLocationId'],
+        'lotNumber': json['lotNumber'] == null ? undefined : json['lotNumber'],
         'quantityPicked': json['quantityPicked'],
+        'scannedLocationId': json['scannedLocationId'],
+        'scannedSkuId': json['scannedSkuId'],
     };
 }
 
@@ -71,9 +78,10 @@ export function ConfirmPickTaskRequestToJSON(value?: ConfirmPickTaskRequest | nu
     }
     return {
         
-        'scannedSkuId': value['scannedSkuId'],
-        'scannedLocationId': value['scannedLocationId'],
+        'lotNumber': value['lotNumber'],
         'quantityPicked': value['quantityPicked'],
+        'scannedLocationId': value['scannedLocationId'],
+        'scannedSkuId': value['scannedSkuId'],
     };
 }
 

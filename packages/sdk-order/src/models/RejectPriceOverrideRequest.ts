@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for rejecting a pending price override
  * @export
  * @interface RejectPriceOverrideRequest
  */
 export interface RejectPriceOverrideRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof RejectPriceOverrideRequest
-     */
-    reason: string;
-    /**
-     * 
+     * Optional reviewer comments recorded with the rejection
      * @type {string}
      * @memberof RejectPriceOverrideRequest
      */
     comments?: string;
+    /**
+     * Reason explaining why the override is being rejected
+     * @type {string}
+     * @memberof RejectPriceOverrideRequest
+     */
+    reason: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function RejectPriceOverrideRequestFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'reason': json['reason'],
         'comments': json['comments'] == null ? undefined : json['comments'],
+        'reason': json['reason'],
     };
 }
 
@@ -62,8 +62,8 @@ export function RejectPriceOverrideRequestToJSON(value?: RejectPriceOverrideRequ
     }
     return {
         
-        'reason': value['reason'],
         'comments': value['comments'],
+        'reason': value['reason'],
     };
 }
 

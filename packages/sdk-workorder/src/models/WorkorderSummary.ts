@@ -14,71 +14,72 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Summary view of a workorder for list displays
  * @export
  * @interface WorkorderSummary
  */
 export interface WorkorderSummary {
     /**
-     * 
-     * @type {string}
-     * @memberof WorkorderSummary
-     */
-    workorderId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WorkorderSummary
-     */
-    workorderNumber?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WorkorderSummary
-     */
-    status?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WorkorderSummary
-     */
-    customerName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof WorkorderSummary
-     */
-    vehicleDescription?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof WorkorderSummary
-     */
-    scheduledDate?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof WorkorderSummary
-     */
-    assignedMechanicId?: string;
-    /**
-     * 
+     * Identifier of the assigned bay
      * @type {string}
      * @memberof WorkorderSummary
      */
     assignedBayId?: string;
     /**
-     * 
+     * Identifier of the assigned mechanic
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    assignedMechanicId?: string;
+    /**
+     * Name of the customer
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    customerName?: string;
+    /**
+     * Estimated labor hours for the workorder
      * @type {number}
      * @memberof WorkorderSummary
      */
     estimatedLaborHours?: number;
+    /**
+     * Date the workorder is scheduled for
+     * @type {Date}
+     * @memberof WorkorderSummary
+     */
+    scheduledDate?: Date;
+    /**
+     * Current workorder status
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    status?: string;
+    /**
+     * Human-readable vehicle description
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    vehicleDescription?: string;
+    /**
+     * Unique identifier of the workorder
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    workorderId: string;
+    /**
+     * Human-readable workorder number
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    workorderNumber?: string;
 }
 
 /**
  * Check if a given object implements the WorkorderSummary interface.
  */
 export function instanceOfWorkorderSummary(value: object): boolean {
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -92,15 +93,15 @@ export function WorkorderSummaryFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'workorderNumber': json['workorderNumber'] == null ? undefined : json['workorderNumber'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'customerName': json['customerName'] == null ? undefined : json['customerName'],
-        'vehicleDescription': json['vehicleDescription'] == null ? undefined : json['vehicleDescription'],
-        'scheduledDate': json['scheduledDate'] == null ? undefined : (new Date(json['scheduledDate'])),
-        'assignedMechanicId': json['assignedMechanicId'] == null ? undefined : json['assignedMechanicId'],
         'assignedBayId': json['assignedBayId'] == null ? undefined : json['assignedBayId'],
+        'assignedMechanicId': json['assignedMechanicId'] == null ? undefined : json['assignedMechanicId'],
+        'customerName': json['customerName'] == null ? undefined : json['customerName'],
         'estimatedLaborHours': json['estimatedLaborHours'] == null ? undefined : json['estimatedLaborHours'],
+        'scheduledDate': json['scheduledDate'] == null ? undefined : (new Date(json['scheduledDate'])),
+        'status': json['status'] == null ? undefined : json['status'],
+        'vehicleDescription': json['vehicleDescription'] == null ? undefined : json['vehicleDescription'],
+        'workorderId': json['workorderId'],
+        'workorderNumber': json['workorderNumber'] == null ? undefined : json['workorderNumber'],
     };
 }
 
@@ -110,15 +111,15 @@ export function WorkorderSummaryToJSON(value?: WorkorderSummary | null): any {
     }
     return {
         
+        'assignedBayId': value['assignedBayId'],
+        'assignedMechanicId': value['assignedMechanicId'],
+        'customerName': value['customerName'],
+        'estimatedLaborHours': value['estimatedLaborHours'],
+        'scheduledDate': value['scheduledDate'] == null ? undefined : ((value['scheduledDate']).toISOString().substring(0,10)),
+        'status': value['status'],
+        'vehicleDescription': value['vehicleDescription'],
         'workorderId': value['workorderId'],
         'workorderNumber': value['workorderNumber'],
-        'status': value['status'],
-        'customerName': value['customerName'],
-        'vehicleDescription': value['vehicleDescription'],
-        'scheduledDate': value['scheduledDate'] == null ? undefined : ((value['scheduledDate']).toISOString().substring(0,10)),
-        'assignedMechanicId': value['assignedMechanicId'],
-        'assignedBayId': value['assignedBayId'],
-        'estimatedLaborHours': value['estimatedLaborHours'],
     };
 }
 

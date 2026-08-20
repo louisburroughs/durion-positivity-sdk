@@ -57,8 +57,8 @@ export interface UpsertEventTypeRequest {
 export class EventTypesApi extends runtime.BaseAPI {
 
     /**
-     * Create a new event type for preregistered events
-     * Create event type
+     * Creates a new event type registration whose typeCode other services reference from @EmitEvent annotations, with latency thresholds used to monitor event performance. Use this tool when registering a brand-new typeCode that must not already exist; use upsertEventType instead for idempotent create-or-update registration, because a duplicate typeCode is rejected here. Preconditions: no event type with the same normalized typeCode may exist, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: typeCode (letters, digits and underscores; trimmed and upper-cased) and description; active defaults to false when omitted from the JSON body, apiVersion defaults to 1, and p50Micros/p95Micros/p99Micros default to 10000000 microseconds (10 seconds) and must satisfy p50 <= p95 <= p99 when supplied. Emits an EVENT_RECEIVER_EVENT_TYPE_CREATE event and inserts one event_type row. Returns 201 with the created type, 400 when the typeCode already exists or a field fails validation, and 401 when the shared secret is missing or invalid. 
+     * Create a new event type
      */
     async createEventTypeRaw(requestParameters: CreateEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
         if (requestParameters['eventTypeRequest'] == null) {
@@ -86,8 +86,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new event type for preregistered events
-     * Create event type
+     * Creates a new event type registration whose typeCode other services reference from @EmitEvent annotations, with latency thresholds used to monitor event performance. Use this tool when registering a brand-new typeCode that must not already exist; use upsertEventType instead for idempotent create-or-update registration, because a duplicate typeCode is rejected here. Preconditions: no event type with the same normalized typeCode may exist, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: typeCode (letters, digits and underscores; trimmed and upper-cased) and description; active defaults to false when omitted from the JSON body, apiVersion defaults to 1, and p50Micros/p95Micros/p99Micros default to 10000000 microseconds (10 seconds) and must satisfy p50 <= p95 <= p99 when supplied. Emits an EVENT_RECEIVER_EVENT_TYPE_CREATE event and inserts one event_type row. Returns 201 with the created type, 400 when the typeCode already exists or a field fails validation, and 401 when the shared secret is missing or invalid. 
+     * Create a new event type
      */
     async createEventType(requestParameters: CreateEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
         const response = await this.createEventTypeRaw(requestParameters, initOverrides);
@@ -95,8 +95,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete an event type by ID
-     * Delete event type
+     * Deletes an event type registration by its UUID, removing the typeCode, metadata and latency thresholds from the registry. Use this tool when a registration was created in error or is being retired permanently; do not use it for a temporary pause — updateEventType with active set to false deactivates the type reversibly instead. Preconditions: an event type row with the supplied id must exist, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: id (UUID) as a path parameter; there is no request body. Emits an EVENT_RECEIVER_EVENT_TYPE_DELETE event and removes one event_type row; already recorded emitted_event history is not touched. Returns 204 on successful deletion, 404 when no event type exists for the id, and 401 when the shared secret is missing or invalid. 
+     * Delete an event type by id
      */
     async deleteEventTypeRaw(requestParameters: DeleteEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
@@ -121,72 +121,16 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Delete an event type by ID
-     * Delete event type
+     * Deletes an event type registration by its UUID, removing the typeCode, metadata and latency thresholds from the registry. Use this tool when a registration was created in error or is being retired permanently; do not use it for a temporary pause — updateEventType with active set to false deactivates the type reversibly instead. Preconditions: an event type row with the supplied id must exist, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: id (UUID) as a path parameter; there is no request body. Emits an EVENT_RECEIVER_EVENT_TYPE_DELETE event and removes one event_type row; already recorded emitted_event history is not touched. Returns 204 on successful deletion, 404 when no event type exists for the id, and 401 when the shared secret is missing or invalid. 
+     * Delete an event type by id
      */
     async deleteEventType(requestParameters: DeleteEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteEventTypeRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieve only active event types
-     * Get active event types
-     */
-    async getActiveEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/v1/eventTypes/active`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EventTypeResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve only active event types
-     * Get active event types
-     */
-    async getActiveEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
-        const response = await this.getActiveEventTypesRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve all available event types
-     * Get all event types
-     */
-    async getAllEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/v1/eventTypes`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EventTypeResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Retrieve all available event types
-     * Get all event types
-     */
-    async getAllEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
-        const response = await this.getAllEventTypesRaw(initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Retrieve a specific event type by its unique type code
-     * Get event type by code
+     * Returns a single event type resolved by its unique typeCode, the same code services reference in @EmitEvent annotations. Use this tool when only the typeCode string is known; use getEventTypeById instead when the UUID of the registration row is already at hand. Preconditions: an event type with the given code must exist; the code is trimmed and upper-cased before lookup, so matching is case-insensitive on input. Required inputs: typeCode as a path parameter, containing only letters, digits and underscores after normalization. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no event type matches the normalized code, and 400 when the code contains characters other than letters, digits and underscores. 
+     * Get an event type by code
      */
     async getEventTypeByCodeRaw(requestParameters: GetEventTypeByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
         if (requestParameters['typeCode'] == null) {
@@ -211,8 +155,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a specific event type by its unique type code
-     * Get event type by code
+     * Returns a single event type resolved by its unique typeCode, the same code services reference in @EmitEvent annotations. Use this tool when only the typeCode string is known; use getEventTypeById instead when the UUID of the registration row is already at hand. Preconditions: an event type with the given code must exist; the code is trimmed and upper-cased before lookup, so matching is case-insensitive on input. Required inputs: typeCode as a path parameter, containing only letters, digits and underscores after normalization. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no event type matches the normalized code, and 400 when the code contains characters other than letters, digits and underscores. 
+     * Get an event type by code
      */
     async getEventTypeByCode(requestParameters: GetEventTypeByCodeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
         const response = await this.getEventTypeByCodeRaw(requestParameters, initOverrides);
@@ -220,8 +164,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a specific event type by its unique ID
-     * Get event type by ID
+     * Returns a single event type, resolved by its UUID primary key, including its typeCode, description, active flag, apiVersion and latency thresholds. Use this tool when the event-type id is already known from a prior create or list call; use getEventTypeByCode instead when only the typeCode string such as ORDER_ORDER_CREATE is known. Preconditions: an event type row with the supplied id must exist. Required inputs: id (UUID) as a path parameter; there is no request body and no filtering. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no event type exists for the supplied id. 
+     * Get an event type by id
      */
     async getEventTypeByIdRaw(requestParameters: GetEventTypeByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
         if (requestParameters['id'] == null) {
@@ -246,8 +190,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a specific event type by its unique ID
-     * Get event type by ID
+     * Returns a single event type, resolved by its UUID primary key, including its typeCode, description, active flag, apiVersion and latency thresholds. Use this tool when the event-type id is already known from a prior create or list call; use getEventTypeByCode instead when only the typeCode string such as ORDER_ORDER_CREATE is known. Preconditions: an event type row with the supplied id must exist. Required inputs: id (UUID) as a path parameter; there is no request body and no filtering. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no event type exists for the supplied id. 
+     * Get an event type by id
      */
     async getEventTypeById(requestParameters: GetEventTypeByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
         const response = await this.getEventTypeByIdRaw(requestParameters, initOverrides);
@@ -255,8 +199,64 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Lists the event types whose active flag is true, which are the types currently expected to appear in event traffic and latency monitoring. Use this tool when only live, monitorable event types matter; use listEventTypes instead to audit the whole registry including deactivated types. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table filtered on active = true. Returns 200 with the active list, which is empty when every registered type is inactive. 
+     * List only active event types
+     */
+    async listActiveEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/eventTypes/active`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EventTypeResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists the event types whose active flag is true, which are the types currently expected to appear in event traffic and latency monitoring. Use this tool when only live, monitorable event types matter; use listEventTypes instead to audit the whole registry including deactivated types. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table filtered on active = true. Returns 200 with the active list, which is empty when every registered type is inactive. 
+     * List only active event types
+     */
+    async listActiveEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
+        const response = await this.listActiveEventTypesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists every registered event type, active and inactive, with its typeCode, description, apiVersion and p50/p95/p99 latency thresholds in microseconds. Use this tool when auditing the full event-type registry including deactivated types; use listActiveEventTypes instead when only the types currently accepted for monitoring matter. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table. Returns 200 with the full list, which is empty when no event types have been registered. 
+     * List all registered event types
+     */
+    async listEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/eventTypes`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EventTypeResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists every registered event type, active and inactive, with its typeCode, description, apiVersion and p50/p95/p99 latency thresholds in microseconds. Use this tool when auditing the full event-type registry including deactivated types; use listActiveEventTypes instead when only the types currently accepted for monitoring matter. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table. Returns 200 with the full list, which is empty when no event types have been registered. 
+     * List all registered event types
+     */
+    async listEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
+        const response = await this.listEventTypesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Updates an existing event type identified by its UUID, replacing the description and active flag and selectively overriding apiVersion and the latency thresholds; the stored typeCode itself is never changed by this operation. Use this tool when the registration id is known and the type must already exist; use upsertEventType instead to create-or-update by typeCode without knowing the id. Preconditions: an event type row with the supplied id must exist, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: id (UUID) as a path parameter and a body with typeCode and description; active defaults to false when omitted, and a null apiVersion or null p50Micros/p95Micros/p99Micros keeps the currently stored values. Emits an EVENT_RECEIVER_EVENT_TYPE_UPDATE event and updates one event_type row. Returns 404 when no event type exists for the id, 400 when a field fails validation such as thresholds violating p50 <= p95 <= p99, and 401 when the shared secret is missing or invalid. 
      * Update an existing event type
-     * Update event type
      */
     async updateEventTypeRaw(requestParameters: UpdateEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
         if (requestParameters['id'] == null) {
@@ -291,8 +291,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
+     * Updates an existing event type identified by its UUID, replacing the description and active flag and selectively overriding apiVersion and the latency thresholds; the stored typeCode itself is never changed by this operation. Use this tool when the registration id is known and the type must already exist; use upsertEventType instead to create-or-update by typeCode without knowing the id. Preconditions: an event type row with the supplied id must exist, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: id (UUID) as a path parameter and a body with typeCode and description; active defaults to false when omitted, and a null apiVersion or null p50Micros/p95Micros/p99Micros keeps the currently stored values. Emits an EVENT_RECEIVER_EVENT_TYPE_UPDATE event and updates one event_type row. Returns 404 when no event type exists for the id, 400 when a field fails validation such as thresholds violating p50 <= p95 <= p99, and 401 when the shared secret is missing or invalid. 
      * Update an existing event type
-     * Update event type
      */
     async updateEventType(requestParameters: UpdateEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
         const response = await this.updateEventTypeRaw(requestParameters, initOverrides);
@@ -300,8 +300,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create or update an event type by type code
-     * Upsert event type
+     * Creates the event type when the typeCode is not yet registered, or updates it in place when it is, keyed by the typeCode path segment; this is the idempotent registration path that module EventTypeInitializers call at startup. Use this tool when the caller does not care whether the type exists yet; use updateEventType instead when a missing type must fail with 404, and createEventType when a duplicate must be rejected. Preconditions: the body typeCode, when supplied, must match the path typeCode after normalization, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: typeCode as a path parameter plus a body with typeCode and description; active defaults to false when omitted, while a null apiVersion or null p50Micros/p95Micros/p99Micros keeps the stored values on update and falls back to 1 and 10000000 microseconds on create. Emits an EVENT_RECEIVER_EVENT_TYPE_UPSERT event and inserts or updates one event_type row. Returns 200 for both the create and update outcome, 400 when the path and body typeCode disagree or a field fails validation, and 401 when the shared secret is missing or invalid. 
+     * Create or update event type by code
      */
     async upsertEventTypeRaw(requestParameters: UpsertEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
         if (requestParameters['typeCode'] == null) {
@@ -336,8 +336,8 @@ export class EventTypesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create or update an event type by type code
-     * Upsert event type
+     * Creates the event type when the typeCode is not yet registered, or updates it in place when it is, keyed by the typeCode path segment; this is the idempotent registration path that module EventTypeInitializers call at startup. Use this tool when the caller does not care whether the type exists yet; use updateEventType instead when a missing type must fail with 404, and createEventType when a duplicate must be rejected. Preconditions: the body typeCode, when supplied, must match the path typeCode after normalization, and the caller must present a valid X-Events-Api-Secret shared-secret header when pos.events.api-secret is configured. Required inputs: typeCode as a path parameter plus a body with typeCode and description; active defaults to false when omitted, while a null apiVersion or null p50Micros/p95Micros/p99Micros keeps the stored values on update and falls back to 1 and 10000000 microseconds on create. Emits an EVENT_RECEIVER_EVENT_TYPE_UPSERT event and inserts or updates one event_type row. Returns 200 for both the create and update outcome, 400 when the path and body typeCode disagree or a field fails validation, and 401 when the shared secret is missing or invalid. 
+     * Create or update event type by code
      */
     async upsertEventType(requestParameters: UpsertEventTypeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
         const response = await this.upsertEventTypeRaw(requestParameters, initOverrides);

@@ -20,41 +20,45 @@ import { mapValues } from '../runtime';
  */
 export interface CompleteWorkorderResponse {
     /**
-     * Workorder identifier
-     * @type {string}
+     * Timestamp when completion was recorded
+     * @type {Date}
      * @memberof CompleteWorkorderResponse
      */
-    workorderId?: string;
-    /**
-     * Status prior to completion
-     * @type {string}
-     * @memberof CompleteWorkorderResponse
-     */
-    previousStatus?: string;
+    completedAt: Date;
     /**
      * Status after completion
      * @type {string}
      * @memberof CompleteWorkorderResponse
      */
-    currentStatus?: string;
-    /**
-     * Timestamp when completion was recorded
-     * @type {Date}
-     * @memberof CompleteWorkorderResponse
-     */
-    completedAt?: Date;
+    currentStatus: string;
     /**
      * Operation outcome message
      * @type {string}
      * @memberof CompleteWorkorderResponse
      */
     message?: string;
+    /**
+     * Status prior to completion
+     * @type {string}
+     * @memberof CompleteWorkorderResponse
+     */
+    previousStatus: string;
+    /**
+     * Workorder identifier
+     * @type {string}
+     * @memberof CompleteWorkorderResponse
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the CompleteWorkorderResponse interface.
  */
 export function instanceOfCompleteWorkorderResponse(value: object): boolean {
+    if (!('completedAt' in value)) return false;
+    if (!('currentStatus' in value)) return false;
+    if (!('previousStatus' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -68,11 +72,11 @@ export function CompleteWorkorderResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'previousStatus': json['previousStatus'] == null ? undefined : json['previousStatus'],
-        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
-        'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
+        'completedAt': (new Date(json['completedAt'])),
+        'currentStatus': json['currentStatus'],
         'message': json['message'] == null ? undefined : json['message'],
+        'previousStatus': json['previousStatus'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -82,11 +86,11 @@ export function CompleteWorkorderResponseToJSON(value?: CompleteWorkorderRespons
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'previousStatus': value['previousStatus'],
+        'completedAt': ((value['completedAt']).toISOString()),
         'currentStatus': value['currentStatus'],
-        'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
         'message': value['message'],
+        'previousStatus': value['previousStatus'],
+        'workorderId': value['workorderId'],
     };
 }
 

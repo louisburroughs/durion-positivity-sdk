@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface LocationInventoryInquiryResponse {
     /**
+     * Quantity available to promise after pending allocations. Note: reservation events are not yet factored in. Null for as-of (historical) requests: historical allocation state is not reliably reconstructable from ATP-neutral ledger events, so as-of responses carry on-hand only.
+     * @type {number}
+     * @memberof LocationInventoryInquiryResponse
+     */
+    availableToPromiseQuantity?: number;
+    /**
      * Storage location identifier
      * @type {string}
      * @memberof LocationInventoryInquiryResponse
@@ -31,12 +37,6 @@ export interface LocationInventoryInquiryResponse {
      * @memberof LocationInventoryInquiryResponse
      */
     onHandQuantity: number;
-    /**
-     * Quantity available to promise after pending allocations. Note: reservation events are not yet factored in.
-     * @type {number}
-     * @memberof LocationInventoryInquiryResponse
-     */
-    availableToPromiseQuantity: number;
 }
 
 /**
@@ -45,7 +45,6 @@ export interface LocationInventoryInquiryResponse {
 export function instanceOfLocationInventoryInquiryResponse(value: object): boolean {
     if (!('locationId' in value)) return false;
     if (!('onHandQuantity' in value)) return false;
-    if (!('availableToPromiseQuantity' in value)) return false;
     return true;
 }
 
@@ -59,9 +58,9 @@ export function LocationInventoryInquiryResponseFromJSONTyped(json: any, ignoreD
     }
     return {
         
+        'availableToPromiseQuantity': json['availableToPromiseQuantity'] == null ? undefined : json['availableToPromiseQuantity'],
         'locationId': json['locationId'],
         'onHandQuantity': json['onHandQuantity'],
-        'availableToPromiseQuantity': json['availableToPromiseQuantity'],
     };
 }
 
@@ -71,9 +70,9 @@ export function LocationInventoryInquiryResponseToJSON(value?: LocationInventory
     }
     return {
         
+        'availableToPromiseQuantity': value['availableToPromiseQuantity'],
         'locationId': value['locationId'],
         'onHandQuantity': value['onHandQuantity'],
-        'availableToPromiseQuantity': value['availableToPromiseQuantity'],
     };
 }
 

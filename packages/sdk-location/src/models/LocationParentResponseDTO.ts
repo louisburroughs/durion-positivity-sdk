@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing a parent relationship of a location
  * @export
  * @interface LocationParentResponseDTO
  */
 export interface LocationParentResponseDTO {
     /**
-     * 
+     * Identifier of the child location
      * @type {string}
      * @memberof LocationParentResponseDTO
      */
-    id?: string;
+    childId: string;
     /**
-     * 
+     * Unique identifier of the parent relationship record
      * @type {string}
      * @memberof LocationParentResponseDTO
      */
-    parentId?: string;
+    id: string;
     /**
-     * 
+     * Identifier of the parent location
      * @type {string}
      * @memberof LocationParentResponseDTO
      */
-    childId?: string;
+    parentId: string;
     /**
-     * 
+     * Type of the parent relationship
      * @type {string}
      * @memberof LocationParentResponseDTO
      */
@@ -49,6 +49,9 @@ export interface LocationParentResponseDTO {
  * Check if a given object implements the LocationParentResponseDTO interface.
  */
 export function instanceOfLocationParentResponseDTO(value: object): boolean {
+    if (!('childId' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('parentId' in value)) return false;
     return true;
 }
 
@@ -62,9 +65,9 @@ export function LocationParentResponseDTOFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'parentId': json['parentId'] == null ? undefined : json['parentId'],
-        'childId': json['childId'] == null ? undefined : json['childId'],
+        'childId': json['childId'],
+        'id': json['id'],
+        'parentId': json['parentId'],
         'parentType': json['parentType'] == null ? undefined : json['parentType'],
     };
 }
@@ -75,9 +78,9 @@ export function LocationParentResponseDTOToJSON(value?: LocationParentResponseDT
     }
     return {
         
+        'childId': value['childId'],
         'id': value['id'],
         'parentId': value['parentId'],
-        'childId': value['childId'],
         'parentType': value['parentType'],
     };
 }

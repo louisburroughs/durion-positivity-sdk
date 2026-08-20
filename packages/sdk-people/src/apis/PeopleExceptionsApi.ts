@@ -34,26 +34,26 @@ import {
     TimeEntryExceptionWaiveRequestToJSON,
 } from '../models/index';
 
-export interface AcknowledgeExceptionRequest {
+export interface AcknowledgeTimeEntryExceptionRequest {
     exceptionId: string;
     xCorrelationId?: string;
 }
 
-export interface CreateExceptionRequest {
+export interface CreateTimeEntryExceptionRequest {
     timeEntryExceptionRequest: TimeEntryExceptionRequest;
 }
 
-export interface ListByEmployeeRequest {
+export interface ListTimeEntryExceptionsRequest {
     employeeId?: string;
 }
 
-export interface ResolveExceptionRequest {
+export interface ResolveTimeEntryExceptionRequest {
     exceptionId: string;
     xCorrelationId?: string;
     timeEntryExceptionResolveRequest?: TimeEntryExceptionResolveRequest;
 }
 
-export interface WaiveExceptionRequest {
+export interface WaiveTimeEntryExceptionRequest {
     exceptionId: string;
     timeEntryExceptionWaiveRequest: TimeEntryExceptionWaiveRequest;
     xCorrelationId?: string;
@@ -65,14 +65,14 @@ export interface WaiveExceptionRequest {
 export class PeopleExceptionsApi extends runtime.BaseAPI {
 
     /**
-     * Mark an exception as acknowledged.
-     * Acknowledge an exception
+     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Acknowledge An Open Time Entry Exception
      */
-    async acknowledgeExceptionRaw(requestParameters: AcknowledgeExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async acknowledgeTimeEntryExceptionRaw(requestParameters: AcknowledgeTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
             throw new runtime.RequiredError(
                 'exceptionId',
-                'Required parameter "exceptionId" was null or undefined when calling acknowledgeException().'
+                'Required parameter "exceptionId" was null or undefined when calling acknowledgeTimeEntryException().'
             );
         }
 
@@ -103,23 +103,23 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark an exception as acknowledged.
-     * Acknowledge an exception
+     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Acknowledge An Open Time Entry Exception
      */
-    async acknowledgeException(requestParameters: AcknowledgeExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
-        const response = await this.acknowledgeExceptionRaw(requestParameters, initOverrides);
+    async acknowledgeTimeEntryException(requestParameters: AcknowledgeTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.acknowledgeTimeEntryExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Create a new time entry exception record with validation of required fields.
-     * Create a time entry exception
+     * Records a timekeeping exception in OPEN status for an employee, such as a missed clock-out. Use this tool when a timekeeping anomaly is detected; do not use resolveTimeEntryException or waiveTimeEntryException, which close an existing exception. Preconditions: none are checked against other records; employeeId and timeEntryId are stored as given without referential validation. Required inputs: employeeId and exceptionCode; severity accepts WARNING or BLOCKING and silently falls back to WARNING on any other value, and detectedAt defaults to the current server time. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_CREATE event; the exception starts in OPEN status. Returns 200 with the new exceptionId, and 400 when the JSON payload is malformed. 
+     * Create A Time Entry Exception
      */
-    async createExceptionRaw(requestParameters: CreateExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryExceptionResponse>> {
+    async createTimeEntryExceptionRaw(requestParameters: CreateTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntryExceptionResponse>> {
         if (requestParameters['timeEntryExceptionRequest'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryExceptionRequest',
-                'Required parameter "timeEntryExceptionRequest" was null or undefined when calling createException().'
+                'Required parameter "timeEntryExceptionRequest" was null or undefined when calling createTimeEntryException().'
             );
         }
 
@@ -149,19 +149,19 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new time entry exception record with validation of required fields.
-     * Create a time entry exception
+     * Records a timekeeping exception in OPEN status for an employee, such as a missed clock-out. Use this tool when a timekeeping anomaly is detected; do not use resolveTimeEntryException or waiveTimeEntryException, which close an existing exception. Preconditions: none are checked against other records; employeeId and timeEntryId are stored as given without referential validation. Required inputs: employeeId and exceptionCode; severity accepts WARNING or BLOCKING and silently falls back to WARNING on any other value, and detectedAt defaults to the current server time. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_CREATE event; the exception starts in OPEN status. Returns 200 with the new exceptionId, and 400 when the JSON payload is malformed. 
+     * Create A Time Entry Exception
      */
-    async createException(requestParameters: CreateExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryExceptionResponse> {
-        const response = await this.createExceptionRaw(requestParameters, initOverrides);
+    async createTimeEntryException(requestParameters: CreateTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntryExceptionResponse> {
+        const response = await this.createTimeEntryExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Retrieve all exceptions or filter by a specific employee ID.
-     * List exceptions, optional filter by employeeId
+     * Lists time entry exceptions, either all of them or those recorded for one employee. Use this tool to review open and historical exceptions; use createTimeEntryException instead to record a new one. Preconditions: none; when employeeId is omitted every exception in the system is returned without pagination. Required inputs: none; employeeId (string) is an optional filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches. 
+     * List Time Entry Exceptions By Employee
      */
-    async listByEmployeeRaw(requestParameters: ListByEmployeeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimeEntryException>>> {
+    async listTimeEntryExceptionsRaw(requestParameters: ListTimeEntryExceptionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TimeEntryException>>> {
         const queryParameters: any = {};
 
         if (requestParameters['employeeId'] != null) {
@@ -189,23 +189,23 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all exceptions or filter by a specific employee ID.
-     * List exceptions, optional filter by employeeId
+     * Lists time entry exceptions, either all of them or those recorded for one employee. Use this tool to review open and historical exceptions; use createTimeEntryException instead to record a new one. Preconditions: none; when employeeId is omitted every exception in the system is returned without pagination. Required inputs: none; employeeId (string) is an optional filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when nothing matches. 
+     * List Time Entry Exceptions By Employee
      */
-    async listByEmployee(requestParameters: ListByEmployeeRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimeEntryException>> {
-        const response = await this.listByEmployeeRaw(requestParameters, initOverrides);
+    async listTimeEntryExceptions(requestParameters: ListTimeEntryExceptionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TimeEntryException>> {
+        const response = await this.listTimeEntryExceptionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Mark an exception as resolved with optional resolution notes.
-     * Resolve an exception
+     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Resolve A Time Entry Exception
      */
-    async resolveExceptionRaw(requestParameters: ResolveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async resolveTimeEntryExceptionRaw(requestParameters: ResolveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
             throw new runtime.RequiredError(
                 'exceptionId',
-                'Required parameter "exceptionId" was null or undefined when calling resolveException().'
+                'Required parameter "exceptionId" was null or undefined when calling resolveTimeEntryException().'
             );
         }
 
@@ -239,30 +239,30 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Mark an exception as resolved with optional resolution notes.
-     * Resolve an exception
+     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Resolve A Time Entry Exception
      */
-    async resolveException(requestParameters: ResolveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
-        const response = await this.resolveExceptionRaw(requestParameters, initOverrides);
+    async resolveTimeEntryException(requestParameters: ResolveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.resolveTimeEntryExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Waive an exception with a reason. waiveReason is required.
-     * Waive an exception
+     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, and 400 when waiveReason is blank or the exception is already RESOLVED or WAIVED. 
+     * Waive A Time Entry Exception
      */
-    async waiveExceptionRaw(requestParameters: WaiveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
+    async waiveTimeEntryExceptionRaw(requestParameters: WaiveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
         if (requestParameters['exceptionId'] == null) {
             throw new runtime.RequiredError(
                 'exceptionId',
-                'Required parameter "exceptionId" was null or undefined when calling waiveException().'
+                'Required parameter "exceptionId" was null or undefined when calling waiveTimeEntryException().'
             );
         }
 
         if (requestParameters['timeEntryExceptionWaiveRequest'] == null) {
             throw new runtime.RequiredError(
                 'timeEntryExceptionWaiveRequest',
-                'Required parameter "timeEntryExceptionWaiveRequest" was null or undefined when calling waiveException().'
+                'Required parameter "timeEntryExceptionWaiveRequest" was null or undefined when calling waiveTimeEntryException().'
             );
         }
 
@@ -296,11 +296,11 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Waive an exception with a reason. waiveReason is required.
-     * Waive an exception
+     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, and 400 when waiveReason is blank or the exception is already RESOLVED or WAIVED. 
+     * Waive A Time Entry Exception
      */
-    async waiveException(requestParameters: WaiveExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
-        const response = await this.waiveExceptionRaw(requestParameters, initOverrides);
+    async waiveTimeEntryException(requestParameters: WaiveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
+        const response = await this.waiveTimeEntryExceptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

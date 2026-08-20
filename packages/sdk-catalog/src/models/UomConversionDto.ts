@@ -14,65 +14,71 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A unit-of-measure conversion between two UOM codes
  * @export
  * @interface UomConversionDto
  */
 export interface UomConversionDto {
     /**
-     * 
-     * @type {string}
-     * @memberof UomConversionDto
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UomConversionDto
-     */
-    fromUomCode?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UomConversionDto
-     */
-    toUomCode?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof UomConversionDto
-     */
-    conversionFactor?: number;
-    /**
-     * 
+     * Whether this conversion is currently active
      * @type {boolean}
      * @memberof UomConversionDto
      */
-    active?: boolean;
+    active: boolean;
     /**
-     * 
+     * Multiplier to convert one unit of the source UOM into the target UOM
+     * @type {number}
+     * @memberof UomConversionDto
+     */
+    conversionFactor: number;
+    /**
+     * Timestamp the conversion was created
      * @type {Date}
      * @memberof UomConversionDto
      */
-    createdAt?: Date;
+    createdAt: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof UomConversionDto
-     */
-    updatedAt?: Date;
-    /**
-     * 
+     * Identifier of the user who created the conversion
      * @type {string}
      * @memberof UomConversionDto
      */
     createdBy?: string;
+    /**
+     * Source unit-of-measure code
+     * @type {string}
+     * @memberof UomConversionDto
+     */
+    fromUomCode: string;
+    /**
+     * Identifier of the conversion
+     * @type {string}
+     * @memberof UomConversionDto
+     */
+    id: string;
+    /**
+     * Target unit-of-measure code
+     * @type {string}
+     * @memberof UomConversionDto
+     */
+    toUomCode: string;
+    /**
+     * Timestamp the conversion was last updated
+     * @type {Date}
+     * @memberof UomConversionDto
+     */
+    updatedAt?: Date;
 }
 
 /**
  * Check if a given object implements the UomConversionDto interface.
  */
 export function instanceOfUomConversionDto(value: object): boolean {
+    if (!('active' in value)) return false;
+    if (!('conversionFactor' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('fromUomCode' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('toUomCode' in value)) return false;
     return true;
 }
 
@@ -86,14 +92,14 @@ export function UomConversionDtoFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'fromUomCode': json['fromUomCode'] == null ? undefined : json['fromUomCode'],
-        'toUomCode': json['toUomCode'] == null ? undefined : json['toUomCode'],
-        'conversionFactor': json['conversionFactor'] == null ? undefined : json['conversionFactor'],
-        'active': json['active'] == null ? undefined : json['active'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'active': json['active'],
+        'conversionFactor': json['conversionFactor'],
+        'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'fromUomCode': json['fromUomCode'],
+        'id': json['id'],
+        'toUomCode': json['toUomCode'],
+        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
 
@@ -103,14 +109,14 @@ export function UomConversionDtoToJSON(value?: UomConversionDto | null): any {
     }
     return {
         
-        'id': value['id'],
-        'fromUomCode': value['fromUomCode'],
-        'toUomCode': value['toUomCode'],
-        'conversionFactor': value['conversionFactor'],
         'active': value['active'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'conversionFactor': value['conversionFactor'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'fromUomCode': value['fromUomCode'],
+        'id': value['id'],
+        'toUomCode': value['toUomCode'],
+        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };
 }
 

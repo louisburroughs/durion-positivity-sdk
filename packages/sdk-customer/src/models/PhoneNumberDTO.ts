@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A phone number for a contact
  * @export
  * @interface PhoneNumberDTO
  */
 export interface PhoneNumberDTO {
     /**
-     * 
+     * Phone number value
      * @type {string}
      * @memberof PhoneNumberDTO
      */
-    type?: string;
+    number: string;
     /**
-     * 
+     * Phone number type
      * @type {string}
      * @memberof PhoneNumberDTO
      */
-    number?: string;
+    type: string;
 }
 
 /**
  * Check if a given object implements the PhoneNumberDTO interface.
  */
 export function instanceOfPhoneNumberDTO(value: object): boolean {
+    if (!('number' in value)) return false;
+    if (!('type' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function PhoneNumberDTOFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'type': json['type'] == null ? undefined : json['type'],
-        'number': json['number'] == null ? undefined : json['number'],
+        'number': json['number'],
+        'type': json['type'],
     };
 }
 
@@ -61,8 +63,8 @@ export function PhoneNumberDTOToJSON(value?: PhoneNumberDTO | null): any {
     }
     return {
         
-        'type': value['type'],
         'number': value['number'],
+        'type': value['type'],
     };
 }
 

@@ -14,65 +14,78 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response returned after creating a vehicle record for a party
  * @export
  * @interface CreateVehicleForPartyResponse
  */
 export interface CreateVehicleForPartyResponse {
     /**
-     * 
+     * Timestamp of creation (ISO 8601)
      * @type {string}
      * @memberof CreateVehicleForPartyResponse
      */
-    vehicleId?: string;
+    createdAt?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CreateVehicleForPartyResponse
-     */
-    partyId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateVehicleForPartyResponse
-     */
-    vinNumber?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateVehicleForPartyResponse
-     */
-    unitNumber?: string;
-    /**
-     * 
+     * Human-readable vehicle description
      * @type {string}
      * @memberof CreateVehicleForPartyResponse
      */
     description?: string;
     /**
-     * 
+     * License plate
      * @type {string}
      * @memberof CreateVehicleForPartyResponse
      */
     licensePlate?: string;
     /**
-     * 
+     * Party identifier of the vehicle owner
      * @type {string}
      * @memberof CreateVehicleForPartyResponse
      */
-    status?: string;
+    partyId: string;
     /**
-     * 
+     * Vehicle status
      * @type {string}
      * @memberof CreateVehicleForPartyResponse
      */
-    createdAt?: string;
+    status: CreateVehicleForPartyResponseStatusEnum;
+    /**
+     * Unit number or internal reference
+     * @type {string}
+     * @memberof CreateVehicleForPartyResponse
+     */
+    unitNumber?: string;
+    /**
+     * Newly created vehicle identifier
+     * @type {string}
+     * @memberof CreateVehicleForPartyResponse
+     */
+    vehicleId: string;
+    /**
+     * Vehicle Identification Number
+     * @type {string}
+     * @memberof CreateVehicleForPartyResponse
+     */
+    vinNumber?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CreateVehicleForPartyResponseStatusEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE'
+}
+
 
 /**
  * Check if a given object implements the CreateVehicleForPartyResponse interface.
  */
 export function instanceOfCreateVehicleForPartyResponse(value: object): boolean {
+    if (!('partyId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('vehicleId' in value)) return false;
     return true;
 }
 
@@ -86,14 +99,14 @@ export function CreateVehicleForPartyResponseFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'vehicleId': json['vehicleId'] == null ? undefined : json['vehicleId'],
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'vinNumber': json['vinNumber'] == null ? undefined : json['vinNumber'],
-        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
         'description': json['description'] == null ? undefined : json['description'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
+        'partyId': json['partyId'],
+        'status': json['status'],
+        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'vehicleId': json['vehicleId'],
+        'vinNumber': json['vinNumber'] == null ? undefined : json['vinNumber'],
     };
 }
 
@@ -103,14 +116,14 @@ export function CreateVehicleForPartyResponseToJSON(value?: CreateVehicleForPart
     }
     return {
         
-        'vehicleId': value['vehicleId'],
-        'partyId': value['partyId'],
-        'vinNumber': value['vinNumber'],
-        'unitNumber': value['unitNumber'],
+        'createdAt': value['createdAt'],
         'description': value['description'],
         'licensePlate': value['licensePlate'],
+        'partyId': value['partyId'],
         'status': value['status'],
-        'createdAt': value['createdAt'],
+        'unitNumber': value['unitNumber'],
+        'vehicleId': value['vehicleId'],
+        'vinNumber': value['vinNumber'],
     };
 }
 

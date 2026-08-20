@@ -20,18 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface CreatePromotionOfferRequest {
     /**
-     * Unique promotion code
-     * @type {string}
-     * @memberof CreatePromotionOfferRequest
-     */
-    promoCode: string;
-    /**
-     * Display name for the promotion
-     * @type {string}
-     * @memberof CreatePromotionOfferRequest
-     */
-    name: string;
-    /**
      * Optional promotion description
      * @type {string}
      * @memberof CreatePromotionOfferRequest
@@ -50,29 +38,41 @@ export interface CreatePromotionOfferRequest {
      */
     discountValue: number;
     /**
-     * Date when promotion becomes valid
-     * @type {Date}
-     * @memberof CreatePromotionOfferRequest
-     */
-    startDate: Date;
-    /**
      * Date when promotion expires
      * @type {Date}
      * @memberof CreatePromotionOfferRequest
      */
     endDate: Date;
     /**
-     * Maximum number of times promotion can be applied
-     * @type {number}
+     * Display name for the promotion
+     * @type {string}
      * @memberof CreatePromotionOfferRequest
      */
-    usageLimit?: number;
+    name: string;
+    /**
+     * Unique promotion code
+     * @type {string}
+     * @memberof CreatePromotionOfferRequest
+     */
+    promoCode: string;
+    /**
+     * Date when promotion becomes valid
+     * @type {Date}
+     * @memberof CreatePromotionOfferRequest
+     */
+    startDate: Date;
     /**
      * Optional store/location code that scopes the promotion
      * @type {string}
      * @memberof CreatePromotionOfferRequest
      */
     storeCode?: string;
+    /**
+     * Maximum number of times promotion can be applied
+     * @type {number}
+     * @memberof CreatePromotionOfferRequest
+     */
+    usageLimit?: number;
 }
 
 /**
@@ -90,12 +90,12 @@ export enum CreatePromotionOfferRequestDiscountTypeEnum {
  * Check if a given object implements the CreatePromotionOfferRequest interface.
  */
 export function instanceOfCreatePromotionOfferRequest(value: object): boolean {
-    if (!('promoCode' in value)) return false;
-    if (!('name' in value)) return false;
     if (!('discountType' in value)) return false;
     if (!('discountValue' in value)) return false;
-    if (!('startDate' in value)) return false;
     if (!('endDate' in value)) return false;
+    if (!('name' in value)) return false;
+    if (!('promoCode' in value)) return false;
+    if (!('startDate' in value)) return false;
     return true;
 }
 
@@ -109,15 +109,15 @@ export function CreatePromotionOfferRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'promoCode': json['promoCode'],
-        'name': json['name'],
         'description': json['description'] == null ? undefined : json['description'],
         'discountType': json['discountType'],
         'discountValue': json['discountValue'],
-        'startDate': (new Date(json['startDate'])),
         'endDate': (new Date(json['endDate'])),
-        'usageLimit': json['usageLimit'] == null ? undefined : json['usageLimit'],
+        'name': json['name'],
+        'promoCode': json['promoCode'],
+        'startDate': (new Date(json['startDate'])),
         'storeCode': json['storeCode'] == null ? undefined : json['storeCode'],
+        'usageLimit': json['usageLimit'] == null ? undefined : json['usageLimit'],
     };
 }
 
@@ -127,15 +127,15 @@ export function CreatePromotionOfferRequestToJSON(value?: CreatePromotionOfferRe
     }
     return {
         
-        'promoCode': value['promoCode'],
-        'name': value['name'],
         'description': value['description'],
         'discountType': value['discountType'],
         'discountValue': value['discountValue'],
-        'startDate': ((value['startDate']).toISOString().substring(0,10)),
         'endDate': ((value['endDate']).toISOString().substring(0,10)),
-        'usageLimit': value['usageLimit'],
+        'name': value['name'],
+        'promoCode': value['promoCode'],
+        'startDate': ((value['startDate']).toISOString().substring(0,10)),
         'storeCode': value['storeCode'],
+        'usageLimit': value['usageLimit'],
     };
 }
 

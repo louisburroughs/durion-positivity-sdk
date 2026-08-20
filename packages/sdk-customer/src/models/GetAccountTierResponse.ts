@@ -24,19 +24,25 @@ export interface GetAccountTierResponse {
      * @type {string}
      * @memberof GetAccountTierResponse
      */
-    accountId?: string;
+    accountId: string;
+    /**
+     * Whether tier was manually assigned or auto-calculated
+     * @type {boolean}
+     * @memberof GetAccountTierResponse
+     */
+    manualOverride: boolean;
+    /**
+     * Optional notes about tier assignment or status
+     * @type {string}
+     * @memberof GetAccountTierResponse
+     */
+    notes?: string;
     /**
      * Current tier level
      * @type {string}
      * @memberof GetAccountTierResponse
      */
-    tier?: GetAccountTierResponseTierEnum;
-    /**
-     * Display name of the tier
-     * @type {string}
-     * @memberof GetAccountTierResponse
-     */
-    tierDisplayName?: string;
+    tier: GetAccountTierResponseTierEnum;
     /**
      * When the tier was last assigned or updated
      * @type {Date}
@@ -50,17 +56,11 @@ export interface GetAccountTierResponse {
      */
     tierAssignedBy?: string;
     /**
-     * Optional notes about tier assignment or status
+     * Display name of the tier
      * @type {string}
      * @memberof GetAccountTierResponse
      */
-    notes?: string;
-    /**
-     * Whether tier was manually assigned or auto-calculated
-     * @type {boolean}
-     * @memberof GetAccountTierResponse
-     */
-    manualOverride?: boolean;
+    tierDisplayName: string;
 }
 
 /**
@@ -81,6 +81,10 @@ export enum GetAccountTierResponseTierEnum {
  * Check if a given object implements the GetAccountTierResponse interface.
  */
 export function instanceOfGetAccountTierResponse(value: object): boolean {
+    if (!('accountId' in value)) return false;
+    if (!('manualOverride' in value)) return false;
+    if (!('tier' in value)) return false;
+    if (!('tierDisplayName' in value)) return false;
     return true;
 }
 
@@ -94,13 +98,13 @@ export function GetAccountTierResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'accountId': json['accountId'] == null ? undefined : json['accountId'],
-        'tier': json['tier'] == null ? undefined : json['tier'],
-        'tierDisplayName': json['tierDisplayName'] == null ? undefined : json['tierDisplayName'],
+        'accountId': json['accountId'],
+        'manualOverride': json['manualOverride'],
+        'notes': json['notes'] == null ? undefined : json['notes'],
+        'tier': json['tier'],
         'tierAssignedAt': json['tierAssignedAt'] == null ? undefined : (new Date(json['tierAssignedAt'])),
         'tierAssignedBy': json['tierAssignedBy'] == null ? undefined : json['tierAssignedBy'],
-        'notes': json['notes'] == null ? undefined : json['notes'],
-        'manualOverride': json['manualOverride'] == null ? undefined : json['manualOverride'],
+        'tierDisplayName': json['tierDisplayName'],
     };
 }
 
@@ -111,12 +115,12 @@ export function GetAccountTierResponseToJSON(value?: GetAccountTierResponse | nu
     return {
         
         'accountId': value['accountId'],
+        'manualOverride': value['manualOverride'],
+        'notes': value['notes'],
         'tier': value['tier'],
-        'tierDisplayName': value['tierDisplayName'],
         'tierAssignedAt': value['tierAssignedAt'] == null ? undefined : ((value['tierAssignedAt']).toISOString()),
         'tierAssignedBy': value['tierAssignedBy'],
-        'notes': value['notes'],
-        'manualOverride': value['manualOverride'],
+        'tierDisplayName': value['tierDisplayName'],
     };
 }
 

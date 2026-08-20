@@ -13,42 +13,59 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ContentDetectionResult } from './ContentDetectionResult';
+import {
+    ContentDetectionResultFromJSON,
+    ContentDetectionResultFromJSONTyped,
+    ContentDetectionResultToJSON,
+} from './ContentDetectionResult';
+
 /**
- * 
+ * Result of uploading a source file for a bulk load job
  * @export
  * @interface FileUploadResponse
  */
 export interface FileUploadResponse {
     /**
      * 
+     * @type {ContentDetectionResult}
+     * @memberof FileUploadResponse
+     */
+    detection?: ContentDetectionResult;
+    /**
+     * Original name of the uploaded file
      * @type {string}
      * @memberof FileUploadResponse
      */
-    jobId?: string;
+    fileName: string;
     /**
-     * 
+     * Identifier of the bulk load job the file was uploaded for
      * @type {string}
      * @memberof FileUploadResponse
      */
-    storagePath?: string;
+    jobId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof FileUploadResponse
-     */
-    fileName?: string;
-    /**
-     * 
+     * Size of the uploaded file in bytes
      * @type {number}
      * @memberof FileUploadResponse
      */
-    sizeBytes?: number;
+    sizeBytes: number;
+    /**
+     * Storage path where the uploaded file is persisted
+     * @type {string}
+     * @memberof FileUploadResponse
+     */
+    storagePath: string;
 }
 
 /**
  * Check if a given object implements the FileUploadResponse interface.
  */
 export function instanceOfFileUploadResponse(value: object): boolean {
+    if (!('fileName' in value)) return false;
+    if (!('jobId' in value)) return false;
+    if (!('sizeBytes' in value)) return false;
+    if (!('storagePath' in value)) return false;
     return true;
 }
 
@@ -62,10 +79,11 @@ export function FileUploadResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'jobId': json['jobId'] == null ? undefined : json['jobId'],
-        'storagePath': json['storagePath'] == null ? undefined : json['storagePath'],
-        'fileName': json['fileName'] == null ? undefined : json['fileName'],
-        'sizeBytes': json['sizeBytes'] == null ? undefined : json['sizeBytes'],
+        'detection': json['detection'] == null ? undefined : ContentDetectionResultFromJSON(json['detection']),
+        'fileName': json['fileName'],
+        'jobId': json['jobId'],
+        'sizeBytes': json['sizeBytes'],
+        'storagePath': json['storagePath'],
     };
 }
 
@@ -75,10 +93,11 @@ export function FileUploadResponseToJSON(value?: FileUploadResponse | null): any
     }
     return {
         
-        'jobId': value['jobId'],
-        'storagePath': value['storagePath'],
+        'detection': ContentDetectionResultToJSON(value['detection']),
         'fileName': value['fileName'],
+        'jobId': value['jobId'],
         'sizeBytes': value['sizeBytes'],
+        'storagePath': value['storagePath'],
     };
 }
 

@@ -33,17 +33,11 @@ import {
  */
 export interface WorkexecLaborPerformedRequest {
     /**
-     * Workorder identifier
-     * @type {string}
+     * 
+     * @type {LaborQuantity}
      * @memberof WorkexecLaborPerformedRequest
      */
-    workorderId: string;
-    /**
-     * Technician identifier
-     * @type {string}
-     * @memberof WorkexecLaborPerformedRequest
-     */
-    technicianId: string;
+    labor: LaborQuantity;
     /**
      * Timestamp when labor was performed
      * @type {Date}
@@ -52,27 +46,33 @@ export interface WorkexecLaborPerformedRequest {
     performedAt: Date;
     /**
      * 
-     * @type {LaborQuantity}
-     * @memberof WorkexecLaborPerformedRequest
-     */
-    labor: LaborQuantity;
-    /**
-     * 
      * @type {SourceReference}
      * @memberof WorkexecLaborPerformedRequest
      */
     source: SourceReference;
+    /**
+     * Technician identifier
+     * @type {string}
+     * @memberof WorkexecLaborPerformedRequest
+     */
+    technicianId: string;
+    /**
+     * Workorder identifier
+     * @type {string}
+     * @memberof WorkexecLaborPerformedRequest
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the WorkexecLaborPerformedRequest interface.
  */
 export function instanceOfWorkexecLaborPerformedRequest(value: object): boolean {
-    if (!('workorderId' in value)) return false;
-    if (!('technicianId' in value)) return false;
-    if (!('performedAt' in value)) return false;
     if (!('labor' in value)) return false;
+    if (!('performedAt' in value)) return false;
     if (!('source' in value)) return false;
+    if (!('technicianId' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -86,11 +86,11 @@ export function WorkexecLaborPerformedRequestFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'workorderId': json['workorderId'],
-        'technicianId': json['technicianId'],
-        'performedAt': (new Date(json['performedAt'])),
         'labor': LaborQuantityFromJSON(json['labor']),
+        'performedAt': (new Date(json['performedAt'])),
         'source': SourceReferenceFromJSON(json['source']),
+        'technicianId': json['technicianId'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -100,11 +100,11 @@ export function WorkexecLaborPerformedRequestToJSON(value?: WorkexecLaborPerform
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'technicianId': value['technicianId'],
-        'performedAt': ((value['performedAt']).toISOString()),
         'labor': LaborQuantityToJSON(value['labor']),
+        'performedAt': ((value['performedAt']).toISOString()),
         'source': SourceReferenceToJSON(value['source']),
+        'technicianId': value['technicianId'],
+        'workorderId': value['workorderId'],
     };
 }
 

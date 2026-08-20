@@ -27,11 +27,11 @@ import {
  */
 export interface AvailabilityInfo {
     /**
-     * On-hand quantity at location
-     * @type {number}
+     * Timestamp of availability data
+     * @type {Date}
      * @memberof AvailabilityInfo
      */
-    onHandQuantity?: number;
+    asOf?: Date;
     /**
      * Available to promise quantity
      * @type {number}
@@ -39,31 +39,40 @@ export interface AvailabilityInfo {
      */
     availableToPromiseQuantity?: number;
     /**
+     * Confidence level in availability data
+     * @type {string}
+     * @memberof AvailabilityInfo
+     */
+    confidence: AvailabilityInfoConfidenceEnum;
+    /**
      * 
      * @type {LeadTimeInfo}
      * @memberof AvailabilityInfo
      */
     leadTime?: LeadTimeInfo;
     /**
+     * On-hand quantity at location
+     * @type {number}
+     * @memberof AvailabilityInfo
+     */
+    onHandQuantity?: number;
+    /**
      * Availability data status
      * @type {string}
      * @memberof AvailabilityInfo
      */
-    status?: AvailabilityInfoStatusEnum;
-    /**
-     * Timestamp of availability data
-     * @type {Date}
-     * @memberof AvailabilityInfo
-     */
-    asOf?: Date;
-    /**
-     * Confidence level in availability data
-     * @type {string}
-     * @memberof AvailabilityInfo
-     */
-    confidence?: AvailabilityInfoConfidenceEnum;
+    status: AvailabilityInfoStatusEnum;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum AvailabilityInfoConfidenceEnum {
+    Low = 'LOW',
+    Medium = 'MEDIUM',
+    High = 'HIGH'
+}
 /**
 * @export
 * @enum {string}
@@ -74,21 +83,14 @@ export enum AvailabilityInfoStatusEnum {
     Stale = 'STALE',
     Error = 'ERROR'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum AvailabilityInfoConfidenceEnum {
-    Low = 'LOW',
-    Medium = 'MEDIUM',
-    High = 'HIGH'
-}
 
 
 /**
  * Check if a given object implements the AvailabilityInfo interface.
  */
 export function instanceOfAvailabilityInfo(value: object): boolean {
+    if (!('confidence' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -102,12 +104,12 @@ export function AvailabilityInfoFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'onHandQuantity': json['onHandQuantity'] == null ? undefined : json['onHandQuantity'],
-        'availableToPromiseQuantity': json['availableToPromiseQuantity'] == null ? undefined : json['availableToPromiseQuantity'],
-        'leadTime': json['leadTime'] == null ? undefined : LeadTimeInfoFromJSON(json['leadTime']),
-        'status': json['status'] == null ? undefined : json['status'],
         'asOf': json['asOf'] == null ? undefined : (new Date(json['asOf'])),
-        'confidence': json['confidence'] == null ? undefined : json['confidence'],
+        'availableToPromiseQuantity': json['availableToPromiseQuantity'] == null ? undefined : json['availableToPromiseQuantity'],
+        'confidence': json['confidence'],
+        'leadTime': json['leadTime'] == null ? undefined : LeadTimeInfoFromJSON(json['leadTime']),
+        'onHandQuantity': json['onHandQuantity'] == null ? undefined : json['onHandQuantity'],
+        'status': json['status'],
     };
 }
 
@@ -117,12 +119,12 @@ export function AvailabilityInfoToJSON(value?: AvailabilityInfo | null): any {
     }
     return {
         
-        'onHandQuantity': value['onHandQuantity'],
-        'availableToPromiseQuantity': value['availableToPromiseQuantity'],
-        'leadTime': LeadTimeInfoToJSON(value['leadTime']),
-        'status': value['status'],
         'asOf': value['asOf'] == null ? undefined : ((value['asOf']).toISOString()),
+        'availableToPromiseQuantity': value['availableToPromiseQuantity'],
         'confidence': value['confidence'],
+        'leadTime': LeadTimeInfoToJSON(value['leadTime']),
+        'onHandQuantity': value['onHandQuantity'],
+        'status': value['status'],
     };
 }
 

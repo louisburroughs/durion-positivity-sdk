@@ -14,41 +14,41 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to reschedule an appointment to a new time window with a mandatory reason
  * @export
  * @interface RescheduleAppointmentRequest
  */
 export interface RescheduleAppointmentRequest {
     /**
-     * 
-     * @type {Date}
-     * @memberof RescheduleAppointmentRequest
-     */
-    newStartAt: Date;
-    /**
-     * 
+     * New appointment end instant in UTC (ISO-8601); must be after newStartAt
      * @type {Date}
      * @memberof RescheduleAppointmentRequest
      */
     newEndAt: Date;
     /**
-     * 
+     * New appointment start instant in UTC (ISO-8601)
+     * @type {Date}
+     * @memberof RescheduleAppointmentRequest
+     */
+    newStartAt: Date;
+    /**
+     * Whether to notify the customer of this reschedule (defaults to true)
+     * @type {boolean}
+     * @memberof RescheduleAppointmentRequest
+     */
+    notifyCustomer?: boolean;
+    /**
+     * Mandatory reschedule reason code
      * @type {string}
      * @memberof RescheduleAppointmentRequest
      */
     reason: RescheduleAppointmentRequestReasonEnum;
     /**
-     * 
+     * Optional notes; required when reason is OTHER or when overriding a hard conflict
      * @type {string}
      * @memberof RescheduleAppointmentRequest
      */
     rescheduleReasonNotes?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof RescheduleAppointmentRequest
-     */
-    notifyCustomer?: boolean;
 }
 
 /**
@@ -72,8 +72,8 @@ export enum RescheduleAppointmentRequestReasonEnum {
  * Check if a given object implements the RescheduleAppointmentRequest interface.
  */
 export function instanceOfRescheduleAppointmentRequest(value: object): boolean {
-    if (!('newStartAt' in value)) return false;
     if (!('newEndAt' in value)) return false;
+    if (!('newStartAt' in value)) return false;
     if (!('reason' in value)) return false;
     return true;
 }
@@ -88,11 +88,11 @@ export function RescheduleAppointmentRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'newStartAt': (new Date(json['newStartAt'])),
         'newEndAt': (new Date(json['newEndAt'])),
+        'newStartAt': (new Date(json['newStartAt'])),
+        'notifyCustomer': json['notifyCustomer'] == null ? undefined : json['notifyCustomer'],
         'reason': json['reason'],
         'rescheduleReasonNotes': json['rescheduleReasonNotes'] == null ? undefined : json['rescheduleReasonNotes'],
-        'notifyCustomer': json['notifyCustomer'] == null ? undefined : json['notifyCustomer'],
     };
 }
 
@@ -102,11 +102,11 @@ export function RescheduleAppointmentRequestToJSON(value?: RescheduleAppointment
     }
     return {
         
-        'newStartAt': ((value['newStartAt']).toISOString()),
         'newEndAt': ((value['newEndAt']).toISOString()),
+        'newStartAt': ((value['newStartAt']).toISOString()),
+        'notifyCustomer': value['notifyCustomer'],
         'reason': value['reason'],
         'rescheduleReasonNotes': value['rescheduleReasonNotes'],
-        'notifyCustomer': value['notifyCustomer'],
     };
 }
 

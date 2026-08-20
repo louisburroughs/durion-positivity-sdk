@@ -14,61 +14,86 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single line item to be evaluated for tax calculation
  * @export
  * @interface TaxLineItem
  */
 export interface TaxLineItem {
     /**
-     * 
-     * @type {string}
-     * @memberof TaxLineItem
-     */
-    lineItemId: string;
-    /**
-     * 
+     * Description of the item being taxed
      * @type {string}
      * @memberof TaxLineItem
      */
     description: string;
     /**
-     * 
+     * Optional exemption-certificate identifier backing this line's exemption claim
+     * @type {string}
+     * @memberof TaxLineItem
+     */
+    exemptionCertificateId?: string;
+    /**
+     * Optional certificate-backed exemption reason for this line (RESALE, GOVERNMENT, NONPROFIT, AGRICULTURAL, OTHER)
+     * @type {string}
+     * @memberof TaxLineItem
+     */
+    exemptionReasonCode?: TaxLineItemExemptionReasonCodeEnum;
+    /**
+     * Unique identifier for the line item (e.g., estimate item ID, invoice line ID)
+     * @type {string}
+     * @memberof TaxLineItem
+     */
+    lineItemId: string;
+    /**
+     * Quantity of the item. Must be greater than zero; zero is rejected.
      * @type {number}
      * @memberof TaxLineItem
      */
     quantity: number;
     /**
-     * 
-     * @type {number}
-     * @memberof TaxLineItem
-     */
-    unitPrice: number;
-    /**
-     * 
+     * Total amount before tax (quantity x unitPrice); calculated when omitted
      * @type {number}
      * @memberof TaxLineItem
      */
     subtotal?: number;
     /**
-     * 
+     * Optional tax category code (e.g., GOODS, SERVICES, LABOR)
      * @type {string}
      * @memberof TaxLineItem
      */
     taxCategory?: string;
     /**
-     * 
+     * Whether this item is tax-exempt
      * @type {boolean}
      * @memberof TaxLineItem
      */
     taxExempt?: boolean;
+    /**
+     * Unit price of the item before tax. Must be greater than zero; zero is rejected.
+     * @type {number}
+     * @memberof TaxLineItem
+     */
+    unitPrice: number;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum TaxLineItemExemptionReasonCodeEnum {
+    Resale = 'RESALE',
+    Government = 'GOVERNMENT',
+    Nonprofit = 'NONPROFIT',
+    Agricultural = 'AGRICULTURAL',
+    Other = 'OTHER'
+}
+
 
 /**
  * Check if a given object implements the TaxLineItem interface.
  */
 export function instanceOfTaxLineItem(value: object): boolean {
-    if (!('lineItemId' in value)) return false;
     if (!('description' in value)) return false;
+    if (!('lineItemId' in value)) return false;
     if (!('quantity' in value)) return false;
     if (!('unitPrice' in value)) return false;
     return true;
@@ -84,13 +109,15 @@ export function TaxLineItemFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'lineItemId': json['lineItemId'],
         'description': json['description'],
+        'exemptionCertificateId': json['exemptionCertificateId'] == null ? undefined : json['exemptionCertificateId'],
+        'exemptionReasonCode': json['exemptionReasonCode'] == null ? undefined : json['exemptionReasonCode'],
+        'lineItemId': json['lineItemId'],
         'quantity': json['quantity'],
-        'unitPrice': json['unitPrice'],
         'subtotal': json['subtotal'] == null ? undefined : json['subtotal'],
         'taxCategory': json['taxCategory'] == null ? undefined : json['taxCategory'],
         'taxExempt': json['taxExempt'] == null ? undefined : json['taxExempt'],
+        'unitPrice': json['unitPrice'],
     };
 }
 
@@ -100,13 +127,15 @@ export function TaxLineItemToJSON(value?: TaxLineItem | null): any {
     }
     return {
         
-        'lineItemId': value['lineItemId'],
         'description': value['description'],
+        'exemptionCertificateId': value['exemptionCertificateId'],
+        'exemptionReasonCode': value['exemptionReasonCode'],
+        'lineItemId': value['lineItemId'],
         'quantity': value['quantity'],
-        'unitPrice': value['unitPrice'],
         'subtotal': value['subtotal'],
         'taxCategory': value['taxCategory'],
         'taxExempt': value['taxExempt'],
+        'unitPrice': value['unitPrice'],
     };
 }
 

@@ -21,89 +21,89 @@ import {
 } from './LocationTypeDTO';
 
 /**
- * 
+ * Response payload describing a location
  * @export
  * @interface LocationResponseDTO
  */
 export interface LocationResponseDTO {
     /**
-     * 
-     * @type {string}
+     * Whether the location is active
+     * @type {boolean}
      * @memberof LocationResponseDTO
      */
-    id?: string;
+    active: boolean;
     /**
-     * 
-     * @type {string}
-     * @memberof LocationResponseDTO
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationResponseDTO
-     */
-    code?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationResponseDTO
-     */
-    geographicalLocationId?: string;
-    /**
-     * 
+     * First line of the street address
      * @type {string}
      * @memberof LocationResponseDTO
      */
     addressLine1?: string;
     /**
-     * 
+     * Second line of the street address
      * @type {string}
      * @memberof LocationResponseDTO
      */
     addressLine2?: string;
     /**
-     * 
+     * City of the location
      * @type {string}
      * @memberof LocationResponseDTO
      */
     city?: string;
     /**
-     * 
+     * Unique business code of the location
      * @type {string}
      * @memberof LocationResponseDTO
      */
-    state?: string;
+    code?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof LocationResponseDTO
-     */
-    postalCode?: string;
-    /**
-     * 
+     * Country of the location
      * @type {string}
      * @memberof LocationResponseDTO
      */
     country?: string;
     /**
-     * 
+     * Identifier of the associated geographical location
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    geographicalLocationId?: string;
+    /**
+     * Unique identifier of the location
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    id: string;
+    /**
+     * Mailing address of the location
      * @type {string}
      * @memberof LocationResponseDTO
      */
     mailingAddress?: string;
     /**
-     * 
-     * @type {boolean}
+     * Display name of the location
+     * @type {string}
      * @memberof LocationResponseDTO
      */
-    active?: boolean;
+    name: string;
     /**
-     * 
-     * @type {number}
+     * Postal or ZIP code of the location
+     * @type {string}
      * @memberof LocationResponseDTO
      */
-    responsiblePersonId?: number;
+    postalCode?: string;
+    /**
+     * People-contact person identifier of the person responsible for the location
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    responsiblePersonId?: string;
+    /**
+     * State or province of the location
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    state?: string;
     /**
      * 
      * @type {LocationTypeDTO}
@@ -116,6 +116,9 @@ export interface LocationResponseDTO {
  * Check if a given object implements the LocationResponseDTO interface.
  */
 export function instanceOfLocationResponseDTO(value: object): boolean {
+    if (!('active' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -129,19 +132,19 @@ export function LocationResponseDTOFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'code': json['code'] == null ? undefined : json['code'],
-        'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
+        'active': json['active'],
         'addressLine1': json['addressLine1'] == null ? undefined : json['addressLine1'],
         'addressLine2': json['addressLine2'] == null ? undefined : json['addressLine2'],
         'city': json['city'] == null ? undefined : json['city'],
-        'state': json['state'] == null ? undefined : json['state'],
-        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
+        'code': json['code'] == null ? undefined : json['code'],
         'country': json['country'] == null ? undefined : json['country'],
+        'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
+        'id': json['id'],
         'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
-        'active': json['active'] == null ? undefined : json['active'],
+        'name': json['name'],
+        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'responsiblePersonId': json['responsiblePersonId'] == null ? undefined : json['responsiblePersonId'],
+        'state': json['state'] == null ? undefined : json['state'],
         'type': json['type'] == null ? undefined : LocationTypeDTOFromJSON(json['type']),
     };
 }
@@ -152,19 +155,19 @@ export function LocationResponseDTOToJSON(value?: LocationResponseDTO | null): a
     }
     return {
         
-        'id': value['id'],
-        'name': value['name'],
-        'code': value['code'],
-        'geographicalLocationId': value['geographicalLocationId'],
+        'active': value['active'],
         'addressLine1': value['addressLine1'],
         'addressLine2': value['addressLine2'],
         'city': value['city'],
-        'state': value['state'],
-        'postalCode': value['postalCode'],
+        'code': value['code'],
         'country': value['country'],
+        'geographicalLocationId': value['geographicalLocationId'],
+        'id': value['id'],
         'mailingAddress': value['mailingAddress'],
-        'active': value['active'],
+        'name': value['name'],
+        'postalCode': value['postalCode'],
         'responsiblePersonId': value['responsiblePersonId'],
+        'state': value['state'],
         'type': LocationTypeDTOToJSON(value['type']),
     };
 }

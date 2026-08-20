@@ -20,6 +20,8 @@ import type {
   InvoiceCreationRequest,
   InvoiceDetailsResponse,
   InvoiceGenerationResponse,
+  OrderInvoiceCreationRequest,
+  OrderInvoiceResponse,
   RevertRequest,
 } from '../models/index';
 import {
@@ -33,17 +35,29 @@ import {
     InvoiceDetailsResponseToJSON,
     InvoiceGenerationResponseFromJSON,
     InvoiceGenerationResponseToJSON,
+    OrderInvoiceCreationRequestFromJSON,
+    OrderInvoiceCreationRequestToJSON,
+    OrderInvoiceResponseFromJSON,
+    OrderInvoiceResponseToJSON,
     RevertRequestFromJSON,
     RevertRequestToJSON,
 } from '../models/index';
 
-export interface ApplyAdjustmentRequest {
+export interface ApplyInvoiceAdjustmentRequest {
     invoiceId: string;
     adjustmentRequest: AdjustmentRequest;
 }
 
+export interface CancelInvoiceRequest {
+    invoiceId: string;
+}
+
 export interface CreateInvoiceRequest {
     invoiceCreationRequest: InvoiceCreationRequest;
+}
+
+export interface CreateInvoiceFromOrderRequest {
+    orderInvoiceCreationRequest: OrderInvoiceCreationRequest;
 }
 
 export interface FinalizeInvoiceRequest {
@@ -66,21 +80,21 @@ export interface RevertInvoiceRequest {
 export class InvoiceApi extends runtime.BaseAPI {
 
     /**
-     * Apply discount, fee, or correction to a draft invoice
-     * Apply invoice adjustment
+     * Applies a monetary adjustment (DISCOUNT, FEE, CORRECTION, or WARRANTY credit) to a DRAFT invoice and recalculates its tax and total. Use this tool while the invoice is still DRAFT; do not use it after finalization — tax and totals freeze there, so revertInvoice must return the invoice to DRAFT first. Preconditions: the invoice must exist and be in DRAFT status; a retry supplying the same type and externalReference replays idempotently, returning the invoice without double-crediting. Required inputs: type, amount (greater than zero), reason, and authorizedBy; externalReference is optional and correlates the adjustment to an external record such as a warranty settlement. Emits an INVOICE_ADJUSTMENT_APPLY event, replaces the persisted per-line tax breakdown, and publishes an invoice-updated notification. Returns 200 with the recalculated invoice, 404 when the invoice does not exist, 409 when the invoice has left DRAFT, and 400 when the type, amount, reason, or authorizedBy is missing or the amount is not positive. 
+     * Apply Adjustment to Draft Invoice
      */
-    async applyAdjustmentRaw(requestParameters: ApplyAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceDetailsResponse>> {
+    async applyInvoiceAdjustmentRaw(requestParameters: ApplyInvoiceAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceDetailsResponse>> {
         if (requestParameters['invoiceId'] == null) {
             throw new runtime.RequiredError(
                 'invoiceId',
-                'Required parameter "invoiceId" was null or undefined when calling applyAdjustment().'
+                'Required parameter "invoiceId" was null or undefined when calling applyInvoiceAdjustment().'
             );
         }
 
         if (requestParameters['adjustmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'adjustmentRequest',
-                'Required parameter "adjustmentRequest" was null or undefined when calling applyAdjustment().'
+                'Required parameter "adjustmentRequest" was null or undefined when calling applyInvoiceAdjustment().'
             );
         }
 
@@ -110,17 +124,60 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Apply discount, fee, or correction to a draft invoice
-     * Apply invoice adjustment
+     * Applies a monetary adjustment (DISCOUNT, FEE, CORRECTION, or WARRANTY credit) to a DRAFT invoice and recalculates its tax and total. Use this tool while the invoice is still DRAFT; do not use it after finalization — tax and totals freeze there, so revertInvoice must return the invoice to DRAFT first. Preconditions: the invoice must exist and be in DRAFT status; a retry supplying the same type and externalReference replays idempotently, returning the invoice without double-crediting. Required inputs: type, amount (greater than zero), reason, and authorizedBy; externalReference is optional and correlates the adjustment to an external record such as a warranty settlement. Emits an INVOICE_ADJUSTMENT_APPLY event, replaces the persisted per-line tax breakdown, and publishes an invoice-updated notification. Returns 200 with the recalculated invoice, 404 when the invoice does not exist, 409 when the invoice has left DRAFT, and 400 when the type, amount, reason, or authorizedBy is missing or the amount is not positive. 
+     * Apply Adjustment to Draft Invoice
      */
-    async applyAdjustment(requestParameters: ApplyAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
-        const response = await this.applyAdjustmentRaw(requestParameters, initOverrides);
+    async applyInvoiceAdjustment(requestParameters: ApplyInvoiceAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
+        const response = await this.applyInvoiceAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Create invoice draft from completed workorder data
-     * Create invoice
+     * Cancels a DRAFT invoice terminally before any money has moved, the invoice-side effect of an order void. Use this tool when an order is voided before tender; do not use revertInvoice, which returns a FINALIZED invoice to DRAFT, and do not use it when payments exist — reverse those first through voidPayment or refundPayment (order cancellation saga). Preconditions: the invoice must still be DRAFT and must carry no AUTHORIZED or CAPTURED payment intent; cancelling an already CANCELLED invoice is an idempotent no-op. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. Emits an INVOICE_CANCEL event and sets the invoice status to CANCELLED. Returns 200 when cancelled or already cancelled, 409 when the invoice has left DRAFT or carries an authorized/captured payment, and 404 when the invoice does not exist. 
+     * Cancel a Draft Invoice
+     */
+    async cancelInvoiceRaw(requestParameters: CancelInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrderInvoiceResponse>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling cancelInvoice().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/cancel`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OrderInvoiceResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Cancels a DRAFT invoice terminally before any money has moved, the invoice-side effect of an order void. Use this tool when an order is voided before tender; do not use revertInvoice, which returns a FINALIZED invoice to DRAFT, and do not use it when payments exist — reverse those first through voidPayment or refundPayment (order cancellation saga). Preconditions: the invoice must still be DRAFT and must carry no AUTHORIZED or CAPTURED payment intent; cancelling an already CANCELLED invoice is an idempotent no-op. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. Emits an INVOICE_CANCEL event and sets the invoice status to CANCELLED. Returns 200 when cancelled or already cancelled, 409 when the invoice has left DRAFT or carries an authorized/captured payment, and 404 when the invoice does not exist. 
+     * Cancel a Draft Invoice
+     */
+    async cancelInvoice(requestParameters: CancelInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderInvoiceResponse> {
+        const response = await this.cancelInvoiceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates a DRAFT invoice from completed workorder data, pricing the supplied line items, calculating draft tax against the shop location\'s jurisdiction, and assigning the permanent invoice number immediately. Use this tool for workorder billing; do not use createInvoiceFromOrder, which fronts a sales order at counter-sale checkout with order-authoritative totals. Preconditions: the workorder must be complete enough to bill; the call is idempotent on workorderId — a replay returns the workorder\'s existing invoice instead of creating a duplicate. Required inputs: workorderId (UUID); estimateId, approvalId, locationId, customerId, idempotencyKey and lineItems (description, quantity, unitPrice, amount, optional type) are optional, and a missing lineItems list produces an empty zero-subtotal draft. Emits an INVOICE_CREATE event, persists the per-line tax breakdown, and publishes an invoice-updated notification. Returns 201 with the invoice (existing or new), and 400 when workorderId is missing. 
+     * Create Invoice Draft from Workorder
      */
     async createInvoiceRaw(requestParameters: CreateInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceGenerationResponse>> {
         if (requestParameters['invoiceCreationRequest'] == null) {
@@ -156,8 +213,8 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create invoice draft from completed workorder data
-     * Create invoice
+     * Creates a DRAFT invoice from completed workorder data, pricing the supplied line items, calculating draft tax against the shop location\'s jurisdiction, and assigning the permanent invoice number immediately. Use this tool for workorder billing; do not use createInvoiceFromOrder, which fronts a sales order at counter-sale checkout with order-authoritative totals. Preconditions: the workorder must be complete enough to bill; the call is idempotent on workorderId — a replay returns the workorder\'s existing invoice instead of creating a duplicate. Required inputs: workorderId (UUID); estimateId, approvalId, locationId, customerId, idempotencyKey and lineItems (description, quantity, unitPrice, amount, optional type) are optional, and a missing lineItems list produces an empty zero-subtotal draft. Emits an INVOICE_CREATE event, persists the per-line tax breakdown, and publishes an invoice-updated notification. Returns 201 with the invoice (existing or new), and 400 when workorderId is missing. 
+     * Create Invoice Draft from Workorder
      */
     async createInvoice(requestParameters: CreateInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceGenerationResponse> {
         const response = await this.createInvoiceRaw(requestParameters, initOverrides);
@@ -165,8 +222,54 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transition invoice from DRAFT to FINALIZED; enforces permission matrix and emits InvoiceFinalized event for async GL posting (Story #13)
-     * Finalize invoice
+     * Creates the DRAFT invoice fronting a sales order at counter-sale checkout, recording the order\'s already-priced subtotal, tax and total verbatim — pos-order and pos-tax are authoritative, so nothing is re-priced here. Use this tool at order checkout; do not use createInvoice, which builds and prices a draft from workorder data. Preconditions: the order must carry final totals and at least one line; the call is idempotent on orderId, and when workorderId is set an existing workorder invoice is returned for tender instead of creating a duplicate. Required inputs: orderId (UUID), subtotal, taxAmount, totalAmount (non-negative) and lines; customerId, locationId and the deposit fields are optional, but depositSourceType and depositSourceId become mandatory when depositAmount is set. Emits an INVOICE_CREATE_FROM_ORDER event; a deposit take also registers a deposit credit (idempotent on orderId), and a workorder settlement draws down available deposit credits, reported as depositApplied. Returns 201 when a new invoice is created, 200 when an existing invoice is returned (orderId replay or workorder dedupe), and 400 when totals are missing or negative, lines are empty, or deposit fields are inconsistent. 
+     * Create Invoice from Sales Order
+     */
+    async createInvoiceFromOrderRaw(requestParameters: CreateInvoiceFromOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrderInvoiceResponse>> {
+        if (requestParameters['orderInvoiceCreationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'orderInvoiceCreationRequest',
+                'Required parameter "orderInvoiceCreationRequest" was null or undefined when calling createInvoiceFromOrder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/from-order`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OrderInvoiceCreationRequestToJSON(requestParameters['orderInvoiceCreationRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OrderInvoiceResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates the DRAFT invoice fronting a sales order at counter-sale checkout, recording the order\'s already-priced subtotal, tax and total verbatim — pos-order and pos-tax are authoritative, so nothing is re-priced here. Use this tool at order checkout; do not use createInvoice, which builds and prices a draft from workorder data. Preconditions: the order must carry final totals and at least one line; the call is idempotent on orderId, and when workorderId is set an existing workorder invoice is returned for tender instead of creating a duplicate. Required inputs: orderId (UUID), subtotal, taxAmount, totalAmount (non-negative) and lines; customerId, locationId and the deposit fields are optional, but depositSourceType and depositSourceId become mandatory when depositAmount is set. Emits an INVOICE_CREATE_FROM_ORDER event; a deposit take also registers a deposit credit (idempotent on orderId), and a workorder settlement draws down available deposit credits, reported as depositApplied. Returns 201 when a new invoice is created, 200 when an existing invoice is returned (orderId replay or workorder dedupe), and 400 when totals are missing or negative, lines are empty, or deposit fields are inconsistent. 
+     * Create Invoice from Sales Order
+     */
+    async createInvoiceFromOrder(requestParameters: CreateInvoiceFromOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderInvoiceResponse> {
+        const response = await this.createInvoiceFromOrderRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Transitions an invoice from DRAFT to FINALIZED: runs the committable tax calculation, freezes tax, totals, payment terms and due date, then commits the provider tax document. Use this tool when the sale is ready to issue; do not use revertInvoice, which undoes a finalization, and mint the managerApprovalCode with elevateManagerApproval when one is needed. Preconditions: the invoice must be DRAFT with tax already calculated; callers without invoice:finalize:override (or a manager/admin role) need a valid elevation token as managerApprovalCode when the stored total exceeds 500.00. Required inputs: invoiceId (UUID) as a path parameter; managerApprovalCode and overrideReason in the body are optional below the cap and for override holders. Emits an INVOICE_FINALIZED event and publishes the async accounting event that drives GL posting; the tax commit tolerates a provider outage by recording PENDING_COMMIT in pos-tax for the re-commit job, and is skipped entirely when nothing is taxable. Returns 200 with the finalized invoice, 404 when the invoice does not exist, 409 when the invoice is not DRAFT or tax has not been calculated, and 400 when a required managerApprovalCode is missing, invalid, or expired. 
+     * Finalize a Draft Invoice
      */
     async finalizeInvoiceRaw(requestParameters: FinalizeInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceDetailsResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -209,8 +312,8 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Transition invoice from DRAFT to FINALIZED; enforces permission matrix and emits InvoiceFinalized event for async GL posting (Story #13)
-     * Finalize invoice
+     * Transitions an invoice from DRAFT to FINALIZED: runs the committable tax calculation, freezes tax, totals, payment terms and due date, then commits the provider tax document. Use this tool when the sale is ready to issue; do not use revertInvoice, which undoes a finalization, and mint the managerApprovalCode with elevateManagerApproval when one is needed. Preconditions: the invoice must be DRAFT with tax already calculated; callers without invoice:finalize:override (or a manager/admin role) need a valid elevation token as managerApprovalCode when the stored total exceeds 500.00. Required inputs: invoiceId (UUID) as a path parameter; managerApprovalCode and overrideReason in the body are optional below the cap and for override holders. Emits an INVOICE_FINALIZED event and publishes the async accounting event that drives GL posting; the tax commit tolerates a provider outage by recording PENDING_COMMIT in pos-tax for the re-commit job, and is skipped entirely when nothing is taxable. Returns 200 with the finalized invoice, 404 when the invoice does not exist, 409 when the invoice is not DRAFT or tax has not been calculated, and 400 when a required managerApprovalCode is missing, invalid, or expired. 
+     * Finalize a Draft Invoice
      */
     async finalizeInvoice(requestParameters: FinalizeInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
         const response = await this.finalizeInvoiceRaw(requestParameters, initOverrides);
@@ -218,8 +321,8 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get invoice details
-     * Get invoice
+     * Returns the full invoice detail — status, line items, adjustments, totals, tax breakdown, due date and the resolved workorder number. Use this tool when the invoiceId is already known; use searchInvoices instead when locating an invoice by number, customer name or workorder number. Preconditions: the invoice must exist. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. Emits an INVOICE_GET audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
+     * Get Invoice Details
      */
     async getInvoiceRaw(requestParameters: GetInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceDetailsResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -252,8 +355,8 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Get invoice details
-     * Get invoice
+     * Returns the full invoice detail — status, line items, adjustments, totals, tax breakdown, due date and the resolved workorder number. Use this tool when the invoiceId is already known; use searchInvoices instead when locating an invoice by number, customer name or workorder number. Preconditions: the invoice must exist. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. Emits an INVOICE_GET audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
+     * Get Invoice Details
      */
     async getInvoice(requestParameters: GetInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
         const response = await this.getInvoiceRaw(requestParameters, initOverrides);
@@ -261,8 +364,8 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Revert a FINALIZED invoice back to DRAFT within 24h of finalization and before GL posting (Story #13, AC6)
-     * Revert finalized invoice
+     * Reverts a FINALIZED invoice back to DRAFT within 24 hours of finalization, before GL posting has made it immutable, and voids the provider tax document committed at finalization. Use this tool to correct a wrongly finalized invoice; do not use cancelInvoice, which terminally cancels a DRAFT invoice on the order-void path. Preconditions: the invoice must be FINALIZED (POSTED is immutable), less than 24 hours must have elapsed since finalizedAt, and callers without invoice:finalize:override (or a manager/admin role) must supply a valid elevation token from elevateManagerApproval as managerApprovalCode. Required inputs: invoiceId (UUID) as a path parameter plus managerApprovalCode and a reason in the body; the reverting actor and approving manager are captured for audit. Emits an INVOICE_DRAFT_REVERT event, publishes an invoice-updated notification, and issues a tax void toward pos-tax for the reverted document. Returns 200 with the DRAFT invoice, 404 when the invoice does not exist, 409 when it is POSTED, not FINALIZED, or the 24-hour window has expired, and 400 when the approval code is blank, invalid, or expired. 
+     * Revert Finalized Invoice to Draft
      */
     async revertInvoiceRaw(requestParameters: RevertInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceDetailsResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -305,8 +408,8 @@ export class InvoiceApi extends runtime.BaseAPI {
     }
 
     /**
-     * Revert a FINALIZED invoice back to DRAFT within 24h of finalization and before GL posting (Story #13, AC6)
-     * Revert finalized invoice
+     * Reverts a FINALIZED invoice back to DRAFT within 24 hours of finalization, before GL posting has made it immutable, and voids the provider tax document committed at finalization. Use this tool to correct a wrongly finalized invoice; do not use cancelInvoice, which terminally cancels a DRAFT invoice on the order-void path. Preconditions: the invoice must be FINALIZED (POSTED is immutable), less than 24 hours must have elapsed since finalizedAt, and callers without invoice:finalize:override (or a manager/admin role) must supply a valid elevation token from elevateManagerApproval as managerApprovalCode. Required inputs: invoiceId (UUID) as a path parameter plus managerApprovalCode and a reason in the body; the reverting actor and approving manager are captured for audit. Emits an INVOICE_DRAFT_REVERT event, publishes an invoice-updated notification, and issues a tax void toward pos-tax for the reverted document. Returns 200 with the DRAFT invoice, 404 when the invoice does not exist, 409 when it is POSTED, not FINALIZED, or the 24-hour window has expired, and 400 when the approval code is blank, invalid, or expired. 
+     * Revert Finalized Invoice to Draft
      */
     async revertInvoice(requestParameters: RevertInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
         const response = await this.revertInvoiceRaw(requestParameters, initOverrides);

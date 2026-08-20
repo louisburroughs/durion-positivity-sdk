@@ -14,47 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Lead-time view returned by inventory for product detail aggregation
  * @export
  * @interface LeadTimeView
  */
 export interface LeadTimeView {
     /**
-     * Product identifier
-     * @type {string}
+     * Timestamp when lead-time data was last refreshed
+     * @type {Date}
      * @memberof LeadTimeView
      */
-    productId?: string;
-    /**
-     * Location identifier
-     * @type {string}
-     * @memberof LeadTimeView
-     */
-    locationId?: string;
-    /**
-     * Source of lead-time data
-     * @type {string}
-     * @memberof LeadTimeView
-     */
-    source?: string;
-    /**
-     * Minimum lead-time in days
-     * @type {number}
-     * @memberof LeadTimeView
-     */
-    minDays?: number;
-    /**
-     * Maximum lead-time in days
-     * @type {number}
-     * @memberof LeadTimeView
-     */
-    maxDays?: number;
-    /**
-     * Human-readable lead-time text
-     * @type {string}
-     * @memberof LeadTimeView
-     */
-    displayText?: string;
+    asOf?: Date;
     /**
      * Confidence level for this estimate
      * @type {string}
@@ -62,17 +32,49 @@ export interface LeadTimeView {
      */
     confidence?: string;
     /**
-     * Timestamp when lead-time data was last refreshed
-     * @type {Date}
+     * Human-readable lead-time text
+     * @type {string}
      * @memberof LeadTimeView
      */
-    asOf?: Date;
+    displayText?: string;
+    /**
+     * Location identifier
+     * @type {string}
+     * @memberof LeadTimeView
+     */
+    locationId: string;
+    /**
+     * Maximum lead-time in days
+     * @type {number}
+     * @memberof LeadTimeView
+     */
+    maxDays?: number;
+    /**
+     * Minimum lead-time in days
+     * @type {number}
+     * @memberof LeadTimeView
+     */
+    minDays?: number;
+    /**
+     * Product identifier
+     * @type {string}
+     * @memberof LeadTimeView
+     */
+    productId: string;
+    /**
+     * Source of lead-time data
+     * @type {string}
+     * @memberof LeadTimeView
+     */
+    source?: string;
 }
 
 /**
  * Check if a given object implements the LeadTimeView interface.
  */
 export function instanceOfLeadTimeView(value: object): boolean {
+    if (!('locationId' in value)) return false;
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -86,14 +88,14 @@ export function LeadTimeViewFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'source': json['source'] == null ? undefined : json['source'],
-        'minDays': json['minDays'] == null ? undefined : json['minDays'],
-        'maxDays': json['maxDays'] == null ? undefined : json['maxDays'],
-        'displayText': json['displayText'] == null ? undefined : json['displayText'],
-        'confidence': json['confidence'] == null ? undefined : json['confidence'],
         'asOf': json['asOf'] == null ? undefined : (new Date(json['asOf'])),
+        'confidence': json['confidence'] == null ? undefined : json['confidence'],
+        'displayText': json['displayText'] == null ? undefined : json['displayText'],
+        'locationId': json['locationId'],
+        'maxDays': json['maxDays'] == null ? undefined : json['maxDays'],
+        'minDays': json['minDays'] == null ? undefined : json['minDays'],
+        'productId': json['productId'],
+        'source': json['source'] == null ? undefined : json['source'],
     };
 }
 
@@ -103,14 +105,14 @@ export function LeadTimeViewToJSON(value?: LeadTimeView | null): any {
     }
     return {
         
-        'productId': value['productId'],
-        'locationId': value['locationId'],
-        'source': value['source'],
-        'minDays': value['minDays'],
-        'maxDays': value['maxDays'],
-        'displayText': value['displayText'],
-        'confidence': value['confidence'],
         'asOf': value['asOf'] == null ? undefined : ((value['asOf']).toISOString()),
+        'confidence': value['confidence'],
+        'displayText': value['displayText'],
+        'locationId': value['locationId'],
+        'maxDays': value['maxDays'],
+        'minDays': value['minDays'],
+        'productId': value['productId'],
+        'source': value['source'],
     };
 }
 

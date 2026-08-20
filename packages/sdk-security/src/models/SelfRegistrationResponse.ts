@@ -27,36 +27,6 @@ import {
  */
 export interface SelfRegistrationResponse {
     /**
-     * Created user identifier
-     * @type {string}
-     * @memberof SelfRegistrationResponse
-     */
-    userId?: string;
-    /**
-     * Resolved or created person identifier
-     * @type {string}
-     * @memberof SelfRegistrationResponse
-     */
-    personId?: string;
-    /**
-     * Canonical username assigned to the account
-     * @type {string}
-     * @memberof SelfRegistrationResponse
-     */
-    username?: string;
-    /**
-     * User-person link status
-     * @type {string}
-     * @memberof SelfRegistrationResponse
-     */
-    linkStatus?: string;
-    /**
-     * True when an existing person was reused
-     * @type {boolean}
-     * @memberof SelfRegistrationResponse
-     */
-    matchedExistingPerson?: boolean;
-    /**
      * 
      * @type {CrmMatchSummaryDto}
      * @memberof SelfRegistrationResponse
@@ -73,13 +43,49 @@ export interface SelfRegistrationResponse {
      * @type {boolean}
      * @memberof SelfRegistrationResponse
      */
-    issuedTokens?: boolean;
+    issuedTokens: boolean;
+    /**
+     * User-person link status
+     * @type {string}
+     * @memberof SelfRegistrationResponse
+     */
+    linkStatus: string;
+    /**
+     * True when an existing person was reused
+     * @type {boolean}
+     * @memberof SelfRegistrationResponse
+     */
+    matchedExistingPerson: boolean;
+    /**
+     * Resolved or created person identifier
+     * @type {string}
+     * @memberof SelfRegistrationResponse
+     */
+    personId: string;
+    /**
+     * Created user identifier
+     * @type {string}
+     * @memberof SelfRegistrationResponse
+     */
+    userId: string;
+    /**
+     * Canonical username assigned to the account
+     * @type {string}
+     * @memberof SelfRegistrationResponse
+     */
+    username: string;
 }
 
 /**
  * Check if a given object implements the SelfRegistrationResponse interface.
  */
 export function instanceOfSelfRegistrationResponse(value: object): boolean {
+    if (!('issuedTokens' in value)) return false;
+    if (!('linkStatus' in value)) return false;
+    if (!('matchedExistingPerson' in value)) return false;
+    if (!('personId' in value)) return false;
+    if (!('userId' in value)) return false;
+    if (!('username' in value)) return false;
     return true;
 }
 
@@ -93,14 +99,14 @@ export function SelfRegistrationResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'userId': json['userId'] == null ? undefined : json['userId'],
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'username': json['username'] == null ? undefined : json['username'],
-        'linkStatus': json['linkStatus'] == null ? undefined : json['linkStatus'],
-        'matchedExistingPerson': json['matchedExistingPerson'] == null ? undefined : json['matchedExistingPerson'],
         'crmMatchSummary': json['crmMatchSummary'] == null ? undefined : CrmMatchSummaryDtoFromJSON(json['crmMatchSummary']),
         'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
-        'issuedTokens': json['issuedTokens'] == null ? undefined : json['issuedTokens'],
+        'issuedTokens': json['issuedTokens'],
+        'linkStatus': json['linkStatus'],
+        'matchedExistingPerson': json['matchedExistingPerson'],
+        'personId': json['personId'],
+        'userId': json['userId'],
+        'username': json['username'],
     };
 }
 
@@ -110,14 +116,14 @@ export function SelfRegistrationResponseToJSON(value?: SelfRegistrationResponse 
     }
     return {
         
-        'userId': value['userId'],
-        'personId': value['personId'],
-        'username': value['username'],
-        'linkStatus': value['linkStatus'],
-        'matchedExistingPerson': value['matchedExistingPerson'],
         'crmMatchSummary': CrmMatchSummaryDtoToJSON(value['crmMatchSummary']),
         'idempotencyKey': value['idempotencyKey'],
         'issuedTokens': value['issuedTokens'],
+        'linkStatus': value['linkStatus'],
+        'matchedExistingPerson': value['matchedExistingPerson'],
+        'personId': value['personId'],
+        'userId': value['userId'],
+        'username': value['username'],
     };
 }
 

@@ -14,71 +14,77 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of submitting a count or recount for a cycle count task
  * @export
  * @interface CountResponse
  */
 export interface CountResponse {
     /**
-     * 
+     * Quantity counted, converted to the product's base UoM
+     * @type {number}
+     * @memberof CountResponse
+     */
+    actualQuantity: number;
+    /**
+     * Unique identifier of the recorded count entry
      * @type {string}
      * @memberof CountResponse
      */
-    countEntryId?: string;
+    countEntryId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CountResponse
-     */
-    taskId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof CountResponse
-     */
-    actualQuantity?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof CountResponse
-     */
-    expectedQuantity?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof CountResponse
-     */
-    variance?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof CountResponse
-     */
-    recountSequenceNumber?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof CountResponse
-     */
-    taskStatus?: CountResponseTaskStatusEnum;
-    /**
-     * 
+     * Timestamp when the count was recorded
      * @type {Date}
      * @memberof CountResponse
      */
-    countedAt?: Date;
+    countedAt: Date;
     /**
-     * 
+     * Book (expected) quantity at the time of the count, in base UoM
+     * @type {number}
+     * @memberof CountResponse
+     */
+    expectedQuantity: number;
+    /**
+     * Whether the maximum allowed number of recounts has been exceeded
      * @type {boolean}
      * @memberof CountResponse
      */
-    limitExceeded?: boolean;
+    limitExceeded: boolean;
     /**
-     * 
+     * Human-readable message describing the outcome of the submission
      * @type {string}
      * @memberof CountResponse
      */
     message?: string;
+    /**
+     * Sequence number of this count within the recount chain; 0 for the initial count
+     * @type {number}
+     * @memberof CountResponse
+     */
+    recountSequenceNumber: number;
+    /**
+     * Identifier of the cycle count task the count was submitted against
+     * @type {string}
+     * @memberof CountResponse
+     */
+    taskId: string;
+    /**
+     * Resulting status of the cycle count task after the submission
+     * @type {string}
+     * @memberof CountResponse
+     */
+    taskStatus: CountResponseTaskStatusEnum;
+    /**
+     * Difference between counted and expected quantity, in base UoM (actual minus expected)
+     * @type {number}
+     * @memberof CountResponse
+     */
+    variance: number;
+    /**
+     * Whether the variance fell within the resolved tolerance; true means the count was reconciled with no adjustment created
+     * @type {boolean}
+     * @memberof CountResponse
+     */
+    withinTolerance: boolean;
 }
 
 /**
@@ -88,7 +94,9 @@ export interface CountResponse {
 export enum CountResponseTaskStatusEnum {
     Assigned = 'ASSIGNED',
     CountedPendingReview = 'COUNTED_PENDING_REVIEW',
+    Conflict = 'CONFLICT',
     RequiresInvestigation = 'REQUIRES_INVESTIGATION',
+    AcceptedWithinTolerance = 'ACCEPTED_WITHIN_TOLERANCE',
     Approved = 'APPROVED',
     Rejected = 'REJECTED'
 }
@@ -98,6 +106,16 @@ export enum CountResponseTaskStatusEnum {
  * Check if a given object implements the CountResponse interface.
  */
 export function instanceOfCountResponse(value: object): boolean {
+    if (!('actualQuantity' in value)) return false;
+    if (!('countEntryId' in value)) return false;
+    if (!('countedAt' in value)) return false;
+    if (!('expectedQuantity' in value)) return false;
+    if (!('limitExceeded' in value)) return false;
+    if (!('recountSequenceNumber' in value)) return false;
+    if (!('taskId' in value)) return false;
+    if (!('taskStatus' in value)) return false;
+    if (!('variance' in value)) return false;
+    if (!('withinTolerance' in value)) return false;
     return true;
 }
 
@@ -111,16 +129,17 @@ export function CountResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'countEntryId': json['countEntryId'] == null ? undefined : json['countEntryId'],
-        'taskId': json['taskId'] == null ? undefined : json['taskId'],
-        'actualQuantity': json['actualQuantity'] == null ? undefined : json['actualQuantity'],
-        'expectedQuantity': json['expectedQuantity'] == null ? undefined : json['expectedQuantity'],
-        'variance': json['variance'] == null ? undefined : json['variance'],
-        'recountSequenceNumber': json['recountSequenceNumber'] == null ? undefined : json['recountSequenceNumber'],
-        'taskStatus': json['taskStatus'] == null ? undefined : json['taskStatus'],
-        'countedAt': json['countedAt'] == null ? undefined : (new Date(json['countedAt'])),
-        'limitExceeded': json['limitExceeded'] == null ? undefined : json['limitExceeded'],
+        'actualQuantity': json['actualQuantity'],
+        'countEntryId': json['countEntryId'],
+        'countedAt': (new Date(json['countedAt'])),
+        'expectedQuantity': json['expectedQuantity'],
+        'limitExceeded': json['limitExceeded'],
         'message': json['message'] == null ? undefined : json['message'],
+        'recountSequenceNumber': json['recountSequenceNumber'],
+        'taskId': json['taskId'],
+        'taskStatus': json['taskStatus'],
+        'variance': json['variance'],
+        'withinTolerance': json['withinTolerance'],
     };
 }
 
@@ -130,16 +149,17 @@ export function CountResponseToJSON(value?: CountResponse | null): any {
     }
     return {
         
-        'countEntryId': value['countEntryId'],
-        'taskId': value['taskId'],
         'actualQuantity': value['actualQuantity'],
+        'countEntryId': value['countEntryId'],
+        'countedAt': ((value['countedAt']).toISOString()),
         'expectedQuantity': value['expectedQuantity'],
-        'variance': value['variance'],
-        'recountSequenceNumber': value['recountSequenceNumber'],
-        'taskStatus': value['taskStatus'],
-        'countedAt': value['countedAt'] == null ? undefined : ((value['countedAt']).toISOString()),
         'limitExceeded': value['limitExceeded'],
         'message': value['message'],
+        'recountSequenceNumber': value['recountSequenceNumber'],
+        'taskId': value['taskId'],
+        'taskStatus': value['taskStatus'],
+        'variance': value['variance'],
+        'withinTolerance': value['withinTolerance'],
     };
 }
 

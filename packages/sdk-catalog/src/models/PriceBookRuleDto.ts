@@ -14,112 +14,103 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Price book rule detail
  * @export
  * @interface PriceBookRuleDto
  */
 export interface PriceBookRuleDto {
     /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleDto
-     */
-    ruleId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleDto
-     */
-    priceBookId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleDto
-     */
-    targetType?: PriceBookRuleDtoTargetTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleDto
-     */
-    targetId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleDto
-     */
-    pricingLogic?: string;
-    /**
-     * 
+     * Condition type gating the rule
      * @type {string}
      * @memberof PriceBookRuleDto
      */
     conditionType?: PriceBookRuleDtoConditionTypeEnum;
     /**
-     * 
+     * Value evaluated against the condition type
      * @type {string}
      * @memberof PriceBookRuleDto
      */
     conditionValue?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof PriceBookRuleDto
-     */
-    priority?: number;
-    /**
-     * 
+     * Timestamp the rule was created
      * @type {Date}
      * @memberof PriceBookRuleDto
      */
-    effectiveStartAt?: Date;
+    createdAt: Date;
     /**
-     * 
+     * Identifier of the user that created the rule
+     * @type {string}
+     * @memberof PriceBookRuleDto
+     */
+    createdByUserId: string;
+    /**
+     * Instant the rule stops being effective
      * @type {Date}
      * @memberof PriceBookRuleDto
      */
     effectiveEndAt?: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleDto
-     */
-    status?: PriceBookRuleDtoStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceBookRuleDto
-     */
-    createdByUserId?: string;
-    /**
-     * 
+     * Instant the rule becomes effective
      * @type {Date}
      * @memberof PriceBookRuleDto
      */
-    createdAt?: Date;
+    effectiveStartAt: Date;
     /**
-     * 
+     * Identifier of the owning price book
+     * @type {string}
+     * @memberof PriceBookRuleDto
+     */
+    priceBookId: string;
+    /**
+     * Pricing logic expression applied by the rule
+     * @type {string}
+     * @memberof PriceBookRuleDto
+     */
+    pricingLogic: string;
+    /**
+     * Evaluation priority; lower wins
+     * @type {number}
+     * @memberof PriceBookRuleDto
+     */
+    priority?: number;
+    /**
+     * Rule identifier
+     * @type {string}
+     * @memberof PriceBookRuleDto
+     */
+    ruleId: string;
+    /**
+     * Current status of the rule
+     * @type {string}
+     * @memberof PriceBookRuleDto
+     */
+    status: PriceBookRuleDtoStatusEnum;
+    /**
+     * Identifier of the targeted entity (SKU or category)
+     * @type {string}
+     * @memberof PriceBookRuleDto
+     */
+    targetId?: string;
+    /**
+     * Target type the rule applies to
+     * @type {string}
+     * @memberof PriceBookRuleDto
+     */
+    targetType: PriceBookRuleDtoTargetTypeEnum;
+    /**
+     * Timestamp the rule was last updated
      * @type {Date}
      * @memberof PriceBookRuleDto
      */
     updatedAt?: Date;
     /**
-     * 
+     * Version for optimistic locking
      * @type {number}
      * @memberof PriceBookRuleDto
      */
-    version?: number;
+    version: number;
 }
 
-/**
-* @export
-* @enum {string}
-*/
-export enum PriceBookRuleDtoTargetTypeEnum {
-    Sku = 'SKU',
-    Category = 'CATEGORY',
-    Global = 'GLOBAL'
-}
 /**
 * @export
 * @enum {string}
@@ -138,12 +129,30 @@ export enum PriceBookRuleDtoStatusEnum {
     Inactive = 'INACTIVE',
     NotApplicableMissingBase = 'NOT_APPLICABLE_MISSING_BASE'
 }
+/**
+* @export
+* @enum {string}
+*/
+export enum PriceBookRuleDtoTargetTypeEnum {
+    Sku = 'SKU',
+    Category = 'CATEGORY',
+    Global = 'GLOBAL'
+}
 
 
 /**
  * Check if a given object implements the PriceBookRuleDto interface.
  */
 export function instanceOfPriceBookRuleDto(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('createdByUserId' in value)) return false;
+    if (!('effectiveStartAt' in value)) return false;
+    if (!('priceBookId' in value)) return false;
+    if (!('pricingLogic' in value)) return false;
+    if (!('ruleId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('targetType' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -157,21 +166,21 @@ export function PriceBookRuleDtoFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'ruleId': json['ruleId'] == null ? undefined : json['ruleId'],
-        'priceBookId': json['priceBookId'] == null ? undefined : json['priceBookId'],
-        'targetType': json['targetType'] == null ? undefined : json['targetType'],
-        'targetId': json['targetId'] == null ? undefined : json['targetId'],
-        'pricingLogic': json['pricingLogic'] == null ? undefined : json['pricingLogic'],
         'conditionType': json['conditionType'] == null ? undefined : json['conditionType'],
         'conditionValue': json['conditionValue'] == null ? undefined : json['conditionValue'],
-        'priority': json['priority'] == null ? undefined : json['priority'],
-        'effectiveStartAt': json['effectiveStartAt'] == null ? undefined : (new Date(json['effectiveStartAt'])),
+        'createdAt': (new Date(json['createdAt'])),
+        'createdByUserId': json['createdByUserId'],
         'effectiveEndAt': json['effectiveEndAt'] == null ? undefined : (new Date(json['effectiveEndAt'])),
-        'status': json['status'] == null ? undefined : json['status'],
-        'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'effectiveStartAt': (new Date(json['effectiveStartAt'])),
+        'priceBookId': json['priceBookId'],
+        'pricingLogic': json['pricingLogic'],
+        'priority': json['priority'] == null ? undefined : json['priority'],
+        'ruleId': json['ruleId'],
+        'status': json['status'],
+        'targetId': json['targetId'] == null ? undefined : json['targetId'],
+        'targetType': json['targetType'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
-        'version': json['version'] == null ? undefined : json['version'],
+        'version': json['version'],
     };
 }
 
@@ -181,19 +190,19 @@ export function PriceBookRuleDtoToJSON(value?: PriceBookRuleDto | null): any {
     }
     return {
         
-        'ruleId': value['ruleId'],
-        'priceBookId': value['priceBookId'],
-        'targetType': value['targetType'],
-        'targetId': value['targetId'],
-        'pricingLogic': value['pricingLogic'],
         'conditionType': value['conditionType'],
         'conditionValue': value['conditionValue'],
-        'priority': value['priority'],
-        'effectiveStartAt': value['effectiveStartAt'] == null ? undefined : ((value['effectiveStartAt']).toISOString()),
-        'effectiveEndAt': value['effectiveEndAt'] == null ? undefined : ((value['effectiveEndAt']).toISOString()),
-        'status': value['status'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'createdByUserId': value['createdByUserId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'effectiveEndAt': value['effectiveEndAt'] == null ? undefined : ((value['effectiveEndAt']).toISOString()),
+        'effectiveStartAt': ((value['effectiveStartAt']).toISOString()),
+        'priceBookId': value['priceBookId'],
+        'pricingLogic': value['pricingLogic'],
+        'priority': value['priority'],
+        'ruleId': value['ruleId'],
+        'status': value['status'],
+        'targetId': value['targetId'],
+        'targetType': value['targetType'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
         'version': value['version'],
     };

@@ -31,7 +31,7 @@ export interface DuplicateCheckResponse {
      * @type {boolean}
      * @memberof DuplicateCheckResponse
      */
-    duplicatesFound?: boolean;
+    duplicatesFound: boolean;
     /**
      * ID of exact-match party, if any
      * @type {string}
@@ -43,13 +43,15 @@ export interface DuplicateCheckResponse {
      * @type {Array<PartyMatch>}
      * @memberof DuplicateCheckResponse
      */
-    potentialDuplicates?: Array<PartyMatch>;
+    potentialDuplicates: Array<PartyMatch>;
 }
 
 /**
  * Check if a given object implements the DuplicateCheckResponse interface.
  */
 export function instanceOfDuplicateCheckResponse(value: object): boolean {
+    if (!('duplicatesFound' in value)) return false;
+    if (!('potentialDuplicates' in value)) return false;
     return true;
 }
 
@@ -63,9 +65,9 @@ export function DuplicateCheckResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'duplicatesFound': json['duplicatesFound'] == null ? undefined : json['duplicatesFound'],
+        'duplicatesFound': json['duplicatesFound'],
         'exactMatchPartyId': json['exactMatchPartyId'] == null ? undefined : json['exactMatchPartyId'],
-        'potentialDuplicates': json['potentialDuplicates'] == null ? undefined : ((json['potentialDuplicates'] as Array<any>).map(PartyMatchFromJSON)),
+        'potentialDuplicates': ((json['potentialDuplicates'] as Array<any>).map(PartyMatchFromJSON)),
     };
 }
 
@@ -77,7 +79,7 @@ export function DuplicateCheckResponseToJSON(value?: DuplicateCheckResponse | nu
         
         'duplicatesFound': value['duplicatesFound'],
         'exactMatchPartyId': value['exactMatchPartyId'],
-        'potentialDuplicates': value['potentialDuplicates'] == null ? undefined : ((value['potentialDuplicates'] as Array<any>).map(PartyMatchToJSON)),
+        'potentialDuplicates': ((value['potentialDuplicates'] as Array<any>).map(PartyMatchToJSON)),
     };
 }
 

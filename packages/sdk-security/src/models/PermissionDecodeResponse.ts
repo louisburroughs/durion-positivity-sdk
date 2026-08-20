@@ -14,23 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Decoded permission code strings
  * @export
  * @interface PermissionDecodeResponse
  */
 export interface PermissionDecodeResponse {
     /**
-     * 
+     * List of decoded permission code strings
      * @type {Array<string>}
      * @memberof PermissionDecodeResponse
      */
-    permissions?: Array<string>;
+    permissions: Array<string>;
 }
 
 /**
  * Check if a given object implements the PermissionDecodeResponse interface.
  */
 export function instanceOfPermissionDecodeResponse(value: object): boolean {
+    if (!('permissions' in value)) return false;
     return true;
 }
 
@@ -44,7 +45,7 @@ export function PermissionDecodeResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'permissions': json['permissions'] == null ? undefined : json['permissions'],
+        'permissions': json['permissions'],
     };
 }
 

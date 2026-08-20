@@ -20,17 +20,47 @@ import { mapValues } from '../runtime';
  */
 export interface WorkexecTimerEntryResponse {
     /**
-     * Timer entry identifier
+     * Computed duration in seconds
+     * @type {number}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    durationInSeconds?: number;
+    /**
+     * Timer stop timestamp
+     * @type {Date}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    endTime?: Date;
+    /**
+     * Labor code
      * @type {string}
      * @memberof WorkexecTimerEntryResponse
      */
-    timeEntryId?: string;
+    laborCode?: string;
     /**
      * Mechanic identifier
      * @type {string}
      * @memberof WorkexecTimerEntryResponse
      */
     mechanicId?: string;
+    /**
+     * Timer start timestamp
+     * @type {Date}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    startTime?: Date;
+    /**
+     * Timer status
+     * @type {string}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    status?: string;
+    /**
+     * Timer entry identifier
+     * @type {string}
+     * @memberof WorkexecTimerEntryResponse
+     */
+    timeEntryId?: string;
     /**
      * Workorder identifier
      * @type {string}
@@ -43,36 +73,6 @@ export interface WorkexecTimerEntryResponse {
      * @memberof WorkexecTimerEntryResponse
      */
     workorderItemId?: string;
-    /**
-     * Labor code
-     * @type {string}
-     * @memberof WorkexecTimerEntryResponse
-     */
-    laborCode?: string;
-    /**
-     * Timer start timestamp
-     * @type {Date}
-     * @memberof WorkexecTimerEntryResponse
-     */
-    startTime?: Date;
-    /**
-     * Timer stop timestamp
-     * @type {Date}
-     * @memberof WorkexecTimerEntryResponse
-     */
-    endTime?: Date;
-    /**
-     * Computed duration in seconds
-     * @type {number}
-     * @memberof WorkexecTimerEntryResponse
-     */
-    durationInSeconds?: number;
-    /**
-     * Timer status
-     * @type {string}
-     * @memberof WorkexecTimerEntryResponse
-     */
-    status?: string;
 }
 
 /**
@@ -92,15 +92,15 @@ export function WorkexecTimerEntryResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
+        'durationInSeconds': json['durationInSeconds'] == null ? undefined : json['durationInSeconds'],
+        'endTime': json['endTime'] == null ? undefined : (new Date(json['endTime'])),
+        'laborCode': json['laborCode'] == null ? undefined : json['laborCode'],
         'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
+        'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
+        'status': json['status'] == null ? undefined : json['status'],
+        'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
         'workorderItemId': json['workorderItemId'] == null ? undefined : json['workorderItemId'],
-        'laborCode': json['laborCode'] == null ? undefined : json['laborCode'],
-        'startTime': json['startTime'] == null ? undefined : (new Date(json['startTime'])),
-        'endTime': json['endTime'] == null ? undefined : (new Date(json['endTime'])),
-        'durationInSeconds': json['durationInSeconds'] == null ? undefined : json['durationInSeconds'],
-        'status': json['status'] == null ? undefined : json['status'],
     };
 }
 
@@ -110,15 +110,15 @@ export function WorkexecTimerEntryResponseToJSON(value?: WorkexecTimerEntryRespo
     }
     return {
         
-        'timeEntryId': value['timeEntryId'],
+        'durationInSeconds': value['durationInSeconds'],
+        'endTime': value['endTime'] == null ? undefined : ((value['endTime']).toISOString()),
+        'laborCode': value['laborCode'],
         'mechanicId': value['mechanicId'],
+        'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
+        'status': value['status'],
+        'timeEntryId': value['timeEntryId'],
         'workorderId': value['workorderId'],
         'workorderItemId': value['workorderItemId'],
-        'laborCode': value['laborCode'],
-        'startTime': value['startTime'] == null ? undefined : ((value['startTime']).toISOString()),
-        'endTime': value['endTime'] == null ? undefined : ((value['endTime']).toISOString()),
-        'durationInSeconds': value['durationInSeconds'],
-        'status': value['status'],
     };
 }
 

@@ -26,23 +26,35 @@ export interface SelfRegistrationRequest {
      */
     email: string;
     /**
-     * Password for the new account
-     * @type {string}
-     * @memberof SelfRegistrationRequest
-     */
-    password: string;
-    /**
      * Given name
      * @type {string}
      * @memberof SelfRegistrationRequest
      */
     firstName: string;
     /**
+     * Optional idempotency key used to replay a completed registration attempt without creating duplicate side effects
+     * @type {string}
+     * @memberof SelfRegistrationRequest
+     */
+    idempotencyKey?: string;
+    /**
+     * Optional external identity subject for future federation support
+     * @type {string}
+     * @memberof SelfRegistrationRequest
+     */
+    idpSubject?: string;
+    /**
      * Family name
      * @type {string}
      * @memberof SelfRegistrationRequest
      */
     lastName: string;
+    /**
+     * Password for the new account
+     * @type {string}
+     * @memberof SelfRegistrationRequest
+     */
+    password: string;
     /**
      * Optional primary phone number
      * @type {string}
@@ -55,18 +67,6 @@ export interface SelfRegistrationRequest {
      * @memberof SelfRegistrationRequest
      */
     username?: string;
-    /**
-     * Optional external identity subject for future federation support
-     * @type {string}
-     * @memberof SelfRegistrationRequest
-     */
-    idpSubject?: string;
-    /**
-     * Optional idempotency key used to replay a completed registration attempt without creating duplicate side effects
-     * @type {string}
-     * @memberof SelfRegistrationRequest
-     */
-    idempotencyKey?: string;
 }
 
 /**
@@ -74,9 +74,9 @@ export interface SelfRegistrationRequest {
  */
 export function instanceOfSelfRegistrationRequest(value: object): boolean {
     if (!('email' in value)) return false;
-    if (!('password' in value)) return false;
     if (!('firstName' in value)) return false;
     if (!('lastName' in value)) return false;
+    if (!('password' in value)) return false;
     return true;
 }
 
@@ -91,13 +91,13 @@ export function SelfRegistrationRequestFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'email': json['email'],
-        'password': json['password'],
         'firstName': json['firstName'],
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
+        'idpSubject': json['idpSubject'] == null ? undefined : json['idpSubject'],
         'lastName': json['lastName'],
+        'password': json['password'],
         'phone': json['phone'] == null ? undefined : json['phone'],
         'username': json['username'] == null ? undefined : json['username'],
-        'idpSubject': json['idpSubject'] == null ? undefined : json['idpSubject'],
-        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
     };
 }
 
@@ -108,13 +108,13 @@ export function SelfRegistrationRequestToJSON(value?: SelfRegistrationRequest | 
     return {
         
         'email': value['email'],
-        'password': value['password'],
         'firstName': value['firstName'],
+        'idempotencyKey': value['idempotencyKey'],
+        'idpSubject': value['idpSubject'],
         'lastName': value['lastName'],
+        'password': value['password'],
         'phone': value['phone'],
         'username': value['username'],
-        'idpSubject': value['idpSubject'],
-        'idempotencyKey': value['idempotencyKey'],
     };
 }
 

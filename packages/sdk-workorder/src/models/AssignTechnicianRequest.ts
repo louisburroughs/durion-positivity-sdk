@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface AssignTechnicianRequest {
     /**
-     * ID of the technician to assign
-     * @type {string}
-     * @memberof AssignTechnicianRequest
-     */
-    technicianId: string;
-    /**
      * ID of the user performing the assignment (defaults from X-User-Id header if not provided)
      * @type {string}
      * @memberof AssignTechnicianRequest
@@ -37,6 +31,12 @@ export interface AssignTechnicianRequest {
      * @memberof AssignTechnicianRequest
      */
     notes?: string;
+    /**
+     * ID of the technician to assign
+     * @type {string}
+     * @memberof AssignTechnicianRequest
+     */
+    technicianId: string;
 }
 
 /**
@@ -57,9 +57,9 @@ export function AssignTechnicianRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'technicianId': json['technicianId'],
         'assignedByUserId': json['assignedByUserId'] == null ? undefined : json['assignedByUserId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'technicianId': json['technicianId'],
     };
 }
 
@@ -69,9 +69,9 @@ export function AssignTechnicianRequestToJSON(value?: AssignTechnicianRequest | 
     }
     return {
         
-        'technicianId': value['technicianId'],
         'assignedByUserId': value['assignedByUserId'],
         'notes': value['notes'],
+        'technicianId': value['technicianId'],
     };
 }
 

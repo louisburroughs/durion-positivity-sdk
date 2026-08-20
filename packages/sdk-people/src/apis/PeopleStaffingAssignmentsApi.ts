@@ -28,23 +28,27 @@ import {
     UpdateStaffingAssignmentRequestToJSON,
 } from '../models/index';
 
-export interface CreateAssignment1Request {
+export interface CreateStaffingAssignmentOperationRequest {
     createStaffingAssignmentRequest: CreateStaffingAssignmentRequest;
 }
 
-export interface EndAssignmentRequest {
+export interface EndStaffingAssignmentRequest {
     assignmentId: string;
 }
 
-export interface GetAssignmentRequest {
+export interface GetStaffingAssignmentRequest {
     assignmentId: string;
 }
 
-export interface GetAssignments1Request {
+export interface ListStaffingAssignmentsRequest {
     personId: string;
 }
 
-export interface UpdateAssignmentRequest {
+export interface ListStaffingAssignmentsByPathRequest {
+    personId: string;
+}
+
+export interface UpdateStaffingAssignmentOperationRequest {
     assignmentId: string;
     updateStaffingAssignmentRequest: UpdateStaffingAssignmentRequest;
 }
@@ -55,14 +59,14 @@ export interface UpdateAssignmentRequest {
 export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
 
     /**
-     * Link a person to a location with role, effective dates, and primary flag.
-     * Create staffing assignment
+     * Creates a staffing assignment linking a person to a location with a role, effective dates, and a primary flag. Use this tool when a person starts working at a location; do not use updateStaffingAssignment, which modifies an existing assignment by id. Preconditions: the person must exist in the identity replica with an ACTIVE employee record, the location must be active, and no assignment for the same person, location, and role may overlap the effective dates. Required inputs: personId (UUID), locationId (UUID), role, isPrimary, and effectiveFrom (yyyy-MM-dd); effectiveTo is optional and open-ended when null. Emits a PEOPLE_STAFFING_ASSIGNMENT_CREATE event and publishes a staffing-assignment fact; a new primary demotes and ends any overlapping existing primary, and a person\'s first active assignment is forced primary regardless of the flag. Returns 409 when an overlapping assignment exists for the person, location, and role, 404 when the person, employee record, or active location cannot be resolved, and 400 when the person\'s employee status is not ACTIVE. 
+     * Create Person To Location Staffing Assignment
      */
-    async createAssignment1Raw(requestParameters: CreateAssignment1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StaffingAssignmentResponse>> {
+    async createStaffingAssignmentRaw(requestParameters: CreateStaffingAssignmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StaffingAssignmentResponse>> {
         if (requestParameters['createStaffingAssignmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'createStaffingAssignmentRequest',
-                'Required parameter "createStaffingAssignmentRequest" was null or undefined when calling createAssignment1().'
+                'Required parameter "createStaffingAssignmentRequest" was null or undefined when calling createStaffingAssignment().'
             );
         }
 
@@ -92,23 +96,23 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Link a person to a location with role, effective dates, and primary flag.
-     * Create staffing assignment
+     * Creates a staffing assignment linking a person to a location with a role, effective dates, and a primary flag. Use this tool when a person starts working at a location; do not use updateStaffingAssignment, which modifies an existing assignment by id. Preconditions: the person must exist in the identity replica with an ACTIVE employee record, the location must be active, and no assignment for the same person, location, and role may overlap the effective dates. Required inputs: personId (UUID), locationId (UUID), role, isPrimary, and effectiveFrom (yyyy-MM-dd); effectiveTo is optional and open-ended when null. Emits a PEOPLE_STAFFING_ASSIGNMENT_CREATE event and publishes a staffing-assignment fact; a new primary demotes and ends any overlapping existing primary, and a person\'s first active assignment is forced primary regardless of the flag. Returns 409 when an overlapping assignment exists for the person, location, and role, 404 when the person, employee record, or active location cannot be resolved, and 400 when the person\'s employee status is not ACTIVE. 
+     * Create Person To Location Staffing Assignment
      */
-    async createAssignment1(requestParameters: CreateAssignment1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StaffingAssignmentResponse> {
-        const response = await this.createAssignment1Raw(requestParameters, initOverrides);
+    async createStaffingAssignment(requestParameters: CreateStaffingAssignmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StaffingAssignmentResponse> {
+        const response = await this.createStaffingAssignmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Ends an active staffing assignment without physically deleting the record.
-     * End (soft-delete) an assignment
+     * Ends a staffing assignment by setting its status to ENDED without physically deleting the row. Use this tool when a person stops working at a location; do not use disableEmployee, which offboards the whole employee, and do not use updateStaffingAssignment to shorten dates manually. Preconditions: the assignment must exist; ending an already ENDED assignment is accepted and republishes the fact. Required inputs: assignmentId (UUID) path parameter; there is no request body. Emits a PEOPLE_STAFFING_ASSIGNMENT_END event and publishes a staffing-assignment fact; a null effectiveTo is stamped with today\'s date. Returns 204 on success, and 404 when no assignment exists for the supplied id. 
+     * End An Active Staffing Assignment
      */
-    async endAssignmentRaw(requestParameters: EndAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async endStaffingAssignmentRaw(requestParameters: EndStaffingAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['assignmentId'] == null) {
             throw new runtime.RequiredError(
                 'assignmentId',
-                'Required parameter "assignmentId" was null or undefined when calling endAssignment().'
+                'Required parameter "assignmentId" was null or undefined when calling endStaffingAssignment().'
             );
         }
 
@@ -135,22 +139,22 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Ends an active staffing assignment without physically deleting the record.
-     * End (soft-delete) an assignment
+     * Ends a staffing assignment by setting its status to ENDED without physically deleting the row. Use this tool when a person stops working at a location; do not use disableEmployee, which offboards the whole employee, and do not use updateStaffingAssignment to shorten dates manually. Preconditions: the assignment must exist; ending an already ENDED assignment is accepted and republishes the fact. Required inputs: assignmentId (UUID) path parameter; there is no request body. Emits a PEOPLE_STAFFING_ASSIGNMENT_END event and publishes a staffing-assignment fact; a null effectiveTo is stamped with today\'s date. Returns 204 on success, and 404 when no assignment exists for the supplied id. 
+     * End An Active Staffing Assignment
      */
-    async endAssignment(requestParameters: EndAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.endAssignmentRaw(requestParameters, initOverrides);
+    async endStaffingAssignment(requestParameters: EndStaffingAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.endStaffingAssignmentRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Retrieves a single staffing assignment by its unique ID.
-     * Get assignment by ID
+     * Returns a single staffing assignment by its unique assignment id. Use this tool when the assignment id is already known; use listStaffingAssignments instead to discover a person\'s assignments. Preconditions: the assignment must exist; both ACTIVE and ENDED assignments are returned. Required inputs: assignmentId (UUID) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no assignment exists for the supplied id. 
+     * Get Staffing Assignment By Id
      */
-    async getAssignmentRaw(requestParameters: GetAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StaffingAssignmentResponse>> {
+    async getStaffingAssignmentRaw(requestParameters: GetStaffingAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StaffingAssignmentResponse>> {
         if (requestParameters['assignmentId'] == null) {
             throw new runtime.RequiredError(
                 'assignmentId',
-                'Required parameter "assignmentId" was null or undefined when calling getAssignment().'
+                'Required parameter "assignmentId" was null or undefined when calling getStaffingAssignment().'
             );
         }
 
@@ -177,23 +181,23 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieves a single staffing assignment by its unique ID.
-     * Get assignment by ID
+     * Returns a single staffing assignment by its unique assignment id. Use this tool when the assignment id is already known; use listStaffingAssignments instead to discover a person\'s assignments. Preconditions: the assignment must exist; both ACTIVE and ENDED assignments are returned. Required inputs: assignmentId (UUID) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no assignment exists for the supplied id. 
+     * Get Staffing Assignment By Id
      */
-    async getAssignment(requestParameters: GetAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StaffingAssignmentResponse> {
-        const response = await this.getAssignmentRaw(requestParameters, initOverrides);
+    async getStaffingAssignment(requestParameters: GetStaffingAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StaffingAssignmentResponse> {
+        const response = await this.getStaffingAssignmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns all staffing assignments for the specified person.
-     * List assignments for person
+     * Lists every staffing assignment for a person, including ENDED ones, across all locations and roles. Use this tool for assignment history and administration; use listPersonLocations instead when only the assignments active today are wanted. Preconditions: none beyond authentication; an unknown personId simply yields no rows. Required inputs: personId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the person has no assignments. 
+     * List Staffing Assignments For A Person
      */
-    async getAssignments1Raw(requestParameters: GetAssignments1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StaffingAssignmentResponse>>> {
+    async listStaffingAssignmentsRaw(requestParameters: ListStaffingAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StaffingAssignmentResponse>>> {
         if (requestParameters['personId'] == null) {
             throw new runtime.RequiredError(
                 'personId',
-                'Required parameter "personId" was null or undefined when calling getAssignments1().'
+                'Required parameter "personId" was null or undefined when calling listStaffingAssignments().'
             );
         }
 
@@ -224,30 +228,73 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all staffing assignments for the specified person.
-     * List assignments for person
+     * Lists every staffing assignment for a person, including ENDED ones, across all locations and roles. Use this tool for assignment history and administration; use listPersonLocations instead when only the assignments active today are wanted. Preconditions: none beyond authentication; an unknown personId simply yields no rows. Required inputs: personId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the person has no assignments. 
+     * List Staffing Assignments For A Person
      */
-    async getAssignments1(requestParameters: GetAssignments1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StaffingAssignmentResponse>> {
-        const response = await this.getAssignments1Raw(requestParameters, initOverrides);
+    async listStaffingAssignments(requestParameters: ListStaffingAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StaffingAssignmentResponse>> {
+        const response = await this.listStaffingAssignmentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Updates an existing staffing assignment, including role, dates, and primary flag.
-     * Update staffing assignment
+     * Lists every staffing assignment for the person given in the path, including ENDED ones; the data is identical to listStaffingAssignments. Use this tool when a path-style URL is preferred; use listStaffingAssignments instead for the query-parameter form, which returns the same rows. Preconditions: none beyond authentication; an unknown personId simply yields no rows. Required inputs: personId (UUID) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the person has no assignments. 
+     * List Staffing Assignments By Person Path
      */
-    async updateAssignmentRaw(requestParameters: UpdateAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StaffingAssignmentResponse>> {
+    async listStaffingAssignmentsByPathRaw(requestParameters: ListStaffingAssignmentsByPathRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StaffingAssignmentResponse>>> {
+        if (requestParameters['personId'] == null) {
+            throw new runtime.RequiredError(
+                'personId',
+                'Required parameter "personId" was null or undefined when calling listStaffingAssignmentsByPath().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/{personId}/staffing/assignments`.replace(`{${"personId"}}`, encodeURIComponent(String(requestParameters['personId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(StaffingAssignmentResponseFromJSON));
+    }
+
+    /**
+     * Lists every staffing assignment for the person given in the path, including ENDED ones; the data is identical to listStaffingAssignments. Use this tool when a path-style URL is preferred; use listStaffingAssignments instead for the query-parameter form, which returns the same rows. Preconditions: none beyond authentication; an unknown personId simply yields no rows. Required inputs: personId (UUID) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the person has no assignments. 
+     * List Staffing Assignments By Person Path
+     */
+    async listStaffingAssignmentsByPath(requestParameters: ListStaffingAssignmentsByPathRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StaffingAssignmentResponse>> {
+        const response = await this.listStaffingAssignmentsByPathRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces a staffing assignment\'s person, location, role, primary flag, and effective dates. Use this tool to correct or reshape an existing assignment; do not use endStaffingAssignment, which only closes an assignment, and do not use createStaffingAssignment for a new one. Preconditions: the assignment must exist, the person must exist with an ACTIVE employee record, the location must be active, and no other assignment for the same person, location, and role may overlap the effective dates. Required inputs: assignmentId (UUID) path parameter plus the full body (personId, locationId, role, isPrimary, effectiveFrom); this is a full replacement, not a patch. Emits a PEOPLE_STAFFING_ASSIGNMENT_UPDATE event and publishes a staffing-assignment fact; setting isPrimary true demotes and ends any other overlapping primary assignment. Returns 404 when the assignment, person, employee record, or active location cannot be resolved, 409 when another assignment overlaps for the person, location, and role, and 400 when the person\'s employee status is not ACTIVE. 
+     * Update An Existing Staffing Assignment
+     */
+    async updateStaffingAssignmentRaw(requestParameters: UpdateStaffingAssignmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<StaffingAssignmentResponse>> {
         if (requestParameters['assignmentId'] == null) {
             throw new runtime.RequiredError(
                 'assignmentId',
-                'Required parameter "assignmentId" was null or undefined when calling updateAssignment().'
+                'Required parameter "assignmentId" was null or undefined when calling updateStaffingAssignment().'
             );
         }
 
         if (requestParameters['updateStaffingAssignmentRequest'] == null) {
             throw new runtime.RequiredError(
                 'updateStaffingAssignmentRequest',
-                'Required parameter "updateStaffingAssignmentRequest" was null or undefined when calling updateAssignment().'
+                'Required parameter "updateStaffingAssignmentRequest" was null or undefined when calling updateStaffingAssignment().'
             );
         }
 
@@ -277,11 +324,11 @@ export class PeopleStaffingAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates an existing staffing assignment, including role, dates, and primary flag.
-     * Update staffing assignment
+     * Replaces a staffing assignment\'s person, location, role, primary flag, and effective dates. Use this tool to correct or reshape an existing assignment; do not use endStaffingAssignment, which only closes an assignment, and do not use createStaffingAssignment for a new one. Preconditions: the assignment must exist, the person must exist with an ACTIVE employee record, the location must be active, and no other assignment for the same person, location, and role may overlap the effective dates. Required inputs: assignmentId (UUID) path parameter plus the full body (personId, locationId, role, isPrimary, effectiveFrom); this is a full replacement, not a patch. Emits a PEOPLE_STAFFING_ASSIGNMENT_UPDATE event and publishes a staffing-assignment fact; setting isPrimary true demotes and ends any other overlapping primary assignment. Returns 404 when the assignment, person, employee record, or active location cannot be resolved, 409 when another assignment overlaps for the person, location, and role, and 400 when the person\'s employee status is not ACTIVE. 
+     * Update An Existing Staffing Assignment
      */
-    async updateAssignment(requestParameters: UpdateAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StaffingAssignmentResponse> {
-        const response = await this.updateAssignmentRaw(requestParameters, initOverrides);
+    async updateStaffingAssignment(requestParameters: UpdateStaffingAssignmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StaffingAssignmentResponse> {
+        const response = await this.updateStaffingAssignmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -20,23 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface EmitEventRequest {
     /**
-     * Preregistered event type code
-     * @type {string}
-     * @memberof EmitEventRequest
-     */
-    id: string;
-    /**
      * Event API version
      * @type {string}
      * @memberof EmitEventRequest
      */
     apiVersion: string;
-    /**
-     * Event timestamp in epoch milliseconds
-     * @type {number}
-     * @memberof EmitEventRequest
-     */
-    timestamp: number;
     /**
      * Elapsed operation time in milliseconds
      * @type {number}
@@ -44,22 +32,34 @@ export interface EmitEventRequest {
      */
     elapsedMs: number;
     /**
+     * Preregistered event type code
+     * @type {string}
+     * @memberof EmitEventRequest
+     */
+    id: string;
+    /**
      * Event publication time in UTC
      * @type {Date}
      * @memberof EmitEventRequest
      */
     publishedAt: Date;
+    /**
+     * Event timestamp in epoch milliseconds
+     * @type {number}
+     * @memberof EmitEventRequest
+     */
+    timestamp: number;
 }
 
 /**
  * Check if a given object implements the EmitEventRequest interface.
  */
 export function instanceOfEmitEventRequest(value: object): boolean {
-    if (!('id' in value)) return false;
     if (!('apiVersion' in value)) return false;
-    if (!('timestamp' in value)) return false;
     if (!('elapsedMs' in value)) return false;
+    if (!('id' in value)) return false;
     if (!('publishedAt' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -73,11 +73,11 @@ export function EmitEventRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'id': json['id'],
         'apiVersion': json['apiVersion'],
-        'timestamp': json['timestamp'],
         'elapsedMs': json['elapsedMs'],
+        'id': json['id'],
         'publishedAt': (new Date(json['publishedAt'])),
+        'timestamp': json['timestamp'],
     };
 }
 
@@ -87,11 +87,11 @@ export function EmitEventRequestToJSON(value?: EmitEventRequest | null): any {
     }
     return {
         
-        'id': value['id'],
         'apiVersion': value['apiVersion'],
-        'timestamp': value['timestamp'],
         'elapsedMs': value['elapsedMs'],
+        'id': value['id'],
         'publishedAt': ((value['publishedAt']).toISOString()),
+        'timestamp': value['timestamp'],
     };
 }
 

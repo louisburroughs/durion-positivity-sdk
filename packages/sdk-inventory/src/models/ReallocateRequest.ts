@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to reallocate available-to-promise stock for a stock item
  * @export
  * @interface ReallocateRequest
  */
 export interface ReallocateRequest {
     /**
-     * 
+     * Identifier of the stock item to reallocate
      * @type {string}
      * @memberof ReallocateRequest
      */
     stockItemId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ReallocateRequest
-     */
-    triggerType?: string;
-    /**
-     * 
+     * Identifier of the source record that triggered the reallocation
      * @type {string}
      * @memberof ReallocateRequest
      */
     triggerReferenceId?: string;
+    /**
+     * Type of event that triggered the reallocation
+     * @type {string}
+     * @memberof ReallocateRequest
+     */
+    triggerType?: string;
 }
 
 /**
@@ -58,8 +58,8 @@ export function ReallocateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'stockItemId': json['stockItemId'],
-        'triggerType': json['triggerType'] == null ? undefined : json['triggerType'],
         'triggerReferenceId': json['triggerReferenceId'] == null ? undefined : json['triggerReferenceId'],
+        'triggerType': json['triggerType'] == null ? undefined : json['triggerType'],
     };
 }
 
@@ -70,8 +70,8 @@ export function ReallocateRequestToJSON(value?: ReallocateRequest | null): any {
     return {
         
         'stockItemId': value['stockItemId'],
-        'triggerType': value['triggerType'],
         'triggerReferenceId': value['triggerReferenceId'],
+        'triggerType': value['triggerType'],
     };
 }
 

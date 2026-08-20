@@ -14,31 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create or fully replace vehicle care preferences
  * @export
  * @interface PreferencesUpsertDto
  */
 export interface PreferencesUpsertDto {
     /**
-     * 
-     * @type {object}
-     * @memberof PreferencesUpsertDto
-     */
-    preferences?: object;
-    /**
-     * 
-     * @type {string}
-     * @memberof PreferencesUpsertDto
-     */
-    serviceNotes?: string;
-    /**
-     * 
+     * Identifier of the user creating the preferences
      * @type {string}
      * @memberof PreferencesUpsertDto
      */
     createdByUserId?: string;
     /**
-     * 
+     * Complete preference map to store for the vehicle
+     * @type {object}
+     * @memberof PreferencesUpsertDto
+     */
+    preferences: object;
+    /**
+     * Structured service interval in whole months; null clears the per-vehicle override so CRM falls back to its default (#1175)
+     * @type {number}
+     * @memberof PreferencesUpsertDto
+     */
+    serviceIntervalMonths?: number;
+    /**
+     * Optional free-text service notes
+     * @type {string}
+     * @memberof PreferencesUpsertDto
+     */
+    serviceNotes?: string;
+    /**
+     * Identifier of the user updating the preferences
      * @type {string}
      * @memberof PreferencesUpsertDto
      */
@@ -49,6 +55,7 @@ export interface PreferencesUpsertDto {
  * Check if a given object implements the PreferencesUpsertDto interface.
  */
 export function instanceOfPreferencesUpsertDto(value: object): boolean {
+    if (!('preferences' in value)) return false;
     return true;
 }
 
@@ -62,9 +69,10 @@ export function PreferencesUpsertDtoFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'preferences': json['preferences'] == null ? undefined : json['preferences'],
-        'serviceNotes': json['serviceNotes'] == null ? undefined : json['serviceNotes'],
         'createdByUserId': json['createdByUserId'] == null ? undefined : json['createdByUserId'],
+        'preferences': json['preferences'],
+        'serviceIntervalMonths': json['serviceIntervalMonths'] == null ? undefined : json['serviceIntervalMonths'],
+        'serviceNotes': json['serviceNotes'] == null ? undefined : json['serviceNotes'],
         'updatedByUserId': json['updatedByUserId'] == null ? undefined : json['updatedByUserId'],
     };
 }
@@ -75,9 +83,10 @@ export function PreferencesUpsertDtoToJSON(value?: PreferencesUpsertDto | null):
     }
     return {
         
-        'preferences': value['preferences'],
-        'serviceNotes': value['serviceNotes'],
         'createdByUserId': value['createdByUserId'],
+        'preferences': value['preferences'],
+        'serviceIntervalMonths': value['serviceIntervalMonths'],
+        'serviceNotes': value['serviceNotes'],
         'updatedByUserId': value['updatedByUserId'],
     };
 }

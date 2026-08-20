@@ -20,41 +20,41 @@ import { mapValues } from '../runtime';
  */
 export interface CreatePersonResponse {
     /**
-     * Unique identifier of the created person
-     * @type {string}
-     * @memberof CreatePersonResponse
-     */
-    personId?: string;
-    /**
-     * First name
-     * @type {string}
-     * @memberof CreatePersonResponse
-     */
-    firstName?: string;
-    /**
-     * Last name
-     * @type {string}
-     * @memberof CreatePersonResponse
-     */
-    lastName?: string;
-    /**
-     * Preferred contact method
-     * @type {string}
-     * @memberof CreatePersonResponse
-     */
-    preferredContactMethod?: CreatePersonResponsePreferredContactMethodEnum;
-    /**
      * Number of contact points created
      * @type {number}
      * @memberof CreatePersonResponse
      */
-    contactPointsCreated?: number;
+    contactPointsCreated: number;
     /**
      * Timestamp when the person was created
      * @type {Date}
      * @memberof CreatePersonResponse
      */
-    createdAt?: Date;
+    createdAt: Date;
+    /**
+     * First name
+     * @type {string}
+     * @memberof CreatePersonResponse
+     */
+    firstName: string;
+    /**
+     * Last name
+     * @type {string}
+     * @memberof CreatePersonResponse
+     */
+    lastName: string;
+    /**
+     * Unique identifier of the created person
+     * @type {string}
+     * @memberof CreatePersonResponse
+     */
+    personId: string;
+    /**
+     * Preferred contact method
+     * @type {string}
+     * @memberof CreatePersonResponse
+     */
+    preferredContactMethod: CreatePersonResponsePreferredContactMethodEnum;
 }
 
 /**
@@ -73,6 +73,12 @@ export enum CreatePersonResponsePreferredContactMethodEnum {
  * Check if a given object implements the CreatePersonResponse interface.
  */
 export function instanceOfCreatePersonResponse(value: object): boolean {
+    if (!('contactPointsCreated' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('firstName' in value)) return false;
+    if (!('lastName' in value)) return false;
+    if (!('personId' in value)) return false;
+    if (!('preferredContactMethod' in value)) return false;
     return true;
 }
 
@@ -86,12 +92,12 @@ export function CreatePersonResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'firstName': json['firstName'] == null ? undefined : json['firstName'],
-        'lastName': json['lastName'] == null ? undefined : json['lastName'],
-        'preferredContactMethod': json['preferredContactMethod'] == null ? undefined : json['preferredContactMethod'],
-        'contactPointsCreated': json['contactPointsCreated'] == null ? undefined : json['contactPointsCreated'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'contactPointsCreated': json['contactPointsCreated'],
+        'createdAt': (new Date(json['createdAt'])),
+        'firstName': json['firstName'],
+        'lastName': json['lastName'],
+        'personId': json['personId'],
+        'preferredContactMethod': json['preferredContactMethod'],
     };
 }
 
@@ -101,12 +107,12 @@ export function CreatePersonResponseToJSON(value?: CreatePersonResponse | null):
     }
     return {
         
-        'personId': value['personId'],
+        'contactPointsCreated': value['contactPointsCreated'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'firstName': value['firstName'],
         'lastName': value['lastName'],
+        'personId': value['personId'],
         'preferredContactMethod': value['preferredContactMethod'],
-        'contactPointsCreated': value['contactPointsCreated'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
     };
 }
 

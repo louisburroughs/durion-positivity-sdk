@@ -21,55 +21,55 @@ import {
 } from './PtoEntry';
 
 /**
- * 
+ * Current availability and status of a mechanic
  * @export
  * @interface MechanicStatus
  */
 export interface MechanicStatus {
     /**
-     * 
-     * @type {string}
-     * @memberof MechanicStatus
-     */
-    personId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MechanicStatus
-     */
-    firstName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MechanicStatus
-     */
-    lastName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof MechanicStatus
-     */
-    currentStatus?: string;
-    /**
-     * 
+     * Identifier of the workorder the mechanic is currently assigned to
      * @type {string}
      * @memberof MechanicStatus
      */
     assignedWorkorderId?: string;
     /**
-     * 
-     * @type {boolean}
-     * @memberof MechanicStatus
-     */
-    onBreak?: boolean;
-    /**
-     * 
+     * Expected return time when the mechanic is on break
      * @type {Date}
      * @memberof MechanicStatus
      */
     breakExpectedReturn?: Date;
     /**
-     * 
+     * Current work status of the mechanic
+     * @type {string}
+     * @memberof MechanicStatus
+     */
+    currentStatus?: string;
+    /**
+     * Mechanic first name
+     * @type {string}
+     * @memberof MechanicStatus
+     */
+    firstName?: string;
+    /**
+     * Mechanic last name
+     * @type {string}
+     * @memberof MechanicStatus
+     */
+    lastName?: string;
+    /**
+     * Whether the mechanic is currently on break
+     * @type {boolean}
+     * @memberof MechanicStatus
+     */
+    onBreak?: boolean;
+    /**
+     * Identifier of the mechanic person
+     * @type {string}
+     * @memberof MechanicStatus
+     */
+    personId: string;
+    /**
+     * Paid time-off entries for the mechanic
      * @type {Array<PtoEntry>}
      * @memberof MechanicStatus
      */
@@ -80,6 +80,7 @@ export interface MechanicStatus {
  * Check if a given object implements the MechanicStatus interface.
  */
 export function instanceOfMechanicStatus(value: object): boolean {
+    if (!('personId' in value)) return false;
     return true;
 }
 
@@ -93,13 +94,13 @@ export function MechanicStatusFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'personId': json['personId'] == null ? undefined : json['personId'],
+        'assignedWorkorderId': json['assignedWorkorderId'] == null ? undefined : json['assignedWorkorderId'],
+        'breakExpectedReturn': json['breakExpectedReturn'] == null ? undefined : (new Date(json['breakExpectedReturn'])),
+        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
-        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
-        'assignedWorkorderId': json['assignedWorkorderId'] == null ? undefined : json['assignedWorkorderId'],
         'onBreak': json['onBreak'] == null ? undefined : json['onBreak'],
-        'breakExpectedReturn': json['breakExpectedReturn'] == null ? undefined : (new Date(json['breakExpectedReturn'])),
+        'personId': json['personId'],
         'ptoEntries': json['ptoEntries'] == null ? undefined : ((json['ptoEntries'] as Array<any>).map(PtoEntryFromJSON)),
     };
 }
@@ -110,13 +111,13 @@ export function MechanicStatusToJSON(value?: MechanicStatus | null): any {
     }
     return {
         
-        'personId': value['personId'],
+        'assignedWorkorderId': value['assignedWorkorderId'],
+        'breakExpectedReturn': value['breakExpectedReturn'] == null ? undefined : ((value['breakExpectedReturn']).toISOString()),
+        'currentStatus': value['currentStatus'],
         'firstName': value['firstName'],
         'lastName': value['lastName'],
-        'currentStatus': value['currentStatus'],
-        'assignedWorkorderId': value['assignedWorkorderId'],
         'onBreak': value['onBreak'],
-        'breakExpectedReturn': value['breakExpectedReturn'] == null ? undefined : ((value['breakExpectedReturn']).toISOString()),
+        'personId': value['personId'],
         'ptoEntries': value['ptoEntries'] == null ? undefined : ((value['ptoEntries'] as Array<any>).map(PtoEntryToJSON)),
     };
 }

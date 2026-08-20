@@ -14,113 +14,127 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of applying a price override to an order line
  * @export
  * @interface PriceOverrideResult
  */
 export interface PriceOverrideResult {
     /**
-     * 
-     * @type {string}
+     * Whether the override affects sales commission
+     * @type {boolean}
      * @memberof PriceOverrideResult
      */
-    overrideId?: string;
+    affectsCommission: boolean;
     /**
-     * 
-     * @type {string}
+     * Timestamp when the override was created
+     * @type {Date}
      * @memberof PriceOverrideResult
      */
-    orderId?: string;
+    createdAt: Date;
     /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideResult
-     */
-    orderLineId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideResult
-     */
-    productId?: string;
-    /**
-     * 
+     * Absolute discount amount granted by the override
      * @type {number}
      * @memberof PriceOverrideResult
      */
-    originalPrice?: number;
+    discountAmount: number;
     /**
-     * 
+     * Discount expressed as a percentage of the original price
      * @type {number}
      * @memberof PriceOverrideResult
      */
-    overridePrice?: number;
+    discountPercentage: number;
     /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideResult
-     */
-    discountAmount?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PriceOverrideResult
-     */
-    discountPercentage?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideResult
-     */
-    reasonCode?: string;
-    /**
-     * 
+     * Free-text justification supporting the override
      * @type {string}
      * @memberof PriceOverrideResult
      */
     justification?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideResult
-     */
-    status?: string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PriceOverrideResult
-     */
-    requiresApproval?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof PriceOverrideResult
-     */
-    affectsCommission?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof PriceOverrideResult
-     */
-    requestedByUserId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof PriceOverrideResult
-     */
-    createdAt?: Date;
-    /**
-     * 
+     * Optional human-readable message describing the result
      * @type {string}
      * @memberof PriceOverrideResult
      */
     message?: string;
+    /**
+     * Identifier of the order the override applies to
+     * @type {string}
+     * @memberof PriceOverrideResult
+     */
+    orderId: string;
+    /**
+     * Identifier of the order line the override applies to
+     * @type {string}
+     * @memberof PriceOverrideResult
+     */
+    orderLineId: string;
+    /**
+     * Original price before the override
+     * @type {number}
+     * @memberof PriceOverrideResult
+     */
+    originalPrice: number;
+    /**
+     * Unique identifier of the created price override
+     * @type {string}
+     * @memberof PriceOverrideResult
+     */
+    overrideId: string;
+    /**
+     * Overridden price applied to the line
+     * @type {number}
+     * @memberof PriceOverrideResult
+     */
+    overridePrice: number;
+    /**
+     * Identifier of the product on the overridden line
+     * @type {string}
+     * @memberof PriceOverrideResult
+     */
+    productId: string;
+    /**
+     * Reason code supplied for the override
+     * @type {string}
+     * @memberof PriceOverrideResult
+     */
+    reasonCode: string;
+    /**
+     * Identifier of the user who requested the override
+     * @type {string}
+     * @memberof PriceOverrideResult
+     */
+    requestedByUserId: string;
+    /**
+     * Whether the override required approval
+     * @type {boolean}
+     * @memberof PriceOverrideResult
+     */
+    requiresApproval: boolean;
+    /**
+     * Override status; APPROVED means applied immediately, PENDING_APPROVAL means queued for review
+     * @type {string}
+     * @memberof PriceOverrideResult
+     */
+    status: string;
 }
 
 /**
  * Check if a given object implements the PriceOverrideResult interface.
  */
 export function instanceOfPriceOverrideResult(value: object): boolean {
+    if (!('affectsCommission' in value)) return false;
+    if (!('createdAt' in value)) return false;
+    if (!('discountAmount' in value)) return false;
+    if (!('discountPercentage' in value)) return false;
+    if (!('orderId' in value)) return false;
+    if (!('orderLineId' in value)) return false;
+    if (!('originalPrice' in value)) return false;
+    if (!('overrideId' in value)) return false;
+    if (!('overridePrice' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('reasonCode' in value)) return false;
+    if (!('requestedByUserId' in value)) return false;
+    if (!('requiresApproval' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -134,22 +148,22 @@ export function PriceOverrideResultFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'overrideId': json['overrideId'] == null ? undefined : json['overrideId'],
-        'orderId': json['orderId'] == null ? undefined : json['orderId'],
-        'orderLineId': json['orderLineId'] == null ? undefined : json['orderLineId'],
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'originalPrice': json['originalPrice'] == null ? undefined : json['originalPrice'],
-        'overridePrice': json['overridePrice'] == null ? undefined : json['overridePrice'],
-        'discountAmount': json['discountAmount'] == null ? undefined : json['discountAmount'],
-        'discountPercentage': json['discountPercentage'] == null ? undefined : json['discountPercentage'],
-        'reasonCode': json['reasonCode'] == null ? undefined : json['reasonCode'],
+        'affectsCommission': json['affectsCommission'],
+        'createdAt': (new Date(json['createdAt'])),
+        'discountAmount': json['discountAmount'],
+        'discountPercentage': json['discountPercentage'],
         'justification': json['justification'] == null ? undefined : json['justification'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'requiresApproval': json['requiresApproval'] == null ? undefined : json['requiresApproval'],
-        'affectsCommission': json['affectsCommission'] == null ? undefined : json['affectsCommission'],
-        'requestedByUserId': json['requestedByUserId'] == null ? undefined : json['requestedByUserId'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'message': json['message'] == null ? undefined : json['message'],
+        'orderId': json['orderId'],
+        'orderLineId': json['orderLineId'],
+        'originalPrice': json['originalPrice'],
+        'overrideId': json['overrideId'],
+        'overridePrice': json['overridePrice'],
+        'productId': json['productId'],
+        'reasonCode': json['reasonCode'],
+        'requestedByUserId': json['requestedByUserId'],
+        'requiresApproval': json['requiresApproval'],
+        'status': json['status'],
     };
 }
 
@@ -159,22 +173,22 @@ export function PriceOverrideResultToJSON(value?: PriceOverrideResult | null): a
     }
     return {
         
-        'overrideId': value['overrideId'],
-        'orderId': value['orderId'],
-        'orderLineId': value['orderLineId'],
-        'productId': value['productId'],
-        'originalPrice': value['originalPrice'],
-        'overridePrice': value['overridePrice'],
+        'affectsCommission': value['affectsCommission'],
+        'createdAt': ((value['createdAt']).toISOString()),
         'discountAmount': value['discountAmount'],
         'discountPercentage': value['discountPercentage'],
-        'reasonCode': value['reasonCode'],
         'justification': value['justification'],
-        'status': value['status'],
-        'requiresApproval': value['requiresApproval'],
-        'affectsCommission': value['affectsCommission'],
-        'requestedByUserId': value['requestedByUserId'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'message': value['message'],
+        'orderId': value['orderId'],
+        'orderLineId': value['orderLineId'],
+        'originalPrice': value['originalPrice'],
+        'overrideId': value['overrideId'],
+        'overridePrice': value['overridePrice'],
+        'productId': value['productId'],
+        'reasonCode': value['reasonCode'],
+        'requestedByUserId': value['requestedByUserId'],
+        'requiresApproval': value['requiresApproval'],
+        'status': value['status'],
     };
 }
 

@@ -21,31 +21,31 @@ import {
 } from './PostalCodeEntry';
 
 /**
- * 
+ * Request payload for creating or updating a service area
  * @export
  * @interface ServiceAreaRequest
  */
 export interface ServiceAreaRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof ServiceAreaRequest
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ServiceAreaRequest
-     */
-    description?: string;
-    /**
-     * 
+     * Whether the service area is active
      * @type {boolean}
      * @memberof ServiceAreaRequest
      */
     active?: boolean;
     /**
-     * 
+     * Description of the service area
+     * @type {string}
+     * @memberof ServiceAreaRequest
+     */
+    description?: string;
+    /**
+     * Display name of the service area
+     * @type {string}
+     * @memberof ServiceAreaRequest
+     */
+    name: string;
+    /**
+     * Postal codes included in the service area
      * @type {Array<PostalCodeEntry>}
      * @memberof ServiceAreaRequest
      */
@@ -56,6 +56,7 @@ export interface ServiceAreaRequest {
  * Check if a given object implements the ServiceAreaRequest interface.
  */
 export function instanceOfServiceAreaRequest(value: object): boolean {
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -69,9 +70,9 @@ export function ServiceAreaRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
-        'description': json['description'] == null ? undefined : json['description'],
         'active': json['active'] == null ? undefined : json['active'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'name': json['name'],
         'postalCodes': json['postalCodes'] == null ? undefined : ((json['postalCodes'] as Array<any>).map(PostalCodeEntryFromJSON)),
     };
 }
@@ -82,9 +83,9 @@ export function ServiceAreaRequestToJSON(value?: ServiceAreaRequest | null): any
     }
     return {
         
-        'name': value['name'],
-        'description': value['description'],
         'active': value['active'],
+        'description': value['description'],
+        'name': value['name'],
         'postalCodes': value['postalCodes'] == null ? undefined : ((value['postalCodes'] as Array<any>).map(PostalCodeEntryToJSON)),
     };
 }

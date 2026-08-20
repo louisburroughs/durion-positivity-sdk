@@ -14,53 +14,53 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Historical record of a single reprocessing attempt
  * @export
  * @interface ReprocessingAttemptHistoryResponse
  */
 export interface ReprocessingAttemptHistoryResponse {
     /**
-     * 
+     * Unique identifier of the reprocessing attempt
      * @type {string}
      * @memberof ReprocessingAttemptHistoryResponse
      */
-    attemptId?: string;
+    attemptId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof ReprocessingAttemptHistoryResponse
-     */
-    eventId?: string;
-    /**
-     * 
+     * Timestamp when the reprocessing was attempted (ISO 8601)
      * @type {Date}
      * @memberof ReprocessingAttemptHistoryResponse
      */
     attemptedAt?: Date;
     /**
-     * 
+     * Identifier of the event that was reprocessed
      * @type {string}
      * @memberof ReprocessingAttemptHistoryResponse
      */
-    triggeredByUserId?: string;
+    eventId: string;
     /**
-     * 
+     * Mapping version used for the attempt
+     * @type {string}
+     * @memberof ReprocessingAttemptHistoryResponse
+     */
+    mappingVersionUsed?: string;
+    /**
+     * Outcome of the reprocessing attempt
      * @type {string}
      * @memberof ReprocessingAttemptHistoryResponse
      */
     outcome?: ReprocessingAttemptHistoryResponseOutcomeEnum;
     /**
-     * 
+     * Additional detail about the outcome
      * @type {string}
      * @memberof ReprocessingAttemptHistoryResponse
      */
     outcomeDetails?: string;
     /**
-     * 
+     * Identifier of the user who triggered the attempt
      * @type {string}
      * @memberof ReprocessingAttemptHistoryResponse
      */
-    mappingVersionUsed?: string;
+    triggeredByUserId?: string;
 }
 
 /**
@@ -77,6 +77,8 @@ export enum ReprocessingAttemptHistoryResponseOutcomeEnum {
  * Check if a given object implements the ReprocessingAttemptHistoryResponse interface.
  */
 export function instanceOfReprocessingAttemptHistoryResponse(value: object): boolean {
+    if (!('attemptId' in value)) return false;
+    if (!('eventId' in value)) return false;
     return true;
 }
 
@@ -90,13 +92,13 @@ export function ReprocessingAttemptHistoryResponseFromJSONTyped(json: any, ignor
     }
     return {
         
-        'attemptId': json['attemptId'] == null ? undefined : json['attemptId'],
-        'eventId': json['eventId'] == null ? undefined : json['eventId'],
+        'attemptId': json['attemptId'],
         'attemptedAt': json['attemptedAt'] == null ? undefined : (new Date(json['attemptedAt'])),
-        'triggeredByUserId': json['triggeredByUserId'] == null ? undefined : json['triggeredByUserId'],
+        'eventId': json['eventId'],
+        'mappingVersionUsed': json['mappingVersionUsed'] == null ? undefined : json['mappingVersionUsed'],
         'outcome': json['outcome'] == null ? undefined : json['outcome'],
         'outcomeDetails': json['outcomeDetails'] == null ? undefined : json['outcomeDetails'],
-        'mappingVersionUsed': json['mappingVersionUsed'] == null ? undefined : json['mappingVersionUsed'],
+        'triggeredByUserId': json['triggeredByUserId'] == null ? undefined : json['triggeredByUserId'],
     };
 }
 
@@ -107,12 +109,12 @@ export function ReprocessingAttemptHistoryResponseToJSON(value?: ReprocessingAtt
     return {
         
         'attemptId': value['attemptId'],
-        'eventId': value['eventId'],
         'attemptedAt': value['attemptedAt'] == null ? undefined : ((value['attemptedAt']).toISOString()),
-        'triggeredByUserId': value['triggeredByUserId'],
+        'eventId': value['eventId'],
+        'mappingVersionUsed': value['mappingVersionUsed'],
         'outcome': value['outcome'],
         'outcomeDetails': value['outcomeDetails'],
-        'mappingVersionUsed': value['mappingVersionUsed'],
+        'triggeredByUserId': value['triggeredByUserId'],
     };
 }
 

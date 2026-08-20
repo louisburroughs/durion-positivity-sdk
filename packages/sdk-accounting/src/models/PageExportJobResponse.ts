@@ -40,46 +40,16 @@ import {
 export interface PageExportJobResponse {
     /**
      * 
-     * @type {number}
-     * @memberof PageExportJobResponse
-     */
-    totalElements?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PageExportJobResponse
-     */
-    totalPages?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PageExportJobResponse
-     */
-    size?: number;
-    /**
-     * 
      * @type {Array<ExportJobResponse>}
      * @memberof PageExportJobResponse
      */
     content?: Array<ExportJobResponse>;
     /**
      * 
-     * @type {number}
+     * @type {boolean}
      * @memberof PageExportJobResponse
      */
-    number?: number;
-    /**
-     * 
-     * @type {PageableObject}
-     * @memberof PageExportJobResponse
-     */
-    pageable?: PageableObject;
-    /**
-     * 
-     * @type {SortObject}
-     * @memberof PageExportJobResponse
-     */
-    sort?: SortObject;
+    empty?: boolean;
     /**
      * 
      * @type {boolean}
@@ -97,13 +67,43 @@ export interface PageExportJobResponse {
      * @type {number}
      * @memberof PageExportJobResponse
      */
+    number?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageExportJobResponse
+     */
     numberOfElements?: number;
     /**
      * 
-     * @type {boolean}
+     * @type {PageableObject}
      * @memberof PageExportJobResponse
      */
-    empty?: boolean;
+    pageable?: PageableObject;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageExportJobResponse
+     */
+    size?: number;
+    /**
+     * 
+     * @type {SortObject}
+     * @memberof PageExportJobResponse
+     */
+    sort?: SortObject;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageExportJobResponse
+     */
+    totalElements?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof PageExportJobResponse
+     */
+    totalPages?: number;
 }
 
 /**
@@ -123,17 +123,17 @@ export function PageExportJobResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
-        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'size': json['size'] == null ? undefined : json['size'],
         'content': json['content'] == null ? undefined : ((json['content'] as Array<any>).map(ExportJobResponseFromJSON)),
-        'number': json['number'] == null ? undefined : json['number'],
-        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
-        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'empty': json['empty'] == null ? undefined : json['empty'],
         'first': json['first'] == null ? undefined : json['first'],
         'last': json['last'] == null ? undefined : json['last'],
+        'number': json['number'] == null ? undefined : json['number'],
         'numberOfElements': json['numberOfElements'] == null ? undefined : json['numberOfElements'],
-        'empty': json['empty'] == null ? undefined : json['empty'],
+        'pageable': json['pageable'] == null ? undefined : PageableObjectFromJSON(json['pageable']),
+        'size': json['size'] == null ? undefined : json['size'],
+        'sort': json['sort'] == null ? undefined : SortObjectFromJSON(json['sort']),
+        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
+        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
     };
 }
 
@@ -143,17 +143,17 @@ export function PageExportJobResponseToJSON(value?: PageExportJobResponse | null
     }
     return {
         
-        'totalElements': value['totalElements'],
-        'totalPages': value['totalPages'],
-        'size': value['size'],
         'content': value['content'] == null ? undefined : ((value['content'] as Array<any>).map(ExportJobResponseToJSON)),
-        'number': value['number'],
-        'pageable': PageableObjectToJSON(value['pageable']),
-        'sort': SortObjectToJSON(value['sort']),
+        'empty': value['empty'],
         'first': value['first'],
         'last': value['last'],
+        'number': value['number'],
         'numberOfElements': value['numberOfElements'],
-        'empty': value['empty'],
+        'pageable': PageableObjectToJSON(value['pageable']),
+        'size': value['size'],
+        'sort': SortObjectToJSON(value['sort']),
+        'totalElements': value['totalElements'],
+        'totalPages': value['totalPages'],
     };
 }
 

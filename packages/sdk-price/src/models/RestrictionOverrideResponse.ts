@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload confirming a created sale-restriction override
  * @export
  * @interface RestrictionOverrideResponse
  */
 export interface RestrictionOverrideResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof RestrictionOverrideResponse
-     */
-    overrideId?: string;
-    /**
-     * 
+     * Timestamp when the override expires
      * @type {Date}
      * @memberof RestrictionOverrideResponse
      */
-    expiresAt?: Date;
+    expiresAt: Date;
+    /**
+     * Identifier of the created override
+     * @type {string}
+     * @memberof RestrictionOverrideResponse
+     */
+    overrideId: string;
 }
 
 /**
  * Check if a given object implements the RestrictionOverrideResponse interface.
  */
 export function instanceOfRestrictionOverrideResponse(value: object): boolean {
+    if (!('expiresAt' in value)) return false;
+    if (!('overrideId' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function RestrictionOverrideResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'overrideId': json['overrideId'] == null ? undefined : json['overrideId'],
-        'expiresAt': json['expiresAt'] == null ? undefined : (new Date(json['expiresAt'])),
+        'expiresAt': (new Date(json['expiresAt'])),
+        'overrideId': json['overrideId'],
     };
 }
 
@@ -61,8 +63,8 @@ export function RestrictionOverrideResponseToJSON(value?: RestrictionOverrideRes
     }
     return {
         
+        'expiresAt': ((value['expiresAt']).toISOString()),
         'overrideId': value['overrideId'],
-        'expiresAt': value['expiresAt'] == null ? undefined : ((value['expiresAt']).toISOString()),
     };
 }
 

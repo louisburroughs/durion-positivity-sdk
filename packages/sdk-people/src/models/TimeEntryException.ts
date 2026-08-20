@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface TimeEntryException {
     /**
-     * Unique identifier for the exception
-     * @type {string}
+     * Timestamp when the exception was detected
+     * @type {Date}
      * @memberof TimeEntryException
      */
-    readonly exceptionId?: string;
+    detectedAt?: Date;
     /**
      * Employee identifier associated with the exception
      * @type {string}
@@ -32,17 +32,35 @@ export interface TimeEntryException {
      */
     employeeId: string;
     /**
-     * Work date when the exception occurred
-     * @type {Date}
-     * @memberof TimeEntryException
-     */
-    workDate: Date;
-    /**
      * Exception code identifying the type of exception
      * @type {string}
      * @memberof TimeEntryException
      */
     exceptionCode: string;
+    /**
+     * Unique identifier for the exception
+     * @type {string}
+     * @memberof TimeEntryException
+     */
+    readonly exceptionId?: string;
+    /**
+     * Notes describing resolution or actions taken
+     * @type {string}
+     * @memberof TimeEntryException
+     */
+    resolutionNotes?: string;
+    /**
+     * Timestamp when the exception was resolved
+     * @type {Date}
+     * @memberof TimeEntryException
+     */
+    resolvedAt?: Date;
+    /**
+     * User who resolved the exception
+     * @type {string}
+     * @memberof TimeEntryException
+     */
+    resolvedBy?: string;
     /**
      * Severity level of the exception
      * @type {string}
@@ -62,29 +80,11 @@ export interface TimeEntryException {
      */
     timeEntryId?: string;
     /**
-     * Notes describing resolution or actions taken
-     * @type {string}
-     * @memberof TimeEntryException
-     */
-    resolutionNotes?: string;
-    /**
-     * Timestamp when the exception was detected
+     * Work date when the exception occurred
      * @type {Date}
      * @memberof TimeEntryException
      */
-    detectedAt?: Date;
-    /**
-     * User who resolved the exception
-     * @type {string}
-     * @memberof TimeEntryException
-     */
-    resolvedBy?: string;
-    /**
-     * Timestamp when the exception was resolved
-     * @type {Date}
-     * @memberof TimeEntryException
-     */
-    resolvedAt?: Date;
+    workDate: Date;
 }
 
 /**
@@ -112,10 +112,10 @@ export enum TimeEntryExceptionStatusEnum {
  */
 export function instanceOfTimeEntryException(value: object): boolean {
     if (!('employeeId' in value)) return false;
-    if (!('workDate' in value)) return false;
     if (!('exceptionCode' in value)) return false;
     if (!('severity' in value)) return false;
     if (!('status' in value)) return false;
+    if (!('workDate' in value)) return false;
     return true;
 }
 
@@ -129,17 +129,17 @@ export function TimeEntryExceptionFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'exceptionId': json['exceptionId'] == null ? undefined : json['exceptionId'],
+        'detectedAt': json['detectedAt'] == null ? undefined : (new Date(json['detectedAt'])),
         'employeeId': json['employeeId'],
-        'workDate': (new Date(json['workDate'])),
         'exceptionCode': json['exceptionCode'],
+        'exceptionId': json['exceptionId'] == null ? undefined : json['exceptionId'],
+        'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
+        'resolvedAt': json['resolvedAt'] == null ? undefined : (new Date(json['resolvedAt'])),
+        'resolvedBy': json['resolvedBy'] == null ? undefined : json['resolvedBy'],
         'severity': json['severity'],
         'status': json['status'],
         'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
-        'resolutionNotes': json['resolutionNotes'] == null ? undefined : json['resolutionNotes'],
-        'detectedAt': json['detectedAt'] == null ? undefined : (new Date(json['detectedAt'])),
-        'resolvedBy': json['resolvedBy'] == null ? undefined : json['resolvedBy'],
-        'resolvedAt': json['resolvedAt'] == null ? undefined : (new Date(json['resolvedAt'])),
+        'workDate': (new Date(json['workDate'])),
     };
 }
 
@@ -149,16 +149,16 @@ export function TimeEntryExceptionToJSON(value?: Omit<TimeEntryException, 'excep
     }
     return {
         
+        'detectedAt': value['detectedAt'] == null ? undefined : ((value['detectedAt']).toISOString()),
         'employeeId': value['employeeId'],
-        'workDate': ((value['workDate']).toISOString().substring(0,10)),
         'exceptionCode': value['exceptionCode'],
+        'resolutionNotes': value['resolutionNotes'],
+        'resolvedAt': value['resolvedAt'] == null ? undefined : ((value['resolvedAt']).toISOString()),
+        'resolvedBy': value['resolvedBy'],
         'severity': value['severity'],
         'status': value['status'],
         'timeEntryId': value['timeEntryId'],
-        'resolutionNotes': value['resolutionNotes'],
-        'detectedAt': value['detectedAt'] == null ? undefined : ((value['detectedAt']).toISOString()),
-        'resolvedBy': value['resolvedBy'],
-        'resolvedAt': value['resolvedAt'] == null ? undefined : ((value['resolvedAt']).toISOString()),
+        'workDate': ((value['workDate']).toISOString().substring(0,10)),
     };
 }
 

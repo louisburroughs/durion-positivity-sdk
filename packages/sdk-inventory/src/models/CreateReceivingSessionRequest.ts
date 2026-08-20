@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to open a new inventory receiving session against a source document
  * @export
  * @interface CreateReceivingSessionRequest
  */
 export interface CreateReceivingSessionRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof CreateReceivingSessionRequest
-     */
-    sourceDocumentId: string;
-    /**
-     * 
+     * Method used to enter receiving lines, such as SCAN or MANUAL
      * @type {string}
      * @memberof CreateReceivingSessionRequest
      */
     entryMethod?: string;
+    /**
+     * Identifier of the source document (e.g. purchase order or workorder) being received against
+     * @type {string}
+     * @memberof CreateReceivingSessionRequest
+     */
+    sourceDocumentId: string;
 }
 
 /**
@@ -51,8 +51,8 @@ export function CreateReceivingSessionRequestFromJSONTyped(json: any, ignoreDisc
     }
     return {
         
-        'sourceDocumentId': json['sourceDocumentId'],
         'entryMethod': json['entryMethod'] == null ? undefined : json['entryMethod'],
+        'sourceDocumentId': json['sourceDocumentId'],
     };
 }
 
@@ -62,8 +62,8 @@ export function CreateReceivingSessionRequestToJSON(value?: CreateReceivingSessi
     }
     return {
         
-        'sourceDocumentId': value['sourceDocumentId'],
         'entryMethod': value['entryMethod'],
+        'sourceDocumentId': value['sourceDocumentId'],
     };
 }
 

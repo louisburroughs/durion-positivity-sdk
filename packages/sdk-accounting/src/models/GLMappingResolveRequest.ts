@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to resolve an external code to a GL account at a point in time
  * @export
  * @interface GLMappingResolveRequest
  */
 export interface GLMappingResolveRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof GLMappingResolveRequest
-     */
-    sourceSystem: string;
-    /**
-     * 
+     * External code from the source system
      * @type {string}
      * @memberof GLMappingResolveRequest
      */
     externalCode: string;
     /**
-     * 
+     * Source system identifier
+     * @type {string}
+     * @memberof GLMappingResolveRequest
+     */
+    sourceSystem: string;
+    /**
+     * Transaction date used for temporal mapping resolution
      * @type {Date}
      * @memberof GLMappingResolveRequest
      */
@@ -43,8 +43,8 @@ export interface GLMappingResolveRequest {
  * Check if a given object implements the GLMappingResolveRequest interface.
  */
 export function instanceOfGLMappingResolveRequest(value: object): boolean {
-    if (!('sourceSystem' in value)) return false;
     if (!('externalCode' in value)) return false;
+    if (!('sourceSystem' in value)) return false;
     if (!('transactionDate' in value)) return false;
     return true;
 }
@@ -59,8 +59,8 @@ export function GLMappingResolveRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'sourceSystem': json['sourceSystem'],
         'externalCode': json['externalCode'],
+        'sourceSystem': json['sourceSystem'],
         'transactionDate': (new Date(json['transactionDate'])),
     };
 }
@@ -71,8 +71,8 @@ export function GLMappingResolveRequestToJSON(value?: GLMappingResolveRequest | 
     }
     return {
         
-        'sourceSystem': value['sourceSystem'],
         'externalCode': value['externalCode'],
+        'sourceSystem': value['sourceSystem'],
         'transactionDate': ((value['transactionDate']).toISOString()),
     };
 }

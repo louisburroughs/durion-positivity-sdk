@@ -20,29 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface TaxJurisdiction {
     /**
-     * Country code in ISO 3166-1 alpha-2 format
-     * @type {string}
-     * @memberof TaxJurisdiction
-     */
-    countryCode: string;
-    /**
-     * Region/subdivision code (ISO 3166-2 subdivision part)
-     * @type {string}
-     * @memberof TaxJurisdiction
-     */
-    regionCode?: string;
-    /**
      * Locality/city/municipality name
      * @type {string}
      * @memberof TaxJurisdiction
      */
     city?: string;
     /**
-     * Postal/ZIP code
+     * Country code in ISO 3166-1 alpha-2 format
      * @type {string}
      * @memberof TaxJurisdiction
      */
-    postalCode?: string;
+    countryCode: string;
+    /**
+     * Jurisdiction type
+     * @type {string}
+     * @memberof TaxJurisdiction
+     */
+    jurisdictionType: TaxJurisdictionJurisdictionTypeEnum;
+    /**
+     * I18n key for localized jurisdiction type labels
+     * @type {string}
+     * @memberof TaxJurisdiction
+     */
+    jurisdictionTypeI18nKey?: string;
     /**
      * Primary street address line
      * @type {string}
@@ -56,17 +56,17 @@ export interface TaxJurisdiction {
      */
     line2?: string;
     /**
-     * Tax rate as percentage points
-     * @type {number}
-     * @memberof TaxJurisdiction
-     */
-    taxRate: number;
-    /**
-     * Jurisdiction type
+     * Postal/ZIP code
      * @type {string}
      * @memberof TaxJurisdiction
      */
-    jurisdictionType: TaxJurisdictionJurisdictionTypeEnum;
+    postalCode?: string;
+    /**
+     * Region/subdivision code (ISO 3166-2 subdivision part)
+     * @type {string}
+     * @memberof TaxJurisdiction
+     */
+    regionCode?: string;
     /**
      * Calculated tax amount for this jurisdiction
      * @type {number}
@@ -74,11 +74,11 @@ export interface TaxJurisdiction {
      */
     taxAmount: number;
     /**
-     * I18n key for localized jurisdiction type labels
-     * @type {string}
+     * Tax rate as percentage points
+     * @type {number}
      * @memberof TaxJurisdiction
      */
-    jurisdictionTypeI18nKey?: string;
+    taxRate: number;
 }
 
 /**
@@ -101,9 +101,9 @@ export enum TaxJurisdictionJurisdictionTypeEnum {
  */
 export function instanceOfTaxJurisdiction(value: object): boolean {
     if (!('countryCode' in value)) return false;
-    if (!('taxRate' in value)) return false;
     if (!('jurisdictionType' in value)) return false;
     if (!('taxAmount' in value)) return false;
+    if (!('taxRate' in value)) return false;
     return true;
 }
 
@@ -117,16 +117,16 @@ export function TaxJurisdictionFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'countryCode': json['countryCode'],
-        'regionCode': json['regionCode'] == null ? undefined : json['regionCode'],
         'city': json['city'] == null ? undefined : json['city'],
-        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
+        'countryCode': json['countryCode'],
+        'jurisdictionType': json['jurisdictionType'],
+        'jurisdictionTypeI18nKey': json['jurisdictionTypeI18nKey'] == null ? undefined : json['jurisdictionTypeI18nKey'],
         'line1': json['line1'] == null ? undefined : json['line1'],
         'line2': json['line2'] == null ? undefined : json['line2'],
-        'taxRate': json['taxRate'],
-        'jurisdictionType': json['jurisdictionType'],
+        'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
+        'regionCode': json['regionCode'] == null ? undefined : json['regionCode'],
         'taxAmount': json['taxAmount'],
-        'jurisdictionTypeI18nKey': json['jurisdictionTypeI18nKey'] == null ? undefined : json['jurisdictionTypeI18nKey'],
+        'taxRate': json['taxRate'],
     };
 }
 
@@ -136,16 +136,16 @@ export function TaxJurisdictionToJSON(value?: TaxJurisdiction | null): any {
     }
     return {
         
-        'countryCode': value['countryCode'],
-        'regionCode': value['regionCode'],
         'city': value['city'],
-        'postalCode': value['postalCode'],
+        'countryCode': value['countryCode'],
+        'jurisdictionType': value['jurisdictionType'],
+        'jurisdictionTypeI18nKey': value['jurisdictionTypeI18nKey'],
         'line1': value['line1'],
         'line2': value['line2'],
-        'taxRate': value['taxRate'],
-        'jurisdictionType': value['jurisdictionType'],
+        'postalCode': value['postalCode'],
+        'regionCode': value['regionCode'],
         'taxAmount': value['taxAmount'],
-        'jurisdictionTypeI18nKey': value['jurisdictionTypeI18nKey'],
+        'taxRate': value['taxRate'],
     };
 }
 

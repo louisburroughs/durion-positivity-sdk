@@ -14,83 +14,87 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Billing rules snapshot returned by pos-customer for a customer account
  * @export
  * @interface BillingRuleRefResponse
  */
 export interface BillingRuleRefResponse {
     /**
-     * 
+     * Whether automatic payment is enabled
      * @type {boolean}
      * @memberof BillingRuleRefResponse
      */
-    poRequired?: boolean;
+    autoPayEnabled: boolean;
     /**
-     * 
-     * @type {boolean}
-     * @memberof BillingRuleRefResponse
-     */
-    taxExempt?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof BillingRuleRefResponse
-     */
-    paymentTerms?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof BillingRuleRefResponse
-     */
-    creditLimit?: number;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof BillingRuleRefResponse
-     */
-    creditHold?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof BillingRuleRefResponse
-     */
-    invoiceDeliveryMethod?: string;
-    /**
-     * 
+     * Identifier of the billing address
      * @type {string}
      * @memberof BillingRuleRefResponse
      */
     billingAddressId?: string;
     /**
-     * 
+     * Whether the customer is currently on credit hold
      * @type {boolean}
      * @memberof BillingRuleRefResponse
      */
-    autoPayEnabled?: boolean;
+    creditHold: boolean;
     /**
-     * 
-     * @type {string}
+     * Credit limit extended to the customer
+     * @type {number}
      * @memberof BillingRuleRefResponse
      */
-    discountPolicyRef?: string;
+    creditLimit?: number;
     /**
-     * 
+     * ISO 4217 currency code
      * @type {string}
      * @memberof BillingRuleRefResponse
      */
     currency?: string;
     /**
-     * 
+     * Reference to the applicable discount policy
+     * @type {string}
+     * @memberof BillingRuleRefResponse
+     */
+    discountPolicyRef?: string;
+    /**
+     * Additional extension attributes keyed by name
      * @type {object}
      * @memberof BillingRuleRefResponse
      */
     extensions?: object;
+    /**
+     * Method used to deliver invoices
+     * @type {string}
+     * @memberof BillingRuleRefResponse
+     */
+    invoiceDeliveryMethod?: string;
+    /**
+     * Agreed payment terms
+     * @type {string}
+     * @memberof BillingRuleRefResponse
+     */
+    paymentTerms?: string;
+    /**
+     * Whether a purchase order is required for billing
+     * @type {boolean}
+     * @memberof BillingRuleRefResponse
+     */
+    poRequired: boolean;
+    /**
+     * Whether the customer is tax exempt
+     * @type {boolean}
+     * @memberof BillingRuleRefResponse
+     */
+    taxExempt: boolean;
 }
 
 /**
  * Check if a given object implements the BillingRuleRefResponse interface.
  */
 export function instanceOfBillingRuleRefResponse(value: object): boolean {
+    if (!('autoPayEnabled' in value)) return false;
+    if (!('creditHold' in value)) return false;
+    if (!('poRequired' in value)) return false;
+    if (!('taxExempt' in value)) return false;
     return true;
 }
 
@@ -104,17 +108,17 @@ export function BillingRuleRefResponseFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'poRequired': json['poRequired'] == null ? undefined : json['poRequired'],
-        'taxExempt': json['taxExempt'] == null ? undefined : json['taxExempt'],
-        'paymentTerms': json['paymentTerms'] == null ? undefined : json['paymentTerms'],
-        'creditLimit': json['creditLimit'] == null ? undefined : json['creditLimit'],
-        'creditHold': json['creditHold'] == null ? undefined : json['creditHold'],
-        'invoiceDeliveryMethod': json['invoiceDeliveryMethod'] == null ? undefined : json['invoiceDeliveryMethod'],
+        'autoPayEnabled': json['autoPayEnabled'],
         'billingAddressId': json['billingAddressId'] == null ? undefined : json['billingAddressId'],
-        'autoPayEnabled': json['autoPayEnabled'] == null ? undefined : json['autoPayEnabled'],
-        'discountPolicyRef': json['discountPolicyRef'] == null ? undefined : json['discountPolicyRef'],
+        'creditHold': json['creditHold'],
+        'creditLimit': json['creditLimit'] == null ? undefined : json['creditLimit'],
         'currency': json['currency'] == null ? undefined : json['currency'],
+        'discountPolicyRef': json['discountPolicyRef'] == null ? undefined : json['discountPolicyRef'],
         'extensions': json['extensions'] == null ? undefined : json['extensions'],
+        'invoiceDeliveryMethod': json['invoiceDeliveryMethod'] == null ? undefined : json['invoiceDeliveryMethod'],
+        'paymentTerms': json['paymentTerms'] == null ? undefined : json['paymentTerms'],
+        'poRequired': json['poRequired'],
+        'taxExempt': json['taxExempt'],
     };
 }
 
@@ -124,17 +128,17 @@ export function BillingRuleRefResponseToJSON(value?: BillingRuleRefResponse | nu
     }
     return {
         
+        'autoPayEnabled': value['autoPayEnabled'],
+        'billingAddressId': value['billingAddressId'],
+        'creditHold': value['creditHold'],
+        'creditLimit': value['creditLimit'],
+        'currency': value['currency'],
+        'discountPolicyRef': value['discountPolicyRef'],
+        'extensions': value['extensions'],
+        'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],
+        'paymentTerms': value['paymentTerms'],
         'poRequired': value['poRequired'],
         'taxExempt': value['taxExempt'],
-        'paymentTerms': value['paymentTerms'],
-        'creditLimit': value['creditLimit'],
-        'creditHold': value['creditHold'],
-        'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],
-        'billingAddressId': value['billingAddressId'],
-        'autoPayEnabled': value['autoPayEnabled'],
-        'discountPolicyRef': value['discountPolicyRef'],
-        'currency': value['currency'],
-        'extensions': value['extensions'],
     };
 }
 

@@ -21,35 +21,35 @@ import {
 } from './FitmentBulkIngestRecord';
 
 /**
- * 
+ * Generic bulk ingest request: a batch of records for a job scoped to a location
  * @export
  * @interface BulkIngestRequestFitmentBulkIngestRecord
  */
 export interface BulkIngestRequestFitmentBulkIngestRecord {
     /**
-     * 
+     * Identifier of the bulk ingest job
      * @type {string}
      * @memberof BulkIngestRequestFitmentBulkIngestRecord
      */
     jobId: string;
     /**
-     * 
+     * Location the records are ingested for
      * @type {string}
      * @memberof BulkIngestRequestFitmentBulkIngestRecord
      */
     locationId: string;
     /**
-     * 
-     * @type {Array<FitmentBulkIngestRecord>}
-     * @memberof BulkIngestRequestFitmentBulkIngestRecord
-     */
-    records: Array<FitmentBulkIngestRecord>;
-    /**
-     * 
+     * Identifier of the operator submitting the batch
      * @type {string}
      * @memberof BulkIngestRequestFitmentBulkIngestRecord
      */
     operatorId?: string;
+    /**
+     * The records to ingest (at least one); shape depends on the target domain
+     * @type {Array<FitmentBulkIngestRecord>}
+     * @memberof BulkIngestRequestFitmentBulkIngestRecord
+     */
+    records: Array<FitmentBulkIngestRecord>;
 }
 
 /**
@@ -74,8 +74,8 @@ export function BulkIngestRequestFitmentBulkIngestRecordFromJSONTyped(json: any,
         
         'jobId': json['jobId'],
         'locationId': json['locationId'],
-        'records': ((json['records'] as Array<any>).map(FitmentBulkIngestRecordFromJSON)),
         'operatorId': json['operatorId'] == null ? undefined : json['operatorId'],
+        'records': ((json['records'] as Array<any>).map(FitmentBulkIngestRecordFromJSON)),
     };
 }
 
@@ -87,8 +87,8 @@ export function BulkIngestRequestFitmentBulkIngestRecordToJSON(value?: BulkInges
         
         'jobId': value['jobId'],
         'locationId': value['locationId'],
-        'records': ((value['records'] as Array<any>).map(FitmentBulkIngestRecordToJSON)),
         'operatorId': value['operatorId'],
+        'records': ((value['records'] as Array<any>).map(FitmentBulkIngestRecordToJSON)),
     };
 }
 

@@ -27,24 +27,6 @@ import {
  */
 export interface TechnicianAssignmentResponse {
     /**
-     * Work order ID
-     * @type {string}
-     * @memberof TechnicianAssignmentResponse
-     */
-    workorderId?: string;
-    /**
-     * Assigned technician ID
-     * @type {string}
-     * @memberof TechnicianAssignmentResponse
-     */
-    technicianId?: string;
-    /**
-     * Technician display name
-     * @type {string}
-     * @memberof TechnicianAssignmentResponse
-     */
-    technicianName?: string;
-    /**
      * When the technician was assigned
      * @type {Date}
      * @memberof TechnicianAssignmentResponse
@@ -57,23 +39,17 @@ export interface TechnicianAssignmentResponse {
      */
     assignedBy?: string;
     /**
-     * Previous technician ID if this was a reassignment
-     * @type {string}
+     * Full assignment history for the workorder
+     * @type {Array<AssignmentHistoryEntry>}
      * @memberof TechnicianAssignmentResponse
      */
-    previousTechnicianId?: string;
+    assignmentHistory?: Array<AssignmentHistoryEntry>;
     /**
-     * Previous technician name if this was a reassignment
+     * Current workorder status
      * @type {string}
      * @memberof TechnicianAssignmentResponse
      */
-    previousTechnicianName?: string;
-    /**
-     * Status of the workorder after assignment
-     * @type {string}
-     * @memberof TechnicianAssignmentResponse
-     */
-    status?: string;
+    currentStatus?: string;
     /**
      * Operation result message
      * @type {string}
@@ -87,11 +63,17 @@ export interface TechnicianAssignmentResponse {
      */
     notes?: string;
     /**
-     * Reason for reassignment if applicable
+     * Previous technician ID if this was a reassignment
      * @type {string}
      * @memberof TechnicianAssignmentResponse
      */
-    reassignmentReason?: string;
+    previousTechnicianId?: string;
+    /**
+     * Previous technician name if this was a reassignment
+     * @type {string}
+     * @memberof TechnicianAssignmentResponse
+     */
+    previousTechnicianName?: string;
     /**
      * When technician was reassigned
      * @type {Date}
@@ -105,23 +87,41 @@ export interface TechnicianAssignmentResponse {
      */
     reassignedBy?: string;
     /**
+     * Reason for reassignment if applicable
+     * @type {string}
+     * @memberof TechnicianAssignmentResponse
+     */
+    reassignmentReason?: string;
+    /**
+     * Status of the workorder after assignment
+     * @type {string}
+     * @memberof TechnicianAssignmentResponse
+     */
+    status?: string;
+    /**
      * Technician certifications
      * @type {Array<string>}
      * @memberof TechnicianAssignmentResponse
      */
     technicianCertifications?: Array<string>;
     /**
-     * Current workorder status
+     * Assigned technician ID
      * @type {string}
      * @memberof TechnicianAssignmentResponse
      */
-    currentStatus?: string;
+    technicianId?: string;
     /**
-     * Full assignment history for the workorder
-     * @type {Array<AssignmentHistoryEntry>}
+     * Technician display name
+     * @type {string}
      * @memberof TechnicianAssignmentResponse
      */
-    assignmentHistory?: Array<AssignmentHistoryEntry>;
+    technicianName?: string;
+    /**
+     * Work order ID
+     * @type {string}
+     * @memberof TechnicianAssignmentResponse
+     */
+    workorderId?: string;
 }
 
 /**
@@ -141,22 +141,22 @@ export function TechnicianAssignmentResponseFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
-        'technicianName': json['technicianName'] == null ? undefined : json['technicianName'],
         'assignedAt': json['assignedAt'] == null ? undefined : (new Date(json['assignedAt'])),
         'assignedBy': json['assignedBy'] == null ? undefined : json['assignedBy'],
-        'previousTechnicianId': json['previousTechnicianId'] == null ? undefined : json['previousTechnicianId'],
-        'previousTechnicianName': json['previousTechnicianName'] == null ? undefined : json['previousTechnicianName'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'assignmentHistory': json['assignmentHistory'] == null ? undefined : ((json['assignmentHistory'] as Array<any>).map(AssignmentHistoryEntryFromJSON)),
+        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
         'message': json['message'] == null ? undefined : json['message'],
         'notes': json['notes'] == null ? undefined : json['notes'],
-        'reassignmentReason': json['reassignmentReason'] == null ? undefined : json['reassignmentReason'],
+        'previousTechnicianId': json['previousTechnicianId'] == null ? undefined : json['previousTechnicianId'],
+        'previousTechnicianName': json['previousTechnicianName'] == null ? undefined : json['previousTechnicianName'],
         'reassignedAt': json['reassignedAt'] == null ? undefined : (new Date(json['reassignedAt'])),
         'reassignedBy': json['reassignedBy'] == null ? undefined : json['reassignedBy'],
+        'reassignmentReason': json['reassignmentReason'] == null ? undefined : json['reassignmentReason'],
+        'status': json['status'] == null ? undefined : json['status'],
         'technicianCertifications': json['technicianCertifications'] == null ? undefined : json['technicianCertifications'],
-        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
-        'assignmentHistory': json['assignmentHistory'] == null ? undefined : ((json['assignmentHistory'] as Array<any>).map(AssignmentHistoryEntryFromJSON)),
+        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
+        'technicianName': json['technicianName'] == null ? undefined : json['technicianName'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -166,22 +166,22 @@ export function TechnicianAssignmentResponseToJSON(value?: TechnicianAssignmentR
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'technicianId': value['technicianId'],
-        'technicianName': value['technicianName'],
         'assignedAt': value['assignedAt'] == null ? undefined : ((value['assignedAt']).toISOString()),
         'assignedBy': value['assignedBy'],
-        'previousTechnicianId': value['previousTechnicianId'],
-        'previousTechnicianName': value['previousTechnicianName'],
-        'status': value['status'],
+        'assignmentHistory': value['assignmentHistory'] == null ? undefined : ((value['assignmentHistory'] as Array<any>).map(AssignmentHistoryEntryToJSON)),
+        'currentStatus': value['currentStatus'],
         'message': value['message'],
         'notes': value['notes'],
-        'reassignmentReason': value['reassignmentReason'],
+        'previousTechnicianId': value['previousTechnicianId'],
+        'previousTechnicianName': value['previousTechnicianName'],
         'reassignedAt': value['reassignedAt'] == null ? undefined : ((value['reassignedAt']).toISOString()),
         'reassignedBy': value['reassignedBy'],
+        'reassignmentReason': value['reassignmentReason'],
+        'status': value['status'],
         'technicianCertifications': value['technicianCertifications'],
-        'currentStatus': value['currentStatus'],
-        'assignmentHistory': value['assignmentHistory'] == null ? undefined : ((value['assignmentHistory'] as Array<any>).map(AssignmentHistoryEntryToJSON)),
+        'technicianId': value['technicianId'],
+        'technicianName': value['technicianName'],
+        'workorderId': value['workorderId'],
     };
 }
 

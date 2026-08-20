@@ -34,11 +34,11 @@ import {
     TokenPairResponseToJSON,
 } from '../models/index';
 
-export interface LoginOperationRequest {
+export interface LoginUserRequest {
     loginRequest: LoginRequest;
 }
 
-export interface SelfRegisterRequest {
+export interface SelfRegisterUserRequest {
     selfRegistrationRequest: SelfRegistrationRequest;
 }
 
@@ -48,14 +48,14 @@ export interface SelfRegisterRequest {
 export class AuthAPIApi extends runtime.BaseAPI {
 
     /**
-     * Authenticates a user with username and password and returns a JWT token pair.
-     * User login
+     * Authenticates a user with username and password and returns a JWT access token (1-hour) and refresh token (7-day) carrying uid, roles, perm_bits, and perm_ver claims. Use this tool when a person signs in with credentials; do not use refreshTokenPair, which exchanges an existing refresh token, and do not use issueInternalToken, which mints tokens for trusted internal callers without a password. Preconditions: the user account must exist, be enabled, non-expired, hold unexpired credentials, and not be inside an active failed-login lockout window. Required inputs: username and password, both non-blank. Emits a SECURITY_AUTH_LOGIN event, resets the failed-attempt counter on success, and persists the issued token pair for later validation and revocation. Returns 401 with code ACCOUNT_LOCKED while the lockout window is active, INVALID_CREDENTIALS on a bad password, and ACCOUNT_DISABLED, ACCOUNT_EXPIRED, or CREDENTIALS_EXPIRED for the matching account states. 
+     * Authenticate User and Issue Tokens
      */
-    async loginRaw(requestParameters: LoginOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
+    async loginUserRaw(requestParameters: LoginUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TokenPairResponse>> {
         if (requestParameters['loginRequest'] == null) {
             throw new runtime.RequiredError(
                 'loginRequest',
-                'Required parameter "loginRequest" was null or undefined when calling login().'
+                'Required parameter "loginRequest" was null or undefined when calling loginUser().'
             );
         }
 
@@ -77,23 +77,23 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Authenticates a user with username and password and returns a JWT token pair.
-     * User login
+     * Authenticates a user with username and password and returns a JWT access token (1-hour) and refresh token (7-day) carrying uid, roles, perm_bits, and perm_ver claims. Use this tool when a person signs in with credentials; do not use refreshTokenPair, which exchanges an existing refresh token, and do not use issueInternalToken, which mints tokens for trusted internal callers without a password. Preconditions: the user account must exist, be enabled, non-expired, hold unexpired credentials, and not be inside an active failed-login lockout window. Required inputs: username and password, both non-blank. Emits a SECURITY_AUTH_LOGIN event, resets the failed-attempt counter on success, and persists the issued token pair for later validation and revocation. Returns 401 with code ACCOUNT_LOCKED while the lockout window is active, INVALID_CREDENTIALS on a bad password, and ACCOUNT_DISABLED, ACCOUNT_EXPIRED, or CREDENTIALS_EXPIRED for the matching account states. 
+     * Authenticate User and Issue Tokens
      */
-    async login(requestParameters: LoginOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
-        const response = await this.loginRaw(requestParameters, initOverrides);
+    async loginUser(requestParameters: LoginUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
+        const response = await this.loginUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Creates a low-privilege customer account after resolving or creating a linked person record. Successful registration requires a follow-up login and does not issue tokens immediately. Conflict responses include operator guidance for recovery, linked-account, and CRM identity-review cases.
-     * Self-register a new user
+     * Creates a low-privilege SELF_SERVICE_CUSTOMER account for an anonymous person, resolving or creating a linked person record before any account row is written. Use this tool when a customer registers themselves; do not use createUser, the operator-facing endpoint that provisions accounts with arbitrary roles and no identity resolution. Preconditions: no active user may exist for the requested or email-derived username, the resolved person must not already have an active linked user, and CRM identity signals must not require manual review. Required inputs: email, password, firstName, and lastName; username is optional and defaults to the email local part, phone and idpSubject are optional, and idempotencyKey optionally replays a completed attempt instead of duplicating it. Emits a SECURITY_AUTH_SELF_REGISTER event, creates the user, and queues an asynchronous user-person link command, so the response reports linkStatus PENDING and issuedTokens false; a follow-up loginUser call is required to obtain tokens. Returns 409 with code USER_ALREADY_EXISTS, ACCOUNT_RECOVERY_REQUIRED, PERSON_ALREADY_HAS_ACTIVE_USER, CRM_PERSON_CONFLICT, or IDEMPOTENCY_KEY_REUSED; recovery and identity conflicts also open a review case and return its id as referenceId with nextAction and supportAction guidance. 
+     * Self-Register a New Customer Account
      */
-    async selfRegisterRaw(requestParameters: SelfRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SelfRegistrationResponse>> {
+    async selfRegisterUserRaw(requestParameters: SelfRegisterUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SelfRegistrationResponse>> {
         if (requestParameters['selfRegistrationRequest'] == null) {
             throw new runtime.RequiredError(
                 'selfRegistrationRequest',
-                'Required parameter "selfRegistrationRequest" was null or undefined when calling selfRegister().'
+                'Required parameter "selfRegistrationRequest" was null or undefined when calling selfRegisterUser().'
             );
         }
 
@@ -115,11 +115,11 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a low-privilege customer account after resolving or creating a linked person record. Successful registration requires a follow-up login and does not issue tokens immediately. Conflict responses include operator guidance for recovery, linked-account, and CRM identity-review cases.
-     * Self-register a new user
+     * Creates a low-privilege SELF_SERVICE_CUSTOMER account for an anonymous person, resolving or creating a linked person record before any account row is written. Use this tool when a customer registers themselves; do not use createUser, the operator-facing endpoint that provisions accounts with arbitrary roles and no identity resolution. Preconditions: no active user may exist for the requested or email-derived username, the resolved person must not already have an active linked user, and CRM identity signals must not require manual review. Required inputs: email, password, firstName, and lastName; username is optional and defaults to the email local part, phone and idpSubject are optional, and idempotencyKey optionally replays a completed attempt instead of duplicating it. Emits a SECURITY_AUTH_SELF_REGISTER event, creates the user, and queues an asynchronous user-person link command, so the response reports linkStatus PENDING and issuedTokens false; a follow-up loginUser call is required to obtain tokens. Returns 409 with code USER_ALREADY_EXISTS, ACCOUNT_RECOVERY_REQUIRED, PERSON_ALREADY_HAS_ACTIVE_USER, CRM_PERSON_CONFLICT, or IDEMPOTENCY_KEY_REUSED; recovery and identity conflicts also open a review case and return its id as referenceId with nextAction and supportAction guidance. 
+     * Self-Register a New Customer Account
      */
-    async selfRegister(requestParameters: SelfRegisterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SelfRegistrationResponse> {
-        const response = await this.selfRegisterRaw(requestParameters, initOverrides);
+    async selfRegisterUser(requestParameters: SelfRegisterUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SelfRegistrationResponse> {
+        const response = await this.selfRegisterUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

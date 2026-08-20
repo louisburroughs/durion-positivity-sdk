@@ -21,53 +21,11 @@ import {
 } from './EmployeeContactInfoDto';
 
 /**
- * 
+ * Employee profile returned by employee read and write operations
  * @export
  * @interface EmployeeProfileDto
  */
 export interface EmployeeProfileDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeProfileDto
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeProfileDto
-     */
-    legalName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeProfileDto
-     */
-    preferredName?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeProfileDto
-     */
-    employeeNumber?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeProfileDto
-     */
-    status?: EmployeeProfileDtoStatusEnum;
-    /**
-     * 
-     * @type {Date}
-     * @memberof EmployeeProfileDto
-     */
-    hireDate?: Date;
-    /**
-     * 
-     * @type {Date}
-     * @memberof EmployeeProfileDto
-     */
-    terminationDate?: Date;
     /**
      * 
      * @type {EmployeeContactInfoDto}
@@ -75,13 +33,73 @@ export interface EmployeeProfileDto {
      */
     contactInfo?: EmployeeContactInfoDto;
     /**
-     * 
+     * Timestamp the employee record was created
+     * @type {Date}
+     * @memberof EmployeeProfileDto
+     */
+    createdAt?: Date;
+    /**
+     * Unique employee number
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    employeeNumber: string;
+    /**
+     * First (given) name of the employee
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    firstName: string;
+    /**
+     * Date the employee was hired
+     * @type {Date}
+     * @memberof EmployeeProfileDto
+     */
+    hireDate: Date;
+    /**
+     * Employee identifier
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    id: string;
+    /**
+     * Last (family) name of the employee
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    lastName: string;
+    /**
+     * Preferred name of the employee
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    preferredName?: string;
+    /**
+     * Employment status of the employee
+     * @type {string}
+     * @memberof EmployeeProfileDto
+     */
+    status: EmployeeProfileDtoStatusEnum;
+    /**
+     * Timestamp the current status became effective
      * @type {Date}
      * @memberof EmployeeProfileDto
      */
     statusEffectiveAt?: Date;
     /**
-     * 
+     * Date the employee was terminated, if applicable
+     * @type {Date}
+     * @memberof EmployeeProfileDto
+     */
+    terminationDate?: Date;
+    /**
+     * Timestamp the employee record was last updated
+     * @type {Date}
+     * @memberof EmployeeProfileDto
+     */
+    updatedAt?: Date;
+    /**
+     * Non-fatal warnings raised while resolving the profile
      * @type {Array<string>}
      * @memberof EmployeeProfileDto
      */
@@ -105,6 +123,12 @@ export enum EmployeeProfileDtoStatusEnum {
  * Check if a given object implements the EmployeeProfileDto interface.
  */
 export function instanceOfEmployeeProfileDto(value: object): boolean {
+    if (!('employeeNumber' in value)) return false;
+    if (!('firstName' in value)) return false;
+    if (!('hireDate' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('lastName' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -118,15 +142,18 @@ export function EmployeeProfileDtoFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'legalName': json['legalName'] == null ? undefined : json['legalName'],
-        'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
-        'employeeNumber': json['employeeNumber'] == null ? undefined : json['employeeNumber'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'hireDate': json['hireDate'] == null ? undefined : (new Date(json['hireDate'])),
-        'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
         'contactInfo': json['contactInfo'] == null ? undefined : EmployeeContactInfoDtoFromJSON(json['contactInfo']),
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'employeeNumber': json['employeeNumber'],
+        'firstName': json['firstName'],
+        'hireDate': (new Date(json['hireDate'])),
+        'id': json['id'],
+        'lastName': json['lastName'],
+        'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
+        'status': json['status'],
         'statusEffectiveAt': json['statusEffectiveAt'] == null ? undefined : (new Date(json['statusEffectiveAt'])),
+        'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
+        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
         'warnings': json['warnings'] == null ? undefined : json['warnings'],
     };
 }
@@ -137,15 +164,18 @@ export function EmployeeProfileDtoToJSON(value?: EmployeeProfileDto | null): any
     }
     return {
         
-        'id': value['id'],
-        'legalName': value['legalName'],
-        'preferredName': value['preferredName'],
-        'employeeNumber': value['employeeNumber'],
-        'status': value['status'],
-        'hireDate': value['hireDate'] == null ? undefined : ((value['hireDate']).toISOString().substring(0,10)),
-        'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
         'contactInfo': EmployeeContactInfoDtoToJSON(value['contactInfo']),
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'employeeNumber': value['employeeNumber'],
+        'firstName': value['firstName'],
+        'hireDate': ((value['hireDate']).toISOString().substring(0,10)),
+        'id': value['id'],
+        'lastName': value['lastName'],
+        'preferredName': value['preferredName'],
+        'status': value['status'],
         'statusEffectiveAt': value['statusEffectiveAt'] == null ? undefined : ((value['statusEffectiveAt']).toISOString()),
+        'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
+        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
         'warnings': value['warnings'],
     };
 }

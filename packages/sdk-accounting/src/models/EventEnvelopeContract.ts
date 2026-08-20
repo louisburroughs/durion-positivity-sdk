@@ -27,29 +27,31 @@ import {
  */
 export interface EventEnvelopeContract {
     /**
-     * Contract schema version
-     * @type {string}
-     * @memberof EventEnvelopeContract
-     */
-    version?: string;
-    /**
-     * Field definitions in the event envelope
-     * @type {Array<ContractField>}
-     * @memberof EventEnvelopeContract
-     */
-    fields?: Array<ContractField>;
-    /**
      * Example event payloads
      * @type {Array<string>}
      * @memberof EventEnvelopeContract
      */
     examples?: Array<string>;
+    /**
+     * Field definitions in the event envelope
+     * @type {Array<ContractField>}
+     * @memberof EventEnvelopeContract
+     */
+    fields: Array<ContractField>;
+    /**
+     * Contract schema version
+     * @type {string}
+     * @memberof EventEnvelopeContract
+     */
+    version: string;
 }
 
 /**
  * Check if a given object implements the EventEnvelopeContract interface.
  */
 export function instanceOfEventEnvelopeContract(value: object): boolean {
+    if (!('fields' in value)) return false;
+    if (!('version' in value)) return false;
     return true;
 }
 
@@ -63,9 +65,9 @@ export function EventEnvelopeContractFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'version': json['version'] == null ? undefined : json['version'],
-        'fields': json['fields'] == null ? undefined : ((json['fields'] as Array<any>).map(ContractFieldFromJSON)),
         'examples': json['examples'] == null ? undefined : json['examples'],
+        'fields': ((json['fields'] as Array<any>).map(ContractFieldFromJSON)),
+        'version': json['version'],
     };
 }
 
@@ -75,9 +77,9 @@ export function EventEnvelopeContractToJSON(value?: EventEnvelopeContract | null
     }
     return {
         
-        'version': value['version'],
-        'fields': value['fields'] == null ? undefined : ((value['fields'] as Array<any>).map(ContractFieldToJSON)),
         'examples': value['examples'],
+        'fields': ((value['fields'] as Array<any>).map(ContractFieldToJSON)),
+        'version': value['version'],
     };
 }
 

@@ -20,55 +20,64 @@ import { mapValues } from '../runtime';
  */
 export interface StartTravelSegmentRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof StartTravelSegmentRequest
-     */
-    mobileWorkAssignmentId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StartTravelSegmentRequest
-     */
-    technicianId: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StartTravelSegmentRequest
-     */
-    segmentType: StartTravelSegmentRequestSegmentTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof StartTravelSegmentRequest
-     */
-    fromLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StartTravelSegmentRequest
-     */
-    toLocationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof StartTravelSegmentRequest
-     */
-    workOrderId?: string;
-    /**
-     * 
+     * Identifier of the person on whose behalf this segment is entered, if applicable
      * @type {string}
      * @memberof StartTravelSegmentRequest
      */
     actedForPersonId?: string;
     /**
-     * 
+     * Identifier of the origin location for the travel leg
+     * @type {string}
+     * @memberof StartTravelSegmentRequest
+     */
+    fromLocationId?: string;
+    /**
+     * Identifier of the mobile work assignment the travel segment belongs to
+     * @type {string}
+     * @memberof StartTravelSegmentRequest
+     */
+    mobileWorkAssignmentId: string;
+    /**
+     * Reason code when the segment is entered on behalf of another person
      * @type {string}
      * @memberof StartTravelSegmentRequest
      */
     onBehalfReasonCode?: StartTravelSegmentRequestOnBehalfReasonCodeEnum;
+    /**
+     * Direction or purpose of this travel leg
+     * @type {string}
+     * @memberof StartTravelSegmentRequest
+     */
+    segmentType: StartTravelSegmentRequestSegmentTypeEnum;
+    /**
+     * Identifier of the technician performing the travel
+     * @type {string}
+     * @memberof StartTravelSegmentRequest
+     */
+    technicianId: string;
+    /**
+     * Identifier of the destination location for the travel leg
+     * @type {string}
+     * @memberof StartTravelSegmentRequest
+     */
+    toLocationId?: string;
+    /**
+     * Identifier of the workorder associated with the travel
+     * @type {string}
+     * @memberof StartTravelSegmentRequest
+     */
+    workOrderId?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum StartTravelSegmentRequestOnBehalfReasonCodeEnum {
+    TechnicianUnavailable = 'TECHNICIAN_UNAVAILABLE',
+    ForgotToClock = 'FORGOT_TO_CLOCK',
+    DataEntryError = 'DATA_ENTRY_ERROR'
+}
 /**
 * @export
 * @enum {string}
@@ -81,15 +90,6 @@ export enum StartTravelSegmentRequestSegmentTypeEnum {
     TravelBetweenSites = 'TRAVEL_BETWEEN_SITES',
     Deadhead = 'DEADHEAD'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum StartTravelSegmentRequestOnBehalfReasonCodeEnum {
-    TechnicianUnavailable = 'TECHNICIAN_UNAVAILABLE',
-    ForgotToClock = 'FORGOT_TO_CLOCK',
-    DataEntryError = 'DATA_ENTRY_ERROR'
-}
 
 
 /**
@@ -97,8 +97,8 @@ export enum StartTravelSegmentRequestOnBehalfReasonCodeEnum {
  */
 export function instanceOfStartTravelSegmentRequest(value: object): boolean {
     if (!('mobileWorkAssignmentId' in value)) return false;
-    if (!('technicianId' in value)) return false;
     if (!('segmentType' in value)) return false;
+    if (!('technicianId' in value)) return false;
     return true;
 }
 
@@ -112,14 +112,14 @@ export function StartTravelSegmentRequestFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'mobileWorkAssignmentId': json['mobileWorkAssignmentId'],
-        'technicianId': json['technicianId'],
-        'segmentType': json['segmentType'],
+        'actedForPersonId': json['actedForPersonId'] == null ? undefined : json['actedForPersonId'],
         'fromLocationId': json['fromLocationId'] == null ? undefined : json['fromLocationId'],
+        'mobileWorkAssignmentId': json['mobileWorkAssignmentId'],
+        'onBehalfReasonCode': json['onBehalfReasonCode'] == null ? undefined : json['onBehalfReasonCode'],
+        'segmentType': json['segmentType'],
+        'technicianId': json['technicianId'],
         'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
         'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
-        'actedForPersonId': json['actedForPersonId'] == null ? undefined : json['actedForPersonId'],
-        'onBehalfReasonCode': json['onBehalfReasonCode'] == null ? undefined : json['onBehalfReasonCode'],
     };
 }
 
@@ -129,14 +129,14 @@ export function StartTravelSegmentRequestToJSON(value?: StartTravelSegmentReques
     }
     return {
         
-        'mobileWorkAssignmentId': value['mobileWorkAssignmentId'],
-        'technicianId': value['technicianId'],
-        'segmentType': value['segmentType'],
+        'actedForPersonId': value['actedForPersonId'],
         'fromLocationId': value['fromLocationId'],
+        'mobileWorkAssignmentId': value['mobileWorkAssignmentId'],
+        'onBehalfReasonCode': value['onBehalfReasonCode'],
+        'segmentType': value['segmentType'],
+        'technicianId': value['technicianId'],
         'toLocationId': value['toLocationId'],
         'workOrderId': value['workOrderId'],
-        'actedForPersonId': value['actedForPersonId'],
-        'onBehalfReasonCode': value['onBehalfReasonCode'],
     };
 }
 

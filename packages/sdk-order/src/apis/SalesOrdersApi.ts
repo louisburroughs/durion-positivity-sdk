@@ -16,54 +16,100 @@
 import * as runtime from '../runtime';
 import type {
   AddItemRequest,
+  CheckoutRequest,
   CreateCartRequest,
   LinkSourceRequest,
+  OrderDiscountRequest,
   SalesOrderLineResponse,
   SalesOrderResponse,
   UpdateItemRequest,
+  VoidOrderRequest,
 } from '../models/index';
 import {
     AddItemRequestFromJSON,
     AddItemRequestToJSON,
+    CheckoutRequestFromJSON,
+    CheckoutRequestToJSON,
     CreateCartRequestFromJSON,
     CreateCartRequestToJSON,
     LinkSourceRequestFromJSON,
     LinkSourceRequestToJSON,
+    OrderDiscountRequestFromJSON,
+    OrderDiscountRequestToJSON,
     SalesOrderLineResponseFromJSON,
     SalesOrderLineResponseToJSON,
     SalesOrderResponseFromJSON,
     SalesOrderResponseToJSON,
     UpdateItemRequestFromJSON,
     UpdateItemRequestToJSON,
+    VoidOrderRequestFromJSON,
+    VoidOrderRequestToJSON,
 } from '../models/index';
 
-export interface AddItemOperationRequest {
+export interface AddCartItemRequest {
     orderId: string;
     addItemRequest: AddItemRequest;
 }
 
+export interface ApplyOrderDiscountRequest {
+    orderId: string;
+    orderDiscountRequest: OrderDiscountRequest;
+}
+
+export interface CheckoutOrderRequest {
+    orderId: string;
+    idempotencyKey: string;
+    checkoutRequest?: CheckoutRequest;
+}
+
+export interface ClearOrderDiscountRequest {
+    orderId: string;
+}
+
 export interface CreateCartOperationRequest {
     createCartRequest: CreateCartRequest;
+    idempotencyKey?: string;
 }
 
 export interface GetOrderRequest {
     orderId: string;
 }
 
-export interface LinkSourceOperationRequest {
+export interface LinkOrderSourceRequest {
     orderId: string;
     linkSourceRequest: LinkSourceRequest;
 }
 
-export interface RemoveItemRequest {
+export interface ListCartsRequest {
+    clerkId?: string;
+    terminalId?: string;
+    status?: string;
+    page?: number;
+    size?: number;
+}
+
+export interface QuoteCartRequest {
+    orderId: string;
+}
+
+export interface RemoveCartItemRequest {
     orderId: string;
     lineId: string;
 }
 
-export interface UpdateItemQuantityRequest {
+export interface ReopenQuoteRequest {
+    orderId: string;
+}
+
+export interface UpdateCartItemQuantityRequest {
     orderId: string;
     lineId: string;
     updateItemRequest: UpdateItemRequest;
+}
+
+export interface VoidOrderOperationRequest {
+    orderId: string;
+    voidOrderRequest?: VoidOrderRequest;
 }
 
 /**
@@ -72,21 +118,21 @@ export interface UpdateItemQuantityRequest {
 export class SalesOrdersApi extends runtime.BaseAPI {
 
     /**
-     * Add a line item to an existing sales order cart using SKU, quantity, and optional pricing context.
-     * Add an item to a sales order cart
+     * Adds a line item to a DRAFT sales order cart, pricing it through the pricing service unless a permissioned manual price is supplied, and marking the line AVAILABLE or BACKORDER from an inventory availability check. Use this tool to put a SKU on an existing cart; do not use updateCartItemQuantity, which only changes the quantity of a line already on the cart. Preconditions: the order must exist and be DRAFT, and a manual price requires the order:line:enter_manual_price permission. Required inputs: itemSku and quantity (minimum 1); manualPrice, reasonCode, notes, and serialNumbers (never more than quantity) are optional, and a client-supplied lineUuid makes the call replay-safe — a replay with a known lineUuid updates that line\'s quantity instead of duplicating it. Emits an ORDER_CART_ITEM_ADD event, recomputes order totals, and marks tax stale. Returns 400 when the SKU is unknown, 404 when the order does not exist, 409 when the order is not DRAFT or the lineUuid was previously used for a different SKU, and 422 when pricing is unavailable or serialNumbers exceed the quantity. 
+     * Add an Item to a Cart
      */
-    async addItemRaw(requestParameters: AddItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderLineResponse>> {
+    async addCartItemRaw(requestParameters: AddCartItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderLineResponse>> {
         if (requestParameters['orderId'] == null) {
             throw new runtime.RequiredError(
                 'orderId',
-                'Required parameter "orderId" was null or undefined when calling addItem().'
+                'Required parameter "orderId" was null or undefined when calling addCartItem().'
             );
         }
 
         if (requestParameters['addItemRequest'] == null) {
             throw new runtime.RequiredError(
                 'addItemRequest',
-                'Required parameter "addItemRequest" was null or undefined when calling addItem().'
+                'Required parameter "addItemRequest" was null or undefined when calling addCartItem().'
             );
         }
 
@@ -116,17 +162,170 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Add a line item to an existing sales order cart using SKU, quantity, and optional pricing context.
-     * Add an item to a sales order cart
+     * Adds a line item to a DRAFT sales order cart, pricing it through the pricing service unless a permissioned manual price is supplied, and marking the line AVAILABLE or BACKORDER from an inventory availability check. Use this tool to put a SKU on an existing cart; do not use updateCartItemQuantity, which only changes the quantity of a line already on the cart. Preconditions: the order must exist and be DRAFT, and a manual price requires the order:line:enter_manual_price permission. Required inputs: itemSku and quantity (minimum 1); manualPrice, reasonCode, notes, and serialNumbers (never more than quantity) are optional, and a client-supplied lineUuid makes the call replay-safe — a replay with a known lineUuid updates that line\'s quantity instead of duplicating it. Emits an ORDER_CART_ITEM_ADD event, recomputes order totals, and marks tax stale. Returns 400 when the SKU is unknown, 404 when the order does not exist, 409 when the order is not DRAFT or the lineUuid was previously used for a different SKU, and 422 when pricing is unavailable or serialNumbers exceed the quantity. 
+     * Add an Item to a Cart
      */
-    async addItem(requestParameters: AddItemOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderLineResponse> {
-        const response = await this.addItemRaw(requestParameters, initOverrides);
+    async addCartItem(requestParameters: AddCartItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderLineResponse> {
+        const response = await this.addCartItemRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Create a new sales order cart for a customer, terminal, and optional vehicle context.
-     * Create a sales order cart
+     * Applies or replaces the single order-level discount on a DRAFT cart, allocated pro-rata across lines when totals are recomputed. Use this tool for a whole-order concession; do not use applyPriceOverride, which changes one line\'s unit price through the price-override approval workflow. Preconditions: the order must exist and be DRAFT. Required inputs: type (PERCENT or AMOUNT) and a positive value — a PERCENT value must not exceed 100; reasonCode is optional. Emits an ORDER_CART_DISCOUNT_APPLY event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 409 when the order is not DRAFT, and 422 when the type or value is invalid. 
+     * Apply an Order-Level Discount
+     */
+    async applyOrderDiscountRaw(requestParameters: ApplyOrderDiscountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling applyOrderDiscount().'
+            );
+        }
+
+        if (requestParameters['orderDiscountRequest'] == null) {
+            throw new runtime.RequiredError(
+                'orderDiscountRequest',
+                'Required parameter "orderDiscountRequest" was null or undefined when calling applyOrderDiscount().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/discount`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OrderDiscountRequestToJSON(requestParameters['orderDiscountRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SalesOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Applies or replaces the single order-level discount on a DRAFT cart, allocated pro-rata across lines when totals are recomputed. Use this tool for a whole-order concession; do not use applyPriceOverride, which changes one line\'s unit price through the price-override approval workflow. Preconditions: the order must exist and be DRAFT. Required inputs: type (PERCENT or AMOUNT) and a positive value — a PERCENT value must not exceed 100; reasonCode is optional. Emits an ORDER_CART_DISCOUNT_APPLY event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 409 when the order is not DRAFT, and 422 when the type or value is invalid. 
+     * Apply an Order-Level Discount
+     */
+    async applyOrderDiscount(requestParameters: ApplyOrderDiscountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.applyOrderDiscountRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Freezes a DRAFT or QUOTED cart into PENDING_PAYMENT: revalidates availability and serial capture, runs the final reprice and tax computation, and synchronously creates the fronting invoice at pos-invoice, rolling the whole checkout back if invoice creation fails. Use this tool when the customer is ready to pay; do not use quoteCart, which produces a resumable quote, and do not use voidOrder, which abandons an order already in PENDING_PAYMENT. Preconditions: the cart must be non-empty with customer validation not PENDING, every line must have sufficient inventory, serial-tracked lines must carry one serial per unit (lot-tracked at least one), and ON_ACCOUNT additionally requires the order:order:charge_on_account permission and a VALIDATED commercial customer with payment terms and no credit hold. Required inputs: the Idempotency-Key header; the body is optional with tenderType DEFAULT or ON_ACCOUNT — DEFAULT settles asynchronously via payment events that complete the order when the balance reaches zero, while ON_ACCOUNT settles against the AR invoice and completes the order immediately. Emits an ORDER_CHECKOUT event; an ON_ACCOUNT checkout also records a settled ON_ACCOUNT ledger entry and publishes an order-completed fact. Returns 201 on checkout, 200 when the same Idempotency-Key replays the checked-out order, 409 when the key belongs to a different order or the status does not allow checkout, 422 when the cart is empty, customer validation is pending, availability or serial capture is insufficient, or on-account eligibility fails, and 503 when the tax or invoicing service is unreachable. 
+     * Check Out a Sales Order
+     */
+    async checkoutOrderRaw(requestParameters: CheckoutOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling checkoutOrder().'
+            );
+        }
+
+        if (requestParameters['idempotencyKey'] == null) {
+            throw new runtime.RequiredError(
+                'idempotencyKey',
+                'Required parameter "idempotencyKey" was null or undefined when calling checkoutOrder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/{orderId}/checkout`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: CheckoutRequestToJSON(requestParameters['checkoutRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SalesOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Freezes a DRAFT or QUOTED cart into PENDING_PAYMENT: revalidates availability and serial capture, runs the final reprice and tax computation, and synchronously creates the fronting invoice at pos-invoice, rolling the whole checkout back if invoice creation fails. Use this tool when the customer is ready to pay; do not use quoteCart, which produces a resumable quote, and do not use voidOrder, which abandons an order already in PENDING_PAYMENT. Preconditions: the cart must be non-empty with customer validation not PENDING, every line must have sufficient inventory, serial-tracked lines must carry one serial per unit (lot-tracked at least one), and ON_ACCOUNT additionally requires the order:order:charge_on_account permission and a VALIDATED commercial customer with payment terms and no credit hold. Required inputs: the Idempotency-Key header; the body is optional with tenderType DEFAULT or ON_ACCOUNT — DEFAULT settles asynchronously via payment events that complete the order when the balance reaches zero, while ON_ACCOUNT settles against the AR invoice and completes the order immediately. Emits an ORDER_CHECKOUT event; an ON_ACCOUNT checkout also records a settled ON_ACCOUNT ledger entry and publishes an order-completed fact. Returns 201 on checkout, 200 when the same Idempotency-Key replays the checked-out order, 409 when the key belongs to a different order or the status does not allow checkout, 422 when the cart is empty, customer validation is pending, availability or serial capture is insufficient, or on-account eligibility fails, and 503 when the tax or invoicing service is unreachable. 
+     * Check Out a Sales Order
+     */
+    async checkoutOrder(requestParameters: CheckoutOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.checkoutOrderRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Clears any order-level discount from a DRAFT cart and recomputes totals. Use this tool to withdraw a whole-order concession; do not use applyOrderDiscount, which sets or replaces the discount. Preconditions: the order must exist and be DRAFT; clearing a cart that has no discount succeeds. Required inputs: orderId (UUID) as a path parameter; there is no request body. Emits an ORDER_CART_DISCOUNT_REMOVE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, and 409 when the order is not DRAFT. 
+     * Remove the Order-Level Discount
+     */
+    async clearOrderDiscountRaw(requestParameters: ClearOrderDiscountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling clearOrderDiscount().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/discount`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SalesOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Clears any order-level discount from a DRAFT cart and recomputes totals. Use this tool to withdraw a whole-order concession; do not use applyOrderDiscount, which sets or replaces the discount. Preconditions: the order must exist and be DRAFT; clearing a cart that has no discount succeeds. Required inputs: orderId (UUID) as a path parameter; there is no request body. Emits an ORDER_CART_DISCOUNT_REMOVE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, and 409 when the order is not DRAFT. 
+     * Remove the Order-Level Discount
+     */
+    async clearOrderDiscount(requestParameters: ClearOrderDiscountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.clearOrderDiscountRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates a DRAFT sales order cart bound to a clerk and terminal, with optional customer, vehicle, and deposit-source context; a register session open on the terminal binds the cart to it and supplies the location when locationId is omitted. Use this tool to start a new sale at the counter; do not use addCartItem, which adds line items to a cart that already exists. Preconditions: the terminal must not have a register session in CLOSING, the customer and vehicle must exist in CRM when supplied, and a location must be resolvable from the request or the open session. Required inputs: clerkId and terminalId; customerId and vehicleId are optional UUID strings, depositSourceType (ESTIMATE, WORKORDER or ORDER) and depositSourceId must be supplied together, and the optional Idempotency-Key header makes creation replay-safe. Emits an ORDER_CART_CREATE event and records the initial DRAFT status-history row. Returns 201 on creation, 200 when a replayed Idempotency-Key returns the original cart, 409 when the key was previously used with a different payload, and 422 when the customer or vehicle cannot be validated, the location cannot be resolved, or the terminal\'s session is being closed. 
+     * Create a Sales Order Cart
      */
     async createCartRaw(requestParameters: CreateCartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
         if (requestParameters['createCartRequest'] == null) {
@@ -141,6 +340,10 @@ export class SalesOrdersApi extends runtime.BaseAPI {
         const headerParameters: runtime.HTTPHeaders = {};
 
         headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['idempotencyKey'] != null) {
+            headerParameters['Idempotency-Key'] = String(requestParameters['idempotencyKey']);
+        }
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
@@ -162,8 +365,8 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Create a new sales order cart for a customer, terminal, and optional vehicle context.
-     * Create a sales order cart
+     * Creates a DRAFT sales order cart bound to a clerk and terminal, with optional customer, vehicle, and deposit-source context; a register session open on the terminal binds the cart to it and supplies the location when locationId is omitted. Use this tool to start a new sale at the counter; do not use addCartItem, which adds line items to a cart that already exists. Preconditions: the terminal must not have a register session in CLOSING, the customer and vehicle must exist in CRM when supplied, and a location must be resolvable from the request or the open session. Required inputs: clerkId and terminalId; customerId and vehicleId are optional UUID strings, depositSourceType (ESTIMATE, WORKORDER or ORDER) and depositSourceId must be supplied together, and the optional Idempotency-Key header makes creation replay-safe. Emits an ORDER_CART_CREATE event and records the initial DRAFT status-history row. Returns 201 on creation, 200 when a replayed Idempotency-Key returns the original cart, 409 when the key was previously used with a different payload, and 422 when the customer or vehicle cannot be validated, the location cannot be resolved, or the terminal\'s session is being closed. 
+     * Create a Sales Order Cart
      */
     async createCart(requestParameters: CreateCartOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
         const response = await this.createCartRaw(requestParameters, initOverrides);
@@ -171,8 +374,8 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a sales order cart and its current line items by identifier.
-     * Get a sales order by ID
+     * Returns a sales order with its current line items, totals, status, invoice references, and payment balances. Use this tool when the order id is already known; use listCarts instead to search by clerk, terminal or status. Preconditions: the order must exist. Required inputs: orderId (UUID) as a path parameter; there is no request body and no filtering. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no sales order exists for the supplied id. 
+     * Get a Sales Order by Id
      */
     async getOrderRaw(requestParameters: GetOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
         if (requestParameters['orderId'] == null) {
@@ -205,8 +408,8 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve a sales order cart and its current line items by identifier.
-     * Get a sales order by ID
+     * Returns a sales order with its current line items, totals, status, invoice references, and payment balances. Use this tool when the order id is already known; use listCarts instead to search by clerk, terminal or status. Preconditions: the order must exist. Required inputs: orderId (UUID) as a path parameter; there is no request body and no filtering. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no sales order exists for the supplied id. 
+     * Get a Sales Order by Id
      */
     async getOrder(requestParameters: GetOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
         const response = await this.getOrderRaw(requestParameters, initOverrides);
@@ -214,21 +417,21 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Associate an external source reference with an existing sales order cart.
-     * Link a source to a sales order
+     * Imports the line items of a source document (an ESTIMATE or WORKORDER) into a DRAFT cart, merging into same-SKU same-price lines where possible; imported source prices are contractual and are never repriced. Use this tool to pull approved estimate or workorder lines onto a sale; do not use addCartItem, which adds individually priced counter lines. Preconditions: the order must be DRAFT, a WORKORDER source requires a customer already on the cart, and source lines already linked to the cart are skipped, making the call replay-safe. Required inputs: sourceType (ESTIMATE or WORKORDER) and sourceId, both in the body. Emits an ORDER_LINK_SOURCE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 409 when the order is not DRAFT, and 422 when the sourceType is unknown or a WORKORDER link is attempted without a customer on the cart. 
+     * Link a Source Document to an Order
      */
-    async linkSourceRaw(requestParameters: LinkSourceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
+    async linkOrderSourceRaw(requestParameters: LinkOrderSourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
         if (requestParameters['orderId'] == null) {
             throw new runtime.RequiredError(
                 'orderId',
-                'Required parameter "orderId" was null or undefined when calling linkSource().'
+                'Required parameter "orderId" was null or undefined when calling linkOrderSource().'
             );
         }
 
         if (requestParameters['linkSourceRequest'] == null) {
             throw new runtime.RequiredError(
                 'linkSourceRequest',
-                'Required parameter "linkSourceRequest" was null or undefined when calling linkSource().'
+                'Required parameter "linkSourceRequest" was null or undefined when calling linkOrderSource().'
             );
         }
 
@@ -258,30 +461,129 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Associate an external source reference with an existing sales order cart.
-     * Link a source to a sales order
+     * Imports the line items of a source document (an ESTIMATE or WORKORDER) into a DRAFT cart, merging into same-SKU same-price lines where possible; imported source prices are contractual and are never repriced. Use this tool to pull approved estimate or workorder lines onto a sale; do not use addCartItem, which adds individually priced counter lines. Preconditions: the order must be DRAFT, a WORKORDER source requires a customer already on the cart, and source lines already linked to the cart are skipped, making the call replay-safe. Required inputs: sourceType (ESTIMATE or WORKORDER) and sourceId, both in the body. Emits an ORDER_LINK_SOURCE event, recomputes order totals, and marks tax stale. Returns 404 when the order does not exist, 409 when the order is not DRAFT, and 422 when the sourceType is unknown or a WORKORDER link is attempted without a customer on the cart. 
+     * Link a Source Document to an Order
      */
-    async linkSource(requestParameters: LinkSourceOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
-        const response = await this.linkSourceRaw(requestParameters, initOverrides);
+    async linkOrderSource(requestParameters: LinkOrderSourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.linkOrderSourceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Remove a line item from an existing sales order cart.
-     * Remove an item from a sales order cart
+     * Lists sales order carts filtered by clerk, terminal, and status — the draft-parking and resume surface; line items are omitted from list results. Use this tool when searching for carts to resume or review; use getOrder instead when the order id is already known and full line detail is needed. Preconditions: none beyond an authenticated caller with order view permission. Required inputs: none — clerkId, terminalId, and status (a status name such as DRAFT) are optional filters; page defaults to 0 and size defaults to 20, capped at 100. Emits an ORDER_CART_LIST audit event; no order state changes. Returns 200 with a possibly empty page, and 422 when status is not a valid order status name. 
+     * List Sales Order Carts
      */
-    async removeItemRaw(requestParameters: RemoveItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async listCartsRaw(requestParameters: ListCartsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<SalesOrderResponse>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['clerkId'] != null) {
+            queryParameters['clerkId'] = requestParameters['clerkId'];
+        }
+
+        if (requestParameters['terminalId'] != null) {
+            queryParameters['terminalId'] = requestParameters['terminalId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/carts`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(SalesOrderResponseFromJSON));
+    }
+
+    /**
+     * Lists sales order carts filtered by clerk, terminal, and status — the draft-parking and resume surface; line items are omitted from list results. Use this tool when searching for carts to resume or review; use getOrder instead when the order id is already known and full line detail is needed. Preconditions: none beyond an authenticated caller with order view permission. Required inputs: none — clerkId, terminalId, and status (a status name such as DRAFT) are optional filters; page defaults to 0 and size defaults to 20, capped at 100. Emits an ORDER_CART_LIST audit event; no order state changes. Returns 200 with a possibly empty page, and 422 when status is not a valid order status name. 
+     * List Sales Order Carts
+     */
+    async listCarts(requestParameters: ListCartsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<SalesOrderResponse>> {
+        const response = await this.listCartsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Converts a DRAFT counter cart to QUOTED by running a final reprice and authoritative tax computation and stamping a validity horizon (default P7D, configurable via pos.order.quote.validity). Use this tool to hand the customer a priced, resumable counter quote; do not use checkoutOrder, which freezes the cart for payment, and note that workorder-linked orders are quoted via pos-workorder estimates and are rejected here. Preconditions: the order must be DRAFT with at least one line, must not reference a workorder directly or through imported lines, and pricing must be reachable for every non-manual, non-source line. Required inputs: orderId (UUID) as a path parameter; there is no request body. Emits an ORDER_CART_QUOTE event. Returns 404 when the order does not exist, 409 when the status does not allow the transition, 422 when the cart is empty, workorder-linked, or pricing is unavailable, and 503 when the tax service cannot be reached. 
+     * Convert a Cart to a Counter Quote
+     */
+    async quoteCartRaw(requestParameters: QuoteCartRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
         if (requestParameters['orderId'] == null) {
             throw new runtime.RequiredError(
                 'orderId',
-                'Required parameter "orderId" was null or undefined when calling removeItem().'
+                'Required parameter "orderId" was null or undefined when calling quoteCart().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/quote`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SalesOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Converts a DRAFT counter cart to QUOTED by running a final reprice and authoritative tax computation and stamping a validity horizon (default P7D, configurable via pos.order.quote.validity). Use this tool to hand the customer a priced, resumable counter quote; do not use checkoutOrder, which freezes the cart for payment, and note that workorder-linked orders are quoted via pos-workorder estimates and are rejected here. Preconditions: the order must be DRAFT with at least one line, must not reference a workorder directly or through imported lines, and pricing must be reachable for every non-manual, non-source line. Required inputs: orderId (UUID) as a path parameter; there is no request body. Emits an ORDER_CART_QUOTE event. Returns 404 when the order does not exist, 409 when the status does not allow the transition, 422 when the cart is empty, workorder-linked, or pricing is unavailable, and 503 when the tax service cannot be reached. 
+     * Convert a Cart to a Counter Quote
+     */
+    async quoteCart(requestParameters: QuoteCartRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.quoteCartRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Removes a line item from a DRAFT sales order cart and recomputes the remaining totals. Use this tool to take a line off the sale entirely; do not use updateCartItemQuantity, which keeps the line and changes its quantity. Preconditions: the order must exist and be DRAFT; a lineId that is not on the order is silently ignored rather than rejected. Required inputs: orderId and lineId as path UUIDs; there is no request body. Emits an ORDER_CART_ITEM_REMOVE event, recomputes order totals, and marks tax stale. Returns 204 on success, 404 when the order does not exist, and 409 when the order is not DRAFT. 
+     * Remove an Item from a Cart
+     */
+    async removeCartItemRaw(requestParameters: RemoveCartItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling removeCartItem().'
             );
         }
 
         if (requestParameters['lineId'] == null) {
             throw new runtime.RequiredError(
                 'lineId',
-                'Required parameter "lineId" was null or undefined when calling removeItem().'
+                'Required parameter "lineId" was null or undefined when calling removeCartItem().'
             );
         }
 
@@ -308,36 +610,79 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Remove a line item from an existing sales order cart.
-     * Remove an item from a sales order cart
+     * Removes a line item from a DRAFT sales order cart and recomputes the remaining totals. Use this tool to take a line off the sale entirely; do not use updateCartItemQuantity, which keeps the line and changes its quantity. Preconditions: the order must exist and be DRAFT; a lineId that is not on the order is silently ignored rather than rejected. Required inputs: orderId and lineId as path UUIDs; there is no request body. Emits an ORDER_CART_ITEM_REMOVE event, recomputes order totals, and marks tax stale. Returns 204 on success, 404 when the order does not exist, and 409 when the order is not DRAFT. 
+     * Remove an Item from a Cart
      */
-    async removeItem(requestParameters: RemoveItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.removeItemRaw(requestParameters, initOverrides);
+    async removeCartItem(requestParameters: RemoveCartItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.removeCartItemRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Update the quantity for an existing sales order line item in a cart.
-     * Update a sales order cart item quantity
+     * Reopens a QUOTED counter quote back to DRAFT, clearing the validity horizon so the cart can be edited again. Use this tool to resume editing a quoted cart; do not use quoteCart, which moves the cart in the opposite direction from DRAFT to QUOTED. Preconditions: the order must be QUOTED. Required inputs: orderId (UUID) as a path parameter; there is no request body. Emits an ORDER_CART_QUOTE_REOPEN event and best-effort reprices the lines — an unavailable pricing service keeps the old prices, and totals are recomputed with tax marked stale. Returns 404 when the order does not exist, and 409 when the order is not QUOTED. 
+     * Reopen a Counter Quote
      */
-    async updateItemQuantityRaw(requestParameters: UpdateItemQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderLineResponse>> {
+    async reopenQuoteRaw(requestParameters: ReopenQuoteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
         if (requestParameters['orderId'] == null) {
             throw new runtime.RequiredError(
                 'orderId',
-                'Required parameter "orderId" was null or undefined when calling updateItemQuantity().'
+                'Required parameter "orderId" was null or undefined when calling reopenQuote().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/carts/{orderId}/quote/reopen`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SalesOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reopens a QUOTED counter quote back to DRAFT, clearing the validity horizon so the cart can be edited again. Use this tool to resume editing a quoted cart; do not use quoteCart, which moves the cart in the opposite direction from DRAFT to QUOTED. Preconditions: the order must be QUOTED. Required inputs: orderId (UUID) as a path parameter; there is no request body. Emits an ORDER_CART_QUOTE_REOPEN event and best-effort reprices the lines — an unavailable pricing service keeps the old prices, and totals are recomputed with tax marked stale. Returns 404 when the order does not exist, and 409 when the order is not QUOTED. 
+     * Reopen a Counter Quote
+     */
+    async reopenQuote(requestParameters: ReopenQuoteRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.reopenQuoteRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Updates the quantity of an existing line on a DRAFT sales order cart and recomputes order totals. Use this tool to change how many units a line sells; do not use removeCartItem, which deletes the line entirely, and do not use addCartItem, which creates a new line. Preconditions: the order must exist and be DRAFT, and the line must exist on that order. Required inputs: orderId and lineId as path UUIDs, and quantity (minimum 1) in the body. Emits an ORDER_CART_ITEM_UPDATE event, recomputes order totals, and marks tax stale. Returns 404 when the order or line does not exist, and 409 when the order is not DRAFT. 
+     * Update a Cart Item Quantity
+     */
+    async updateCartItemQuantityRaw(requestParameters: UpdateCartItemQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderLineResponse>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling updateCartItemQuantity().'
             );
         }
 
         if (requestParameters['lineId'] == null) {
             throw new runtime.RequiredError(
                 'lineId',
-                'Required parameter "lineId" was null or undefined when calling updateItemQuantity().'
+                'Required parameter "lineId" was null or undefined when calling updateCartItemQuantity().'
             );
         }
 
         if (requestParameters['updateItemRequest'] == null) {
             throw new runtime.RequiredError(
                 'updateItemRequest',
-                'Required parameter "updateItemRequest" was null or undefined when calling updateItemQuantity().'
+                'Required parameter "updateItemRequest" was null or undefined when calling updateCartItemQuantity().'
             );
         }
 
@@ -367,11 +712,57 @@ export class SalesOrdersApi extends runtime.BaseAPI {
     }
 
     /**
-     * Update the quantity for an existing sales order line item in a cart.
-     * Update a sales order cart item quantity
+     * Updates the quantity of an existing line on a DRAFT sales order cart and recomputes order totals. Use this tool to change how many units a line sells; do not use removeCartItem, which deletes the line entirely, and do not use addCartItem, which creates a new line. Preconditions: the order must exist and be DRAFT, and the line must exist on that order. Required inputs: orderId and lineId as path UUIDs, and quantity (minimum 1) in the body. Emits an ORDER_CART_ITEM_UPDATE event, recomputes order totals, and marks tax stale. Returns 404 when the order or line does not exist, and 409 when the order is not DRAFT. 
+     * Update a Cart Item Quantity
      */
-    async updateItemQuantity(requestParameters: UpdateItemQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderLineResponse> {
-        const response = await this.updateItemQuantityRaw(requestParameters, initOverrides);
+    async updateCartItemQuantity(requestParameters: UpdateCartItemQuantityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderLineResponse> {
+        const response = await this.updateCartItemQuantityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Voids a PENDING_PAYMENT order before any settlement: cancels the fronting pos-invoice invoice and transitions the order to VOIDED, rolling the void back if the invoice cancel fails. Use this tool to abandon a checked-out order that has taken no money; do not use cancelOrder, which runs the cancellation saga for DRAFT and QUOTED orders and reverses settled payments. Preconditions: the order must be PENDING_PAYMENT with no settled payment records; voiding an already VOIDED order is an idempotent no-op. Required inputs: orderId (UUID) as a path parameter; the body is optional and carries only a free-text reason. Emits an ORDER_VOID event. Returns 200 on success or an already-voided no-op, 404 when the order does not exist, 409 when settled payments exist (route through cancelOrder) or the status is not PENDING_PAYMENT, and 503 when the invoicing service is unreachable. 
+     * Void an Unsettled Order
+     */
+    async voidOrderRaw(requestParameters: VoidOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SalesOrderResponse>> {
+        if (requestParameters['orderId'] == null) {
+            throw new runtime.RequiredError(
+                'orderId',
+                'Required parameter "orderId" was null or undefined when calling voidOrder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/{orderId}/void`.replace(`{${"orderId"}}`, encodeURIComponent(String(requestParameters['orderId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VoidOrderRequestToJSON(requestParameters['voidOrderRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SalesOrderResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Voids a PENDING_PAYMENT order before any settlement: cancels the fronting pos-invoice invoice and transitions the order to VOIDED, rolling the void back if the invoice cancel fails. Use this tool to abandon a checked-out order that has taken no money; do not use cancelOrder, which runs the cancellation saga for DRAFT and QUOTED orders and reverses settled payments. Preconditions: the order must be PENDING_PAYMENT with no settled payment records; voiding an already VOIDED order is an idempotent no-op. Required inputs: orderId (UUID) as a path parameter; the body is optional and carries only a free-text reason. Emits an ORDER_VOID event. Returns 200 on success or an already-voided no-op, 404 when the order does not exist, 409 when settled payments exist (route through cancelOrder) or the status is not PENDING_PAYMENT, and 503 when the invoicing service is unreachable. 
+     * Void an Unsettled Order
+     */
+    async voidOrder(requestParameters: VoidOrderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SalesOrderResponse> {
+        const response = await this.voidOrderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

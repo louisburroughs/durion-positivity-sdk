@@ -25,11 +25,11 @@ import {
     RecordRedemptionRequestToJSON,
 } from '../models/index';
 
-export interface GetRedemptionsByCustomerRequest {
+export interface ListPromotionRedemptionsByCustomerRequest {
     customerId: string;
 }
 
-export interface RecordRedemptionOperationRequest {
+export interface RecordPromotionRedemptionRequest {
     recordRedemptionRequest: RecordRedemptionRequest;
 }
 
@@ -39,14 +39,14 @@ export interface RecordRedemptionOperationRequest {
 export class PromotionRedemptionsApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve all recorded redemptions for a customer
-     * Get redemptions by customer
+     * Returns every promotion redemption recorded for one customer, including discount amounts, codes, statuses, and timestamps. Use this tool when reviewing a customer\'s redemption history, for example to enforce per-customer limits; use recordPromotionRedemption instead to record a new redemption. Preconditions: none; an unknown customerId yields an empty list rather than an error. Required inputs: customerId (UUID) as a path parameter; there is no request body. Emits a PROMOTION_REDEMPTION_LIST audit event; no state changes occur. Returns 200 with an empty list rather than an error when the customer has no redemptions. 
+     * List Customer Promotion Redemptions
      */
-    async getRedemptionsByCustomerRaw(requestParameters: GetRedemptionsByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PromotionRedemptionResponse>>> {
+    async listPromotionRedemptionsByCustomerRaw(requestParameters: ListPromotionRedemptionsByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PromotionRedemptionResponse>>> {
         if (requestParameters['customerId'] == null) {
             throw new runtime.RequiredError(
                 'customerId',
-                'Required parameter "customerId" was null or undefined when calling getRedemptionsByCustomer().'
+                'Required parameter "customerId" was null or undefined when calling listPromotionRedemptionsByCustomer().'
             );
         }
 
@@ -56,7 +56,7 @@ export class PromotionRedemptionsApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:ViewRedemption"]);
+            const tokenString = await token("bearerAuth", ["crm:promotion_redemption:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -73,23 +73,23 @@ export class PromotionRedemptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all recorded redemptions for a customer
-     * Get redemptions by customer
+     * Returns every promotion redemption recorded for one customer, including discount amounts, codes, statuses, and timestamps. Use this tool when reviewing a customer\'s redemption history, for example to enforce per-customer limits; use recordPromotionRedemption instead to record a new redemption. Preconditions: none; an unknown customerId yields an empty list rather than an error. Required inputs: customerId (UUID) as a path parameter; there is no request body. Emits a PROMOTION_REDEMPTION_LIST audit event; no state changes occur. Returns 200 with an empty list rather than an error when the customer has no redemptions. 
+     * List Customer Promotion Redemptions
      */
-    async getRedemptionsByCustomer(requestParameters: GetRedemptionsByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PromotionRedemptionResponse>> {
-        const response = await this.getRedemptionsByCustomerRaw(requestParameters, initOverrides);
+    async listPromotionRedemptionsByCustomer(requestParameters: ListPromotionRedemptionsByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PromotionRedemptionResponse>> {
+        const response = await this.listPromotionRedemptionsByCustomerRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Record a promotion redemption idempotently
-     * Record promotion redemption
+     * Records that a promotion was redeemed on a workorder, increments the promotion\'s usage counter, and stamps the recording user; the pair of promotionId and workorderId is the idempotency key. Use this tool when a discount is actually applied at checkout or invoicing; use listPromotionRedemptionsByCustomer instead to read what a customer has redeemed. Preconditions: no redemption may already exist for the same promotionId and workorderId pair; the referenced promotion, customer, and workorder ids are recorded as supplied without cross-service validation. Required inputs: promotionId, customerId, and workorderId (UUIDs), discountAmount, discountType (max 50), and promotionCode (max 100); invoiceId, campaignCode, and redemptionTimestamp (defaulting to now) are optional, and recordedOverLimit defaults to false and switches the stored status to RECORDED_OVER_LIMIT. Emits a PROMOTION_REDEMPTION_RECORD event and publishes a redemption-recorded fact for every redemption so marketing keeps a non-attributed baseline. Returns 409 when the promotion has already been redeemed on that workorder, and 400 when a required field is missing. 
+     * Record Promotion Redemption
      */
-    async recordRedemptionRaw(requestParameters: RecordRedemptionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionRedemptionResponse>> {
+    async recordPromotionRedemptionRaw(requestParameters: RecordPromotionRedemptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PromotionRedemptionResponse>> {
         if (requestParameters['recordRedemptionRequest'] == null) {
             throw new runtime.RequiredError(
                 'recordRedemptionRequest',
-                'Required parameter "recordRedemptionRequest" was null or undefined when calling recordRedemption().'
+                'Required parameter "recordRedemptionRequest" was null or undefined when calling recordPromotionRedemption().'
             );
         }
 
@@ -101,7 +101,7 @@ export class PromotionRedemptionsApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["Promotion:RecordRedemption"]);
+            const tokenString = await token("bearerAuth", ["crm:promotion_redemption:record"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -119,11 +119,11 @@ export class PromotionRedemptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Record a promotion redemption idempotently
-     * Record promotion redemption
+     * Records that a promotion was redeemed on a workorder, increments the promotion\'s usage counter, and stamps the recording user; the pair of promotionId and workorderId is the idempotency key. Use this tool when a discount is actually applied at checkout or invoicing; use listPromotionRedemptionsByCustomer instead to read what a customer has redeemed. Preconditions: no redemption may already exist for the same promotionId and workorderId pair; the referenced promotion, customer, and workorder ids are recorded as supplied without cross-service validation. Required inputs: promotionId, customerId, and workorderId (UUIDs), discountAmount, discountType (max 50), and promotionCode (max 100); invoiceId, campaignCode, and redemptionTimestamp (defaulting to now) are optional, and recordedOverLimit defaults to false and switches the stored status to RECORDED_OVER_LIMIT. Emits a PROMOTION_REDEMPTION_RECORD event and publishes a redemption-recorded fact for every redemption so marketing keeps a non-attributed baseline. Returns 409 when the promotion has already been redeemed on that workorder, and 400 when a required field is missing. 
+     * Record Promotion Redemption
      */
-    async recordRedemption(requestParameters: RecordRedemptionOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionRedemptionResponse> {
-        const response = await this.recordRedemptionRaw(requestParameters, initOverrides);
+    async recordPromotionRedemption(requestParameters: RecordPromotionRedemptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PromotionRedemptionResponse> {
+        const response = await this.recordPromotionRedemptionRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

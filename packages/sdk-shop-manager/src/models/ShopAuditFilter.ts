@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ShopAuditFilter {
     /**
-     * Workorder UUID to filter by - one word per workspace naming policy
+     * Actor user ID to filter by
      * @type {string}
      * @memberof ShopAuditFilter
      */
-    workorderId?: string;
+    actorUserId?: string;
     /**
      * Appointment UUID to filter by
      * @type {string}
@@ -32,29 +32,11 @@ export interface ShopAuditFilter {
      */
     appointmentId?: string;
     /**
-     * Mechanic user ID to filter by
-     * @type {string}
-     * @memberof ShopAuditFilter
-     */
-    mechanicId?: string;
-    /**
-     * Actor user ID to filter by
-     * @type {string}
-     * @memberof ShopAuditFilter
-     */
-    actorUserId?: string;
-    /**
      * Specific audit event type to filter by
      * @type {string}
      * @memberof ShopAuditFilter
      */
     eventType?: ShopAuditFilterEventTypeEnum;
-    /**
-     * Location ID to filter by
-     * @type {string}
-     * @memberof ShopAuditFilter
-     */
-    locationId?: string;
     /**
      * Inclusive start timestamp for date-time range filter
      * @type {Date}
@@ -62,11 +44,29 @@ export interface ShopAuditFilter {
      */
     fromDateTime?: Date;
     /**
+     * Location ID to filter by
+     * @type {string}
+     * @memberof ShopAuditFilter
+     */
+    locationId?: string;
+    /**
+     * Mechanic user ID to filter by
+     * @type {string}
+     * @memberof ShopAuditFilter
+     */
+    mechanicId?: string;
+    /**
      * Inclusive end timestamp for date-time range filter
      * @type {Date}
      * @memberof ShopAuditFilter
      */
     toDateTime?: Date;
+    /**
+     * Workorder UUID to filter by - one word per workspace naming policy
+     * @type {string}
+     * @memberof ShopAuditFilter
+     */
+    workorderId?: string;
 }
 
 /**
@@ -99,14 +99,14 @@ export function ShopAuditFilterFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
-        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
         'actorUserId': json['actorUserId'] == null ? undefined : json['actorUserId'],
+        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
         'eventType': json['eventType'] == null ? undefined : json['eventType'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'fromDateTime': json['fromDateTime'] == null ? undefined : (new Date(json['fromDateTime'])),
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
+        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
         'toDateTime': json['toDateTime'] == null ? undefined : (new Date(json['toDateTime'])),
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -116,14 +116,14 @@ export function ShopAuditFilterToJSON(value?: ShopAuditFilter | null): any {
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'appointmentId': value['appointmentId'],
-        'mechanicId': value['mechanicId'],
         'actorUserId': value['actorUserId'],
+        'appointmentId': value['appointmentId'],
         'eventType': value['eventType'],
-        'locationId': value['locationId'],
         'fromDateTime': value['fromDateTime'] == null ? undefined : ((value['fromDateTime']).toISOString()),
+        'locationId': value['locationId'],
+        'mechanicId': value['mechanicId'],
         'toDateTime': value['toDateTime'] == null ? undefined : ((value['toDateTime']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

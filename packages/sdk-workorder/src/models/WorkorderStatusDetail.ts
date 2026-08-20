@@ -27,35 +27,11 @@ import {
  */
 export interface WorkorderStatusDetail {
     /**
-     * Workorder unique identifier
-     * @type {string}
-     * @memberof WorkorderStatusDetail
-     */
-    workorderId?: string;
-    /**
-     * Current workorder status
-     * @type {string}
-     * @memberof WorkorderStatusDetail
-     */
-    status?: WorkorderStatusDetailStatusEnum;
-    /**
      * ID of the technician currently assigned (null if unassigned)
      * @type {string}
      * @memberof WorkorderStatusDetail
      */
     assignedTechnicianId?: string;
-    /**
-     * Location ID the workorder belongs to
-     * @type {string}
-     * @memberof WorkorderStatusDetail
-     */
-    locationId?: string;
-    /**
-     * Estimated time of completion (null if not set)
-     * @type {Date}
-     * @memberof WorkorderStatusDetail
-     */
-    estimatedCompletionTime?: Date;
     /**
      * Full name of the customer
      * @type {string}
@@ -63,41 +39,11 @@ export interface WorkorderStatusDetail {
      */
     customerName?: string;
     /**
-     * Human-readable vehicle description (year/make/model/trim)
-     * @type {string}
-     * @memberof WorkorderStatusDetail
-     */
-    vehicleInfo?: string;
-    /**
-     * Timestamp of the last status update
+     * Estimated time of completion (null if not set)
      * @type {Date}
      * @memberof WorkorderStatusDetail
      */
-    lastUpdatedAt?: Date;
-    /**
-     * Ordered history of all status changes for this workorder
-     * @type {Array<WorkorderStatusHistoryEntry>}
-     * @memberof WorkorderStatusDetail
-     */
-    statusHistory?: Array<WorkorderStatusHistoryEntry>;
-    /**
-     * Customer contact phone number (null if not available)
-     * @type {string}
-     * @memberof WorkorderStatusDetail
-     */
-    phoneNumber?: string;
-    /**
-     * Vehicle VIN (null if not recorded)
-     * @type {string}
-     * @memberof WorkorderStatusDetail
-     */
-    vehicleVin?: string;
-    /**
-     * Summary of the service being performed
-     * @type {string}
-     * @memberof WorkorderStatusDetail
-     */
-    serviceDescription?: string;
+    estimatedCompletionTime?: Date;
     /**
      * Internal shop notes (null if none)
      * @type {string}
@@ -105,11 +51,65 @@ export interface WorkorderStatusDetail {
      */
     internalNotes?: string;
     /**
+     * Timestamp of the last status update
+     * @type {Date}
+     * @memberof WorkorderStatusDetail
+     */
+    lastUpdatedAt?: Date;
+    /**
+     * Location ID the workorder belongs to
+     * @type {string}
+     * @memberof WorkorderStatusDetail
+     */
+    locationId?: string;
+    /**
      * Part numbers or descriptions that are blocking progress
      * @type {Array<string>}
      * @memberof WorkorderStatusDetail
      */
     partsBlocking?: Array<string>;
+    /**
+     * Customer contact phone number (null if not available)
+     * @type {string}
+     * @memberof WorkorderStatusDetail
+     */
+    phoneNumber?: string;
+    /**
+     * Summary of the service being performed
+     * @type {string}
+     * @memberof WorkorderStatusDetail
+     */
+    serviceDescription?: string;
+    /**
+     * Current workorder status
+     * @type {string}
+     * @memberof WorkorderStatusDetail
+     */
+    status?: WorkorderStatusDetailStatusEnum;
+    /**
+     * Ordered history of all status changes for this workorder
+     * @type {Array<WorkorderStatusHistoryEntry>}
+     * @memberof WorkorderStatusDetail
+     */
+    statusHistory?: Array<WorkorderStatusHistoryEntry>;
+    /**
+     * Human-readable vehicle description (year/make/model/trim)
+     * @type {string}
+     * @memberof WorkorderStatusDetail
+     */
+    vehicleInfo?: string;
+    /**
+     * Vehicle VIN (null if not recorded)
+     * @type {string}
+     * @memberof WorkorderStatusDetail
+     */
+    vehicleVin?: string;
+    /**
+     * Workorder unique identifier
+     * @type {string}
+     * @memberof WorkorderStatusDetail
+     */
+    workorderId?: string;
 }
 
 /**
@@ -146,20 +146,20 @@ export function WorkorderStatusDetailFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'status': json['status'] == null ? undefined : json['status'],
         'assignedTechnicianId': json['assignedTechnicianId'] == null ? undefined : json['assignedTechnicianId'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'estimatedCompletionTime': json['estimatedCompletionTime'] == null ? undefined : (new Date(json['estimatedCompletionTime'])),
         'customerName': json['customerName'] == null ? undefined : json['customerName'],
-        'vehicleInfo': json['vehicleInfo'] == null ? undefined : json['vehicleInfo'],
-        'lastUpdatedAt': json['lastUpdatedAt'] == null ? undefined : (new Date(json['lastUpdatedAt'])),
-        'statusHistory': json['statusHistory'] == null ? undefined : ((json['statusHistory'] as Array<any>).map(WorkorderStatusHistoryEntryFromJSON)),
-        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
-        'vehicleVin': json['vehicleVin'] == null ? undefined : json['vehicleVin'],
-        'serviceDescription': json['serviceDescription'] == null ? undefined : json['serviceDescription'],
+        'estimatedCompletionTime': json['estimatedCompletionTime'] == null ? undefined : (new Date(json['estimatedCompletionTime'])),
         'internalNotes': json['internalNotes'] == null ? undefined : json['internalNotes'],
+        'lastUpdatedAt': json['lastUpdatedAt'] == null ? undefined : (new Date(json['lastUpdatedAt'])),
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'partsBlocking': json['partsBlocking'] == null ? undefined : json['partsBlocking'],
+        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
+        'serviceDescription': json['serviceDescription'] == null ? undefined : json['serviceDescription'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'statusHistory': json['statusHistory'] == null ? undefined : ((json['statusHistory'] as Array<any>).map(WorkorderStatusHistoryEntryFromJSON)),
+        'vehicleInfo': json['vehicleInfo'] == null ? undefined : json['vehicleInfo'],
+        'vehicleVin': json['vehicleVin'] == null ? undefined : json['vehicleVin'],
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -169,20 +169,20 @@ export function WorkorderStatusDetailToJSON(value?: WorkorderStatusDetail | null
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'status': value['status'],
         'assignedTechnicianId': value['assignedTechnicianId'],
-        'locationId': value['locationId'],
-        'estimatedCompletionTime': value['estimatedCompletionTime'] == null ? undefined : ((value['estimatedCompletionTime']).toISOString()),
         'customerName': value['customerName'],
-        'vehicleInfo': value['vehicleInfo'],
-        'lastUpdatedAt': value['lastUpdatedAt'] == null ? undefined : ((value['lastUpdatedAt']).toISOString()),
-        'statusHistory': value['statusHistory'] == null ? undefined : ((value['statusHistory'] as Array<any>).map(WorkorderStatusHistoryEntryToJSON)),
-        'phoneNumber': value['phoneNumber'],
-        'vehicleVin': value['vehicleVin'],
-        'serviceDescription': value['serviceDescription'],
+        'estimatedCompletionTime': value['estimatedCompletionTime'] == null ? undefined : ((value['estimatedCompletionTime']).toISOString()),
         'internalNotes': value['internalNotes'],
+        'lastUpdatedAt': value['lastUpdatedAt'] == null ? undefined : ((value['lastUpdatedAt']).toISOString()),
+        'locationId': value['locationId'],
         'partsBlocking': value['partsBlocking'],
+        'phoneNumber': value['phoneNumber'],
+        'serviceDescription': value['serviceDescription'],
+        'status': value['status'],
+        'statusHistory': value['statusHistory'] == null ? undefined : ((value['statusHistory'] as Array<any>).map(WorkorderStatusHistoryEntryToJSON)),
+        'vehicleInfo': value['vehicleInfo'],
+        'vehicleVin': value['vehicleVin'],
+        'workorderId': value['workorderId'],
     };
 }
 

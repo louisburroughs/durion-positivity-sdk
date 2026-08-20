@@ -25,27 +25,27 @@ import {
     ApiErrorToJSON,
 } from '../models/index';
 
-export interface DisableRequest {
+export interface DisableUserAccountRequest {
     id: string;
 }
 
-export interface EnableRequest {
+export interface EnableUserAccountRequest {
     id: string;
 }
 
-export interface ExpireAccountRequest {
+export interface ExpireUserAccountRequest {
     id: string;
 }
 
-export interface ExpireCredentialsRequest {
+export interface ExpireUserCredentialsRequest {
     id: string;
 }
 
-export interface GetAccountStateRequest {
+export interface GetUserAccountStateRequest {
     id: string;
 }
 
-export interface UnlockRequest {
+export interface UnlockUserAccountRequest {
     id: string;
 }
 
@@ -55,14 +55,14 @@ export interface UnlockRequest {
 export class AdminAccountStateAPIApi extends runtime.BaseAPI {
 
     /**
-     * Marks the specified user account as disabled to prevent further use until it is re-enabled.
-     * Disable a user account
+     * Marks a user account as disabled, records the disabling actor and time, and immediately revokes every token issued to the user. Use this tool for a reversible administrative block; do not use deleteUser, which removes the account, and do not use expireUserAccount, which marks the account expired instead. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_DISABLE event and revokes all of the user\'s access and refresh tokens. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Disable a User Account
      */
-    async disableRaw(requestParameters: DisableRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async disableUserAccountRaw(requestParameters: DisableUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling disable().'
+                'Required parameter "id" was null or undefined when calling disableUserAccount().'
             );
         }
 
@@ -89,22 +89,22 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks the specified user account as disabled to prevent further use until it is re-enabled.
-     * Disable a user account
+     * Marks a user account as disabled, records the disabling actor and time, and immediately revokes every token issued to the user. Use this tool for a reversible administrative block; do not use deleteUser, which removes the account, and do not use expireUserAccount, which marks the account expired instead. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_DISABLE event and revokes all of the user\'s access and refresh tokens. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Disable a User Account
      */
-    async disable(requestParameters: DisableRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.disableRaw(requestParameters, initOverrides);
+    async disableUserAccount(requestParameters: DisableUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.disableUserAccountRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Marks the specified user account as enabled so it can be used for sign-in and access checks.
-     * Enable a user account
+     * Marks a user account as enabled so it is again accepted for sign-in and access checks. Use this tool to reverse disableUserAccount; do not use unlockUserAccount, which clears a failed-login lockout instead. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_ENABLE event; no tokens are issued or restored, so the user must sign in again. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Enable a Disabled User Account
      */
-    async enableRaw(requestParameters: EnableRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async enableUserAccountRaw(requestParameters: EnableUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling enable().'
+                'Required parameter "id" was null or undefined when calling enableUserAccount().'
             );
         }
 
@@ -131,22 +131,22 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks the specified user account as enabled so it can be used for sign-in and access checks.
-     * Enable a user account
+     * Marks a user account as enabled so it is again accepted for sign-in and access checks. Use this tool to reverse disableUserAccount; do not use unlockUserAccount, which clears a failed-login lockout instead. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_ENABLE event; no tokens are issued or restored, so the user must sign in again. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Enable a Disabled User Account
      */
-    async enable(requestParameters: EnableRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.enableRaw(requestParameters, initOverrides);
+    async enableUserAccount(requestParameters: EnableUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.enableUserAccountRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Expires the specified user account so it is no longer considered valid for authentication.
-     * Expire a user account
+     * Marks a user account as expired, stamping the expiry time and immediately revoking every token issued to the user. Use this tool to end an account\'s validity, for example at offboarding; do not use disableUserAccount, which signals a reversible administrative block, or expireUserCredentials, which only forces a credential reset. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_EXPIRE_ACCOUNT event and revokes all of the user\'s access and refresh tokens. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Expire a User Account
      */
-    async expireAccountRaw(requestParameters: ExpireAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async expireUserAccountRaw(requestParameters: ExpireUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling expireAccount().'
+                'Required parameter "id" was null or undefined when calling expireUserAccount().'
             );
         }
 
@@ -173,22 +173,22 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Expires the specified user account so it is no longer considered valid for authentication.
-     * Expire a user account
+     * Marks a user account as expired, stamping the expiry time and immediately revoking every token issued to the user. Use this tool to end an account\'s validity, for example at offboarding; do not use disableUserAccount, which signals a reversible administrative block, or expireUserCredentials, which only forces a credential reset. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_EXPIRE_ACCOUNT event and revokes all of the user\'s access and refresh tokens. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Expire a User Account
      */
-    async expireAccount(requestParameters: ExpireAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.expireAccountRaw(requestParameters, initOverrides);
+    async expireUserAccount(requestParameters: ExpireUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.expireUserAccountRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Expires the specified user\'s credentials so a credential reset or update is required before reuse.
-     * Expire user credentials
+     * Marks a user\'s credentials as expired, stamping the expiry time and immediately revoking every token so a credential reset is required before further use. Use this tool to force a password rotation; do not use expireUserAccount, which expires the whole account rather than just its credentials. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_EXPIRE_CREDENTIALS event and revokes all of the user\'s access and refresh tokens. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Expire a User\'s Credentials
      */
-    async expireCredentialsRaw(requestParameters: ExpireCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async expireUserCredentialsRaw(requestParameters: ExpireUserCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling expireCredentials().'
+                'Required parameter "id" was null or undefined when calling expireUserCredentials().'
             );
         }
 
@@ -215,22 +215,22 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Expires the specified user\'s credentials so a credential reset or update is required before reuse.
-     * Expire user credentials
+     * Marks a user\'s credentials as expired, stamping the expiry time and immediately revoking every token so a credential reset is required before further use. Use this tool to force a password rotation; do not use expireUserAccount, which expires the whole account rather than just its credentials. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_EXPIRE_CREDENTIALS event and revokes all of the user\'s access and refresh tokens. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Expire a User\'s Credentials
      */
-    async expireCredentials(requestParameters: ExpireCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.expireCredentialsRaw(requestParameters, initOverrides);
+    async expireUserCredentials(requestParameters: ExpireUserCredentialsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.expireUserCredentialsRaw(requestParameters, initOverrides);
     }
 
     /**
-     * Returns the current administrative account-state flags for the specified user.
-     * Get user account state
+     * Returns the administrative account-state flags for a user: enabled, lock, account-expiry, and credential-expiry state with their timestamps, disabling actor, and failed-attempt count. Use this tool to diagnose why sign-in fails before choosing among unlockUserAccount, enableUserAccount, and the expiry endpoints; use getUserById instead for identity and role data. Preconditions: the caller must hold security:user_account_state:view and the user must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Get a User\'s Account-State Flags
      */
-    async getAccountStateRaw(requestParameters: GetAccountStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountStateResponse>> {
+    async getUserAccountStateRaw(requestParameters: GetUserAccountStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountStateResponse>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling getAccountState().'
+                'Required parameter "id" was null or undefined when calling getUserAccountState().'
             );
         }
 
@@ -257,23 +257,23 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current administrative account-state flags for the specified user.
-     * Get user account state
+     * Returns the administrative account-state flags for a user: enabled, lock, account-expiry, and credential-expiry state with their timestamps, disabling actor, and failed-attempt count. Use this tool to diagnose why sign-in fails before choosing among unlockUserAccount, enableUserAccount, and the expiry endpoints; use getUserById instead for identity and role data. Preconditions: the caller must hold security:user_account_state:view and the user must exist. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Get a User\'s Account-State Flags
      */
-    async getAccountState(requestParameters: GetAccountStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountStateResponse> {
-        const response = await this.getAccountStateRaw(requestParameters, initOverrides);
+    async getUserAccountState(requestParameters: GetUserAccountStateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountStateResponse> {
+        const response = await this.getUserAccountStateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Removes the locked state from the specified user account so the user can authenticate again.
-     * Unlock a user account
+     * Clears the lockout state on a user account, resetting the failed-attempt counter and lock timestamps so the user can authenticate again. Use this tool after a lockout caused by repeated failed logins; do not use enableUserAccount, which reverses an administrative disable rather than a lockout. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_UNLOCK event; existing tokens are not revoked. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Unlock a Locked User Account
      */
-    async unlockRaw(requestParameters: UnlockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async unlockUserAccountRaw(requestParameters: UnlockUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['id'] == null) {
             throw new runtime.RequiredError(
                 'id',
-                'Required parameter "id" was null or undefined when calling unlock().'
+                'Required parameter "id" was null or undefined when calling unlockUserAccount().'
             );
         }
 
@@ -300,11 +300,11 @@ export class AdminAccountStateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Removes the locked state from the specified user account so the user can authenticate again.
-     * Unlock a user account
+     * Clears the lockout state on a user account, resetting the failed-attempt counter and lock timestamps so the user can authenticate again. Use this tool after a lockout caused by repeated failed logins; do not use enableUserAccount, which reverses an administrative disable rather than a lockout. Preconditions: the caller must hold security:user_account_state:manage and the user must exist. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a SECURITY_USER_UNLOCK event; existing tokens are not revoked. Returns 404 with USER_NOT_FOUND when the user does not exist. 
+     * Unlock a Locked User Account
      */
-    async unlock(requestParameters: UnlockRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.unlockRaw(requestParameters, initOverrides);
+    async unlockUserAccount(requestParameters: UnlockUserAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.unlockUserAccountRaw(requestParameters, initOverrides);
     }
 
 }

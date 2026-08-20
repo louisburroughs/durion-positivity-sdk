@@ -14,49 +14,79 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a new GL account
  * @export
  * @interface GLAccountCreateRequest
  */
 export interface GLAccountCreateRequest {
     /**
-     * 
+     * Account code in #### or ####-### format
      * @type {string}
      * @memberof GLAccountCreateRequest
      */
     accountCode: string;
     /**
-     * 
+     * Display name of the GL account
      * @type {string}
      * @memberof GLAccountCreateRequest
      */
     accountName: string;
     /**
-     * 
+     * Optional subtype refining accountType for report grouping and posting-config plausibility checks (e.g. UNDEPOSITED_FUNDS for the cash-receipt clearing account). Null when no refinement applies.
+     * @type {string}
+     * @memberof GLAccountCreateRequest
+     */
+    accountSubtype?: GLAccountCreateRequestAccountSubtypeEnum;
+    /**
+     * Type of the GL account
      * @type {string}
      * @memberof GLAccountCreateRequest
      */
     accountType: GLAccountCreateRequestAccountTypeEnum;
     /**
-     * 
+     * Date and time the account becomes active (ISO 8601)
+     * @type {Date}
+     * @memberof GLAccountCreateRequest
+     */
+    activationDate: Date;
+    /**
+     * Optional description of the account
      * @type {string}
      * @memberof GLAccountCreateRequest
      */
     description?: string;
     /**
-     * 
+     * Identifier of the parent account, if any
      * @type {string}
      * @memberof GLAccountCreateRequest
      */
     parentAccountId?: string;
     /**
-     * 
-     * @type {Date}
+     * Whether journal entry lines on this account participate in reconciliation (e.g. settlement/bank reconciliation). Defaults to false when omitted.
+     * @type {boolean}
      * @memberof GLAccountCreateRequest
      */
-    activationDate: Date;
+    reconcilable?: boolean;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum GLAccountCreateRequestAccountSubtypeEnum {
+    Receivable = 'RECEIVABLE',
+    Payable = 'PAYABLE',
+    BankCash = 'BANK_CASH',
+    UndepositedFunds = 'UNDEPOSITED_FUNDS',
+    TaxPayable = 'TAX_PAYABLE',
+    CurrentAsset = 'CURRENT_ASSET',
+    FixedAsset = 'FIXED_ASSET',
+    CurrentLiability = 'CURRENT_LIABILITY',
+    Sales = 'SALES',
+    CostOfSales = 'COST_OF_SALES',
+    OperatingExpense = 'OPERATING_EXPENSE',
+    Other = 'OTHER'
+}
 /**
 * @export
 * @enum {string}
@@ -93,10 +123,12 @@ export function GLAccountCreateRequestFromJSONTyped(json: any, ignoreDiscriminat
         
         'accountCode': json['accountCode'],
         'accountName': json['accountName'],
+        'accountSubtype': json['accountSubtype'] == null ? undefined : json['accountSubtype'],
         'accountType': json['accountType'],
+        'activationDate': (new Date(json['activationDate'])),
         'description': json['description'] == null ? undefined : json['description'],
         'parentAccountId': json['parentAccountId'] == null ? undefined : json['parentAccountId'],
-        'activationDate': (new Date(json['activationDate'])),
+        'reconcilable': json['reconcilable'] == null ? undefined : json['reconcilable'],
     };
 }
 
@@ -108,10 +140,12 @@ export function GLAccountCreateRequestToJSON(value?: GLAccountCreateRequest | nu
         
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
+        'accountSubtype': value['accountSubtype'],
         'accountType': value['accountType'],
+        'activationDate': ((value['activationDate']).toISOString()),
         'description': value['description'],
         'parentAccountId': value['parentAccountId'],
-        'activationDate': ((value['activationDate']).toISOString()),
+        'reconcilable': value['reconcilable'],
     };
 }
 

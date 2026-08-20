@@ -14,23 +14,11 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request DTO for approval configuration creation and updates
+ * Configuration object to be created
  * @export
  * @interface ApprovalConfigurationRequest
  */
 export interface ApprovalConfigurationRequest {
-    /**
-     * Location ID for this configuration (null = applies to all locations)
-     * @type {string}
-     * @memberof ApprovalConfigurationRequest
-     */
-    locationId?: string;
-    /**
-     * Customer ID for this configuration (null = applies to all customers)
-     * @type {string}
-     * @memberof ApprovalConfigurationRequest
-     */
-    customerId?: string;
     /**
      * Approval method
      * @type {string}
@@ -38,23 +26,35 @@ export interface ApprovalConfigurationRequest {
      */
     approvalMethod: string;
     /**
+     * Customer ID for this configuration (null = applies to all customers)
+     * @type {string}
+     * @memberof ApprovalConfigurationRequest
+     */
+    customerId?: string;
+    /**
      * Number of days a declined estimate can be reopened
      * @type {number}
      * @memberof ApprovalConfigurationRequest
      */
     declineExpiryDays?: number;
     /**
-     * Whether signature is required
+     * Location ID for this configuration (null = applies to all locations)
      * @type {string}
      * @memberof ApprovalConfigurationRequest
      */
-    requireSignature?: string;
+    locationId?: string;
     /**
      * Priority for configuration matching (0=default, 1=location-specific, 2=customer-specific)
      * @type {number}
      * @memberof ApprovalConfigurationRequest
      */
     priority?: number;
+    /**
+     * Whether signature is required
+     * @type {string}
+     * @memberof ApprovalConfigurationRequest
+     */
+    requireSignature?: string;
 }
 
 /**
@@ -75,12 +75,12 @@ export function ApprovalConfigurationRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'approvalMethod': json['approvalMethod'],
+        'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'declineExpiryDays': json['declineExpiryDays'] == null ? undefined : json['declineExpiryDays'],
-        'requireSignature': json['requireSignature'] == null ? undefined : json['requireSignature'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'priority': json['priority'] == null ? undefined : json['priority'],
+        'requireSignature': json['requireSignature'] == null ? undefined : json['requireSignature'],
     };
 }
 
@@ -90,12 +90,12 @@ export function ApprovalConfigurationRequestToJSON(value?: ApprovalConfiguration
     }
     return {
         
-        'locationId': value['locationId'],
-        'customerId': value['customerId'],
         'approvalMethod': value['approvalMethod'],
+        'customerId': value['customerId'],
         'declineExpiryDays': value['declineExpiryDays'],
-        'requireSignature': value['requireSignature'],
+        'locationId': value['locationId'],
         'priority': value['priority'],
+        'requireSignature': value['requireSignature'],
     };
 }
 

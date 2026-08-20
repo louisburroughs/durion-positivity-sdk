@@ -14,29 +14,30 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single permission definition within a registration manifest
  * @export
  * @interface PermissionDefinition
  */
 export interface PermissionDefinition {
     /**
-     * 
-     * @type {string}
-     * @memberof PermissionDefinition
-     */
-    name?: string;
-    /**
-     * 
+     * Human-readable description of the permission
      * @type {string}
      * @memberof PermissionDefinition
      */
     description?: string;
+    /**
+     * Permission name in format domain:resource:action
+     * @type {string}
+     * @memberof PermissionDefinition
+     */
+    name: string;
 }
 
 /**
  * Check if a given object implements the PermissionDefinition interface.
  */
 export function instanceOfPermissionDefinition(value: object): boolean {
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -50,8 +51,8 @@ export function PermissionDefinitionFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
+        'name': json['name'],
     };
 }
 
@@ -61,8 +62,8 @@ export function PermissionDefinitionToJSON(value?: PermissionDefinition | null):
     }
     return {
         
-        'name': value['name'],
         'description': value['description'],
+        'name': value['name'],
     };
 }
 

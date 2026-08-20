@@ -14,59 +14,61 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Drilldown of an individual journal line affecting an account
  * @export
  * @interface JournalLineDrilldownResponse
  */
 export interface JournalLineDrilldownResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof JournalLineDrilldownResponse
-     */
-    journalEntryId?: string;
-    /**
-     * 
-     * @type {Date}
-     * @memberof JournalLineDrilldownResponse
-     */
-    transactionDate?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof JournalLineDrilldownResponse
-     */
-    description?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof JournalLineDrilldownResponse
-     */
-    debitAmount?: number;
-    /**
-     * 
+     * Credit amount (null if debit)
      * @type {number}
      * @memberof JournalLineDrilldownResponse
      */
     creditAmount?: number;
     /**
-     * 
+     * Debit amount (null if credit)
+     * @type {number}
+     * @memberof JournalLineDrilldownResponse
+     */
+    debitAmount?: number;
+    /**
+     * Description/narrative for the journal line
+     * @type {string}
+     * @memberof JournalLineDrilldownResponse
+     */
+    description?: string;
+    /**
+     * Journal entry UUID
+     * @type {string}
+     * @memberof JournalLineDrilldownResponse
+     */
+    journalEntryId: string;
+    /**
+     * Source event UUID that triggered this journal entry
      * @type {string}
      * @memberof JournalLineDrilldownResponse
      */
     sourceEventId?: string;
     /**
-     * 
+     * Source event type
      * @type {string}
      * @memberof JournalLineDrilldownResponse
      */
     sourceEventType?: string;
+    /**
+     * Transaction date
+     * @type {Date}
+     * @memberof JournalLineDrilldownResponse
+     */
+    transactionDate: Date;
 }
 
 /**
  * Check if a given object implements the JournalLineDrilldownResponse interface.
  */
 export function instanceOfJournalLineDrilldownResponse(value: object): boolean {
+    if (!('journalEntryId' in value)) return false;
+    if (!('transactionDate' in value)) return false;
     return true;
 }
 
@@ -80,13 +82,13 @@ export function JournalLineDrilldownResponseFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
-        'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
-        'description': json['description'] == null ? undefined : json['description'],
-        'debitAmount': json['debitAmount'] == null ? undefined : json['debitAmount'],
         'creditAmount': json['creditAmount'] == null ? undefined : json['creditAmount'],
+        'debitAmount': json['debitAmount'] == null ? undefined : json['debitAmount'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'journalEntryId': json['journalEntryId'],
         'sourceEventId': json['sourceEventId'] == null ? undefined : json['sourceEventId'],
         'sourceEventType': json['sourceEventType'] == null ? undefined : json['sourceEventType'],
+        'transactionDate': (new Date(json['transactionDate'])),
     };
 }
 
@@ -96,13 +98,13 @@ export function JournalLineDrilldownResponseToJSON(value?: JournalLineDrilldownR
     }
     return {
         
-        'journalEntryId': value['journalEntryId'],
-        'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString().substring(0,10)),
-        'description': value['description'],
-        'debitAmount': value['debitAmount'],
         'creditAmount': value['creditAmount'],
+        'debitAmount': value['debitAmount'],
+        'description': value['description'],
+        'journalEntryId': value['journalEntryId'],
         'sourceEventId': value['sourceEventId'],
         'sourceEventType': value['sourceEventType'],
+        'transactionDate': ((value['transactionDate']).toISOString().substring(0,10)),
     };
 }
 

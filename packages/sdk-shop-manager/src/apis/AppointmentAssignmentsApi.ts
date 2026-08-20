@@ -40,8 +40,8 @@ export interface ListAssignmentsRequest {
 export class AppointmentAssignmentsApi extends runtime.BaseAPI {
 
     /**
-     * Creates assignments for the specified appointment using the requested mechanics or shop resources.
-     * Create appointment assignments
+     * Creates the mechanic assignment for a scheduled appointment in CONFIRMED status, linking one LEAD mechanic and optional ASSIST mechanics and optionally reserving a bay or mobile-unit resource. Use this tool when staffing a booked appointment; do not use executeConflictOverride, which records a schedule-conflict bypass without assigning anyone, and use listAssignments to read what is already assigned. Preconditions: the appointment must exist and be in SCHEDULED status, no CONFIRMED or IN_PROGRESS assignment may already exist for it, and every mechanicPersonId must resolve to a known mechanic. Required inputs: mechanics with exactly one LEAD role (a single mechanic with a null role defaults to LEAD); resourceId and resourceType are optional, and override=true requires the shop:schedule:edit authority plus a non-blank overrideReason. Emits a SHOPMGR_ASSIGNMENT_CREATED event and persists the assignment and its mechanic links. Returns 400 when the appointment or a mechanic cannot be resolved, the LEAD constraint is violated, or overrideReason is blank with override=true, and 403 when override is requested without the shop:schedule:edit authority. 
+     * Create Mechanic Assignments for an Appointment
      */
     async createAssignmentRaw(requestParameters: CreateAssignmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AssignmentResponse>> {
         if (requestParameters['appointmentId'] == null) {
@@ -84,8 +84,8 @@ export class AppointmentAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates assignments for the specified appointment using the requested mechanics or shop resources.
-     * Create appointment assignments
+     * Creates the mechanic assignment for a scheduled appointment in CONFIRMED status, linking one LEAD mechanic and optional ASSIST mechanics and optionally reserving a bay or mobile-unit resource. Use this tool when staffing a booked appointment; do not use executeConflictOverride, which records a schedule-conflict bypass without assigning anyone, and use listAssignments to read what is already assigned. Preconditions: the appointment must exist and be in SCHEDULED status, no CONFIRMED or IN_PROGRESS assignment may already exist for it, and every mechanicPersonId must resolve to a known mechanic. Required inputs: mechanics with exactly one LEAD role (a single mechanic with a null role defaults to LEAD); resourceId and resourceType are optional, and override=true requires the shop:schedule:edit authority plus a non-blank overrideReason. Emits a SHOPMGR_ASSIGNMENT_CREATED event and persists the assignment and its mechanic links. Returns 400 when the appointment or a mechanic cannot be resolved, the LEAD constraint is violated, or overrideReason is blank with override=true, and 403 when override is requested without the shop:schedule:edit authority. 
+     * Create Mechanic Assignments for an Appointment
      */
     async createAssignment(requestParameters: CreateAssignmentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AssignmentResponse> {
         const response = await this.createAssignmentRaw(requestParameters, initOverrides);
@@ -93,8 +93,8 @@ export class AppointmentAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current assignments associated with the specified appointment.
-     * List appointment assignments
+     * Returns all assignments recorded for an appointment, including each mechanic\'s role, the reserved resource, status and override flag. Use this tool when reading the staffing of a known appointment; do not use createAssignment, which creates a new assignment, and use searchShopAudit for the historical change trail. Preconditions: none beyond authorization; an unknown appointmentId is not rejected. Required inputs: appointmentId (UUID) as a path parameter; there is no request body and no filtering. Emits a SHOPMGR_ASSIGNMENT_LIST_FETCHED audit event; no state changes occur, this is a read-only projection. Returns 200 with an empty list when the appointment has no assignments or does not exist; no 404 is raised for an unknown appointmentId. 
+     * List Assignments for an Appointment
      */
     async listAssignmentsRaw(requestParameters: ListAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AssignmentResponse>>> {
         if (requestParameters['appointmentId'] == null) {
@@ -127,8 +127,8 @@ export class AppointmentAssignmentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current assignments associated with the specified appointment.
-     * List appointment assignments
+     * Returns all assignments recorded for an appointment, including each mechanic\'s role, the reserved resource, status and override flag. Use this tool when reading the staffing of a known appointment; do not use createAssignment, which creates a new assignment, and use searchShopAudit for the historical change trail. Preconditions: none beyond authorization; an unknown appointmentId is not rejected. Required inputs: appointmentId (UUID) as a path parameter; there is no request body and no filtering. Emits a SHOPMGR_ASSIGNMENT_LIST_FETCHED audit event; no state changes occur, this is a read-only projection. Returns 200 with an empty list when the appointment has no assignments or does not exist; no 404 is raised for an unknown appointmentId. 
+     * List Assignments for an Appointment
      */
     async listAssignments(requestParameters: ListAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AssignmentResponse>> {
         const response = await this.listAssignmentsRaw(requestParameters, initOverrides);

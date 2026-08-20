@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for configuring default storage locations for a site
  * @export
  * @interface SiteDefaultsRequest
  */
 export interface SiteDefaultsRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof SiteDefaultsRequest
-     */
-    defaultStagingLocationId?: string;
-    /**
-     * 
+     * Identifier of the default quarantine storage location
      * @type {string}
      * @memberof SiteDefaultsRequest
      */
     defaultQuarantineLocationId?: string;
+    /**
+     * Identifier of the default staging storage location
+     * @type {string}
+     * @memberof SiteDefaultsRequest
+     */
+    defaultStagingLocationId?: string;
 }
 
 /**
@@ -50,8 +50,8 @@ export function SiteDefaultsRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'defaultStagingLocationId': json['defaultStagingLocationId'] == null ? undefined : json['defaultStagingLocationId'],
         'defaultQuarantineLocationId': json['defaultQuarantineLocationId'] == null ? undefined : json['defaultQuarantineLocationId'],
+        'defaultStagingLocationId': json['defaultStagingLocationId'] == null ? undefined : json['defaultStagingLocationId'],
     };
 }
 
@@ -61,8 +61,8 @@ export function SiteDefaultsRequestToJSON(value?: SiteDefaultsRequest | null): a
     }
     return {
         
-        'defaultStagingLocationId': value['defaultStagingLocationId'],
         'defaultQuarantineLocationId': value['defaultQuarantineLocationId'],
+        'defaultStagingLocationId': value['defaultStagingLocationId'],
     };
 }
 

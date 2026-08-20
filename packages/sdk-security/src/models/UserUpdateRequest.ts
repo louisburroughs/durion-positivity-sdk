@@ -14,29 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * Updated user object
+ * Partial update of a user account; only supplied fields are applied
  * @export
  * @interface UserUpdateRequest
  */
 export interface UserUpdateRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof UserUpdateRequest
-     */
-    username?: string;
-    /**
-     * 
+     * New password for the account
      * @type {string}
      * @memberof UserUpdateRequest
      */
     password?: string;
     /**
-     * 
+     * Replacement set of role names
      * @type {Set<string>}
      * @memberof UserUpdateRequest
      */
     roles?: Set<string>;
+    /**
+     * New login username
+     * @type {string}
+     * @memberof UserUpdateRequest
+     */
+    username?: string;
 }
 
 /**
@@ -56,9 +56,9 @@ export function UserUpdateRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'username': json['username'] == null ? undefined : json['username'],
         'password': json['password'] == null ? undefined : json['password'],
         'roles': json['roles'] == null ? undefined : json['roles'],
+        'username': json['username'] == null ? undefined : json['username'],
     };
 }
 
@@ -68,9 +68,9 @@ export function UserUpdateRequestToJSON(value?: UserUpdateRequest | null): any {
     }
     return {
         
-        'username': value['username'],
         'password': value['password'],
         'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
+        'username': value['username'],
     };
 }
 

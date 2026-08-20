@@ -20,77 +20,77 @@ import { mapValues } from '../runtime';
  */
 export interface TimeEntryResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof TimeEntryResponse
-     */
-    timeEntryId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TimeEntryResponse
-     */
-    personId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof TimeEntryResponse
-     */
-    workOrderId?: string;
-    /**
-     * 
+     * Timestamp when the time entry was created
      * @type {Date}
      * @memberof TimeEntryResponse
      */
-    startAt?: Date;
+    createdAt: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof TimeEntryResponse
-     */
-    endAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof TimeEntryResponse
-     */
-    status?: TimeEntryResponseStatusEnum;
-    /**
-     * 
-     * @type {Date}
-     * @memberof TimeEntryResponse
-     */
-    submittedAt?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof TimeEntryResponse
-     */
-    decisionByUserId?: string;
-    /**
-     * 
+     * UTC timestamp when the approval decision was made
      * @type {Date}
      * @memberof TimeEntryResponse
      */
     decisionAtUtc?: Date;
     /**
-     * 
+     * Identifier of the user who approved or rejected the entry
+     * @type {string}
+     * @memberof TimeEntryResponse
+     */
+    decisionByUserId?: string;
+    /**
+     * Timestamp when the time entry ended
+     * @type {Date}
+     * @memberof TimeEntryResponse
+     */
+    endAt?: Date;
+    /**
+     * Identifier of the person the time entry belongs to
+     * @type {string}
+     * @memberof TimeEntryResponse
+     */
+    personId: string;
+    /**
+     * Reason supplied when the time entry was rejected
      * @type {string}
      * @memberof TimeEntryResponse
      */
     rejectionReason?: string;
     /**
-     * 
+     * Timestamp when the time entry started
      * @type {Date}
      * @memberof TimeEntryResponse
      */
-    createdAt?: Date;
+    startAt: Date;
     /**
-     * 
+     * Current status of the time entry
+     * @type {string}
+     * @memberof TimeEntryResponse
+     */
+    status: TimeEntryResponseStatusEnum;
+    /**
+     * Timestamp when the time entry was submitted
      * @type {Date}
      * @memberof TimeEntryResponse
      */
-    updatedAt?: Date;
+    submittedAt?: Date;
+    /**
+     * Unique identifier of the time entry
+     * @type {string}
+     * @memberof TimeEntryResponse
+     */
+    timeEntryId: string;
+    /**
+     * Timestamp when the time entry was last updated
+     * @type {Date}
+     * @memberof TimeEntryResponse
+     */
+    updatedAt: Date;
+    /**
+     * Identifier of the workorder associated with the time entry
+     * @type {string}
+     * @memberof TimeEntryResponse
+     */
+    workOrderId: string;
 }
 
 /**
@@ -109,6 +109,13 @@ export enum TimeEntryResponseStatusEnum {
  * Check if a given object implements the TimeEntryResponse interface.
  */
 export function instanceOfTimeEntryResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('personId' in value)) return false;
+    if (!('startAt' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('timeEntryId' in value)) return false;
+    if (!('updatedAt' in value)) return false;
+    if (!('workOrderId' in value)) return false;
     return true;
 }
 
@@ -122,18 +129,18 @@ export function TimeEntryResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'timeEntryId': json['timeEntryId'] == null ? undefined : json['timeEntryId'],
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'workOrderId': json['workOrderId'] == null ? undefined : json['workOrderId'],
-        'startAt': json['startAt'] == null ? undefined : (new Date(json['startAt'])),
-        'endAt': json['endAt'] == null ? undefined : (new Date(json['endAt'])),
-        'status': json['status'] == null ? undefined : json['status'],
-        'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
-        'decisionByUserId': json['decisionByUserId'] == null ? undefined : json['decisionByUserId'],
+        'createdAt': (new Date(json['createdAt'])),
         'decisionAtUtc': json['decisionAtUtc'] == null ? undefined : (new Date(json['decisionAtUtc'])),
+        'decisionByUserId': json['decisionByUserId'] == null ? undefined : json['decisionByUserId'],
+        'endAt': json['endAt'] == null ? undefined : (new Date(json['endAt'])),
+        'personId': json['personId'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'startAt': (new Date(json['startAt'])),
+        'status': json['status'],
+        'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
+        'timeEntryId': json['timeEntryId'],
+        'updatedAt': (new Date(json['updatedAt'])),
+        'workOrderId': json['workOrderId'],
     };
 }
 
@@ -143,18 +150,18 @@ export function TimeEntryResponseToJSON(value?: TimeEntryResponse | null): any {
     }
     return {
         
-        'timeEntryId': value['timeEntryId'],
-        'personId': value['personId'],
-        'workOrderId': value['workOrderId'],
-        'startAt': value['startAt'] == null ? undefined : ((value['startAt']).toISOString()),
+        'createdAt': ((value['createdAt']).toISOString()),
+        'decisionAtUtc': value['decisionAtUtc'] == null ? undefined : ((value['decisionAtUtc']).toISOString()),
+        'decisionByUserId': value['decisionByUserId'],
         'endAt': value['endAt'] == null ? undefined : ((value['endAt']).toISOString()),
+        'personId': value['personId'],
+        'rejectionReason': value['rejectionReason'],
+        'startAt': ((value['startAt']).toISOString()),
         'status': value['status'],
         'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
-        'decisionByUserId': value['decisionByUserId'],
-        'decisionAtUtc': value['decisionAtUtc'] == null ? undefined : ((value['decisionAtUtc']).toISOString()),
-        'rejectionReason': value['rejectionReason'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'timeEntryId': value['timeEntryId'],
+        'updatedAt': ((value['updatedAt']).toISOString()),
+        'workOrderId': value['workOrderId'],
     };
 }
 

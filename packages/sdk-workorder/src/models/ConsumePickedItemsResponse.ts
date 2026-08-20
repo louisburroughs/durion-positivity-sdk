@@ -21,35 +21,37 @@ import {
 } from './ConsumedItemResult';
 
 /**
- * 
+ * Result of consuming picked items into a workorder
  * @export
  * @interface ConsumePickedItemsResponse
  */
 export interface ConsumePickedItemsResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof ConsumePickedItemsResponse
-     */
-    workorderId?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ConsumePickedItemsResponse
-     */
-    totalItemsConsumed?: number;
-    /**
-     * 
+     * Per-item consumption results
      * @type {Array<ConsumedItemResult>}
      * @memberof ConsumePickedItemsResponse
      */
     results?: Array<ConsumedItemResult>;
+    /**
+     * Total number of items consumed
+     * @type {number}
+     * @memberof ConsumePickedItemsResponse
+     */
+    totalItemsConsumed: number;
+    /**
+     * Identifier of the workorder the items were consumed into
+     * @type {string}
+     * @memberof ConsumePickedItemsResponse
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the ConsumePickedItemsResponse interface.
  */
 export function instanceOfConsumePickedItemsResponse(value: object): boolean {
+    if (!('totalItemsConsumed' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -63,9 +65,9 @@ export function ConsumePickedItemsResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'totalItemsConsumed': json['totalItemsConsumed'] == null ? undefined : json['totalItemsConsumed'],
         'results': json['results'] == null ? undefined : ((json['results'] as Array<any>).map(ConsumedItemResultFromJSON)),
+        'totalItemsConsumed': json['totalItemsConsumed'],
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -75,9 +77,9 @@ export function ConsumePickedItemsResponseToJSON(value?: ConsumePickedItemsRespo
     }
     return {
         
-        'workorderId': value['workorderId'],
-        'totalItemsConsumed': value['totalItemsConsumed'],
         'results': value['results'] == null ? undefined : ((value['results'] as Array<any>).map(ConsumedItemResultToJSON)),
+        'totalItemsConsumed': value['totalItemsConsumed'],
+        'workorderId': value['workorderId'],
     };
 }
 

@@ -14,77 +14,80 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing a service bay
  * @export
  * @interface BayResponse
  */
 export interface BayResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof BayResponse
-     */
-    id?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BayResponse
-     */
-    locationId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof BayResponse
-     */
-    name?: string;
-    /**
-     * 
+     * Type classification of the bay
      * @type {string}
      * @memberof BayResponse
      */
     bayType?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof BayResponse
-     */
-    status?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof BayResponse
-     */
-    maxConcurrentVehicles?: number;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof BayResponse
-     */
-    serviceCapabilityIds?: Array<string>;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof BayResponse
-     */
-    skillRequirementIds?: Array<string>;
-    /**
-     * 
+     * Timestamp when the bay was created (ISO 8601)
      * @type {Date}
      * @memberof BayResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Unique identifier of the bay
+     * @type {string}
+     * @memberof BayResponse
+     */
+    id: string;
+    /**
+     * Timestamp when the bay was last modified (ISO 8601)
      * @type {Date}
      * @memberof BayResponse
      */
     lastModifiedAt?: Date;
+    /**
+     * Identifier of the location that owns the bay
+     * @type {string}
+     * @memberof BayResponse
+     */
+    locationId: string;
+    /**
+     * Maximum number of vehicles that can be serviced concurrently in the bay
+     * @type {number}
+     * @memberof BayResponse
+     */
+    maxConcurrentVehicles?: number;
+    /**
+     * Display name of the bay
+     * @type {string}
+     * @memberof BayResponse
+     */
+    name: string;
+    /**
+     * Identifiers of service capabilities supported by the bay
+     * @type {Array<string>}
+     * @memberof BayResponse
+     */
+    serviceCapabilityIds?: Array<string>;
+    /**
+     * Identifiers of skills required to operate the bay
+     * @type {Array<string>}
+     * @memberof BayResponse
+     */
+    skillRequirementIds?: Array<string>;
+    /**
+     * Operational status of the bay
+     * @type {string}
+     * @memberof BayResponse
+     */
+    status?: string;
 }
 
 /**
  * Check if a given object implements the BayResponse interface.
  */
 export function instanceOfBayResponse(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('locationId' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -98,16 +101,16 @@ export function BayResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'name': json['name'] == null ? undefined : json['name'],
         'bayType': json['bayType'] == null ? undefined : json['bayType'],
-        'status': json['status'] == null ? undefined : json['status'],
+        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'id': json['id'],
+        'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
+        'locationId': json['locationId'],
         'maxConcurrentVehicles': json['maxConcurrentVehicles'] == null ? undefined : json['maxConcurrentVehicles'],
+        'name': json['name'],
         'serviceCapabilityIds': json['serviceCapabilityIds'] == null ? undefined : json['serviceCapabilityIds'],
         'skillRequirementIds': json['skillRequirementIds'] == null ? undefined : json['skillRequirementIds'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
+        'status': json['status'] == null ? undefined : json['status'],
     };
 }
 
@@ -117,16 +120,16 @@ export function BayResponseToJSON(value?: BayResponse | null): any {
     }
     return {
         
-        'id': value['id'],
-        'locationId': value['locationId'],
-        'name': value['name'],
         'bayType': value['bayType'],
-        'status': value['status'],
+        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'id': value['id'],
+        'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
+        'locationId': value['locationId'],
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
+        'name': value['name'],
         'serviceCapabilityIds': value['serviceCapabilityIds'],
         'skillRequirementIds': value['skillRequirementIds'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
-        'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
+        'status': value['status'],
     };
 }
 

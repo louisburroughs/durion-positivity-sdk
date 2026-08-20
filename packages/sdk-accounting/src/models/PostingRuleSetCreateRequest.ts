@@ -14,51 +14,51 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a new posting rule set
  * @export
  * @interface PostingRuleSetCreateRequest
  */
 export interface PostingRuleSetCreateRequest {
     /**
-     * 
+     * Identifier of the user creating the rule set
      * @type {string}
      * @memberof PostingRuleSetCreateRequest
      */
-    name: string;
+    createdBy: string;
     /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleSetCreateRequest
-     */
-    eventType: string;
-    /**
-     * 
+     * Optional human-readable description of the rule set
      * @type {string}
      * @memberof PostingRuleSetCreateRequest
      */
     description?: string;
     /**
-     * 
+     * Accounting event type the rule set applies to
+     * @type {string}
+     * @memberof PostingRuleSetCreateRequest
+     */
+    eventType: string;
+    /**
+     * Display name of the posting rule set
+     * @type {string}
+     * @memberof PostingRuleSetCreateRequest
+     */
+    name: string;
+    /**
+     * Serialized rules definition (JSON) describing GL mapping logic
      * @type {string}
      * @memberof PostingRuleSetCreateRequest
      */
     rulesDefinition: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PostingRuleSetCreateRequest
-     */
-    createdBy: string;
 }
 
 /**
  * Check if a given object implements the PostingRuleSetCreateRequest interface.
  */
 export function instanceOfPostingRuleSetCreateRequest(value: object): boolean {
-    if (!('name' in value)) return false;
-    if (!('eventType' in value)) return false;
-    if (!('rulesDefinition' in value)) return false;
     if (!('createdBy' in value)) return false;
+    if (!('eventType' in value)) return false;
+    if (!('name' in value)) return false;
+    if (!('rulesDefinition' in value)) return false;
     return true;
 }
 
@@ -72,11 +72,11 @@ export function PostingRuleSetCreateRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'name': json['name'],
-        'eventType': json['eventType'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'rulesDefinition': json['rulesDefinition'],
         'createdBy': json['createdBy'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'eventType': json['eventType'],
+        'name': json['name'],
+        'rulesDefinition': json['rulesDefinition'],
     };
 }
 
@@ -86,11 +86,11 @@ export function PostingRuleSetCreateRequestToJSON(value?: PostingRuleSetCreateRe
     }
     return {
         
-        'name': value['name'],
-        'eventType': value['eventType'],
-        'description': value['description'],
-        'rulesDefinition': value['rulesDefinition'],
         'createdBy': value['createdBy'],
+        'description': value['description'],
+        'eventType': value['eventType'],
+        'name': value['name'],
+        'rulesDefinition': value['rulesDefinition'],
     };
 }
 

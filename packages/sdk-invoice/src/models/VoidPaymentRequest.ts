@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to void an authorized payment before capture
  * @export
  * @interface VoidPaymentRequest
  */
 export interface VoidPaymentRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof VoidPaymentRequest
-     */
-    reason: VoidPaymentRequestReasonEnum;
-    /**
-     * 
+     * Optional free-text notes explaining the void
      * @type {string}
      * @memberof VoidPaymentRequest
      */
     notes?: string;
+    /**
+     * Reason the payment is being voided
+     * @type {string}
+     * @memberof VoidPaymentRequest
+     */
+    reason: VoidPaymentRequestReasonEnum;
 }
 
 /**
@@ -65,8 +65,8 @@ export function VoidPaymentRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'reason': json['reason'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'reason': json['reason'],
     };
 }
 
@@ -76,8 +76,8 @@ export function VoidPaymentRequestToJSON(value?: VoidPaymentRequest | null): any
     }
     return {
         
-        'reason': value['reason'],
         'notes': value['notes'],
+        'reason': value['reason'],
     };
 }
 

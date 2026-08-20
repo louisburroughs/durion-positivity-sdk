@@ -45,8 +45,8 @@ export interface InitiatePaymentOperationRequest {
 export class PaymentApi extends runtime.BaseAPI {
 
     /**
-     * Capture all or part of a previously authorized invoice payment hold
-     * Capture authorized payment hold
+     * Captures all or part of a previously authorized AUTH_ONLY payment hold at the gateway; when the captured amount is below the authorized amount, the remainder of the hold is voided. Use this tool to settle an existing AUTHORIZED intent; do not use initiatePayment, which starts a new payment, and use voidPayment instead to release the hold without taking funds. Preconditions: the payment intent must belong to the invoice and be in AUTHORIZED status; the caller needs the MANUAL_CAPTURE authority. Required inputs: amount (positive, up to the authorized amount) and captureIdempotencyKey, which is forwarded to the gateway so a retried capture settles at most once. Emits an INVOICE_PAYMENT_CAPTURE event; the intent moves to CAPTURED on success or CAPTURE_FAILED on decline, and an ambiguous gateway response is resolved by a status inquiry before failing. Returns 200 with the captured intent, 404 when the intent does not exist under the invoice, 409 when the intent is not AUTHORIZED, 422 when the gateway declines the capture, and 403 when the MANUAL_CAPTURE authority is missing. 
+     * Capture Authorized Payment Hold
      */
     async capturePaymentRaw(requestParameters: CapturePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InitiatePaymentResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -96,8 +96,8 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Capture all or part of a previously authorized invoice payment hold
-     * Capture authorized payment hold
+     * Captures all or part of a previously authorized AUTH_ONLY payment hold at the gateway; when the captured amount is below the authorized amount, the remainder of the hold is voided. Use this tool to settle an existing AUTHORIZED intent; do not use initiatePayment, which starts a new payment, and use voidPayment instead to release the hold without taking funds. Preconditions: the payment intent must belong to the invoice and be in AUTHORIZED status; the caller needs the MANUAL_CAPTURE authority. Required inputs: amount (positive, up to the authorized amount) and captureIdempotencyKey, which is forwarded to the gateway so a retried capture settles at most once. Emits an INVOICE_PAYMENT_CAPTURE event; the intent moves to CAPTURED on success or CAPTURE_FAILED on decline, and an ambiguous gateway response is resolved by a status inquiry before failing. Returns 200 with the captured intent, 404 when the intent does not exist under the invoice, 409 when the intent is not AUTHORIZED, 422 when the gateway declines the capture, and 403 when the MANUAL_CAPTURE authority is missing. 
+     * Capture Authorized Payment Hold
      */
     async capturePayment(requestParameters: CapturePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {
         const response = await this.capturePaymentRaw(requestParameters, initOverrides);
@@ -105,8 +105,8 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Initiate a SALE_CAPTURE or AUTH_ONLY card payment against an invoice
-     * Initiate card payment
+     * Initiates a card payment against an invoice through the payment gateway, creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist; the caller needs the PROCESS_PAYMENT authority, plus OVERRIDE_PAYMENT_LIMIT when the amount exceeds 500.00 and SELECT_PAYMENT_FLOW to choose AUTH_ONLY. Required inputs: paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive), idempotencyKey and paymentToken (tokenised card reference, never a PAN); a replayed idempotencyKey with an identical payload returns the existing intent instead of charging twice. Emits an INVOICE_PAYMENT_INITIATE event and records the gateway result on the intent. Returns 201 with the intent, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload, 422 when the gateway declines, and 403 when a required payment authority is missing. 
+     * Initiate Card Payment on Invoice
      */
     async initiatePaymentRaw(requestParameters: InitiatePaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InitiatePaymentResponse>> {
         if (requestParameters['invoiceId'] == null) {
@@ -149,8 +149,8 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Initiate a SALE_CAPTURE or AUTH_ONLY card payment against an invoice
-     * Initiate card payment
+     * Initiates a card payment against an invoice through the payment gateway, creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist; the caller needs the PROCESS_PAYMENT authority, plus OVERRIDE_PAYMENT_LIMIT when the amount exceeds 500.00 and SELECT_PAYMENT_FLOW to choose AUTH_ONLY. Required inputs: paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive), idempotencyKey and paymentToken (tokenised card reference, never a PAN); a replayed idempotencyKey with an identical payload returns the existing intent instead of charging twice. Emits an INVOICE_PAYMENT_INITIATE event and records the gateway result on the intent. Returns 201 with the intent, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload, 422 when the gateway declines, and 403 when a required payment authority is missing. 
+     * Initiate Card Payment on Invoice
      */
     async initiatePayment(requestParameters: InitiatePaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {
         const response = await this.initiatePaymentRaw(requestParameters, initOverrides);

@@ -14,37 +14,48 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Single product/context entry to evaluate against sale-restriction rules
  * @export
  * @interface RestrictionEvaluationItem
  */
 export interface RestrictionEvaluationItem {
     /**
-     * 
+     * Transaction lifecycle context for the evaluation
      * @type {string}
      * @memberof RestrictionEvaluationItem
      */
-    productId: string;
+    context: RestrictionEvaluationItemContextEnum;
     /**
-     * 
+     * Location scope tag for the evaluation
      * @type {string}
      * @memberof RestrictionEvaluationItem
      */
     locationTag: RestrictionEvaluationItemLocationTagEnum;
     /**
-     * 
+     * Product to evaluate restrictions for
+     * @type {string}
+     * @memberof RestrictionEvaluationItem
+     */
+    productId: string;
+    /**
+     * Service channel scope tag for the evaluation
      * @type {string}
      * @memberof RestrictionEvaluationItem
      */
     serviceTag: RestrictionEvaluationItemServiceTagEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof RestrictionEvaluationItem
-     */
-    context: RestrictionEvaluationItemContextEnum;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum RestrictionEvaluationItemContextEnum {
+    Browse = 'BROWSE',
+    Quote = 'QUOTE',
+    Checkout = 'CHECKOUT',
+    InvoiceFinalize = 'INVOICE_FINALIZE',
+    CommitSale = 'COMMIT_SALE'
+}
 /**
 * @export
 * @enum {string}
@@ -68,27 +79,16 @@ export enum RestrictionEvaluationItemServiceTagEnum {
     Invoice = 'INVOICE',
     Delivery = 'DELIVERY'
 }
-/**
-* @export
-* @enum {string}
-*/
-export enum RestrictionEvaluationItemContextEnum {
-    Browse = 'BROWSE',
-    Quote = 'QUOTE',
-    Checkout = 'CHECKOUT',
-    InvoiceFinalize = 'INVOICE_FINALIZE',
-    CommitSale = 'COMMIT_SALE'
-}
 
 
 /**
  * Check if a given object implements the RestrictionEvaluationItem interface.
  */
 export function instanceOfRestrictionEvaluationItem(value: object): boolean {
-    if (!('productId' in value)) return false;
-    if (!('locationTag' in value)) return false;
-    if (!('serviceTag' in value)) return false;
     if (!('context' in value)) return false;
+    if (!('locationTag' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('serviceTag' in value)) return false;
     return true;
 }
 
@@ -102,10 +102,10 @@ export function RestrictionEvaluationItemFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'productId': json['productId'],
-        'locationTag': json['locationTag'],
-        'serviceTag': json['serviceTag'],
         'context': json['context'],
+        'locationTag': json['locationTag'],
+        'productId': json['productId'],
+        'serviceTag': json['serviceTag'],
     };
 }
 
@@ -115,10 +115,10 @@ export function RestrictionEvaluationItemToJSON(value?: RestrictionEvaluationIte
     }
     return {
         
-        'productId': value['productId'],
-        'locationTag': value['locationTag'],
-        'serviceTag': value['serviceTag'],
         'context': value['context'],
+        'locationTag': value['locationTag'],
+        'productId': value['productId'],
+        'serviceTag': value['serviceTag'],
     };
 }
 

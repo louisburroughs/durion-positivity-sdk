@@ -33,59 +33,67 @@ import {
  */
 export interface PriceQuoteResponse {
     /**
-     * Product identifier
-     * @type {string}
+     * 
+     * @type {MoneyAmount}
      * @memberof PriceQuoteResponse
      */
-    productId?: string;
-    /**
-     * Quoted quantity
-     * @type {number}
-     * @memberof PriceQuoteResponse
-     */
-    quantity?: number;
+    extendedPrice: MoneyAmount;
     /**
      * 
      * @type {MoneyAmount}
      * @memberof PriceQuoteResponse
      */
-    msrp?: MoneyAmount;
-    /**
-     * 
-     * @type {MoneyAmount}
-     * @memberof PriceQuoteResponse
-     */
-    unitPrice?: MoneyAmount;
-    /**
-     * 
-     * @type {MoneyAmount}
-     * @memberof PriceQuoteResponse
-     */
-    extendedPrice?: MoneyAmount;
+    msrp: MoneyAmount;
     /**
      * Source from which the final price was resolved
      * @type {string}
      * @memberof PriceQuoteResponse
      */
-    priceSource?: string;
+    priceSource: string;
     /**
      * Per-rule pricing breakdown entries
      * @type {Array<PricingBreakdownEntry>}
      * @memberof PriceQuoteResponse
      */
-    pricingBreakdown?: Array<PricingBreakdownEntry>;
+    pricingBreakdown: Array<PricingBreakdownEntry>;
+    /**
+     * Product identifier
+     * @type {string}
+     * @memberof PriceQuoteResponse
+     */
+    productId: string;
+    /**
+     * Quoted quantity
+     * @type {number}
+     * @memberof PriceQuoteResponse
+     */
+    quantity: number;
+    /**
+     * 
+     * @type {MoneyAmount}
+     * @memberof PriceQuoteResponse
+     */
+    unitPrice: MoneyAmount;
     /**
      * Non-fatal warnings generated during quote calculation
      * @type {Array<string>}
      * @memberof PriceQuoteResponse
      */
-    warnings?: Array<string>;
+    warnings: Array<string>;
 }
 
 /**
  * Check if a given object implements the PriceQuoteResponse interface.
  */
 export function instanceOfPriceQuoteResponse(value: object): boolean {
+    if (!('extendedPrice' in value)) return false;
+    if (!('msrp' in value)) return false;
+    if (!('priceSource' in value)) return false;
+    if (!('pricingBreakdown' in value)) return false;
+    if (!('productId' in value)) return false;
+    if (!('quantity' in value)) return false;
+    if (!('unitPrice' in value)) return false;
+    if (!('warnings' in value)) return false;
     return true;
 }
 
@@ -99,14 +107,14 @@ export function PriceQuoteResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'msrp': json['msrp'] == null ? undefined : MoneyAmountFromJSON(json['msrp']),
-        'unitPrice': json['unitPrice'] == null ? undefined : MoneyAmountFromJSON(json['unitPrice']),
-        'extendedPrice': json['extendedPrice'] == null ? undefined : MoneyAmountFromJSON(json['extendedPrice']),
-        'priceSource': json['priceSource'] == null ? undefined : json['priceSource'],
-        'pricingBreakdown': json['pricingBreakdown'] == null ? undefined : ((json['pricingBreakdown'] as Array<any>).map(PricingBreakdownEntryFromJSON)),
-        'warnings': json['warnings'] == null ? undefined : json['warnings'],
+        'extendedPrice': MoneyAmountFromJSON(json['extendedPrice']),
+        'msrp': MoneyAmountFromJSON(json['msrp']),
+        'priceSource': json['priceSource'],
+        'pricingBreakdown': ((json['pricingBreakdown'] as Array<any>).map(PricingBreakdownEntryFromJSON)),
+        'productId': json['productId'],
+        'quantity': json['quantity'],
+        'unitPrice': MoneyAmountFromJSON(json['unitPrice']),
+        'warnings': json['warnings'],
     };
 }
 
@@ -116,13 +124,13 @@ export function PriceQuoteResponseToJSON(value?: PriceQuoteResponse | null): any
     }
     return {
         
+        'extendedPrice': MoneyAmountToJSON(value['extendedPrice']),
+        'msrp': MoneyAmountToJSON(value['msrp']),
+        'priceSource': value['priceSource'],
+        'pricingBreakdown': ((value['pricingBreakdown'] as Array<any>).map(PricingBreakdownEntryToJSON)),
         'productId': value['productId'],
         'quantity': value['quantity'],
-        'msrp': MoneyAmountToJSON(value['msrp']),
         'unitPrice': MoneyAmountToJSON(value['unitPrice']),
-        'extendedPrice': MoneyAmountToJSON(value['extendedPrice']),
-        'priceSource': value['priceSource'],
-        'pricingBreakdown': value['pricingBreakdown'] == null ? undefined : ((value['pricingBreakdown'] as Array<any>).map(PricingBreakdownEntryToJSON)),
         'warnings': value['warnings'],
     };
 }

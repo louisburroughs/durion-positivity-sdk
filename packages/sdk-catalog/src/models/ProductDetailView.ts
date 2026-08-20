@@ -37,6 +37,12 @@ import {
     SubstitutionHintFromJSONTyped,
     SubstitutionHintToJSON,
 } from './SubstitutionHint';
+import type { SupplierAvailabilityInfo } from './SupplierAvailabilityInfo';
+import {
+    SupplierAvailabilityInfoFromJSON,
+    SupplierAvailabilityInfoFromJSONTyped,
+    SupplierAvailabilityInfoToJSON,
+} from './SupplierAvailabilityInfo';
 
 /**
  * Consolidated product detail view with pricing and availability
@@ -45,11 +51,17 @@ import {
  */
 export interface ProductDetailView {
     /**
-     * Unique product identifier
+     * 
+     * @type {AvailabilityInfo}
+     * @memberof ProductDetailView
+     */
+    availability?: AvailabilityInfo;
+    /**
+     * Overall confidence in the data completeness
      * @type {string}
      * @memberof ProductDetailView
      */
-    productId?: string;
+    confidence: ProductDetailViewConfidenceEnum;
     /**
      * Product description
      * @type {string}
@@ -57,11 +69,11 @@ export interface ProductDetailView {
      */
     description?: string;
     /**
-     * Product specifications
-     * @type {Array<ProductSpecification>}
+     * Timestamp when this response was generated
+     * @type {Date}
      * @memberof ProductDetailView
      */
-    specifications?: Array<ProductSpecification>;
+    generatedAt: Date;
     /**
      * 
      * @type {PricingInfo}
@@ -69,11 +81,17 @@ export interface ProductDetailView {
      */
     pricing?: PricingInfo;
     /**
-     * 
-     * @type {AvailabilityInfo}
+     * Unique product identifier
+     * @type {string}
      * @memberof ProductDetailView
      */
-    availability?: AvailabilityInfo;
+    productId: string;
+    /**
+     * Product specifications
+     * @type {Array<ProductSpecification>}
+     * @memberof ProductDetailView
+     */
+    specifications?: Array<ProductSpecification>;
     /**
      * Substitution product suggestions
      * @type {Array<SubstitutionHint>}
@@ -81,17 +99,11 @@ export interface ProductDetailView {
      */
     substitutions?: Array<SubstitutionHint>;
     /**
-     * Timestamp when this response was generated
-     * @type {Date}
+     * 
+     * @type {SupplierAvailabilityInfo}
      * @memberof ProductDetailView
      */
-    generatedAt?: Date;
-    /**
-     * Overall confidence in the data completeness
-     * @type {string}
-     * @memberof ProductDetailView
-     */
-    confidence?: ProductDetailViewConfidenceEnum;
+    supplierAvailability?: SupplierAvailabilityInfo;
 }
 
 /**
@@ -109,6 +121,9 @@ export enum ProductDetailViewConfidenceEnum {
  * Check if a given object implements the ProductDetailView interface.
  */
 export function instanceOfProductDetailView(value: object): boolean {
+    if (!('confidence' in value)) return false;
+    if (!('generatedAt' in value)) return false;
+    if (!('productId' in value)) return false;
     return true;
 }
 
@@ -122,14 +137,15 @@ export function ProductDetailViewFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'productId': json['productId'] == null ? undefined : json['productId'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'specifications': json['specifications'] == null ? undefined : ((json['specifications'] as Array<any>).map(ProductSpecificationFromJSON)),
-        'pricing': json['pricing'] == null ? undefined : PricingInfoFromJSON(json['pricing']),
         'availability': json['availability'] == null ? undefined : AvailabilityInfoFromJSON(json['availability']),
+        'confidence': json['confidence'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'generatedAt': (new Date(json['generatedAt'])),
+        'pricing': json['pricing'] == null ? undefined : PricingInfoFromJSON(json['pricing']),
+        'productId': json['productId'],
+        'specifications': json['specifications'] == null ? undefined : ((json['specifications'] as Array<any>).map(ProductSpecificationFromJSON)),
         'substitutions': json['substitutions'] == null ? undefined : ((json['substitutions'] as Array<any>).map(SubstitutionHintFromJSON)),
-        'generatedAt': json['generatedAt'] == null ? undefined : (new Date(json['generatedAt'])),
-        'confidence': json['confidence'] == null ? undefined : json['confidence'],
+        'supplierAvailability': json['supplierAvailability'] == null ? undefined : SupplierAvailabilityInfoFromJSON(json['supplierAvailability']),
     };
 }
 
@@ -139,14 +155,15 @@ export function ProductDetailViewToJSON(value?: ProductDetailView | null): any {
     }
     return {
         
-        'productId': value['productId'],
-        'description': value['description'],
-        'specifications': value['specifications'] == null ? undefined : ((value['specifications'] as Array<any>).map(ProductSpecificationToJSON)),
-        'pricing': PricingInfoToJSON(value['pricing']),
         'availability': AvailabilityInfoToJSON(value['availability']),
-        'substitutions': value['substitutions'] == null ? undefined : ((value['substitutions'] as Array<any>).map(SubstitutionHintToJSON)),
-        'generatedAt': value['generatedAt'] == null ? undefined : ((value['generatedAt']).toISOString()),
         'confidence': value['confidence'],
+        'description': value['description'],
+        'generatedAt': ((value['generatedAt']).toISOString()),
+        'pricing': PricingInfoToJSON(value['pricing']),
+        'productId': value['productId'],
+        'specifications': value['specifications'] == null ? undefined : ((value['specifications'] as Array<any>).map(ProductSpecificationToJSON)),
+        'substitutions': value['substitutions'] == null ? undefined : ((value['substitutions'] as Array<any>).map(SubstitutionHintToJSON)),
+        'supplierAvailability': SupplierAvailabilityInfoToJSON(value['supplierAvailability']),
     };
 }
 

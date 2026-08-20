@@ -14,53 +14,57 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Result of a party merge operation
  * @export
  * @interface MergePartiesResponse
  */
 export interface MergePartiesResponse {
     /**
-     * 
+     * Timestamp of merge completion (ISO 8601)
      * @type {string}
      * @memberof MergePartiesResponse
      */
-    mergeAuditId?: string;
+    completedAt?: string;
     /**
-     * 
+     * Losing party ID (now merged away)
      * @type {string}
      * @memberof MergePartiesResponse
      */
-    survivorPartyId?: string;
+    losingPartyId: string;
     /**
-     * 
+     * Merge audit record ID (for traceability)
      * @type {string}
      * @memberof MergePartiesResponse
      */
-    losingPartyId?: string;
+    mergeAuditId: string;
     /**
-     * 
+     * Alias/redirect ID for the losing party, pointing to the survivor
      * @type {string}
      * @memberof MergePartiesResponse
      */
     mergedPartyAlias?: string;
     /**
-     * 
+     * Merge status
      * @type {string}
      * @memberof MergePartiesResponse
      */
-    status?: string;
+    status: string;
     /**
-     * 
+     * Survivor party ID (canonical identifier for merged entity)
      * @type {string}
      * @memberof MergePartiesResponse
      */
-    completedAt?: string;
+    survivorPartyId: string;
 }
 
 /**
  * Check if a given object implements the MergePartiesResponse interface.
  */
 export function instanceOfMergePartiesResponse(value: object): boolean {
+    if (!('losingPartyId' in value)) return false;
+    if (!('mergeAuditId' in value)) return false;
+    if (!('status' in value)) return false;
+    if (!('survivorPartyId' in value)) return false;
     return true;
 }
 
@@ -74,12 +78,12 @@ export function MergePartiesResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'mergeAuditId': json['mergeAuditId'] == null ? undefined : json['mergeAuditId'],
-        'survivorPartyId': json['survivorPartyId'] == null ? undefined : json['survivorPartyId'],
-        'losingPartyId': json['losingPartyId'] == null ? undefined : json['losingPartyId'],
-        'mergedPartyAlias': json['mergedPartyAlias'] == null ? undefined : json['mergedPartyAlias'],
-        'status': json['status'] == null ? undefined : json['status'],
         'completedAt': json['completedAt'] == null ? undefined : json['completedAt'],
+        'losingPartyId': json['losingPartyId'],
+        'mergeAuditId': json['mergeAuditId'],
+        'mergedPartyAlias': json['mergedPartyAlias'] == null ? undefined : json['mergedPartyAlias'],
+        'status': json['status'],
+        'survivorPartyId': json['survivorPartyId'],
     };
 }
 
@@ -89,12 +93,12 @@ export function MergePartiesResponseToJSON(value?: MergePartiesResponse | null):
     }
     return {
         
-        'mergeAuditId': value['mergeAuditId'],
-        'survivorPartyId': value['survivorPartyId'],
+        'completedAt': value['completedAt'],
         'losingPartyId': value['losingPartyId'],
+        'mergeAuditId': value['mergeAuditId'],
         'mergedPartyAlias': value['mergedPartyAlias'],
         'status': value['status'],
-        'completedAt': value['completedAt'],
+        'survivorPartyId': value['survivorPartyId'],
     };
 }
 

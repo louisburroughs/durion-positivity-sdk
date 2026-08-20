@@ -14,41 +14,41 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for creating a product MSRP
  * @export
  * @interface CreateMsrpRequestDto
  */
 export interface CreateMsrpRequestDto {
     /**
-     * 
+     * MSRP amount
      * @type {number}
      * @memberof CreateMsrpRequestDto
      */
     amount: number;
     /**
-     * 
+     * Identifier of the user creating the MSRP
+     * @type {string}
+     * @memberof CreateMsrpRequestDto
+     */
+    createdByUserId: string;
+    /**
+     * ISO 4217 currency code
      * @type {string}
      * @memberof CreateMsrpRequestDto
      */
     currency: string;
     /**
-     * 
-     * @type {Date}
-     * @memberof CreateMsrpRequestDto
-     */
-    effectiveStartDate: Date;
-    /**
-     * 
+     * Date the MSRP stops being effective
      * @type {Date}
      * @memberof CreateMsrpRequestDto
      */
     effectiveEndDate?: Date;
     /**
-     * 
-     * @type {string}
+     * Date the MSRP becomes effective
+     * @type {Date}
      * @memberof CreateMsrpRequestDto
      */
-    createdByUserId: string;
+    effectiveStartDate: Date;
 }
 
 /**
@@ -56,9 +56,9 @@ export interface CreateMsrpRequestDto {
  */
 export function instanceOfCreateMsrpRequestDto(value: object): boolean {
     if (!('amount' in value)) return false;
+    if (!('createdByUserId' in value)) return false;
     if (!('currency' in value)) return false;
     if (!('effectiveStartDate' in value)) return false;
-    if (!('createdByUserId' in value)) return false;
     return true;
 }
 
@@ -73,10 +73,10 @@ export function CreateMsrpRequestDtoFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'amount': json['amount'],
-        'currency': json['currency'],
-        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
-        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
         'createdByUserId': json['createdByUserId'],
+        'currency': json['currency'],
+        'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
+        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
     };
 }
 
@@ -87,10 +87,10 @@ export function CreateMsrpRequestDtoToJSON(value?: CreateMsrpRequestDto | null):
     return {
         
         'amount': value['amount'],
-        'currency': value['currency'],
-        'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0,10)),
-        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
         'createdByUserId': value['createdByUserId'],
+        'currency': value['currency'],
+        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
+        'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0,10)),
     };
 }
 

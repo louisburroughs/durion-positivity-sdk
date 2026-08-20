@@ -14,47 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A single customer record submitted as part of a bulk ingest request
  * @export
  * @interface CustomerBulkIngestRecord
  */
 export interface CustomerBulkIngestRecord {
     /**
-     * 
+     * Existing customer number, if known
      * @type {string}
      * @memberof CustomerBulkIngestRecord
      */
-    firstName: string;
+    customerNumber?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CustomerBulkIngestRecord
-     */
-    lastName: string;
-    /**
-     * 
+     * Email address of the customer
      * @type {string}
      * @memberof CustomerBulkIngestRecord
      */
     email?: string;
     /**
-     * 
+     * First name of the customer
+     * @type {string}
+     * @memberof CustomerBulkIngestRecord
+     */
+    firstName: string;
+    /**
+     * Last name of the customer
+     * @type {string}
+     * @memberof CustomerBulkIngestRecord
+     */
+    lastName: string;
+    /**
+     * Phone number of the customer
      * @type {string}
      * @memberof CustomerBulkIngestRecord
      */
     phoneNumber?: string;
     /**
-     * 
+     * Primary address of the customer
      * @type {string}
      * @memberof CustomerBulkIngestRecord
      */
     primaryAddress?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CustomerBulkIngestRecord
-     */
-    customerNumber?: string;
 }
 
 /**
@@ -76,12 +76,12 @@ export function CustomerBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'customerNumber': json['customerNumber'] == null ? undefined : json['customerNumber'],
+        'email': json['email'] == null ? undefined : json['email'],
         'firstName': json['firstName'],
         'lastName': json['lastName'],
-        'email': json['email'] == null ? undefined : json['email'],
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'primaryAddress': json['primaryAddress'] == null ? undefined : json['primaryAddress'],
-        'customerNumber': json['customerNumber'] == null ? undefined : json['customerNumber'],
     };
 }
 
@@ -91,12 +91,12 @@ export function CustomerBulkIngestRecordToJSON(value?: CustomerBulkIngestRecord 
     }
     return {
         
+        'customerNumber': value['customerNumber'],
+        'email': value['email'],
         'firstName': value['firstName'],
         'lastName': value['lastName'],
-        'email': value['email'],
         'phoneNumber': value['phoneNumber'],
         'primaryAddress': value['primaryAddress'],
-        'customerNumber': value['customerNumber'],
     };
 }
 

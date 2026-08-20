@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to decode encoded permission bits into permission code strings
  * @export
  * @interface PermissionDecodeRequest
  */
 export interface PermissionDecodeRequest {
     /**
-     * 
+     * Base64URL-encoded BitSet of permission bits taken from an access token
      * @type {string}
      * @memberof PermissionDecodeRequest
      */
     permBits: string;
     /**
-     * 
+     * Catalog version that was in effect when permBits was encoded
      * @type {number}
      * @memberof PermissionDecodeRequest
      */
-    permVer?: number;
+    permVer: number;
 }
 
 /**
@@ -38,6 +38,7 @@ export interface PermissionDecodeRequest {
  */
 export function instanceOfPermissionDecodeRequest(value: object): boolean {
     if (!('permBits' in value)) return false;
+    if (!('permVer' in value)) return false;
     return true;
 }
 
@@ -52,7 +53,7 @@ export function PermissionDecodeRequestFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'permBits': json['perm_bits'],
-        'permVer': json['perm_ver'] == null ? undefined : json['perm_ver'],
+        'permVer': json['perm_ver'],
     };
 }
 

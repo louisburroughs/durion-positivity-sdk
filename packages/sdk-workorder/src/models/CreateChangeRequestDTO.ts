@@ -21,17 +21,11 @@ import {
 } from './WorkorderItemDTO';
 
 /**
- * Request payload for creating a change request
+ * Change request details including items
  * @export
  * @interface CreateChangeRequestDTO
  */
 export interface CreateChangeRequestDTO {
-    /**
-     * Workorder identifier
-     * @type {string}
-     * @memberof CreateChangeRequestDTO
-     */
-    workorderId?: string;
     /**
      * Description of additional requested work
      * @type {string}
@@ -39,17 +33,23 @@ export interface CreateChangeRequestDTO {
      */
     description: string;
     /**
+     * Exception reason when emergency override context applies
+     * @type {string}
+     * @memberof CreateChangeRequestDTO
+     */
+    exceptionReason?: string;
+    /**
      * Whether this request contains emergency/safety exception items
      * @type {boolean}
      * @memberof CreateChangeRequestDTO
      */
     isEmergencyException?: boolean;
     /**
-     * Exception reason when emergency override context applies
-     * @type {string}
+     * Part items included in this change request
+     * @type {Array<WorkorderItemDTO>}
      * @memberof CreateChangeRequestDTO
      */
-    exceptionReason?: string;
+    parts?: Array<WorkorderItemDTO>;
     /**
      * Service items included in this change request
      * @type {Array<WorkorderItemDTO>}
@@ -57,11 +57,11 @@ export interface CreateChangeRequestDTO {
      */
     services?: Array<WorkorderItemDTO>;
     /**
-     * Part items included in this change request
-     * @type {Array<WorkorderItemDTO>}
+     * Workorder identifier
+     * @type {string}
      * @memberof CreateChangeRequestDTO
      */
-    parts?: Array<WorkorderItemDTO>;
+    workorderId?: string;
 }
 
 /**
@@ -82,12 +82,12 @@ export function CreateChangeRequestDTOFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
         'description': json['description'],
-        'isEmergencyException': json['isEmergencyException'] == null ? undefined : json['isEmergencyException'],
         'exceptionReason': json['exceptionReason'] == null ? undefined : json['exceptionReason'],
-        'services': json['services'] == null ? undefined : ((json['services'] as Array<any>).map(WorkorderItemDTOFromJSON)),
+        'isEmergencyException': json['isEmergencyException'] == null ? undefined : json['isEmergencyException'],
         'parts': json['parts'] == null ? undefined : ((json['parts'] as Array<any>).map(WorkorderItemDTOFromJSON)),
+        'services': json['services'] == null ? undefined : ((json['services'] as Array<any>).map(WorkorderItemDTOFromJSON)),
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
     };
 }
 
@@ -97,12 +97,12 @@ export function CreateChangeRequestDTOToJSON(value?: CreateChangeRequestDTO | nu
     }
     return {
         
-        'workorderId': value['workorderId'],
         'description': value['description'],
-        'isEmergencyException': value['isEmergencyException'],
         'exceptionReason': value['exceptionReason'],
-        'services': value['services'] == null ? undefined : ((value['services'] as Array<any>).map(WorkorderItemDTOToJSON)),
+        'isEmergencyException': value['isEmergencyException'],
         'parts': value['parts'] == null ? undefined : ((value['parts'] as Array<any>).map(WorkorderItemDTOToJSON)),
+        'services': value['services'] == null ? undefined : ((value['services'] as Array<any>).map(WorkorderItemDTOToJSON)),
+        'workorderId': value['workorderId'],
     };
 }
 

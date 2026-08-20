@@ -14,29 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Minimal acknowledgement returned after creating an audit event
  * @export
  * @interface AuditEventCreatedResponse
  */
 export interface AuditEventCreatedResponse {
     /**
-     * 
+     * Identifier of the created audit event
      * @type {string}
      * @memberof AuditEventCreatedResponse
      */
-    eventId?: string;
+    eventId: string;
     /**
-     * 
+     * Timestamp recorded for the audit event
      * @type {Date}
      * @memberof AuditEventCreatedResponse
      */
-    timestamp?: Date;
+    timestamp: Date;
 }
 
 /**
  * Check if a given object implements the AuditEventCreatedResponse interface.
  */
 export function instanceOfAuditEventCreatedResponse(value: object): boolean {
+    if (!('eventId' in value)) return false;
+    if (!('timestamp' in value)) return false;
     return true;
 }
 
@@ -50,8 +52,8 @@ export function AuditEventCreatedResponseFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
-        'eventId': json['eventId'] == null ? undefined : json['eventId'],
-        'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
+        'eventId': json['eventId'],
+        'timestamp': (new Date(json['timestamp'])),
     };
 }
 
@@ -62,7 +64,7 @@ export function AuditEventCreatedResponseToJSON(value?: AuditEventCreatedRespons
     return {
         
         'eventId': value['eventId'],
-        'timestamp': value['timestamp'] == null ? undefined : ((value['timestamp']).toISOString()),
+        'timestamp': ((value['timestamp']).toISOString()),
     };
 }
 

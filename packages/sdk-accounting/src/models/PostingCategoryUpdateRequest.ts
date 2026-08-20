@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request payload for updating an existing posting category
  * @export
  * @interface PostingCategoryUpdateRequest
  */
 export interface PostingCategoryUpdateRequest {
     /**
-     * 
+     * Name of the posting category
      * @type {string}
      * @memberof PostingCategoryUpdateRequest
      */
     categoryName: string;
     /**
-     * 
+     * Optional description of the posting category
      * @type {string}
      * @memberof PostingCategoryUpdateRequest
      */
     description?: string;
     /**
-     * 
+     * Identifier of the user modifying the posting category
      * @type {string}
      * @memberof PostingCategoryUpdateRequest
      */

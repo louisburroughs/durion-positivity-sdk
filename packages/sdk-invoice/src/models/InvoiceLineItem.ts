@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface InvoiceLineItem {
     /**
+     * Line amount (quantity x unit price).
+     * @type {number}
+     * @memberof InvoiceLineItem
+     */
+    amount: number;
+    /**
      * Line item description.
      * @type {string}
      * @memberof InvoiceLineItem
@@ -32,27 +38,27 @@ export interface InvoiceLineItem {
      */
     quantity: number;
     /**
+     * Line item type (e.g. PART, LABOR, FEE, TAX).
+     * @type {string}
+     * @memberof InvoiceLineItem
+     */
+    type?: string;
+    /**
      * Unit price amount.
      * @type {number}
      * @memberof InvoiceLineItem
      */
     unitPrice: number;
-    /**
-     * Line amount (quantity x unit price).
-     * @type {number}
-     * @memberof InvoiceLineItem
-     */
-    amount: number;
 }
 
 /**
  * Check if a given object implements the InvoiceLineItem interface.
  */
 export function instanceOfInvoiceLineItem(value: object): boolean {
+    if (!('amount' in value)) return false;
     if (!('description' in value)) return false;
     if (!('quantity' in value)) return false;
     if (!('unitPrice' in value)) return false;
-    if (!('amount' in value)) return false;
     return true;
 }
 
@@ -66,10 +72,11 @@ export function InvoiceLineItemFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
+        'amount': json['amount'],
         'description': json['description'],
         'quantity': json['quantity'],
+        'type': json['type'] == null ? undefined : json['type'],
         'unitPrice': json['unitPrice'],
-        'amount': json['amount'],
     };
 }
 
@@ -79,10 +86,11 @@ export function InvoiceLineItemToJSON(value?: InvoiceLineItem | null): any {
     }
     return {
         
+        'amount': value['amount'],
         'description': value['description'],
         'quantity': value['quantity'],
+        'type': value['type'],
         'unitPrice': value['unitPrice'],
-        'amount': value['amount'],
     };
 }
 

@@ -44,8 +44,8 @@ export interface UpdateContactRolesOperationRequest {
 export class CRMContactsApi extends runtime.BaseAPI {
 
     /**
-     * Retrieve all contacts for a party including their role assignments
-     * Get contacts with roles
+     * Returns every contact person assigned a role on a commercial account, with names, emails, and phones resolved from pos-people and each contact\'s role assignments and primary flags. Use this tool when listing who represents a commercial account and in what capacity; do not use updateContactRoles, which rewrites one contact\'s role assignments. Preconditions: a commercial party must exist for the supplied partyId; a pos-people outage degrades contact names and contact points to null rather than failing. Required inputs: partyId (UUID) as a path parameter; there is no request body. Emits a CRM_CONTACTS_LIST audit event; no state changes occur. Returns 404 when no commercial party exists for the supplied partyId, and 200 with an empty contacts list when the account has no role assignments. 
+     * Get Party Contacts With Roles
      */
     async getContactsWithRolesRaw(requestParameters: GetContactsWithRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetContactsWithRolesResponse>> {
         if (requestParameters['partyId'] == null) {
@@ -78,8 +78,8 @@ export class CRMContactsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Retrieve all contacts for a party including their role assignments
-     * Get contacts with roles
+     * Returns every contact person assigned a role on a commercial account, with names, emails, and phones resolved from pos-people and each contact\'s role assignments and primary flags. Use this tool when listing who represents a commercial account and in what capacity; do not use updateContactRoles, which rewrites one contact\'s role assignments. Preconditions: a commercial party must exist for the supplied partyId; a pos-people outage degrades contact names and contact points to null rather than failing. Required inputs: partyId (UUID) as a path parameter; there is no request body. Emits a CRM_CONTACTS_LIST audit event; no state changes occur. Returns 404 when no commercial party exists for the supplied partyId, and 200 with an empty contacts list when the account has no role assignments. 
+     * Get Party Contacts With Roles
      */
     async getContactsWithRoles(requestParameters: GetContactsWithRolesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetContactsWithRolesResponse> {
         const response = await this.getContactsWithRolesRaw(requestParameters, initOverrides);
@@ -87,8 +87,8 @@ export class CRMContactsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assign or update role assignments for a specific contact within a party
-     * Update contact roles
+     * Replaces the full set of role assignments for one contact on a commercial account; existing assignments for that contact are deleted and the submitted list is written in their place. Use this tool when changing what a known contact does for an account; use getContactsWithRoles instead to read current assignments, and note that submitting an empty roles list removes the contact\'s roles entirely. Preconditions: the commercial party and the contact person must both exist; assigning a role as primary automatically demotes any existing primary contact for that role. Required inputs: partyId and contactId (UUIDs) as path parameters, plus roles, a list where each entry has roleCode (BILLING, PAYMENT_AUTHORIZER, OPERATIONS, PRIMARY_BUSINESS_CONTACT, or TECHNICAL) and an optional isPrimary flag defaulting to false. Emits a CRM_CONTACT_ROLES_UPDATE event; assignments are rewritten in place. Returns 404 when the party or contact person cannot be found, and 400 when a roleCode is not a recognized role. 
+     * Update Contact Role Assignments
      */
     async updateContactRolesRaw(requestParameters: UpdateContactRolesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UpdateContactRolesResponse>> {
         if (requestParameters['partyId'] == null) {
@@ -138,8 +138,8 @@ export class CRMContactsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assign or update role assignments for a specific contact within a party
-     * Update contact roles
+     * Replaces the full set of role assignments for one contact on a commercial account; existing assignments for that contact are deleted and the submitted list is written in their place. Use this tool when changing what a known contact does for an account; use getContactsWithRoles instead to read current assignments, and note that submitting an empty roles list removes the contact\'s roles entirely. Preconditions: the commercial party and the contact person must both exist; assigning a role as primary automatically demotes any existing primary contact for that role. Required inputs: partyId and contactId (UUIDs) as path parameters, plus roles, a list where each entry has roleCode (BILLING, PAYMENT_AUTHORIZER, OPERATIONS, PRIMARY_BUSINESS_CONTACT, or TECHNICAL) and an optional isPrimary flag defaulting to false. Emits a CRM_CONTACT_ROLES_UPDATE event; assignments are rewritten in place. Returns 404 when the party or contact person cannot be found, and 400 when a roleCode is not a recognized role. 
+     * Update Contact Role Assignments
      */
     async updateContactRoles(requestParameters: UpdateContactRolesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UpdateContactRolesResponse> {
         const response = await this.updateContactRolesRaw(requestParameters, initOverrides);

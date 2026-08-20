@@ -14,11 +14,17 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload for approving a change request
+ * Approval details including user ID and note
  * @export
  * @interface ApproveChangeRequestDTO
  */
 export interface ApproveChangeRequestDTO {
+    /**
+     * Approval note captured as the decision artifact
+     * @type {string}
+     * @memberof ApproveChangeRequestDTO
+     */
+    approvalNote: string;
     /**
      * Deprecated. Actor identity is resolved from authenticated security context.
      * @type {string}
@@ -26,12 +32,6 @@ export interface ApproveChangeRequestDTO {
      * @deprecated
      */
     approvedBy?: string;
-    /**
-     * Approval note captured as the decision artifact
-     * @type {string}
-     * @memberof ApproveChangeRequestDTO
-     */
-    approvalNote: string;
 }
 
 /**
@@ -52,8 +52,8 @@ export function ApproveChangeRequestDTOFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
         'approvalNote': json['approvalNote'],
+        'approvedBy': json['approvedBy'] == null ? undefined : json['approvedBy'],
     };
 }
 
@@ -63,8 +63,8 @@ export function ApproveChangeRequestDTOToJSON(value?: ApproveChangeRequestDTO | 
     }
     return {
         
-        'approvedBy': value['approvedBy'],
         'approvalNote': value['approvalNote'],
+        'approvedBy': value['approvedBy'],
     };
 }
 

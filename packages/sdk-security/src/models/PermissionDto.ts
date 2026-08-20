@@ -14,47 +14,51 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * A permission entry exposed by user-facing RBAC endpoints
  * @export
  * @interface PermissionDto
  */
 export interface PermissionDto {
     /**
-     * 
-     * @type {string}
+     * True when the permission is deprecated
+     * @type {boolean}
      * @memberof PermissionDto
      */
-    id?: string;
+    deprecated: boolean;
     /**
-     * 
-     * @type {string}
-     * @memberof PermissionDto
-     */
-    name?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof PermissionDto
-     */
-    domain?: string;
-    /**
-     * 
+     * Human-readable description of the permission
      * @type {string}
      * @memberof PermissionDto
      */
     description?: string;
     /**
-     * 
-     * @type {boolean}
+     * Domain that owns the permission
+     * @type {string}
      * @memberof PermissionDto
      */
-    deprecated?: boolean;
+    domain: string;
+    /**
+     * Permission identifier
+     * @type {string}
+     * @memberof PermissionDto
+     */
+    id: string;
+    /**
+     * Permission name in format domain:resource:action
+     * @type {string}
+     * @memberof PermissionDto
+     */
+    name: string;
 }
 
 /**
  * Check if a given object implements the PermissionDto interface.
  */
 export function instanceOfPermissionDto(value: object): boolean {
+    if (!('deprecated' in value)) return false;
+    if (!('domain' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -68,11 +72,11 @@ export function PermissionDtoFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'domain': json['domain'] == null ? undefined : json['domain'],
+        'deprecated': json['deprecated'],
         'description': json['description'] == null ? undefined : json['description'],
-        'deprecated': json['deprecated'] == null ? undefined : json['deprecated'],
+        'domain': json['domain'],
+        'id': json['id'],
+        'name': json['name'],
     };
 }
 
@@ -82,11 +86,11 @@ export function PermissionDtoToJSON(value?: PermissionDto | null): any {
     }
     return {
         
+        'deprecated': value['deprecated'],
+        'description': value['description'],
+        'domain': value['domain'],
         'id': value['id'],
         'name': value['name'],
-        'domain': value['domain'],
-        'description': value['description'],
-        'deprecated': value['deprecated'],
     };
 }
 

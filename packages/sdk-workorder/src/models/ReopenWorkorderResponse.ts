@@ -20,41 +20,46 @@ import { mapValues } from '../runtime';
  */
 export interface ReopenWorkorderResponse {
     /**
-     * Workorder identifier
-     * @type {string}
-     * @memberof ReopenWorkorderResponse
-     */
-    workorderId?: string;
-    /**
      * Current lifecycle status
      * @type {string}
      * @memberof ReopenWorkorderResponse
      */
-    currentStatus?: string;
+    currentStatus: string;
     /**
      * Whether the workorder is reopened for controlled edits
      * @type {boolean}
      * @memberof ReopenWorkorderResponse
      */
-    isReopened?: boolean;
-    /**
-     * Reopen timestamp
-     * @type {Date}
-     * @memberof ReopenWorkorderResponse
-     */
-    reopenedAt?: Date;
+    isReopened: boolean;
     /**
      * Operation message
      * @type {string}
      * @memberof ReopenWorkorderResponse
      */
-    message?: string;
+    message: string;
+    /**
+     * Reopen timestamp
+     * @type {Date}
+     * @memberof ReopenWorkorderResponse
+     */
+    reopenedAt: Date;
+    /**
+     * Workorder identifier
+     * @type {string}
+     * @memberof ReopenWorkorderResponse
+     */
+    workorderId: string;
 }
 
 /**
  * Check if a given object implements the ReopenWorkorderResponse interface.
  */
 export function instanceOfReopenWorkorderResponse(value: object): boolean {
+    if (!('currentStatus' in value)) return false;
+    if (!('isReopened' in value)) return false;
+    if (!('message' in value)) return false;
+    if (!('reopenedAt' in value)) return false;
+    if (!('workorderId' in value)) return false;
     return true;
 }
 
@@ -68,11 +73,11 @@ export function ReopenWorkorderResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
-        'currentStatus': json['currentStatus'] == null ? undefined : json['currentStatus'],
-        'isReopened': json['isReopened'] == null ? undefined : json['isReopened'],
-        'reopenedAt': json['reopenedAt'] == null ? undefined : (new Date(json['reopenedAt'])),
-        'message': json['message'] == null ? undefined : json['message'],
+        'currentStatus': json['currentStatus'],
+        'isReopened': json['isReopened'],
+        'message': json['message'],
+        'reopenedAt': (new Date(json['reopenedAt'])),
+        'workorderId': json['workorderId'],
     };
 }
 
@@ -82,11 +87,11 @@ export function ReopenWorkorderResponseToJSON(value?: ReopenWorkorderResponse | 
     }
     return {
         
-        'workorderId': value['workorderId'],
         'currentStatus': value['currentStatus'],
         'isReopened': value['isReopened'],
-        'reopenedAt': value['reopenedAt'] == null ? undefined : ((value['reopenedAt']).toISOString()),
         'message': value['message'],
+        'reopenedAt': ((value['reopenedAt']).toISOString()),
+        'workorderId': value['workorderId'],
     };
 }
 

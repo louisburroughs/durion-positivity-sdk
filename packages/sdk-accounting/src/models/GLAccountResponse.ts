@@ -14,97 +14,127 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * GL account response with computed status
  * @export
  * @interface GLAccountResponse
  */
 export interface GLAccountResponse {
     /**
-     * 
-     * @type {string}
-     * @memberof GLAccountResponse
-     */
-    glAccountId?: string;
-    /**
-     * 
+     * GL account code
      * @type {string}
      * @memberof GLAccountResponse
      */
     accountCode?: string;
     /**
-     * 
+     * GL account display name
      * @type {string}
      * @memberof GLAccountResponse
      */
     accountName?: string;
     /**
-     * 
+     * Optional subtype refining accountType for report grouping and posting-config plausibility checks. Null when no refinement applies.
+     * @type {string}
+     * @memberof GLAccountResponse
+     */
+    accountSubtype?: GLAccountResponseAccountSubtypeEnum;
+    /**
+     * Account classification
      * @type {string}
      * @memberof GLAccountResponse
      */
     accountType?: GLAccountResponseAccountTypeEnum;
     /**
-     * 
-     * @type {string}
-     * @memberof GLAccountResponse
-     */
-    description?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof GLAccountResponse
-     */
-    parentAccountId?: string;
-    /**
-     * 
+     * Date the account becomes active
      * @type {Date}
      * @memberof GLAccountResponse
      */
     activationDate?: Date;
     /**
-     * 
-     * @type {Date}
-     * @memberof GLAccountResponse
-     */
-    deactivationDate?: Date;
-    /**
-     * 
-     * @type {string}
-     * @memberof GLAccountResponse
-     */
-    status?: GLAccountResponseStatusEnum;
-    /**
-     * 
+     * Created timestamp
      * @type {Date}
      * @memberof GLAccountResponse
      */
     createdAt?: Date;
     /**
-     * 
+     * Created by username
      * @type {string}
      * @memberof GLAccountResponse
      */
     createdBy?: string;
     /**
-     * 
+     * Date the account becomes inactive
+     * @type {Date}
+     * @memberof GLAccountResponse
+     */
+    deactivationDate?: Date;
+    /**
+     * GL account description
+     * @type {string}
+     * @memberof GLAccountResponse
+     */
+    description?: string;
+    /**
+     * GL account UUID
+     * @type {string}
+     * @memberof GLAccountResponse
+     */
+    glAccountId: string;
+    /**
+     * Last modified timestamp
      * @type {Date}
      * @memberof GLAccountResponse
      */
     modifiedAt?: Date;
     /**
-     * 
+     * Last modified by username
      * @type {string}
      * @memberof GLAccountResponse
      */
     modifiedBy?: string;
     /**
-     * 
+     * Parent GL account UUID for hierarchical accounts
+     * @type {string}
+     * @memberof GLAccountResponse
+     */
+    parentAccountId?: string;
+    /**
+     * Whether journal entry lines on this account participate in reconciliation (e.g. settlement/bank reconciliation).
+     * @type {boolean}
+     * @memberof GLAccountResponse
+     */
+    reconcilable: boolean;
+    /**
+     * Derived account status (ACTIVE, INACTIVE, NOT_YET_ACTIVE)
+     * @type {string}
+     * @memberof GLAccountResponse
+     */
+    status?: GLAccountResponseStatusEnum;
+    /**
+     * Optimistic locking version
      * @type {number}
      * @memberof GLAccountResponse
      */
     version?: number;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum GLAccountResponseAccountSubtypeEnum {
+    Receivable = 'RECEIVABLE',
+    Payable = 'PAYABLE',
+    BankCash = 'BANK_CASH',
+    UndepositedFunds = 'UNDEPOSITED_FUNDS',
+    TaxPayable = 'TAX_PAYABLE',
+    CurrentAsset = 'CURRENT_ASSET',
+    FixedAsset = 'FIXED_ASSET',
+    CurrentLiability = 'CURRENT_LIABILITY',
+    Sales = 'SALES',
+    CostOfSales = 'COST_OF_SALES',
+    OperatingExpense = 'OPERATING_EXPENSE',
+    Other = 'OTHER'
+}
 /**
 * @export
 * @enum {string}
@@ -131,6 +161,8 @@ export enum GLAccountResponseStatusEnum {
  * Check if a given object implements the GLAccountResponse interface.
  */
 export function instanceOfGLAccountResponse(value: object): boolean {
+    if (!('glAccountId' in value)) return false;
+    if (!('reconcilable' in value)) return false;
     return true;
 }
 
@@ -144,19 +176,21 @@ export function GLAccountResponseFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
         'accountCode': json['accountCode'] == null ? undefined : json['accountCode'],
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
+        'accountSubtype': json['accountSubtype'] == null ? undefined : json['accountSubtype'],
         'accountType': json['accountType'] == null ? undefined : json['accountType'],
-        'description': json['description'] == null ? undefined : json['description'],
-        'parentAccountId': json['parentAccountId'] == null ? undefined : json['parentAccountId'],
         'activationDate': json['activationDate'] == null ? undefined : (new Date(json['activationDate'])),
-        'deactivationDate': json['deactivationDate'] == null ? undefined : (new Date(json['deactivationDate'])),
-        'status': json['status'] == null ? undefined : json['status'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'deactivationDate': json['deactivationDate'] == null ? undefined : (new Date(json['deactivationDate'])),
+        'description': json['description'] == null ? undefined : json['description'],
+        'glAccountId': json['glAccountId'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : (new Date(json['modifiedAt'])),
         'modifiedBy': json['modifiedBy'] == null ? undefined : json['modifiedBy'],
+        'parentAccountId': json['parentAccountId'] == null ? undefined : json['parentAccountId'],
+        'reconcilable': json['reconcilable'],
+        'status': json['status'] == null ? undefined : json['status'],
         'version': json['version'] == null ? undefined : json['version'],
     };
 }
@@ -167,19 +201,21 @@ export function GLAccountResponseToJSON(value?: GLAccountResponse | null): any {
     }
     return {
         
-        'glAccountId': value['glAccountId'],
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
+        'accountSubtype': value['accountSubtype'],
         'accountType': value['accountType'],
-        'description': value['description'],
-        'parentAccountId': value['parentAccountId'],
         'activationDate': value['activationDate'] == null ? undefined : ((value['activationDate']).toISOString()),
-        'deactivationDate': value['deactivationDate'] == null ? undefined : ((value['deactivationDate']).toISOString()),
-        'status': value['status'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'deactivationDate': value['deactivationDate'] == null ? undefined : ((value['deactivationDate']).toISOString()),
+        'description': value['description'],
+        'glAccountId': value['glAccountId'],
         'modifiedAt': value['modifiedAt'] == null ? undefined : ((value['modifiedAt']).toISOString()),
         'modifiedBy': value['modifiedBy'],
+        'parentAccountId': value['parentAccountId'],
+        'reconcilable': value['reconcilable'],
+        'status': value['status'],
         'version': value['version'],
     };
 }

@@ -14,65 +14,68 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response payload describing a mobile unit coverage rule
  * @export
  * @interface CoverageRuleResponse
  */
 export interface CoverageRuleResponse {
     /**
-     * 
+     * Unique identifier of the coverage rule
      * @type {string}
      * @memberof CoverageRuleResponse
      */
-    id?: string;
+    id: string;
     /**
-     * 
+     * Maximum service distance in kilometres covered by the rule
+     * @type {number}
+     * @memberof CoverageRuleResponse
+     */
+    maxDistance?: number;
+    /**
+     * Identifier of the mobile unit this rule belongs to
      * @type {string}
      * @memberof CoverageRuleResponse
      */
-    mobileUnitId?: string;
+    mobileUnitId: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CoverageRuleResponse
-     */
-    serviceAreaId?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CoverageRuleResponse
-     */
-    ruleType?: string;
-    /**
-     * 
+     * Evaluation priority of the rule (lower is evaluated first)
      * @type {number}
      * @memberof CoverageRuleResponse
      */
     priority?: number;
     /**
-     * 
+     * Type of coverage rule
+     * @type {string}
+     * @memberof CoverageRuleResponse
+     */
+    ruleType?: string;
+    /**
+     * Identifier of the service area this rule applies to
+     * @type {string}
+     * @memberof CoverageRuleResponse
+     */
+    serviceAreaId: string;
+    /**
+     * Date from which the rule is effective
      * @type {Date}
      * @memberof CoverageRuleResponse
      */
     validFrom?: Date;
     /**
-     * 
+     * Date until which the rule is effective
      * @type {Date}
      * @memberof CoverageRuleResponse
      */
     validTo?: Date;
-    /**
-     * 
-     * @type {number}
-     * @memberof CoverageRuleResponse
-     */
-    maxDistance?: number;
 }
 
 /**
  * Check if a given object implements the CoverageRuleResponse interface.
  */
 export function instanceOfCoverageRuleResponse(value: object): boolean {
+    if (!('id' in value)) return false;
+    if (!('mobileUnitId' in value)) return false;
+    if (!('serviceAreaId' in value)) return false;
     return true;
 }
 
@@ -86,14 +89,14 @@ export function CoverageRuleResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
-        'mobileUnitId': json['mobileUnitId'] == null ? undefined : json['mobileUnitId'],
-        'serviceAreaId': json['serviceAreaId'] == null ? undefined : json['serviceAreaId'],
-        'ruleType': json['ruleType'] == null ? undefined : json['ruleType'],
+        'id': json['id'],
+        'maxDistance': json['maxDistance'] == null ? undefined : json['maxDistance'],
+        'mobileUnitId': json['mobileUnitId'],
         'priority': json['priority'] == null ? undefined : json['priority'],
+        'ruleType': json['ruleType'] == null ? undefined : json['ruleType'],
+        'serviceAreaId': json['serviceAreaId'],
         'validFrom': json['validFrom'] == null ? undefined : (new Date(json['validFrom'])),
         'validTo': json['validTo'] == null ? undefined : (new Date(json['validTo'])),
-        'maxDistance': json['maxDistance'] == null ? undefined : json['maxDistance'],
     };
 }
 
@@ -104,13 +107,13 @@ export function CoverageRuleResponseToJSON(value?: CoverageRuleResponse | null):
     return {
         
         'id': value['id'],
+        'maxDistance': value['maxDistance'],
         'mobileUnitId': value['mobileUnitId'],
-        'serviceAreaId': value['serviceAreaId'],
-        'ruleType': value['ruleType'],
         'priority': value['priority'],
+        'ruleType': value['ruleType'],
+        'serviceAreaId': value['serviceAreaId'],
         'validFrom': value['validFrom'] == null ? undefined : ((value['validFrom']).toISOString().substring(0,10)),
         'validTo': value['validTo'] == null ? undefined : ((value['validTo']).toISOString().substring(0,10)),
-        'maxDistance': value['maxDistance'],
     };
 }
 

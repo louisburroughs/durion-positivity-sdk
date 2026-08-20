@@ -24,37 +24,37 @@ export interface ResolveAccountTierResponse {
      * @type {string}
      * @memberof ResolveAccountTierResponse
      */
-    accountId?: string;
+    accountId: string;
     /**
      * Currently assigned tier (before resolution)
      * @type {string}
      * @memberof ResolveAccountTierResponse
      */
-    currentTier?: ResolveAccountTierResponseCurrentTierEnum;
-    /**
-     * Recommended/resolved tier based on business rules
-     * @type {string}
-     * @memberof ResolveAccountTierResponse
-     */
-    recommendedTier?: ResolveAccountTierResponseRecommendedTierEnum;
-    /**
-     * Whether the tier was applied to the account
-     * @type {boolean}
-     * @memberof ResolveAccountTierResponse
-     */
-    tierApplied?: boolean;
+    currentTier: ResolveAccountTierResponseCurrentTierEnum;
     /**
      * Whether the current tier was manually set and blocked auto-update
      * @type {boolean}
      * @memberof ResolveAccountTierResponse
      */
-    manualOverrideActive?: boolean;
+    manualOverrideActive: boolean;
+    /**
+     * Recommended/resolved tier based on business rules
+     * @type {string}
+     * @memberof ResolveAccountTierResponse
+     */
+    recommendedTier: ResolveAccountTierResponseRecommendedTierEnum;
     /**
      * Explanation of why this tier was recommended
      * @type {string}
      * @memberof ResolveAccountTierResponse
      */
     resolutionReason?: string;
+    /**
+     * Whether the tier was applied to the account
+     * @type {boolean}
+     * @memberof ResolveAccountTierResponse
+     */
+    tierApplied: boolean;
     /**
      * Score or metric used for tier calculation
      * @type {number}
@@ -93,6 +93,11 @@ export enum ResolveAccountTierResponseRecommendedTierEnum {
  * Check if a given object implements the ResolveAccountTierResponse interface.
  */
 export function instanceOfResolveAccountTierResponse(value: object): boolean {
+    if (!('accountId' in value)) return false;
+    if (!('currentTier' in value)) return false;
+    if (!('manualOverrideActive' in value)) return false;
+    if (!('recommendedTier' in value)) return false;
+    if (!('tierApplied' in value)) return false;
     return true;
 }
 
@@ -106,12 +111,12 @@ export function ResolveAccountTierResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
-        'accountId': json['accountId'] == null ? undefined : json['accountId'],
-        'currentTier': json['currentTier'] == null ? undefined : json['currentTier'],
-        'recommendedTier': json['recommendedTier'] == null ? undefined : json['recommendedTier'],
-        'tierApplied': json['tierApplied'] == null ? undefined : json['tierApplied'],
-        'manualOverrideActive': json['manualOverrideActive'] == null ? undefined : json['manualOverrideActive'],
+        'accountId': json['accountId'],
+        'currentTier': json['currentTier'],
+        'manualOverrideActive': json['manualOverrideActive'],
+        'recommendedTier': json['recommendedTier'],
         'resolutionReason': json['resolutionReason'] == null ? undefined : json['resolutionReason'],
+        'tierApplied': json['tierApplied'],
         'tierScore': json['tierScore'] == null ? undefined : json['tierScore'],
     };
 }
@@ -124,10 +129,10 @@ export function ResolveAccountTierResponseToJSON(value?: ResolveAccountTierRespo
         
         'accountId': value['accountId'],
         'currentTier': value['currentTier'],
-        'recommendedTier': value['recommendedTier'],
-        'tierApplied': value['tierApplied'],
         'manualOverrideActive': value['manualOverrideActive'],
+        'recommendedTier': value['recommendedTier'],
         'resolutionReason': value['resolutionReason'],
+        'tierApplied': value['tierApplied'],
         'tierScore': value['tierScore'],
     };
 }

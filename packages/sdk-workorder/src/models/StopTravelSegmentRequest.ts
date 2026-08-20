@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface StopTravelSegmentRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof StopTravelSegmentRequest
-     */
-    toLocationId?: string;
-    /**
-     * 
+     * Optional notes recorded when stopping the travel segment
      * @type {string}
      * @memberof StopTravelSegmentRequest
      */
     notes?: string;
+    /**
+     * Identifier of the location reached when the travel segment stops
+     * @type {string}
+     * @memberof StopTravelSegmentRequest
+     */
+    toLocationId?: string;
 }
 
 /**
@@ -50,8 +50,8 @@ export function StopTravelSegmentRequestFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'toLocationId': json['toLocationId'] == null ? undefined : json['toLocationId'],
     };
 }
 
@@ -61,8 +61,8 @@ export function StopTravelSegmentRequestToJSON(value?: StopTravelSegmentRequest 
     }
     return {
         
-        'toLocationId': value['toLocationId'],
         'notes': value['notes'],
+        'toLocationId': value['toLocationId'],
     };
 }
 

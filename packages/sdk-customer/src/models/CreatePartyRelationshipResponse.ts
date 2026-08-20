@@ -20,35 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface CreatePartyRelationshipResponse {
     /**
-     * Unique identifier of the relationship
-     * @type {string}
-     * @memberof CreatePartyRelationshipResponse
-     */
-    relationshipId?: string;
-    /**
-     * ID of the commercial account
-     * @type {string}
-     * @memberof CreatePartyRelationshipResponse
-     */
-    partyId?: string;
-    /**
-     * ID of the individual person
-     * @type {string}
-     * @memberof CreatePartyRelationshipResponse
-     */
-    personId?: string;
-    /**
-     * Roles assigned to this relationship
-     * @type {Set<string>}
-     * @memberof CreatePartyRelationshipResponse
-     */
-    roles?: Set<CreatePartyRelationshipResponseRolesEnum>;
-    /**
-     * Effective start date
+     * Timestamp when the relationship was created
      * @type {Date}
      * @memberof CreatePartyRelationshipResponse
      */
-    effectiveStartDate?: Date;
+    createdAt: Date;
     /**
      * Effective end date (null if active)
      * @type {Date}
@@ -56,23 +32,47 @@ export interface CreatePartyRelationshipResponse {
      */
     effectiveEndDate?: Date;
     /**
-     * Timestamp when the relationship was created
+     * Effective start date
      * @type {Date}
      * @memberof CreatePartyRelationshipResponse
      */
-    createdAt?: Date;
+    effectiveStartDate: Date;
+    /**
+     * ID of the commercial account
+     * @type {string}
+     * @memberof CreatePartyRelationshipResponse
+     */
+    partyId: string;
+    /**
+     * ID of the individual person
+     * @type {string}
+     * @memberof CreatePartyRelationshipResponse
+     */
+    personId: string;
     /**
      * Whether a previous primary billing contact was demoted
      * @type {boolean}
      * @memberof CreatePartyRelationshipResponse
      */
-    previousPrimaryDemoted?: boolean;
+    previousPrimaryDemoted: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof CreatePartyRelationshipResponse
      */
     primaryBillingContact?: boolean;
+    /**
+     * Unique identifier of the relationship
+     * @type {string}
+     * @memberof CreatePartyRelationshipResponse
+     */
+    relationshipId: string;
+    /**
+     * Roles assigned to this relationship
+     * @type {Set<string>}
+     * @memberof CreatePartyRelationshipResponse
+     */
+    roles: Set<CreatePartyRelationshipResponseRolesEnum>;
 }
 
 /**
@@ -92,6 +92,13 @@ export enum CreatePartyRelationshipResponseRolesEnum {
  * Check if a given object implements the CreatePartyRelationshipResponse interface.
  */
 export function instanceOfCreatePartyRelationshipResponse(value: object): boolean {
+    if (!('createdAt' in value)) return false;
+    if (!('effectiveStartDate' in value)) return false;
+    if (!('partyId' in value)) return false;
+    if (!('personId' in value)) return false;
+    if (!('previousPrimaryDemoted' in value)) return false;
+    if (!('relationshipId' in value)) return false;
+    if (!('roles' in value)) return false;
     return true;
 }
 
@@ -105,15 +112,15 @@ export function CreatePartyRelationshipResponseFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'relationshipId': json['relationshipId'] == null ? undefined : json['relationshipId'],
-        'partyId': json['partyId'] == null ? undefined : json['partyId'],
-        'personId': json['personId'] == null ? undefined : json['personId'],
-        'roles': json['roles'] == null ? undefined : json['roles'],
-        'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
+        'createdAt': (new Date(json['createdAt'])),
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'previousPrimaryDemoted': json['previousPrimaryDemoted'] == null ? undefined : json['previousPrimaryDemoted'],
+        'effectiveStartDate': (new Date(json['effectiveStartDate'])),
+        'partyId': json['partyId'],
+        'personId': json['personId'],
+        'previousPrimaryDemoted': json['previousPrimaryDemoted'],
         'primaryBillingContact': json['primaryBillingContact'] == null ? undefined : json['primaryBillingContact'],
+        'relationshipId': json['relationshipId'],
+        'roles': json['roles'],
     };
 }
 
@@ -123,15 +130,15 @@ export function CreatePartyRelationshipResponseToJSON(value?: CreatePartyRelatio
     }
     return {
         
-        'relationshipId': value['relationshipId'],
+        'createdAt': ((value['createdAt']).toISOString()),
+        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
+        'effectiveStartDate': ((value['effectiveStartDate']).toISOString().substring(0,10)),
         'partyId': value['partyId'],
         'personId': value['personId'],
-        'roles': value['roles'] == null ? undefined : Array.from(value['roles'] as Set<any>),
-        'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString().substring(0,10)),
-        'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString().substring(0,10)),
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'previousPrimaryDemoted': value['previousPrimaryDemoted'],
         'primaryBillingContact': value['primaryBillingContact'],
+        'relationshipId': value['relationshipId'],
+        'roles': Array.from(value['roles'] as Set<any>),
     };
 }
 

@@ -14,47 +14,47 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Postal address for an employee
  * @export
  * @interface EmployeeAddressDto
  */
 export interface EmployeeAddressDto {
     /**
-     * 
-     * @type {string}
-     * @memberof EmployeeAddressDto
-     */
-    line1?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EmployeeAddressDto
-     */
-    line2?: string;
-    /**
-     * 
+     * City
      * @type {string}
      * @memberof EmployeeAddressDto
      */
     city?: string;
     /**
-     * 
+     * Country
      * @type {string}
      * @memberof EmployeeAddressDto
      */
-    region?: string;
+    country?: string;
     /**
-     * 
+     * First address line
+     * @type {string}
+     * @memberof EmployeeAddressDto
+     */
+    line1?: string;
+    /**
+     * Second address line
+     * @type {string}
+     * @memberof EmployeeAddressDto
+     */
+    line2?: string;
+    /**
+     * Postal or ZIP code
      * @type {string}
      * @memberof EmployeeAddressDto
      */
     postalCode?: string;
     /**
-     * 
+     * State, province, or region
      * @type {string}
      * @memberof EmployeeAddressDto
      */
-    country?: string;
+    region?: string;
 }
 
 /**
@@ -74,12 +74,12 @@ export function EmployeeAddressDtoFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'city': json['city'] == null ? undefined : json['city'],
+        'country': json['country'] == null ? undefined : json['country'],
         'line1': json['line1'] == null ? undefined : json['line1'],
         'line2': json['line2'] == null ? undefined : json['line2'],
-        'city': json['city'] == null ? undefined : json['city'],
-        'region': json['region'] == null ? undefined : json['region'],
         'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
-        'country': json['country'] == null ? undefined : json['country'],
+        'region': json['region'] == null ? undefined : json['region'],
     };
 }
 
@@ -89,12 +89,12 @@ export function EmployeeAddressDtoToJSON(value?: EmployeeAddressDto | null): any
     }
     return {
         
+        'city': value['city'],
+        'country': value['country'],
         'line1': value['line1'],
         'line2': value['line2'],
-        'city': value['city'],
-        'region': value['region'],
         'postalCode': value['postalCode'],
-        'country': value['country'],
+        'region': value['region'],
     };
 }
 

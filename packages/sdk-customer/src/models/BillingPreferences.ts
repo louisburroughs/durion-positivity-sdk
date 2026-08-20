@@ -14,35 +14,37 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Account-level billing preferences within a CRM snapshot
  * @export
  * @interface BillingPreferences
  */
 export interface BillingPreferences {
     /**
-     * 
+     * Whether the account should not be contacted at all
      * @type {boolean}
      * @memberof BillingPreferences
      */
-    marketingOptOut?: boolean;
+    doNotContact: boolean;
     /**
-     * 
-     * @type {boolean}
-     * @memberof BillingPreferences
-     */
-    doNotContact?: boolean;
-    /**
-     * 
+     * Preferred invoice delivery method
      * @type {string}
      * @memberof BillingPreferences
      */
     invoiceDeliveryMethod?: string;
+    /**
+     * Whether the account has opted out of marketing communications
+     * @type {boolean}
+     * @memberof BillingPreferences
+     */
+    marketingOptOut: boolean;
 }
 
 /**
  * Check if a given object implements the BillingPreferences interface.
  */
 export function instanceOfBillingPreferences(value: object): boolean {
+    if (!('doNotContact' in value)) return false;
+    if (!('marketingOptOut' in value)) return false;
     return true;
 }
 
@@ -56,9 +58,9 @@ export function BillingPreferencesFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'marketingOptOut': json['marketingOptOut'] == null ? undefined : json['marketingOptOut'],
-        'doNotContact': json['doNotContact'] == null ? undefined : json['doNotContact'],
+        'doNotContact': json['doNotContact'],
         'invoiceDeliveryMethod': json['invoiceDeliveryMethod'] == null ? undefined : json['invoiceDeliveryMethod'],
+        'marketingOptOut': json['marketingOptOut'],
     };
 }
 
@@ -68,9 +70,9 @@ export function BillingPreferencesToJSON(value?: BillingPreferences | null): any
     }
     return {
         
-        'marketingOptOut': value['marketingOptOut'],
         'doNotContact': value['doNotContact'],
         'invoiceDeliveryMethod': value['invoiceDeliveryMethod'],
+        'marketingOptOut': value['marketingOptOut'],
     };
 }
 

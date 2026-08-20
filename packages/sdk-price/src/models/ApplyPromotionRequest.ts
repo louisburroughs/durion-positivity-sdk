@@ -27,25 +27,25 @@ import {
  */
 export interface ApplyPromotionRequest {
     /**
-     * Promotion code to apply
-     * @type {string}
-     * @memberof ApplyPromotionRequest
-     */
-    promotionCode: string;
-    /**
      * 
      * @type {EstimateContext}
      * @memberof ApplyPromotionRequest
      */
     estimateContext: EstimateContext;
+    /**
+     * Promotion code to apply
+     * @type {string}
+     * @memberof ApplyPromotionRequest
+     */
+    promotionCode: string;
 }
 
 /**
  * Check if a given object implements the ApplyPromotionRequest interface.
  */
 export function instanceOfApplyPromotionRequest(value: object): boolean {
-    if (!('promotionCode' in value)) return false;
     if (!('estimateContext' in value)) return false;
+    if (!('promotionCode' in value)) return false;
     return true;
 }
 
@@ -59,8 +59,8 @@ export function ApplyPromotionRequestFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
-        'promotionCode': json['promotionCode'],
         'estimateContext': EstimateContextFromJSON(json['estimateContext']),
+        'promotionCode': json['promotionCode'],
     };
 }
 
@@ -70,8 +70,8 @@ export function ApplyPromotionRequestToJSON(value?: ApplyPromotionRequest | null
     }
     return {
         
-        'promotionCode': value['promotionCode'],
         'estimateContext': EstimateContextToJSON(value['estimateContext']),
+        'promotionCode': value['promotionCode'],
     };
 }
 

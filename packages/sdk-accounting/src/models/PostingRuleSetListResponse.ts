@@ -21,41 +21,41 @@ import {
 } from './PostingRuleSetResponse';
 
 /**
- * 
+ * Paginated list of posting rule sets
  * @export
  * @interface PostingRuleSetListResponse
  */
 export interface PostingRuleSetListResponse {
     /**
-     * 
-     * @type {Array<PostingRuleSetResponse>}
-     * @memberof PostingRuleSetListResponse
-     */
-    ruleSets?: Array<PostingRuleSetResponse>;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostingRuleSetListResponse
-     */
-    totalElements?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof PostingRuleSetListResponse
-     */
-    totalPages?: number;
-    /**
-     * 
+     * Zero-based index of the current page
      * @type {number}
      * @memberof PostingRuleSetListResponse
      */
     currentPage?: number;
     /**
-     * 
+     * Number of items per page
      * @type {number}
      * @memberof PostingRuleSetListResponse
      */
     pageSize?: number;
+    /**
+     * Posting rule sets on the current page
+     * @type {Array<PostingRuleSetResponse>}
+     * @memberof PostingRuleSetListResponse
+     */
+    ruleSets?: Array<PostingRuleSetResponse>;
+    /**
+     * Total number of posting rule sets across all pages
+     * @type {number}
+     * @memberof PostingRuleSetListResponse
+     */
+    totalElements?: number;
+    /**
+     * Total number of pages available
+     * @type {number}
+     * @memberof PostingRuleSetListResponse
+     */
+    totalPages?: number;
 }
 
 /**
@@ -75,11 +75,11 @@ export function PostingRuleSetListResponseFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
+        'currentPage': json['currentPage'] == null ? undefined : json['currentPage'],
+        'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
         'ruleSets': json['ruleSets'] == null ? undefined : ((json['ruleSets'] as Array<any>).map(PostingRuleSetResponseFromJSON)),
         'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
         'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
-        'currentPage': json['currentPage'] == null ? undefined : json['currentPage'],
-        'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
     };
 }
 
@@ -89,11 +89,11 @@ export function PostingRuleSetListResponseToJSON(value?: PostingRuleSetListRespo
     }
     return {
         
+        'currentPage': value['currentPage'],
+        'pageSize': value['pageSize'],
         'ruleSets': value['ruleSets'] == null ? undefined : ((value['ruleSets'] as Array<any>).map(PostingRuleSetResponseToJSON)),
         'totalElements': value['totalElements'],
         'totalPages': value['totalPages'],
-        'currentPage': value['currentPage'],
-        'pageSize': value['pageSize'],
     };
 }
 

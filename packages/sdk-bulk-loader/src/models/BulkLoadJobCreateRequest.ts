@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Request to create a new bulk load job
  * @export
  * @interface BulkLoadJobCreateRequest
  */
 export interface BulkLoadJobCreateRequest {
     /**
-     * 
-     * @type {string}
-     * @memberof BulkLoadJobCreateRequest
-     */
-    fileName: string;
-    /**
-     * 
+     * Target domain for the bulk load
      * @type {string}
      * @memberof BulkLoadJobCreateRequest
      */
     domainType: BulkLoadJobCreateRequestDomainTypeEnum;
     /**
-     * 
+     * Name of the source file to be uploaded for this job
+     * @type {string}
+     * @memberof BulkLoadJobCreateRequest
+     */
+    fileName: string;
+    /**
+     * Identifier of the location to scope the load to, if applicable
      * @type {string}
      * @memberof BulkLoadJobCreateRequest
      */
@@ -59,8 +59,8 @@ export enum BulkLoadJobCreateRequestDomainTypeEnum {
  * Check if a given object implements the BulkLoadJobCreateRequest interface.
  */
 export function instanceOfBulkLoadJobCreateRequest(value: object): boolean {
-    if (!('fileName' in value)) return false;
     if (!('domainType' in value)) return false;
+    if (!('fileName' in value)) return false;
     return true;
 }
 
@@ -74,8 +74,8 @@ export function BulkLoadJobCreateRequestFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'fileName': json['fileName'],
         'domainType': json['domainType'],
+        'fileName': json['fileName'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
     };
 }
@@ -86,8 +86,8 @@ export function BulkLoadJobCreateRequestToJSON(value?: BulkLoadJobCreateRequest 
     }
     return {
         
-        'fileName': value['fileName'],
         'domainType': value['domainType'],
+        'fileName': value['fileName'],
         'locationId': value['locationId'],
     };
 }

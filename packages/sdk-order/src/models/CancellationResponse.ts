@@ -14,41 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Response returned after cancelling an order
  * @export
  * @interface CancellationResponse
  */
 export interface CancellationResponse {
     /**
-     * 
+     * Idempotency key associated with the cancellation request
      * @type {string}
      * @memberof CancellationResponse
      */
-    orderId?: string;
+    cancellationIdempotencyKey?: string;
     /**
-     * 
-     * @type {string}
-     * @memberof CancellationResponse
-     */
-    status?: string;
-    /**
-     * 
+     * Human-readable message describing the cancellation outcome
      * @type {string}
      * @memberof CancellationResponse
      */
     message?: string;
     /**
-     * 
+     * Identifier of the cancelled order
      * @type {string}
      * @memberof CancellationResponse
      */
-    cancellationIdempotencyKey?: string;
+    orderId: string;
+    /**
+     * Resulting status of the order after cancellation
+     * @type {string}
+     * @memberof CancellationResponse
+     */
+    status: string;
 }
 
 /**
  * Check if a given object implements the CancellationResponse interface.
  */
 export function instanceOfCancellationResponse(value: object): boolean {
+    if (!('orderId' in value)) return false;
+    if (!('status' in value)) return false;
     return true;
 }
 
@@ -62,10 +64,10 @@ export function CancellationResponseFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'orderId': json['orderId'] == null ? undefined : json['orderId'],
-        'status': json['status'] == null ? undefined : json['status'],
-        'message': json['message'] == null ? undefined : json['message'],
         'cancellationIdempotencyKey': json['cancellationIdempotencyKey'] == null ? undefined : json['cancellationIdempotencyKey'],
+        'message': json['message'] == null ? undefined : json['message'],
+        'orderId': json['orderId'],
+        'status': json['status'],
     };
 }
 
@@ -75,10 +77,10 @@ export function CancellationResponseToJSON(value?: CancellationResponse | null):
     }
     return {
         
+        'cancellationIdempotencyKey': value['cancellationIdempotencyKey'],
+        'message': value['message'],
         'orderId': value['orderId'],
         'status': value['status'],
-        'message': value['message'],
-        'cancellationIdempotencyKey': value['cancellationIdempotencyKey'],
     };
 }
 
