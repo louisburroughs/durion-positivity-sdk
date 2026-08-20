@@ -32,11 +32,34 @@ MODULES=(security order inventory workorder accounting catalog customer invoice 
 patch_package_tsconfig() {
 	local pkg="$1"
 	local tsconfig="packages/sdk-${pkg}/tsconfig.json"
+	local tsconfig_esm="packages/sdk-${pkg}/tsconfig.esm.json"
+	# The generator emits legacy settings (target es6, module commonjs,
+	# moduleResolution node) and its esm variant inherits moduleResolution,
+	# which TS 5.x rejects when paired with a non-Node16 module (TS5110).
+	# Rewrite both configs to the combos the workspace standardizes on:
+	# CJS build = NodeNext/NodeNext, ESM build = ESNext + bundler.
 	if [[ -f "$tsconfig" ]]; then
-		sed -i 's/"moduleResolution": "node"/"moduleResolution": "node16"/' "$tsconfig"
-		if ! grep -q '"rootDir"' "$tsconfig"; then
-			sed -i 's/"outDir": "dist"/"outDir": "dist",\n    "rootDir": "src"/' "$tsconfig"
-		fi
+		node -e '
+			const fs = require("fs");
+			const file = process.argv[1];
+			const t = JSON.parse(fs.readFileSync(file, "utf8"));
+			t.compilerOptions.target = "ES2022";
+			t.compilerOptions.module = "NodeNext";
+			t.compilerOptions.moduleResolution = "NodeNext";
+			t.compilerOptions.rootDir = t.compilerOptions.rootDir || "src";
+			delete t.compilerOptions.typeRoots;
+			fs.writeFileSync(file, JSON.stringify(t, null, 2) + "\n");
+		' "$tsconfig"
+	fi
+	if [[ -f "$tsconfig_esm" ]]; then
+		node -e '
+			const fs = require("fs");
+			const file = process.argv[1];
+			const t = JSON.parse(fs.readFileSync(file, "utf8"));
+			t.compilerOptions.module = "ESNext";
+			t.compilerOptions.moduleResolution = "bundler";
+			fs.writeFileSync(file, JSON.stringify(t, null, 2) + "\n");
+		' "$tsconfig_esm"
 	fi
 }
 
