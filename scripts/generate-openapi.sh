@@ -115,6 +115,82 @@ cleanup_accounting_duplicate_exports() {
 	fi
 }
 
+# ---------------------------------------------------------------------------
+# Protected-file guard
+#
+# Commit 33507b5 ("Regenerated from latest openapi changes") let the generator
+# overwrite hand-maintained files - the src/index.ts factories, package.json,
+# README banners and tsconfigs - and the breakage went unnoticed for months.
+# Each package now carries real rules in its .openapi-generator-ignore; this
+# guard is the tripwire that proves they held. It hashes the protected files
+# before generation and fails the run if any of them changed.
+# ---------------------------------------------------------------------------
+
+PROTECTED_RELPATHS=(
+	"src/index.ts"
+	"package.json"
+	"README.md"
+	"tsconfig.json"
+	"tsconfig.esm.json"
+	".openapi-generator-ignore"
+)
+
+PROTECTED_SNAPSHOT=""
+
+protected_paths() {
+	local m path
+	for m in "${MODULES[@]}"; do
+		for path in "${PROTECTED_RELPATHS[@]}"; do
+			[[ -f "packages/sdk-${m}/${path}" ]] && echo "packages/sdk-${m}/${path}"
+		done
+	done
+	# Hand-written validator living inside an otherwise generated model.
+	[[ -f packages/sdk-customer/src/models/VehicleSummary.ts ]] && \
+		echo packages/sdk-customer/src/models/VehicleSummary.ts
+	return 0
+}
+
+snapshot_protected() {
+	PROTECTED_SNAPSHOT="$(mktemp)"
+	protected_paths | while read -r f; do
+		printf '%s  %s\n' "$(git hash-object "$f")" "$f"
+	done > "$PROTECTED_SNAPSHOT"
+}
+
+verify_protected() {
+	[[ -n "$PROTECTED_SNAPSHOT" && -f "$PROTECTED_SNAPSHOT" ]] || return 0
+	local changed=() hash f now
+	while read -r hash f; do
+		[[ -z "$f" ]] && continue
+		if [[ ! -f "$f" ]]; then
+			changed+=("$f (deleted)")
+			continue
+		fi
+		now="$(git hash-object "$f")"
+		[[ "$now" != "$hash" ]] && changed+=("$f")
+	done < "$PROTECTED_SNAPSHOT"
+	rm -f "$PROTECTED_SNAPSHOT"
+
+	if (( ${#changed[@]} > 0 )); then
+		echo "" >&2
+		echo "[generate] ERROR: the generator modified hand-maintained files:" >&2
+		printf '  %s\n' "${changed[@]}" >&2
+		echo "" >&2
+		echo "  These are listed in the package's .openapi-generator-ignore and must" >&2
+		echo "  survive regeneration. Restore them with:" >&2
+		echo "" >&2
+		printf '    git checkout -- %s\n' "${changed[@]}" >&2
+		echo "" >&2
+		echo "  Then fix the ignore rules before re-running. See the Durion block in" >&2
+		echo "  packages/sdk-<module>/.openapi-generator-ignore." >&2
+		return 1
+	fi
+	echo "[generate] Protected files intact."
+	return 0
+}
+
+snapshot_protected
+
 if [[ -n "$module" ]]; then
 	# Validate the provided module name
 	valid=false
@@ -159,5 +235,7 @@ else
 		fi
 	done
 fi
+
+verify_protected
 
 echo "Generation complete."

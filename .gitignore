@@ -31,7 +31,9 @@ packages/*/dist/
 
 # OpenAPI generator temporary artifacts
 .openapi-generator/
-.openapi-generator-ignore
+# .openapi-generator-ignore is NOT an artifact - it is the only thing stopping
+# the generator from overwriting hand-maintained files, so it must be tracked.
+!.openapi-generator-ignore
 
 # Environment
 .env
