@@ -3,8 +3,15 @@ const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts'],
+  // Integration tests (*.itest.ts) need a live backend and run only through
+  // packages/sdk-integration-tests/jest.integration.config.js.
+  testPathIgnorePatterns: ['/node_modules/', '\\.itest\\.ts$'],
   coverageProvider: 'v8',
   moduleNameMapper: {
+    // The seeder's index.ts is an executable entrypoint (it starts a run on
+    // import); its library surface is the lib.ts barrel. Must precede the
+    // generic mapping below.
+    '^@durion-sdk/seeder$': '<rootDir>/packages/sdk-seeder/src/lib.ts',
     '^@durion-sdk/(.+)$': '<rootDir>/packages/sdk-$1/src/index.ts',
   },
   passWithNoTests: true,

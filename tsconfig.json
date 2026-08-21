@@ -13,6 +13,9 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
+      "@durion-sdk/seeder": [
+        "packages/sdk-seeder/src/lib.ts"
+      ],
       "@durion-sdk/*": [
         "packages/sdk-*/src"
       ]

@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    // Drop the root tsconfig's @durion-sdk/* → sibling-src paths: the build
+    // must resolve siblings through their built dists in node_modules, or
+    // their sources leak into this program and violate rootDir.
+    "paths": {}
+  },
+  // Only the library surface ships in dist. The executable entrypoint and
+  // loop simulators stay ts-node-only: they import @durion-sdk/workorder and
+  // friends, which npm's non-topological `--workspaces` build order cannot
+  // guarantee are built before this package.
+  "include": ["src/lib.ts"],
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts"]
+}
