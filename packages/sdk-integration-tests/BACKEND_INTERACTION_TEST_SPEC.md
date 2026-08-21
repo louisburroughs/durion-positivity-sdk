@@ -85,7 +85,7 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | `ITEST_ADVISOR_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | SERVICE_ADVISOR persona login |
 | `ITEST_TECH_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | TECHNICIAN persona login |
 | `ITEST_MANAGER_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | LOCATION_MANAGER persona login |
-| `ITEST_PARTS_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | Custom `ITEST_PARTS_CLERK` role login (Task 8) |
+| `ITEST_PARTS_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | INVENTORY_LEAD persona login (+ supplemental grants, Task 8) |
 | `ITEST_ACCT_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | ACCOUNT_MANAGER persona login |
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible data values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` polling timeout |
@@ -176,7 +176,7 @@ Six personas, mapped to real roles (role UUIDs from
 | `advisor` | `SERVICE_ADVISOR` | `f5e58579-e9de-574d-c2c5-56d3fd7e93f6` | Customer onboarding (`crm:party:create`, `crm:person:create` — granted by #1435), appointments (`appointments:*`), full estimate lifecycle (`workorder:estimate:*`) including the from-appointment bridge, change-request creation, invoice generation + finalization (`workorder:workorder:generate_invoice`, `invoice:finalize`) |
 | `tech` | `TECHNICIAN` | `190cbafe-4c1b-7e5f-768f-4b3c0d58a165` | Execution: `workorder:start`, timers (`workorder:labor:add`), picks (`inventory:pick_list:view`/`execute`), consumption (`workorder:parts:consume`) |
 | `manager` | `LOCATION_MANAGER` | `783422f6-84ab-f590-5d51-4fa87b06d679` | Workorder approval, technician assignment (`workorder:workorder:assign-technician`), change-request approval, item + workorder completion (`workorder:workorder:complete`), runtime-granted `order:purchase_order:approve` |
-| `parts` | custom `ITEST_PARTS_CLERK` (created by Task 8) | _(created at runtime)_ | POs, ASNs, receiving sessions, goods receipts, cross-dock, putaway, backorder/availability views — **no seeded role holds these**: the whole receiving permission family is ADMIN-only in the seed and `order:purchase_order:*` is granted to no role at all |
+| `parts` | `INVENTORY_LEAD` (+ supplemental `ITEST_PARTS_SUPPLY` role, Task 8) | _(no pinned UUID — created by `RoleInitializer` at startup; look up by name)_ | The parts clerk **is the lowest inventory role**: `RoleInitializer` (pos-security-service) defines the family as INVENTORY_LEAD (create adjustment requests) < INVENTORY_MANAGER (create + approve, location-scoped) < INVENTORY_CONTROLLER (global approval + negative-stock override). Its seeded grants are adjustments plus catalog/order/pricing views only, so the receiving family (ASNs, receiving sessions, goods receipts, cross-dock, putaway, backorders, availability) and `order:purchase_order:create` — ADMIN-only or unheld in the seed — ride a supplemental test-owned role until the backend grants them to INVENTORY_LEAD |
 | `acct` | `ACCOUNT_MANAGER` | `a781f7c1-e2aa-6ebb-7096-b53ac3575c92` | `accounting:events:submit` for the invoice-payment event (ADMIN and ACCOUNT_MANAGER are the only holders) |
 
 The suite runs in one of two modes, decided by config at startup:
@@ -249,8 +249,13 @@ Design rules:
     `admin` **fixture** step in every suite (the advisor can only
     search/view vehicles).
   - Receiving-family permissions remain ADMIN-only and
-    `order:purchase_order:*` remains granted to no seeded role — the
-    test-owned roles in Task 8 are still required.
+    `order:purchase_order:*` remains granted to no seeded role. In
+    particular INVENTORY_LEAD — the parts-clerk role, lowest of the
+    inventory family per `RoleInitializer` — holds only adjustment
+    create/view plus catalog/order/pricing views, so it cannot receive
+    stock. The supplemental grants in Task 8 bridge this; the proper fix is
+    upstream, granting the receiving set to INVENTORY_LEAD in
+    `R__seed_role_permissions.sql`.
 - Provisioning the persona logins is Task 8. Until it lands, alpha runs use
   single-credential mode with the existing seeder/admin account, so nothing
   blocks the functional suites.
@@ -601,7 +606,8 @@ unknowable.
 
 **Acting personas:** `admin` creates the new catalog products (D1, D7 —
 `createProduct` checks `ROLE_ADMIN`/`ROLE_CATALOG_EDIT` role authorities, and
-no CATALOG_* role is seeded); `parts` (custom `ITEST_PARTS_CLERK`, Task 8)
+no CATALOG_* role is seeded); `parts` (INVENTORY_LEAD — the lowest inventory
+role — plus the supplemental `ITEST_PARTS_SUPPLY` grants, Task 8)
 runs the supply chain — PO creation (`order:purchase_order:create` — note the
 `order:` namespace, PO endpoints live in pos-order, and **no seeded role
 holds any `order:purchase_order:*` permission**), ASNs
@@ -738,24 +744,31 @@ already uses.)
 - Modify: `src/harness/globalSetup.ts` (invoke when role mode is configured)
 - Test: unit tests for the idempotency logic (mocked HTTP)
 
-- [ ] **Step 1: Assign the seeded roles.** For `advisor`, `tech`, `manager`,
-  and `acct`: find-or-create the user with the configured credentials, then
-  assign the seeded role by its pinned UUID (SERVICE_ADVISOR
-  `f5e58579-…`, TECHNICIAN `190cbafe-…`, LOCATION_MANAGER `783422f6-…`,
-  ACCOUNT_MANAGER `a781f7c1-…` — full values in the persona table). These
-  roles already carry their permission sets from `R__seed_role_permissions.sql`;
-  do **not** grant them anything extra.
+- [ ] **Step 1: Assign the seeded/initialized roles.** For each persona:
+  find-or-create the user with the configured credentials, then assign its
+  real role. SERVICE_ADVISOR `f5e58579-…`, TECHNICIAN `190cbafe-…`,
+  LOCATION_MANAGER `783422f6-…`, and ACCOUNT_MANAGER `a781f7c1-…` are
+  SQL-seeded with pinned UUIDs (full values in the persona table).
+  `INVENTORY_LEAD` (the `parts` persona) is created by the security
+  service's `RoleInitializer` at startup with a **generated** id — resolve
+  it by name via the roles listing before assigning. These roles already
+  carry their permission sets from `R__seed_role_permissions.sql`; do
+  **not** grant them anything extra.
 - [ ] **Step 2: Create the two test-owned roles.** Never mutate canonical
   roles on a shared environment; add test-owned roles instead:
-  - `ITEST_PARTS_CLERK`, granted exactly: `order:purchase_order:create`,
+  - `ITEST_PARTS_SUPPLY`, assigned to the `parts` user **in addition to**
+    INVENTORY_LEAD. It carries only what the receiving flows need that
+    INVENTORY_LEAD's seed lacks (the natural upstream fix is granting these
+    to INVENTORY_LEAD itself in `R__seed_role_permissions.sql`; when that
+    lands, this role becomes empty and is dropped):
+    `order:purchase_order:create`,
     `inventory:asn:create`, `inventory:asn:view`,
     `inventory:goods_receipt:create`, `inventory:goods_receipt:view`,
     `inventory:receiving:create`, `inventory:receiving:complete`,
     `inventory:receiving:view`, `inventory:issue:parts`,
     `inventory:shortage:view`, `inventory:on_hand:view`,
     `inventory:putaway:view`, `inventory:putaway:generate`,
-    `inventory:putaway:claim`, `inventory:putaway:execute`. Assigned to the
-    `parts` user.
+    `inventory:putaway:claim`, `inventory:putaway:execute`.
   - `ITEST_PO_APPROVER`, granted exactly `order:purchase_order:approve`.
     Assigned to the `manager` user **in addition to** LOCATION_MANAGER, so
     PO approval works without editing the canonical role.
