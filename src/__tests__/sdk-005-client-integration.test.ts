@@ -372,7 +372,7 @@ describe('SDK-005 sdk-people: createPeopleClient', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(client.employeeApi).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(client.peopleApi).toBeDefined();
+    expect(client.peopleStaffingAssignmentsApi).toBeDefined();
   });
 
   it('AC-3: factory accepts optional token + apiVersion config', () => {

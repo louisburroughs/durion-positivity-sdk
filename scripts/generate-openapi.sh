@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-MODULES=(security order inventory workorder accounting catalog customer invoice location people price shop-manager image event-receiver vehicle-fitment vehicle-inventory internal documents inquiry bulk-loader)
+MODULES=(security order inventory workorder accounting catalog customer invoice location people people-contact price shop-manager image event-receiver vehicle-fitment vehicle-inventory internal documents inquiry bulk-loader marketing mcp-server supplier warranty)
 
 patch_package_tsconfig() {
 	local pkg="$1"
