@@ -19,12 +19,31 @@
 #   ALPHA_REGION                default us-east-1
 #   ITEST_GATEWAY_LOCAL_PORT    default 18080
 #   ITEST_SECURITY_LOCAL_PORT   default 18086
+#   ALPHA_DB_LOCAL_PORT         default 15432 (only with --with-db)
+#
+# Flags:
+#   --with-db   also forward alpha's PostgreSQL. The container publishes
+#               127.0.0.1:5432 on the EC2 host, which is exactly what SSM
+#               reaches, so no ingress and no SSH is involved. Credentials
+#               are POSTGRES_USER / POSTGRES_PASSWORD in /opt/durion/alpha/.env
+#               on the host - this script never reads or transports them.
 #
 # Ctrl-C shuts both sessions down.
 
 set -euo pipefail
 
+WITH_DB=false
+for arg in "$@"; do
+	case "$arg" in
+		--with-db) WITH_DB=true ;;
+		-h|--help) sed -n '2,40p' "$0"; exit 0 ;;
+		*) echo "error: unknown argument '$arg' (try --help)" >&2; exit 2 ;;
+	esac
+done
+
 REGION="${ALPHA_REGION:-us-east-1}"
+DB_REMOTE_PORT=5432
+DB_LOCAL_PORT="${ALPHA_DB_LOCAL_PORT:-15432}"
 GATEWAY_REMOTE_PORT=8080
 SECURITY_REMOTE_PORT=8086
 GATEWAY_LOCAL_PORT="${ITEST_GATEWAY_LOCAL_PORT:-18080}"
@@ -85,7 +104,10 @@ port_in_use() {
   return 1
 }
 
-for port in "$GATEWAY_LOCAL_PORT" "$SECURITY_LOCAL_PORT"; do
+PREFLIGHT_PORTS=("$GATEWAY_LOCAL_PORT" "$SECURITY_LOCAL_PORT")
+[[ "$WITH_DB" == "true" ]] && PREFLIGHT_PORTS+=("$DB_LOCAL_PORT")
+
+for port in "${PREFLIGHT_PORTS[@]}"; do
   if port_in_use "$port"; then
     die "Local port $port is already in use (an older tunnel still running?). Close it or set ITEST_GATEWAY_LOCAL_PORT / ITEST_SECURITY_LOCAL_PORT."
   fi
@@ -176,8 +198,16 @@ GATEWAY_PID="${PIDS[-1]}"
 start_forward "pos-security-service" "$SECURITY_REMOTE_PORT" "$SECURITY_LOCAL_PORT" "$LOG_DIR/security.log"
 SECURITY_PID="${PIDS[-1]}"
 
+if [[ "$WITH_DB" == "true" ]]; then
+	start_forward "postgres           " "$DB_REMOTE_PORT" "$DB_LOCAL_PORT" "$LOG_DIR/postgres.log"
+	DB_PID="${PIDS[-1]}"
+fi
+
 wait_ready "pos-api-gateway" "$GATEWAY_PID" "$LOG_DIR/gateway.log" || exit 1
 wait_ready "pos-security-service" "$SECURITY_PID" "$LOG_DIR/security.log" || exit 1
+if [[ "$WITH_DB" == "true" ]]; then
+	wait_ready "postgres" "$DB_PID" "$LOG_DIR/postgres.log" || exit 1
+fi
 
 # ---- Print the exports the suite needs ------------------------------------
 
@@ -193,9 +223,17 @@ Then:  npm run test:integration
 Smoke-check:
   curl http://localhost:$GATEWAY_LOCAL_PORT/actuator/health
   curl http://localhost:$SECURITY_LOCAL_PORT/actuator/health
+$(if [[ "$WITH_DB" == "true" ]]; then cat <<DB
+
+PostgreSQL is forwarded on localhost:$DB_LOCAL_PORT. Credentials are
+POSTGRES_USER / POSTGRES_PASSWORD from /opt/durion/alpha/.env on the host:
+
+  psql -h 127.0.0.1 -p $DB_LOCAL_PORT -U <POSTGRES_USER> -d pos_people_db
+DB
+fi)
 
 Traffic rides the SSM-encrypted channel; nothing is exposed publicly.
-Press Ctrl-C to close both sessions.
+Press Ctrl-C to close all sessions.
 EXPORTS
 
 wait 2>/dev/null || true
