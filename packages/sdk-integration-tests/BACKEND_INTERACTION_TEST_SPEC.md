@@ -407,7 +407,7 @@ before and after.
 - Test: unit tests for `ItestConfig` parsing and `waitFor` semantics (these
   are plain unit tests, runnable offline)
 
-- [ ] **Step 1: Write failing unit tests for the harness primitives**
+- [x] **Step 1: Write failing unit tests for the harness primitives**
 
 `ItestConfig`: required-variable failure message names every missing variable
 in one error; defaults applied; non-integer timeout rejected; a persona
@@ -417,7 +417,7 @@ resolves on first truthy predicate result, polls at the configured interval,
 rejects with the last predicate error (not a generic timeout) after the
 deadline, never overlaps in-flight predicate calls.
 
-- [ ] **Step 2: Implement the harness**
+- [x] **Step 2: Implement the harness**
 
 - `waitFor<T>(fn: () => Promise<T | undefined>, opts?): Promise<T>` — the
   only sanctioned waiting mechanism in suite code. Raw `setTimeout` sleeps are
@@ -440,18 +440,47 @@ deadline, never overlaps in-flight predicate calls.
   shapes as `CustomerEventSimulator`/`InventoryMaintenanceSimulator` — those
   shapes are backend-proven; do not improvise new ones.
 
-- [ ] **Step 3: Wire global setup and context rehydration**
+- [x] **Step 3: Wire global setup and context rehydration**
 
 Implement serialization as described in *Fixtures* above. Global setup failures
 must print the failing bootstrap stage and the formatted HTTP error.
 
-- [ ] **Step 4: Verify offline behavior**
+Implementation notes (deviations from the draft, chosen during Task 2):
+
+- The context file carries `{runId, mode, referenceCache}` only — **no
+  tokens**. Suites log their personas in via `Personas.login()` in
+  `beforeAll` instead of rehydrating serialized token pairs: `SeederAuth`
+  keeps token state private, and keeping credential material out of temp
+  files is the better trade anyway.
+- Jest does not apply `moduleNameMapper` to `globalSetup`, so its require
+  chain resolves `@durion-sdk/*` through real `node_modules` dists. Local
+  prerequisite after install (same ordering the seeder Dockerfile uses):
+  `npm run build -w packages/sdk-transport && npm run build --workspaces
+  --if-present`.
+- `suites/00-harness.itest.ts` is a permanent smoke suite: it validates the
+  context → login plumbing against a real backend and guarantees at least
+  one itest exists, so `npm run test:integration` always executes
+  globalSetup — where the credential fail-fast and the accelerated-profile
+  guard live (with zero matching tests jest would skip globalSetup
+  entirely).
+- sdk-shop-manager ships no `create*Client` factory, so the harness carries
+  `shopManagerClient.ts`, mirroring the generated factory pattern for the
+  appointments API.
+
+- [x] **Step 4: Verify offline behavior**
 
 ```bash
 npm test            # unit run: harness unit tests pass, no *.itest.ts collected
 npm run build
 npm run test:integration   # without credentials: fails fast with the single clear message
 ```
+
+Verified: 15 harness unit tests pass in the unit run with no itest files
+collected; `npm run test:integration` without credentials exits 1 with the
+single configuration error, and with credentials but no reachable backend
+exits with a clear reachability message. The workspace dists build cleanly
+in dependency order (the branch's pre-existing failures are confined to
+root `src/__tests__`).
 
 ### Task 3: Suite A — Appointments
 

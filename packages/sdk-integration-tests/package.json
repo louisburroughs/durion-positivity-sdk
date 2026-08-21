@@ -1,0 +1,21 @@
+{
+  "name": "@durion-sdk/integration-tests",
+  "version": "0.1.0-alpha",
+  "private": true,
+  "description": "Non-accelerated backend interaction tests (see BACKEND_INTERACTION_TEST_SPEC.md)",
+  "dependencies": {
+    "@durion-sdk/accounting": "*",
+    "@durion-sdk/catalog": "*",
+    "@durion-sdk/customer": "*",
+    "@durion-sdk/inventory": "*",
+    "@durion-sdk/invoice": "*",
+    "@durion-sdk/seeder": "*",
+    "@durion-sdk/shop-manager": "*",
+    "@durion-sdk/transport": "*",
+    "@durion-sdk/workorder": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~5.9.3"
+  }
+}

@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "test": "jest",
+    "test:integration": "jest --config packages/sdk-integration-tests/jest.integration.config.js --runInBand",
     "lint": "eslint . --ext .ts,.tsx",
     "generate": "bash scripts/generate-openapi.sh"
   },
