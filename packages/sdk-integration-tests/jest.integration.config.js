@@ -21,6 +21,11 @@ const config = {
   // so the credential fail-fast is observable before any suite exists.
   passWithNoTests: true,
   globalSetup: '<rootDir>/packages/sdk-integration-tests/src/harness/globalSetup.ts',
+  // Committed build artifacts (.js/.d.ts) still sit beside the .ts sources in
+  // packages/*/src. Jest's default moduleFileExtensions puts 'js' first, so a
+  // stale .js shadows its current .ts twin (e.g. an April apis/index.js that
+  // predates LocationBulkIngestAPIApi). Resolve TypeScript first.
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'mjs', 'cjs', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     '^@durion-sdk/seeder$': '<rootDir>/packages/sdk-seeder/src/lib.ts',
     '^@durion-sdk/(.+)$': '<rootDir>/packages/sdk-$1/src/index.ts',

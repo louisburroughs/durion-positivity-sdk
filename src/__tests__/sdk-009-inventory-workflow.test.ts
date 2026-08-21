@@ -64,8 +64,8 @@ const mockReceivingApi = {
 } as any;
 
 const mockAvailabilityApi = {
-  queryInventoryAvailability: jest.fn(),
-  queryAvailabilityBySku: jest.fn(),
+  getAvailabilityByProduct: jest.fn(),
+  getAvailabilityBySku: jest.fn(),
 } as any;
 
 // ===========================================================================
@@ -118,7 +118,7 @@ describe('SDK-009 Behavior: InventoryProcureToReceiveWorkflow', () => {
     mockAsnApi.createAsn.mockResolvedValue({ asnId: 'asn-1' });
     mockReceivingApi.createReceivingSession.mockResolvedValue({ sessionId: 'sess-1' });
     mockReceivingApi.receiveItemsIntoStaging.mockResolvedValue({ received: true });
-    mockAvailabilityApi.queryInventoryAvailability.mockResolvedValue({ available: 10 });
+    mockAvailabilityApi.getAvailabilityByProduct.mockResolvedValue({ available: 10 });
   });
 
   it('when_createPurchaseOrder_then_delegates_to_purchaseOrdersApi_createPurchaseOrder', async () => {
@@ -214,7 +214,7 @@ describe('SDK-009 Behavior: InventoryProcureToReceiveWorkflow', () => {
     expect(result).toBeDefined();
   });
 
-  it('when_checkAvailability_then_delegates_to_availabilityApi_queryInventoryAvailability', async () => {
+  it('when_checkAvailability_then_delegates_to_availabilityApi_getAvailabilityByProduct', async () => {
     // Fails RED: InventoryProcureToReceiveWorkflow is not a constructor (undefined)
     const workflow = new (InventoryProcureToReceiveWorkflow as any)(
       mockPurchaseOrdersApi,
@@ -226,8 +226,8 @@ describe('SDK-009 Behavior: InventoryProcureToReceiveWorkflow', () => {
 
     const result = await workflow.checkAvailability(params);
 
-    expect(mockAvailabilityApi.queryInventoryAvailability).toHaveBeenCalledTimes(1);
-    expect(mockAvailabilityApi.queryInventoryAvailability).toHaveBeenCalledWith(
+    expect(mockAvailabilityApi.getAvailabilityByProduct).toHaveBeenCalledTimes(1);
+    expect(mockAvailabilityApi.getAvailabilityByProduct).toHaveBeenCalledWith(
       expect.objectContaining(params),
     );
     expect(result).toBeDefined();

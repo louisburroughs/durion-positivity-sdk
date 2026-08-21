@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": true,
     "target": "ES2022",
@@ -6,10 +7,21 @@
     "moduleResolution": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmit": false,
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
+    "src/**/*.d.ts",
     "dist",
     "node_modules"
+  ],
+  "references": [
+    {
+      "path": "../sdk-transport"
+    }
   ]
 }

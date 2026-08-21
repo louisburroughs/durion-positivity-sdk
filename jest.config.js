@@ -7,6 +7,11 @@ const config = {
   // packages/sdk-integration-tests/jest.integration.config.js.
   testPathIgnorePatterns: ['/node_modules/', '\\.itest\\.ts$'],
   coverageProvider: 'v8',
+  // Committed build artifacts (.js/.d.ts) still sit beside the .ts sources in
+  // packages/*/src. Jest's default moduleFileExtensions puts 'js' first, so a
+  // stale .js shadows its current .ts twin (e.g. an April apis/index.js that
+  // predates LocationBulkIngestAPIApi). Resolve TypeScript first.
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'mjs', 'cjs', 'jsx', 'json', 'node'],
   moduleNameMapper: {
     // The seeder's index.ts is an executable entrypoint (it starts a run on
     // import); its library surface is the lib.ts barrel. Must precede the

@@ -3,6 +3,9 @@
   "version": "0.1.0-alpha",
   "private": true,
   "description": "Non-accelerated backend interaction tests (see BACKEND_INTERACTION_TEST_SPEC.md)",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit"
+  },
   "dependencies": {
     "@durion-sdk/accounting": "*",
     "@durion-sdk/catalog": "*",

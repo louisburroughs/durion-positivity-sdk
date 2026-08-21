@@ -3,7 +3,7 @@
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';
-export * from './workflows/securityAuthWorkflow';
+export { SecurityAuthWorkflow } from './workflows/securityAuthWorkflow';
 
 import { DurionSdkConfig, SdkHttpClient } from '@durion-sdk/transport';
 import { Configuration } from './runtime';

@@ -3,8 +3,8 @@
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';
-export * from './workflows/workorderEstimateWorkflow';
-export * from './workflows/workorderChangeRequestWorkflow';
+export { WorkorderEstimateWorkflow } from './workflows/workorderEstimateWorkflow';
+export { WorkorderChangeRequestWorkflow } from './workflows/workorderChangeRequestWorkflow';
 
 import { DurionSdkConfig, SdkHttpClient } from '@durion-sdk/transport';
 import { Configuration } from './runtime';

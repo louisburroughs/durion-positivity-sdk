@@ -3,7 +3,7 @@
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';
-export * from './workflows/inventoryProcureToReceiveWorkflow';
+export { InventoryProcureToReceiveWorkflow } from './workflows/inventoryProcureToReceiveWorkflow';
 
 import { DurionSdkConfig, SdkHttpClient } from '@durion-sdk/transport';
 import { Configuration } from './runtime';

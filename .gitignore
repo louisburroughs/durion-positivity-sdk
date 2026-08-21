@@ -37,3 +37,8 @@ packages/*/dist/
 .env
 .env.local
 .env.*
+# ...but the credential template is meant to be committed.
+!.env.itest.example
+
+# TypeScript project-reference build metadata
+*.tsbuildinfo
