@@ -80,11 +80,19 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | --- | --- | --- | --- |
 | `ITEST_BASE_URL` | `http://localhost:8080` | No | API gateway base URL |
 | `ITEST_SECURITY_SERVICE_URL` | `http://localhost:8086` | No | Direct security service URL (bootstrap + login) |
-| `ITEST_USERNAME` | — | **Yes** | Login username |
-| `ITEST_PASSWORD` | — | **Yes** | Login password |
+| `ITEST_USERNAME` | — | **Yes** | Admin login (SYSTEM_ADMINISTRATOR) — bootstrap and persona fallback |
+| `ITEST_PASSWORD` | — | **Yes** | Admin password |
+| `ITEST_WRITER_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | SERVICE_WRITER persona login |
+| `ITEST_TECH_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | TECHNICIAN persona login |
+| `ITEST_MANAGER_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | MANAGER persona login |
+| `ITEST_PARTS_USERNAME` / `_PASSWORD` | _(admin fallback)_ | No | PARTS_CLERK persona login |
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible data values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` polling timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` polling interval |
+
+Persona credentials are optional as a set: define **all or none** per persona
+(a username without its password fails config validation). See *Personas,
+Roles, and Credentials* below for how the suite behaves in each mode.
 
 For an alpha run from the laptop, the tunnel (Task 7) maps local ports onto
 the alpha gateway and security service, and the shell exports:
@@ -120,6 +128,60 @@ deployment state). Global setup asserts this by probing `GET /system/time`:
 a 404/absent endpoint means the normal clock and the run proceeds; a 200
 response means alpha is mid-accelerated-run and the suite aborts before
 writing anything.
+
+### Personas, Roles, and Credentials
+
+Each test step declares an **acting persona** — the role a real shop would use
+for that action — and the harness executes the step with that persona's SDK
+client. Five personas exist:
+
+| Persona | Security role | Used for |
+| --- | --- | --- |
+| `admin` | `SYSTEM_ADMINISTRATOR` | Global setup/bootstrap only; never a suite's acting persona |
+| `writer` | `SERVICE_WRITER` | Customer/vehicle creation, appointments, estimate authoring/submission, capturing the customer's approve/decline signature, invoicing |
+| `tech` | `TECHNICIAN` | Workorder execution: timers, pick/consume, item completion |
+| `manager` | `MANAGER` | Workorder approval, change-request approval, PO approval, cycle-count approval |
+| `parts` | `PARTS_CLERK` | POs, ASNs, receiving sessions, goods receipts, cross-dock, putaway |
+
+The suite runs in one of two modes, decided by config at startup:
+
+- **Single-credential mode** (only `ITEST_USERNAME`/`ITEST_PASSWORD` set):
+  every persona resolves to the admin login. This validates the functional
+  flows only — it proves nothing about authorization. All A–D functional
+  tests must pass in this mode; role-enforcement tests are skipped with an
+  explicit "single-credential mode" skip reason.
+- **Role mode** (persona credentials set): each persona logs in separately in
+  global setup (one `SeederAuth` per persona, token refresh handled per
+  persona), functional steps run as their declared persona, and the
+  role-enforcement negatives (below) are enabled.
+
+Design rules:
+
+- The harness exposes `clients.as('writer').workorder…` etc.; suite code
+  never constructs an SDK client from raw credentials. Every builder takes
+  the acting persona as its first argument so the declaration is visible at
+  the call site and greppable.
+- **Timer identity:** the workexec timer API attributes `startTimer` /
+  `stopTimers` to the *authenticated user*. In role mode the `tech` persona
+  must be the same identity for start and stop, and technician assignment
+  still happens only after the timer loop (suite C rule). Running timers as a
+  real technician login removes the seeder's admin-fallback workaround — a
+  correctness gain worth asserting: the resulting labor entry must belong to
+  the tech persona's user.
+- **Role-enforcement negatives** (role mode only), one per suite, using
+  `expectHttpError(…, 401/403)` and recording the actual status the backend
+  returns:
+  - A: `tech` attempts `createAppointment` → rejected.
+  - B: `tech` attempts `approveEstimate` → rejected.
+  - C: `parts` attempts `completeWorkorder` → rejected.
+  - D: `tech` attempts `approvePurchaseOrder` → rejected.
+  If the backend accepts any of these (enforcement not yet implemented for
+  that endpoint), the test records the gap as a documented expected-failure
+  (`test.failing`) rather than silently passing — the suite then doubles as
+  an authorization-coverage report.
+- Provisioning the persona logins is Task 8. Until it lands, alpha runs use
+  single-credential mode with the existing seeder/admin account, so nothing
+  blocks the functional suites.
 
 ### Test Framework Layout
 
@@ -174,12 +236,13 @@ behavior this suite needs.
 `globalSetup.ts` performs, once per run:
 
 1. `SecurityBootstrap.run()` — ensure the admin account exists.
-2. `SeederAuth.login()` — acquire the JWT pair.
+2. `SeederAuth.login()` for the admin, then one login per configured persona
+   (role mode); missing-persona fallback to admin is resolved here, once.
 3. `BootstrapOrchestrator.run()` — returns the `ReferenceCache`
    (locationId, employee ids by role, service/product entity ids and names).
-4. Serialize `{ referenceCache, tokenPair, runId }` to a JSON file in the OS
-   temp dir; test files rehydrate it in `beforeAll` (Jest globalSetup runs in
-   a separate process, so context must cross via disk).
+4. Serialize `{ referenceCache, tokenPairsByPersona, runId, mode }` to a JSON
+   file in the OS temp dir; test files rehydrate it in `beforeAll` (Jest
+   globalSetup runs in a separate process, so context must cross via disk).
 
 This requires `sdk-seeder` to export its internals as a library (today
 `src/index.ts` is only an executable entrypoint) — Task 1 below.
@@ -238,7 +301,9 @@ Expected: Jest and TypeScript compilation pass; seeder image build unaffected.
 - [ ] **Step 1: Write failing unit tests for the harness primitives**
 
 `ItestConfig`: required-variable failure message names every missing variable
-in one error; defaults applied; non-integer timeout rejected. `waitFor`:
+in one error; defaults applied; non-integer timeout rejected; a persona
+username without its password (or vice versa) rejected; mode resolution
+(single-credential vs. role) reported on the parsed config. `waitFor`:
 resolves on first truthy predicate result, polls at the configured interval,
 rejects with the last predicate error (not a generic timeout) after the
 deadline, never overlaps in-flight predicate calls.
@@ -251,7 +316,12 @@ deadline, never overlaps in-flight predicate calls.
 - `http.ts` — lift `formatError` and `isHttpStatus` from
   `CustomerEventSimulator` unchanged; add `expectHttpError(promise, status)`
   for negative-path assertions.
-- `builders.ts` — thin, assertive wrappers returning ids or throwing:
+- `personas.ts` — the persona→client registry: one `SeederAuth` per
+  configured persona (admin fallback in single-credential mode), exposing
+  `clients.as(persona)` with lazily created SDK clients per domain, plus
+  `isRoleMode()` for the enforcement tests' skip logic.
+- `builders.ts` — thin, assertive wrappers returning ids or throwing, each
+  taking the acting persona as its first argument:
   `createPersonAccount()`, `createVehicle(partyId)`,
   `createDraftEstimate(partyId, vehicleId)`,
   `addLaborLine(estimateId, serviceId)`, `addPartLine(estimateId, productId, qty)`,
@@ -284,6 +354,10 @@ SDK surface: `@durion-sdk/shop-manager` `AppointmentsAPIApi`
 (`createEstimateFromAppointment`). Appointment windows use real near-future
 times (e.g. tomorrow 09:00–10:00 UTC) — valid on a normal clock, no waiting.
 
+**Acting personas:** `writer` for every functional step (booking, reschedule,
+cancel, and the estimate bridge are front-desk actions). Role-mode negative:
+`tech` attempts A1's `createAppointment` → rejected.
+
 - [ ] **A1 — Book an appointment.** Create a fresh person account + vehicle via
   builders. `createAppointment` with `crmCustomerId`, `crmVehicleId`,
   `locationId`, tomorrow's `startAt`/`endAt`, `serviceRequestIds` drawn from
@@ -313,6 +387,11 @@ times (e.g. tomorrow 09:00–10:00 UTC) — valid on a normal clock, no waiting.
 SDK surface: `@durion-sdk/workorder` `EstimateAPIApi`. Sequences mirror
 `CustomerEventSimulator.simulate` steps `createEstimate` through
 `customerDecision`, with assertions replacing tolerant logging.
+
+**Acting personas:** `writer` for every functional step — the estimate is a
+front-desk document, and approve/decline records the *customer's* signature
+captured by the writer. Role-mode negative: `tech` attempts B5's
+`approveEstimate` → rejected.
 
 - [ ] **B1 — Create a draft estimate.** For a fresh party/vehicle:
   `createEstimate` with the seeder's field shape (`customerId`, `vehicleId`,
@@ -355,6 +434,14 @@ calls them today.
 
 Scenario: one estimate with two labor lines and one part line (quantity such
 that bootstrap stock of 50 covers it), promoted via builders.
+
+**Acting personas:** `manager` approves the workorder (C1) and the change
+request (C7's approval half); `tech` executes — start, timers, picks/consume,
+item completion (C2–C4, C6, C7's execution, C8's item completes); `writer`
+authors the change request (C7) and generates/finalizes the invoice plus the
+payment event (C9); `manager` closes the workorder (C8's `completeWorkorder`).
+In role mode the labor entries from C3/C4 must be attributed to the `tech`
+user. Role-mode negative: `parts` attempts `completeWorkorder` → rejected.
 
 - [ ] **C1 — Approve the workorder.** Signature payload as in the seeder.
   Assert approved status via `getWorkorderDetail`.
@@ -407,6 +494,12 @@ the bootstrap `SEED_VENDOR_ID`. Availability assertions use
 `getAvailabilityBySku` at the bootstrap location, and always compare **deltas**
 against a before-snapshot — the shared environment's absolute levels are
 unknowable.
+
+**Acting personas:** `parts` runs the supply chain — POs, ASNs, receiving
+sessions, goods receipts, cross-dock, putaway (D1–D6, D8–D9); `manager`
+approves the PO (D2); `writer` builds the shortage estimate (D7); `tech`
+completes the unblocked pick (D10). Role-mode negative: `tech` attempts
+D2's `approvePurchaseOrder` → rejected.
 
 **Part 1 — receiving a brand-new product into stock:**
 
@@ -467,7 +560,7 @@ nothing on alpha changes.
 
 - Create: `scripts/alpha-itest-tunnel.ps1` (and `.sh` twin for non-Windows)
 - Modify: `packages/sdk-integration-tests/README.md` (prerequisites section,
-  Task 8)
+  Task 9)
 
 Prerequisites on the laptop: AWS CLI v2, the Session Manager plugin, and an
 AWS profile/role with `ssm:StartSession` on the alpha instance (the same
@@ -502,17 +595,55 @@ Note: token lifetime must cover a full suite run; `SeederAuth.refreshIfNeeded`
 already handles refresh — the harness reuses it between suites (the seeder
 refreshes per virtual day for the same reason).
 
-### Task 8: Documentation
+### Task 8: Provision Persona Accounts (enables role mode)
+
+Alpha (and local Compose) currently has only the admin login. Persona logins
+must exist as real security-service users with the matching role before role
+mode can run. This task follows the `SecurityBootstrap` pattern (which already
+grants roles via `/v1/users/{id}/roles/{roleId}` and
+`/v1/roles/permissions` with `X-Authorities` headers).
+
+**Files:**
+
+- Create: `packages/sdk-integration-tests/src/harness/PersonaBootstrap.ts`
+- Modify: `src/harness/globalSetup.ts` (invoke when role mode is configured)
+- Test: unit tests for the idempotency logic (mocked HTTP)
+
+- [ ] **Step 1: Map roles.** Confirm the role UUIDs seeded by
+  `R__seed_reference_security.sql` in the backend for SERVICE_WRITER,
+  TECHNICIAN, MANAGER, and PARTS_CLERK (the sysadmin UUID is already pinned
+  in `SecurityBootstrap`). If a role does not exist in the reference seed,
+  record it here and drop that persona to admin-fallback rather than
+  inventing roles at runtime.
+- [ ] **Step 2: Idempotent user provisioning.** Using the admin token: for
+  each configured persona, find-or-create the security user with the
+  configured username/password, assign the mapped role, and (where the
+  security model requires it) grant the role's permission set. Re-runs are
+  no-ops. Passwords come only from the `ITEST_*` variables — never generated,
+  logged, or stored.
+- [ ] **Step 3: Link personas to people records.** Where the backend supports
+  it, associate each persona user with the matching `PeopleBootstrap`
+  employee (e.g. the tech login ↔ a TECHNICIAN employee id) so labor
+  attribution and assignment views line up. If no linkage API exists, record
+  that as a known limitation next to the affected C-suite assertions.
+- [ ] **Step 4: Verify role mode end-to-end.** With persona credentials set,
+  global setup logs in all personas; suites A–D pass with per-persona
+  execution; the four role-enforcement negatives run (passing or as
+  documented `test.failing` gaps).
+
+### Task 9: Documentation
 
 **Files:**
 
 - Create: `packages/sdk-integration-tests/README.md`
 - Modify: root `README.md` (one section pointing at the new package)
 
-- [ ] **Step 1: README.** Environment contract table, local and alpha run
-  paths, the append-only data policy (records intentionally persist in the
-  alpha database, found by runId), the timer-before-assignment constraint,
-  the accelerated-profile guard, and the waitFor-not-sleep rule.
+- [ ] **Step 1: README.** Environment contract table (including the persona
+  credential variables and the two run modes), the persona/role matrix,
+  local and alpha run paths, the append-only data policy (records
+  intentionally persist in the alpha database, found by runId), the
+  timer-before-assignment constraint, the accelerated-profile guard, and the
+  waitFor-not-sleep rule.
 - [ ] **Step 2: Full verification.**
 
 ```bash
@@ -548,6 +679,10 @@ npm run test:integration   # against a local backend: all suites green
       completed alpha run's records are queryable in the alpha database.
 - [ ] The full suite runs from a developer laptop against alpha through the
       SSM tunnel with no new public ingress on the alpha host.
+- [ ] Every test step declares its acting persona; the suite passes in
+      single-credential mode, and in role mode each persona acts under its
+      own login with the four role-enforcement negatives running (passing or
+      recorded as documented gaps).
 - [ ] Credentials appear only in shell environment variables or a git-ignored
       env file; they are never committed, logged, or passed on a command line.
 - [ ] Root Jest unit run, TypeScript build, and lint remain green.
