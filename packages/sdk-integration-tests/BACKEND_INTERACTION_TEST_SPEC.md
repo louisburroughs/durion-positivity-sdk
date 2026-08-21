@@ -794,21 +794,48 @@ access already needed to operate alpha).
   its `session-manager-plugin` child — killing only the `aws` pid orphans the
   plugin, which keeps both the SSM session and the local port alive. Both
   scripts kill the whole process tree on Ctrl-C for this reason.
-- [ ] **Step 3: Smoke-check the tunnel.** With the tunnel up, document and
+- [x] **Step 3: Smoke-check the tunnel.** With the tunnel up, document and
   verify: `curl http://localhost:18080/actuator/health` (or the gateway's
   health path) returns healthy, and a login round-trip against
   `http://localhost:18086` succeeds. The tunnel carries JWTs and credentials
   over the SSM-encrypted channel; nothing is exposed publicly.
 
-  Partially verified (2026-08-21): with both sessions open,
+  Verified (2026-08-21): with both sessions open,
   `curl http://localhost:18080/actuator/health` returned HTTP 200 `status: UP`
   and `http://localhost:18086/actuator/health` returned HTTP 200 with `db: UP`
-  and all 20 services registered in Eureka. The login round-trip is still
-  unverified — it gets exercised by the first Step 4 run.
+  and all 20 services registered in Eureka. The login round-trip also succeeds
+  against alpha through the tunnel (`[Auth] Login successful.` as
+  `admin.alpha`, after `SecurityBootstrap` granted 429 permissions to
+  SYSTEM_ADMINISTRATOR and confirmed the role assignment).
 - [ ] **Step 4: Run the suite through the tunnel.** `npm run test:integration`
   with the printed exports completes against alpha; afterward, query one
   created record by runId (any suite's entity) through the API to confirm the
   records persisted in the alpha database.
+
+  **Blocked (2026-08-21) — alpha backend, not the harness.** Config, tunnel,
+  credentials and login all work; the run dies in `BootstrapOrchestrator`
+  during `PeopleBootstrap`:
+
+  ```
+  POST /people/v1/people/staffing/assignments -> 404
+  {"detail":"Person not found: 01a025ef-889c-799a-aea5-904b2830ef41", ...}
+  ```
+
+  That id is the `personId` the people service itself reports for the employee
+  (`GET /v1/people/employees/by-number/EMP-T001` returns
+  `employeeId` + `personId`), so employee creation leaves a `personId` that the
+  staffing endpoint cannot resolve. It is not a propagation race — the same id
+  still fails minutes later — and not an SDK path bug: the generated
+  `createStaffingAssignment` posts to `/v1/people/staffing/assignments`, which
+  is the endpoint that returns the 404, and `GET
+  /v1/people/{personId}/staffing/assignments` returns `200 []` for the same id.
+  The likely cause is the async person projection (ADR-0043 / backend #876)
+  being disabled on alpha, leaving employee records with dangling person
+  references; confirming that needs the people service's Kafka settings on the
+  alpha host.
+
+  Note the aborted runs still wrote to alpha: location `MAIN-01`, its three
+  bays, and employee records up to `EMP-T001`.
 
 Note: token lifetime must cover a full suite run; `SeederAuth.refreshIfNeeded`
 already handles refresh — the harness reuses it between suites (the seeder
