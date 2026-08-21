@@ -527,26 +527,26 @@ Expected: both commands report `BUILD SUCCESS`.
 - Create: `.github/workflows/build-push-seeder.yml`
 - Test: Docker build and one-container command check
 
-- [ ] **Step 1: Add a container smoke test to CI**
+- [x] **Step 1: Add a container smoke test to CI**
 
 Build the image from the SCRIPT-SDK repository root and assert its configured
 entry point starts the seeder and fails with the expected missing-configuration
 message when credentials are absent.
 
-- [ ] **Step 2: Add a non-root seeder image**
+- [x] **Step 2: Add a non-root seeder image**
 
 Use a pinned Node 22 image. Copy root workspace manifests and package sources,
 run `npm ci`, switch to the image's non-root user, and use
 `npm run seed -w packages/sdk-seeder` as the command. Do not bake credentials,
 URLs, clock anchors, or alpha identifiers into the image.
 
-- [ ] **Step 3: Add ECR publishing**
+- [x] **Step 3: Add ECR publishing**
 
 Create a workflow that uses GitHub OIDC, logs into ECR, and publishes
 `durion/sdk-seeder:sha-<short-sha>`. Record the immutable image tag in the job
 summary. Do not publish `latest` as the alpha execution input.
 
-- [ ] **Step 4: Validate the image locally in CI**
+- [x] **Step 4: Validate the image locally in CI**
 
 ```bash
 docker build -f packages/sdk-seeder/Dockerfile -t sdk-seeder:test .
