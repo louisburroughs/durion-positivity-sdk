@@ -269,9 +269,14 @@ Design rules:
     enforces `order:purchase_order:*`. Harmless to the suites, but never
     grant from the legacy family; its retirement is tracked on backend
     #1438.
-- Provisioning the persona logins is Task 8. Until it lands, alpha runs use
-  single-credential mode with the existing seeder/admin account, so nothing
-  blocks the functional suites.
+- Alpha already carries seeded operational accounts for every persona
+  except `parts` (`R__seed_security_operational_data.sql` — see Task 8 for
+  the persona → username mapping), so role mode works immediately for
+  `advisor`/`tech`/`manager`/`acct` by pointing the `ITEST_<PERSONA>_*`
+  variables at those accounts. The `parts` persona needs Task 8's single
+  INVENTORY_LEAD role assignment first; until then leave `ITEST_PARTS_*`
+  unset (admin fallback). Single-credential mode with the admin account
+  remains the zero-setup path.
 
 The endpoint→permission mapping used above is recorded per suite in the
 suite sections and was read directly from the backend controllers
@@ -774,64 +779,66 @@ Note: token lifetime must cover a full suite run; `SeederAuth.refreshIfNeeded`
 already handles refresh — the harness reuses it between suites (the seeder
 refreshes per virtual day for the same reason).
 
-### Task 8: Provision Persona Accounts (enables role mode)
+### Task 8: Wire Personas to the Seeded Operational Accounts (enables role mode)
 
-Alpha (and local Compose) currently has only the admin login. Persona logins
-must exist as real security-service users with the right roles before role
-mode can run. All mechanics below are verified against the backend's
-`pos-security-service` controllers.
+The backend seeds the accounts already:
+`pos-security-service/.../db/migration/R__seed_security_operational_data.sql`
+creates 16 operational users (one shared password hash) with `user_roles`
+assignments, so role mode needs **no user creation at all**. The persona →
+seeded-account mapping:
 
-Provisioning API surface (all called with the admin token, whose
-bootstrap-granted catalog includes the needed `security:*` authorities):
-
-| Operation | Endpoint | Required authority |
+| Persona | Role | Seeded users |
 | --- | --- | --- |
-| Create user | `POST /v1/users` | `security:user:create` |
-| Assign role to user | `PUT /v1/users/{userId}/roles/{roleId}` | `security:role:assign` |
-| Create role | `POST /v1/roles` | `security:role:create` |
-| Grant one permission to role | `PUT /v1/roles/{roleId}/permissions/{permissionKey}` | `security:role:edit` |
-| Read a user's effective permissions | `GET /v1/users/{userId}/permissions` | `security:permission:view` |
+| `advisor` | SERVICE_ADVISOR | `rachel.kim`, `tyrone.williams` |
+| `tech` | TECHNICIAN | `kyle.brennan`, `deshawn.morris`, `carlos.ruiz`, `amber.nguyen`, `eddie.vasquez`, `priya.patel`, `james.okafor` |
+| `manager` | LOCATION_MANAGER | `diana.rowe` |
+| `acct` | ACCOUNT_MANAGER | `irene.torres` |
+| `parts` | INVENTORY_LEAD | **none** — no seeded user holds an INVENTORY_* role |
+| `admin` | SYSTEM_ADMINISTRATOR | `marcus.webb` (also `admin.alpha` from the reference seed) |
 
-(Note: role-grant endpoints are `PUT`, matching what `SecurityBootstrap`
-already uses.)
+Operators point the `ITEST_<PERSONA>_*` variables at these usernames with
+the shared operational password. The only remaining provisioning is the
+`parts` login: one role assignment
+(`PUT /v1/users/{userId}/roles/{roleId}`, requires `security:role:assign`)
+granting INVENTORY_LEAD to whichever user the operator chooses for
+`ITEST_PARTS_USERNAME` — or, better, adding an INVENTORY_LEAD user to the
+seed upstream, extending "16 employees across 7 roles" to 8. Resolve the
+role **by name** from the roles listing rather than hardcoding its UUID: on
+databases populated before backend #1440 (alpha included) the formerly
+initializer-created roles keep their originally generated ids. Never grant
+individual permissions — the seeded roles carry their full sets from
+`R__seed_role_permissions.sql` — and never grant from the unenforced legacy
+`inventory:purchase_order:*` family.
 
 **Files:**
 
 - Create: `packages/sdk-integration-tests/src/harness/PersonaBootstrap.ts`
+  (role-mode preflight: verify + the single INVENTORY_LEAD assignment)
 - Modify: `src/harness/globalSetup.ts` (invoke when role mode is configured)
-- Test: unit tests for the idempotency logic (mocked HTTP)
+- Test: unit tests for the preflight logic (mocked HTTP)
 
-- [ ] **Step 1: Assign the seeded roles.** For each persona: find-or-create
-  the user with the configured credentials, then assign its real role —
-  SERVICE_ADVISOR, TECHNICIAN, LOCATION_MANAGER, ACCOUNT_MANAGER, and
-  INVENTORY_LEAD. Since backend #1440 every role is SQL-seeded with a
-  pinned UUID, **but** resolve each role **by name** from the roles listing
-  rather than hardcoding UUIDs: on databases populated before #1440 (alpha
-  included) the five formerly initializer-created roles — INVENTORY_LEAD
-  among them — keep their originally generated ids. These roles carry their
-  full permission sets from `R__seed_role_permissions.sql`
-  (INVENTORY_LEAD's receiving surface and PO authoring, LOCATION_MANAGER's
-  PO approval, per #1438/#1439); do **not** grant them anything extra, and
-  create **no** test-owned roles — the suites run entirely on seeded
-  grants. If a grant ever must be added, use only permission strings from
-  the seeded catalog: the JWT `perm_bits` bitmap encodes only permissions
-  present in the backend's `PermissionCode` enum, so an invented permission
-  row is silently dropped from tokens; and never grant from the unenforced
-  legacy `inventory:purchase_order:*` family.
-- [ ] **Step 2: Verify effective permissions.** After provisioning, read
-  `GET /v1/users/{userId}/permissions` for each persona and assert the
-  expected authority set — this catches a partially-applied grant before any
-  suite runs, with a far clearer failure than a scattered 403.
-- [ ] **Step 3: Link personas to people records.** Where the backend supports
-  it, associate each persona user with the matching `PeopleBootstrap`
-  employee (e.g. the tech login ↔ a TECHNICIAN employee id; the `users`
-  table has a `person_id` column) so labor attribution and assignment views
-  line up. If no linkage API exists, record that as a known limitation next
-  to the affected C-suite assertions.
-- [ ] **Step 4: Idempotency and hygiene.** Re-runs are no-ops (find before
-  create; assignment endpoints tolerate already-present state). Passwords
-  come only from the `ITEST_*` variables — never generated, logged, or
-  stored.
+- [ ] **Step 1: Verify the configured accounts.** In role mode, for each
+  configured persona resolve the user by username and read
+  `GET /v1/users/{userId}/permissions` (requires `security:permission:view`)
+  as admin; assert the authorities the suites rely on are present. This
+  catches a wrong username or missing role assignment before any suite
+  runs, with a far clearer failure than a scattered 403.
+- [ ] **Step 2: Assign INVENTORY_LEAD for the parts persona.** When
+  `ITEST_PARTS_*` is configured and that user lacks INVENTORY_LEAD, assign
+  it (`PUT /v1/users/{userId}/roles/{roleId}`, role id resolved by name).
+  Idempotent: already-assigned is a no-op. Record in the run log that the
+  assignment was made. Separately, propose the upstream seed change adding
+  a dedicated INVENTORY_LEAD operational user.
+- [ ] **Step 3: Link personas to people records.** The seeded operational
+  users have no `person_id` (only `admin.alpha` does). Where the backend
+  supports it, associate each persona user with the matching
+  `PeopleBootstrap` employee (e.g. the tech login ↔ a TECHNICIAN employee
+  id) so labor attribution and assignment views line up. If no linkage API
+  exists, record that as a known limitation next to the affected C-suite
+  assertions.
+- [ ] **Step 4: Hygiene.** Re-runs are no-ops. Passwords come only from the
+  `ITEST_*` variables — never generated, logged, or stored; the shared
+  operational password never appears in code or docs.
 - [ ] **Step 5: Verify role mode end-to-end.** With persona credentials set,
   global setup logs in all personas; suites A–D pass with per-persona
   execution; the role-enforcement negatives run (passing or as documented
