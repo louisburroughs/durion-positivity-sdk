@@ -159,7 +159,7 @@ No new public EC2 ingress is required.
 - Test:
   `../durion-positivity-backend/pos-events/src/test/java/com/positivity/time/ScaledClockTest.java`
 
-- [ ] **Step 1: Write failing configuration tests**
+- [x] **Step 1: Write failing configuration tests**
 
 Use `ApplicationContextRunner` with the accelerated profile and all clock
 properties. Assert exactly one `Clock`, concrete type `ScaledClock`, and exact
@@ -167,7 +167,7 @@ scale, zone, real-start, and virtual-start values. Add negative cases for
 missing anchors, invalid zone, non-positive scale, and a `virtual-start` that is
 after `real-start`.
 
-- [ ] **Step 2: Confirm the tests fail**
+- [x] **Step 2: Confirm the tests fail**
 
 ```bash
 cd ../durion-positivity-backend
@@ -177,7 +177,7 @@ cd ../durion-positivity-backend
 Expected: failures because typed anchors, anchor getters, and convergence do not
 exist.
 
-- [ ] **Step 3: Add typed properties and authoritative bean selection**
+- [x] **Step 3: Add typed properties and authoritative bean selection**
 
 Create `@ConfigurationProperties("pos.time.accelerated")` with `double scale`,
 `ZoneId zone`, `Instant realStart`, `Instant virtualStart`, and
@@ -189,7 +189,7 @@ Do not put `@ConditionalOnMissingBean` on the accelerated bean. A competing
 module clock must fail startup rather than silently disabling acceleration.
 Keep the conditional system-clock fallback under `!accelerated`.
 
-- [ ] **Step 4: Implement convergence in `ScaledClock`**
+- [x] **Step 4: Implement convergence in `ScaledClock`**
 
 `instant()` returns
 `min(virtualStart + scale * (baseNow - realStart), baseNow)` when `converge` is
@@ -200,7 +200,7 @@ Add a test proving two clocks with separate base-clock objects and identical
 anchors return the same virtual instant after equal real elapsed time, and a
 test proving the clock equals wall time after `G / (scale - 1)` has elapsed.
 
-- [ ] **Step 5: Run all shared-clock tests**
+- [x] **Step 5: Run all shared-clock tests**
 
 ```bash
 ./mvnw -pl pos-events test
@@ -227,19 +227,19 @@ Persisted-timestamp repair for these modules is Task 5. This task only removes
 the competing `Clock` beans so the accelerated bean is the one every auditing
 provider resolves.
 
-- [ ] **Step 1: Write accelerated-context regression tests**
+- [x] **Step 1: Write accelerated-context regression tests**
 
 Start each affected module with shared anchors and assert one `Clock` bean of
 type `ScaledClock`.
 
-- [ ] **Step 2: Confirm existing conflicts**
+- [x] **Step 2: Confirm existing conflicts**
 
 ```bash
 ./mvnw -pl pos-documents,pos-price,pos-bulk-loader,pos-tax -am \
   -Dtest='*Clock*Test' -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 
-- [ ] **Step 3: Remove local clock beans and direct system-time calls**
+- [x] **Step 3: Remove local clock beans and direct system-time calls**
 
 Delete the three dedicated configurations and remove the tax clock bean.
 Replace production `Clock.systemUTC()`, `Instant.now(Clock.systemUTC())`,
@@ -251,7 +251,7 @@ the 15 explicit `Clock.systemUTC()` and `Clock.systemDefaultZone()` sites. Five
 of them are legitimate and stay: the `TimeSource` static default and its
 `reset()`, the `ScaledClock` base clock, and the two `TimeConfig` factories.
 
-- [ ] **Step 4: Validate affected modules and architecture rules**
+- [x] **Step 4: Validate affected modules and architecture rules**
 
 ```bash
 ./mvnw -pl pos-documents,pos-price,pos-bulk-loader,pos-tax -am test
@@ -274,32 +274,32 @@ Expected: both commands report `BUILD SUCCESS`.
 - Test:
   `../durion-positivity-backend/pos-api-gateway/src/test/java/com/positivity/gateway/internal/controller/SystemTimeControllerTest.java`
 
-- [ ] **Step 1: Write failing WebFlux tests**
+- [x] **Step 1: Write failing WebFlux tests**
 
 Prove `GET /system/time` returns `200` without JWT or `X-API-Version`, reports
 the injected clock and metadata including `converged`, and is unavailable
 outside `accelerated`.
 
-- [ ] **Step 2: Confirm the endpoint test fails**
+- [x] **Step 2: Confirm the endpoint test fails**
 
 ```bash
 ./mvnw -pl pos-api-gateway -am -Dtest=SystemTimeControllerTest \
   -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 
-- [ ] **Step 3: Add `pos-events` and implement the endpoint**
+- [x] **Step 3: Add `pos-events` and implement the endpoint**
 
 Add the normal reactor dependency on `pos-events`. Create a response record
 matching the target JSON. Add a thin controller under `@Profile("accelerated")`
 that injects `Clock`, requires `ScaledClock`, and returns its instant and
 metadata.
 
-- [ ] **Step 4: Permit only the startup probe**
+- [x] **Step 4: Permit only the startup probe**
 
 Permit unauthenticated `GET /system/time`. Do not permit `/system/**` and do not
 add runtime clock mutation operations.
 
-- [ ] **Step 5: Run gateway and architecture tests**
+- [x] **Step 5: Run gateway and architecture tests**
 
 ```bash
 ./mvnw -pl pos-api-gateway -am test
@@ -319,25 +319,25 @@ Expected: both commands report `BUILD SUCCESS`.
 - Inspect date-driven jobs reached by customer, inventory, people, invoice, and
   workorder scenario steps.
 
-- [ ] **Step 1: Classify reached schedulers**
+- [x] **Step 1: Classify reached schedulers**
 
 Classify each as a real-time transport poller, a due-work poller whose business
 comparison must use injected `Clock`, or a calendar cron that must become an
 idempotent due-work poller to observe crossed virtual boundaries.
 
-- [ ] **Step 2: Write due-time tests without real sleeps**
+- [x] **Step 2: Write due-time tests without real sleeps**
 
 Inject a controlled clock, cross the due boundary, invoke the job method
 directly, and assert due records process exactly once. Include a case where a
 single poll spans many virtual days, since catch-up compresses a year of
 boundaries into hours.
 
-- [ ] **Step 3: Parameterize only required detection intervals**
+- [x] **Step 3: Parameterize only required detection intervals**
 
 Keep transport and outbox polling at safe real-time rates. Never multiply
 database or network polling frequency by clock scale.
 
-- [ ] **Step 4: Run touched module tests**
+- [x] **Step 4: Run touched module tests**
 
 ```bash
 ./mvnw -pl pos-workorder,pos-accounting,pos-customer,pos-inventory,pos-people,pos-invoice -am test
@@ -373,7 +373,7 @@ stores what Java sends. This task closes the paths that bypass it.
 - Create:
   `../durion-positivity-backend/deployment/alpha/verify-accelerated-timestamps.sql`
 
-- [ ] **Step 1: Write failing persistence tests**
+- [x] **Step 1: Write failing persistence tests**
 
 For each affected entity, run a slice test with a `Clock` fixed at an instant one
 year in the past. Persist, flush, clear, reload, and assert `createdAt` and
@@ -381,7 +381,7 @@ year in the past. Persist, flush, clear, reload, and assert `createdAt` and
 case asserting `updatedAt` moves to the second fixed instant and `createdAt` does
 not.
 
-- [ ] **Step 2: Give `pos-tax` real auditing**
+- [x] **Step 2: Give `pos-tax` real auditing**
 
 Add `JpaAuditingConfig` identical to the other 21 modules:
 
@@ -402,7 +402,7 @@ Annotate both entities with `@EntityListeners(AuditingEntityListener.class)`,
 `@PreUpdate` bodies that call `Instant.now(Clock.systemUTC())`. Apply the same
 treatment to `TusUpload` in `pos-bulk-loader`.
 
-- [ ] **Step 3: Remove the Hibernate timestamp generators in `pos-price`**
+- [x] **Step 3: Remove the Hibernate timestamp generators in `pos-price`**
 
 Replace `@CreationTimestamp` and `@UpdateTimestamp` on `PromotionOffer` and
 `RestrictionRule` with `@CreatedDate` and `@LastModifiedDate`. Both entities
@@ -424,7 +424,7 @@ Use it only if the generators must be kept. It is a testing-namespace setting
 with no compatibility guarantee, and it is easy to forget when a new module
 adds a generator.
 
-- [ ] **Step 4: Bind native SQL writes to the injected clock**
+- [x] **Step 4: Bind native SQL writes to the injected clock**
 
 In `SupplierScheduleLeaseRepository`, replace `updated_at = now()` in the SET
 clauses with a bound `:now` parameter supplied from the injected `Clock`. Leave
@@ -432,7 +432,7 @@ the `leased_until` and `last_heartbeat_at` comparisons on database time: leasing
 is a real-time liveness concern and must not accelerate. Document that split in
 the repository javadoc so the mixed clocks are deliberate.
 
-- [ ] **Step 5: Close the unannotated-entity gap**
+- [x] **Step 5: Close the unannotated-entity gap**
 
 About 40 entities declare `createdAt`/`updatedAt` without audit annotations,
 concentrated in `pos-workorder` (13), `pos-customer` (7), `pos-shop-manager` (4),
@@ -441,14 +441,14 @@ annotations or confirm the writing service passes an injected `Clock`. Replica
 entities that copy a source timestamp verbatim are correct as they are; record
 that decision next to the field.
 
-- [ ] **Step 6: Enforce the rule in ArchUnit**
+- [x] **Step 6: Enforce the rule in ArchUnit**
 
 Add rules failing the build when production code outside `pos-events` calls
 `Clock.systemUTC()` or `Clock.systemDefaultZone()`, calls a no-argument
 `now()`, or declares `@CreationTimestamp`, `@UpdateTimestamp`, or
 `@CurrentTimestamp`. Without this the gap reopens on the next entity.
 
-- [ ] **Step 6a: Extend enforcement to SQL written as strings**
+- [x] **Step 6a: Extend enforcement to SQL written as strings**
 
 The bytecode rules above are Java-only. They cannot see `now()` inside a
 `@Query` string, which is exactly how the `pos-supplier` lease writes in Step 4
@@ -482,7 +482,7 @@ An empty or comment-free allowlist entry fails the test.
 Neither check covers Flyway migration files. Those are reviewed against the
 Step 8 list and verified by the Step 9 query.
 
-- [ ] **Step 7: Close the pre-bind window**
+- [x] **Step 7: Close the pre-bind window**
 
 `TimeSource` defaults to `Clock.systemUTC()` until `TimeSourceBinder` runs at
 `afterSingletonsInstantiated`, so Flyway migrations and bean construction see
@@ -490,7 +490,7 @@ wall time. Under the accelerated profile, make `TimeSource` throw on read before
 the bind rather than silently return wall time, and confirm no startup path
 writes business timestamps.
 
-- [ ] **Step 8: Accept and document the residual database-clock reads**
+- [x] **Step 8: Accept and document the residual database-clock reads**
 
 These stay on wall time and are safe only because virtual time trails it:
 
@@ -503,13 +503,13 @@ These stay on wall time and are safe only because virtual time trails it:
   set rather than hiding rows.
 - Kafka record timestamps and log timestamps, which are transport metadata.
 
-- [ ] **Step 9: Add a post-run timestamp assertion**
+- [x] **Step 9: Add a post-run timestamp assertion**
 
 Write `verify-accelerated-timestamps.sql` to report any row whose `created_at`
 or `updated_at` falls outside `[virtual_start, now()]`, or whose `updated_at`
 precedes its `created_at`, across the audited tables. Task 11 runs it.
 
-- [ ] **Step 10: Run the affected module tests**
+- [x] **Step 10: Run the affected module tests**
 
 ```bash
 ./mvnw -pl pos-tax,pos-bulk-loader,pos-price,pos-supplier -am test
