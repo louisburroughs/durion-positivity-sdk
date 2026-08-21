@@ -189,6 +189,36 @@ verify_protected() {
 	return 0
 }
 
+# ---------------------------------------------------------------------------
+# Input-spec format guard
+#
+# The backend keeps a stale openapi.json beside the live openapi.yaml in 13
+# modules; several are months behind (pos-inventory: 15 paths vs the yaml's 114)
+# and two have drifted in both directions. openapi.yaml is the source of truth,
+# so refuse to generate from a .json input rather than silently emitting a
+# client for an obsolete contract.
+# ---------------------------------------------------------------------------
+verify_input_specs() {
+	local bad
+	bad="$(node -e '
+		const gens = require("./openapitools.json")["generator-cli"].generators;
+		const bad = Object.entries(gens)
+			.filter(([, g]) => !/\.ya?ml$/.test(g.inputSpec))
+			.map(([k, g]) => `${k} -> ${g.inputSpec}`);
+		process.stdout.write(bad.join("\n"));
+	')"
+	if [[ -n "$bad" ]]; then
+		echo "[generate] ERROR: generator inputSpec must be openapi.yaml, not .json:" >&2
+		echo "$bad" | sed 's/^/  /' >&2
+		echo "  The .json specs in durion-positivity-backend are stale; the .yaml is authoritative." >&2
+		return 1
+	fi
+	echo "[generate] All inputSpec entries use openapi.yaml."
+	return 0
+}
+
+verify_input_specs
+
 snapshot_protected
 
 if [[ -n "$module" ]]; then
