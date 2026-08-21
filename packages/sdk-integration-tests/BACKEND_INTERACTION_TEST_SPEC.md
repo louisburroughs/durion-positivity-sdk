@@ -354,26 +354,32 @@ This requires `sdk-seeder` to export its internals as a library (today
 - Modify: `packages/sdk-seeder/package.json` (add `main`/`exports` pointing at `src/lib.ts`)
 - Test: `packages/sdk-seeder/src/lib.test.ts`
 
-- [ ] **Step 1: Write a failing import test**
+- [x] **Step 1: Write a failing import test**
 
 A unit test importing `SeederAuth`, `SeederConfig`, `SecurityBootstrap`,
 `BootstrapOrchestrator`, `ReferenceCache`, and `SeederRandom` from the package
 root and asserting they are constructible types. Run with `npm test`.
 
-- [ ] **Step 2: Add the barrel and package exports**
+- [x] **Step 2: Add the barrel and package exports**
 
 `lib.ts` re-exports the classes above plus the `SEED_VENDOR_ID` constant from
 `bootstrap/InventoryBootstrap`. Do not move `index.ts`; the `seed` script keeps
 running it directly. Keep the seeder's Docker image and CI behavior unchanged.
 
-- [ ] **Step 3: Decouple config construction from `process.env` naming**
+Implementation note: because `index.ts` starts a seeder run on import, both
+resolution layers must point `@durion-sdk/seeder` at the barrel — the root
+jest `moduleNameMapper` (runtime) **and** the root tsconfig `paths`
+(ts-jest's type checker). Both specific entries precede the generic
+`@durion-sdk/*` rules.
+
+- [x] **Step 3: Decouple config construction from `process.env` naming**
 
 `SeederConfig.fromEnv()` reads `SEEDER_*` names. Add a
 `SeederConfig.fromValues(shape)` factory so the integration harness can map
 `ITEST_*` variables onto it without fake env mutation. Validation rules stay in
 one place.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 npm test -- --runInBand packages/sdk-seeder
@@ -381,6 +387,12 @@ npm run build
 ```
 
 Expected: Jest and TypeScript compilation pass; seeder image build unaffected.
+
+Verified: the seeder suite passes (10 tests) and the change introduces no new
+failures — the full `npm test` / `npm run build` runs carry 21 test failures
+and 4 compile errors that pre-date this task on the branch (stale
+`src/__tests__` expectations against the regenerated SDK surface), identical
+before and after.
 
 ### Task 2: Scaffold the Integration Package and Harness
 
