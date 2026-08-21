@@ -3,9 +3,10 @@
   "version": "0.1.0-alpha",
   "private": true,
   "description": "Year-scale data seeder for Durion Positivity Backend using the accelerated clock profile",
-  "main": "src/lib.ts",
-  "types": "src/lib.ts",
+  "main": "./dist/lib.js",
+  "types": "./dist/lib.d.ts",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "seed": "ts-node src/index.ts",
     "seed:day": "cross-env SEEDER_DAYS=1 ts-node src/index.ts"
   },
