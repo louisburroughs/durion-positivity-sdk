@@ -137,7 +137,9 @@ for that action — and the harness executes the step with that persona's SDK
 client.
 
 The persona model below is **verified against the backend**
-(`durion-positivity-backend`), not assumed. Ground truth:
+(`durion-positivity-backend` at commit `7250344`, which includes PR #1436's
+authorization-enforcement fixes for issues #1432–#1435), not assumed. Ground
+truth:
 
 - Roles are seeded by
   `pos-security-service/.../db/migration/R__seed_reference_security.sql`
@@ -170,8 +172,8 @@ Six personas, mapped to real roles (role UUIDs from
 
 | Persona | Security role | Role UUID | Used for |
 | --- | --- | --- | --- |
-| `admin` | `SYSTEM_ADMINISTRATOR` (+ full catalog via bootstrap) | `e9b3e6ba-af10-08ff-0376-1f2fa60d5093` | Global setup, persona provisioning, and **fixture** creation the seeded roles cannot do: CRM customers/vehicles (`crm:party:create`/`crm:vehicle:create` are ADMIN-only in the seed) and catalog products (`ROLE_ADMIN`) |
-| `advisor` | `SERVICE_ADVISOR` | `f5e58579-e9de-574d-c2c5-56d3fd7e93f6` | Appointments (`appointments:*`), full estimate lifecycle (`workorder:estimate:*`), change-request creation, invoice generation + finalization (`workorder:workorder:generate_invoice`, `invoice:finalize`) |
+| `admin` | `SYSTEM_ADMINISTRATOR` (+ full catalog via bootstrap) | `e9b3e6ba-af10-08ff-0376-1f2fa60d5093` | Global setup, persona provisioning, and **fixture** creation the seeded roles cannot do: CRM vehicles (`crm:vehicle:create` is still ADMIN-only) and catalog products (`ROLE_ADMIN`) |
+| `advisor` | `SERVICE_ADVISOR` | `f5e58579-e9de-574d-c2c5-56d3fd7e93f6` | Customer onboarding (`crm:party:create`, `crm:person:create` — granted by #1435), appointments (`appointments:*`), full estimate lifecycle (`workorder:estimate:*`) including the from-appointment bridge, change-request creation, invoice generation + finalization (`workorder:workorder:generate_invoice`, `invoice:finalize`) |
 | `tech` | `TECHNICIAN` | `190cbafe-4c1b-7e5f-768f-4b3c0d58a165` | Execution: `workorder:start`, timers (`workorder:labor:add`), picks (`inventory:pick_list:view`/`execute`), consumption (`workorder:parts:consume`) |
 | `manager` | `LOCATION_MANAGER` | `783422f6-84ab-f590-5d51-4fa87b06d679` | Workorder approval, technician assignment (`workorder:workorder:assign-technician`), change-request approval, item + workorder completion (`workorder:workorder:complete`), runtime-granted `order:purchase_order:approve` |
 | `parts` | custom `ITEST_PARTS_CLERK` (created by Task 8) | _(created at runtime)_ | POs, ASNs, receiving sessions, goods receipts, cross-dock, putaway, backorder/availability views — **no seeded role holds these**: the whole receiving permission family is ADMIN-only in the seed and `order:purchase_order:*` is granted to no role at all |
@@ -216,25 +218,39 @@ Design rules:
     labor is the technician's domain).
   - D: `tech` attempts `approvePurchaseOrder` → rejected
     (`order:purchase_order:approve` is granted to no seeded role).
-- **Known authorization gaps** (verified in backend code) where a negative
-  test is impossible or must be written as gap documentation instead:
-  - `POST /v1/workorders/estimates/from-appointment`,
-    `POST /v1/workorders` (createWorkorder), `DELETE /v1/workorders/{id}`,
-    and `GET /v1/workorders/{id}/detail` are `isAuthenticated()`-only — any
-    logged-in user passes. Suite A's bridge test therefore asserts function,
-    not authorization, and a `test.failing`-style gap test documents each.
-  - `getWorkorderDetail` filters **response fields** by authority instead of
-    rejecting: financial fields (`estimatedTotal`, `laborTotal`,
-    `partsTotal`) are omitted for callers without the pricing authorities.
-    Role mode asserts the split: `advisor` sees financials, `tech` gets a
-    200 without them.
-  - `POST /v1/products` (createProduct) requires only `ROLE_ADMIN` **or**
-    `ROLE_CATALOG_VIEW` — a view role gating a create operation. Documented
-    as a gap; product-creation fixtures run as `admin`.
-  - `crm:party:create` / `crm:vehicle:create` are ADMIN-only in the seed, so
-    a service advisor cannot onboard a customer — likely a seed gap. Until
-    the seed changes, customer/vehicle creation is an `admin` **fixture**
-    step in every suite, never an `advisor` action.
+- **Closed gaps — now positive authorization surface** (fixed by backend
+  PR #1436, #1432–#1435; earlier revisions of this spec listed them as
+  gaps). The suites assert the new enforcement:
+  - `POST /v1/workorders/estimates/from-appointment` now requires
+    `workorder:estimate:create` — the A5 bridge runs as `advisor` and gains
+    a negative: `tech` attempts it → rejected.
+  - `POST /v1/workorders` requires `workorder:workorder:create` (advisor,
+    manager); `DELETE /v1/workorders/{id}` requires
+    `workorder:workorder:delete` — held by the manager tier only (ADMIN,
+    GENERAL_MANAGER, LOCATION_MANAGER, MANAGER, SHOP_MANAGER), deliberately
+    **not** SERVICE_ADVISOR: advisors create workorders but cannot destroy
+    them. Worth a role-mode negative: `advisor` attempts delete → rejected
+    (the suites never delete data, so this negative targets a runId-tagged
+    throwaway workorder and must expect 403, not perform a delete).
+  - `crm:party:create`, `crm:party:search/view`, `crm:person:create/read`
+    are now granted to SERVICE_ADVISOR (#1435), so **customer onboarding is
+    an `advisor` action**. Party edit/deactivate/merge stay
+    manager-and-above by design.
+  - `POST /v1/products` now requires `ROLE_ADMIN` or `ROLE_CATALOG_EDIT`
+    (the view-role bug is fixed). Still role-name-based, and no CATALOG_*
+    role is seeded, so product fixtures stay on `admin`.
+- **Remaining authorization gaps** (still true at commit `7250344`):
+  - `getWorkorderDetail` remains `isAuthenticated()`-only and filters
+    **response fields** by authority instead of rejecting: financial fields
+    (`estimatedTotal`, `laborTotal`, `partsTotal`) are omitted for callers
+    without the pricing authorities. Role mode asserts the split: `advisor`
+    sees financials, `tech` gets a 200 without them.
+  - `crm:vehicle:create` is still ADMIN-only, so vehicle registration is an
+    `admin` **fixture** step in every suite (the advisor can only
+    search/view vehicles).
+  - Receiving-family permissions remain ADMIN-only and
+    `order:purchase_order:*` remains granted to no seeded role — the
+    test-owned roles in Task 8 are still required.
 - Provisioning the persona logins is Task 8. Until it lands, alpha runs use
   single-credential mode with the existing seeder/admin account, so nothing
   blocks the functional suites.
@@ -417,13 +433,15 @@ SDK surface: `@durion-sdk/shop-manager` `AppointmentsAPIApi`
 (`createEstimateFromAppointment`). Appointment windows use real near-future
 times (e.g. tomorrow 09:00–10:00 UTC) — valid on a normal clock, no waiting.
 
-**Acting personas:** `admin` creates the customer/vehicle fixtures; `advisor`
-(SERVICE_ADVISOR) performs every functional step. Required authorities per
-step (all held by SERVICE_ADVISOR): A1 `appointments:create` OR
-`shop:schedule:edit`; A2 `appointments:view` OR `shop:schedule:view`; A3
-`appointments:reschedule`; A4 `appointments:cancel`; A5 none — the bridge
-endpoint is `isAuthenticated()`-only (documented gap). Role-mode negative:
-`tech` attempts A1's `createAppointment` → rejected.
+**Acting personas:** `advisor` (SERVICE_ADVISOR) onboards the customer
+(`crm:party:create`) and performs every functional step; `admin` registers
+the vehicle fixture (`crm:vehicle:create` is still ADMIN-only). Required
+authorities per step (all held by SERVICE_ADVISOR): A1 `appointments:create`
+OR `shop:schedule:edit`; A2 `appointments:view` OR `shop:schedule:view`; A3
+`appointments:reschedule`; A4 `appointments:cancel`; A5
+`workorder:estimate:create` (enforced since #1436). Role-mode negatives:
+`tech` attempts A1's `createAppointment` → rejected; `tech` attempts A5's
+bridge → rejected (no `workorder:estimate:create`).
 
 - [ ] **A1 — Book an appointment.** Create a fresh person account + vehicle via
   builders. `createAppointment` with `crmCustomerId`, `crmVehicleId`,
@@ -455,10 +473,12 @@ SDK surface: `@durion-sdk/workorder` `EstimateAPIApi`. Sequences mirror
 `CustomerEventSimulator.simulate` steps `createEstimate` through
 `customerDecision`, with assertions replacing tolerant logging.
 
-**Acting personas:** `admin` creates the customer/vehicle fixtures; `advisor`
-(SERVICE_ADVISOR) performs every functional step — the estimate is a
+**Acting personas:** `advisor` (SERVICE_ADVISOR) creates the customer
+(`crm:party:create`) and performs every functional step — the estimate is a
 front-desk document, and approve/decline records the *customer's* signature
-captured by the advisor. Required authorities (all held by SERVICE_ADVISOR):
+captured by the advisor; `admin` registers the vehicle fixture
+(`crm:vehicle:create` is ADMIN-only). Required authorities (all held by
+SERVICE_ADVISOR):
 `workorder:estimate:create`, `workorder:estimate_item:add`,
 `workorder:estimate:calculate`, `workorder:estimate:submit`,
 `workorder:estimate:approve`, `workorder:estimate:decline`,
@@ -580,7 +600,7 @@ against a before-snapshot — the shared environment's absolute levels are
 unknowable.
 
 **Acting personas:** `admin` creates the new catalog products (D1, D7 —
-`createProduct` checks `ROLE_ADMIN`/`ROLE_CATALOG_VIEW` role authorities, and
+`createProduct` checks `ROLE_ADMIN`/`ROLE_CATALOG_EDIT` role authorities, and
 no CATALOG_* role is seeded); `parts` (custom `ITEST_PARTS_CLERK`, Task 8)
 runs the supply chain — PO creation (`order:purchase_order:create` — note the
 `order:` namespace, PO endpoints live in pos-order, and **no seeded role
