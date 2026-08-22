@@ -136,7 +136,7 @@ describe('SDK-008 Behavior: OrderPriceOverrideWorkflow', () => {
     applyPriceOverride: jest.fn(),
     approvePriceOverride: jest.fn(),
     rejectPriceOverride: jest.fn(),
-    getPendingApprovals: jest.fn(),
+    listPendingPriceOverrides: jest.fn(),
     getOverride: jest.fn(),
     getOverridesByOrder: jest.fn(),
   } as any;
@@ -146,7 +146,7 @@ describe('SDK-008 Behavior: OrderPriceOverrideWorkflow', () => {
     mockPriceOverridesApi.applyPriceOverride.mockResolvedValue({});
     mockPriceOverridesApi.approvePriceOverride.mockResolvedValue({});
     mockPriceOverridesApi.rejectPriceOverride.mockResolvedValue({});
-    mockPriceOverridesApi.getPendingApprovals.mockResolvedValue([]);
+    mockPriceOverridesApi.listPendingPriceOverrides.mockResolvedValue([]);
   });
 
   it('when_submit_then_delegates_to_priceOverridesApi_applyPriceOverride', async () => {
@@ -191,13 +191,13 @@ describe('SDK-008 Behavior: OrderPriceOverrideWorkflow', () => {
     expect(result).toBeDefined();
   });
 
-  it('when_getPending_then_delegates_to_priceOverridesApi_getPendingApprovals', async () => {
+  it('when_getPending_then_delegates_to_priceOverridesApi_listPendingPriceOverrides', async () => {
     // Fails RED: OrderPriceOverrideWorkflow is not a constructor (undefined)
     const workflow = new (OrderPriceOverrideWorkflow as any)(mockPriceOverridesApi);
 
     const result = await workflow.getPending();
 
-    expect(mockPriceOverridesApi.getPendingApprovals).toHaveBeenCalledTimes(1);
+    expect(mockPriceOverridesApi.listPendingPriceOverrides).toHaveBeenCalledTimes(1);
     expect(result).toBeDefined();
   });
 });
@@ -211,8 +211,8 @@ describe('SDK-008 Behavior: WorkorderEstimateWorkflow', () => {
     createEstimate: jest.fn(),
     approveEstimate: jest.fn(),
     declineEstimate: jest.fn(),
-    submitForApproval: jest.fn(),
-    promoteEstimateToWorkorder: jest.fn(),
+    submitEstimateForApproval: jest.fn(),
+    promoteEstimate: jest.fn(),
     getEstimateById: jest.fn(),
   } as any;
 
@@ -221,8 +221,8 @@ describe('SDK-008 Behavior: WorkorderEstimateWorkflow', () => {
     mockEstimateApi.createEstimate.mockResolvedValue({});
     mockEstimateApi.approveEstimate.mockResolvedValue({});
     mockEstimateApi.declineEstimate.mockResolvedValue({});
-    mockEstimateApi.submitForApproval.mockResolvedValue({});
-    mockEstimateApi.promoteEstimateToWorkorder.mockResolvedValue({});
+    mockEstimateApi.submitEstimateForApproval.mockResolvedValue({});
+    mockEstimateApi.promoteEstimate.mockResolvedValue({});
   });
 
   it('when_create_then_delegates_to_estimateApi_createEstimate', async () => {
@@ -239,15 +239,15 @@ describe('SDK-008 Behavior: WorkorderEstimateWorkflow', () => {
     expect(result).toBeDefined();
   });
 
-  it('when_submitForApproval_then_delegates_to_estimateApi_submitForApproval', async () => {
+  it('when_submitForApproval_then_delegates_to_estimateApi_submitEstimateForApproval', async () => {
     // Fails RED: WorkorderEstimateWorkflow is not a constructor (undefined)
     const workflow = new (WorkorderEstimateWorkflow as any)(mockEstimateApi);
     const params = { estimateId: 'est-1' };
 
     const result = await workflow.submitForApproval(params);
 
-    expect(mockEstimateApi.submitForApproval).toHaveBeenCalledTimes(1);
-    expect(mockEstimateApi.submitForApproval).toHaveBeenCalledWith(
+    expect(mockEstimateApi.submitEstimateForApproval).toHaveBeenCalledTimes(1);
+    expect(mockEstimateApi.submitEstimateForApproval).toHaveBeenCalledWith(
       expect.objectContaining(params),
     );
     expect(result).toBeDefined();
@@ -281,15 +281,15 @@ describe('SDK-008 Behavior: WorkorderEstimateWorkflow', () => {
     expect(result).toBeDefined();
   });
 
-  it('when_promoteToWorkorder_then_delegates_to_estimateApi_promoteEstimateToWorkorder', async () => {
+  it('when_promoteToWorkorder_then_delegates_to_estimateApi_promoteEstimate', async () => {
     // Fails RED: WorkorderEstimateWorkflow is not a constructor (undefined)
     const workflow = new (WorkorderEstimateWorkflow as any)(mockEstimateApi);
     const params = { estimateId: 'est-1', promoteEstimateToWorkorderRequest: {} };
 
     const result = await workflow.promoteToWorkorder(params);
 
-    expect(mockEstimateApi.promoteEstimateToWorkorder).toHaveBeenCalledTimes(1);
-    expect(mockEstimateApi.promoteEstimateToWorkorder).toHaveBeenCalledWith(
+    expect(mockEstimateApi.promoteEstimate).toHaveBeenCalledTimes(1);
+    expect(mockEstimateApi.promoteEstimate).toHaveBeenCalledWith(
       expect.objectContaining(params),
     );
     expect(result).toBeDefined();
@@ -366,29 +366,29 @@ describe('SDK-008 Behavior: WorkorderChangeRequestWorkflow', () => {
 
 describe('SDK-008 Behavior: AccountingEventWorkflow', () => {
   const mockAccountingEventsApi = {
-    retryEventProcessing: jest.fn(),
+    retryAccountingEvent: jest.fn(),
     reprocessSuspendedEvent: jest.fn(),
     getEvent: jest.fn(),
     listEvents: jest.fn(),
-    submitEvent: jest.fn(),
+    submitAccountingEvent: jest.fn(),
   } as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockAccountingEventsApi.retryEventProcessing.mockResolvedValue({});
+    mockAccountingEventsApi.retryAccountingEvent.mockResolvedValue({});
     mockAccountingEventsApi.reprocessSuspendedEvent.mockResolvedValue({});
-    mockAccountingEventsApi.submitEvent.mockResolvedValue({});
+    mockAccountingEventsApi.submitAccountingEvent.mockResolvedValue({});
   });
 
-  it('when_retry_then_delegates_to_accountingEventsApi_retryEventProcessing', async () => {
+  it('when_retry_then_delegates_to_accountingEventsApi_retryAccountingEvent', async () => {
     // Fails RED: AccountingEventWorkflow is not a constructor (undefined)
     const workflow = new (AccountingEventWorkflow as any)(mockAccountingEventsApi);
     const params = { eventId: 'evt-1' };
 
     const result = await workflow.retry(params);
 
-    expect(mockAccountingEventsApi.retryEventProcessing).toHaveBeenCalledTimes(1);
-    expect(mockAccountingEventsApi.retryEventProcessing).toHaveBeenCalledWith(
+    expect(mockAccountingEventsApi.retryAccountingEvent).toHaveBeenCalledTimes(1);
+    expect(mockAccountingEventsApi.retryAccountingEvent).toHaveBeenCalledWith(
       expect.objectContaining(params),
     );
     expect(result).toBeDefined();
@@ -408,15 +408,15 @@ describe('SDK-008 Behavior: AccountingEventWorkflow', () => {
     expect(result).toBeDefined();
   });
 
-  it('when_submit_then_delegates_to_accountingEventsApi_submitEvent', async () => {
+  it('when_submit_then_delegates_to_accountingEventsApi_submitAccountingEvent', async () => {
     // Fails RED: AccountingEventWorkflow is not a constructor (undefined)
     const workflow = new (AccountingEventWorkflow as any)(mockAccountingEventsApi);
     const params = { submitEventRequest: { eventType: 'INVOICE_CREATED', payload: {} } };
 
     const result = await workflow.submit(params);
 
-    expect(mockAccountingEventsApi.submitEvent).toHaveBeenCalledTimes(1);
-    expect(mockAccountingEventsApi.submitEvent).toHaveBeenCalledWith(
+    expect(mockAccountingEventsApi.submitAccountingEvent).toHaveBeenCalledTimes(1);
+    expect(mockAccountingEventsApi.submitAccountingEvent).toHaveBeenCalledWith(
       expect.objectContaining(params),
     );
     expect(result).toBeDefined();
@@ -429,20 +429,20 @@ describe('SDK-008 Behavior: AccountingEventWorkflow', () => {
 
 describe('SDK-008 Behavior: SecurityAuthWorkflow', () => {
   const mockAuthApi = {
-    login: jest.fn(),
+    loginUser: jest.fn(),
     selfRegister: jest.fn(),
   } as any;
 
   const mockJwtApi = {
-    refreshAccessToken: jest.fn(),
+    refreshTokenPair: jest.fn(),
     revokeToken: jest.fn(),
     validateToken: jest.fn(),
   } as any;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockAuthApi.login.mockResolvedValue({ accessToken: 'token-abc', refreshToken: 'refresh-xyz' });
-    mockJwtApi.refreshAccessToken.mockResolvedValue({ accessToken: 'new-token', refreshToken: 'new-refresh' });
+    mockAuthApi.loginUser.mockResolvedValue({ accessToken: 'token-abc', refreshToken: 'refresh-xyz' });
+    mockJwtApi.refreshTokenPair.mockResolvedValue({ accessToken: 'new-token', refreshToken: 'new-refresh' });
     mockJwtApi.revokeToken.mockResolvedValue(undefined);
     mockJwtApi.validateToken.mockResolvedValue({ valid: true });
   });
@@ -454,20 +454,20 @@ describe('SDK-008 Behavior: SecurityAuthWorkflow', () => {
 
     const result = await workflow.login(params);
 
-    expect(mockAuthApi.login).toHaveBeenCalledTimes(1);
-    expect(mockAuthApi.login).toHaveBeenCalledWith(expect.objectContaining(params));
+    expect(mockAuthApi.loginUser).toHaveBeenCalledTimes(1);
+    expect(mockAuthApi.loginUser).toHaveBeenCalledWith(expect.objectContaining(params));
     expect(result).toEqual({ accessToken: 'token-abc', refreshToken: 'refresh-xyz' });
   });
 
-  it('when_refresh_then_delegates_to_jwtApi_refreshAccessToken_and_returns_result', async () => {
+  it('when_refresh_then_delegates_to_jwtApi_refreshTokenPair_and_returns_result', async () => {
     // Fails RED: SecurityAuthWorkflow is not a constructor (undefined)
     const workflow = new (SecurityAuthWorkflow as any)(mockAuthApi, mockJwtApi);
     const params = { refreshTokenRequest: { refreshToken: 'refresh-xyz' } };
 
     const result = await workflow.refresh(params);
 
-    expect(mockJwtApi.refreshAccessToken).toHaveBeenCalledTimes(1);
-    expect(mockJwtApi.refreshAccessToken).toHaveBeenCalledWith(
+    expect(mockJwtApi.refreshTokenPair).toHaveBeenCalledTimes(1);
+    expect(mockJwtApi.refreshTokenPair).toHaveBeenCalledWith(
       expect.objectContaining(params),
     );
     expect(result).toEqual({ accessToken: 'new-token', refreshToken: 'new-refresh' });

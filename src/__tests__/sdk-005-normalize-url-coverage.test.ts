@@ -9,7 +9,7 @@
  * coverage by calling fetchApi — extracted from the live configuration stored
  * on a generated API instance — with each of those input shapes.
  *
- * One describe block per factory × three url-type branches = 33 targeted
+ * One describe block per factory × three url-type branches = 48 targeted
  * tests.  All factories share the same helper and fetch mock.
  *
  * Issue: SDK-005
@@ -22,6 +22,16 @@
 
 // @ts-ignore
 import { createCatalogClient } from '@durion-sdk/catalog';
+// @ts-ignore
+import { createPeopleContactClient } from '@durion-sdk/people-contact';
+// @ts-ignore
+import { createMarketingClient } from '@durion-sdk/marketing';
+// @ts-ignore
+import { createMcpServerClient } from '@durion-sdk/mcp-server';
+// @ts-ignore
+import { createSupplierClient } from '@durion-sdk/supplier';
+// @ts-ignore
+import { createWarrantyClient } from '@durion-sdk/warranty';
 // @ts-ignore
 import { createCustomerClient } from '@durion-sdk/customer';
 // @ts-ignore
@@ -84,6 +94,11 @@ const FACTORIES: Array<{
     { name: 'event-receiver', create: createEventReceiverClient, port: 8088 },
     { name: 'vehicle-fitment', create: createVehicleFitmentClient, port: 8089 },
     { name: 'vehicle-inventory', create: createVehicleInventoryClient, port: 8090 },
+    { name: 'people-contact', create: createPeopleContactClient, port: 8091 },
+    { name: 'marketing', create: createMarketingClient, port: 8092 },
+    { name: 'mcp-server', create: createMcpServerClient, port: 8093 },
+    { name: 'supplier', create: createSupplierClient, port: 8094 },
+    { name: 'warranty', create: createWarrantyClient, port: 8095 },
   ];
 
 // ---------------------------------------------------------------------------

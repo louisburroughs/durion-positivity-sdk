@@ -106,7 +106,12 @@ ITEST_PASSWORD=<alpha password>
 ```
 
 Credentials live in the developer's shell or a git-ignored `.env.itest` file —
-never printed, never committed. When `ITEST_USERNAME`/`ITEST_PASSWORD` are
+never printed, never committed. The file half is implemented by
+`src/harness/loadEnvFile.ts` (dependency-free; `.env.itest` is read from the
+repo root, or from `ITEST_ENV_FILE` when set). Real environment variables
+always win over the file, so CI and one-off `VAR=x npm run ...` overrides are
+unaffected; only the names of applied keys are logged, never the values.
+`.env.itest.example` at the repo root is the template. When `ITEST_USERNAME`/`ITEST_PASSWORD` are
 absent, the suite must fail fast in global setup with a single clear message —
 not skip silently and not error once per test file.
 
@@ -750,7 +755,7 @@ Prerequisites on the laptop: AWS CLI v2, the Session Manager plugin, and an
 AWS profile/role with `ssm:StartSession` on the alpha instance (the same
 access already needed to operate alpha).
 
-- [ ] **Step 1: Determine reachable forward targets.** The gateway and
+- [x] **Step 1: Determine reachable forward targets.** The gateway and
   security service are containers on the Compose network; SSM forwards to
   ports reachable *from the EC2 host*. Confirm from
   `deployment/alpha/docker-compose.prod.yml` which host ports the gateway and
@@ -759,21 +764,78 @@ access already needed to operate alpha).
   Compose model, or use `AWS-StartPortForwardingSessionToRemoteHost` with the
   container's network alias resolved on the host. Record the chosen mechanism
   in the script header.
-- [ ] **Step 2: Implement the tunnel script.** The script resolves the alpha
+
+  **Resolved (2026-08-21):** no Compose change and no `...ToRemoteHost`
+  fallback needed. `deployment/alpha/docker-compose.prod.yml` is an
+  image/restart override only; the base `docker-compose.yml` publishes both
+  host ports already — `pos-api-gateway` `8080:8080` and
+  `pos-security-service` `8086:8080`. Chosen mechanism:
+  `AWS-StartPortForwardingSession` (instance-local ports), alpha instance
+  `i-06d434c7593e70f5c` in `us-east-1`. Note both containers publish on
+  `0.0.0.0`, so the host ports are open to anything the security group lets
+  in; SSM is what keeps them unreachable from the internet.
+- [x] **Step 2: Implement the tunnel script.** The script resolves the alpha
   instance id (tag lookup or `ALPHA_INSTANCE_ID` env), then opens two
   forwarding sessions: local `18080` → gateway, local `18086` → security
   service, and prints the matching `ITEST_*` exports. It must run both
   sessions concurrently, forward Ctrl-C to clean shutdown, and fail with a
   clear message when the SSM plugin is missing or the session is denied.
-- [ ] **Step 3: Smoke-check the tunnel.** With the tunnel up, document and
+
+  **Done (2026-08-21):** `scripts/alpha-itest-tunnel.sh` and
+  `scripts/alpha-itest-tunnel.ps1`. Instance resolution is
+  `ALPHA_INSTANCE_ID` / `-InstanceId`, else a tag lookup on
+  `Project=durion` + `Environment=alpha` + `instance-state-name=running`
+  (fails loudly on zero or multiple matches). Preflight checks the AWS CLI,
+  `session-manager-plugin`, callable credentials, that the local ports are
+  free, and that the instance is an `Online` SSM managed node. Local ports
+  override via `ITEST_GATEWAY_LOCAL_PORT` / `ITEST_SECURITY_LOCAL_PORT`.
+
+  Shutdown note: `aws ssm start-session` does **not** forward termination to
+  its `session-manager-plugin` child — killing only the `aws` pid orphans the
+  plugin, which keeps both the SSM session and the local port alive. Both
+  scripts kill the whole process tree on Ctrl-C for this reason.
+- [x] **Step 3: Smoke-check the tunnel.** With the tunnel up, document and
   verify: `curl http://localhost:18080/actuator/health` (or the gateway's
   health path) returns healthy, and a login round-trip against
   `http://localhost:18086` succeeds. The tunnel carries JWTs and credentials
   over the SSM-encrypted channel; nothing is exposed publicly.
+
+  Verified (2026-08-21): with both sessions open,
+  `curl http://localhost:18080/actuator/health` returned HTTP 200 `status: UP`
+  and `http://localhost:18086/actuator/health` returned HTTP 200 with `db: UP`
+  and all 20 services registered in Eureka. The login round-trip also succeeds
+  against alpha through the tunnel (`[Auth] Login successful.` as
+  `admin.alpha`, after `SecurityBootstrap` granted 429 permissions to
+  SYSTEM_ADMINISTRATOR and confirmed the role assignment).
 - [ ] **Step 4: Run the suite through the tunnel.** `npm run test:integration`
   with the printed exports completes against alpha; afterward, query one
   created record by runId (any suite's entity) through the API to confirm the
   records persisted in the alpha database.
+
+  **Blocked (2026-08-21) — alpha backend, not the harness.** Config, tunnel,
+  credentials and login all work; the run dies in `BootstrapOrchestrator`
+  during `PeopleBootstrap`:
+
+  ```
+  POST /people/v1/people/staffing/assignments -> 404
+  {"detail":"Person not found: 01a025ef-889c-799a-aea5-904b2830ef41", ...}
+  ```
+
+  That id is the `personId` the people service itself reports for the employee
+  (`GET /v1/people/employees/by-number/EMP-T001` returns
+  `employeeId` + `personId`), so employee creation leaves a `personId` that the
+  staffing endpoint cannot resolve. It is not a propagation race — the same id
+  still fails minutes later — and not an SDK path bug: the generated
+  `createStaffingAssignment` posts to `/v1/people/staffing/assignments`, which
+  is the endpoint that returns the 404, and `GET
+  /v1/people/{personId}/staffing/assignments` returns `200 []` for the same id.
+  The likely cause is the async person projection (ADR-0043 / backend #876)
+  being disabled on alpha, leaving employee records with dangling person
+  references; confirming that needs the people service's Kafka settings on the
+  alpha host.
+
+  Note the aborted runs still wrote to alpha: location `MAIN-01`, its three
+  bays, and employee records up to `EMP-T001`.
 
 Note: token lifetime must cover a full suite run; `SeederAuth.refreshIfNeeded`
 already handles refresh — the harness reuses it between suites (the seeder

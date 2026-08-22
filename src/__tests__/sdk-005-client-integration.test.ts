@@ -1,7 +1,7 @@
 /**
  * SDK-005 Phase 2 Generated Client Integration — factory call coverage tests.
  *
- * Verifies that each of the 11 Phase 2 generated client packages exposes a
+ * Verifies that each of the 16 generated client packages exposes a
  * working factory function that:
  *   - returns a non-null client object (AC-1)
  *   - exposes all required API namespace properties (AC-2)
@@ -57,6 +57,21 @@ import { createImageClient } from '@durion-sdk/image';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { createEventReceiverClient } from '@durion-sdk/event-receiver';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { createPeopleContactClient } from '@durion-sdk/people-contact';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { createMarketingClient } from '@durion-sdk/marketing';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { createMcpServerClient } from '@durion-sdk/mcp-server';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { createSupplierClient } from '@durion-sdk/supplier';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { createWarrantyClient } from '@durion-sdk/warranty';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { createVehicleFitmentClient } from '@durion-sdk/vehicle-fitment';
@@ -372,7 +387,7 @@ describe('SDK-005 sdk-people: createPeopleClient', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(client.employeeApi).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(client.peopleApi).toBeDefined();
+    expect(client.peopleStaffingAssignmentsApi).toBeDefined();
   });
 
   it('AC-3: factory accepts optional token + apiVersion config', () => {
@@ -863,5 +878,353 @@ describe('SDK-005 AC-5: all 11 Phase 2 factories — minimal-config smoke test',
     expect(createVehicleFitmentClient(fullConfig(BASE))).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     expect(createVehicleInventoryClient(fullConfig(BASE))).toBeDefined();
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-1..AC-3: sdk-people-contact
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-people-contact: createPeopleContactClient', () => {
+  it('AC-1: factory returns a defined non-null object', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createPeopleContactClient(minimalConfig('http://localhost:8091'));
+    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
+  });
+
+  it('AC-2: required API properties are defined', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createPeopleContactClient(minimalConfig('http://localhost:8091')) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.peopleApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.userPersonLinkingApi).toBeDefined();
+    // Spot check additional APIs returned by this factory
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.peopleAccessControlApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.postalAddressApi).toBeDefined();
+  });
+
+  it('AC-3: factory accepts optional token + apiVersion config', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createPeopleContactClient(fullConfig('http://localhost:9091'));
+    expect(client).toBeDefined();
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-4: sdk-people-contact fetchApi branch coverage
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-people-contact: fetchApi callback branches', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('AC-4: fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createPeopleContactClient(fullConfig('http://localhost:8091')) as any;
+    const fetchApi = getFetchApi(client, 'peopleApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8091/api/people', { method: 'GET' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-4: fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createPeopleContactClient(fullConfig('http://localhost:8091')) as any;
+    const fetchApi = getFetchApi(client, 'peopleApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8091/api/people', {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-1..AC-3: sdk-marketing
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-marketing: createMarketingClient', () => {
+  it('AC-1: factory returns a defined non-null object', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createMarketingClient(minimalConfig('http://localhost:8092'));
+    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
+  });
+
+  it('AC-2: required API properties are defined', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMarketingClient(minimalConfig('http://localhost:8092')) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.marketingCampaignsApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.marketingTemplatesApi).toBeDefined();
+    // Spot check additional APIs returned by this factory
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.marketingAnalyticsApi).toBeDefined();
+  });
+
+  it('AC-3: factory accepts optional token + apiVersion config', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createMarketingClient(fullConfig('http://localhost:9092'));
+    expect(client).toBeDefined();
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-4: sdk-marketing fetchApi branch coverage
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-marketing: fetchApi callback branches', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('AC-4: fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMarketingClient(fullConfig('http://localhost:8092')) as any;
+    const fetchApi = getFetchApi(client, 'marketingCampaignsApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8092/api/marketing', { method: 'GET' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-4: fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMarketingClient(fullConfig('http://localhost:8092')) as any;
+    const fetchApi = getFetchApi(client, 'marketingCampaignsApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8092/api/marketing', {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-1..AC-3: sdk-mcp-server
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-mcp-server: createMcpServerClient', () => {
+  it('AC-1: factory returns a defined non-null object', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createMcpServerClient(minimalConfig('http://localhost:8093'));
+    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
+  });
+
+  it('AC-2: required API properties are defined', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMcpServerClient(minimalConfig('http://localhost:8093')) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.mcpChatApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.systemPromptsApi).toBeDefined();
+    // Spot check additional APIs returned by this factory
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.documentIngestionApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.nltiApi).toBeDefined();
+  });
+
+  it('AC-3: factory accepts optional token + apiVersion config', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createMcpServerClient(fullConfig('http://localhost:9093'));
+    expect(client).toBeDefined();
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-4: sdk-mcp-server fetchApi branch coverage
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-mcp-server: fetchApi callback branches', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('AC-4: fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMcpServerClient(fullConfig('http://localhost:8093')) as any;
+    const fetchApi = getFetchApi(client, 'mcpChatApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8093/api/mcp', { method: 'GET' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-4: fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMcpServerClient(fullConfig('http://localhost:8093')) as any;
+    const fetchApi = getFetchApi(client, 'mcpChatApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8093/api/mcp', {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-1..AC-3: sdk-supplier
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-supplier: createSupplierClient', () => {
+  it('AC-1: factory returns a defined non-null object', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createSupplierClient(minimalConfig('http://localhost:8094'));
+    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
+  });
+
+  it('AC-2: required API properties are defined', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createSupplierClient(minimalConfig('http://localhost:8094')) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.supplierVendorProfilesApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.supplierPriceCatalogApi).toBeDefined();
+    // Spot check additional APIs returned by this factory
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.supplierInvoicesApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.supplierStockInquiryApi).toBeDefined();
+  });
+
+  it('AC-3: factory accepts optional token + apiVersion config', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createSupplierClient(fullConfig('http://localhost:9094'));
+    expect(client).toBeDefined();
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-4: sdk-supplier fetchApi branch coverage
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-supplier: fetchApi callback branches', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('AC-4: fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createSupplierClient(fullConfig('http://localhost:8094')) as any;
+    const fetchApi = getFetchApi(client, 'supplierVendorProfilesApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8094/api/suppliers', { method: 'GET' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-4: fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createSupplierClient(fullConfig('http://localhost:8094')) as any;
+    const fetchApi = getFetchApi(client, 'supplierVendorProfilesApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8094/api/suppliers', {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-1..AC-3: sdk-warranty
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-warranty: createWarrantyClient', () => {
+  it('AC-1: factory returns a defined non-null object', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createWarrantyClient(minimalConfig('http://localhost:8095'));
+    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
+  });
+
+  it('AC-2: required API properties are defined', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createWarrantyClient(minimalConfig('http://localhost:8095')) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.warrantyClaimsApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.warrantyPoliciesApi).toBeDefined();
+    // Spot check additional APIs returned by this factory
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.warrantyProvidersApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.warrantyRegistrationsApi).toBeDefined();
+  });
+
+  it('AC-3: factory accepts optional token + apiVersion config', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createWarrantyClient(fullConfig('http://localhost:9095'));
+    expect(client).toBeDefined();
+  });
+});
+
+// -------------------------------------------------------------------------
+// AC-4: sdk-warranty fetchApi branch coverage
+// -------------------------------------------------------------------------
+
+describe('SDK-005 sdk-warranty: fetchApi callback branches', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('AC-4: fetchApi — explicit method (Branch A: no ?? fallback)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createWarrantyClient(fullConfig('http://localhost:8095')) as any;
+    const fetchApi = getFetchApi(client, 'warrantyClaimsApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8095/api/warranty', { method: 'GET' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('AC-4: fetchApi — absent method (Branch B: ?? fallback to GET)', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createWarrantyClient(fullConfig('http://localhost:8095')) as any;
+    const fetchApi = getFetchApi(client, 'warrantyClaimsApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8095/api/warranty', {});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,7 +3,7 @@
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';
-export * from './workflows/accountingEventWorkflow';
+export { AccountingEventWorkflow } from './workflows/accountingEventWorkflow';
 
 import { DurionSdkConfig, SdkHttpClient } from '@durion-sdk/transport';
 import { Configuration } from './runtime';

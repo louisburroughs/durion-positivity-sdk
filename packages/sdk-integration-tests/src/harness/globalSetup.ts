@@ -1,6 +1,7 @@
 import { BootstrapOrchestrator, SecurityBootstrap, SeederAuth, SeederConfig } from '@durion-sdk/seeder';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
+import { loadEnvFile } from './loadEnvFile';
 
 /**
  * Runs once, before any suite: validates configuration, refuses to touch a
@@ -10,6 +11,15 @@ import { saveContext } from './ItestContext';
  * no tokens are serialized.
  */
 export default async function globalSetup(): Promise<void> {
+  // Credentials may come from the shell or from a git-ignored .env.itest
+  // (spec: Environment Contract). A non-empty shell value wins; a set-but-empty
+  // one counts as unset and the file applies. See loadEnvFile.
+  const envFile = loadEnvFile();
+  if (envFile.file !== null) {
+    const detail = envFile.skipped.length > 0 ? ` (shell overrides: ${envFile.skipped.join(', ')})` : '';
+    console.log(`[itest] loaded ${envFile.applied.length} vars from ${envFile.file}${detail}`);
+  }
+
   const config = ItestConfig.fromEnv();
 
   await assertNonAcceleratedBackend(config.baseUrl);

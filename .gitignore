@@ -31,9 +31,16 @@ packages/*/dist/
 
 # OpenAPI generator temporary artifacts
 .openapi-generator/
-.openapi-generator-ignore
+# .openapi-generator-ignore is NOT an artifact - it is the only thing stopping
+# the generator from overwriting hand-maintained files, so it must be tracked.
+!.openapi-generator-ignore
 
 # Environment
 .env
 .env.local
 .env.*
+# ...but the credential template is meant to be committed.
+!.env.itest.example
+
+# TypeScript project-reference build metadata
+*.tsbuildinfo
