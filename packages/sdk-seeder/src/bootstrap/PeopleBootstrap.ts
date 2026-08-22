@@ -86,6 +86,26 @@ const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
   },
 ];
 
+const PERSON_REPLICATION_TIMEOUT_MS = 30_000;
+const PERSON_REPLICATION_POLL_MS = 500;
+
+/**
+ * True when the failure is the staffing endpoint reporting that the person is
+ * not yet in its replica. Reads the response body once and tolerates any shape,
+ * so a non-JSON error page cannot break the retry decision.
+ */
+async function isPersonNotFound(error: unknown): Promise<boolean> {
+  const response = (error as { response?: Response } | undefined)?.response;
+  if (!response || response.status !== 404) {
+    return false;
+  }
+  try {
+    return (await response.clone().text()).includes('Person not found');
+  } catch {
+    return false;
+  }
+}
+
 export class PeopleBootstrap {
   constructor(private readonly sdkConfig: DurionSdkConfig) {}
 
@@ -236,13 +256,55 @@ export class PeopleBootstrap {
       // Fall through to create the assignment when list retrieval is unavailable.
     }
 
-    await createAssignment({
-      personId,
-      locationId,
-      role,
-      effectiveFrom: new Date('2024-01-01'),
-      isPrimary: true,
-    });
+    // The person this employee points at is created asynchronously: pos-people
+    // writes a command to its outbox, pos-people-contact creates the Person, and
+    // pos-people replicates it back into ext_people_contact_person. The staffing
+    // endpoint validates against that replica, so an assignment issued
+    // immediately after createEmployee loses a race it cannot see - observed at
+    // 138ms after creation, against a 1s outbox poll.
+    await this.createAssignmentWhenPersonReplicated(personId, () =>
+      createAssignment({
+        personId,
+        locationId,
+        role,
+        effectiveFrom: new Date('2024-01-01'),
+        isPrimary: true,
+      }),
+    );
+  }
+
+  /**
+   * Retries an assignment while the person is still propagating.
+   *
+   * Only "Person not found" 404s are retried: any other failure - an unknown
+   * location, an inactive person, a malformed request - is returned immediately
+   * rather than being hidden behind a timeout.
+   */
+  private async createAssignmentWhenPersonReplicated(
+    personId: string,
+    attempt: () => Promise<StaffingAssignmentResponse>,
+  ): Promise<void> {
+    const deadline = Date.now() + PERSON_REPLICATION_TIMEOUT_MS;
+    let waited = false;
+
+    for (;;) {
+      try {
+        await attempt();
+        if (waited) {
+          console.log(`[Bootstrap] Person ${personId} replicated; assignment created.`);
+        }
+        return;
+      } catch (error) {
+        if (!(await isPersonNotFound(error)) || Date.now() >= deadline) {
+          throw error;
+        }
+        if (!waited) {
+          console.log(`[Bootstrap] Waiting for person ${personId} to replicate...`);
+          waited = true;
+        }
+        await new Promise((resolve) => setTimeout(resolve, PERSON_REPLICATION_POLL_MS));
+      }
+    }
   }
 
   private requireEmployeeId(employee: EmployeeProfileDto, employeeNumber: string): string {
