@@ -1,7 +1,7 @@
 import { createCatalogClient, type CatalogItemRequestDto, type ProductCreateRequestDto } from '@durion-sdk/catalog';
+import type { DurionSdkConfig } from '@durion-sdk/transport';
 
 type CatalogClient = ReturnType<typeof createCatalogClient>;
-import type { DurionSdkConfig } from '@durion-sdk/transport';
 
 interface ServiceSeedDefinition {
   name: string;
