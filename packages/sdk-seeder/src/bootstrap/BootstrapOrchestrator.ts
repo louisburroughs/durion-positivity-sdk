@@ -33,9 +33,20 @@ export class BootstrapOrchestrator {
       id,
       name: productNameById.get(id) ?? id,
     }));
-    const virtualNow = await new VirtualClock(this.config.baseUrl, this.config.pollIntervalMs)
-      .getCurrentVirtualTime();
-    const inventoryResult = await new InventoryBootstrap(this.auth.buildSdkConfig('inventory')).run(
+    // /system/time exists only under the backend's accelerated profile. The
+    // integration suite bootstraps against the normal clock, where the endpoint
+    // is absent - fall back to the real clock instead of failing the whole
+    // bootstrap. Only the inventory PO/delivery dates below use this value.
+    const acceleratedNow = await new VirtualClock(this.config.baseUrl, this.config.pollIntervalMs)
+      .tryGetCurrentVirtualTime();
+    if (acceleratedNow === null) {
+      console.log('[Bootstrap] No /system/time endpoint (non-accelerated backend); using the real clock.');
+    }
+    const virtualNow = acceleratedNow ?? new Date();
+    const inventoryResult = await new InventoryBootstrap(
+      this.auth.buildSdkConfig('inventory'),
+      this.auth.buildSdkConfig('order'),
+    ).run(
       namedProducts,
       locationId,
       virtualNow,

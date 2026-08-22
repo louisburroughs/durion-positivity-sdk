@@ -807,35 +807,55 @@ access already needed to operate alpha).
   against alpha through the tunnel (`[Auth] Login successful.` as
   `admin.alpha`, after `SecurityBootstrap` granted 429 permissions to
   SYSTEM_ADMINISTRATOR and confirmed the role assignment).
-- [ ] **Step 4: Run the suite through the tunnel.** `npm run test:integration`
+- [x] **Step 4: Run the suite through the tunnel.** `npm run test:integration`
   with the printed exports completes against alpha; afterward, query one
   created record by runId (any suite's entity) through the API to confirm the
   records persisted in the alpha database.
 
-  **Blocked (2026-08-21) — alpha backend, not the harness.** Config, tunnel,
-  credentials and login all work; the run dies in `BootstrapOrchestrator`
-  during `PeopleBootstrap`:
+  **Green (2026-08-22).** `npm run test:integration` through the tunnel:
+  `Test Suites: 1 passed`, `Tests: 3 passed`, exit 0, with the bootstrap
+  fixture fully idempotent on a second run (location, 7 people, 12 services and
+  30 products all reported as skipped). The runId query half of this step waits
+  on Suites A-D, which do not exist yet - `00-harness.itest.ts` creates no
+  records of its own.
 
-  ```
-  POST /people/v1/people/staffing/assignments -> 404
-  {"detail":"Person not found: 01a025ef-889c-799a-aea5-904b2830ef41", ...}
-  ```
+  The 2026-08-21 blocker (staffing assignment 404 "Person not found") was a
+  propagation race after all, and is fixed in the seeder: the assignment now
+  retries while the person replicates (SDK #11).
 
-  That id is the `personId` the people service itself reports for the employee
-  (`GET /v1/people/employees/by-number/EMP-T001` returns
-  `employeeId` + `personId`), so employee creation leaves a `personId` that the
-  staffing endpoint cannot resolve. It is not a propagation race — the same id
-  still fails minutes later — and not an SDK path bug: the generated
-  `createStaffingAssignment` posts to `/v1/people/staffing/assignments`, which
-  is the endpoint that returns the 404, and `GET
-  /v1/people/{personId}/staffing/assignments` returns `200 []` for the same id.
-  The likely cause is the async person projection (ADR-0043 / backend #876)
-  being disabled on alpha, leaving employee records with dangling person
-  references; confirming that needs the people service's Kafka settings on the
-  alpha host.
+  Four further faults surfaced and were fixed on the harness side:
 
-  Note the aborted runs still wrote to alpha: location `MAIN-01`, its three
-  bays, and employee records up to `EMP-T001`.
+  - `BootstrapOrchestrator` demanded `/system/time`, which exists only under
+    the accelerated profile, so the bootstrap died on a normal backend. It now
+    falls back to the real clock.
+  - Purchase orders moved to pos-order (`/v1/orders/purchase-orders`);
+    `@durion-sdk/inventory` still carries a pre-move `PurchaseOrdersApi` whose
+    paths 404. `InventoryBootstrap` now takes an order client for POs and keeps
+    the inventory client for ASNs and goods receipts.
+  - Jest does not apply `moduleNameMapper` to `globalSetup`, so the fixtures ran
+    `packages/sdk-seeder/dist` - whatever was last built - while the suites ran
+    current sources. `globalSetup` now imports the seeder by path.
+  - Catalog idempotency was resolved through by-name lookups that cannot work:
+    `listProductsByName` returns 500 on alpha, and `listServicesByName` returns
+    a JSON array while the generated client declares a single DTO, so every run
+    re-created all 12 services. Both now resolve through the search endpoints
+    (`sku` for products, exact-name filter for services).
+
+  Two backend faults remain open and are **not** harness bugs:
+
+  - **pos-order is down on alpha** - `GET /order/actuator/health` returns 503
+    while catalog, inventory, people, location and workorder all return 200.
+    Every `POST /v1/orders/purchase-orders` fails, so `InventoryBootstrap`
+    seeds no stock (30 products reported as "skipped" are really 30 failed POs;
+    the counter conflates the two). Suite D will need this service up.
+  - **`GET /catalog/v1/products/name/{name}` returns 500** for a name that
+    exists (`Oil Filter 1`), on every call. Diagnosing it needs the pos-catalog
+    stack trace from the alpha host.
+
+  Earlier aborted runs wrote to alpha: location `MAIN-01`, its three bays,
+  employee records, and duplicate service rows from the runs that predate the
+  service-idempotency fix (`searchCatalogServices` shows more than one row per
+  seeded service name).
 
 Note: token lifetime must cover a full suite run; `SeederAuth.refreshIfNeeded`
 already handles refresh — the harness reuses it between suites (the seeder

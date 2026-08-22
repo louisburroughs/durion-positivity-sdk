@@ -1,6 +1,8 @@
 import { createCatalogClient, type CatalogItemRequestDto, type ProductCreateRequestDto } from '@durion-sdk/catalog';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
 
+type CatalogClient = ReturnType<typeof createCatalogClient>;
+
 interface ServiceSeedDefinition {
   name: string;
   price: number;
@@ -71,9 +73,7 @@ export class CatalogBootstrap {
     const productNameById = new Map<string, string>();
 
     for (const service of SERVICE_SEEDS) {
-      const existingId = await this.findCatalogEntityIdByName(
-        () => productsApi.listServicesByName({ name: service.name }),
-      );
+      const existingId = await this.findExistingServiceId(productsApi, service.name);
 
       if (existingId) {
         serviceEntityIds.push(existingId);
@@ -112,9 +112,7 @@ export class CatalogBootstrap {
           throw error;
         }
 
-        const duplicateId = await this.findCatalogEntityIdByName(
-          () => productsApi.listServicesByName({ name: service.name }),
-        );
+        const duplicateId = await this.findExistingServiceId(productsApi, service.name);
         if (!duplicateId) {
           throw error;
         }
@@ -126,12 +124,7 @@ export class CatalogBootstrap {
     }
 
     for (const product of PRODUCT_SEEDS) {
-      const existingId = await this.findCatalogEntityIdByName(
-        async () => {
-          const raw = await productsApi.listProductsByNameRaw({ name: product.name });
-          return raw.raw.json();
-        },
-      );
+      const existingId = await this.findExistingProductId(productsApi, product);
 
       if (existingId) {
         productEntityIds.push(existingId);
@@ -171,12 +164,7 @@ export class CatalogBootstrap {
           throw error;
         }
 
-        const duplicateId = await this.findCatalogEntityIdByName(
-          async () => {
-            const raw = await productsApi.listProductsByNameRaw({ name: product.name });
-            return raw.raw.json();
-          },
-        );
+        const duplicateId = await this.findExistingProductId(productsApi, product);
         if (!duplicateId) {
           throw error;
         }
@@ -199,6 +187,56 @@ export class CatalogBootstrap {
       serviceNameById,
       productNameById,
     };
+  }
+
+  /**
+   * Resolves an already-seeded service by exact name.
+   *
+   * listServicesByName cannot be used for this: the endpoint returns a JSON
+   * array, but the generated client declares a single ServiceDto, so the
+   * deserializer hands back {} and every run reads it as "not found" and seeds
+   * a duplicate. The search endpoint returns a real array; the exact-name
+   * filter is applied here because the search itself is a substring match.
+   */
+  private async findExistingServiceId(
+    productsApi: CatalogClient['productsApi'],
+    name: string,
+  ): Promise<string | undefined> {
+    try {
+      const matches = await productsApi.searchCatalogServices({ q: name, limit: 50 });
+      const exact = (Array.isArray(matches) ? matches : []).filter((service) => service.name === name);
+      return this.extractEntityId(exact);
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Resolves an already-seeded product, preferring the SKU search over the
+   * exact-name lookup.
+   *
+   * SKU is what the backend enforces uniqueness on - a create that fails with
+   * "Product with sku already exists" is answered by exactly this query - and
+   * the search endpoint tolerates a miss with an empty page. The by-name
+   * endpoint stays as a fallback: it returns 500 on alpha (a row it cannot map
+   * to a DTO), and swallowing that would leave the create loop with nothing to
+   * fall back on.
+   */
+  private async findExistingProductId(
+    productsApi: CatalogClient['productsApi'],
+    product: ProductSeedDefinition,
+  ): Promise<string | undefined> {
+    const bySku = await this.findCatalogEntityIdByName(() =>
+      productsApi.searchCatalogProducts({ sku: product.sku, limit: 1 }),
+    );
+    if (bySku) {
+      return bySku;
+    }
+
+    return this.findCatalogEntityIdByName(async () => {
+      const raw = await productsApi.listProductsByNameRaw({ name: product.name });
+      return raw.raw.json();
+    });
   }
 
   private async findCatalogEntityIdByName(
