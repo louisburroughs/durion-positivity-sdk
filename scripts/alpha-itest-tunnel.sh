@@ -140,11 +140,25 @@ else
   echo "Resolved alpha instance: $INSTANCE_ID"
 fi
 
+# Distinguish "the caller may not ask" from "the instance is not managed" - they
+# need completely different fixes, and swallowing stderr makes a denial look
+# like a broken SSM agent.
+PING_ERR="$(mktemp)"
 PING_STATUS="$(aws ssm describe-instance-information \
   --region "$REGION" \
   --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
   --query 'InstanceInformationList[0].PingStatus' \
-  --output text 2>/dev/null)" || PING_STATUS="None"
+  --output text 2>"$PING_ERR")" || PING_STATUS=""
+
+if grep -q 'AccessDenied\|not authorized' "$PING_ERR" 2>/dev/null; then
+  CALLER="$(aws sts get-caller-identity --query Arn --output text 2>/dev/null || echo '(unknown)')"
+  rm -f "$PING_ERR"
+  die "Not authorized to call ssm:DescribeInstanceInformation as $CALLER.
+  This is a permissions problem, not a broken SSM agent. The identity needs
+  ssm:DescribeInstanceInformation and ssm:StartSession on $INSTANCE_ID.
+  If you use a separate profile for alpha, set AWS_PROFILE before running."
+fi
+rm -f "$PING_ERR"
 
 if [[ "$PING_STATUS" != "Online" ]]; then
   die "Instance $INSTANCE_ID is not an Online SSM managed node (ping status: ${PING_STATUS:-None}). Check the SSM agent, the instance profile (AmazonSSMManagedInstanceCore), and outbound 443 to the ssm/ssmmessages/ec2messages endpoints."
