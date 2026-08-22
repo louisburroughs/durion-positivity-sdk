@@ -86,6 +86,27 @@ const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
   },
 ];
 
+const PERSON_REPLICATION_TIMEOUT_MS = 30_000;
+const PERSON_REPLICATION_POLL_MS = 500;
+const ASSIGNMENT_LOOKUP_TIMEOUT_MS = 10_000;
+
+/**
+ * True when the failure is the staffing endpoint reporting that the person is
+ * not yet in its replica. Reads the response body once and tolerates any shape,
+ * so a non-JSON error page cannot break the retry decision.
+ */
+async function isPersonNotFound(error: unknown): Promise<boolean> {
+  const response = (error as { response?: Response } | undefined)?.response;
+  if (!response || response.status !== 404) {
+    return false;
+  }
+  try {
+    return (await response.clone().text()).includes('Person not found');
+  } catch {
+    return false;
+  }
+}
+
 export class PeopleBootstrap {
   constructor(private readonly sdkConfig: DurionSdkConfig) {}
 
@@ -141,9 +162,13 @@ export class PeopleBootstrap {
         employeeId,
         seed.role,
         locationId,
-        async (personId: string) => peopleStaffingAssignmentsApi.listStaffingAssignments({ personId }),
-        async (request: CreateStaffingAssignmentRequest) =>
-          peopleStaffingAssignmentsApi.createStaffingAssignment({ createStaffingAssignmentRequest: request }),
+        async (personId: string, initOverrides?: RequestInit) =>
+          peopleStaffingAssignmentsApi.listStaffingAssignments({ personId }, initOverrides),
+        async (request: CreateStaffingAssignmentRequest, initOverrides?: RequestInit) =>
+          peopleStaffingAssignmentsApi.createStaffingAssignment(
+            { createStaffingAssignmentRequest: request },
+            initOverrides,
+          ),
       );
 
       switch (seed.bucket) {
@@ -216,11 +241,19 @@ export class PeopleBootstrap {
     personId: string,
     role: string,
     locationId: string,
-    getAssignments: (personId: string) => Promise<StaffingAssignmentResponse[]>,
-    createAssignment: (request: CreateStaffingAssignmentRequest) => Promise<StaffingAssignmentResponse>,
+    getAssignments: (
+      personId: string,
+      initOverrides?: RequestInit,
+    ) => Promise<StaffingAssignmentResponse[]>,
+    createAssignment: (
+      request: CreateStaffingAssignmentRequest,
+      initOverrides?: RequestInit,
+    ) => Promise<StaffingAssignmentResponse>,
   ): Promise<void> {
     try {
-      const assignments = await getAssignments(personId);
+      const assignments = await getAssignments(personId, {
+        signal: AbortSignal.timeout(ASSIGNMENT_LOOKUP_TIMEOUT_MS),
+      });
       const existing = assignments.find(
         (assignment) =>
           assignment.locationId === locationId &&
@@ -236,13 +269,72 @@ export class PeopleBootstrap {
       // Fall through to create the assignment when list retrieval is unavailable.
     }
 
-    await createAssignment({
-      personId,
-      locationId,
-      role,
-      effectiveFrom: new Date('2024-01-01'),
-      isPrimary: true,
-    });
+    // The person this employee points at is created asynchronously: pos-people
+    // writes a command to its outbox, pos-people-contact creates the Person, and
+    // pos-people replicates it back into ext_people_contact_person. The staffing
+    // endpoint validates against that replica, so an assignment issued
+    // immediately after createEmployee loses a race it cannot see - observed at
+    // 138ms after creation, against a 1s outbox poll.
+    await this.createAssignmentWhenPersonReplicated(personId, (initOverrides) =>
+      createAssignment(
+        {
+          personId,
+          locationId,
+          role,
+          effectiveFrom: new Date('2024-01-01'),
+          isPrimary: true,
+        },
+        initOverrides,
+      ),
+    );
+  }
+
+  /**
+   * Retries an assignment while the person is still propagating.
+   *
+   * Only "Person not found" 404s are retried: any other failure - an unknown
+   * location, an inactive person, a malformed request - is returned immediately
+   * rather than being hidden behind a timeout.
+   */
+  private async createAssignmentWhenPersonReplicated(
+    personId: string,
+    attempt: (initOverrides: RequestInit) => Promise<StaffingAssignmentResponse>,
+  ): Promise<void> {
+    const deadline = Date.now() + PERSON_REPLICATION_TIMEOUT_MS;
+    let waited = false;
+    let lastError: unknown;
+
+    for (;;) {
+      // Bound each request by what is left of the deadline. fetch applies no
+      // request timeout of its own, so without an abort signal a stalled
+      // connection would park inside attempt() and the deadline check below
+      // would never be reached. The signal also covers reading the error body.
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        throw (
+          lastError ??
+          new Error(`PeopleBootstrap: timed out waiting for person ${personId} to replicate`)
+        );
+      }
+
+      try {
+        await attempt({ signal: AbortSignal.timeout(remaining) });
+        if (waited) {
+          console.log(`[Bootstrap] Person ${personId} replicated; assignment created.`);
+        }
+        return;
+      } catch (error) {
+        if (!(await isPersonNotFound(error))) {
+          throw error;
+        }
+        lastError = error;
+        if (!waited) {
+          console.log(`[Bootstrap] Waiting for person ${personId} to replicate...`);
+          waited = true;
+        }
+        await new Promise((resolve) => setTimeout(resolve, PERSON_REPLICATION_POLL_MS));
+      }
+    }
   }
 
   private requireEmployeeId(employee: EmployeeProfileDto, employeeNumber: string): string {
