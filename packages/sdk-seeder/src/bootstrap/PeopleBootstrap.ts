@@ -88,6 +88,7 @@ const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
 
 const PERSON_REPLICATION_TIMEOUT_MS = 30_000;
 const PERSON_REPLICATION_POLL_MS = 500;
+const ASSIGNMENT_LOOKUP_TIMEOUT_MS = 10_000;
 
 /**
  * True when the failure is the staffing endpoint reporting that the person is
@@ -161,9 +162,13 @@ export class PeopleBootstrap {
         employeeId,
         seed.role,
         locationId,
-        async (personId: string) => peopleStaffingAssignmentsApi.listStaffingAssignments({ personId }),
-        async (request: CreateStaffingAssignmentRequest) =>
-          peopleStaffingAssignmentsApi.createStaffingAssignment({ createStaffingAssignmentRequest: request }),
+        async (personId: string, initOverrides?: RequestInit) =>
+          peopleStaffingAssignmentsApi.listStaffingAssignments({ personId }, initOverrides),
+        async (request: CreateStaffingAssignmentRequest, initOverrides?: RequestInit) =>
+          peopleStaffingAssignmentsApi.createStaffingAssignment(
+            { createStaffingAssignmentRequest: request },
+            initOverrides,
+          ),
       );
 
       switch (seed.bucket) {
@@ -236,11 +241,19 @@ export class PeopleBootstrap {
     personId: string,
     role: string,
     locationId: string,
-    getAssignments: (personId: string) => Promise<StaffingAssignmentResponse[]>,
-    createAssignment: (request: CreateStaffingAssignmentRequest) => Promise<StaffingAssignmentResponse>,
+    getAssignments: (
+      personId: string,
+      initOverrides?: RequestInit,
+    ) => Promise<StaffingAssignmentResponse[]>,
+    createAssignment: (
+      request: CreateStaffingAssignmentRequest,
+      initOverrides?: RequestInit,
+    ) => Promise<StaffingAssignmentResponse>,
   ): Promise<void> {
     try {
-      const assignments = await getAssignments(personId);
+      const assignments = await getAssignments(personId, {
+        signal: AbortSignal.timeout(ASSIGNMENT_LOOKUP_TIMEOUT_MS),
+      });
       const existing = assignments.find(
         (assignment) =>
           assignment.locationId === locationId &&
@@ -262,14 +275,17 @@ export class PeopleBootstrap {
     // endpoint validates against that replica, so an assignment issued
     // immediately after createEmployee loses a race it cannot see - observed at
     // 138ms after creation, against a 1s outbox poll.
-    await this.createAssignmentWhenPersonReplicated(personId, () =>
-      createAssignment({
-        personId,
-        locationId,
-        role,
-        effectiveFrom: new Date('2024-01-01'),
-        isPrimary: true,
-      }),
+    await this.createAssignmentWhenPersonReplicated(personId, (initOverrides) =>
+      createAssignment(
+        {
+          personId,
+          locationId,
+          role,
+          effectiveFrom: new Date('2024-01-01'),
+          isPrimary: true,
+        },
+        initOverrides,
+      ),
     );
   }
 
@@ -282,22 +298,36 @@ export class PeopleBootstrap {
    */
   private async createAssignmentWhenPersonReplicated(
     personId: string,
-    attempt: () => Promise<StaffingAssignmentResponse>,
+    attempt: (initOverrides: RequestInit) => Promise<StaffingAssignmentResponse>,
   ): Promise<void> {
     const deadline = Date.now() + PERSON_REPLICATION_TIMEOUT_MS;
     let waited = false;
+    let lastError: unknown;
 
     for (;;) {
+      // Bound each request by what is left of the deadline. fetch applies no
+      // request timeout of its own, so without an abort signal a stalled
+      // connection would park inside attempt() and the deadline check below
+      // would never be reached. The signal also covers reading the error body.
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        throw (
+          lastError ??
+          new Error(`PeopleBootstrap: timed out waiting for person ${personId} to replicate`)
+        );
+      }
+
       try {
-        await attempt();
+        await attempt({ signal: AbortSignal.timeout(remaining) });
         if (waited) {
           console.log(`[Bootstrap] Person ${personId} replicated; assignment created.`);
         }
         return;
       } catch (error) {
-        if (!(await isPersonNotFound(error)) || Date.now() >= deadline) {
+        if (!(await isPersonNotFound(error))) {
           throw error;
         }
+        lastError = error;
         if (!waited) {
           console.log(`[Bootstrap] Waiting for person ${personId} to replicate...`);
           waited = true;
