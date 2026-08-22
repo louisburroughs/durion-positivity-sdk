@@ -10,10 +10,9 @@ import * as path from 'path';
  * dependency surface is supposed to mirror a real SDK consumer, and a
  * key=value parser does not justify pulling in dotenv.
  *
- * Precedence: the real environment always wins. A value already present in
+ * Precedence: the real environment always wins. A non-empty value already present in
  * `process.env` is never overwritten, so `ITEST_FOO=x npm run test:integration`
  * still beats the file, and CI (which sets real env vars) ignores it entirely.
- *
  * Values are never logged — only the names of the keys that were applied.
  */
 
