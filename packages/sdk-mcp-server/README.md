@@ -1,5 +1,22 @@
 ## @durion-sdk/mcp-server@0.1.0-alpha
 
+> **Known limitation — `streamMcpChat` is not usable as generated.**
+>
+> `POST /v1/mcp/chat/stream` returns `text/event-stream`, but the backend spec
+> types its 200 response as `type: array` of `ServerSentEventString` (springdoc's
+> rendering of `Flux<ServerSentEvent<String>>`). `typescript-fetch` keys off the
+> schema rather than the media type, so the generated `streamMcpChatRaw` wraps
+> the response in `JSONApiResponse` and calls `response.json()`. That throws on
+> an SSE body, and would buffer the whole stream even if it parsed — defeating
+> the incremental token delivery the endpoint exists for.
+>
+> Consume this endpoint with `fetch` and an SSE reader directly until the spec is
+> corrected. The blocking `executeMcpChat` on `McpChatControllerApi` is
+> unaffected, as is every other API in this package.
+>
+> Tracked in durion-positivity-backend#1455.
+
+
 This generator creates TypeScript/JavaScript client that utilizes [Fetch API](https://fetch.spec.whatwg.org/). The generated Node module can be used in the following environments:
 
 Environment

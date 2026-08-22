@@ -12,7 +12,8 @@ import { loadEnvFile } from './loadEnvFile';
  */
 export default async function globalSetup(): Promise<void> {
   // Credentials may come from the shell or from a git-ignored .env.itest
-  // (spec: Environment Contract). A non-empty shell value always wins; see loadEnvFile.
+  // (spec: Environment Contract). A non-empty shell value wins; a set-but-empty
+  // one counts as unset and the file applies. See loadEnvFile.
   const envFile = loadEnvFile();
   if (envFile.file !== null) {
     const detail = envFile.skipped.length > 0 ? ` (shell overrides: ${envFile.skipped.join(', ')})` : '';

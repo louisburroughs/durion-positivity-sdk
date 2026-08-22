@@ -10,9 +10,16 @@ import * as path from 'path';
  * dependency surface is supposed to mirror a real SDK consumer, and a
  * key=value parser does not justify pulling in dotenv.
  *
- * Precedence: the real environment always wins. A non-empty value already present in
- * `process.env` is never overwritten, so `ITEST_FOO=x npm run test:integration`
- * still beats the file, and CI (which sets real env vars) ignores it entirely.
+ * Precedence: a non-empty value in the real environment always wins and is never
+ * overwritten, so `ITEST_FOO=x npm run test:integration` still beats the file and
+ * CI (which sets real env vars) ignores it entirely.
+ *
+ * A variable that is *set but empty* counts as unset and the file value applies.
+ * That is deliberate: an exported-but-blank `ITEST_PASSWORD=` in a stale shell
+ * would otherwise silently mask the file and fail as a bad-credentials error
+ * rather than a missing-credentials one. To force an empty value past the file,
+ * remove the key from the file rather than blanking it in the shell.
+ *
  * Values are never logged — only the names of the keys that were applied.
  */
 
@@ -21,7 +28,7 @@ export interface LoadEnvFileResult {
   readonly file: string | null;
   /** Names (never values) of the keys applied to process.env. */
   readonly applied: readonly string[];
-  /** Names of keys present in the file but already set in the environment. */
+  /** Names of keys present in the file but already set (non-empty) in the environment. */
   readonly skipped: readonly string[];
 }
 
