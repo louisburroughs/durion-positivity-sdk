@@ -1,4 +1,14 @@
-import { BootstrapOrchestrator, SecurityBootstrap, SeederAuth, SeederConfig } from '@durion-sdk/seeder';
+// Imported by path, not by package name: Jest applies moduleNameMapper to the
+// suites but NOT to globalSetup, so '@durion-sdk/seeder' here would resolve
+// through node_modules to packages/sdk-seeder/dist - whatever was last built.
+// The fixtures would then silently run stale bootstrap code while the suites
+// run the current sources.
+import {
+  BootstrapOrchestrator,
+  SecurityBootstrap,
+  SeederAuth,
+  SeederConfig,
+} from '../../../sdk-seeder/src/lib';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
@@ -52,8 +62,29 @@ async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
     return await fn();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`[itest] global setup failed during ${name}: ${message}`);
+    throw new Error(`[itest] global setup failed during ${name}: ${message}${await describeResponse(error)}`);
   }
+}
+
+/**
+ * The generated clients throw a ResponseError whose message is always
+ * "Response returned an error code" - useless on its own when a bootstrap stage
+ * fails against a real backend. Pull the request and the server's own error
+ * body out of the attached Response so the failure names the endpoint.
+ */
+async function describeResponse(error: unknown): Promise<string> {
+  const response = (error as { response?: Response } | undefined)?.response;
+  if (!response || typeof response.status !== 'number') {
+    return '';
+  }
+
+  let body = '';
+  try {
+    body = (await response.clone().text()).slice(0, 300);
+  } catch {
+    body = '(unreadable body)';
+  }
+  return ` [${response.status} ${response.url}${body ? ` - ${body}` : ''}]`;
 }
 
 /**

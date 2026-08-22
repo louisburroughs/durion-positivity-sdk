@@ -1,4 +1,5 @@
-import { createInventoryClient, type PurchaseOrderResponse } from '@durion-sdk/inventory';
+import { createInventoryClient } from '@durion-sdk/inventory';
+import { createOrderClient, type PurchaseOrderResponse } from '@durion-sdk/order';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
 
 interface InventoryBootstrapResult {
@@ -12,14 +13,24 @@ export const SEED_VENDOR_ID = 'sdk-seeder-vendor-main';
 const SEED_CURRENCY = 'USD';
 
 export class InventoryBootstrap {
-  constructor(private readonly sdkConfig: DurionSdkConfig) {}
+  /**
+   * Purchase orders live in pos-order (/v1/orders/purchase-orders), not
+   * pos-inventory: @durion-sdk/inventory still carries a PurchaseOrdersApi from
+   * before the move, but its paths 404 against the gateway. ASNs and goods
+   * receipts are still inventory's, so this needs a client for each service.
+   */
+  constructor(
+    private readonly sdkConfig: DurionSdkConfig,
+    private readonly orderSdkConfig: DurionSdkConfig,
+  ) {}
 
   async run(
     products: { id: string; name: string }[],
     locationId: string,
     virtualNow: Date,
   ): Promise<InventoryBootstrapResult> {
-    const { asnApi, purchaseOrdersApi } = createInventoryClient(this.sdkConfig);
+    const { asnApi } = createInventoryClient(this.sdkConfig);
+    const { purchaseOrdersApi } = createOrderClient(this.orderSdkConfig);
 
     let createdCount = 0;
     let skippedCount = 0;

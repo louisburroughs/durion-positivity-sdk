@@ -25,7 +25,31 @@ export class VirtualClock {
    * Throws if the endpoint is unreachable.
    */
   async fetchTime(): Promise<ServerTimeResponse> {
+    return this.readTime(await fetch(this.timeUrl));
+  }
+
+  /**
+   * Returns the current virtual time as a Date.
+   */
+  async getCurrentVirtualTime(): Promise<Date> {
+    return this.toDate(await this.fetchTime());
+  }
+
+  /**
+   * The current virtual time, or null when the backend does not expose
+   * /system/time at all - the normal, non-accelerated deployment. Every other
+   * failure (unreachable backend, 5xx, unparseable body) still throws: only the
+   * endpoint being absent is an expected answer rather than a fault.
+   */
+  async tryGetCurrentVirtualTime(): Promise<Date | null> {
     const res = await fetch(this.timeUrl);
+    if (res.status === 404) {
+      return null;
+    }
+    return this.toDate(await this.readTime(res));
+  }
+
+  private async readTime(res: Response): Promise<ServerTimeResponse> {
     if (!res.ok) {
       throw new Error(`Failed to fetch virtual time: HTTP ${res.status} ${res.statusText}`);
     }
@@ -34,11 +58,7 @@ export class VirtualClock {
     return data;
   }
 
-  /**
-   * Returns the current virtual time as a Date.
-   */
-  async getCurrentVirtualTime(): Promise<Date> {
-    const resp = await this.fetchTime();
+  private toDate(resp: ServerTimeResponse): Date {
     const parsed = new Date(resp.virtualTime);
     if (Number.isNaN(parsed.getTime())) {
       throw new Error(
