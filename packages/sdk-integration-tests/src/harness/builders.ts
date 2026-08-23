@@ -1,5 +1,6 @@
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
+import { call } from './http';
 import type { DomainClients } from './personas';
 
 /**
@@ -70,6 +71,14 @@ export function seedFromRunId(runId: string): number {
   return hash;
 }
 
+/**
+ * Distinguishes accounts created within one run. The generated name pool is
+ * small enough that two customers in the same suite can draw the same first and
+ * last name, and the email is unique per account in CRM — so the runId alone
+ * is not enough to keep them apart.
+ */
+let accountSequence = 0;
+
 export interface CreatedCustomer {
   partyId: string;
   firstName: string;
@@ -85,8 +94,10 @@ export async function createPersonAccount(
   const lastName = ctx.random.lastName();
   // The email carries the runId: it is unique per account in CRM, and a
   // generated address without it collides the moment a suite runs twice.
-  const email = `${firstName}.${lastName}.${ctx.runId}@itest.invalid`.toLowerCase();
-  const customer = await as.customer.crmAccountsApi.createCrmCommercialAccount({
+  accountSequence += 1;
+  const email = `${firstName}.${lastName}.${ctx.runId}-${accountSequence}@itest.invalid`.toLowerCase();
+  const customer = await call('createCrmCommercialAccount', () =>
+    as.customer.crmAccountsApi.createCrmCommercialAccount({
     createCommercialAccountRequest: {
       legalName: `${firstName} ${lastName}`,
       displayName: `${firstName} ${lastName} [${ctx.runId}]`,
@@ -96,7 +107,8 @@ export async function createPersonAccount(
       email,
       phone: ctx.random.phone(),
     },
-  });
+    }),
+  );
   return {
     partyId: requireField(customer.partyId, 'partyId'),
     firstName,
@@ -124,7 +136,8 @@ export async function createVehicle(
   const year = ctx.random.vehicleYear();
   const make = ctx.random.vehicleMake();
   const model = ctx.random.vehicleModel();
-  const vehicle = await as.vehicleInventory.vehicleRegistryApi.createVehicle({
+  const vehicle = await call('createVehicle', () =>
+    as.vehicleInventory.vehicleRegistryApi.createVehicle({
     createVehicleRequest: {
       accountId: partyId,
       vin: ctx.random.vin(),
@@ -136,7 +149,8 @@ export async function createVehicle(
       model,
       year,
     },
-  });
+    }),
+  );
   return requireField(vehicle.vehicleId, 'vehicleId');
 }
 
@@ -240,6 +254,41 @@ export async function approveAndPromote(
     }
   }
   return { workorderId, serviceItemMap };
+}
+
+export interface CreatedProduct {
+  productEntityId: string;
+  sku: string;
+  name: string;
+}
+
+/**
+ * A brand-new catalog product, suffixed with the runId so every run gets its
+ * own SKU and the record is traceable back to the run that made it. Shape
+ * mirrors CatalogBootstrap's, which is backend-proven.
+ */
+export async function createCatalogProduct(
+  as: DomainClients,
+  ctx: BuilderContext,
+  suffix: string,
+): Promise<CreatedProduct> {
+  const sku = `ITEST-${suffix}-${ctx.runId}`.toUpperCase();
+  const name = `Integration test part ${suffix} [${ctx.runId}]`;
+  const created = await as.catalog.productsApi.createProduct({
+    productCreateRequestDto: {
+      name,
+      description: `${name}, created by the integration suite.`,
+      unitOfMeasure: 'EA',
+      sku,
+      mpn: `MPN-${suffix}-${ctx.runId}`.toUpperCase(),
+      attributes: JSON.stringify({ seededBy: 'sdk-itest', runId: ctx.runId }),
+    },
+  });
+  return {
+    productEntityId: requireField(readString(created, 'id', 'productId'), 'productEntityId'),
+    sku,
+    name,
+  };
 }
 
 export interface CreatedPo {
