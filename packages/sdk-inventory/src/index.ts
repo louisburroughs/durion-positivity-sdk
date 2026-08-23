@@ -16,6 +16,7 @@ import { BackordersApi } from './apis/BackordersApi';
 import { InventoryAvailabilityApi } from './apis/InventoryAvailabilityApi';
 import { PutawayApi } from './apis/PutawayApi';
 import { PutawayExecutionApi } from './apis/PutawayExecutionApi';
+import { PickListsApi } from './apis/PickListsApi';
 
 export function createInventoryClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -49,5 +50,6 @@ export function createInventoryClient(config: DurionSdkConfig) {
     backordersApi: new BackordersApi(configuration),
     putawayApi: new PutawayApi(configuration),
     putawayExecutionApi: new PutawayExecutionApi(configuration),
+    pickListsApi: new PickListsApi(configuration),
   };
 }

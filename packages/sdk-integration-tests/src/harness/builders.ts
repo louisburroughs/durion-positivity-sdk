@@ -231,19 +231,27 @@ export async function approveAndPromote(
   estimateId: string,
   customer: { partyId: string; fullName: string },
 ): Promise<PromotedWorkorder> {
-  await as.workorder.estimateAPIApi.calculateEstimateTotals({ estimateId });
-  await as.workorder.estimateAPIApi.submitEstimateForApproval({ estimateId });
-  await as.workorder.estimateAPIApi.approveEstimate({
-    estimateId,
-    approveEstimateRequest: {
-      customerId: customer.partyId,
-      signatureData: ctx.random.base64(32),
-      signerName: customer.fullName,
-      signatureMimeType: 'image/png',
-    },
-  });
+  await call('calculateEstimateTotals', () =>
+    as.workorder.estimateAPIApi.calculateEstimateTotals({ estimateId }),
+  );
+  await call('submitEstimateForApproval', () =>
+    as.workorder.estimateAPIApi.submitEstimateForApproval({ estimateId }),
+  );
+  await call('approveEstimate', () =>
+    as.workorder.estimateAPIApi.approveEstimate({
+      estimateId,
+      approveEstimateRequest: {
+        customerId: customer.partyId,
+        signatureData: ctx.random.base64(32),
+        signerName: customer.fullName,
+        signatureMimeType: 'image/png',
+      },
+    }),
+  );
 
-  const promoted = await as.workorder.estimateAPIApi.promoteEstimate({ estimateId });
+  const promoted = await call('promoteEstimate', () =>
+    as.workorder.estimateAPIApi.promoteEstimate({ estimateId }),
+  );
   const workorderId = requireField(readString(promoted, 'id', 'workorderId'), 'workorderId');
 
   const detail = await as.workorder.workorderDetailApi.getWorkorderDetail({ workorderId });

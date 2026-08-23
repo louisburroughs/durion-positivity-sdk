@@ -46,3 +46,30 @@ export async function readOnHand(
   const snapshot = await readAvailability(as, productSku, locationId);
   return snapshot?.onHandQty ?? 0;
 }
+
+/**
+ * A bootstrap product with at least `minimumQuantity` on hand at the location.
+ *
+ * Only the products whose seeded purchase orders were actually received carry
+ * stock - ten of thirty on alpha at the time of writing - and a workorder for an
+ * unstocked part never gets a pick list at all, since there is nothing to
+ * allocate. Tests that need picking have to start from a part that exists in the
+ * building rather than from whichever product happens to be first.
+ */
+export async function findStockedProduct(
+  as: DomainClients,
+  productEntityIds: string[],
+  locationId: string,
+  minimumQuantity: number,
+): Promise<{ productEntityId: string; onHandQty: number }> {
+  for (const productEntityId of productEntityIds) {
+    const snapshot = await readAvailability(as, productEntityId, locationId);
+    if (snapshot && snapshot.atpQty >= minimumQuantity) {
+      return { productEntityId, onHandQty: snapshot.onHandQty };
+    }
+  }
+  throw new Error(
+    `No bootstrap product has ${minimumQuantity} available at ${locationId}. ` +
+      'Seeded stock is a bootstrap concern: run the seeder, or check that its purchase orders were received.',
+  );
+}

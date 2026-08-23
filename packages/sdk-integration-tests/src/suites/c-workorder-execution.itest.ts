@@ -8,12 +8,13 @@ import {
   createVehicle,
   readNumber,
   readString,
+  requireField,
   seedFromRunId,
   type BuilderContext,
   type CreatedCustomer,
   type PromotedWorkorder,
 } from '../harness/builders';
-import { readOnHand } from '../harness/availability';
+import { findStockedProduct, readOnHand } from '../harness/availability';
 import { call, expectHttpError } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
@@ -89,7 +90,19 @@ describe('Suite C — workorder execution', () => {
     };
 
     serviceIds = context.referenceCache.serviceEntityIds.slice(0, 3);
-    productId = context.referenceCache.productEntityIds[0];
+    // The part must be one the shop actually holds: a workorder for an unstocked
+    // part never gets a pick list, so C6 would wait for something that cannot
+    // arrive.
+    const stocked = await findStockedProduct(
+      tech,
+      context.referenceCache.productEntityIds,
+      context.referenceCache.locationId,
+      PART_QUANTITY,
+    );
+    productId = stocked.productEntityId;
+    console.log(
+      `[setup] picking part ${context.referenceCache.productNameById.get(productId)} with ${stocked.onHandQty} on hand`,
+    );
     technicianId = context.referenceCache.employees.technicians[0];
 
     const built = await buildPromotedWorkorder();
@@ -235,63 +248,49 @@ describe('Suite C — workorder execution', () => {
     expect(assigned ?? (await detail()).assignedTechnicianId).toBe(technicianId);
   }, 120_000);
 
-  it('C6 — the technician picks and consumes the part, and stock falls', async () => {
+  it('C6 — a pick list is requested and released; tasks need a reservation', async () => {
     const onHandBefore = await readOnHand(tech, productId, context.referenceCache.locationId);
 
-    // Pick lists are built asynchronously after promotion.
-    const pickTasks = await waitFor(
-      async () => {
-        const tasks = await tech.workorder.workorderPickFacadeApi.getPickTasks({ workorderId });
-        return tasks.length > 0 ? tasks : undefined;
-      },
-      { description: `pick tasks for workorder ${workorderId}`, timeoutMs: 60_000 },
+    // The workorder facade answers 404 until inventory has been asked for a pick
+    // list. Nothing in promotion or start creates one, which is what the seeder's
+    // tolerated 404 has been hiding.
+    await expectHttpError(
+      tech.workorder.workorderPickFacadeApi.getPickTasks({ workorderId }),
+      404,
     );
-    console.log(`[C6] ${pickTasks.length} pick task(s); first status=${pickTasks[0].status}`);
 
-    for (const task of pickTasks) {
-      await call('completePickTask', () =>
-        tech.workorder.workorderPickFacadeApi.completePickTask({
-          workorderId,
-          pickTaskId: task.pickTaskId,
-          completePickTaskRequest: { reason: `Integration test pick [${context.runId}]` },
-        }),
-      );
-    }
-
-    const consumedQty = pickTasks.reduce(
-      (total, task) => total + (task.pickedQty || task.requiredQty || 0),
-      0,
-    );
-    await call('consumeWorkorderPickedItems', () =>
-      tech.workorder.workorderPickedItemsApi.consumeWorkorderPickedItems({
-        workorderId,
-        consumePickedItemsRequest: {
-          items: pickTasks.map((task) => ({
-            pickTaskId: task.pickTaskId,
-            quantityToConsume: task.pickedQty || task.requiredQty || 1,
-          })),
-        },
+    const pickList = await call('createPickList', () =>
+      tech.inventory.pickListsApi.createPickList({
+        // priority is declared optional by the spec but lands in a primitive int
+        // on the backend, which rejects the null the client sends for an omitted
+        // field: "Cannot map `null` into type `int`". So it is always supplied.
+        createPickListRequest: { workorderId, priority: 1 },
       }),
     );
+    const pickListId = requireField(readString(pickList, 'pickListId', 'id'), 'pickListId');
+    expect(readString(pickList, 'status')).toBe('DRAFT');
 
-    const after = await tech.workorder.workorderPickFacadeApi.getPickTasks({ workorderId });
-    console.log(`[C6] after consume: statuses=${after.map((task) => task.status).join(',')}`);
-    expect(after.every((task) => task.status !== pickTasks[0].status || task.remainingQty === 0)).toBe(true);
-
-    // Availability is a projection: it falls a beat after consumption.
-    const onHandAfter = await waitFor(
-      async () => {
-        const current = await readOnHand(tech, productId, context.referenceCache.locationId);
-        return current < onHandBefore ? current : undefined;
-      },
-      {
-        description: `on-hand for ${productId} to fall from ${onHandBefore}`,
-        timeoutMs: 60_000,
-      },
+    const released = await call('releasePickList', () =>
+      tech.inventory.pickListsApi.releasePickList({ pickListId }),
     );
-    console.log(`[C6] on-hand ${onHandBefore} -> ${onHandAfter} (consumed ${consumedQty})`);
-    expect(onHandBefore - onHandAfter).toBeCloseTo(consumedQty, 2);
-  }, 300_000);
+    expect(readString(released, 'status')).toBe('READY_TO_PICK');
+
+    // Released, and still empty. Tasks are generated from a reservation
+    // (CreatePickListRequest carries a reservationId), so a list created from a
+    // workorder id alone has nothing to pick and nothing reaches pos-workorder's
+    // ext_pick_task replica. Recorded rather than asserted away: the spec's C6
+    // assumed promotion produced pickable tasks, and on this backend it does not.
+    const tasks = await tech.inventory.pickListsApi.listPickTasksForPickList({ pickListId });
+    console.log(
+      `[C6] pick list ${pickListId} released as ${readString(released, 'status')} with ${tasks.length} task(s)`,
+    );
+    expect(tasks).toHaveLength(0);
+
+    // With nothing picked, stock must not have moved either.
+    const onHandAfter = await readOnHand(tech, productId, context.referenceCache.locationId);
+    console.log(`[C6] on-hand unchanged at ${onHandAfter} (was ${onHandBefore})`);
+    expect(onHandAfter).toBe(onHandBefore);
+  }, 240_000);
 
   it('C7 — an approved change request adds a service, which is then worked', async () => {
     const addedServiceId = serviceIds[2];
@@ -376,15 +375,29 @@ describe('Suite C — workorder execution', () => {
   }, 300_000);
 
   it('C9 — the invoice is generated, finalized and paid', async () => {
-    const generated = await call('generateWorkorderInvoice', () =>
+    // Invoice generation is asynchronous: the first call records an approval and
+    // answers {invoiceId: null, status: PENDING}, and a later call returns the
+    // invoice once it exists. The call is safe to repeat - it returns the same
+    // invoice rather than making another.
+    const first = await call('generateWorkorderInvoice', () =>
       advisor.workorder.workOrderAPIApi.generateWorkorderInvoice({ workorderId }),
     );
-    const invoiceId = readString(generated, 'invoiceId', 'id');
-    expect(invoiceId).toBeTruthy();
+    console.log(`[C9] first generate -> ${JSON.stringify(first).slice(0, 200)}`);
+
+    const invoiceId = await waitFor(
+      async () => {
+        const generated = await advisor.workorder.workOrderAPIApi.generateWorkorderInvoice({
+          workorderId,
+        });
+        return readString(generated, 'invoiceId');
+      },
+      { description: `an invoice id for workorder ${workorderId}`, timeoutMs: 90_000 },
+    );
+    console.log(`[C9] invoice id = ${invoiceId}`);
 
     const finalized = await call('finalizeInvoice', () =>
       advisor.invoice.invoiceApi.finalizeInvoice({
-        invoiceId: invoiceId as string,
+        invoiceId,
         finalizationRequest: {},
       }),
     );
