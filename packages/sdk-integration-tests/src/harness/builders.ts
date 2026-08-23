@@ -1,6 +1,6 @@
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
-import { call, retryWhileReplicating } from './http';
+import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 
 /**
@@ -249,9 +249,7 @@ export async function approveAndPromote(
     }),
   );
 
-  const promoted = await call('promoteEstimate', () =>
-    as.workorder.estimateAPIApi.promoteEstimate({ estimateId }),
-  );
+  const promoted = await promoteWhenPromotable(as, estimateId);
   const workorderId = requireField(readString(promoted, 'id', 'workorderId'), 'workorderId');
 
   const detail = await as.workorder.workorderDetailApi.getWorkorderDetail({ workorderId });
@@ -262,6 +260,53 @@ export async function approveAndPromote(
     }
   }
   return { workorderId, serviceItemMap };
+}
+
+/**
+ * Promotes an approved estimate, tolerating the transient refusal that follows
+ * a freshly created customer.
+ *
+ * `createWorkorder` gates on `checkCustomerRequirements(customerId)` before it
+ * does anything, and on an estimate whose customer was created moments earlier
+ * that check can answer false. The controller catches the resulting
+ * `IllegalArgumentException` and returns `ResponseEntity.badRequest().build()`,
+ * discarding the message - so the client sees a 400 with an empty body and no
+ * correlation id, and cannot tell this apart from a genuine state error
+ * (durion-positivity-backend#1471, and #1477 for the discarded reason).
+ *
+ * The retry is deliberately narrow: only an empty-bodied 400, only while the
+ * estimate reads back as APPROVED, and only for a bounded window. A promote
+ * refused for any reason that carries a body is raised at once.
+ */
+export async function promoteWhenPromotable(
+  as: DomainClients,
+  estimateId: string,
+): Promise<unknown> {
+  const deadline = Date.now() + 60_000;
+  let lastDetail = '';
+
+  for (;;) {
+    try {
+      return await as.workorder.estimateAPIApi.promoteEstimate({ estimateId });
+    } catch (error) {
+      lastDetail = await formatError(error);
+      const isEmptyBadRequest = isHttpStatus(error, 400) && lastDetail.includes('(empty body)');
+
+      let status = 'unreadable';
+      try {
+        status = (await as.workorder.estimateAPIApi.getEstimate({ estimateId })).status;
+      } catch {
+        /* leave it unreadable */
+      }
+
+      if (!isEmptyBadRequest || status !== 'APPROVED' || Date.now() >= deadline) {
+        throw new Error(
+          `promoteEstimate failed for estimate ${estimateId} (status=${status}): ${lastDetail}`,
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+  }
 }
 
 export interface CreatedProduct {

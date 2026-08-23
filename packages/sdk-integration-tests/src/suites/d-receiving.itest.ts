@@ -50,7 +50,8 @@ describe('Suite D — receiving', () => {
   let tech: DomainClients;
   let locationId: string;
 
-  const receiveFully = async (po: CreatedPo, product: CreatedProduct, quantity: number) => {
+  /** Receives every line of a purchase order in full, at each line's own SKU. */
+  const receiveFully = async (po: CreatedPo, quantity: number) => {
     const asnId = await createAsnForPo(parts, ctx, SEED_VENDOR_ID, po);
     const receipt = await call('createGoodsReceipt', () =>
       parts.inventory.asnApi.createGoodsReceipt({
@@ -60,7 +61,9 @@ describe('Suite D — receiving', () => {
           locationId,
           lines: po.lines.map((line) => ({
             poLineId: line.poLineId,
-            sku: product.productEntityId,
+            // The line's own SKU, not the caller's: a multi-line PO would
+            // otherwise be received entirely against one product.
+            sku: line.skuId,
             quantityReceived: quantity,
             unitCostMinor: line.unitCostMinor,
           })),
@@ -132,7 +135,7 @@ describe('Suite D — receiving', () => {
     }, 180_000);
 
     it('D3 — an ASN and a goods receipt land the full quantity', async () => {
-      const received = await receiveFully(po, product, RECEIVE_QUANTITY);
+      const received = await receiveFully(po, RECEIVE_QUANTITY);
       receiptId = received.receiptId;
 
       const roundTrip = await call('getGoodsReceipt', () =>
@@ -283,7 +286,7 @@ describe('Suite D — receiving', () => {
 
       // Goods receipt rather than a receiving session: D6 records why the
       // staging path cannot run here.
-      await receiveFully(shortagePo, shortProduct, SHORTAGE_QUANTITY);
+      await receiveFully(shortagePo, SHORTAGE_QUANTITY);
 
       const onHandAfter = await waitFor(
         async () => {

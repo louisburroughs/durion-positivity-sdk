@@ -526,9 +526,12 @@ bridge → rejected (no `workorder:estimate:create`).
   status. Then assert `rescheduleAppointment` on the cancelled appointment is
   rejected via `expectHttpError` (record the actual 4xx the backend uses).
 - [x] **A5 — Appointment → estimate bridge (idempotent).** On a second, active
-  appointment: `createEstimateFromAppointment` with a runId-derived
-  `idempotencyKey`. Assert `created === true` and an `estimateId`. Call again
-  with the same key: assert `created === false` and the **same** `estimateId`.
+  appointment: `createEstimateFromAppointment` with a fresh UUID
+  `idempotencyKey` — the field is a plain string in the generated client but a
+  UUID on the backend, which rejects anything else with a bare 400, so a
+  runId-derived key cannot be used. Assert `created === true` and an
+  `estimateId`. Call again: assert `created === false` and the **same**
+  `estimateId`.
   The returned estimate must be fetchable through `EstimateAPIApi` and carry
   the appointment's customer/vehicle.
 - [x] **A6 — Validation negative.** `createAppointment` with `endAt` before
@@ -633,12 +636,20 @@ be attributed to the `tech` user. Role-mode negatives: `tech` attempts
 - [x] **C5 — Assign technician.** After the timer work, `assignTechnician`
   with a bootstrap technician id. Assert assignment visible on the detail or
   assignment endpoint.
-- [x] **C6 — Pick and consume the part.** `waitFor` `getPickTasks` to return a
-  non-empty list (pick-list creation is asynchronous after promotion).
-  `completePickTask` each, then `consumeWorkorderPickedItems` with
-  picked/required quantities. Assert: subsequent `getPickTasks` shows
-  completed/consumed state, and location availability for the SKU (Suite D's
-  availability helper) decreased by the consumed quantity.
+- [x] **C6 — Request a pick list; tasks need a reservation.** Written to expect
+  promotion to produce pickable tasks; alpha does not. `getPickTasks` answers
+  404 until a pick list is requested from inventory
+  (`POST /v1/inventory/pick-lists`, with `priority` supplied — it is optional in
+  the spec but a primitive `int` on the backend). Releasing that list moves it
+  to `READY_TO_PICK` holding **zero tasks**, because tasks come from a
+  reservation, which `CreatePickListRequest` carries an id for. The step asserts
+  that sequence and that stock did not move, so the day tasks do appear the test
+  fails and says so. Consumption and the availability delta wait on the
+  reservation path.
+
+  The part must also be one the shop holds: only ten of the thirty bootstrap
+  products were ever received, and a workorder for an unstocked part can never
+  be picked. The suite selects a stocked one.
 - [x] **C7 — Change request.** `createChangeRequest` adding one service;
   `approveChangeRequest`. Assert the new service item appears on the
   workorder detail; run its timer + completion like the others.

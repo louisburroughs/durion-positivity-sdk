@@ -4,6 +4,7 @@ import {
   addLaborLine,
   addPartLine,
   createPersonAccount,
+  promoteWhenPromotable,
   createVehicle,
   readNumber,
   readString,
@@ -188,9 +189,9 @@ describe('Suite B — estimates', () => {
     });
 
     it('B7 — promotes to a workorder carrying every line', async () => {
-      const promoted = await call('promoteEstimate', () =>
-        advisor.workorder.estimateAPIApi.promoteEstimate({ estimateId }),
-      );
+      // Through the builder's helper, which tolerates the transient empty-bodied
+      // 400 that a freshly created customer provokes (see promoteWhenPromotable).
+      const promoted = await promoteWhenPromotable(advisor, estimateId);
       workorderId = requireField(readString(promoted, 'id', 'workorderId'), 'workorderId');
 
       const detail = await call('getWorkorderDetail', () =>

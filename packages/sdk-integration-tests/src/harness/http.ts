@@ -35,17 +35,28 @@ export const formatError = async (error: unknown): Promise<string> => {
     (error as { response: unknown }).response !== null &&
     typeof (error as { response: unknown }).response === 'object'
   ) {
-    const response = (error as { response: { status?: unknown; text?: unknown } }).response;
+    const response = (error as { response: { status?: unknown; text?: unknown; headers?: Headers } }).response;
     const status = typeof response.status === 'number' ? response.status : '?';
+
+    // The correlation id is the only handle on a failure whose body is empty -
+    // which is exactly the shape an unhandled exception takes here
+    // (durion-positivity-backend#1471). Without it such a failure cannot be
+    // traced to a log line at all.
+    const correlationId =
+      response.headers && typeof response.headers.get === 'function'
+        ? (response.headers.get('x-correlation-id') ?? response.headers.get('X-Correlation-Id'))
+        : undefined;
+    const trace = correlationId ? ` [correlationId=${correlationId}]` : '';
+
     if (typeof response.text === 'function') {
       try {
         const body = await (response.text as () => Promise<string>)();
-        return `HTTP ${status}: ${body}`;
+        return `HTTP ${status}${trace}: ${body || '(empty body)'}`;
       } catch {
-        return `HTTP ${status}: (could not read body)`;
+        return `HTTP ${status}${trace}: (could not read body)`;
       }
     }
-    return `HTTP ${status}`;
+    return `HTTP ${status}${trace}`;
   }
   return error instanceof Error ? error.message : String(error);
 };

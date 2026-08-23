@@ -15,7 +15,7 @@ import {
   type PromotedWorkorder,
 } from '../harness/builders';
 import { findStockedProduct, readOnHand } from '../harness/availability';
-import { call, expectHttpError } from '../harness/http';
+import { call, expectHttpError, isHttpStatus } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -33,6 +33,24 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
  * executes; the advisor raises the change request and bills; accounting takes
  * the payment.
  */
+/**
+ * Stops whatever timer the acting user has running, tolerating the one failure
+ * that means "there was nothing to stop".
+ *
+ * Deliberately narrow: swallowing every error here would hide a 401, a 403 or a
+ * 500 and turn a real regression into a later, stranger failure.
+ */
+const stopTimersIfRunning = async (as: DomainClients): Promise<void> => {
+  try {
+    await as.workorder.workexecTimeTrackingAPIApi.stopTimers();
+  } catch (error) {
+    // 409 NO_ACTIVE_TIMER: no timer was running for this mechanic.
+    if (!isHttpStatus(error, 409)) {
+      throw error;
+    }
+  }
+};
+
 describe('Suite C — workorder execution', () => {
   const LABOR_ONE_PRICE = 145.0;
   const LABOR_TWO_PRICE = 62.5;
@@ -143,8 +161,11 @@ describe('Suite C — workorder execution', () => {
 
     const started = await detail();
     console.log(`[C2] started: status=${started.status} isStarted=${started.isStarted}`);
-    expect(started.isStarted ?? String(started.status)).toBeTruthy();
-    expect(String(started.status).toUpperCase()).not.toContain('APPROVED_PENDING');
+    // Not merely "truthy": the workorder has to have actually moved. Alpha
+    // reports WORK_IN_PROGRESS here, and isStarted is the flag the detail view
+    // exposes for it.
+    expect(String(started.status).toUpperCase()).toBe('WORK_IN_PROGRESS');
+    expect(String(started.isStarted)).toBe('true');
   }, 120_000);
 
   it('C3 — a timer records labor against the first service item', async () => {
@@ -154,7 +175,7 @@ describe('Suite C — workorder execution', () => {
     // stopTimers targets the authenticated user, so no technician may be
     // assigned yet (C5 does that afterwards): an assignment would strand this
     // timer on someone else. Tolerate "nothing running" on the first stop.
-    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers().catch(() => undefined);
+    await stopTimersIfRunning(tech);
 
     await call('startTimer', () =>
       tech.workorder.workexecTimeTrackingAPIApi.startTimer({
@@ -330,7 +351,7 @@ describe('Suite C — workorder execution', () => {
     console.log(`[C7] added service item ${withChange.added.id} status=${withChange.added.status}`);
 
     // Work it like the others so C8 can complete every item.
-    await tech.workorder.workexecTimeTrackingAPIApi.stopTimers().catch(() => undefined);
+    await stopTimersIfRunning(tech);
     await tech.workorder.workexecTimeTrackingAPIApi.startTimer({
       workexecTimerStartRequest: {
         workorderId,
