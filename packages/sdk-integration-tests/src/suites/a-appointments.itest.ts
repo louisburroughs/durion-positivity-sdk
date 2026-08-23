@@ -10,7 +10,7 @@ import {
   seedFromRunId,
   type BuilderContext,
 } from '../harness/builders';
-import { call, expectHttpError, retryWhileReplicating } from '../harness/http';
+import { call, expectHttpError, formatError, isHttpStatus, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -26,9 +26,11 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
 /**
  * Suite A — appointments, and the appointment → estimate bridge.
  *
- * Windows are real near-future times: valid against a normal clock, and no
- * step waits for one to arrive. Every appointment is booked for tomorrow, so
- * nothing here depends on when the suite runs.
+ * Windows are real near-future times: valid against a normal clock, and no step
+ * waits for one to arrive. Slots are chosen from the coming months rather than
+ * from tomorrow, and a slot already taken is simply retried elsewhere - every
+ * appointment any previous run booked is still on the shared environment, and
+ * the backend refuses a double-booking.
  */
 describe('Suite A — appointments', () => {
   let context: ItestContext;
@@ -41,52 +43,76 @@ describe('Suite A — appointments', () => {
   let vehicleId: string;
   let serviceRequestIds: string[];
 
-  /**
-   * Tomorrow at 09:00 UTC, plus a per-run band and the requested offset.
-   *
-   * The band matters: the backend rejects a double-booked slot with
-   * "Requested slot is already booked", and every appointment any previous run
-   * booked is still there. A random band spread across the next few months keeps
-   * runs apart without coordination; a week's worth was not enough once the runs
-   * started accumulating.
-   */
-  const runBandMinutes = Math.floor(Math.random() * 200_000);
+  const SLOT_CONFLICT = 'already booked';
 
-  const window = (startOffsetMinutes: number, durationMinutes: number) => {
+  /**
+   * A window starting `offsetMinutes` after 09:00 UTC tomorrow.
+   *
+   * Callers pass an offset drawn at random rather than a fixed one: the backend
+   * refuses a double-booking, and every appointment any previous run booked is
+   * still on this environment, so no fixed schedule stays free. A wider range
+   * lowers the odds of a clash but cannot remove them - `bookAppointment` is
+   * what actually handles one, by trying somewhere else.
+   */
+  const window = (offsetMinutes: number, durationMinutes: number) => {
     const start = new Date();
     start.setUTCDate(start.getUTCDate() + 1);
     start.setUTCHours(9, 0, 0, 0);
-    start.setUTCMinutes(start.getUTCMinutes() + runBandMinutes + startOffsetMinutes);
+    start.setUTCMinutes(start.getUTCMinutes() + offsetMinutes);
     const end = new Date(start.getTime() + durationMinutes * 60_000);
     return { startAt: start, endAt: end };
   };
 
+  /** A slot somewhere in the next few months, on a whole hour. */
+  const randomOffsetMinutes = () => Math.floor(Math.random() * 200_000 / 60) * 60;
+
+  const isSlotConflict = async (error: unknown): Promise<boolean> =>
+    isHttpStatus(error, 400) && (await formatError(error)).includes(SLOT_CONFLICT);
+
   /**
-   * Books an appointment, tolerating the CRM replica pos-shop-manager reads.
-   * The customer and vehicle are created by this suite moments earlier and
-   * reach shop-manager over customer.events.v1 / vehicle.events.v1, so the
-   * first attempts can legitimately answer CUSTOMER_NOT_FOUND.
+   * Books an appointment into a free slot.
+   *
+   * Two conditions are tolerated, for different reasons. The CRM replica
+   * pos-shop-manager validates against is fed over customer.events.v1 /
+   * vehicle.events.v1, and this suite creates its customer and vehicle moments
+   * earlier, so the first attempts can legitimately answer CUSTOMER_NOT_FOUND.
+   * And the chosen slot may already be taken by a previous run, which is a
+   * refusal about the *slot* rather than the request - so it is answered by
+   * trying a different one rather than by failing.
    */
-  const bookAppointment = async (as: DomainClients, offsetMinutes: number) => {
-    const { startAt, endAt } = window(offsetMinutes, 60);
-    return retryWhileReplicating(
-      () =>
-        as.shopManager.appointmentsApi.createAppointment({
-          appointmentCreateRequest: {
-            crmCustomerId: customer.partyId,
-            crmVehicleId: vehicleId,
-            locationId: context.referenceCache.locationId,
-            startAt,
-            endAt,
-            serviceRequestIds,
+  const bookAppointment = async (as: DomainClients) => {
+    for (let attempt = 1; ; attempt += 1) {
+      const { startAt, endAt } = window(randomOffsetMinutes(), 60);
+      try {
+        return await retryWhileReplicating(
+          () =>
+            as.shopManager.appointmentsApi.createAppointment({
+              appointmentCreateRequest: {
+                crmCustomerId: customer.partyId,
+                crmVehicleId: vehicleId,
+                locationId: context.referenceCache.locationId,
+                startAt,
+                endAt,
+                serviceRequestIds,
+              },
+            }),
+          {
+            markers: ['CUSTOMER_NOT_FOUND', 'VEHICLE_NOT_FOUND'],
+            description: `booking an appointment for party ${customer.partyId}`,
+            timeoutMs: 60_000,
           },
-        }),
-      {
-        markers: ['CUSTOMER_NOT_FOUND', 'VEHICLE_NOT_FOUND'],
-        description: `booking an appointment for party ${customer.partyId}`,
-        timeoutMs: 60_000,
-      },
-    );
+        );
+      } catch (error) {
+        // retryWhileReplicating wraps the failure, so the conflict is matched on
+        // the message it carries rather than on the original error object.
+        const conflicted =
+          error instanceof Error ? error.message.includes(SLOT_CONFLICT) : await isSlotConflict(error);
+        if (!conflicted || attempt >= 10) {
+          throw error;
+        }
+        console.log(`[A] slot taken on attempt ${attempt}; trying another`);
+      }
+    }
   };
 
   beforeAll(async () => {
@@ -120,7 +146,7 @@ describe('Suite A — appointments', () => {
     let booked: Awaited<ReturnType<typeof bookAppointment>>;
 
     it('creates the appointment and echoes what was booked', async () => {
-      booked = await bookAppointment(advisor, 0);
+      booked = await bookAppointment(advisor);
       appointmentId = booked.appointmentId;
 
       expect(appointmentId).toBeTruthy();
@@ -150,19 +176,31 @@ describe('Suite A — appointments', () => {
     });
 
     it('A3 — reschedules an hour later, and the move persists', async () => {
-      const moved = window(60, 60);
-
-      const rescheduled = await call('rescheduleAppointment', () =>
-        advisor.shopManager.appointmentsApi.rescheduleAppointment({
-        appointmentId,
-        rescheduleAppointmentRequest: {
-          newStartAt: moved.startAt,
-          newEndAt: moved.endAt,
-          reason: RescheduleAppointmentRequestReasonEnum.CustomerRequest,
-          rescheduleReasonNotes: `Integration test reschedule [${context.runId}]`,
-        },
-      }),
-      );
+      // Relative to the slot A1 actually got, which is not the one it first
+      // asked for if that was taken. A move into an occupied hour is retried
+      // further out for the same reason booking is.
+      let moved = { startAt: new Date(), endAt: new Date() };
+      let rescheduled;
+      for (let attempt = 1; ; attempt += 1) {
+        const start = new Date(new Date(booked.startAt).getTime() + attempt * 60 * 60_000);
+        moved = { startAt: start, endAt: new Date(start.getTime() + 60 * 60_000) };
+        try {
+          rescheduled = await advisor.shopManager.appointmentsApi.rescheduleAppointment({
+            appointmentId,
+            rescheduleAppointmentRequest: {
+              newStartAt: moved.startAt,
+              newEndAt: moved.endAt,
+              reason: RescheduleAppointmentRequestReasonEnum.CustomerRequest,
+              rescheduleReasonNotes: `Integration test reschedule [${context.runId}]`,
+            },
+          });
+          break;
+        } catch (error) {
+          if (!(await isSlotConflict(error)) || attempt >= 10) {
+            throw new Error(`rescheduleAppointment failed: ${await formatError(error)}`);
+          }
+        }
+      }
       expect(new Date(rescheduled.startAt).toISOString()).toBe(moved.startAt.toISOString());
 
       const refetched = await advisor.shopManager.appointmentsApi.getAppointmentById({ appointmentId });
@@ -182,7 +220,7 @@ describe('Suite A — appointments', () => {
       );
       expect(cancelled.status.toUpperCase()).toContain('CANCEL');
 
-      const later = window(180, 60);
+      const later = window(randomOffsetMinutes(), 60);
       const status = await expectHttpError(
         advisor.shopManager.appointmentsApi.rescheduleAppointment({
           appointmentId,
@@ -202,7 +240,7 @@ describe('Suite A — appointments', () => {
 
   describe('A5 — appointment → estimate bridge', () => {
     it('is idempotent on the appointment: the second call returns the first estimate', async () => {
-      const appointment = await bookAppointment(advisor, 240);
+      const appointment = await bookAppointment(advisor);
       // The field is typed as a plain string by the generated client but is a UUID
       // on the backend, which rejects anything else with a bare 400. One value,
       // reused across both calls: that sameness is what the test is proving.
@@ -246,7 +284,7 @@ describe('Suite A — appointments', () => {
 
   describe('A6 — validation negative', () => {
     it('rejects a window that ends before it starts', async () => {
-      const { startAt, endAt } = window(300, 60);
+      const { startAt, endAt } = window(randomOffsetMinutes(), 60);
       const status = await expectHttpError(
         advisor.shopManager.appointmentsApi.createAppointment({
           appointmentCreateRequest: {
@@ -267,11 +305,11 @@ describe('Suite A — appointments', () => {
 
   describe('role-mode negatives', () => {
     itInRoleMode('a technician cannot book an appointment', async () => {
-      await expectHttpError(bookAppointment(tech, 360), 401, 403);
+      await expectHttpError(bookAppointment(tech), 401, 403);
     });
 
     itInRoleMode('a technician cannot bridge an appointment into an estimate', async () => {
-      const appointment = await bookAppointment(advisor, 420);
+      const appointment = await bookAppointment(advisor);
       await expectHttpError(
         tech.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
           createEstimateFromAppointmentRequest: {

@@ -500,7 +500,12 @@ SDK surface: `@durion-sdk/shop-manager` `AppointmentsAPIApi`
 (`createAppointment`, `getAppointmentById`, `rescheduleAppointment`,
 `cancelAppointment`) and `@durion-sdk/workorder` `EstimatesFromAppointmentsApi`
 (`createEstimateFromAppointment`). Appointment windows use real near-future
-times (e.g. tomorrow 09:00–10:00 UTC) — valid on a normal clock, no waiting.
+times — valid on a normal clock, no waiting. Slots are drawn at random from the
+coming months rather than fixed to tomorrow: alpha keeps every appointment any
+previous run booked, and the backend refuses a double-booking with
+`400 VALIDATION_ERROR: Requested slot is already booked`. A wider range lowers
+the odds of a clash but cannot remove them, so a clash is answered by booking
+somewhere else (see A1).
 
 **Acting personas:** `advisor` (SERVICE_ADVISOR) onboards the customer
 (`crm:party:create`) and performs every functional step; `admin` registers
@@ -514,14 +519,17 @@ bridge → rejected (no `workorder:estimate:create`).
 
 - [x] **A1 — Book an appointment.** Create a fresh person account + vehicle via
   builders. `createAppointment` with `crmCustomerId`, `crmVehicleId`,
-  `locationId`, tomorrow's `startAt`/`endAt`, `serviceRequestIds` drawn from
-  bootstrap service entity ids. Assert: id returned, echoed fields match, and
+  `locationId`, a randomly chosen free `startAt`/`endAt`, `serviceRequestIds`
+  drawn from bootstrap service entity ids. A slot already taken is retried in a
+  different one — that refusal is about the slot, not the request. Assert: id returned, echoed fields match, and
   status is the backend's initial state (capture actual value; assert
   non-cancelled).
 - [x] **A2 — Fetch by id.** `getAppointmentById` returns the same appointment;
   round-trips the schedule window.
-- [x] **A3 — Reschedule.** Move the window one hour later. Assert the response
-  reflects the new window; re-fetch confirms persistence.
+- [x] **A3 — Reschedule.** Move the window one hour later **than the slot A1
+  actually got**, which is not necessarily the one it first asked for. Assert
+  the response reflects the new window; re-fetch confirms persistence. A move
+  into an occupied hour is retried further out, as booking is.
 - [x] **A4 — Cancel.** `cancelAppointment` with a reason. Assert cancelled
   status. Then assert `rescheduleAppointment` on the cancelled appointment is
   rejected via `expectHttpError` (record the actual 4xx the backend uses).
