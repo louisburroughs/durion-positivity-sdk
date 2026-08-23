@@ -1,5 +1,6 @@
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
+import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 
 /**
@@ -32,12 +33,51 @@ export const readString = (value: unknown, ...keys: string[]): string | undefine
   return undefined;
 };
 
+/**
+ * Numeric counterpart to readString. Several generated operations declare their
+ * response as a bare `object` (calculateEstimateTotals among them), so the
+ * fields have to be read defensively rather than through a model.
+ */
+export const readNumber = (value: unknown, ...keys: string[]): number | undefined => {
+  const record = asRecord(value);
+  if (!record) return undefined;
+  for (const key of keys) {
+    const candidate = record[key];
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
+};
+
 export const requireField = (value: string | undefined, name: string): string => {
   if (!value) {
     throw new Error(`${name} is missing from the response`);
   }
   return value;
 };
+
+/**
+ * A stable numeric seed derived from the runId, so a suite's generated data is
+ * reproducible within a run and different between runs. A fixed literal seed
+ * would regenerate the same person on every run and collide on the unique
+ * email.
+ */
+export function seedFromRunId(runId: string): number {
+  let hash = 0;
+  for (const char of runId) {
+    hash = (hash * 31 + char.charCodeAt(0)) % 2_147_483_647;
+  }
+  return hash;
+}
+
+/**
+ * Distinguishes accounts created within one run. The generated name pool is
+ * small enough that two customers in the same suite can draw the same first and
+ * last name, and the email is unique per account in CRM — so the runId alone
+ * is not enough to keep them apart.
+ */
+let accountSequence = 0;
 
 export interface CreatedCustomer {
   partyId: string;
@@ -52,17 +92,23 @@ export async function createPersonAccount(
 ): Promise<CreatedCustomer> {
   const firstName = ctx.random.firstName();
   const lastName = ctx.random.lastName();
-  const customer = await as.customer.crmAccountsApi.createCrmCommercialAccount({
+  // The email carries the runId: it is unique per account in CRM, and a
+  // generated address without it collides the moment a suite runs twice.
+  accountSequence += 1;
+  const email = `${firstName}.${lastName}.${ctx.runId}-${accountSequence}@itest.invalid`.toLowerCase();
+  const customer = await call('createCrmCommercialAccount', () =>
+    as.customer.crmAccountsApi.createCrmCommercialAccount({
     createCommercialAccountRequest: {
       legalName: `${firstName} ${lastName}`,
-      displayName: `${firstName} ${lastName}`,
+      displayName: `${firstName} ${lastName} [${ctx.runId}]`,
       partyType: 'PERSON',
       contactFirstName: firstName,
       contactLastName: lastName,
-      email: ctx.random.email(firstName, lastName),
+      email,
       phone: ctx.random.phone(),
     },
-  });
+    }),
+  );
   return {
     partyId: requireField(customer.partyId, 'partyId'),
     firstName,
@@ -71,22 +117,40 @@ export async function createPersonAccount(
   };
 }
 
+/**
+ * Registers a vehicle and returns its id.
+ *
+ * Deliberately not `crmAccountsApi.createVehicleForParty`, which the name
+ * suggests: that endpoint appends the VIN to the party's `vehicleVins` list and
+ * returns `{partyId, vinNumber, status}` — no vehicle record, and no id, even
+ * though its response model declares `vehicleId` as required. pos-customer
+ * serves vehicle reads from an `ext_vehicle` replica; the aggregate itself
+ * lives in pos-vehicle-inventory, which is what this registers against.
+ * Tracked as durion-positivity-backend#1466.
+ */
 export async function createVehicle(
   as: DomainClients,
   ctx: BuilderContext,
   partyId: string,
 ): Promise<string> {
-  const description = `${ctx.random.vehicleYear()} ${ctx.random.vehicleMake()} ${ctx.random.vehicleModel()}`;
-  const vehicle = await as.customer.crmAccountsApi.createVehicleForParty({
-    partyId,
-    createVehicleForPartyRequest: {
-      vinNumber: ctx.random.vin(),
-      unitNumber: description,
-      description,
+  const year = ctx.random.vehicleYear();
+  const make = ctx.random.vehicleMake();
+  const model = ctx.random.vehicleModel();
+  const vehicle = await call('createVehicle', () =>
+    as.vehicleInventory.vehicleRegistryApi.createVehicle({
+    createVehicleRequest: {
+      accountId: partyId,
+      vin: ctx.random.vin(),
+      unitNumber: `${year} ${make} ${model}`,
+      description: `${year} ${make} ${model} [${ctx.runId}]`,
       licensePlate: ctx.random.licensePlate(),
-      licensePlateRegion: 'TX',
+      licensePlateJurisdiction: 'TX',
+      make,
+      model,
+      year,
     },
-  });
+    }),
+  );
   return requireField(vehicle.vehicleId, 'vehicleId');
 }
 
@@ -167,19 +231,25 @@ export async function approveAndPromote(
   estimateId: string,
   customer: { partyId: string; fullName: string },
 ): Promise<PromotedWorkorder> {
-  await as.workorder.estimateAPIApi.calculateEstimateTotals({ estimateId });
-  await as.workorder.estimateAPIApi.submitEstimateForApproval({ estimateId });
-  await as.workorder.estimateAPIApi.approveEstimate({
-    estimateId,
-    approveEstimateRequest: {
-      customerId: customer.partyId,
-      signatureData: ctx.random.base64(32),
-      signerName: customer.fullName,
-      signatureMimeType: 'image/png',
-    },
-  });
+  await call('calculateEstimateTotals', () =>
+    as.workorder.estimateAPIApi.calculateEstimateTotals({ estimateId }),
+  );
+  await call('submitEstimateForApproval', () =>
+    as.workorder.estimateAPIApi.submitEstimateForApproval({ estimateId }),
+  );
+  await call('approveEstimate', () =>
+    as.workorder.estimateAPIApi.approveEstimate({
+      estimateId,
+      approveEstimateRequest: {
+        customerId: customer.partyId,
+        signatureData: ctx.random.base64(32),
+        signerName: customer.fullName,
+        signatureMimeType: 'image/png',
+      },
+    }),
+  );
 
-  const promoted = await as.workorder.estimateAPIApi.promoteEstimate({ estimateId });
+  const promoted = await promoteWhenPromotable(as, estimateId);
   const workorderId = requireField(readString(promoted, 'id', 'workorderId'), 'workorderId');
 
   const detail = await as.workorder.workorderDetailApi.getWorkorderDetail({ workorderId });
@@ -190,6 +260,88 @@ export async function approveAndPromote(
     }
   }
   return { workorderId, serviceItemMap };
+}
+
+/**
+ * Promotes an approved estimate, tolerating the transient refusal that follows
+ * a freshly created customer.
+ *
+ * `createWorkorder` gates on `checkCustomerRequirements(customerId)` before it
+ * does anything, and on an estimate whose customer was created moments earlier
+ * that check can answer false. The controller catches the resulting
+ * `IllegalArgumentException` and returns `ResponseEntity.badRequest().build()`,
+ * discarding the message - so the client sees a 400 with an empty body and no
+ * correlation id, and cannot tell this apart from a genuine state error
+ * (durion-positivity-backend#1471, and #1477 for the discarded reason).
+ *
+ * The retry is deliberately narrow: only an empty-bodied 400, only while the
+ * estimate reads back as APPROVED, and only for a bounded window. A promote
+ * refused for any reason that carries a body is raised at once.
+ */
+export async function promoteWhenPromotable(
+  as: DomainClients,
+  estimateId: string,
+): Promise<unknown> {
+  const deadline = Date.now() + 60_000;
+  let lastDetail = '';
+
+  for (;;) {
+    try {
+      return await as.workorder.estimateAPIApi.promoteEstimate({ estimateId });
+    } catch (error) {
+      lastDetail = await formatError(error);
+      const isEmptyBadRequest = isHttpStatus(error, 400) && lastDetail.includes('(empty body)');
+
+      let status = 'unreadable';
+      try {
+        status = (await as.workorder.estimateAPIApi.getEstimate({ estimateId })).status;
+      } catch {
+        /* leave it unreadable */
+      }
+
+      if (!isEmptyBadRequest || status !== 'APPROVED' || Date.now() >= deadline) {
+        throw new Error(
+          `promoteEstimate failed for estimate ${estimateId} (status=${status}): ${lastDetail}`,
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+    }
+  }
+}
+
+export interface CreatedProduct {
+  productEntityId: string;
+  sku: string;
+  name: string;
+}
+
+/**
+ * A brand-new catalog product, suffixed with the runId so every run gets its
+ * own SKU and the record is traceable back to the run that made it. Shape
+ * mirrors CatalogBootstrap's, which is backend-proven.
+ */
+export async function createCatalogProduct(
+  as: DomainClients,
+  ctx: BuilderContext,
+  suffix: string,
+): Promise<CreatedProduct> {
+  const sku = `ITEST-${suffix}-${ctx.runId}`.toUpperCase();
+  const name = `Integration test part ${suffix} [${ctx.runId}]`;
+  const created = await as.catalog.productsApi.createProduct({
+    productCreateRequestDto: {
+      name,
+      description: `${name}, created by the integration suite.`,
+      unitOfMeasure: 'EA',
+      sku,
+      mpn: `MPN-${suffix}-${ctx.runId}`.toUpperCase(),
+      attributes: JSON.stringify({ seededBy: 'sdk-itest', runId: ctx.runId }),
+    },
+  });
+  return {
+    productEntityId: requireField(readString(created, 'id', 'productId'), 'productEntityId'),
+    sku,
+    name,
+  };
 }
 
 export interface CreatedPo {
@@ -208,7 +360,7 @@ export async function createApprovedPo(
   vendorId: string,
   products: Array<{ skuId: string; quantity: number; unitCostMinor: number }>,
 ): Promise<CreatedPo> {
-  const po = await asParts.inventory.purchaseOrdersApi.createPurchaseOrder({
+  const po = await asParts.order.purchaseOrdersApi.createPurchaseOrder({
     createPurchaseOrderRequest: {
       vendorId,
       poDate: new Date(),
@@ -227,7 +379,7 @@ export async function createApprovedPo(
   });
   const purchaseOrderId = requireField(po.purchaseOrderId, 'purchaseOrderId');
 
-  await asManager.inventory.purchaseOrdersApi.approvePurchaseOrder({
+  await asManager.order.purchaseOrdersApi.approvePurchaseOrder({
     poId: purchaseOrderId,
     approvePurchaseOrderRequest: {
       approvalNotes: `Integration test approval [${ctx.runId}]`,
@@ -253,21 +405,38 @@ export async function createAsnForPo(
   po: CreatedPo,
 ): Promise<string> {
   const now = new Date();
-  const asn = await as.inventory.asnApi.createAsn({
-    createAsnRequest: {
-      vendorId,
-      asnReferenceNumber: `ASN-${ctx.runId}-${po.purchaseOrderId.slice(0, 8)}`,
-      relatedPoIds: [po.purchaseOrderId],
-      shipDate: now,
-      expectedArrivalDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
-      lineItems: po.lines.map((line) => ({
-        poId: po.purchaseOrderId,
-        poLineId: line.poLineId,
-        sku: line.skuId,
-        quantityShipped: line.quantity,
-        unitCostMinor: line.unitCostMinor,
-      })),
+  // The ASN names a purchase order pos-inventory has not necessarily heard of:
+  // pos-order owns the aggregate and publishes purchaseorder.updated on
+  // order.events.v1, which pos-inventory folds into ext_purchase_order on its
+  // next poll. An ASN issued straight after approval loses that race and fails
+  // with INVALID_PO_REFERENCE - the same one the seeder retries.
+  const asn = await retryWhileReplicating(
+    () =>
+      as.inventory.asnApi.createAsn({
+        createAsnRequest: {
+          vendorId,
+          // The tail, not the head: purchase order ids are UUIDv7, whose leading
+          // characters are a timestamp shared by everything created in the same
+          // ~65 second window, so two POs in one run would collide on the
+          // reference and the second ASN would be rejected as a duplicate.
+          asnReferenceNumber: `ASN-${ctx.runId}-${po.purchaseOrderId.slice(-12)}`,
+          relatedPoIds: [po.purchaseOrderId],
+          shipDate: now,
+          expectedArrivalDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+          lineItems: po.lines.map((line) => ({
+            poId: po.purchaseOrderId,
+            poLineId: line.poLineId,
+            sku: line.skuId,
+            quantityShipped: line.quantity,
+            unitCostMinor: line.unitCostMinor,
+          })),
+        },
+      }),
+    {
+      markers: ['INVALID_PO_REFERENCE'],
+      description: `creating an ASN for purchase order ${po.purchaseOrderId}`,
+      timeoutMs: 60_000,
     },
-  });
+  );
   return requireField(asn.asnId, 'asnId');
 }

@@ -512,26 +512,29 @@ OR `shop:schedule:edit`; A2 `appointments:view` OR `shop:schedule:view`; A3
 `tech` attempts A1's `createAppointment` → rejected; `tech` attempts A5's
 bridge → rejected (no `workorder:estimate:create`).
 
-- [ ] **A1 — Book an appointment.** Create a fresh person account + vehicle via
+- [x] **A1 — Book an appointment.** Create a fresh person account + vehicle via
   builders. `createAppointment` with `crmCustomerId`, `crmVehicleId`,
   `locationId`, tomorrow's `startAt`/`endAt`, `serviceRequestIds` drawn from
   bootstrap service entity ids. Assert: id returned, echoed fields match, and
   status is the backend's initial state (capture actual value; assert
   non-cancelled).
-- [ ] **A2 — Fetch by id.** `getAppointmentById` returns the same appointment;
+- [x] **A2 — Fetch by id.** `getAppointmentById` returns the same appointment;
   round-trips the schedule window.
-- [ ] **A3 — Reschedule.** Move the window one hour later. Assert the response
+- [x] **A3 — Reschedule.** Move the window one hour later. Assert the response
   reflects the new window; re-fetch confirms persistence.
-- [ ] **A4 — Cancel.** `cancelAppointment` with a reason. Assert cancelled
+- [x] **A4 — Cancel.** `cancelAppointment` with a reason. Assert cancelled
   status. Then assert `rescheduleAppointment` on the cancelled appointment is
   rejected via `expectHttpError` (record the actual 4xx the backend uses).
-- [ ] **A5 — Appointment → estimate bridge (idempotent).** On a second, active
-  appointment: `createEstimateFromAppointment` with a runId-derived
-  `idempotencyKey`. Assert `created === true` and an `estimateId`. Call again
-  with the same key: assert `created === false` and the **same** `estimateId`.
+- [x] **A5 — Appointment → estimate bridge (idempotent).** On a second, active
+  appointment: `createEstimateFromAppointment` with a fresh UUID
+  `idempotencyKey` — the field is a plain string in the generated client but a
+  UUID on the backend, which rejects anything else with a bare 400, so a
+  runId-derived key cannot be used. Assert `created === true` and an
+  `estimateId`. Call again: assert `created === false` and the **same**
+  `estimateId`.
   The returned estimate must be fetchable through `EstimateAPIApi` and carry
   the appointment's customer/vehicle.
-- [ ] **A6 — Validation negative.** `createAppointment` with `endAt` before
+- [x] **A6 — Validation negative.** `createAppointment` with `endAt` before
   `startAt` is rejected with a 4xx and no appointment is created.
 
 ### Task 4: Suite B — Estimates
@@ -554,29 +557,29 @@ SERVICE_ADVISOR):
 `workorder:estimate:promote`; B7's detail read is authenticated-only.
 Role-mode negative: `tech` attempts B5's `approveEstimate` → rejected.
 
-- [ ] **B1 — Create a draft estimate.** For a fresh party/vehicle:
+- [x] **B1 — Create a draft estimate.** For a fresh party/vehicle:
   `createEstimate` with the seeder's field shape (`customerId`, `vehicleId`,
   `crmPartyId`, `crmVehicleId`, `crmContactIds: []`, `currencyUomId: 'USD'`,
   `locationId`). Assert an estimate id.
-- [ ] **B2 — Add labor and part lines.** Two labor lines
+- [x] **B2 — Add labor and part lines.** Two labor lines
   (`itemType: Labor`, `serviceId`, qty 1, known unit prices) and one part line
   (`itemType: Part`, `productId`, qty 2, known unit price). Assert each line
   returns an id.
-- [ ] **B3 — Totals.** `calculateEstimateTotals`; assert the computed total
+- [x] **B3 — Totals.** `calculateEstimateTotals`; assert the computed total
   equals the arithmetic sum of the lines added in B2 (exact expected value —
   prices are chosen by the test, not random here). Record and assert tax
   handling as observed (document actual behavior in the test).
-- [ ] **B4 — Submit for approval.** Assert resulting status transition.
-- [ ] **B5 — Approve with signature.** `approveEstimate` with signature
+- [x] **B4 — Submit for approval.** Assert resulting status transition.
+- [x] **B5 — Approve with signature.** `approveEstimate` with signature
   payload (base64 data, signer name, `image/png`). Assert approved status.
-- [ ] **B6 — Decline path.** On a second estimate: submit, then
+- [x] **B6 — Decline path.** On a second estimate: submit, then
   `declineEstimate` with a reason. Assert declined status, and assert
   `promoteEstimate` on the declined estimate is rejected (4xx).
-- [ ] **B7 — Promote.** Promote the approved estimate. Assert a workorder id,
+- [x] **B7 — Promote.** Promote the approved estimate. Assert a workorder id,
   and that `getWorkorderDetail` lists one workorder service item per B2 labor
   line with matching `serviceEntityId`, and the part line present with its
   quantity.
-- [ ] **B8 — Lifecycle negative.** `approveEstimate` on the already-promoted
+- [x] **B8 — Lifecycle negative.** `approveEstimate` on the already-promoted
   estimate is rejected; adding an item to a promoted estimate is rejected.
 
 ### Task 5: Suite C — Workorder Execution
@@ -616,42 +619,50 @@ apply to finalize). `acct` (ACCOUNT_MANAGER) submits the payment event (C9,
 be attributed to the `tech` user. Role-mode negatives: `tech` attempts
 `completeWorkorder` → rejected; `advisor` attempts `startTimer` → rejected.
 
-- [ ] **C1 — Approve the workorder.** Signature payload as in the seeder.
+- [x] **C1 — Approve the workorder.** Signature payload as in the seeder.
   Assert approved status via `getWorkorderDetail`.
-- [ ] **C2 — Start execution.** `operationalContextApi.startWorkorder`. Assert
+- [x] **C2 — Start execution.** `operationalContextApi.startWorkorder`. Assert
   the detail status reflects execution start.
-- [ ] **C3 — Timer lifecycle.** Honor the seeder's hard-won ordering
+- [x] **C3 — Timer lifecycle.** Honor the seeder's hard-won ordering
   constraint: **do not assign a technician before the timer loop** (stop
   targets the authenticated user; an assigned technician would strand the
   timer). For the first service item: `stopTimers` (tolerate no-active-timer),
   `startTimer` with `{workorderId, workorderItemId, laborCode}`, wait ≥1s of
   real time, `stopTimers`. Assert via the workorder labor/time-entry API that
   a labor entry exists for that item with duration > 0.
-- [ ] **C4 — Timer conflict.** Start a timer, then `startTimer` again for the
+- [x] **C4 — Timer conflict.** Start a timer, then `startTimer` again for the
   second item without stopping: assert 409. Recover exactly as the seeder
   does (stop, restart), then stop. Assert both items have labor entries.
-- [ ] **C5 — Assign technician.** After the timer work, `assignTechnician`
+- [x] **C5 — Assign technician.** After the timer work, `assignTechnician`
   with a bootstrap technician id. Assert assignment visible on the detail or
   assignment endpoint.
-- [ ] **C6 — Pick and consume the part.** `waitFor` `getPickTasks` to return a
-  non-empty list (pick-list creation is asynchronous after promotion).
-  `completePickTask` each, then `consumeWorkorderPickedItems` with
-  picked/required quantities. Assert: subsequent `getPickTasks` shows
-  completed/consumed state, and location availability for the SKU (Suite D's
-  availability helper) decreased by the consumed quantity.
-- [ ] **C7 — Change request.** `createChangeRequest` adding one service;
+- [x] **C6 — Request a pick list; tasks need a reservation.** Written to expect
+  promotion to produce pickable tasks; alpha does not. `getPickTasks` answers
+  404 until a pick list is requested from inventory
+  (`POST /v1/inventory/pick-lists`, with `priority` supplied — it is optional in
+  the spec but a primitive `int` on the backend). Releasing that list moves it
+  to `READY_TO_PICK` holding **zero tasks**, because tasks come from a
+  reservation, which `CreatePickListRequest` carries an id for. The step asserts
+  that sequence and that stock did not move, so the day tasks do appear the test
+  fails and says so. Consumption and the availability delta wait on the
+  reservation path.
+
+  The part must also be one the shop holds: only ten of the thirty bootstrap
+  products were ever received, and a workorder for an unstocked part can never
+  be picked. The suite selects a stocked one.
+- [x] **C7 — Change request.** `createChangeRequest` adding one service;
   `approveChangeRequest`. Assert the new service item appears on the
   workorder detail; run its timer + completion like the others.
-- [ ] **C8 — Complete items, then the workorder.** POST the per-item complete
+- [x] **C8 — Complete items, then the workorder.** POST the per-item complete
   endpoint for every service/part in a completable status
   (`OPEN`, `READY_TO_EXECUTE`, `IN_PROGRESS`); assert 200/204 per item. Then
   `completeWorkorder` with notes; assert completed status.
-- [ ] **C9 — Invoice and payment.** `generateWorkorderInvoice` → assert
+- [x] **C9 — Invoice and payment.** `generateWorkorderInvoice` → assert
   `invoiceId`. `finalizeInvoice` → assert a numeric total consistent with the
   estimate lines plus the approved change request. Submit the
   `INVOICE_PAYMENT` accounting event (`sourceSystem: 'SDK_ITEST'`,
   `organizationId: locationId`, full amount); assert acceptance.
-- [ ] **C10 — Execution negative.** On a fresh approved-but-unstarted
+- [x] **C10 — Execution negative.** On a fresh approved-but-unstarted
   workorder, `completeWorkorder` before items complete: assert the backend
   rejects it (record actual status/code). This pins the state machine the
   seeder only navigates around.
@@ -692,23 +703,23 @@ cannot approve it — INVENTORY_LEAD deliberately holds `create` but not
 
 **Part 1 — receiving a brand-new product into stock:**
 
-- [ ] **D1 — Create a new catalog product.** A runId-suffixed SKU/product via
+- [x] **D1 — Create a new catalog product.** A runId-suffixed SKU/product via
   the catalog API (same shape as `CatalogBootstrap`). Assert entity id;
   snapshot availability (expect zero/absent).
-- [ ] **D2 — Purchase order.** `createPurchaseOrder` for 25 units
+- [x] **D2 — Purchase order.** `createPurchaseOrder` for 25 units
   (`poDate: new Date()`, real now), runId in `comment`. Assert PO id and one
   line with a line id. `approvePurchaseOrder`; assert approved.
-- [ ] **D3 — ASN and goods receipt.** `createAsn` referencing the PO and its
+- [x] **D3 — ASN and goods receipt.** `createAsn` referencing the PO and its
   line (`shipDate` now, `expectedArrivalDate` +3 real days — a future date is
   data, not a wait). `createGoodsReceipt` for the full 25 against the PO
   line. Assert receipt id; `getGoodsReceipt` round-trips.
-- [ ] **D4 — Stock visible.** `waitFor` availability of the new SKU at the
+- [x] **D4 — Stock visible.** `waitFor` availability of the new SKU at the
   location to increase by 25 over the D1 snapshot.
-- [ ] **D5 — Putaway (observed behavior).** `listPutawayTasks` for the
+- [x] **D5 — Putaway (observed behavior).** `listPutawayTasks` for the
   receipt; if tasks exist, `claimPutawayTask` → `executePutaway` and assert
   completion. If the backend auto-putaways (no tasks), assert that and move
   on — the test documents which path this backend takes.
-- [ ] **D6 — Receiving-session variant.** For a second small PO:
+- [x] **D6 — Receiving-session variant.** For a second small PO:
   `createReceivingSession` (`sourceDocumentId` = PO id),
   `receiveItemsIntoStaging` with its lines, `getReceivingSession` → assert
   session state and received quantities. This covers the staging-based
@@ -716,27 +727,79 @@ cannot approve it — INVENTORY_LEAD deliberately holds `create` but not
 
 **Part 2 — receiving products for a specific workorder:**
 
-- [ ] **D7 — Create a parts-shortage workorder.** New product (runId SKU-B)
+- [x] **D7 — Create a parts-shortage workorder.** New product (runId SKU-B)
   with **no stock**. Build an estimate with one labor line and one part line
   of SKU-B (qty 2); approve and promote. Assert the shortage is observable:
   either a backorder for SKU-B (`listBackorders` filtered by sku) or an
   unfulfillable pick task — record which signal this backend emits and assert
   it via `waitFor`.
-- [ ] **D8 — Order and receive against the workorder.** PO + ASN for SKU-B
+- [x] **D8 — Order and receive against the workorder.** PO + ASN for SKU-B
   (qty 2) as in D2–D3, then `createReceivingSession` +
   `receiveItemsIntoStaging` for the delivery.
-- [ ] **D9 — Cross-dock to the workorder.** `crossDockReceivingLine` with
+- [x] **D9 — Cross-dock to the workorder.** `crossDockReceivingLine` with
   `{ workorderId, workorderLineId, quantity: 2, notes: runId }` using the
   workorder part line id from D7. Assert the cross-dock response links the
   workorder.
-- [ ] **D10 — Workorder can proceed.** `waitFor` the workorder's pick task
+- [x] **D10 — Workorder can proceed.** `waitFor` the workorder's pick task
   for SKU-B to become completable; complete and consume it (as C6); assert
   the part item reaches a completable status and the backorder (if D7
   observed one) is closed.
-- [ ] **D11 — Receiving negative.** `createGoodsReceipt` with a quantity
+- [x] **D11 — Receiving negative.** `createGoodsReceipt` with a quantity
   exceeding the PO line (e.g. 999): assert rejection or documented
   over-receipt behavior; `crossDockReceivingLine` against a bogus workorder
   id: assert 4xx.
+
+### Suites A-D: what alpha actually does (2026-08-23)
+
+All four suites run as one set against alpha: **38 passing, 7 skipped** (the
+role-mode negatives, which need role mode), one failing on a backend defect
+(below). Values recorded from real runs:
+
+- **A1** initial appointment status is `SCHEDULED`; **A4** rescheduling a
+  cancelled appointment is rejected with **409**; **A6** an inverted window is
+  rejected with **400**.
+- **B3** totals are exact: subtotal 262.95 for 129.95 + 84.50 + 2 x 24.25, tax
+  22.35, total 285.30. **B4** submit moves `DRAFT -> PENDING_APPROVAL`. **B8**
+  approve-after-promote is **400**, add-after-promote is **409**. **B6**
+  declined status is `DECLINED` and promote is rejected with **409**.
+- **C2** start moves the workorder to `WORK_IN_PROGRESS`. **C4** a second
+  concurrent timer is **409**. **C9** invoice generation is *asynchronous*: the
+  first call returns `{invoiceId: null, status: PENDING}` and a later call
+  returns the invoice; finalized total 286.17, payment event accepted.
+- **D4** a goods receipt raises on-hand by exactly what was received.
+  **D5** this backend auto-putaways: no putaway tasks are created for a receipt.
+  **D11** over-receipt is **accepted** - 999 units against a line of 1.
+
+Three specified behaviours do not exist here, and the suites now assert their
+absence so the tests fail the day they appear:
+
+- **Pick tasks are not created by promotion** (C6). A pick list must be
+  requested from inventory (`POST /v1/inventory/pick-lists`) and released; even
+  then it holds no tasks, because tasks come from a reservation, which
+  `CreatePickListRequest` carries an id for. The seeder's tolerated 404 had been
+  hiding this.
+- **Receiving sessions cannot be built from a purchase order** (D6, D9).
+  pos-inventory fetches source-document lines through `SourceDocumentStubClient`,
+  which is disabled by default (`pos.inventory.receiving.stub.enabled`) and
+  points at a `/stub/...` service that was never written. Staging and cross-dock
+  are therefore unreachable.
+- **A workorder short of a part raises no shortage signal** (D7): no backorder,
+  no unfulfillable pick task.
+
+Backend defects found by these suites, each fixed or filed: #1460 (catalog LOB
+reads), #1464 (purchase order auditing), #1465 (paged list endpoints ignore
+client parameters), #1467 and #1473 (replica feeds disabled on alpha), #1469
+(customer numbers collided every ~65 seconds), #1471 (unhandled exceptions
+escape as bare 500s), #1475 (the appointment bridge never set created_by_id -
+the one remaining failure, A5).
+
+Environment notes worth keeping: only 10 of the 30 bootstrap products carry
+stock, so any test that needs to pick a part must select a stocked one; and
+`crmAccountsApi.createVehicleForParty` does not create a vehicle - it files a
+VIN against the party and returns no id, so vehicles are registered through
+pos-vehicle-inventory.
+
+---
 
 ### Task 7: Laptop → Alpha Access Tunnel
 

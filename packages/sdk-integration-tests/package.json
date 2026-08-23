@@ -12,9 +12,11 @@
     "@durion-sdk/customer": "*",
     "@durion-sdk/inventory": "*",
     "@durion-sdk/invoice": "*",
+    "@durion-sdk/order": "*",
     "@durion-sdk/seeder": "*",
     "@durion-sdk/shop-manager": "*",
     "@durion-sdk/transport": "*",
+    "@durion-sdk/vehicle-inventory": "*",
     "@durion-sdk/workorder": "*"
   },
   "devDependencies": {
