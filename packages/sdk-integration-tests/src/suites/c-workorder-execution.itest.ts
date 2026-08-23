@@ -85,7 +85,9 @@ describe('Suite C — workorder execution', () => {
     acct = personas.as('acct');
     ctx = {
       runId: context.runId,
-      random: new SeederRandom(seedFromRunId(context.runId)),
+      // Seeded per suite, not per run: a shared seed makes every suite generate
+      // the same VIN, and VINs are globally unique across active vehicles.
+      random: new SeederRandom(seedFromRunId(`${context.runId}:c-workorder-execution`)),
       refs: context.referenceCache,
     };
 

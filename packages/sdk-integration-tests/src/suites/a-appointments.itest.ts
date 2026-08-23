@@ -41,12 +41,23 @@ describe('Suite A — appointments', () => {
   let vehicleId: string;
   let serviceRequestIds: string[];
 
-  /** Tomorrow at 09:00 UTC, plus the requested offsets in minutes. */
+  /**
+   * Tomorrow at 09:00 UTC, plus a per-run band and the requested offset.
+   *
+   * The band matters: the backend rejects a double-booked slot with
+   * "Requested slot is already booked", so a fixed 09:00 start means the second
+   * run of this suite collides with the first. A random band spread over the
+   * following week keeps runs apart without any coordination - and unlike a
+   * clock-derived one, it cannot collide with another run whose band happens to
+   * differ by exactly one of this suite's offsets.
+   */
+  const runBandMinutes = Math.floor(Math.random() * 10_000);
+
   const window = (startOffsetMinutes: number, durationMinutes: number) => {
     const start = new Date();
     start.setUTCDate(start.getUTCDate() + 1);
     start.setUTCHours(9, 0, 0, 0);
-    start.setUTCMinutes(start.getUTCMinutes() + startOffsetMinutes);
+    start.setUTCMinutes(start.getUTCMinutes() + runBandMinutes + startOffsetMinutes);
     const end = new Date(start.getTime() + durationMinutes * 60_000);
     return { startAt: start, endAt: end };
   };
@@ -88,7 +99,9 @@ describe('Suite A — appointments', () => {
     tech = personas.as('tech');
     ctx = {
       runId: context.runId,
-      random: new SeederRandom(seedFromRunId(context.runId)),
+      // Seeded per suite, not per run: a shared seed makes every suite generate
+      // the same VIN, and VINs are globally unique across active vehicles.
+      random: new SeederRandom(seedFromRunId(`${context.runId}:a-appointments`)),
       refs: context.referenceCache,
     };
 
@@ -191,7 +204,10 @@ describe('Suite A — appointments', () => {
   describe('A5 — appointment → estimate bridge', () => {
     it('is idempotent on the appointment: the second call returns the first estimate', async () => {
       const appointment = await bookAppointment(advisor, 240);
-      const idempotencyKey = `${context.runId}-bridge-${appointment.appointmentId.slice(0, 8)}`;
+      // The field is typed as a plain string by the generated client but is a UUID
+      // on the backend, which rejects anything else with a bare 400. One value,
+      // reused across both calls: that sameness is what the test is proving.
+      const idempotencyKey = crypto.randomUUID();
 
       const request = {
         createEstimateFromAppointmentRequest: {
@@ -260,7 +276,7 @@ describe('Suite A — appointments', () => {
       await expectHttpError(
         tech.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
           createEstimateFromAppointmentRequest: {
-            idempotencyKey: `${context.runId}-tech-bridge`,
+            idempotencyKey: crypto.randomUUID(),
             appointmentId: appointment.appointmentId,
             customerId: customer.partyId,
             vehicleId,

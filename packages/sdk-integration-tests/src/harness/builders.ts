@@ -1,6 +1,6 @@
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
-import { call } from './http';
+import { call, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 
 /**
@@ -360,21 +360,38 @@ export async function createAsnForPo(
   po: CreatedPo,
 ): Promise<string> {
   const now = new Date();
-  const asn = await as.inventory.asnApi.createAsn({
-    createAsnRequest: {
-      vendorId,
-      asnReferenceNumber: `ASN-${ctx.runId}-${po.purchaseOrderId.slice(0, 8)}`,
-      relatedPoIds: [po.purchaseOrderId],
-      shipDate: now,
-      expectedArrivalDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
-      lineItems: po.lines.map((line) => ({
-        poId: po.purchaseOrderId,
-        poLineId: line.poLineId,
-        sku: line.skuId,
-        quantityShipped: line.quantity,
-        unitCostMinor: line.unitCostMinor,
-      })),
+  // The ASN names a purchase order pos-inventory has not necessarily heard of:
+  // pos-order owns the aggregate and publishes purchaseorder.updated on
+  // order.events.v1, which pos-inventory folds into ext_purchase_order on its
+  // next poll. An ASN issued straight after approval loses that race and fails
+  // with INVALID_PO_REFERENCE - the same one the seeder retries.
+  const asn = await retryWhileReplicating(
+    () =>
+      as.inventory.asnApi.createAsn({
+        createAsnRequest: {
+          vendorId,
+          // The tail, not the head: purchase order ids are UUIDv7, whose leading
+          // characters are a timestamp shared by everything created in the same
+          // ~65 second window, so two POs in one run would collide on the
+          // reference and the second ASN would be rejected as a duplicate.
+          asnReferenceNumber: `ASN-${ctx.runId}-${po.purchaseOrderId.slice(-12)}`,
+          relatedPoIds: [po.purchaseOrderId],
+          shipDate: now,
+          expectedArrivalDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+          lineItems: po.lines.map((line) => ({
+            poId: po.purchaseOrderId,
+            poLineId: line.poLineId,
+            sku: line.skuId,
+            quantityShipped: line.quantity,
+            unitCostMinor: line.unitCostMinor,
+          })),
+        },
+      }),
+    {
+      markers: ['INVALID_PO_REFERENCE'],
+      description: `creating an ASN for purchase order ${po.purchaseOrderId}`,
+      timeoutMs: 60_000,
     },
-  });
+  );
   return requireField(asn.asnId, 'asnId');
 }
