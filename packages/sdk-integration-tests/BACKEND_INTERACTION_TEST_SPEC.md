@@ -751,9 +751,9 @@ cannot approve it — INVENTORY_LEAD deliberately holds `create` but not
 
 ### Suites A-D: what alpha actually does (2026-08-23)
 
-All four suites run as one set against alpha: **38 passing, 7 skipped** (the
-role-mode negatives, which need role mode), one failing on a backend defect
-(below). Values recorded from real runs:
+All four suites run as one set against alpha: **39 passing, 7 skipped** (the
+role-mode negatives, which need role mode), **0 failing**, repeatably. Values
+recorded from real runs:
 
 - **A1** initial appointment status is `SCHEDULED`; **A4** rescheduling a
   cancelled appointment is rejected with **409**; **A6** an inverted window is
@@ -790,8 +790,16 @@ Backend defects found by these suites, each fixed or filed: #1460 (catalog LOB
 reads), #1464 (purchase order auditing), #1465 (paged list endpoints ignore
 client parameters), #1467 and #1473 (replica feeds disabled on alpha), #1469
 (customer numbers collided every ~65 seconds), #1471 (unhandled exceptions
-escape as bare 500s), #1475 (the appointment bridge never set created_by_id -
-the one remaining failure, A5).
+escape as bare 500s), #1475 (the appointment bridge never set created_by_id),
+#1477 (estimate promotion discards the reason it refused, making a transient
+refusal indistinguishable from a permanent one).
+
+Two things the suites must do to stay repeatable, both learned the hard way:
+appointment slots are booked in a band chosen at random across the next few
+months, because every appointment a previous run booked is still there and the
+backend refuses a double-booking; and each suite seeds its generator from its
+own name as well as the runId, because a shared seed makes all four generate the
+same VIN, which must be globally unique across active vehicles.
 
 Environment notes worth keeping: only 10 of the 30 bootstrap products carry
 stock, so any test that needs to pick a part must select a stocked one; and

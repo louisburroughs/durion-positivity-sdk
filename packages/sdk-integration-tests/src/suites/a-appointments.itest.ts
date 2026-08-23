@@ -45,13 +45,12 @@ describe('Suite A — appointments', () => {
    * Tomorrow at 09:00 UTC, plus a per-run band and the requested offset.
    *
    * The band matters: the backend rejects a double-booked slot with
-   * "Requested slot is already booked", so a fixed 09:00 start means the second
-   * run of this suite collides with the first. A random band spread over the
-   * following week keeps runs apart without any coordination - and unlike a
-   * clock-derived one, it cannot collide with another run whose band happens to
-   * differ by exactly one of this suite's offsets.
+   * "Requested slot is already booked", and every appointment any previous run
+   * booked is still there. A random band spread across the next few months keeps
+   * runs apart without coordination; a week's worth was not enough once the runs
+   * started accumulating.
    */
-  const runBandMinutes = Math.floor(Math.random() * 10_000);
+  const runBandMinutes = Math.floor(Math.random() * 200_000);
 
   const window = (startOffsetMinutes: number, durationMinutes: number) => {
     const start = new Date();
