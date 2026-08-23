@@ -8,6 +8,7 @@ import {
 } from '@durion-sdk/people';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
 import type { EmployeeRefs } from '../support/ReferenceCache';
+import { isResponseErrorMatching, retryWhileReplicating } from '../support/replicationRetry';
 
 interface EmployeeSeedDefinition {
   legalName: string;
@@ -89,23 +90,6 @@ const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
 const PERSON_REPLICATION_TIMEOUT_MS = 30_000;
 const PERSON_REPLICATION_POLL_MS = 500;
 const ASSIGNMENT_LOOKUP_TIMEOUT_MS = 10_000;
-
-/**
- * True when the failure is the staffing endpoint reporting that the person is
- * not yet in its replica. Reads the response body once and tolerates any shape,
- * so a non-JSON error page cannot break the retry decision.
- */
-async function isPersonNotFound(error: unknown): Promise<boolean> {
-  const response = (error as { response?: Response } | undefined)?.response;
-  if (!response || response.status !== 404) {
-    return false;
-  }
-  try {
-    return (await response.clone().text()).includes('Person not found');
-  } catch {
-    return false;
-  }
-}
 
 export class PeopleBootstrap {
   constructor(private readonly sdkConfig: DurionSdkConfig) {}
@@ -293,48 +277,21 @@ export class PeopleBootstrap {
    * Retries an assignment while the person is still propagating.
    *
    * Only "Person not found" 404s are retried: any other failure - an unknown
-   * location, an inactive person, a malformed request - is returned immediately
+   * location, an inactive person, a malformed request - is raised immediately
    * rather than being hidden behind a timeout.
    */
   private async createAssignmentWhenPersonReplicated(
     personId: string,
     attempt: (initOverrides: RequestInit) => Promise<StaffingAssignmentResponse>,
   ): Promise<void> {
-    const deadline = Date.now() + PERSON_REPLICATION_TIMEOUT_MS;
-    let waited = false;
-    let lastError: unknown;
-
-    for (;;) {
-      // Bound each request by what is left of the deadline. fetch applies no
-      // request timeout of its own, so without an abort signal a stalled
-      // connection would park inside attempt() and the deadline check below
-      // would never be reached. The signal also covers reading the error body.
-      const remaining = deadline - Date.now();
-      if (remaining <= 0) {
-        throw (
-          lastError ??
-          new Error(`PeopleBootstrap: timed out waiting for person ${personId} to replicate`)
-        );
-      }
-
-      try {
-        await attempt({ signal: AbortSignal.timeout(remaining) });
-        if (waited) {
-          console.log(`[Bootstrap] Person ${personId} replicated; assignment created.`);
-        }
-        return;
-      } catch (error) {
-        if (!(await isPersonNotFound(error))) {
-          throw error;
-        }
-        lastError = error;
-        if (!waited) {
-          console.log(`[Bootstrap] Waiting for person ${personId} to replicate...`);
-          waited = true;
-        }
-        await new Promise((resolve) => setTimeout(resolve, PERSON_REPLICATION_POLL_MS));
-      }
-    }
+    await retryWhileReplicating({
+      attempt,
+      subject: `person ${personId}`,
+      outcome: 'assignment created',
+      isReplicationLag: (error) => isResponseErrorMatching(error, 404, 'Person not found'),
+      timeoutMs: PERSON_REPLICATION_TIMEOUT_MS,
+      pollMs: PERSON_REPLICATION_POLL_MS,
+    });
   }
 
   private requireEmployeeId(employee: EmployeeProfileDto, employeeNumber: string): string {
