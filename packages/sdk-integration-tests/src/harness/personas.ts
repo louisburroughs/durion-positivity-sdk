@@ -3,7 +3,9 @@ import { createCatalogClient } from '@durion-sdk/catalog';
 import { createCustomerClient } from '@durion-sdk/customer';
 import { createInventoryClient } from '@durion-sdk/inventory';
 import { createInvoiceClient } from '@durion-sdk/invoice';
+import { createOrderClient } from '@durion-sdk/order';
 import { SeederAuth, SeederConfig } from '@durion-sdk/seeder';
+import { createVehicleInventoryClient } from '@durion-sdk/vehicle-inventory';
 import { createWorkorderClient } from '@durion-sdk/workorder';
 import type { ItestConfig, PersonaName } from './ItestConfig';
 import { createShopManagerClient, type ShopManagerClient } from './shopManagerClient';
@@ -14,6 +16,18 @@ export interface DomainClients {
   invoice: ReturnType<typeof createInvoiceClient>;
   accounting: ReturnType<typeof createAccountingClient>;
   inventory: ReturnType<typeof createInventoryClient>;
+  /**
+   * Purchase orders live in pos-order (/v1/orders/purchase-orders), not
+   * pos-inventory: @durion-sdk/inventory still carries a PurchaseOrdersApi from
+   * before the move whose paths 404 against the gateway.
+   */
+  order: ReturnType<typeof createOrderClient>;
+  /**
+   * Vehicles are owned here, not by CRM: pos-customer serves them from an
+   * ext_vehicle replica and its own create endpoint only files a VIN string
+   * against the party.
+   */
+  vehicleInventory: ReturnType<typeof createVehicleInventoryClient>;
   catalog: ReturnType<typeof createCatalogClient>;
   shopManager: ShopManagerClient;
   /** The identity behind these clients — for labor-attribution assertions. */
@@ -89,6 +103,8 @@ export class Personas {
         invoice: createInvoiceClient(auth.buildSdkConfig('invoice')),
         accounting: createAccountingClient(auth.buildSdkConfig('accounting')),
         inventory: createInventoryClient(auth.buildSdkConfig('inventory')),
+        order: createOrderClient(auth.buildSdkConfig('order')),
+        vehicleInventory: createVehicleInventoryClient(auth.buildSdkConfig('vehicle-inventory')),
         catalog: createCatalogClient(auth.buildSdkConfig('catalog')),
         shopManager: createShopManagerClient({
           baseUrl: this.config.baseUrl,

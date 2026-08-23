@@ -12,6 +12,10 @@ import { CycleCountAdjustmentsApi } from './apis/CycleCountAdjustmentsApi';
 import { InventoryManagementApi } from './apis/InventoryManagementApi';
 import { PurchaseOrdersApi } from './apis/PurchaseOrdersApi';
 import { ReceivingApi } from './apis/ReceivingApi';
+import { BackordersApi } from './apis/BackordersApi';
+import { InventoryAvailabilityApi } from './apis/InventoryAvailabilityApi';
+import { PutawayApi } from './apis/PutawayApi';
+import { PutawayExecutionApi } from './apis/PutawayExecutionApi';
 
 export function createInventoryClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -31,7 +35,19 @@ export function createInventoryClient(config: DurionSdkConfig) {
     asnApi: new ASNApi(configuration),
     cycleCountAdjustmentsApi: new CycleCountAdjustmentsApi(configuration),
     inventoryManagementApi: new InventoryManagementApi(configuration),
+    /**
+     * @deprecated Purchase orders moved to pos-order; these paths
+     * (/v1/inventory/purchase-orders) 404 against the gateway. Use
+     * `createOrderClient(...).purchaseOrdersApi` instead. Kept only so the
+     * removal is a deliberate breaking change rather than a silent one.
+     */
     purchaseOrdersApi: new PurchaseOrdersApi(configuration),
     receivingApi: new ReceivingApi(configuration),
+    // Generated and exported by the apis barrel, but never surfaced here, so no
+    // consumer of this factory could reach availability, backorders or putaway.
+    inventoryAvailabilityApi: new InventoryAvailabilityApi(configuration),
+    backordersApi: new BackordersApi(configuration),
+    putawayApi: new PutawayApi(configuration),
+    putawayExecutionApi: new PutawayExecutionApi(configuration),
   };
 }

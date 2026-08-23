@@ -32,12 +32,43 @@ export const readString = (value: unknown, ...keys: string[]): string | undefine
   return undefined;
 };
 
+/**
+ * Numeric counterpart to readString. Several generated operations declare their
+ * response as a bare `object` (calculateEstimateTotals among them), so the
+ * fields have to be read defensively rather than through a model.
+ */
+export const readNumber = (value: unknown, ...keys: string[]): number | undefined => {
+  const record = asRecord(value);
+  if (!record) return undefined;
+  for (const key of keys) {
+    const candidate = record[key];
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
+};
+
 export const requireField = (value: string | undefined, name: string): string => {
   if (!value) {
     throw new Error(`${name} is missing from the response`);
   }
   return value;
 };
+
+/**
+ * A stable numeric seed derived from the runId, so a suite's generated data is
+ * reproducible within a run and different between runs. A fixed literal seed
+ * would regenerate the same person on every run and collide on the unique
+ * email.
+ */
+export function seedFromRunId(runId: string): number {
+  let hash = 0;
+  for (const char of runId) {
+    hash = (hash * 31 + char.charCodeAt(0)) % 2_147_483_647;
+  }
+  return hash;
+}
 
 export interface CreatedCustomer {
   partyId: string;
@@ -52,14 +83,17 @@ export async function createPersonAccount(
 ): Promise<CreatedCustomer> {
   const firstName = ctx.random.firstName();
   const lastName = ctx.random.lastName();
+  // The email carries the runId: it is unique per account in CRM, and a
+  // generated address without it collides the moment a suite runs twice.
+  const email = `${firstName}.${lastName}.${ctx.runId}@itest.invalid`.toLowerCase();
   const customer = await as.customer.crmAccountsApi.createCrmCommercialAccount({
     createCommercialAccountRequest: {
       legalName: `${firstName} ${lastName}`,
-      displayName: `${firstName} ${lastName}`,
+      displayName: `${firstName} ${lastName} [${ctx.runId}]`,
       partyType: 'PERSON',
       contactFirstName: firstName,
       contactLastName: lastName,
-      email: ctx.random.email(firstName, lastName),
+      email,
       phone: ctx.random.phone(),
     },
   });
@@ -71,20 +105,36 @@ export async function createPersonAccount(
   };
 }
 
+/**
+ * Registers a vehicle and returns its id.
+ *
+ * Deliberately not `crmAccountsApi.createVehicleForParty`, which the name
+ * suggests: that endpoint appends the VIN to the party's `vehicleVins` list and
+ * returns `{partyId, vinNumber, status}` — no vehicle record, and no id, even
+ * though its response model declares `vehicleId` as required. pos-customer
+ * serves vehicle reads from an `ext_vehicle` replica; the aggregate itself
+ * lives in pos-vehicle-inventory, which is what this registers against.
+ * Tracked as durion-positivity-backend#1466.
+ */
 export async function createVehicle(
   as: DomainClients,
   ctx: BuilderContext,
   partyId: string,
 ): Promise<string> {
-  const description = `${ctx.random.vehicleYear()} ${ctx.random.vehicleMake()} ${ctx.random.vehicleModel()}`;
-  const vehicle = await as.customer.crmAccountsApi.createVehicleForParty({
-    partyId,
-    createVehicleForPartyRequest: {
-      vinNumber: ctx.random.vin(),
-      unitNumber: description,
-      description,
+  const year = ctx.random.vehicleYear();
+  const make = ctx.random.vehicleMake();
+  const model = ctx.random.vehicleModel();
+  const vehicle = await as.vehicleInventory.vehicleRegistryApi.createVehicle({
+    createVehicleRequest: {
+      accountId: partyId,
+      vin: ctx.random.vin(),
+      unitNumber: `${year} ${make} ${model}`,
+      description: `${year} ${make} ${model} [${ctx.runId}]`,
       licensePlate: ctx.random.licensePlate(),
-      licensePlateRegion: 'TX',
+      licensePlateJurisdiction: 'TX',
+      make,
+      model,
+      year,
     },
   });
   return requireField(vehicle.vehicleId, 'vehicleId');
@@ -208,7 +258,7 @@ export async function createApprovedPo(
   vendorId: string,
   products: Array<{ skuId: string; quantity: number; unitCostMinor: number }>,
 ): Promise<CreatedPo> {
-  const po = await asParts.inventory.purchaseOrdersApi.createPurchaseOrder({
+  const po = await asParts.order.purchaseOrdersApi.createPurchaseOrder({
     createPurchaseOrderRequest: {
       vendorId,
       poDate: new Date(),
@@ -227,7 +277,7 @@ export async function createApprovedPo(
   });
   const purchaseOrderId = requireField(po.purchaseOrderId, 'purchaseOrderId');
 
-  await asManager.inventory.purchaseOrdersApi.approvePurchaseOrder({
+  await asManager.order.purchaseOrdersApi.approvePurchaseOrder({
     poId: purchaseOrderId,
     approvePurchaseOrderRequest: {
       approvalNotes: `Integration test approval [${ctx.runId}]`,

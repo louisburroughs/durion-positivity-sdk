@@ -10,6 +10,7 @@ import { DurionSdkConfig, SdkHttpClient } from '@durion-sdk/transport';
 import { Configuration } from './runtime';
 import { WorkOrderAPIApi } from './apis/WorkOrderAPIApi';
 import { EstimateAPIApi } from './apis/EstimateAPIApi';
+import { EstimatesFromAppointmentsApi } from './apis/EstimatesFromAppointmentsApi';
 import { TechnicianAssignmentAPIApi } from './apis/TechnicianAssignmentAPIApi';
 import { WorkorderPickFacadeApi } from './apis/WorkorderPickFacadeApi';
 import { WorkorderPickedItemsApi } from './apis/WorkorderPickedItemsApi';
@@ -36,6 +37,10 @@ export function createWorkorderClient(config: DurionSdkConfig) {
   return {
     workOrderAPIApi: new WorkOrderAPIApi(configuration),
     estimateAPIApi: new EstimateAPIApi(configuration),
+    // The appointment -> estimate bridge (POST /v1/estimates/from-appointment).
+    // Generated and exported by the apis barrel, but never surfaced here, so no
+    // consumer of this factory could reach it.
+    estimatesFromAppointmentsApi: new EstimatesFromAppointmentsApi(configuration),
     technicianAssignmentAPIApi: new TechnicianAssignmentAPIApi(configuration),
     workorderPickFacadeApi: new WorkorderPickFacadeApi(configuration),
     workorderPickedItemsApi: new WorkorderPickedItemsApi(configuration),
