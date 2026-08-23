@@ -19,7 +19,6 @@ import type {
   ConvertPurchaseSuggestionsRequest,
   ConvertPurchaseSuggestionsResponse,
   DismissPurchaseSuggestionRequest,
-  Pageable,
   PurchaseSuggestionResponse,
 } from '../models/index';
 import {
@@ -31,8 +30,6 @@ import {
     ConvertPurchaseSuggestionsResponseToJSON,
     DismissPurchaseSuggestionRequestFromJSON,
     DismissPurchaseSuggestionRequestToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     PurchaseSuggestionResponseFromJSON,
     PurchaseSuggestionResponseToJSON,
 } from '../models/index';
@@ -55,10 +52,12 @@ export interface GetPurchaseSuggestionRequest {
 }
 
 export interface ListPurchaseSuggestionsRequest {
-    pageable: Pageable;
     status?: string;
     sku?: string;
     locationId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -256,13 +255,6 @@ export class PurchaseSuggestionsApi extends runtime.BaseAPI {
      * List Purchase Suggestions
      */
     async listPurchaseSuggestionsRaw(requestParameters: ListPurchaseSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listPurchaseSuggestions().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['status'] != null) {
@@ -277,8 +269,16 @@ export class PurchaseSuggestionsApi extends runtime.BaseAPI {
             queryParameters['locationId'] = requestParameters['locationId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -309,7 +309,7 @@ export class PurchaseSuggestionsApi extends runtime.BaseAPI {
      * Returns a page of replenishment purchase suggestions, newest first, with their lifecycle status, suggested quantity, vendor and pricing snapshot. Use this tool to discover suggestionIds or review what the replenishment scan proposed; use getPurchaseSuggestion instead when the id is already known. Preconditions: none; suggestions are created only by the replenishment scan, so an empty page means the scan proposed nothing matching the filters. Required inputs: none; status (SUGGESTED, ACCEPTED, CONVERTED or DISMISSED), sku and locationId are optional filters, and the page size defaults to 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when status is not a known lifecycle value, and 200 with an empty page when nothing matches. 
      * List Purchase Suggestions
      */
-    async listPurchaseSuggestions(requestParameters: ListPurchaseSuggestionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+    async listPurchaseSuggestions(requestParameters: ListPurchaseSuggestionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listPurchaseSuggestionsRaw(requestParameters, initOverrides);
         return await response.value();
     }

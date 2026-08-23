@@ -73,6 +73,9 @@ export interface SearchAuditEventsRequest {
     reasonCode?: string;
     pageToken?: string;
     locationIds?: Array<string>;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -385,6 +388,18 @@ export class AuditApi extends runtime.BaseAPI {
 
         if (requestParameters['locationIds'] != null) {
             queryParameters['locationIds'] = requestParameters['locationIds'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

@@ -12,7 +12,6 @@ export * from './NltiRequestDTO';
 export * from './NltiResponseV1';
 export * from './PageAuditEventResponse';
 export * from './PageableObject';
-export * from './ServerSentEventString';
 export * from './SortObject';
 export * from './StreamChatRequest';
 export * from './SystemPromptRequest';

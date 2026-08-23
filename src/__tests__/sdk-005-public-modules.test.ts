@@ -68,7 +68,7 @@ const PHASE_2_API_PROPS: Readonly<Record<string, readonly string[]>> = {
   'supplier': ['supplierVendorProfilesApi', 'supplierPriceCatalogApi'],
   'warranty': ['warrantyClaimsApi', 'warrantyPoliciesApi'],
   'price': ['priceQuotesApi', 'priceRestrictionsApi'],
-  'shop-manager': ['appointmentsApi', 'shopApi'],
+  'shop-manager': ['appointmentsApi', 'shopAuditApi'],
   'image': ['imageApi'],
   'event-receiver': ['eventEmissionApi', 'eventTypesApi'],
   'vehicle-fitment': ['vehicleFitmentApi'],

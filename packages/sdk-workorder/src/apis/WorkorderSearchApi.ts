@@ -16,15 +16,12 @@
 import * as runtime from '../runtime';
 import type {
   PageWorkorderSearchResult,
-  Pageable,
   WorkorderNumberRef,
   WorkorderNumberResolveRequest,
 } from '../models/index';
 import {
     PageWorkorderSearchResultFromJSON,
     PageWorkorderSearchResultToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     WorkorderNumberRefFromJSON,
     WorkorderNumberRefToJSON,
     WorkorderNumberResolveRequestFromJSON,
@@ -36,10 +33,12 @@ export interface ResolveWorkorderNumbersRequest {
 }
 
 export interface SearchWorkordersRequest {
-    pageable: Pageable;
     q?: string;
     customerId?: string;
     vehicleId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -98,13 +97,6 @@ export class WorkorderSearchApi extends runtime.BaseAPI {
      * Search Workorders With Filters
      */
     async searchWorkordersRaw(requestParameters: SearchWorkordersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageWorkorderSearchResult>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling searchWorkorders().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['q'] != null) {
@@ -119,8 +111,16 @@ export class WorkorderSearchApi extends runtime.BaseAPI {
             queryParameters['vehicleId'] = requestParameters['vehicleId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -147,7 +147,7 @@ export class WorkorderSearchApi extends runtime.BaseAPI {
      * Searches workorders by free-text query against customer display names or a literal workorder id, optionally narrowed by exact customerId and vehicleId filters, returning a page of rows enriched with customer name, vehicle label, and VIN. Use this tool when finding workorders by customer or id fragments; use listWorkorders instead for an unfiltered listing, and resolveWorkorderNumbers to map known ids to human numbers. Preconditions: customer-name matching depends on the local customer replica; at most 10 name-matched customers are considered per query. Required inputs: none are mandatory — q defaults to an empty string and is treated as a workorder id when it parses as a UUID; page size defaults to 25. Emits a WORKORDER_SEARCH audit event; no workorder state changes — this is a read-only projection. Returns 200 with an empty page when nothing matches; no 404 is produced for empty results. 
      * Search Workorders With Filters
      */
-    async searchWorkorders(requestParameters: SearchWorkordersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageWorkorderSearchResult> {
+    async searchWorkorders(requestParameters: SearchWorkordersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageWorkorderSearchResult> {
         const response = await this.searchWorkordersRaw(requestParameters, initOverrides);
         return await response.value();
     }

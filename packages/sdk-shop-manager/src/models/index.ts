@@ -17,6 +17,4 @@ export * from './RescheduleAppointmentRequest';
 export * from './ScheduleEventView';
 export * from './ScheduleResourceView';
 export * from './ScheduleViewResponse';
-export * from './ServiceEntityDTO';
 export * from './ShopAuditEntryResponse';
-export * from './ShopAuditFilter';

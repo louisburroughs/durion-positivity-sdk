@@ -25,7 +25,6 @@ import type {
   ClaimResponse,
   ClaimUpdateRequest,
   PageClaimSummaryResponse,
-  Pageable,
 } from '../models/index';
 import {
     CandidateLineFromJSON,
@@ -48,8 +47,6 @@ import {
     ClaimUpdateRequestToJSON,
     PageClaimSummaryResponseFromJSON,
     PageClaimSummaryResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface AddClaimLineRequest {
@@ -112,12 +109,14 @@ export interface SearchCandidateLinesRequest {
 }
 
 export interface SearchClaimsRequest {
-    pageable: Pageable;
     customerId?: string;
     vehicleId?: string;
     status?: SearchClaimsStatusEnum;
     claimCode?: string;
     locationId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface SubmitClaimRequest {
@@ -738,13 +737,6 @@ export class WarrantyClaimsApi extends runtime.BaseAPI {
      * Search claims
      */
     async searchClaimsRaw(requestParameters: SearchClaimsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageClaimSummaryResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling searchClaims().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['customerId'] != null) {
@@ -767,8 +759,16 @@ export class WarrantyClaimsApi extends runtime.BaseAPI {
             queryParameters['locationId'] = requestParameters['locationId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -795,7 +795,7 @@ export class WarrantyClaimsApi extends runtime.BaseAPI {
      * Searches warranty claims and returns a page of claim summaries filtered by customer, vehicle, status, claim code, and location. Use this tool to locate claims by criteria or to browse a worklist; do not use getClaim, which requires a known claim id and returns the full detail including lines, settlements, and history. Preconditions: none — an empty page is returned when nothing matches. Required inputs: every filter is optional; claimCode must be exact (for example WC-2026-000123) and short-circuits the other filters to at most one match, and paging defaults to size 20 sorted by createdAt descending. Emits a WARRANTY_CLAIM_SEARCH audit event; no claim state changes, this is a read-only projection. Returns 200 with the page, which is empty rather than 404 when no claim matches. 
      * Search claims
      */
-    async searchClaims(requestParameters: SearchClaimsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageClaimSummaryResponse> {
+    async searchClaims(requestParameters: SearchClaimsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageClaimSummaryResponse> {
         const response = await this.searchClaimsRaw(requestParameters, initOverrides);
         return await response.value();
     }

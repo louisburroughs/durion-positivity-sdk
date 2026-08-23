@@ -17,15 +17,12 @@ import * as runtime from '../runtime';
 import type {
   CustomerDTO,
   PageCustomerDTO,
-  Pageable,
 } from '../models/index';
 import {
     CustomerDTOFromJSON,
     CustomerDTOToJSON,
     PageCustomerDTOFromJSON,
     PageCustomerDTOToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface CreateCustomerRequest {
@@ -41,10 +38,12 @@ export interface GetCustomerByIdRequest {
 }
 
 export interface ListCustomersRequest {
-    pageable: Pageable;
     customerType?: string;
     name?: string;
     email?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface UpdateCustomerRequest {
@@ -193,13 +192,6 @@ export class CustomerAPIApi extends runtime.BaseAPI {
      * List Customers By Type
      */
     async listCustomersRaw(requestParameters: ListCustomersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageCustomerDTO>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listCustomers().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['customerType'] != null) {
@@ -214,8 +206,16 @@ export class CustomerAPIApi extends runtime.BaseAPI {
             queryParameters['email'] = requestParameters['email'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -242,7 +242,7 @@ export class CustomerAPIApi extends runtime.BaseAPI {
      * Returns a page of customers of one party type, switching to a server-side typeahead search when a name or email filter is supplied. Use this tool for the legacy flat customer listing keyed by customerType; use browseParties instead for the unified directory that merges commercial and individual customers in one result. Preconditions: none; an empty page is returned when nothing matches. Required inputs: none; customerType defaults to PERSON and accepts PERSON or COMMERCIAL, name and email are optional case-insensitive filters, and paging defaults to page 0, size 20, sorted by customerNumber. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page rather than an error when no customer matches. 
      * List Customers By Type
      */
-    async listCustomers(requestParameters: ListCustomersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCustomerDTO> {
+    async listCustomers(requestParameters: ListCustomersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCustomerDTO> {
         const response = await this.listCustomersRaw(requestParameters, initOverrides);
         return await response.value();
     }

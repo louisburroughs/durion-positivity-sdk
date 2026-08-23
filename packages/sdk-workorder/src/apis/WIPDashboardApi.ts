@@ -16,14 +16,11 @@
 import * as runtime from '../runtime';
 import type {
   PageWorkorderStatusView,
-  Pageable,
   WorkorderStatusDetail,
 } from '../models/index';
 import {
     PageWorkorderStatusViewFromJSON,
     PageWorkorderStatusViewToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     WorkorderStatusDetailFromJSON,
     WorkorderStatusDetailToJSON,
 } from '../models/index';
@@ -34,8 +31,10 @@ export interface GetWipDetailRequest {
 
 export interface ListWipWorkordersRequest {
     locationId: string;
-    pageable: Pageable;
     multiLocation?: boolean;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -98,13 +97,6 @@ export class WIPDashboardApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listWipWorkorders().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['locationId'] != null) {
@@ -115,8 +107,16 @@ export class WIPDashboardApi extends runtime.BaseAPI {
             queryParameters['multiLocation'] = requestParameters['multiLocation'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

@@ -1,4 +1,5 @@
 import { createInventoryClient } from '@durion-sdk/inventory';
+import { createOrderClient } from '@durion-sdk/order';
 import { SEED_VENDOR_ID } from '../bootstrap/InventoryBootstrap';
 import { SeederAuth } from '../SeederAuth';
 import { SeederConfig } from '../SeederConfig';
@@ -47,6 +48,10 @@ const pickMany = <T>(values: T[], minCount: number, maxCount: number): T[] => {
 
 export class InventoryMaintenanceSimulator {
   private readonly inventoryClient;
+  // Purchase orders are pos-order's, not pos-inventory's: the inventory
+  // contract no longer declares /v1/inventory/purchase-orders, and the calls
+  // below used to 404. Same split InventoryBootstrap already makes.
+  private readonly orderClient;
 
   constructor(
     private readonly config: SeederConfig,
@@ -54,6 +59,7 @@ export class InventoryMaintenanceSimulator {
     private readonly refs: ReferenceCache,
   ) {
     this.inventoryClient = createInventoryClient(this.auth.buildSdkConfig('inventory'));
+    this.orderClient = createOrderClient(this.auth.buildSdkConfig('order'));
   }
 
   async runCycleCount(): Promise<void> {
@@ -121,7 +127,7 @@ export class InventoryMaintenanceSimulator {
       console.log(`[Inventory] Creating monthly restock PO for: ${productNames.join(', ')}`);
 
       const partsClerkName = this.refs.employeeNameById.get(this.refs.employees.partsClerk) ?? 'Parts Clerk';
-      const purchaseOrder = await this.inventoryClient.purchaseOrdersApi.createPurchaseOrder({
+      const purchaseOrder = await this.orderClient.purchaseOrdersApi.createPurchaseOrder({
         createPurchaseOrderRequest: {
           vendorId,
           poDate: new Date(virtualNow),
@@ -144,7 +150,7 @@ export class InventoryMaintenanceSimulator {
         return;
       }
 
-      await this.inventoryClient.purchaseOrdersApi.approvePurchaseOrder({
+      await this.orderClient.purchaseOrdersApi.approvePurchaseOrder({
         poId: purchaseOrder.purchaseOrderId,
         approvePurchaseOrderRequest: {
           approvalNotes: 'Seeder monthly restock approval',

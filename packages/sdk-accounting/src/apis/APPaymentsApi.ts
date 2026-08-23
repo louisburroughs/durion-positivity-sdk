@@ -18,7 +18,6 @@ import type {
   APPaymentResponse,
   ExecuteAPPaymentRequest,
   PageVendorBillSummaryResponse,
-  Pageable,
 } from '../models/index';
 import {
     APPaymentResponseFromJSON,
@@ -27,8 +26,6 @@ import {
     ExecuteAPPaymentRequestToJSON,
     PageVendorBillSummaryResponseFromJSON,
     PageVendorBillSummaryResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface ExecuteApPaymentRequest {
@@ -44,8 +41,10 @@ export interface GetApPaymentByRefRequest {
 }
 
 export interface ListApBillsRequest {
-    pageable: Pageable;
     vendorId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -190,21 +189,22 @@ export class APPaymentsApi extends runtime.BaseAPI {
      * List Eligible Vendor Bills
      */
     async listApBillsRaw(requestParameters: ListApBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageVendorBillSummaryResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listApBills().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['vendorId'] != null) {
             queryParameters['vendorId'] = requestParameters['vendorId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -231,7 +231,7 @@ export class APPaymentsApi extends runtime.BaseAPI {
      * Lists vendor bills eligible for payment, meaning those in APPROVED status, ordered by due date oldest first with nulls last, then bill date, then bill id. Use this tool to pick bills before calling executeApPayment; do not use listVendorBills on the vendor-bill API, which returns bills of every status. Preconditions: none; the sort order is server-controlled and cannot be overridden. Required inputs: none; vendorId (UUID) is an optional filter and page size defaults to 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the vendor id is malformed. 
      * List Eligible Vendor Bills
      */
-    async listApBills(requestParameters: ListApBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillSummaryResponse> {
+    async listApBills(requestParameters: ListApBillsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillSummaryResponse> {
         const response = await this.listApBillsRaw(requestParameters, initOverrides);
         return await response.value();
     }

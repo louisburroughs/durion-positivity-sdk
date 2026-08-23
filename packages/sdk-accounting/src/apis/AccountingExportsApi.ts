@@ -18,7 +18,6 @@ import type {
   ExportJobRequest,
   ExportJobResponse,
   PageExportJobResponse,
-  Pageable,
 } from '../models/index';
 import {
     ExportJobRequestFromJSON,
@@ -27,8 +26,6 @@ import {
     ExportJobResponseToJSON,
     PageExportJobResponseFromJSON,
     PageExportJobResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface GetExportStatusRequest {
@@ -36,7 +33,9 @@ export interface GetExportStatusRequest {
 }
 
 export interface ListExportHistoryRequest {
-    pageable: Pageable;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface RequestExportRequest {
@@ -96,17 +95,18 @@ export class AccountingExportsApi extends runtime.BaseAPI {
      * List Export Job History
      */
     async listExportHistoryRaw(requestParameters: ListExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageExportJobResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listExportHistory().'
-            );
-        }
-
         const queryParameters: any = {};
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -133,7 +133,7 @@ export class AccountingExportsApi extends runtime.BaseAPI {
      * Lists timekeeping and generic export jobs as a paginated projection, most recent first. Use this tool to review past export jobs; do not use getExportStatus, which polls one job by its id. Preconditions: none beyond the caller holding accounting:export:view. Required inputs: none; the page defaults to 20 items and only requestedAt is a supported sort property. No events are emitted and no state changes; this is a read-only projection. Returns 400 UNSUPPORTED_SORT_PROPERTY when an unsupported sort property is requested. 
      * List Export Job History
      */
-    async listExportHistory(requestParameters: ListExportHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageExportJobResponse> {
+    async listExportHistory(requestParameters: ListExportHistoryRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageExportJobResponse> {
         const response = await this.listExportHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }

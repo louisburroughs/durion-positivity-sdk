@@ -17,15 +17,12 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   ShopAuditEntryResponse,
-  ShopAuditFilter,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
     ShopAuditEntryResponseFromJSON,
     ShopAuditEntryResponseToJSON,
-    ShopAuditFilterFromJSON,
-    ShopAuditFilterToJSON,
 } from '../models/index';
 
 export interface GetShopAuditEntryRequest {
@@ -33,7 +30,14 @@ export interface GetShopAuditEntryRequest {
 }
 
 export interface SearchShopAuditRequest {
-    filter: ShopAuditFilter;
+    workorderId?: string;
+    appointmentId?: string;
+    mechanicId?: string;
+    actorUserId?: string;
+    eventType?: SearchShopAuditEventTypeEnum;
+    locationId?: string;
+    fromDateTime?: Date;
+    toDateTime?: Date;
 }
 
 /**
@@ -89,17 +93,38 @@ export class ShopAuditApi extends runtime.BaseAPI {
      * Search the Shop Audit Trail
      */
     async searchShopAuditRaw(requestParameters: SearchShopAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ShopAuditEntryResponse>>> {
-        if (requestParameters['filter'] == null) {
-            throw new runtime.RequiredError(
-                'filter',
-                'Required parameter "filter" was null or undefined when calling searchShopAudit().'
-            );
-        }
-
         const queryParameters: any = {};
 
-        if (requestParameters['filter'] != null) {
-            queryParameters['filter'] = requestParameters['filter'];
+        if (requestParameters['workorderId'] != null) {
+            queryParameters['workorderId'] = requestParameters['workorderId'];
+        }
+
+        if (requestParameters['appointmentId'] != null) {
+            queryParameters['appointmentId'] = requestParameters['appointmentId'];
+        }
+
+        if (requestParameters['mechanicId'] != null) {
+            queryParameters['mechanicId'] = requestParameters['mechanicId'];
+        }
+
+        if (requestParameters['actorUserId'] != null) {
+            queryParameters['actorUserId'] = requestParameters['actorUserId'];
+        }
+
+        if (requestParameters['eventType'] != null) {
+            queryParameters['eventType'] = requestParameters['eventType'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['fromDateTime'] != null) {
+            queryParameters['fromDateTime'] = (requestParameters['fromDateTime'] as any).toISOString();
+        }
+
+        if (requestParameters['toDateTime'] != null) {
+            queryParameters['toDateTime'] = (requestParameters['toDateTime'] as any).toISOString();
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -126,9 +151,21 @@ export class ShopAuditApi extends runtime.BaseAPI {
      * Searches the immutable shop audit trail of schedule and assignment changes, returning matching entries in reverse-chronological order with actor, event type, change summary and reason. Use this tool when investigating who changed a schedule or assignment and why; use getShopAuditEntry instead when the audit entry id is already known. Preconditions: at least one filter criterion (workorderId, appointmentId, mechanicId, actorUserId, eventType or locationId) must be supplied; unbounded scans are rejected. Required inputs: any combination of the filter fields plus optional fromDateTime and toDateTime, which default to the last 90 days ending now; eventType is one of SCHEDULE_CREATED, SCHEDULE_UPDATED, SCHEDULE_CANCELLED, ASSIGNMENT_CREATED or ASSIGNMENT_REMOVED. No events are emitted and no state changes; this is a read-only projection of records retained for seven years. Returns 400 when no filter criterion is provided. 
      * Search the Shop Audit Trail
      */
-    async searchShopAudit(requestParameters: SearchShopAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ShopAuditEntryResponse>> {
+    async searchShopAudit(requestParameters: SearchShopAuditRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ShopAuditEntryResponse>> {
         const response = await this.searchShopAuditRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum SearchShopAuditEventTypeEnum {
+    ScheduleCreated = 'SCHEDULE_CREATED',
+    ScheduleUpdated = 'SCHEDULE_UPDATED',
+    ScheduleCancelled = 'SCHEDULE_CANCELLED',
+    AssignmentCreated = 'ASSIGNMENT_CREATED',
+    AssignmentRemoved = 'ASSIGNMENT_REMOVED'
 }

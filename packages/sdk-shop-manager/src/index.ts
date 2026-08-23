@@ -1,14 +1,15 @@
 ﻿/* tslint:disable */
 /* eslint-disable */
 import * as GeneratedApis from './apis';
-// These classes exist as generated files but are not part of the apis barrel;
-// import them directly (same situation as sdk-catalog's SupplierItemCostAPIApi).
-import { ShopAPIApi } from './apis/ShopAPIApi';
-import { AssignmentControllerApi } from './apis/AssignmentControllerApi';
-import { ShopAuditControllerApi } from './apis/ShopAuditControllerApi';
-import { ShopBayAPIApi } from './apis/ShopBayAPIApi';
-import { ShopMobileUnitAPIApi } from './apis/ShopMobileUnitAPIApi';
-import { WorkorderOperationalContextAPIApi } from './apis/WorkorderOperationalContextAPIApi';
+// Note: shopApi, assignmentApi, shopAuditControllerApi, shopBayApi,
+// shopMobileUnitApi and workorderOperationalContextApi used to be constructed
+// here from generated classes that had fallen out of the apis barrel. The
+// regenerated pos-shop-manager contract settles what they were: bays, mobile
+// units, service details and workorder operational context are gone from the
+// spec entirely, and the two that survive moved to classes the barrel does
+// export - /v1/appointments/{appointmentId}/assignments is
+// appointmentAssignmentsApi, /v1/shop/audit is shopAuditApi. Both are already
+// on this factory, so callers of the removed accessors switch to those.
 import { Configuration } from './runtime';
 
 export interface DurionSdkConfig {
@@ -64,12 +65,6 @@ export function createShopManagerClient(config: DurionSdkConfig) {
     scheduleApi: new GeneratedApis.ScheduleAPIApi(configuration),
     shopAuditApi: new GeneratedApis.ShopAuditApi(configuration),
     technicianApi: new GeneratedApis.TechnicianAPIApi(configuration),
-    shopApi: new ShopAPIApi(configuration),
-    assignmentApi: new AssignmentControllerApi(configuration),
-    shopAuditControllerApi: new ShopAuditControllerApi(configuration),
-    shopBayApi: new ShopBayAPIApi(configuration),
-    shopMobileUnitApi: new ShopMobileUnitAPIApi(configuration),
-    workorderOperationalContextApi: new WorkorderOperationalContextAPIApi(configuration),
   };
 }
 

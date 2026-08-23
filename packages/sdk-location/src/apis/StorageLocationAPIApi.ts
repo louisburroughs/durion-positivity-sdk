@@ -16,7 +16,6 @@
 import * as runtime from '../runtime';
 import type {
   PageStorageLocationResponse,
-  Pageable,
   StorageLocationPatchRequest,
   StorageLocationRequest,
   StorageLocationResponse,
@@ -25,8 +24,6 @@ import type {
 import {
     PageStorageLocationResponseFromJSON,
     PageStorageLocationResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     StorageLocationPatchRequestFromJSON,
     StorageLocationPatchRequestToJSON,
     StorageLocationRequestFromJSON,
@@ -53,9 +50,11 @@ export interface GetStorageLocationTopologyRequest {
 
 export interface ListStorageLocationsRequest {
     siteId: string;
-    pageable: Pageable;
     type?: ListStorageLocationsTypeEnum;
     status?: ListStorageLocationsStatusEnum;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface PatchStorageLocationRequest {
@@ -227,13 +226,6 @@ export class StorageLocationAPIApi extends runtime.BaseAPI {
             );
         }
 
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listStorageLocations().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['type'] != null) {
@@ -244,8 +236,16 @@ export class StorageLocationAPIApi extends runtime.BaseAPI {
             queryParameters['status'] = requestParameters['status'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

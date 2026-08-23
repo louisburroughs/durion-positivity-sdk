@@ -16,28 +16,31 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
-  Pageable,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface ListInventoryLocationZonesRequest {
-    pageable: Pageable;
     locationId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ListInventoryLocationsRequest {
-    pageable: Pageable;
     siteId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ListInventoryStorageLocationsRequest {
-    pageable: Pageable;
     locationId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -50,21 +53,22 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
      * List inventory location zones
      */
     async listInventoryLocationZonesRaw(requestParameters: ListInventoryLocationZonesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listInventoryLocationZones().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['locationId'] != null) {
             queryParameters['locationId'] = requestParameters['locationId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -95,7 +99,7 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
      * Lists inventory location zones as a page; the current implementation is a placeholder that always returns an empty page until the pos-location client integration lands. Use this tool only to probe the future location-zone contract; use listInventoryLocations instead for reference data that is actually served. Preconditions: none. Required inputs: none; locationId and the page/size parameters (default size 20) are accepted but no data is served yet. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page unconditionally in the current implementation. 
      * List inventory location zones
      */
-    async listInventoryLocationZones(requestParameters: ListInventoryLocationZonesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+    async listInventoryLocationZones(requestParameters: ListInventoryLocationZonesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listInventoryLocationZonesRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -105,21 +109,22 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
      * List inventory locations
      */
     async listInventoryLocationsRaw(requestParameters: ListInventoryLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listInventoryLocations().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['siteId'] != null) {
             queryParameters['siteId'] = requestParameters['siteId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -150,7 +155,7 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
      * Lists inventory locations as a page, served from the local location roster that is continuously synced from pos-location. Use this tool to browse the roster the inventory module actually posts against; use listInventoryStorageLocations instead for bin-level records, and use triggerLocationSync when the roster looks stale. Preconditions: none; the roster reflects the last synced state, not a live pos-location call. Required inputs: none; the standard page/size parameters default to a page size of 20, and the siteId parameter is accepted but not yet applied because the roster carries no site linkage. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when the roster is empty, so an empty result is not an error condition. 
      * List inventory locations
      */
-    async listInventoryLocations(requestParameters: ListInventoryLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+    async listInventoryLocations(requestParameters: ListInventoryLocationsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listInventoryLocationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -160,21 +165,22 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
      * List inventory storage locations
      */
     async listInventoryStorageLocationsRaw(requestParameters: ListInventoryStorageLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listInventoryStorageLocations().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['locationId'] != null) {
             queryParameters['locationId'] = requestParameters['locationId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -205,7 +211,7 @@ export class InventoryReferenceDataApi extends runtime.BaseAPI {
      * Lists inventory storage locations as a page; the current implementation is a placeholder that always returns an empty page until the pos-location client integration lands. Use this tool only to probe the future storage-location contract; use listInventoryLocations instead for the site-level roster that is actually populated. Preconditions: none. Required inputs: none; locationId and the page/size parameters (default size 20) are accepted but no data is served yet. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page unconditionally in the current implementation. 
      * List inventory storage locations
      */
-    async listInventoryStorageLocations(requestParameters: ListInventoryStorageLocationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+    async listInventoryStorageLocations(requestParameters: ListInventoryStorageLocationsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listInventoryStorageLocationsRaw(requestParameters, initOverrides);
         return await response.value();
     }

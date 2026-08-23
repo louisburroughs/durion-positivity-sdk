@@ -517,7 +517,9 @@ describe('SDK-005 sdk-shop-manager: createShopManagerClient', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(client.appointmentsApi).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(client.shopApi).toBeDefined();
+    expect(client.technicianApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.shopAuditApi).toBeDefined();
   });
 
   it('AC-3: factory accepts optional token + apiVersion config', () => {

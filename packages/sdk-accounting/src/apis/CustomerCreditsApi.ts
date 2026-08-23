@@ -21,7 +21,6 @@ import type {
   CustomerCreditResponse,
   CustomerCreditTransactionResponse,
   PageCustomerCreditResponse,
-  Pageable,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -36,8 +35,6 @@ import {
     CustomerCreditTransactionResponseToJSON,
     PageCustomerCreditResponseFromJSON,
     PageCustomerCreditResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface ApplyCustomerCreditRequest {
@@ -50,9 +47,11 @@ export interface GetCustomerCreditRequest {
 }
 
 export interface ListCustomerCreditsRequest {
-    pageable: Pageable;
     customerId?: string;
     status?: ListCustomerCreditsStatusEnum;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface RefundCustomerCreditRequest {
@@ -166,13 +165,6 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
      * List Customer Credits
      */
     async listCustomerCreditsRaw(requestParameters: ListCustomerCreditsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageCustomerCreditResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listCustomerCredits().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['customerId'] != null) {
@@ -183,8 +175,16 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
             queryParameters['status'] = requestParameters['status'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -211,7 +211,7 @@ export class CustomerCreditsApi extends runtime.BaseAPI {
      * Lists AR customer credits with their remaining open amounts as a paginated projection, optionally filtered by customer and consumption state. Use this tool to find open credit before applying or refunding; do not use getCustomerCredit, which fetches one credit by its known id. Preconditions: none beyond the caller holding accounting:customer-credit:view. Required inputs: none; customerId and status are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CUSTOMER_CREDIT_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
      * List Customer Credits
      */
-    async listCustomerCredits(requestParameters: ListCustomerCreditsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCustomerCreditResponse> {
+    async listCustomerCredits(requestParameters: ListCustomerCreditsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCustomerCreditResponse> {
         const response = await this.listCustomerCreditsRaw(requestParameters, initOverrides);
         return await response.value();
     }

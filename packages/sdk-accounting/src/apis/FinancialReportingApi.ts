@@ -24,7 +24,6 @@ import type {
   IncomeStatementReport,
   JournalLineDrilldownResponse,
   PageReportExportResponse,
-  Pageable,
   ReportExportRequest,
   ReportExportResponse,
   TaxLiabilityReport,
@@ -52,8 +51,6 @@ import {
     JournalLineDrilldownResponseToJSON,
     PageReportExportResponseFromJSON,
     PageReportExportResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     ReportExportRequestFromJSON,
     ReportExportRequestToJSON,
     ReportExportResponseFromJSON,
@@ -132,7 +129,9 @@ export interface GetTaxLiabilitySnapshotRequest {
 }
 
 export interface ListReportExportsRequest {
-    pageable: Pageable;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ListTaxLiabilitySnapshotsRequest {
@@ -833,17 +832,18 @@ export class FinancialReportingApi extends runtime.BaseAPI {
      * List Report Export History
      */
     async listReportExportsRaw(requestParameters: ListReportExportsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageReportExportResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listReportExports().'
-            );
-        }
-
         const queryParameters: any = {};
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -870,7 +870,7 @@ export class FinancialReportingApi extends runtime.BaseAPI {
      * Lists all asynchronous report export jobs as a paginated projection, most recent first. Use this tool to review past exports and their statuses; do not use getReportExportStatus, which polls a single job by id. Preconditions: none beyond the caller holding accounting:report:export. Required inputs: none; the page defaults to 20 items and only requestedAt is a supported sort property. Emits an ACCOUNTING_REPORT_EXPORT_LIST audit event; no state changes. Returns 400 when an unsupported sort property is requested. 
      * List Report Export History
      */
-    async listReportExports(requestParameters: ListReportExportsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageReportExportResponse> {
+    async listReportExports(requestParameters: ListReportExportsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageReportExportResponse> {
         const response = await this.listReportExportsRaw(requestParameters, initOverrides);
         return await response.value();
     }

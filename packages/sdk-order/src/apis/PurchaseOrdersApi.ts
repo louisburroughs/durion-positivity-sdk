@@ -18,9 +18,7 @@ import type {
   ApiError,
   ApprovePurchaseOrderRequest,
   CreatePurchaseOrderRequest,
-  ListPurchaseOrdersRequest,
   PagePurchaseOrderResponse,
-  Pageable,
   ProcurementAvailability,
   PurchaseOrderResponse,
   RevisePurchaseOrderRequest,
@@ -32,12 +30,8 @@ import {
     ApprovePurchaseOrderRequestToJSON,
     CreatePurchaseOrderRequestFromJSON,
     CreatePurchaseOrderRequestToJSON,
-    ListPurchaseOrdersRequestFromJSON,
-    ListPurchaseOrdersRequestToJSON,
     PagePurchaseOrderResponseFromJSON,
     PagePurchaseOrderResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     ProcurementAvailabilityFromJSON,
     ProcurementAvailabilityToJSON,
     PurchaseOrderResponseFromJSON,
@@ -69,9 +63,14 @@ export interface GetPurchaseOrderSupplierAvailabilityRequest {
     deliveryLocationId: string;
 }
 
-export interface ListPurchaseOrdersOperationRequest {
-    filter: ListPurchaseOrdersRequest;
-    pageable: Pageable;
+export interface ListPurchaseOrdersRequest {
+    vendorId?: string;
+    status?: ListPurchaseOrdersStatusEnum;
+    currency?: string;
+    locationId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface RevisePurchaseOrderOperationRequest {
@@ -342,29 +341,35 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
      * Returns a page of purchase orders matching the optional filter criteria, with lifecycle status, totals and open balances. Use this tool to discover a poId or survey open orders; use getPurchaseOrder instead when the id is already known. Preconditions: none; every filter is optional and an unfiltered call pages over all orders. Required inputs: none; vendorId, status, currency and locationId narrow the result, and standard page, size and sort parameters control pagination. Emits an ORDER_PURCHASE_ORDER_LIST audit event; no stock state changes, this is a read-only projection. Returns 200 with an empty page when nothing matches, so an empty result is not an error condition. 
      * List Purchase Orders
      */
-    async listPurchaseOrdersRaw(requestParameters: ListPurchaseOrdersOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagePurchaseOrderResponse>> {
-        if (requestParameters['filter'] == null) {
-            throw new runtime.RequiredError(
-                'filter',
-                'Required parameter "filter" was null or undefined when calling listPurchaseOrders().'
-            );
-        }
-
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listPurchaseOrders().'
-            );
-        }
-
+    async listPurchaseOrdersRaw(requestParameters: ListPurchaseOrdersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagePurchaseOrderResponse>> {
         const queryParameters: any = {};
 
-        if (requestParameters['filter'] != null) {
-            queryParameters['filter'] = requestParameters['filter'];
+        if (requestParameters['vendorId'] != null) {
+            queryParameters['vendorId'] = requestParameters['vendorId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['currency'] != null) {
+            queryParameters['currency'] = requestParameters['currency'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -391,7 +396,7 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
      * Returns a page of purchase orders matching the optional filter criteria, with lifecycle status, totals and open balances. Use this tool to discover a poId or survey open orders; use getPurchaseOrder instead when the id is already known. Preconditions: none; every filter is optional and an unfiltered call pages over all orders. Required inputs: none; vendorId, status, currency and locationId narrow the result, and standard page, size and sort parameters control pagination. Emits an ORDER_PURCHASE_ORDER_LIST audit event; no stock state changes, this is a read-only projection. Returns 200 with an empty page when nothing matches, so an empty result is not an error condition. 
      * List Purchase Orders
      */
-    async listPurchaseOrders(requestParameters: ListPurchaseOrdersOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagePurchaseOrderResponse> {
+    async listPurchaseOrders(requestParameters: ListPurchaseOrdersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagePurchaseOrderResponse> {
         const response = await this.listPurchaseOrdersRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -491,4 +496,17 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
         await this.transmitPurchaseOrderRaw(requestParameters, initOverrides);
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListPurchaseOrdersStatusEnum {
+    Draft = 'DRAFT',
+    Approved = 'APPROVED',
+    PartiallyReceived = 'PARTIALLY_RECEIVED',
+    FullyReceived = 'FULLY_RECEIVED',
+    Closed = 'CLOSED',
+    Cancelled = 'CANCELLED'
 }
