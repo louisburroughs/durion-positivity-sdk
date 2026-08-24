@@ -1,5 +1,9 @@
-import { createInventoryClient } from '@durion-sdk/inventory';
-import { createOrderClient, type PurchaseOrderResponse } from '@durion-sdk/order';
+import { createInventoryClient, type InventoryAvailabilityApi } from '@durion-sdk/inventory';
+import {
+  createOrderClient,
+  PurchaseOrderResponseStatusEnum,
+  type PurchaseOrderResponse,
+} from '@durion-sdk/order';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
 import { isResponseErrorMatching, retryWhileReplicating } from '../support/replicationRetry';
 
@@ -10,9 +14,37 @@ interface InventoryBootstrapResult {
   skipped: string[];
 }
 
+/** Whether a product needs seeding, and the reason when it does not. */
+type SeedDecision = { seed: true } | { seed: false; reason: string; warn?: boolean };
+
+/** On-hand and open incoming supply for one SKU at one location. */
+interface StockPosition {
+  onHandQuantity: number;
+  incomingQuantity: number;
+}
+
 export const SEED_VENDOR_ID = 'sdk-seeder-vendor-main';
 const SEED_CURRENCY = 'USD';
 const PURCHASE_ORDER_LOOKUP_TIMEOUT_MS = 15_000;
+
+/**
+ * Purchase order statuses that may still put stock in the building. Consulted
+ * only by the fallback in `decideWhetherToSeed`, when availability cannot be
+ * read.
+ *
+ * CANCELLED is the status this set exists to exclude: a cancelled order
+ * delivers nothing, so it is never evidence that a product is stocked. DRAFT is
+ * excluded for the same reason and handled separately below. CLOSED is
+ * included: it may or may not have delivered, and in a fallback that runs only
+ * when the authoritative answer is missing, not duplicating an order matters
+ * more than being exact.
+ */
+const SUPPLY_BEARING_STATUSES: ReadonlySet<PurchaseOrderResponseStatusEnum> = new Set([
+  PurchaseOrderResponseStatusEnum.Approved,
+  PurchaseOrderResponseStatusEnum.PartiallyReceived,
+  PurchaseOrderResponseStatusEnum.FullyReceived,
+  PurchaseOrderResponseStatusEnum.Closed,
+]);
 
 export class InventoryBootstrap {
   /**
@@ -31,7 +63,7 @@ export class InventoryBootstrap {
     locationId: string,
     virtualNow: Date,
   ): Promise<InventoryBootstrapResult> {
-    const { asnApi } = createInventoryClient(this.sdkConfig);
+    const { asnApi, inventoryAvailabilityApi } = createInventoryClient(this.sdkConfig);
     const { purchaseOrdersApi } = createOrderClient(this.orderSdkConfig);
 
     let createdCount = 0;
@@ -44,18 +76,30 @@ export class InventoryBootstrap {
       existingPurchaseOrders = await this.listSeededPurchaseOrders();
     } catch (error) {
       console.warn(
-        '[Bootstrap] InventoryBootstrap: failed to query existing purchase orders — idempotency check skipped, duplicate POs may be created.',
+        '[Bootstrap] InventoryBootstrap: failed to query existing purchase orders — the stock check below still decides what is seeded, but DRAFT orders will go unnoticed.',
         error,
       );
     }
 
     for (const [index, product] of products.entries()) {
       const { id: productEntityId, name: productName } = product;
-      const existingPurchaseOrder = existingPurchaseOrders.find(
-        (purchaseOrder) => purchaseOrder.comment === this.buildSeedComment(productEntityId),
+      const seedComment = this.buildSeedComment(productEntityId);
+      const seededPurchaseOrders = existingPurchaseOrders.filter(
+        (purchaseOrder) => purchaseOrder.comment === seedComment,
       );
 
-      if (existingPurchaseOrder) {
+      const decision = await this.decideWhetherToSeed(
+        inventoryAvailabilityApi,
+        productEntityId,
+        locationId,
+        seededPurchaseOrders,
+      );
+
+      if (!decision.seed) {
+        const message = `[Bootstrap] InventoryBootstrap: ${productName} (${productEntityId}) skipped — ${decision.reason}.`;
+        if (decision.warn) {
+          console.warn(message);
+        }
         skipped.push(productName);
         skippedCount += 1;
         continue;
@@ -67,7 +111,6 @@ export class InventoryBootstrap {
       // calendar dates, so bootstrap data lands inside the simulated year.
       const purchaseOrderDate = new Date(virtualNow);
       const expectedDeliveryDate = new Date(virtualNow.getTime() + 24 * 60 * 60 * 1000);
-      const poComment = this.buildSeedComment(productEntityId);
 
       try {
         const purchaseOrder = await purchaseOrdersApi.createPurchaseOrder({
@@ -77,7 +120,7 @@ export class InventoryBootstrap {
             currency: SEED_CURRENCY,
             shipToLocationId: locationId,
             requestedBy: 'sdk-seeder',
-            comment: poComment,
+            comment: seedComment,
             expectedDeliveryDate,
             lines: [
               {
@@ -186,6 +229,132 @@ export class InventoryBootstrap {
       created,
       skipped,
     };
+  }
+
+  /**
+   * Whether this product still needs stock seeding.
+   *
+   * The question the bootstrap has to answer is "does this product have stock",
+   * and the answer lives in the availability projection, not in the purchase
+   * order list. An order that exists proves only that an order was created
+   * once: a CANCELLED one delivers nothing, and so does one whose ASN or goods
+   * receipt failed after the order was written. Matching on the seed comment
+   * alone therefore skipped products that had never been stocked, and kept
+   * skipping them on every later run, because the same stale order satisfied
+   * the check forever (issue #14).
+   *
+   * So availability decides, in two parts:
+   *
+   *   - `onHandQuantity` — stock that arrived and is in the building.
+   *   - `incomingQty` — open expected supply: the open line quantity of
+   *     *approved* purchase orders plus any un-received ASN remainder.
+   *
+   * Counting incoming supply is what keeps a repeat run a no-op. Twenty of the
+   * thirty seeded products on alpha sit at APPROVED with nothing received yet;
+   * they hold no on-hand stock, but their orders are live and stock is on its
+   * way, so re-ordering for them would duplicate what is already in flight. A
+   * cancelled order contributes to neither figure, which is exactly the
+   * behaviour this fix needs.
+   *
+   * DRAFT orders are the one case where an order still overrides the stock
+   * reading. A draft was never approved, so it delivers nothing and contributes
+   * nothing to `incomingQty` — but re-seeding would leave it behind as litter
+   * next to the new order. The product is skipped with a warning instead, so
+   * the draft gets approved or cancelled by a human rather than accumulating
+   * silently.
+   *
+   * Note that a product whose stock has been fully consumed and whose orders
+   * have all been received now re-seeds rather than skipping. That follows from
+   * asserting stock instead of orders, and matches what the bootstrap is for:
+   * guaranteeing seeded stock exists when a run starts.
+   */
+  private async decideWhetherToSeed(
+    inventoryAvailabilityApi: InventoryAvailabilityApi,
+    productEntityId: string,
+    locationId: string,
+    seededPurchaseOrders: PurchaseOrderResponse[],
+  ): Promise<SeedDecision> {
+    const draftPurchaseOrder = seededPurchaseOrders.find(
+      (purchaseOrder) => purchaseOrder.status === PurchaseOrderResponseStatusEnum.Draft,
+    );
+
+    let stock: StockPosition;
+    try {
+      stock = await this.readStockPosition(inventoryAvailabilityApi, productEntityId, locationId);
+    } catch (error) {
+      // Without the authoritative reading, fall back to the cheap local check:
+      // skip when a seeded order could still be bearing supply. That risks
+      // leaving a product unstocked, but the opposite guess duplicates orders,
+      // which is the failure #13 was raised to stop.
+      console.warn(
+        `[Bootstrap] InventoryBootstrap: availability lookup failed for ${productEntityId}; falling back to the purchase order check.`,
+        error,
+      );
+      const livePurchaseOrder = seededPurchaseOrders.find((purchaseOrder) =>
+        SUPPLY_BEARING_STATUSES.has(purchaseOrder.status),
+      );
+      if (livePurchaseOrder) {
+        return {
+          seed: false,
+          reason: `stock unverifiable, and seeded purchase order ${livePurchaseOrder.poNumber} is ${livePurchaseOrder.status}`,
+          warn: true,
+        };
+      }
+      if (draftPurchaseOrder) {
+        return {
+          seed: false,
+          reason: `stock unverifiable, and seeded purchase order ${draftPurchaseOrder.poNumber} is still DRAFT — approve or cancel it, then re-run`,
+          warn: true,
+        };
+      }
+      return { seed: true };
+    }
+
+    if (stock.onHandQuantity > 0) {
+      return { seed: false, reason: `${stock.onHandQuantity} on hand` };
+    }
+    if (stock.incomingQuantity > 0) {
+      return { seed: false, reason: `${stock.incomingQuantity} incoming on a live order` };
+    }
+    if (draftPurchaseOrder) {
+      return {
+        seed: false,
+        reason: `no stock, and seeded purchase order ${draftPurchaseOrder.poNumber} is still DRAFT — approve or cancel it, then re-run`,
+        warn: true,
+      };
+    }
+    return { seed: true };
+  }
+
+  /**
+   * On-hand and open incoming supply for a SKU at a location.
+   *
+   * A SKU with no stock-summary row at all answers 404 rather than zero, which
+   * is the normal state for a product that has never been received; it reads as
+   * a genuine zero here. Every other failure propagates, so the caller can tell
+   * "no stock" from "could not ask".
+   */
+  private async readStockPosition(
+    inventoryAvailabilityApi: InventoryAvailabilityApi,
+    productSku: string,
+    locationId: string,
+  ): Promise<StockPosition> {
+    try {
+      const availability = await inventoryAvailabilityApi.getAvailabilityBySku({
+        productSku,
+        locationId,
+      });
+      return {
+        onHandQuantity: availability.onHandQuantity ?? 0,
+        incomingQuantity: availability.incomingQty ?? 0,
+      };
+    } catch (error) {
+      const status = (error as { response?: { status?: number } } | undefined)?.response?.status;
+      if (status === 404) {
+        return { onHandQuantity: 0, incomingQuantity: 0 };
+      }
+      throw error;
+    }
   }
 
   /**
