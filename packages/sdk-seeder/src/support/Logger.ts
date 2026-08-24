@@ -8,12 +8,6 @@ export type SeederPhase =
   | 'COMPLETE'
   | 'WAIT';
 
-interface LogContext {
-  day?: number;
-  totalDays?: number;
-  phase?: SeederPhase;
-}
-
 /**
  * Logger that prefixes every line with virtual time (from backend), real time (host),
  * day progress, and phase for full verifiability of the accelerated clock.
