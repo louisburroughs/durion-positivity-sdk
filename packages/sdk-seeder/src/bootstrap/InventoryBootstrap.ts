@@ -39,7 +39,7 @@ const PURCHASE_ORDER_LOOKUP_TIMEOUT_MS = 15_000;
  * when the authoritative answer is missing, not duplicating an order matters
  * more than being exact.
  */
-const SUPPLY_BEARING_STATUSES: ReadonlySet<string> = new Set<string>([
+const SUPPLY_BEARING_STATUSES: ReadonlySet<PurchaseOrderResponseStatusEnum> = new Set([
   PurchaseOrderResponseStatusEnum.Approved,
   PurchaseOrderResponseStatusEnum.PartiallyReceived,
   PurchaseOrderResponseStatusEnum.FullyReceived,
@@ -278,7 +278,7 @@ export class InventoryBootstrap {
       (purchaseOrder) => purchaseOrder.status === PurchaseOrderResponseStatusEnum.Draft,
     );
 
-    let stock: StockPosition | null;
+    let stock: StockPosition;
     try {
       stock = await this.readStockPosition(inventoryAvailabilityApi, productEntityId, locationId);
     } catch (error) {
