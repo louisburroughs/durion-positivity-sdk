@@ -25,7 +25,8 @@ const PARTS_AUTHORITIES = [...REQUIRED_AUTHORITIES.parts];
 interface SecurityCalls {
   getRoleIdByName: string[];
   assignUserRole: Array<{ userId: string; roleId: string }>;
-  getUserPermissions: string[];
+  /** Usernames the preflight logged in as to read enforced authorities. */
+  getEnforcedAuthorities: string[];
 }
 
 function fakeSecurity(
@@ -37,16 +38,18 @@ function fakeSecurity(
     failPermissions?: boolean;
   } = {},
 ): PersonaSecurityPort & { calls: SecurityCalls } {
-  const calls: SecurityCalls = { getRoleIdByName: [], assignUserRole: [], getUserPermissions: [] };
+  const calls: SecurityCalls = { getRoleIdByName: [], assignUserRole: [], getEnforcedAuthorities: [] };
   return {
     calls,
     listUsers: () => Promise.resolve(users),
-    getUserPermissions: (userId) => {
-      calls.getUserPermissions.push(userId);
+    getEnforcedAuthorities: (credentials) => {
+      calls.getEnforcedAuthorities.push(credentials.username);
       if (options.failPermissions) {
         return Promise.reject(new Error('403 Forbidden'));
       }
-      return Promise.resolve(options.permissions?.[userId] ?? []);
+      // Keyed by username: the preflight now asks with credentials, because
+      // what the gateway enforces lives in the persona's own token.
+      return Promise.resolve(options.permissions?.[credentials.username] ?? []);
     },
     getRoleIdByName: (name) => {
       calls.getRoleIdByName.push(name);
@@ -101,7 +104,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
   it('verifies a persona that already holds its role and authorities', async () => {
     const security = fakeSecurity(
       [{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }],
-      { permissions: { 'u-1': PARTS_AUTHORITIES } },
+      { permissions: { 'gloria.mendez': PARTS_AUTHORITIES } },
     );
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
 
@@ -117,7 +120,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
 
   it('grants INVENTORY_LEAD when the parts account lacks it', async () => {
     const security = fakeSecurity([{ id: 'u-1', username: 'gloria.mendez', roles: [] }], {
-      permissions: { 'u-1': PARTS_AUTHORITIES },
+      permissions: { 'gloria.mendez': PARTS_AUTHORITIES },
       roleIds: { INVENTORY_LEAD: 'role-uuid-77' },
     });
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
@@ -143,7 +146,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
   it('names every missing authority rather than the first', async () => {
     const security = fakeSecurity(
       [{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }],
-      { permissions: { 'u-1': ['order:purchase_order:create'] } },
+      { permissions: { 'gloria.mendez': ['order:purchase_order:create'] } },
     );
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
 
@@ -165,7 +168,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     };
     const security = fakeSecurity(
       [{ id: 'u-2', username: 'kyle.brennan', roles: ['TECHNICIAN'] }],
-      { permissions: { 'u-2': [] } },
+      { permissions: { 'kyle.brennan': [] } },
     );
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(env), security, fakePeople());
 
@@ -187,7 +190,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
       /lacks INVENTORY_LEAD and it could not be granted \(404 role not found\)/,
     );
     // The permission read is skipped once the grant failed - no cascade.
-    expect(security.calls.getUserPermissions).toEqual([]);
+    expect(security.calls.getEnforcedAuthorities).toEqual([]);
   });
 
   it('surfaces the HTTP status a generated ResponseError hides', async () => {
@@ -200,7 +203,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     const security: PersonaSecurityPort = {
       listUsers: () =>
         Promise.resolve([{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }]),
-      getUserPermissions: () => Promise.reject(responseError),
+      getEnforcedAuthorities: () => Promise.reject(responseError),
       getRoleIdByName: () => Promise.resolve('role-1'),
       assignUserRole: () => Promise.resolve(),
     };
@@ -220,7 +223,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
 
     await expect(bootstrap.verifyAndProvision()).rejects.toThrow(
-      /parts: could not read permissions for "gloria.mendez" \(403 Forbidden\)/,
+      /parts: could not establish what "gloria.mendez" is authorized for \(403 Forbidden\)/,
     );
   });
 });

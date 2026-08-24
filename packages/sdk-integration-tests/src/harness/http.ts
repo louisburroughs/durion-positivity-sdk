@@ -118,6 +118,17 @@ export async function retryWhileReplicating<T>(
     } catch (error) {
       const detail = await formatError(error);
       if (!options.markers.some((marker) => detail.includes(marker))) {
+        // Rethrow the original, not a wrapper. A wrapper is a plain Error with
+        // no `response`, so every status-aware helper downstream - isHttpStatus,
+        // expectHttpError - goes blind: a role-mode negative that correctly got
+        // its 403 fails with "Expected HTTP 401/403 but got: ... HTTP 403",
+        // reading the status out of a string it can no longer inspect. To keep
+        // the description without losing `response`, the original error's own
+        // message is rewritten in place to carry it.
+        if (error instanceof Error) {
+          error.message = `${options.description} failed: ${detail}`;
+          throw error;
+        }
         throw new Error(`${options.description} failed: ${detail}`);
       }
       lastError = new Error(`${options.description} never became consistent: ${detail}`);

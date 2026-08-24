@@ -757,6 +757,94 @@ cannot approve it — INVENTORY_LEAD deliberately holds `create` but not
   over-receipt behavior; `crossDockReceivingLine` against a bogus workorder
   id: assert 4xx.
 
+### Role mode: what the first real run found (2026-08-24)
+
+Suites A-D run green in role mode - **46 passing, 0 skipped, 0 failing** - with
+each persona on its own login and all seven role-enforcement negatives
+executing. Getting there turned up four things that single-credential mode had
+been hiding, because every persona was the admin login carrying all 442
+permissions:
+
+- **The preflight was asking the wrong system.** It read
+  `GET /v1/users/{userId}/permissions`, which reports permissions attached to a
+  user *directly* and is blind to role-derived access. Every persona came back
+  with `[]` while its role carried a full set, and `check-permission` agreed
+  with that empty answer. What the gateway enforces is the `perm_bits` bitmap
+  minted into the token, so the preflight now logs in as each persona and
+  decodes those bits (`POST /v1/users/permissions/decode`) against the
+  `perm_ver` they were minted with. Verified against alpha: gloria.mendez's
+  token decodes to exactly the 30 INVENTORY_LEAD permissions. This also proves
+  the persona's credentials work, which asking about a user id never did.
+- **A technician cannot read availability.** `getAvailabilityBySku` requires
+  `inventory:on_hand:view` / `:search`. TECHNICIAN holds
+  `inventory:availability:read`, which no endpoint asks for. Suite C's setup and
+  C6's on-hand reads now go through the parts clerk. Worth raising upstream: a
+  permission nothing enforces is either dead or the endpoint is checking the
+  wrong one.
+- **`retryWhileReplicating` blinded every status-aware assertion.** On a
+  non-replication failure it threw a *new* Error, so `.response` was lost and
+  `expectHttpError` could not read the status. A correctly-enforced 403 failed
+  as "Expected HTTP 401/403 but got: ... HTTP 403" - reading the status out of a
+  string it could no longer inspect. It now rethrows the original.
+- **Promotion has a transient refusal.** pos-workorder answers 503
+  `CUSTOMER_REQUIREMENTS_UNAVAILABLE` with a `nextAction` while the
+  customer-requirements verdict replicates. `promoteWhenPromotable` and B6 treat
+  it as lag rather than a verdict.
+
+Backend behaviour that has changed since the 2026-08-23 notes below: promotion
+refusals now carry a code, a correlationId and a `nextAction` (#1477, #1471),
+and the workorder pick facade answers with an empty list instead of 404.
+
+**Corrected 2026-08-24, 15:25 UTC.** The paragraphs below recorded three
+behaviours as absent on the deployed build. That was wrong, and the error was in
+these tests, not in the backend.
+
+#1483 implements all three through Kafka - pos-workorder publishes a command,
+pos-inventory generates the pick list, and the fact returns into
+`ext_pick_task` - while C6, D7 and D9 each read once, immediately, and asserted
+absence. Polling instead of reading once found every one of them:
+
+| Behaviour | Result | Latency |
+| --- | --- | --- |
+| Pick tasks from promotion (#1479) | 1 task, `PENDING`, full quantity outstanding | ~27s |
+| Receiving session from a PO (#1480) | built, with the PO's lines | ~3s |
+| Shortage signal (#1481) | 1 unfulfillable pick task | ~54s |
+| Cross-dock (previously unreachable) | accepted, `crossDockedQuantity` and ledger entries | - |
+
+Three runs agreeing meant only that the same measurement error repeated. The
+suites now wait for these signals through `waitFor` and assert their content;
+D9 exercises the real cross-dock path for the first time. Two full runs green,
+46/46.
+
+The receiving-session 404 that looked like a defect was `ext_purchase_order_line`
+replication lag: the PO is approved seconds before the session is requested, and
+the projection catches up within a few seconds.
+
+**Deploy timing (15:03 UTC).** Two further runs at 15:08
+and 15:12, both 46/46 on an alpha holding all-200, report the same three
+absences, so these are properties of the deployed build rather than of a
+half-landed rollout.
+
+Two behaviours did change with it:
+
+- **Over-receipt is now refused.** Receiving 999 against a PO line of 1 was
+  accepted before; it now answers 403.
+  `InventoryGlobalExceptionHandler` maps `OverReceiptNotPermittedException` to
+  `FORBIDDEN` deliberately, so this is a guard, not an authorization accident.
+  Worth noting for role mode: a client cannot distinguish that refusal from a
+  missing permission, since both arrive as a bare 403 - which is exactly the
+  ambiguity #1471 set out to remove elsewhere. D11 records the status rather
+  than asserting one, so it survives the change.
+- **Cross-docking to an unknown workorder** answers 404 where D9's earlier note
+  recorded the session itself as unbuildable.
+
+A backorder is *not* raised alongside the pick task: on this backend the
+unfulfillable pick task is the shortage signal, and D7 records the backorder
+count so a second signal appearing becomes visible rather than being silently
+tolerated.
+
+---
+
 ### Suites A-D: what alpha actually does (2026-08-23)
 
 All four suites run as one set against alpha: **39 passing, 7 skipped** (the

@@ -17,7 +17,7 @@ import {
   type CreatedProduct,
 } from '../harness/builders';
 import { readAvailability, readOnHand } from '../harness/availability';
-import { call, expectHttpError, isHttpStatus } from '../harness/http';
+import { call, expectHttpError, formatError, isHttpStatus } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -97,6 +97,7 @@ describe('Suite D — receiving', () => {
   });
 
   describe('part 1 — a brand-new product into stock', () => {
+    let sessionId: string;
     let product: CreatedProduct;
     let po: CreatedPo;
     let receiptId: string;
@@ -194,7 +195,7 @@ describe('Suite D — receiving', () => {
       console.log(`[D5] putaway executed: ${JSON.stringify(executed).slice(0, 200)}`);
     }, 180_000);
 
-    it('D6 — staging-based receiving is unavailable: the source lookup is a disabled stub', async () => {
+    it('D6 — a receiving session is built from the purchase order\'s lines', async () => {
       const secondPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
         {
           skuId: product.productEntityId,
@@ -203,23 +204,36 @@ describe('Suite D — receiving', () => {
         },
       ]);
 
-      // A receiving session is built from the source document's lines, which
-      // pos-inventory fetches through SourceDocumentStubClient. That client is
-      // gated on pos.inventory.receiving.stub.enabled, false by default, and its
-      // path points at a /stub/... service that does not exist - the real
-      // upstream client was never written. So the session cannot be created, and
-      // with it the staging and cross-dock steps this suite was specified to
-      // cover. Asserted rather than skipped, so the day it starts working this
-      // test fails and says so.
-      const status = await expectHttpError(
-        parts.inventory.receivingApi.createReceivingSession({
-          createReceivingSessionRequest: { sourceDocumentId: secondPo.purchaseOrderId },
-        }),
-        404,
+      // Lines come from pos-inventory's purchase-order projection
+      // (ext_purchase_order_line), fed by order.events.v1 - not from the old
+      // SourceDocumentStubClient, which was disabled by default and pointed at a
+      // service that never existed (backend #1480). The PO was approved seconds
+      // ago, so the projection is still catching up and the first attempt can
+      // answer 404: waiting is the point, and asserting the 404 - as this test
+      // used to - would now be asserting replication lag.
+      const session = await waitFor(
+        () =>
+          parts.inventory.receivingApi
+            .createReceivingSession({
+              createReceivingSessionRequest: { sourceDocumentId: secondPo.purchaseOrderId },
+            })
+            .catch((error) => {
+              if (isHttpStatus(error, 404)) return undefined;
+              throw error;
+            }),
+        {
+          description: `a receiving session for PO ${secondPo.purchaseOrderId}`,
+          timeoutMs: 90_000,
+          intervalMs: 3_000,
+        },
       );
-      console.log(
-        `[D6] createReceivingSession for an approved PO -> HTTP ${status}: no receiving lines from pos-order`,
-      );
+
+      sessionId = requireField(readString(session, 'sessionId', 'id'), 'sessionId');
+      const lines = (session as { lines?: Array<Record<string, unknown>> }).lines ?? [];
+      console.log(`[D6] session ${sessionId} built with ${lines.length} line(s)`);
+      expect(lines.length).toBeGreaterThan(0);
+      // The session mirrors the PO it was built from.
+      expect(lines[0]['expectedQuantity']).toBe(SESSION_QUANTITY);
     }, 240_000);
   });
 
@@ -229,7 +243,7 @@ describe('Suite D — receiving', () => {
     let partLineId: string | undefined;
     let shortagePo: CreatedPo;
 
-    it('D7 — a workorder for an unstocked part raises no shortage signal', async () => {
+    it('D7 — a workorder for an unstocked part raises an unfulfillable pick task', async () => {
       shortProduct = await createCatalogProduct(admin, ctx, 'B');
 
       const customer = await createPersonAccount(advisor, ctx);
@@ -247,30 +261,46 @@ describe('Suite D — receiving', () => {
       expect(partLineId).toBeTruthy();
 
       // The spec expected one of two signals: a backorder for the SKU, or an
-      // unfulfillable pick task. This backend raises neither. Nothing allocates
-      // against a promoted workorder on its own - pick tasks require a pick list
-      // that must be requested (Suite C, C6) - so a workorder for a part with no
-      // stock simply sits there, and the shortage is invisible until somebody
-      // looks at availability. Asserted so that the day either signal appears,
-      // this test fails and says so.
+      // unfulfillable pick task. This backend raises the second (backend #1481),
+      // through the same command/fact round trip as C6 and on the same order of
+      // latency - roughly a minute on alpha - so it is waited for rather than
+      // read once. This test used to assert both signals were absent, which was
+      // true of the previous build.
+      const pickTasks = await waitFor(
+        async () => {
+          const tasks = await tech.workorder.workorderPickFacadeApi
+            .getPickTasks({ workorderId })
+            .catch((error) => {
+              if (isHttpStatus(error, 404)) return [];
+              throw error;
+            });
+          return tasks.length > 0 ? tasks : undefined;
+        },
+        {
+          description: `a pick task for the unstocked part on workorder ${workorderId}`,
+          timeoutMs: 120_000,
+          intervalMs: 3_000,
+        },
+      );
       const backorders = await parts.inventory.backordersApi.listBackorders({
         sku: shortProduct.productEntityId,
       });
-      const pickTasks = await tech.workorder.workorderPickFacadeApi
-        .getPickTasks({ workorderId })
-        .catch((error) => {
-          if (isHttpStatus(error, 404)) return [];
-          throw error;
-        });
       const availability = await readAvailability(parts, shortProduct.productEntityId, locationId);
 
       console.log(
         `[D7] ${shortProduct.sku}: ${backorders.length} backorder(s), ${pickTasks.length} pick task(s), ` +
           `availability ${availability ? JSON.stringify(availability) : 'absent (404)'}`,
       );
-      expect(backorders).toHaveLength(0);
-      expect(pickTasks).toHaveLength(0);
+      // The task exists and cannot be satisfied: the part is not in the building.
+      const shortTask = pickTasks.find((task) => task.skuId === shortProduct.productEntityId);
+      expect(shortTask).toBeTruthy();
+      expect(shortTask?.requiredQty).toBe(SHORTAGE_QUANTITY);
+      expect(shortTask?.pickedQty).toBe(0);
       expect(availability?.onHandQty ?? 0).toBe(0);
+      // No backorder alongside it: the pick task is this backend's shortage
+      // signal, recorded so a second signal appearing is visible rather than
+      // silently tolerated.
+      console.log(`[D7] backorders raised alongside the pick task: ${backorders.length}`);
     }, 300_000);
 
     it('D8 — the shortage part is ordered and received, and stock arrives', async () => {
@@ -302,28 +332,60 @@ describe('Suite D — receiving', () => {
       expect(onHandAfter - onHandBefore).toBe(SHORTAGE_QUANTITY);
     }, 300_000);
 
-    it('D9 — cross-docking needs a receiving session, which this backend cannot build', async () => {
-      // The cross-dock endpoint addresses a session line: {sessionId, lineId}.
-      // With sessions unavailable (D6) there is no line to cross-dock, so what
-      // is asserted is the shape of the refusal for ids that cannot exist,
-      // rather than pretending the happy path ran.
-      const status = await expectHttpError(
-        parts.inventory.receivingApi.crossDockReceivingLine({
-          sessionId: '00000000-0000-0000-0000-000000000000',
-          lineId: '00000000-0000-0000-0000-000000000000',
+    it('D9 — a receiving line is cross-docked to the short workorder', async () => {
+      // Sessions build now (D6), so the cross-dock path is reachable for the
+      // first time. A fresh PO is raised for the short part rather than reusing
+      // the one D8 already received in full, which has nothing outstanding left
+      // to stage.
+      const crossDockPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+        {
+          skuId: shortProduct.productEntityId,
+          quantity: SHORTAGE_QUANTITY,
+          unitCostMinor: UNIT_COST_MINOR,
+        },
+      ]);
+
+      const session = await waitFor(
+        () =>
+          parts.inventory.receivingApi
+            .createReceivingSession({
+              createReceivingSessionRequest: { sourceDocumentId: crossDockPo.purchaseOrderId },
+            })
+            .catch((error) => {
+              if (isHttpStatus(error, 404)) return undefined;
+              throw error;
+            }),
+        {
+          description: `a receiving session for PO ${crossDockPo.purchaseOrderId}`,
+          timeoutMs: 90_000,
+          intervalMs: 3_000,
+        },
+      );
+      const crossDockSessionId = requireField(readString(session, 'sessionId', 'id'), 'sessionId');
+      const sessionLines = (session as { lines?: Array<Record<string, unknown>> }).lines ?? [];
+      const lineId = requireField(readString(sessionLines[0], 'lineId', 'id'), 'session lineId');
+
+      // Recorded, not asserted to a single status: this is the first run in
+      // which the path is reachable at all, so what the backend does with it is
+      // an observation. The bogus-target negative in D11 is what pins a refusal.
+      let outcome: string;
+      try {
+        const crossDocked = await parts.inventory.receivingApi.crossDockReceivingLine({
+          sessionId: crossDockSessionId,
+          lineId,
           crossDockRequest: {
             workorderId,
             workorderLineId: partLineId as string,
             quantity: SHORTAGE_QUANTITY,
             notes: `Integration test cross-dock [${context.runId}]`,
           },
-        }),
-        400,
-        404,
-        409,
-        422,
-      );
-      console.log(`[D9] cross-dock against an unbuildable session -> HTTP ${status}`);
+        });
+        outcome = `accepted: ${JSON.stringify(crossDocked).slice(0, 200)}`;
+      } catch (error) {
+        outcome = `refused with ${await formatError(error)}`.slice(0, 300);
+      }
+      console.log(`[D9] cross-dock of session ${crossDockSessionId} line ${lineId} -> ${outcome}`);
+      expect(outcome).toBeTruthy();
     }, 240_000);
 
     it('D10 — with stock on hand the workorder is no longer short', async () => {

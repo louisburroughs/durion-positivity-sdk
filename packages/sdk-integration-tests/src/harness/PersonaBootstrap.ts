@@ -5,7 +5,12 @@
 import { createPeopleContactClient } from '../../../sdk-people-contact/src';
 import { createSecurityClient } from '../../../sdk-security/src';
 import type { EmployeeRefs, SeederAuth } from '../../../sdk-seeder/src/lib';
-import type { CredentialedPersona, ItestConfig, PersonaName } from './ItestConfig';
+import type {
+  CredentialedPersona,
+  ItestConfig,
+  PersonaCredentials,
+  PersonaName,
+} from './ItestConfig';
 
 /**
  * Role-mode preflight (spec: Task 8).
@@ -91,7 +96,22 @@ export type LinkOutcome = 'created' | 'already-linked' | 'linked-elsewhere';
  */
 export interface PersonaSecurityPort {
   listUsers(): Promise<UserSummary[]>;
-  getUserPermissions(userId: string): Promise<string[]>;
+  /**
+   * The authorities the gateway will actually enforce for these credentials.
+   *
+   * Deliberately not `GET /v1/users/{userId}/permissions`, which this preflight
+   * used first and which is blind to role-derived access: it answers with the
+   * permissions attached to the user directly, so a correctly seeded account
+   * whose access comes entirely from its role reads as an empty set. On alpha
+   * every persona returned `[]` while its role carried a full set, and
+   * `check-permission` agreed with the empty answer.
+   *
+   * What the gateway enforces is the `perm_bits` bitmap minted into the
+   * persona's own token, so this logs in as the persona and decodes those bits
+   * against the catalog version they were minted with. It verifies the
+   * credentials at the same time, which asking about a user id never did.
+   */
+  getEnforcedAuthorities(credentials: PersonaCredentials): Promise<string[]>;
   getRoleIdByName(name: string): Promise<string>;
   assignUserRole(userId: string, roleId: string): Promise<void>;
 }
@@ -168,11 +188,18 @@ export class PersonaBootstrap {
         }
       }
 
+      // Whether the grant above ran or the account was already correct, the
+      // authorities below are read from a freshly minted token, so a grant that
+      // did not reach the set the token is built from shows up here as missing
+      // authorities rather than as a false pass.
+
       let authorities: string[];
       try {
-        authorities = await this.security.getUserPermissions(user.id);
+        authorities = await this.security.getEnforcedAuthorities(this.config.credentialsFor(persona));
       } catch (error) {
-        problems.push(`${persona}: could not read permissions for "${username}" (${describe(error)})`);
+        problems.push(
+          `${persona}: could not establish what "${username}" is authorized for (${describe(error)})`,
+        );
         continue;
       }
 
@@ -251,6 +278,37 @@ export class PersonaBootstrap {
  * an error code)" says nothing about whether the caller lacked a permission or
  * the role simply does not exist, so pull the status through.
  */
+/**
+ * Pulls `perm_bits` / `perm_ver` out of an access token.
+ *
+ * The token carries the bitmap, not the permission names - decoding it needs
+ * the catalog version it was minted against, and the decode endpoint rejects a
+ * version that is no longer current. A token minted before a catalog change
+ * therefore fails loudly here rather than being silently misread.
+ */
+function readPermissionClaims(accessToken: string): { permBits: string; permVer: number } {
+  const segments = accessToken.split('.');
+  if (segments.length < 2) {
+    throw new Error('access token is not a JWT');
+  }
+  const padded = segments[1] + '='.repeat((4 - (segments[1].length % 4)) % 4);
+  let claims: Record<string, unknown>;
+  try {
+    claims = JSON.parse(Buffer.from(padded, 'base64url').toString('utf8')) as Record<string, unknown>;
+  } catch (error) {
+    throw new Error(`access token payload is not readable JSON (${describe(error)})`);
+  }
+  const permBits = claims['perm_bits'];
+  const permVer = claims['perm_ver'];
+  if (typeof permBits !== 'string' || permBits.length === 0) {
+    throw new Error('access token carries no perm_bits claim');
+  }
+  if (typeof permVer !== 'number') {
+    throw new Error('access token carries no perm_ver claim');
+  }
+  return { permBits, permVer };
+}
+
 function describe(error: unknown): string {
   const response = (error as { response?: Response } | undefined)?.response;
   const status = typeof response?.status === 'number' ? response.status : undefined;
@@ -287,9 +345,18 @@ export function createPersonaPorts(adminAuth: SeederAuth): {
           personId: user.personId,
         }));
       },
-      async getUserPermissions(userId: string): Promise<string[]> {
-        const permissions = await securityClient.userRoleManagementApi.getUserPermissions({ userId });
-        return Array.from(permissions).map((permission) => permission.name);
+      async getEnforcedAuthorities(credentials: PersonaCredentials): Promise<string[]> {
+        const { accessToken } = await securityClient.authAPIApi.loginUser({
+          loginRequest: { username: credentials.username, password: credentials.password },
+        });
+        if (!accessToken) {
+          throw new Error('login returned no access token');
+        }
+        const { permBits, permVer } = readPermissionClaims(accessToken);
+        const decoded = await securityClient.permissionRegistryApi.decodePermissionBits({
+          permissionDecodeRequest: { permBits, permVer },
+        });
+        return decoded.permissions;
       },
       async getRoleIdByName(name: string): Promise<string> {
         const role = await securityClient.roleManagementApi.getRoleByName({ name });
