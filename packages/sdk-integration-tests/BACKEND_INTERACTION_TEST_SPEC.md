@@ -890,7 +890,7 @@ recorded from real runs:
 - **D4** a goods receipt raises on-hand by exactly what was received.
   **D5** no putaway tasks are created for a receipt - but that is not
   auto-putaway, as this note first concluded. Tasks are raised on request; see
-  the putaway note below.
+  *Putaway, corrected 2026-08-24* in the preceding section.
   **D11** over-receipt is **accepted** - 999 units against a line of 1.
 
 Three specified behaviours do not exist here, and the suites now assert their
