@@ -1155,7 +1155,22 @@ permissions — the seeded roles carry their full sets from
   README pointing at it. The waitFor rule carries the observed round-trip
   latencies, because "read once and assert" is the mistake this suite has
   actually made.
-- [ ] **Step 2: Full verification.**
+- [x] **Step 2: Full verification.**
+
+  Run from `main` on 2026-08-24 after the README merged. `npm test` 530
+  passing and collecting **no** `*.itest.ts`; `npm run build` clean;
+  `npm run test:integration` through the tunnel against alpha **46/46 in role
+  mode**, runId `itest-1787593385-227v`, whose workorders are retrievable
+  afterwards through `GET /v1/workorders/search?q=<runId>` (4 records).
+
+  Two caveats, neither hidden:
+
+  - The local-Compose leg was not run - there is no local stack up on this
+    machine. Every alpha leg was.
+  - Traceability was proved through the API rather than by connecting to the
+    alpha database directly, which needs credentials this run did not have.
+    The estimate search endpoint does not match on the runId marker; the
+    workorder one does.
 
 ```bash
 npm test            # unit suite still green, no itest files collected
@@ -1169,16 +1184,24 @@ npm run test:integration   # against a local backend: all suites green
 
 ### Completion Criteria
 
-- [ ] `packages/sdk-integration-tests` exists as a private workspace package;
+- [x] `packages/sdk-integration-tests` exists as a private workspace package;
       `npm test` (unit) and `npm run test:integration` are fully independent.
-- [ ] Seeder fixtures (`SeederAuth`, bootstraps, `ReferenceCache`,
+      Verified by `jest --listTests`: the unit run collects zero `*.itest.ts`.
+- [x] Seeder fixtures (`SeederAuth`, bootstraps, `ReferenceCache`,
       `SeederRandom`, `SEED_VENDOR_ID`) are consumed as a library, not
       copy-pasted; the seeder's own entrypoint and image are unchanged.
-- [ ] No test depends on virtual time: `/system/time` is touched only by the
+- [x] No test depends on virtual time: `/system/time` is touched only by the
       global-setup guard that aborts when alpha is mid-accelerated-run; no
       test waits for a clock boundary or uses an unbounded/fixed sleep; all
       asynchrony goes through `waitFor`.
-- [ ] Suites A–D pass against a non-accelerated backend, covering:
+
+      With one deliberate exception, recorded rather than waved through: suite
+      C sleeps 1.5s in three places to let **real time elapse**, because a
+      labor entry has to carry a duration above zero and the backend measures
+      the wall clock. That is what C3 specifies. No amount of polling
+      substitutes for elapsed time; every wait *for state* goes through
+      `waitFor`.
+- [x] Suites A–D pass against a non-accelerated backend, covering:
       appointment lifecycle + idempotent appointment→estimate bridge;
       estimate draft→lines→totals→approve/decline→promote; workorder
       approve→start→timers (incl. 409 recovery)→assignment→pick/consume→
@@ -1186,14 +1209,28 @@ npm run test:integration   # against a local backend: all suites green
       a new SKU (PO→ASN→receipt→availability delta→putaway) and
       workorder-directed receiving (shortage→receive→cross-dock→pick
       completable), each with at least one negative case.
-- [ ] Every created entity is traceable to a run via the runId marker, and a
+- [x] Every created entity is traceable to a run via the runId marker, and a
       completed alpha run's records are queryable in the alpha database.
-- [ ] The full suite runs from a developer laptop against alpha through the
+      Verified through the API (`/v1/workorders/search?q=<runId>`), not by a
+      direct database connection.
+- [x] The full suite runs from a developer laptop against alpha through the
       SSM tunnel with no new public ingress on the alpha host.
 - [x] Every test step declares its acting persona; the suite passes in
       single-credential mode, and in role mode each persona acts under its
       own login with the role-enforcement negatives running (passing or
       recorded as documented gaps).
-- [ ] Credentials appear only in shell environment variables or a git-ignored
+- [x] Credentials appear only in shell environment variables or a git-ignored
       env file; they are never committed, logged, or passed on a command line.
 - [ ] Root Jest unit run, TypeScript build, and lint remain green.
+
+      Unit run and build: green (530 passing, `tsc` clean). **Lint is not, and
+      never has been.** `npm run lint` reports 6,669 errors, of which 6,332 are
+      in generated client code (`apis/`, `models/`, `runtime.ts`) and 300 in
+      `dist/`. Only **37** are in hand-written source, and those are almost all
+      deliberate `as any` mock casts in two unit-test files.
+
+      ESLint has no `.eslintignore` and no `ignorePatterns`, so it lints build
+      output and generated clients that `jest.config.js` already excludes from
+      coverage. Making this criterion achievable means scoping ESLint the same
+      way; that is a config decision left for its own change rather than folded
+      into a documentation pass.
