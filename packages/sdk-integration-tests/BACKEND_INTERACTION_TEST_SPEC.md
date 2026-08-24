@@ -795,7 +795,32 @@ Backend behaviour that has changed since the 2026-08-23 notes below: promotion
 refusals now carry a code, a correlationId and a `nextAction` (#1477, #1471),
 and the workorder pick facade answers with an empty list instead of 404.
 
-**Confirmed after the deploy finished (15:03 UTC).** Two further runs at 15:08
+**Corrected 2026-08-24, 15:25 UTC.** The paragraphs below recorded three
+behaviours as absent on the deployed build. That was wrong, and the error was in
+these tests, not in the backend.
+
+#1483 implements all three through Kafka - pos-workorder publishes a command,
+pos-inventory generates the pick list, and the fact returns into
+`ext_pick_task` - while C6, D7 and D9 each read once, immediately, and asserted
+absence. Polling instead of reading once found every one of them:
+
+| Behaviour | Result | Latency |
+| --- | --- | --- |
+| Pick tasks from promotion (#1479) | 1 task, `PENDING`, full quantity outstanding | ~27s |
+| Receiving session from a PO (#1480) | built, with the PO's lines | ~3s |
+| Shortage signal (#1481) | 1 unfulfillable pick task | ~54s |
+| Cross-dock (previously unreachable) | accepted, `crossDockedQuantity` and ledger entries | - |
+
+Three runs agreeing meant only that the same measurement error repeated. The
+suites now wait for these signals through `waitFor` and assert their content;
+D9 exercises the real cross-dock path for the first time. Two full runs green,
+46/46.
+
+The receiving-session 404 that looked like a defect was `ext_purchase_order_line`
+replication lag: the PO is approved seconds before the session is requested, and
+the projection catches up within a few seconds.
+
+**Deploy timing (15:03 UTC).** Two further runs at 15:08
 and 15:12, both 46/46 on an alpha holding all-200, report the same three
 absences, so these are properties of the deployed build rather than of a
 half-landed rollout.
@@ -813,15 +838,10 @@ Two behaviours did change with it:
 - **Cross-docking to an unknown workorder** answers 404 where D9's earlier note
   recorded the session itself as unbuildable.
 
-The three absent behaviours were **still absent** on the build this ran against:
-promotion left 0 pick tasks, a released pick list held 0 tasks,
-`createReceivingSession` answered 404 "no receiving lines from pos-order", and a
-short workorder raised 0 backorders and 0 pick tasks. The error text for
-receiving has changed shape - it now reports missing source-document lines
-rather than a disabled stub - so part of #1483 is live. A further deploy was
-landing during the following run (catalog 500, customer 503), so these
-observations describe the build present at 14:52 UTC, not necessarily what
-#1483 finally delivers.
+A backorder is *not* raised alongside the pick task: on this backend the
+unfulfillable pick task is the shortage signal, and D7 records the backorder
+count so a second signal appearing becomes visible rather than being silently
+tolerated.
 
 ---
 

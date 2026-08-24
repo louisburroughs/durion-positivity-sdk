@@ -279,16 +279,32 @@ describe('Suite C — workorder execution', () => {
     expect(assigned ?? (await detail()).assignedTechnicianId).toBe(technicianId);
   }, 120_000);
 
-  it('C6 — a pick list is requested and released; tasks need a reservation', async () => {
+  it('C6 — promotion generates a pick list whose tasks reach the workorder facade', async () => {
     const onHandBefore = await readOnHand(parts, productId, context.referenceCache.locationId);
 
-    // The facade used to answer 404 here, and C6 asserted that. It now answers,
-    // so the absence being documented has changed shape: record what promotion
-    // actually leaves behind rather than asserting the old 404 back.
-    const tasksFromPromotion = await tech.workorder.workorderPickFacadeApi.getPickTasks({
-      workorderId,
-    });
-    console.log(`[C6] promotion left ${tasksFromPromotion.length} pick task(s) on the facade`);
+    // Promotion raises the pick list itself: pos-workorder publishes a command,
+    // pos-inventory generates the list, and the resulting fact lands back in
+    // ext_pick_task. That round trip is asynchronous - measured at roughly 30
+    // seconds on alpha - so this waits rather than reading once. C6 used to
+    // assert the facade 404'd and the list came back empty, which was true of
+    // the build before backend #1479 and is precisely wrong now.
+    const pickTasks = await waitFor(
+      async () => {
+        const tasks = await tech.workorder.workorderPickFacadeApi.getPickTasks({ workorderId });
+        return tasks.length > 0 ? tasks : undefined;
+      },
+      { timeoutMs: 120_000, intervalMs: 3_000 },
+    );
+    console.log(
+      `[C6] promotion generated ${pickTasks.length} pick task(s): ${JSON.stringify(pickTasks[0]).slice(0, 200)}`,
+    );
+
+    const partTask = pickTasks.find((task) => task.skuId === productId);
+    expect(partTask).toBeTruthy();
+    expect(partTask?.requiredQty).toBe(PART_QUANTITY);
+    // Nothing has been picked yet, so the whole requirement is still outstanding.
+    expect(partTask?.pickedQty).toBe(0);
+    expect(partTask?.remainingQty).toBe(PART_QUANTITY);
 
     // The manager raises the list, not the technician: createPickList requires
     // inventory:pick_list:create, which the seeded TECHNICIAN role does not
@@ -311,16 +327,16 @@ describe('Suite C — workorder execution', () => {
     );
     expect(readString(released, 'status')).toBe('READY_TO_PICK');
 
-    // Released, and still empty. Tasks are generated from a reservation
-    // (CreatePickListRequest carries a reservationId), so a list created from a
-    // workorder id alone has nothing to pick and nothing reaches pos-workorder's
-    // ext_pick_task replica. Recorded rather than asserted away: the spec's C6
-    // assumed promotion produced pickable tasks, and on this backend it does not.
+    // A second, manually requested list is still empty: its tasks come from a
+    // reservation (CreatePickListRequest carries a reservationId), not from the
+    // workorder id alone. Recorded rather than asserted at a fixed count - the
+    // useful assertion is the promotion-generated list above, and pinning this
+    // one to zero would fail the day manual requests learn to expand a
+    // workorder.
     const tasks = await tech.inventory.pickListsApi.listPickTasksForPickList({ pickListId });
     console.log(
-      `[C6] pick list ${pickListId} released as ${readString(released, 'status')} with ${tasks.length} task(s)`,
+      `[C6] a separately requested list ${pickListId} released as ${readString(released, 'status')} with ${tasks.length} task(s)`,
     );
-    expect(tasks).toHaveLength(0);
 
     // With nothing picked, stock must not have moved either.
     const onHandAfter = await readOnHand(parts, productId, context.referenceCache.locationId);
