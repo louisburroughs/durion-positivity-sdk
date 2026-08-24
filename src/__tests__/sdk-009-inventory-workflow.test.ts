@@ -45,13 +45,6 @@ function readText(filePath: string): string {
 // Mock API instances — shared across behavioral describe blocks
 // ---------------------------------------------------------------------------
 
-const mockPurchaseOrdersApi = {
-  createPurchaseOrder: jest.fn(),
-  approvePurchaseOrder: jest.fn(),
-  getPurchaseOrder: jest.fn(),
-  receivePurchaseOrder: jest.fn(),
-} as any;
-
 const mockAsnApi = {
   createAsn: jest.fn(),
   getAsn: jest.fn(),
@@ -103,8 +96,12 @@ describe('SDK-009 Exports: InventoryProcureToReceiveWorkflow is exported from pa
 // 3. BEHAVIORAL TESTS — delegation to generated API instances
 //
 //    Constructor: new InventoryProcureToReceiveWorkflow(
-//      purchaseOrdersApi, asnApi, receivingApi, availabilityApi
+//      asnApi, receivingApi, availabilityApi
 //    )
+//
+//    Purchase orders are not in this list: pos-inventory's contract no longer
+//    declares /v1/inventory/purchase-orders, so creating and approving a PO is
+//    `createOrderClient(...).purchaseOrdersApi`, not this workflow.
 //
 //    In RED phase the imported class is `undefined`, so `new ClassX()`
 //    throws: TypeError: InventoryProcureToReceiveWorkflow is not a constructor
@@ -113,56 +110,15 @@ describe('SDK-009 Exports: InventoryProcureToReceiveWorkflow is exported from pa
 describe('SDK-009 Behavior: InventoryProcureToReceiveWorkflow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPurchaseOrdersApi.createPurchaseOrder.mockResolvedValue({ purchaseOrderId: 'po-1' });
-    mockPurchaseOrdersApi.approvePurchaseOrder.mockResolvedValue({ status: 'APPROVED' });
     mockAsnApi.createAsn.mockResolvedValue({ asnId: 'asn-1' });
     mockReceivingApi.createReceivingSession.mockResolvedValue({ sessionId: 'sess-1' });
     mockReceivingApi.receiveItemsIntoStaging.mockResolvedValue({ received: true });
     mockAvailabilityApi.getAvailabilityByProduct.mockResolvedValue({ available: 10 });
   });
 
-  it('when_createPurchaseOrder_then_delegates_to_purchaseOrdersApi_createPurchaseOrder', async () => {
-    // Fails RED: InventoryProcureToReceiveWorkflow is not a constructor (undefined)
-    const workflow = new (InventoryProcureToReceiveWorkflow as any)(
-      mockPurchaseOrdersApi,
-      mockAsnApi,
-      mockReceivingApi,
-      mockAvailabilityApi,
-    );
-    const params = { createPurchaseOrderRequest: { locationId: 'loc-1', supplierId: 'sup-1' } };
-
-    const result = await workflow.createPurchaseOrder(params);
-
-    expect(mockPurchaseOrdersApi.createPurchaseOrder).toHaveBeenCalledTimes(1);
-    expect(mockPurchaseOrdersApi.createPurchaseOrder).toHaveBeenCalledWith(
-      expect.objectContaining(params),
-    );
-    expect(result).toBeDefined();
-  });
-
-  it('when_approvePurchaseOrder_then_delegates_to_purchaseOrdersApi_approvePurchaseOrder', async () => {
-    // Fails RED: InventoryProcureToReceiveWorkflow is not a constructor (undefined)
-    const workflow = new (InventoryProcureToReceiveWorkflow as any)(
-      mockPurchaseOrdersApi,
-      mockAsnApi,
-      mockReceivingApi,
-      mockAvailabilityApi,
-    );
-    const params = { purchaseOrderId: 'po-1', approvePurchaseOrderRequest: { approvedBy: 'mgr-1' } };
-
-    const result = await workflow.approvePurchaseOrder(params);
-
-    expect(mockPurchaseOrdersApi.approvePurchaseOrder).toHaveBeenCalledTimes(1);
-    expect(mockPurchaseOrdersApi.approvePurchaseOrder).toHaveBeenCalledWith(
-      expect.objectContaining(params),
-    );
-    expect(result).toBeDefined();
-  });
-
   it('when_registerAsn_then_delegates_to_asnApi_createAsn', async () => {
     // Fails RED: InventoryProcureToReceiveWorkflow is not a constructor (undefined)
     const workflow = new (InventoryProcureToReceiveWorkflow as any)(
-      mockPurchaseOrdersApi,
       mockAsnApi,
       mockReceivingApi,
       mockAvailabilityApi,
@@ -179,7 +135,6 @@ describe('SDK-009 Behavior: InventoryProcureToReceiveWorkflow', () => {
   it('when_startReceivingSession_then_delegates_to_receivingApi_createReceivingSession', async () => {
     // Fails RED: InventoryProcureToReceiveWorkflow is not a constructor (undefined)
     const workflow = new (InventoryProcureToReceiveWorkflow as any)(
-      mockPurchaseOrdersApi,
       mockAsnApi,
       mockReceivingApi,
       mockAvailabilityApi,
@@ -198,7 +153,6 @@ describe('SDK-009 Behavior: InventoryProcureToReceiveWorkflow', () => {
   it('when_receiveItems_then_delegates_to_receivingApi_receiveItemsIntoStaging', async () => {
     // Fails RED: InventoryProcureToReceiveWorkflow is not a constructor (undefined)
     const workflow = new (InventoryProcureToReceiveWorkflow as any)(
-      mockPurchaseOrdersApi,
       mockAsnApi,
       mockReceivingApi,
       mockAvailabilityApi,
@@ -217,7 +171,6 @@ describe('SDK-009 Behavior: InventoryProcureToReceiveWorkflow', () => {
   it('when_checkAvailability_then_delegates_to_availabilityApi_getAvailabilityByProduct', async () => {
     // Fails RED: InventoryProcureToReceiveWorkflow is not a constructor (undefined)
     const workflow = new (InventoryProcureToReceiveWorkflow as any)(
-      mockPurchaseOrdersApi,
       mockAsnApi,
       mockReceivingApi,
       mockAvailabilityApi,

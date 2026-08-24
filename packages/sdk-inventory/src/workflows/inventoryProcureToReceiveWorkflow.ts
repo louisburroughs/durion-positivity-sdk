@@ -1,25 +1,20 @@
-import { PurchaseOrdersApi } from '../apis/PurchaseOrdersApi';
 import { ASNApi } from '../apis/ASNApi';
 import { ReceivingApi } from '../apis/ReceivingApi';
 import { InventoryAvailabilityApi } from '../apis/InventoryAvailabilityApi';
 
+/**
+ * The procure half of procure-to-receive now lives in pos-order: creating and
+ * approving a purchase order is `createOrderClient(...).purchaseOrdersApi`, and
+ * the regenerated pos-inventory contract no longer declares those paths. This
+ * workflow covers what pos-inventory still owns - ASN, receiving, availability -
+ * and takes the PO id the order service issued.
+ */
 export class InventoryProcureToReceiveWorkflow {
   constructor(
-    private readonly purchaseOrdersApi: PurchaseOrdersApi,
     private readonly asnApi: ASNApi,
     private readonly receivingApi: ReceivingApi,
     private readonly availabilityApi: InventoryAvailabilityApi,
   ) { }
-
-  /** @operationId createPurchaseOrder */
-  createPurchaseOrder(params: Parameters<PurchaseOrdersApi['createPurchaseOrder']>[0]) {
-    return this.purchaseOrdersApi.createPurchaseOrder(params);
-  }
-
-  /** @operationId approvePurchaseOrder */
-  approvePurchaseOrder(params: Parameters<PurchaseOrdersApi['approvePurchaseOrder']>[0]) {
-    return this.purchaseOrdersApi.approvePurchaseOrder(params);
-  }
 
   /** @operationId createAsn */
   registerAsn(params: Parameters<ASNApi['createAsn']>[0]) {

@@ -92,7 +92,6 @@ export * from './PageCustomerCreditResponse';
 export * from './PageExportJobResponse';
 export * from './PageReportExportResponse';
 export * from './PageVendorBillSummaryResponse';
-export * from './Pageable';
 export * from './PageableObject';
 export * from './PagedResponseJournalEntryResponse';
 export * from './PaymentApplicationRequest';

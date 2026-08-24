@@ -16,7 +16,6 @@
 import * as runtime from '../runtime';
 import type {
   CreateReplenishmentPolicyRequest,
-  Pageable,
   ReplenishmentNeedResponse,
   ReplenishmentPolicyResponse,
   ReplenishmentScanResultResponse,
@@ -27,8 +26,6 @@ import type {
 import {
     CreateReplenishmentPolicyRequestFromJSON,
     CreateReplenishmentPolicyRequestToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     ReplenishmentNeedResponseFromJSON,
     ReplenishmentNeedResponseToJSON,
     ReplenishmentPolicyResponseFromJSON,
@@ -48,8 +45,10 @@ export interface CreateReplenishmentPolicyOperationRequest {
 }
 
 export interface ListReplenishmentPoliciesRequest {
-    pageable: Pageable;
     locationId?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface SnoozeReplenishmentPolicyOperationRequest {
@@ -154,21 +153,22 @@ export class ReplenishmentApi extends runtime.BaseAPI {
      * List replenishment policies
      */
     async listReplenishmentPoliciesRaw(requestParameters: ListReplenishmentPoliciesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<string>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listReplenishmentPolicies().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['locationId'] != null) {
             queryParameters['locationId'] = requestParameters['locationId'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -199,7 +199,7 @@ export class ReplenishmentApi extends runtime.BaseAPI {
      * Lists configured replenishment policies as a page, optionally filtered to one location. Use this tool to discover a policyId before updating or snoozing a policy; use listReplenishmentNeeds instead to see which policies would currently trigger. Preconditions: none. Required inputs: none; locationId is an optional query filter and the standard page/size parameters default to a page size of 20. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when nothing is configured, so an empty result is not an error condition. 
      * List replenishment policies
      */
-    async listReplenishmentPolicies(requestParameters: ListReplenishmentPoliciesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
+    async listReplenishmentPolicies(requestParameters: ListReplenishmentPoliciesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<string> {
         const response = await this.listReplenishmentPoliciesRaw(requestParameters, initOverrides);
         return await response.value();
     }

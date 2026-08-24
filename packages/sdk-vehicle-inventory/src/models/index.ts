@@ -11,6 +11,7 @@ export * from './SearchVehiclesResponse';
 export * from './UpdateVehicleRequest';
 export * from './VehicleBulkIngestRecord';
 export * from './VehicleCarePreferenceResponse';
+export * from './VehicleFactReplayResultDto';
 export * from './VehicleLegacyRequest';
 export * from './VehicleLegacyResponse';
 export * from './VehicleResponse';

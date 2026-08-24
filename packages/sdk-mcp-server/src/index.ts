@@ -34,6 +34,21 @@ async function buildRequestHeaders(
   }
   return headers;
 }
+/**
+ * Path of the one endpoint whose only declared response media type is
+ * text/event-stream.
+ *
+ * typescript-fetch derives a Content-Type header from the request body but
+ * never derives an Accept header from the response content, so the generated
+ * streamMcpChat sends no Accept at all and negotiation falls to whatever the
+ * server or an intermediary defaults to - for an operation whose own
+ * description says the client must accept text/event-stream. Setting it in the
+ * generated class would not survive the next regeneration; this factory is
+ * hand-maintained and listed in .openapi-generator-ignore, so the header is set
+ * here instead.
+ */
+const SSE_PATH = '/v1/mcp/chat/stream';
+
 export function createMcpServerClient(config: DurionSdkConfig) {
   const configuration = new Configuration({
     basePath: config.baseUrl,
@@ -46,6 +61,13 @@ export function createMcpServerClient(config: DurionSdkConfig) {
         idempotencyKey: mergedHeaders.get('Idempotency-Key') ?? undefined,
       });
       Object.keys(sdkHeaders).forEach((key: string) => mergedHeaders.set(key, sdkHeaders[key]));
+      // A caller-supplied Accept wins: overriding it would break anyone who
+      // deliberately asks for something else. urlStr is undefined when the
+      // caller hands fetchApi an object that is neither a string, a URL nor a
+      // Request - buildRequestHeaders already tolerates that, so this must too.
+      if (!mergedHeaders.has('Accept') && (urlStr ?? '').split('?')[0].endsWith(SSE_PATH)) {
+        mergedHeaders.set('Accept', 'text/event-stream');
+      }
       return fetch(url, { ...init, headers: mergedHeaders });
     },
   });

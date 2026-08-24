@@ -517,7 +517,9 @@ describe('SDK-005 sdk-shop-manager: createShopManagerClient', () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     expect(client.appointmentsApi).toBeDefined();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    expect(client.shopApi).toBeDefined();
+    expect(client.technicianApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    expect(client.shopAuditApi).toBeDefined();
   });
 
   it('AC-3: factory accepts optional token + apiVersion config', () => {
@@ -1086,6 +1088,50 @@ describe('SDK-005 sdk-mcp-server: fetchApi callback branches', () => {
     expect(fetchApi).toBeDefined();
     await fetchApi!('http://localhost:8093/api/mcp', {});
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // The SSE operation declares text/event-stream as its only response media
+  // type, but typescript-fetch never emits an Accept header, so the factory
+  // supplies it.
+  function sentHeaders(): Headers {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+    return new Headers(fetchMock.mock.calls[0][1].headers as HeadersInit);
+  }
+
+  it('AC-5: fetchApi — sets Accept: text/event-stream on the SSE path', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMcpServerClient(fullConfig('http://localhost:8093')) as any;
+    const fetchApi = getFetchApi(client, 'mcpStreamingChatApi');
+    expect(fetchApi).toBeDefined();
+    await fetchApi!('http://localhost:8093/v1/mcp/chat/stream', { method: 'POST' });
+    expect(sentHeaders().get('Accept')).toBe('text/event-stream');
+  });
+
+  it('AC-5: fetchApi — leaves Accept alone on every other path', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMcpServerClient(fullConfig('http://localhost:8093')) as any;
+    const fetchApi = getFetchApi(client, 'mcpChatApi');
+    await fetchApi!('http://localhost:8093/v1/mcp/chat', { method: 'POST' });
+    expect(sentHeaders().get('Accept')).toBeNull();
+  });
+
+  it('AC-5: fetchApi — a caller-supplied Accept wins on the SSE path', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMcpServerClient(fullConfig('http://localhost:8093')) as any;
+    const fetchApi = getFetchApi(client, 'mcpStreamingChatApi');
+    await fetchApi!('http://localhost:8093/v1/mcp/chat/stream', {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+    });
+    expect(sentHeaders().get('Accept')).toBe('application/json');
+  });
+
+  it('AC-5: fetchApi — query string does not defeat the SSE path match', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createMcpServerClient(fullConfig('http://localhost:8093')) as any;
+    const fetchApi = getFetchApi(client, 'mcpStreamingChatApi');
+    await fetchApi!('http://localhost:8093/v1/mcp/chat/stream?trace=1', { method: 'POST' });
+    expect(sentHeaders().get('Accept')).toBe('text/event-stream');
   });
 });
 

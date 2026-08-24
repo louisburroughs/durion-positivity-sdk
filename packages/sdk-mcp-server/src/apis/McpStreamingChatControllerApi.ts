@@ -15,12 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
-  ServerSentEventString,
   StreamChatRequest,
 } from '../models/index';
 import {
-    ServerSentEventStringFromJSON,
-    ServerSentEventStringToJSON,
     StreamChatRequestFromJSON,
     StreamChatRequestToJSON,
 } from '../models/index';
@@ -38,7 +35,7 @@ export class McpStreamingChatControllerApi extends runtime.BaseAPI {
      * Executes a chat message against the caller\'s permission-scoped assistant agent and streams the response as Server-Sent Events, one token per event with event type chat. Use this tool when the client renders tokens incrementally as they are generated; do not use executeMcpChat, which blocks until the full response is complete. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the client must accept the text/event-stream media type. Emits a MCP_CHAT_STREAM_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while streaming. Returns 200 with an SSE token stream, and 429 when the caller\'s chat rate limit is exceeded. 
      * Stream an MCP Chat Turn Over SSE
      */
-    async streamMcpChatRaw(requestParameters: StreamMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ServerSentEventString>>> {
+    async streamMcpChatRaw(requestParameters: StreamMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
         if (requestParameters['streamChatRequest'] == null) {
             throw new runtime.RequiredError(
                 'streamChatRequest',
@@ -60,14 +57,14 @@ export class McpStreamingChatControllerApi extends runtime.BaseAPI {
             body: StreamChatRequestToJSON(requestParameters['streamChatRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServerSentEventStringFromJSON));
+        return new runtime.BlobApiResponse(response);
     }
 
     /**
      * Executes a chat message against the caller\'s permission-scoped assistant agent and streams the response as Server-Sent Events, one token per event with event type chat. Use this tool when the client renders tokens incrementally as they are generated; do not use executeMcpChat, which blocks until the full response is complete. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the client must accept the text/event-stream media type. Emits a MCP_CHAT_STREAM_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while streaming. Returns 200 with an SSE token stream, and 429 when the caller\'s chat rate limit is exceeded. 
      * Stream an MCP Chat Turn Over SSE
      */
-    async streamMcpChat(requestParameters: StreamMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ServerSentEventString>> {
+    async streamMcpChat(requestParameters: StreamMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
         const response = await this.streamMcpChatRaw(requestParameters, initOverrides);
         return await response.value();
     }

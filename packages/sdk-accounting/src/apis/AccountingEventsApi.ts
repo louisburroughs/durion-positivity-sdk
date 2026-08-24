@@ -20,7 +20,6 @@ import type {
   EventEnvelopeContract,
   EventProcessingLogEntry,
   PageAccountingEventResponse,
-  Pageable,
   ReprocessEventRequest,
   ReprocessingAttemptHistoryResponse,
 } from '../models/index';
@@ -35,8 +34,6 @@ import {
     EventProcessingLogEntryToJSON,
     PageAccountingEventResponseFromJSON,
     PageAccountingEventResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     ReprocessEventRequestFromJSON,
     ReprocessEventRequestToJSON,
     ReprocessingAttemptHistoryResponseFromJSON,
@@ -56,7 +53,6 @@ export interface GetEventReprocessingHistoryRequest {
 }
 
 export interface ListAccountingEventsRequest {
-    pageable: Pageable;
     organizationId?: string;
     eventType?: string;
     idempotencyOutcome?: string;
@@ -67,6 +63,9 @@ export interface ListAccountingEventsRequest {
     domainKeyId?: string;
     invoiceId?: string;
     status?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ReprocessSuspendedEventRequest {
@@ -258,13 +257,6 @@ export class AccountingEventsApi extends runtime.BaseAPI {
      * List Accounting Events
      */
     async listAccountingEventsRaw(requestParameters: ListAccountingEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageAccountingEventResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listAccountingEvents().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['organizationId'] != null) {
@@ -307,8 +299,16 @@ export class AccountingEventsApi extends runtime.BaseAPI {
             queryParameters['status'] = requestParameters['status'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -335,7 +335,7 @@ export class AccountingEventsApi extends runtime.BaseAPI {
      * Lists ingested accounting events as a paginated projection with rich optional filters: organization, event type, idempotency outcome, received-at range, event id, ingestion id, domain key, invoice id and processing status. Use this tool to monitor or triage the event pipeline; do not use getAccountingEvent, which fetches one event by its known id. Preconditions: none beyond the caller holding accounting:events:view; an unrecognized status value is silently ignored rather than rejected. Required inputs: none; all filters are optional and the page defaults to 20 items sorted by receivedAt descending. Emits an ACCOUNTING_EVENT_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
      * List Accounting Events
      */
-    async listAccountingEvents(requestParameters: ListAccountingEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageAccountingEventResponse> {
+    async listAccountingEvents(requestParameters: ListAccountingEventsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageAccountingEventResponse> {
         const response = await this.listAccountingEventsRaw(requestParameters, initOverrides);
         return await response.value();
     }

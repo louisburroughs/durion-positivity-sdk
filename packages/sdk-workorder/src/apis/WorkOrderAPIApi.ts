@@ -374,7 +374,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a DRAFT workorder from an estimate, copying the estimate\'s customer, location, and CRM references and generating a workorder number. Use this tool when opening a workorder directly; do not use promoteEstimate, which is the estimate-side path that promotes an APPROVED estimate into a workorder. Preconditions: the referenced estimate must exist; the location falls back to the caller\'s primary location when the estimate carries none. Required inputs: estimateId and customerId (UUIDs); an Idempotency-Key header is recommended — a repeated key returns the originally created workorder instead of a duplicate. Emits a WORKORDER_CREATE event and marks the workorder fact changed for downstream replication. Returns 200 with the created or replayed workorder, and 400 when the estimate cannot be found. 
+     * Creates a DRAFT workorder from an estimate, copying the estimate\'s customer, location, and CRM references and generating a workorder number. Use this tool when opening a workorder directly; do not use promoteEstimate, which is the estimate-side path that promotes an APPROVED estimate into a workorder. Preconditions: the referenced estimate must exist, and the caller must hold workorder:workorder:create; the location falls back to the caller\'s primary location when the estimate carries none. Required inputs: estimateId and customerId (UUIDs); an Idempotency-Key header is recommended — a repeated key returns the originally created workorder instead of a duplicate. Emits a WORKORDER_CREATE event and marks the workorder fact changed for downstream replication. Returns 200 with the created or replayed workorder, and 400 when the estimate cannot be found. 
      * Create a New Workorder
      */
     async createWorkorderRaw(requestParameters: CreateWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
@@ -397,7 +397,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+            const tokenString = await token("bearerAuth", ["workorder:workorder:create"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -415,7 +415,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a DRAFT workorder from an estimate, copying the estimate\'s customer, location, and CRM references and generating a workorder number. Use this tool when opening a workorder directly; do not use promoteEstimate, which is the estimate-side path that promotes an APPROVED estimate into a workorder. Preconditions: the referenced estimate must exist; the location falls back to the caller\'s primary location when the estimate carries none. Required inputs: estimateId and customerId (UUIDs); an Idempotency-Key header is recommended — a repeated key returns the originally created workorder instead of a duplicate. Emits a WORKORDER_CREATE event and marks the workorder fact changed for downstream replication. Returns 200 with the created or replayed workorder, and 400 when the estimate cannot be found. 
+     * Creates a DRAFT workorder from an estimate, copying the estimate\'s customer, location, and CRM references and generating a workorder number. Use this tool when opening a workorder directly; do not use promoteEstimate, which is the estimate-side path that promotes an APPROVED estimate into a workorder. Preconditions: the referenced estimate must exist, and the caller must hold workorder:workorder:create; the location falls back to the caller\'s primary location when the estimate carries none. Required inputs: estimateId and customerId (UUIDs); an Idempotency-Key header is recommended — a repeated key returns the originally created workorder instead of a duplicate. Emits a WORKORDER_CREATE event and marks the workorder fact changed for downstream replication. Returns 200 with the created or replayed workorder, and 400 when the estimate cannot be found. 
      * Create a New Workorder
      */
     async createWorkorder(requestParameters: CreateWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {
@@ -424,7 +424,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a workorder row by id, a hard delete with no status guard or soft-delete fallback. Use this tool only to remove mistakenly created workorders; do not use completeWorkorder or reopenWorkorder, which drive the normal lifecycle without destroying history. Preconditions: none are enforced — deletion is idempotent and deleting an unknown id is a silent no-op. Required inputs: workorderId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_DELETE event. Returns 204 regardless of whether the workorder previously existed. 
+     * Deletes a workorder row by id, a hard delete with no status guard or soft-delete fallback. Use this tool only to remove mistakenly created workorders; do not use completeWorkorder or reopenWorkorder, which drive the normal lifecycle without destroying history. Preconditions: the caller must hold workorder:workorder:delete; deletion is idempotent and deleting an unknown id is a silent no-op. Required inputs: workorderId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_DELETE event. Returns 204 regardless of whether the workorder previously existed. 
      * Delete a Workorder
      */
     async deleteWorkorderRaw(requestParameters: DeleteWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -441,7 +441,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+            const tokenString = await token("bearerAuth", ["workorder:workorder:delete"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -458,7 +458,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a workorder row by id, a hard delete with no status guard or soft-delete fallback. Use this tool only to remove mistakenly created workorders; do not use completeWorkorder or reopenWorkorder, which drive the normal lifecycle without destroying history. Preconditions: none are enforced — deletion is idempotent and deleting an unknown id is a silent no-op. Required inputs: workorderId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_DELETE event. Returns 204 regardless of whether the workorder previously existed. 
+     * Deletes a workorder row by id, a hard delete with no status guard or soft-delete fallback. Use this tool only to remove mistakenly created workorders; do not use completeWorkorder or reopenWorkorder, which drive the normal lifecycle without destroying history. Preconditions: the caller must hold workorder:workorder:delete; deletion is idempotent and deleting an unknown id is a silent no-op. Required inputs: workorderId (UUID) as a path parameter; there is no request body. Emits a WORKORDER_DELETE event. Returns 204 regardless of whether the workorder previously existed. 
      * Delete a Workorder
      */
     async deleteWorkorder(requestParameters: DeleteWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -616,7 +616,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+            const tokenString = await token("bearerAuth", ["workorder:workorder:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -659,7 +659,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+            const tokenString = await token("bearerAuth", ["workorder:workorder:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

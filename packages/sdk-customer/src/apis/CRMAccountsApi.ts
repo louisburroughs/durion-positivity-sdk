@@ -27,7 +27,6 @@ import type {
   GetPartyResponse,
   MergePartiesRequest,
   MergePartiesResponse,
-  Pageable,
   PartyNameRef,
   PartyNameResolveRequest,
   ResolveAccountTierRequest,
@@ -63,8 +62,6 @@ import {
     MergePartiesRequestToJSON,
     MergePartiesResponseFromJSON,
     MergePartiesResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     PartyNameRefFromJSON,
     PartyNameRefToJSON,
     PartyNameResolveRequestFromJSON,
@@ -86,7 +83,9 @@ import {
 } from '../models/index';
 
 export interface BrowsePartiesRequest {
-    pageable: Pageable;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
     name?: string;
     status?: string;
     partyType?: string;
@@ -157,17 +156,18 @@ export class CRMAccountsApi extends runtime.BaseAPI {
      * Browse Customer Directory
      */
     async browsePartiesRaw(requestParameters: BrowsePartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SearchPartiesResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling browseParties().'
-            );
-        }
-
         const queryParameters: any = {};
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         if (requestParameters['name'] != null) {
@@ -218,7 +218,7 @@ export class CRMAccountsApi extends runtime.BaseAPI {
      * Returns a paged customer directory that unifies commercial parties and standalone individual customers, with person names and contact points resolved from pos-people. Use this tool when listing or typeahead-filtering customers by name, status, party type, or customer number; do not use searchParties, which filters commercial parties only by structured criteria, and use getParty instead when the party id is already known. Preconditions: none; an empty page is returned when nothing matches, and a pos-people outage degrades person names to null rather than failing the request. Required inputs: none; page defaults to 0 with size 20, the name filter matches legal name, display name, or customer number case-insensitively, status matches ACTIVE, INACTIVE, ON_HOLD, or MERGED, sortField is name (default) or customerNumber, and sortOrder is asc (default) or desc with partyId as a stable tie-breaker. Emits a CUSTOMER_PARTY_BROWSE audit event; no state changes occur. Returns 200 with an empty results array rather than an error when no party matches the filters. 
      * Browse Customer Directory
      */
-    async browseParties(requestParameters: BrowsePartiesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchPartiesResponse> {
+    async browseParties(requestParameters: BrowsePartiesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SearchPartiesResponse> {
         const response = await this.browsePartiesRaw(requestParameters, initOverrides);
         return await response.value();
     }

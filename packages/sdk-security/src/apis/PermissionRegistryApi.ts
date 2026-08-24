@@ -69,10 +69,16 @@ export interface GetPermissionById1Request {
 
 export interface ListPermissionsRequest {
     domain?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ListPermissions1Request {
     domain?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ListPermissionsByDomainRequest {
@@ -451,6 +457,18 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
             queryParameters['domain'] = requestParameters['domain'];
         }
 
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.accessToken) {
@@ -489,6 +507,18 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
 
         if (requestParameters['domain'] != null) {
             queryParameters['domain'] = requestParameters['domain'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};

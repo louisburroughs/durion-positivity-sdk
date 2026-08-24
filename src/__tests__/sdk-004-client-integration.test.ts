@@ -353,8 +353,12 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const client = createInventoryClient({ baseUrl: 'http://localhost:8082', token: () => 'tok' }) as Record<string, unknown>;
     expect(client['inventoryManagementApi']).toBeDefined();
-    expect(client['purchaseOrdersApi']).toBeDefined();
     expect(client['receivingApi']).toBeDefined();
+    expect(client['inventoryAvailabilityApi']).toBeDefined();
+    // Purchase orders are pos-order's; pos-inventory's contract no longer
+    // declares /v1/inventory/purchase-orders, so this factory must not offer
+    // an accessor that would 404.
+    expect(client['purchaseOrdersApi']).toBeUndefined();
   });
 
   it('createWorkorderClient returns expected API namespaces', async () => {

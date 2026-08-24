@@ -13,7 +13,6 @@ export * from './ContentDetectionResult';
 export * from './CorrectionResultDto';
 export * from './FileUploadResponse';
 export * from './PageBulkLoadJobResponse';
-export * from './Pageable';
 export * from './PageableObject';
 export * from './ProblemDetail';
 export * from './SortObject';

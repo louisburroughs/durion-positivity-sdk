@@ -18,7 +18,6 @@ import type {
   BulkLoadJobCreateRequest,
   BulkLoadJobResponse,
   PageBulkLoadJobResponse,
-  Pageable,
 } from '../models/index';
 import {
     BulkLoadJobCreateRequestFromJSON,
@@ -27,8 +26,6 @@ import {
     BulkLoadJobResponseToJSON,
     PageBulkLoadJobResponseFromJSON,
     PageBulkLoadJobResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface CancelBulkLoadJobRequest {
@@ -44,7 +41,9 @@ export interface GetBulkLoadJobRequest {
 }
 
 export interface ListBulkLoadJobsRequest {
-    pageable: Pageable;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface RetryBulkLoadJobRequest {
@@ -193,17 +192,18 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
      * List Bulk Load Jobs for Operator
      */
     async listBulkLoadJobsRaw(requestParameters: ListBulkLoadJobsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageBulkLoadJobResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listBulkLoadJobs().'
-            );
-        }
-
         const queryParameters: any = {};
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -230,7 +230,7 @@ export class BulkLoadJobsAPIApi extends runtime.BaseAPI {
      * Returns a paginated list of the authenticated operator\'s bulk load jobs with their statuses and progress counters. Use this tool to find a job id or review import history; use getBulkLoadJob instead when a specific job id is already known. Preconditions: none beyond authentication; the listing is always scoped to the caller\'s own jobs and other operators\' jobs are never included. Required inputs: standard page, size and sort query parameters, all optional with Spring defaults (page 0, size 20). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when the operator has no jobs; there are no operation-specific error responses. 
      * List Bulk Load Jobs for Operator
      */
-    async listBulkLoadJobs(requestParameters: ListBulkLoadJobsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageBulkLoadJobResponse> {
+    async listBulkLoadJobs(requestParameters: ListBulkLoadJobsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageBulkLoadJobResponse> {
         const response = await this.listBulkLoadJobsRaw(requestParameters, initOverrides);
         return await response.value();
     }

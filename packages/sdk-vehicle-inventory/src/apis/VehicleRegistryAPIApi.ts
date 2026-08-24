@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   CreateVehicleRequest,
   UpdateVehicleRequest,
+  VehicleFactReplayResultDto,
   VehicleResponse,
 } from '../models/index';
 import {
@@ -24,6 +25,8 @@ import {
     CreateVehicleRequestToJSON,
     UpdateVehicleRequestFromJSON,
     UpdateVehicleRequestToJSON,
+    VehicleFactReplayResultDtoFromJSON,
+    VehicleFactReplayResultDtoToJSON,
     VehicleResponseFromJSON,
     VehicleResponseToJSON,
 } from '../models/index';
@@ -42,6 +45,12 @@ export interface GetVehicleRequest {
 
 export interface GetVehicleByVinRequest {
     vin: string;
+}
+
+export interface ReplayVehicleFactsRequest {
+    afterVehicleId?: string;
+    updatedSince?: Date;
+    limit?: number;
 }
 
 export interface UpdateVehicleOperationRequest {
@@ -225,6 +234,54 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
      */
     async getVehicleByVin(requestParameters: GetVehicleByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
         const response = await this.getVehicleByVinRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Re-publishes vehicle.vehicle.updated facts for one bounded page of vehicles so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after publication was enabled on an environment that already held vehicles, or after a consumer outage longer than broker retention; do not use the outbox replay for that, which re-queues only rows already written and therefore cannot reach vehicles whose facts were never produced. Preconditions: Kafka publication must be enabled, or the facts queue in the outbox and reach nobody; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterVehicleId resumes a previous page, updatedSince restricts to vehicles changed at or after an instant, and limit bounds the page at 1000. Emits a VEHICLE_FACT_REPLAY event and queues one vehicle fact per vehicle in the page; no vehicle state changes. Returns 200 with complete=true and a null cursor once the last vehicle is reached, and 400 when a parameter is malformed. 
+     * Re-emit Vehicle Facts for Replica Consumers
+     */
+    async replayVehicleFactsRaw(requestParameters: ReplayVehicleFactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleFactReplayResultDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['afterVehicleId'] != null) {
+            queryParameters['afterVehicleId'] = requestParameters['afterVehicleId'];
+        }
+
+        if (requestParameters['updatedSince'] != null) {
+            queryParameters['updatedSince'] = (requestParameters['updatedSince'] as any).toISOString();
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/vehicle-registry/facts/replay`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => VehicleFactReplayResultDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-publishes vehicle.vehicle.updated facts for one bounded page of vehicles so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after publication was enabled on an environment that already held vehicles, or after a consumer outage longer than broker retention; do not use the outbox replay for that, which re-queues only rows already written and therefore cannot reach vehicles whose facts were never produced. Preconditions: Kafka publication must be enabled, or the facts queue in the outbox and reach nobody; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterVehicleId resumes a previous page, updatedSince restricts to vehicles changed at or after an instant, and limit bounds the page at 1000. Emits a VEHICLE_FACT_REPLAY event and queues one vehicle fact per vehicle in the page; no vehicle state changes. Returns 200 with complete=true and a null cursor once the last vehicle is reached, and 400 when a parameter is malformed. 
+     * Re-emit Vehicle Facts for Replica Consumers
+     */
+    async replayVehicleFacts(requestParameters: ReplayVehicleFactsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleFactReplayResultDto> {
+        const response = await this.replayVehicleFactsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

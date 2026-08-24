@@ -30,7 +30,6 @@ export * from './OrderInvoiceCreationRequest';
 export * from './OrderInvoiceLineItem';
 export * from './OrderInvoiceResponse';
 export * from './PageInvoiceSearchResult';
-export * from './Pageable';
 export * from './PageableObject';
 export * from './PartyStandaloneRefundRequest';
 export * from './PrintDeliveryRequest';

@@ -54,7 +54,6 @@ export * from './Not';
 export * from './NotAllOfNode';
 export * from './Or';
 export * from './PageCustomerDTO';
-export * from './Pageable';
 export * from './PageableObject';
 export * from './PagedResponse';
 export * from './PartyMatch';

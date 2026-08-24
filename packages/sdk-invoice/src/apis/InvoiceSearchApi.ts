@@ -18,7 +18,6 @@ import type {
   ApiError,
   InvoiceLineSearchResult,
   PageInvoiceSearchResult,
-  Pageable,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -27,8 +26,6 @@ import {
     InvoiceLineSearchResultToJSON,
     PageInvoiceSearchResultFromJSON,
     PageInvoiceSearchResultToJSON,
-    PageableFromJSON,
-    PageableToJSON,
 } from '../models/index';
 
 export interface SearchInvoiceLinesRequest {
@@ -37,8 +34,10 @@ export interface SearchInvoiceLinesRequest {
 }
 
 export interface SearchInvoicesRequest {
-    pageable: Pageable;
     q?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -102,21 +101,22 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
      * Search Invoices by Free Text
      */
     async searchInvoicesRaw(requestParameters: SearchInvoicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageInvoiceSearchResult>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling searchInvoices().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['q'] != null) {
             queryParameters['q'] = requestParameters['q'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -143,7 +143,7 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
      * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Use this tool to locate an invoice when its id is unknown; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank or missing q short-circuits to an empty page rather than listing all invoices. Required inputs: q (free-text term) plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed. 
      * Search Invoices by Free Text
      */
-    async searchInvoices(requestParameters: SearchInvoicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageInvoiceSearchResult> {
+    async searchInvoices(requestParameters: SearchInvoicesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageInvoiceSearchResult> {
         const response = await this.searchInvoicesRaw(requestParameters, initOverrides);
         return await response.value();
     }

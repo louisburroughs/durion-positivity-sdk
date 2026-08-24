@@ -22,7 +22,6 @@ import type {
   LocationResponseDTO,
   LocationValidationResponseDTO,
   PageLocationRef,
-  Pageable,
   PersonDTO,
 } from '../models/index';
 import {
@@ -40,8 +39,6 @@ import {
     LocationValidationResponseDTOToJSON,
     PageLocationRefFromJSON,
     PageLocationRefToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     PersonDTOFromJSON,
     PersonDTOToJSON,
 } from '../models/index';
@@ -69,9 +66,11 @@ export interface GetLocationResponsiblePersonRequest {
 }
 
 export interface GetLocationRosterRequest {
-    pageable: Pageable;
     status?: string;
     sinceUpdatedAt?: Date;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ListLocationChildrenRequest {
@@ -343,13 +342,6 @@ export class LocationAPIApi extends runtime.BaseAPI {
      * Get Paginated Location Roster for Sync
      */
     async getLocationRosterRaw(requestParameters: GetLocationRosterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageLocationRef>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling getLocationRoster().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['status'] != null) {
@@ -360,8 +352,16 @@ export class LocationAPIApi extends runtime.BaseAPI {
             queryParameters['sinceUpdatedAt'] = (requestParameters['sinceUpdatedAt'] as any).toISOString();
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -388,7 +388,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
      * Returns a paginated roster of lightweight location references (id, name, code, status, hrLocationId, timezone, updatedAt) for sync consumers. Use this tool when incrementally synchronising locations into another system; do not use listLocations, which returns full unpaginated location payloads. Preconditions: none beyond the location:read authority. Required inputs: none are mandatory; status filters exactly on the stored status value such as ACTIVE, sinceUpdatedAt is an ISO-8601 instant returning only rows updated after it, and standard page, size and sort parameters control paging. Emits a LOCATION_ROSTER_GET event; no location state changes. Returns 200 with a page of location refs; an unknown status value yields an empty page rather than an error. 
      * Get Paginated Location Roster for Sync
      */
-    async getLocationRoster(requestParameters: GetLocationRosterRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageLocationRef> {
+    async getLocationRoster(requestParameters: GetLocationRosterRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageLocationRef> {
         const response = await this.getLocationRosterRaw(requestParameters, initOverrides);
         return await response.value();
     }

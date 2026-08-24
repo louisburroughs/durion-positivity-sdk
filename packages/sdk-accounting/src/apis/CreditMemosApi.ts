@@ -19,7 +19,6 @@ import type {
   CreateCreditMemoRequest,
   CreditMemoResponse,
   PageCreditMemoResponse,
-  Pageable,
   VoidCreditMemoRequest,
 } from '../models/index';
 import {
@@ -31,8 +30,6 @@ import {
     CreditMemoResponseToJSON,
     PageCreditMemoResponseFromJSON,
     PageCreditMemoResponseToJSON,
-    PageableFromJSON,
-    PageableToJSON,
     VoidCreditMemoRequestFromJSON,
     VoidCreditMemoRequestToJSON,
 } from '../models/index';
@@ -46,10 +43,12 @@ export interface GetCreditMemoRequest {
 }
 
 export interface ListCreditMemosRequest {
-    pageable: Pageable;
     customerId?: string;
     originalInvoiceId?: string;
     status?: ListCreditMemosStatusEnum;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface VoidCreditMemoOperationRequest {
@@ -156,13 +155,6 @@ export class CreditMemosApi extends runtime.BaseAPI {
      * List Credit Memos
      */
     async listCreditMemosRaw(requestParameters: ListCreditMemosRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageCreditMemoResponse>> {
-        if (requestParameters['pageable'] == null) {
-            throw new runtime.RequiredError(
-                'pageable',
-                'Required parameter "pageable" was null or undefined when calling listCreditMemos().'
-            );
-        }
-
         const queryParameters: any = {};
 
         if (requestParameters['customerId'] != null) {
@@ -177,8 +169,16 @@ export class CreditMemosApi extends runtime.BaseAPI {
             queryParameters['status'] = requestParameters['status'];
         }
 
-        if (requestParameters['pageable'] != null) {
-            queryParameters['pageable'] = requestParameters['pageable'];
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -205,7 +205,7 @@ export class CreditMemosApi extends runtime.BaseAPI {
      * Lists credit memos as a paginated projection, optionally filtered by customer, original invoice or lifecycle status. Use this tool when browsing or reconciling memos; do not use getCreditMemo, which fetches one memo by its known id. Preconditions: none beyond the caller holding accounting:credit-memo:read. Required inputs: none; customerId, originalInvoiceId and status (DRAFT, POSTED, APPLIED, VOIDED) are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CREDIT_MEMO_LIST audit event; no state changes. Returns 400 when pagination or filter parameters are invalid. 
      * List Credit Memos
      */
-    async listCreditMemos(requestParameters: ListCreditMemosRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCreditMemoResponse> {
+    async listCreditMemos(requestParameters: ListCreditMemosRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCreditMemoResponse> {
         const response = await this.listCreditMemosRaw(requestParameters, initOverrides);
         return await response.value();
     }

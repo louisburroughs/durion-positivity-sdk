@@ -10,7 +10,6 @@ import { Configuration } from './runtime';
 import { ASNApi } from './apis/ASNApi';
 import { CycleCountAdjustmentsApi } from './apis/CycleCountAdjustmentsApi';
 import { InventoryManagementApi } from './apis/InventoryManagementApi';
-import { PurchaseOrdersApi } from './apis/PurchaseOrdersApi';
 import { ReceivingApi } from './apis/ReceivingApi';
 import { BackordersApi } from './apis/BackordersApi';
 import { InventoryAvailabilityApi } from './apis/InventoryAvailabilityApi';
@@ -36,13 +35,11 @@ export function createInventoryClient(config: DurionSdkConfig) {
     asnApi: new ASNApi(configuration),
     cycleCountAdjustmentsApi: new CycleCountAdjustmentsApi(configuration),
     inventoryManagementApi: new InventoryManagementApi(configuration),
-    /**
-     * @deprecated Purchase orders moved to pos-order; these paths
-     * (/v1/inventory/purchase-orders) 404 against the gateway. Use
-     * `createOrderClient(...).purchaseOrdersApi` instead. Kept only so the
-     * removal is a deliberate breaking change rather than a silent one.
-     */
-    purchaseOrdersApi: new PurchaseOrdersApi(configuration),
+    // Note: purchaseOrdersApi is deliberately absent. Purchase orders moved to
+    // pos-order and the regenerated pos-inventory contract no longer declares
+    // /v1/inventory/purchase-orders, so the class and its DTOs were dropped
+    // rather than kept as a deprecated accessor that 404s. Use
+    // `createOrderClient(...).purchaseOrdersApi`.
     receivingApi: new ReceivingApi(configuration),
     // Generated and exported by the apis barrel, but never surfaced here, so no
     // consumer of this factory could reach availability, backorders or putaway.

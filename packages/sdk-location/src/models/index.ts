@@ -27,7 +27,6 @@ export * from './PageBayResponse';
 export * from './PageLocationRef';
 export * from './PageMobileUnitResponse';
 export * from './PageStorageLocationResponse';
-export * from './Pageable';
 export * from './PageableObject';
 export * from './PersonDTO';
 export * from './PostalCodeEntry';
