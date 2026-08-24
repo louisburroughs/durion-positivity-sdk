@@ -795,6 +795,24 @@ Backend behaviour that has changed since the 2026-08-23 notes below: promotion
 refusals now carry a code, a correlationId and a `nextAction` (#1477, #1471),
 and the workorder pick facade answers with an empty list instead of 404.
 
+**Confirmed after the deploy finished (15:03 UTC).** Two further runs at 15:08
+and 15:12, both 46/46 on an alpha holding all-200, report the same three
+absences, so these are properties of the deployed build rather than of a
+half-landed rollout.
+
+Two behaviours did change with it:
+
+- **Over-receipt is now refused.** Receiving 999 against a PO line of 1 was
+  accepted before; it now answers 403.
+  `InventoryGlobalExceptionHandler` maps `OverReceiptNotPermittedException` to
+  `FORBIDDEN` deliberately, so this is a guard, not an authorization accident.
+  Worth noting for role mode: a client cannot distinguish that refusal from a
+  missing permission, since both arrive as a bare 403 - which is exactly the
+  ambiguity #1471 set out to remove elsewhere. D11 records the status rather
+  than asserting one, so it survives the change.
+- **Cross-docking to an unknown workorder** answers 404 where D9's earlier note
+  recorded the session itself as unbuildable.
+
 The three absent behaviours were **still absent** on the build this ran against:
 promotion left 0 pick tasks, a released pick list held 0 tasks,
 `createReceivingSession` answered 404 "no receiving lines from pos-order", and a
