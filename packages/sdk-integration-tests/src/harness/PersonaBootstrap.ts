@@ -39,9 +39,13 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
   advisor: ['appointments:create', 'workorder:estimate:create', 'workorder:estimate:submit'],
   tech: ['workorder:start', 'workorder:labor:add', 'workorder:parts:consume'],
   manager: [
-    'workorder:estimate:approve',
     'workorder:workorder:approve',
+    'workorder:workorder:complete',
+    'workorder:workorder:assign-technician',
     'order:purchase_order:approve',
+    // C6 raises the pick list as the manager precisely because TECHNICIAN
+    // cannot; checking it here is what stops that regressing silently.
+    'inventory:pick_list:create',
   ],
   parts: [
     'order:purchase_order:create',
@@ -49,7 +53,11 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'inventory:goods_receipt:create',
     'inventory:receiving:create',
   ],
-  acct: ['accounting:payment:apply', 'invoice:manage'],
+  // The acct persona makes exactly one call in the suites - submitting an
+  // INVOICE_PAYMENT through accountingEventsApi. Applying payments and managing
+  // invoices are ACCOUNT_MANAGER's on paper but nothing here exercises them,
+  // and the advisor is what finalizes the invoice.
+  acct: ['accounting:events:submit'],
 };
 
 /**
@@ -236,8 +244,22 @@ export class PersonaBootstrap {
   }
 }
 
+/**
+ * The generated clients throw a ResponseError whose message is always
+ * "Response returned an error code" and whose useful half - the status and the
+ * URL - hangs off `.response`. A preflight problem reading "(Response returned
+ * an error code)" says nothing about whether the caller lacked a permission or
+ * the role simply does not exist, so pull the status through.
+ */
 function describe(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  const response = (error as { response?: Response } | undefined)?.response;
+  const status = typeof response?.status === 'number' ? response.status : undefined;
+  const message = error instanceof Error ? error.message : String(error);
+  if (status === undefined) {
+    return message;
+  }
+  const url = typeof response?.url === 'string' && response.url.length > 0 ? ` ${response.url}` : '';
+  return `HTTP ${status}${url}: ${message}`;
 }
 
 /**

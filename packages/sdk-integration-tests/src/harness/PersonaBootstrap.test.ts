@@ -190,6 +190,28 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
     expect(security.calls.getUserPermissions).toEqual([]);
   });
 
+  it('surfaces the HTTP status a generated ResponseError hides', async () => {
+    // The generated clients always say "Response returned an error code"; the
+    // status lives on .response, and without it the operator cannot tell a
+    // missing permission from a missing role.
+    const responseError = Object.assign(new Error('Response returned an error code'), {
+      response: { status: 403, url: 'http://gw/security-service/v1/users/u-1/permissions' },
+    });
+    const security: PersonaSecurityPort = {
+      listUsers: () =>
+        Promise.resolve([{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }]),
+      getUserPermissions: () => Promise.reject(responseError),
+      getRoleIdByName: () => Promise.resolve('role-1'),
+      assignUserRole: () => Promise.resolve(),
+    };
+    const bootstrap = new PersonaBootstrap(ItestConfig.fromEnv(ROLE_ENV), security, fakePeople());
+
+    const error = await bootstrap.verifyAndProvision().catch((e: Error) => e);
+
+    expect((error as Error).message).toContain('HTTP 403');
+    expect((error as Error).message).toContain('/v1/users/u-1/permissions');
+  });
+
   it('reports an unreadable permission set against the persona', async () => {
     const security = fakeSecurity(
       [{ id: 'u-1', username: 'gloria.mendez', roles: ['INVENTORY_LEAD'] }],
