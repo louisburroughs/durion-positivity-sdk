@@ -954,20 +954,30 @@ seeded-account mapping:
 | `tech` | TECHNICIAN | `kyle.brennan`, `deshawn.morris`, `carlos.ruiz`, `amber.nguyen`, `eddie.vasquez`, `priya.patel`, `james.okafor` |
 | `manager` | LOCATION_MANAGER | `diana.rowe` |
 | `acct` | ACCOUNT_MANAGER | `irene.torres` |
-| `parts` | INVENTORY_LEAD | **none** — no seeded user holds an INVENTORY_* role |
+| `parts` | INVENTORY_LEAD | `gloria.mendez` |
 | `admin` | SYSTEM_ADMINISTRATOR | `marcus.webb` (also `admin.alpha` from the reference seed) |
 
 Operators point the `ITEST_<PERSONA>_*` variables at these usernames with
-the shared operational password. The only remaining provisioning is the
-`parts` login: one role assignment
-(`PUT /v1/users/{userId}/roles/{roleId}`, requires `security:role:assign`)
-granting INVENTORY_LEAD to whichever user the operator chooses for
-`ITEST_PARTS_USERNAME` — or, better, adding an INVENTORY_LEAD user to the
-seed upstream, extending "16 employees across 7 roles" to 8. Resolve the
-role **by name** from the roles listing rather than hardcoding its UUID: on
-databases populated before backend #1440 (alpha included) the formerly
-initializer-created roles keep their originally generated ids. Never grant
-individual permissions — the seeded roles carry their full sets from
+the shared operational password.
+
+**Updated 2026-08-23:** this section used to say no seeded user held an
+INVENTORY_* role and proposed adding one upstream. That happened.
+`R__seed_security_operational_data.sql` now seeds 17 users, and
+`gloria.mendez` carries INVENTORY_LEAD, so the `parts` persona needs no
+provisioning on a freshly seeded database. The preflight still performs the
+grant, because an environment seeded before that change — alpha may be one —
+has the user without the role, and the two cases are indistinguishable from
+the client side.
+
+When the grant is needed it is one role assignment
+(`PUT /v1/users/{userId}/roles/{roleId}`, requires `security:role:assign`).
+Resolve the role **by name** from the roles listing rather than hardcoding its
+UUID: on databases populated before backend #1440 (alpha included) the formerly
+initializer-created roles keep their originally generated ids. Use
+`assignUserRole`, which adds one scoped assignment — never
+`assignUserRolesByUsername`, which **replaces** the user's entire direct role
+set and would strip whatever else the account holds. Never grant individual
+permissions — the seeded roles carry their full sets from
 `R__seed_role_permissions.sql` — and never grant from the unenforced legacy
 `inventory:purchase_order:*` family.
 
@@ -978,32 +988,58 @@ individual permissions — the seeded roles carry their full sets from
 - Modify: `src/harness/globalSetup.ts` (invoke when role mode is configured)
 - Test: unit tests for the preflight logic (mocked HTTP)
 
-- [ ] **Step 1: Verify the configured accounts.** In role mode, for each
+- [x] **Step 1: Verify the configured accounts.** In role mode, for each
   configured persona resolve the user by username and read
   `GET /v1/users/{userId}/permissions` (requires `security:permission:view`)
   as admin; assert the authorities the suites rely on are present. This
   catches a wrong username or missing role assignment before any suite
   runs, with a far clearer failure than a scattered 403.
-- [ ] **Step 2: Assign INVENTORY_LEAD for the parts persona.** When
+- [x] **Step 2: Assign INVENTORY_LEAD for the parts persona.** When
   `ITEST_PARTS_*` is configured and that user lacks INVENTORY_LEAD, assign
   it (`PUT /v1/users/{userId}/roles/{roleId}`, role id resolved by name).
   Idempotent: already-assigned is a no-op. Record in the run log that the
   assignment was made. Separately, propose the upstream seed change adding
   a dedicated INVENTORY_LEAD operational user.
-- [ ] **Step 3: Link personas to people records.** The seeded operational
+- [x] **Step 3: Link personas to people records.** The seeded operational
   users have no `person_id` (only `admin.alpha` does). Where the backend
   supports it, associate each persona user with the matching
   `PeopleBootstrap` employee (e.g. the tech login ↔ a TECHNICIAN employee
   id) so labor attribution and assignment views line up. If no linkage API
   exists, record that as a known limitation next to the affected C-suite
   assertions.
-- [ ] **Step 4: Hygiene.** Re-runs are no-ops. Passwords come only from the
+- [x] **Step 4: Hygiene.** Re-runs are no-ops. Passwords come only from the
   `ITEST_*` variables — never generated, logged, or stored; the shared
   operational password never appears in code or docs.
 - [ ] **Step 5: Verify role mode end-to-end.** With persona credentials set,
   global setup logs in all personas; suites A–D pass with per-persona
   execution; the role-enforcement negatives run (passing or as documented
   `test.failing` gaps).
+
+  All five personas are now configured (`rachel.kim`, `kyle.brennan`,
+  `diana.rowe`, `irene.torres`, `gloria.mendez`), so the next run executes in
+  role mode with each persona on its own login and the seven
+  role-enforcement negatives running. Steps 1-4 are implemented and
+  unit-tested (`src/harness/PersonaBootstrap.test.ts`, 15 cases). Still
+  unchecked because it has not actually been run: alpha is mid-deploy for the
+  #1477/#1479/#1480/#1481 fixes.
+
+  Every call the suites make was checked against
+  `R__seed_role_permissions.sql` and the operations' own
+  `x-required-permissions` before enabling role mode. Two findings:
+
+  - **C6 created its pick list as the technician.** `createPickList` requires
+    `inventory:pick_list:create`, which TECHNICIAN does not hold — it carries
+    `pick_list:execute` and `pick_list:view`. The manager raises the list now;
+    the technician still releases and reads it. Single-credential mode hid
+    this, because every persona was the admin login.
+  - **All seven negatives are consistent with the seed**: TECHNICIAN lacks
+    `workorder:estimate:approve`, `appointments:create`,
+    `workorder:estimate:create`, `order:purchase_order:approve` and
+    `workorder:workorder:complete`; INVENTORY_LEAD lacks
+    `order:purchase_order:approve`; SERVICE_ADVISOR lacks `workorder:start`
+    and `workorder:labor:add`. Each should therefore get its expected 403,
+    provided the backend enforces what the registry declares — which is the
+    thing these tests exist to find out.
 
 ### Task 9: Documentation
 

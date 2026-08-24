@@ -282,8 +282,13 @@ describe('Suite C — workorder execution', () => {
       404,
     );
 
+    // The manager raises the list, not the technician: createPickList requires
+    // inventory:pick_list:create, which the seeded TECHNICIAN role does not
+    // carry - it holds pick_list:execute and pick_list:view. In
+    // single-credential mode every persona is the admin login and this passed
+    // either way; in role mode a technician here is a 403.
     const pickList = await call('createPickList', () =>
-      tech.inventory.pickListsApi.createPickList({
+      manager.inventory.pickListsApi.createPickList({
         // priority is declared optional by the spec but lands in a primitive int
         // on the backend, which rejects the null the client sends for an omitted
         // field: "Cannot map `null` into type `int`". So it is always supplied.

@@ -12,6 +12,7 @@ import {
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
+import { createPersonaPorts, PersonaBootstrap } from './PersonaBootstrap';
 
 /**
  * Runs once, before any suite: validates configuration, refuses to touch a
@@ -48,13 +49,50 @@ export default async function globalSetup(): Promise<void> {
   const auth = new SeederAuth(adminConfig);
   await stage('admin login', () => auth.login());
 
+  // Role mode only: prove every persona login resolves to an account with the
+  // authorities its suite steps need, before the reference bootstrap spends
+  // minutes seeding for a run that would 403 halfway through (spec: Task 8).
+  const personaBootstrap = new PersonaBootstrap(config, ...personaPortsFor(auth));
+  if (personaBootstrap.applies) {
+    const { verified, assignments } = await stage('persona preflight', () =>
+      personaBootstrap.verifyAndProvision(),
+    );
+    console.log(`[itest] personas verified: ${verified.join(', ')}`);
+    for (const assignment of assignments) {
+      console.log(`[itest] role assigned: ${assignment}`);
+    }
+  }
+
   const refs = await stage('reference bootstrap', () =>
     new BootstrapOrchestrator(adminConfig, auth).run(),
   );
 
+  // Step 3 runs here rather than with the rest of the preflight: the employees
+  // it links to are what the reference bootstrap just created.
+  if (personaBootstrap.applies) {
+    const { links, limitations } = await stage('persona person-links', () =>
+      personaBootstrap.linkPersons(refs.employees),
+    );
+    for (const link of links) {
+      console.log(`[itest] linked ${link}`);
+    }
+    for (const limitation of limitations) {
+      console.log(`[itest] role-mode limitation: ${limitation}`);
+    }
+  }
+
   const runId = `itest-${Math.floor(Date.now() / 1000)}-${Math.random().toString(36).slice(2, 6)}`;
   const file = saveContext({ runId, mode: config.mode, referenceCache: refs });
   console.log(`[itest] runId=${runId} context=${file}`);
+}
+
+/** Spreads into the PersonaBootstrap constructor's (security, people) pair. */
+function personaPortsFor(auth: SeederAuth): [
+  ReturnType<typeof createPersonaPorts>['security'],
+  ReturnType<typeof createPersonaPorts>['people'],
+] {
+  const ports = createPersonaPorts(auth);
+  return [ports.security, ports.people];
 }
 
 async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
