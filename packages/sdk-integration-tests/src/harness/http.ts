@@ -122,8 +122,9 @@ export async function retryWhileReplicating<T>(
         // no `response`, so every status-aware helper downstream - isHttpStatus,
         // expectHttpError - goes blind: a role-mode negative that correctly got
         // its 403 fails with "Expected HTTP 401/403 but got: ... HTTP 403",
-        // reading the status out of a string it can no longer inspect. The
-        // description is preserved as the cause's context instead.
+        // reading the status out of a string it can no longer inspect. To keep
+        // the description without losing `response`, the original error's own
+        // message is rewritten in place to carry it.
         if (error instanceof Error) {
           error.message = `${options.description} failed: ${detail}`;
           throw error;
