@@ -843,6 +843,31 @@ unfulfillable pick task is the shortage signal, and D7 records the backorder
 count so a second signal appearing becomes visible rather than being silently
 tolerated.
 
+**Putaway, corrected 2026-08-24.** D5 concluded for twelve runs that this
+backend "auto-putaways", on the evidence that a goods receipt raises no putaway
+tasks. That was the wrong inference from a true observation: tasks are not
+raised automatically, they are raised *on request*. `generatePutawayTasks`
+returns one task per received line, and `claimPutawayTask` works on it - so two
+thirds of the path had never been exercised.
+
+The task the backend generates then cannot be executed by either available
+route:
+
+- From the task's own `sourceLocationId` - the staging location, `...0002` -
+  **422 `NO_ON_HAND_AT_SOURCE_LOCATION`**, "Data consistency error -
+  reconciliation required". Nothing is in staging, because `createGoodsReceipt`
+  puts stock directly on hand at the receiving location. That is precisely why
+  D4 sees on-hand rise and why no task appears on its own.
+- From the receiving location, where the stock actually is - **422
+  `LOCATION_NOT_VALID_FOR_SKU`** against the task's *own*
+  `suggestedDestinationLocationId`, "SKU is not configured in replenishment
+  policies".
+
+So generation roots the task at a location the receipt never touched, and
+resolves a destination that execution rejects. Filed as a backend issue. D5
+records both refusals and still asserts the stock is on hand, so it passes today
+and starts failing the day either route begins to work.
+
 ---
 
 ### Suites A-D: what alpha actually does (2026-08-23)
@@ -863,7 +888,9 @@ recorded from real runs:
   first call returns `{invoiceId: null, status: PENDING}` and a later call
   returns the invoice; finalized total 286.17, payment event accepted.
 - **D4** a goods receipt raises on-hand by exactly what was received.
-  **D5** this backend auto-putaways: no putaway tasks are created for a receipt.
+  **D5** no putaway tasks are created for a receipt - but that is not
+  auto-putaway, as this note first concluded. Tasks are raised on request; see
+  *Putaway, corrected 2026-08-24* in the preceding section.
   **D11** over-receipt is **accepted** - 999 units against a line of 1.
 
 Three specified behaviours do not exist here, and the suites now assert their
