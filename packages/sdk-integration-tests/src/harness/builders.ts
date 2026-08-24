@@ -290,7 +290,19 @@ export async function promoteWhenPromotable(
       return await as.workorder.estimateAPIApi.promoteEstimate({ estimateId });
     } catch (error) {
       lastDetail = await formatError(error);
+      // Two transient refusals, both meaning "the estimate is fine, something it
+      // depends on has not caught up".
+      //
+      // The 503 is the current one: pos-workorder answers
+      // CUSTOMER_REQUIREMENTS_UNAVAILABLE with a nextAction saying to retry
+      // while the customer-requirements verdict replicates (backend #1477 gave
+      // the refusal a code and a reason - it used to be the bare, bodyless 400
+      // below, which is kept because an environment running the older build
+      // still produces it and the two mean the same thing here).
+      const isRequirementsLag =
+        isHttpStatus(error, 503) && lastDetail.includes('CUSTOMER_REQUIREMENTS_UNAVAILABLE');
       const isEmptyBadRequest = isHttpStatus(error, 400) && lastDetail.includes('(empty body)');
+      const isTransient = isRequirementsLag || isEmptyBadRequest;
 
       let status = 'unreadable';
       try {
@@ -299,7 +311,7 @@ export async function promoteWhenPromotable(
         /* leave it unreadable */
       }
 
-      if (!isEmptyBadRequest || status !== 'APPROVED' || Date.now() >= deadline) {
+      if (!isTransient || status !== 'APPROVED' || Date.now() >= deadline) {
         throw new Error(
           `promoteEstimate failed for estimate ${estimateId} (status=${status}): ${lastDetail}`,
         );

@@ -757,6 +757,56 @@ cannot approve it — INVENTORY_LEAD deliberately holds `create` but not
   over-receipt behavior; `crossDockReceivingLine` against a bogus workorder
   id: assert 4xx.
 
+### Role mode: what the first real run found (2026-08-24)
+
+Suites A-D run green in role mode - **46 passing, 0 skipped, 0 failing** - with
+each persona on its own login and all seven role-enforcement negatives
+executing. Getting there turned up four things that single-credential mode had
+been hiding, because every persona was the admin login carrying all 442
+permissions:
+
+- **The preflight was asking the wrong system.** It read
+  `GET /v1/users/{userId}/permissions`, which reports permissions attached to a
+  user *directly* and is blind to role-derived access. Every persona came back
+  with `[]` while its role carried a full set, and `check-permission` agreed
+  with that empty answer. What the gateway enforces is the `perm_bits` bitmap
+  minted into the token, so the preflight now logs in as each persona and
+  decodes those bits (`POST /v1/users/permissions/decode`) against the
+  `perm_ver` they were minted with. Verified against alpha: gloria.mendez's
+  token decodes to exactly the 30 INVENTORY_LEAD permissions. This also proves
+  the persona's credentials work, which asking about a user id never did.
+- **A technician cannot read availability.** `getAvailabilityBySku` requires
+  `inventory:on_hand:view` / `:search`. TECHNICIAN holds
+  `inventory:availability:read`, which no endpoint asks for. Suite C's setup and
+  C6's on-hand reads now go through the parts clerk. Worth raising upstream: a
+  permission nothing enforces is either dead or the endpoint is checking the
+  wrong one.
+- **`retryWhileReplicating` blinded every status-aware assertion.** On a
+  non-replication failure it threw a *new* Error, so `.response` was lost and
+  `expectHttpError` could not read the status. A correctly-enforced 403 failed
+  as "Expected HTTP 401/403 but got: ... HTTP 403" - reading the status out of a
+  string it could no longer inspect. It now rethrows the original.
+- **Promotion has a transient refusal.** pos-workorder answers 503
+  `CUSTOMER_REQUIREMENTS_UNAVAILABLE` with a `nextAction` while the
+  customer-requirements verdict replicates. `promoteWhenPromotable` and B6 treat
+  it as lag rather than a verdict.
+
+Backend behaviour that has changed since the 2026-08-23 notes below: promotion
+refusals now carry a code, a correlationId and a `nextAction` (#1477, #1471),
+and the workorder pick facade answers with an empty list instead of 404.
+
+The three absent behaviours were **still absent** on the build this ran against:
+promotion left 0 pick tasks, a released pick list held 0 tasks,
+`createReceivingSession` answered 404 "no receiving lines from pos-order", and a
+short workorder raised 0 backorders and 0 pick tasks. The error text for
+receiving has changed shape - it now reports missing source-document lines
+rather than a disabled stub - so part of #1483 is live. A further deploy was
+landing during the following run (catalog 500, customer 503), so these
+observations describe the build present at 14:52 UTC, not necessarily what
+#1483 finally delivers.
+
+---
+
 ### Suites A-D: what alpha actually does (2026-08-23)
 
 All four suites run as one set against alpha: **39 passing, 7 skipped** (the

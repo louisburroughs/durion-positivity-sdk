@@ -13,7 +13,7 @@ import {
   type BuilderContext,
   type CreatedCustomer,
 } from '../harness/builders';
-import { call, expectHttpError } from '../harness/http';
+import { call, expectHttpError, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -264,8 +264,20 @@ describe('Suite B — estimates', () => {
       const declined = await advisor.workorder.estimateAPIApi.getEstimate({ estimateId });
       expect(declined.status.toUpperCase()).toContain('DECLIN');
 
+      // The refusal races pos-workorder's customer-requirements replica: until
+      // the verdict lands, promotion answers 503 CUSTOMER_REQUIREMENTS_UNAVAILABLE
+      // - the backend's own nextAction says to retry in a few seconds - and that
+      // transient answer says nothing about whether a declined estimate can be
+      // promoted, which is what B6 is asserting.
       const status = await expectHttpError(
-        advisor.workorder.estimateAPIApi.promoteEstimate({ estimateId }),
+        retryWhileReplicating(
+          () => advisor.workorder.estimateAPIApi.promoteEstimate({ estimateId }),
+          {
+            markers: ['CUSTOMER_REQUIREMENTS_UNAVAILABLE'],
+            description: `promoting declined estimate ${estimateId}`,
+            timeoutMs: 60_000,
+          },
+        ),
         400,
         409,
         422,
