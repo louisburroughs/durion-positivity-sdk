@@ -1015,13 +1015,31 @@ permissions — the seeded roles carry their full sets from
   execution; the role-enforcement negatives run (passing or as documented
   `test.failing` gaps).
 
-  Not yet run: alpha is mid-deploy for the #1477/#1479/#1480/#1481 fixes, and
-  `.env.itest` currently configures only the `parts` persona, so role mode
-  would run one persona as `gloria.mendez` and the rest as admin. That is a
-  valid role-mode run and exercises the preflight, but it does not satisfy
-  this step — the role-enforcement negatives need each persona on its own
-  login. Steps 1-4 are implemented and unit-tested
-  (`src/harness/PersonaBootstrap.test.ts`, 15 cases).
+  All five personas are now configured (`rachel.kim`, `kyle.brennan`,
+  `diana.rowe`, `irene.torres`, `gloria.mendez`), so the next run executes in
+  role mode with each persona on its own login and the seven
+  role-enforcement negatives running. Steps 1-4 are implemented and
+  unit-tested (`src/harness/PersonaBootstrap.test.ts`, 15 cases). Still
+  unchecked because it has not actually been run: alpha is mid-deploy for the
+  #1477/#1479/#1480/#1481 fixes.
+
+  Every call the suites make was checked against
+  `R__seed_role_permissions.sql` and the operations' own
+  `x-required-permissions` before enabling role mode. Two findings:
+
+  - **C6 created its pick list as the technician.** `createPickList` requires
+    `inventory:pick_list:create`, which TECHNICIAN does not hold — it carries
+    `pick_list:execute` and `pick_list:view`. The manager raises the list now;
+    the technician still releases and reads it. Single-credential mode hid
+    this, because every persona was the admin login.
+  - **All seven negatives are consistent with the seed**: TECHNICIAN lacks
+    `workorder:estimate:approve`, `appointments:create`,
+    `workorder:estimate:create`, `order:purchase_order:approve` and
+    `workorder:workorder:complete`; INVENTORY_LEAD lacks
+    `order:purchase_order:approve`; SERVICE_ADVISOR lacks `workorder:start`
+    and `workorder:labor:add`. Each should therefore get its expected 403,
+    provided the backend enforces what the registry declares — which is the
+    thing these tests exist to find out.
 
 ### Task 9: Documentation
 
