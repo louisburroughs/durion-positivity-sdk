@@ -36,6 +36,7 @@ Angular-first but fully framework-agnostic — works in any Node.js or browser e
     - [What is generated vs. hand-written](#what-is-generated-vs-hand-written)
   - [Build \& Outputs](#build--outputs)
   - [Testing](#testing)
+    - [Integration tests against a real backend](#integration-tests-against-a-real-backend)
   - [Scripts Reference](#scripts-reference)
   - [Project Structure](#project-structure)
   - [Contributing](#contributing)
@@ -453,7 +454,7 @@ Tests are written with **Jest + ts-jest** and cover:
 - Contract diff validation
 
 ```bash
-# Run full suite (392 tests, ~15 test files)
+# Run the unit suite (never collects *.itest.ts)
 npm test
 
 # Run a single suite
@@ -461,6 +462,28 @@ npx jest src/sdk-003-transport.test.ts
 ```
 
 **Coverage:** 80% threshold enforced across branches, functions, lines, and statements. Generated code (`apis/`, `models/`, `runtime.ts`) is excluded from coverage.
+
+### Integration tests against a real backend
+
+Everything above is offline. `packages/sdk-integration-tests` is the other half:
+suites that drive a **running** Durion backend through these clients, with
+nothing mocked. They are wired so the two never mix — `npm test` does not
+collect a `*.itest.ts` file, and the integration run does not execute a unit
+test.
+
+```bash
+./scripts/alpha-itest-tunnel.sh   # terminal 1: SSM tunnel to alpha, stays running
+npm run test:integration          # terminal 2
+```
+
+They need credentials and a backend that is not running the accelerated clock
+profile, and they write records that are deliberately left behind, traceable by
+a per-run id. Personas can each act under their own login so role enforcement
+is exercised for real.
+
+See **[`packages/sdk-integration-tests/README.md`](./packages/sdk-integration-tests/README.md)**
+for the environment contract, the persona matrix, and the rules a new suite has
+to follow.
 
 ---
 
