@@ -12,6 +12,7 @@ import { UserAPIApi } from './apis/UserAPIApi';
 import { PermissionRegistryApi } from './apis/PermissionRegistryApi';
 import { RoleManagementApi } from './apis/RoleManagementApi';
 import { JWTAPIApi } from './apis/JWTAPIApi';
+import { UserRoleManagementApi } from './apis/UserRoleManagementApi';
 
 export function createSecurityClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -33,5 +34,10 @@ export function createSecurityClient(config: DurionSdkConfig) {
     permissionRegistryApi: new PermissionRegistryApi(configuration),
     roleManagementApi: new RoleManagementApi(configuration),
     jwtAPIApi: new JWTAPIApi(configuration),
+    // Reading a user's effective permissions and assigning a single role by id
+    // (GET /v1/users/{userId}/permissions, PUT /v1/users/{userId}/roles/{roleId})
+    // live here, not on roleManagementApi. Surfaced so the integration suite's
+    // role-mode preflight can verify a persona before any suite runs.
+    userRoleManagementApi: new UserRoleManagementApi(configuration),
   };
 }
