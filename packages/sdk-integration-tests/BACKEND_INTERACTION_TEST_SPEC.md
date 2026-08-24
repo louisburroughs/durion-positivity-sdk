@@ -1098,10 +1098,18 @@ permissions — the seeded roles carry their full sets from
 - [x] **Step 4: Hygiene.** Re-runs are no-ops. Passwords come only from the
   `ITEST_*` variables — never generated, logged, or stored; the shared
   operational password never appears in code or docs.
-- [ ] **Step 5: Verify role mode end-to-end.** With persona credentials set,
+- [x] **Step 5: Verify role mode end-to-end.** With persona credentials set,
   global setup logs in all personas; suites A–D pass with per-persona
   execution; the role-enforcement negatives run (passing or as documented
   `test.failing` gaps).
+
+  Done 2026-08-24 against alpha. All five personas configured
+  (`rachel.kim`, `kyle.brennan`, `diana.rowe`, `irene.torres`,
+  `gloria.mendez`); the preflight verifies each, and the person-link step
+  reports which personas were already linked elsewhere. Suites A–D pass
+  **46/46 with nothing skipped**, the seven role-enforcement negatives among
+  them, repeated across several runs and once more from `main` after the work
+  merged.
 
   All five personas are now configured (`rachel.kim`, `kyle.brennan`,
   `diana.rowe`, `irene.torres`, `gloria.mendez`), so the next run executes in
@@ -1136,12 +1144,17 @@ permissions — the seeded roles carry their full sets from
 - Create: `packages/sdk-integration-tests/README.md`
 - Modify: root `README.md` (one section pointing at the new package)
 
-- [ ] **Step 1: README.** Environment contract table (including the persona
+- [x] **Step 1: README.** Environment contract table (including the persona
   credential variables and the two run modes), the persona/role matrix,
   local and alpha run paths, the append-only data policy (records
   intentionally persist in the alpha database, found by runId), the
   timer-before-assignment constraint, the accelerated-profile guard, and the
   waitFor-not-sleep rule.
+
+  `packages/sdk-integration-tests/README.md`, with a section in the root
+  README pointing at it. The waitFor rule carries the observed round-trip
+  latencies, because "read once and assert" is the mistake this suite has
+  actually made.
 - [ ] **Step 2: Full verification.**
 
 ```bash
@@ -1177,7 +1190,7 @@ npm run test:integration   # against a local backend: all suites green
       completed alpha run's records are queryable in the alpha database.
 - [ ] The full suite runs from a developer laptop against alpha through the
       SSM tunnel with no new public ingress on the alpha host.
-- [ ] Every test step declares its acting persona; the suite passes in
+- [x] Every test step declares its acting persona; the suite passes in
       single-credential mode, and in role mode each persona acts under its
       own login with the role-enforcement negatives running (passing or
       recorded as documented gaps).
