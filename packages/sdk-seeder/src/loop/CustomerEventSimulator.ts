@@ -41,31 +41,6 @@ const readString = (value: unknown, ...keys: string[]): string | undefined => {
   return undefined;
 };
 
-const readUnknownArray = (value: unknown, ...keys: string[]): unknown[] => {
-  const record = asRecord(value);
-  if (!record) {
-    return [];
-  }
-
-  for (const key of keys) {
-    const candidate = record[key];
-    if (Array.isArray(candidate)) {
-      return candidate;
-    }
-  }
-
-  return [];
-};
-
-const readTaskId = (value: unknown): string | undefined => {
-  const record = asRecord(value);
-  if (!record) {
-    return undefined;
-  }
-
-  return readString(record, 'workOrderTaskId', 'workorderTaskId', 'taskId', 'id');
-};
-
 const requireField = (value: string | undefined, name: string): string => {
   if (!value) {
     throw new Error(`${name} is missing`);
@@ -395,7 +370,7 @@ export class CustomerEventSimulator {
         return 'error';
       }
 
-      let serviceToWorkorderItemMap = new Map<string, string>();
+      const serviceToWorkorderItemMap = new Map<string, string>();
 
       try {
         const workorderResponse = await this.workorderClient.estimateAPIApi.promoteEstimate({ estimateId });

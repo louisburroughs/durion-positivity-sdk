@@ -86,7 +86,7 @@ export class VirtualClock {
     nextDayMidnight.setUTCDate(nextDayMidnight.getUTCDate() + 1);
     nextDayMidnight.setUTCHours(0, 0, 0, 0);
 
-    while (true) {
+    for (;;) {
       await sleep(this.pollIntervalMs);
       const now = await this.getCurrentVirtualTime();
       if (now >= nextDayMidnight) {
