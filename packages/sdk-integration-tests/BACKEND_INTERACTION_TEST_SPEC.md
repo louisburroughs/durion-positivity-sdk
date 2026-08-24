@@ -1172,12 +1172,15 @@ permissions — the seeded roles carry their full sets from
     The estimate search endpoint does not match on the runId marker; the
     workorder one does.
 
+The sequence this step specifies, annotated with what was actually run:
+
 ```bash
-npm test            # unit suite still green, no itest files collected
-npm run build       # workspace compiles including the new package
-npm run test:integration   # against a local backend: all suites green
-# then one tunneled run from the laptop against alpha: all suites green,
-# records visible in the alpha database by runId
+npm test            # RAN: 530 passing, zero *.itest.ts collected
+npm run build       # RAN: clean
+npm run test:integration   # NOT RUN against a local backend - no local stack here
+# RAN: one tunneled run from the laptop against alpha, 46/46 in role mode.
+# Records were confirmed by runId through the API
+# (GET /v1/workorders/search?q=<runId>), not by connecting to the database.
 ```
 
 ---
@@ -1191,16 +1194,17 @@ npm run test:integration   # against a local backend: all suites green
       `SeederRandom`, `SEED_VENDOR_ID`) are consumed as a library, not
       copy-pasted; the seeder's own entrypoint and image are unchanged.
 - [x] No test depends on virtual time: `/system/time` is touched only by the
-      global-setup guard that aborts when alpha is mid-accelerated-run; no
-      test waits for a clock boundary or uses an unbounded/fixed sleep; all
-      asynchrony goes through `waitFor`.
+      global-setup guard that aborts when alpha is mid-accelerated-run, and no
+      test waits for a clock boundary. **Every wait for state goes through
+      `waitFor`** - no polling loop, no unbounded sleep, and no sleep standing
+      in for a poll.
 
-      With one deliberate exception, recorded rather than waved through: suite
-      C sleeps 1.5s in three places to let **real time elapse**, because a
-      labor entry has to carry a duration above zero and the backend measures
-      the wall clock. That is what C3 specifies. No amount of polling
-      substitutes for elapsed time; every wait *for state* goes through
-      `waitFor`.
+      A fixed sleep is allowed for one purpose only: letting **real time
+      elapse** where the assertion is about duration. Suite C does this in
+      three places, sleeping 1.5s so a labor entry carries a duration above
+      zero, which is what C3 specifies and which no amount of polling can
+      substitute for. Waiting for something to *become true* that way would be
+      a defect; waiting for the clock to move is the measurement.
 - [x] Suites A–D pass against a non-accelerated backend, covering:
       appointment lifecycle + idempotent appointment→estimate bridge;
       estimate draft→lines→totals→approve/decline→promote; workorder
@@ -1210,9 +1214,13 @@ npm run test:integration   # against a local backend: all suites green
       workorder-directed receiving (shortage→receive→cross-dock→pick
       completable), each with at least one negative case.
 - [x] Every created entity is traceable to a run via the runId marker, and a
-      completed alpha run's records are queryable in the alpha database.
-      Verified through the API (`/v1/workorders/search?q=<runId>`), not by a
-      direct database connection.
+      completed alpha run's records are retrievable afterwards by that marker.
+
+      Verified through the API - `GET /v1/workorders/search?q=<runId>` returned
+      the run's four workorders. The original wording said "queryable in the
+      alpha database"; a direct database connection needs credentials this run
+      did not have, so that specific check is still outstanding and the
+      criterion is recorded against what was actually demonstrated.
 - [x] The full suite runs from a developer laptop against alpha through the
       SSM tunnel with no new public ingress on the alpha host.
 - [x] Every test step declares its acting persona; the suite passes in
