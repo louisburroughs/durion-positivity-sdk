@@ -92,6 +92,7 @@ usually just credentials are needed.
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` interval |
+| `ITEST_STAGING_LOCATION_ID` | `00000000-…-0002` | No | pos-inventory's staging location; suite D books a receipt there to exercise putaway. Override only if the backend's `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID` was changed |
 | `ITEST_ENV_FILE` | `.env.itest` at the repo root | No | Alternate credentials file |
 
 Persona credentials are **all-or-none per persona**: a username without its

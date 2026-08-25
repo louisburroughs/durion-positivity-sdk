@@ -38,13 +38,21 @@ describe('Suite D — receiving', () => {
   const RECEIVE_QUANTITY = 25;
   const SESSION_QUANTITY = 5;
   /**
-   * pos-inventory's staging location - the default of
-   * POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID, and what
-   * StagingLocationResolver answers with on alpha. Putaway generation compares
-   * the goods receipt's location against it, so a receipt booked anywhere else
-   * is refused (backend #1496).
+   * pos-inventory's staging location, from ITEST_STAGING_LOCATION_ID or the
+   * default of POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID. Putaway generation
+   * compares the goods receipt's location against it, so a receipt booked
+   * anywhere else is refused (backend #1496), and an environment that overrode
+   * the backend default has to say so rather than have this test fail
+   * mysteriously.
    */
-  const STAGING_LOCATION_ID = '00000000-0000-0000-0000-000000000002';
+  const STAGING_LOCATION_ID = ItestConfig.fromEnv().stagingLocationId;
+
+  /**
+   * True only for the purchase-order line projection still catching up. Any
+   * other 409 is a real conflict and is left to fail.
+   */
+  const isReplicationLag = async (error: unknown): Promise<boolean> =>
+    isHttpStatus(error, 409) && (await formatError(error)).includes('SOURCE_DOCUMENT_LINES_UNAVAILABLE');
   const SHORTAGE_QUANTITY = 2;
   const UNIT_COST_MINOR = 1_450;
 
@@ -299,7 +307,9 @@ describe('Suite D — receiving', () => {
               // SOURCE_DOCUMENT_LINES_UNAVAILABLE with a nextAction, and a 404
               // means the document genuinely is not there - so retrying a 404
               // would now be waiting for something that will never arrive.
-              if (isHttpStatus(error, 409)) return undefined;
+              // Matched on the code, not the status: 409 is a conflict in
+              // general, and swallowing every one would hide real ones.
+              if (await isReplicationLag(error)) return undefined;
               throw error;
             }),
         {
@@ -432,9 +442,10 @@ describe('Suite D — receiving', () => {
             .createReceivingSession({
               createReceivingSessionRequest: { sourceDocumentId: crossDockPo.purchaseOrderId },
             })
-            .catch((error) => {
-              // Same as D6: the line projection reports 409 while it catches up.
-              if (isHttpStatus(error, 409)) return undefined;
+            .catch(async (error) => {
+              // Same as D6: the line projection reports 409
+              // SOURCE_DOCUMENT_LINES_UNAVAILABLE while it catches up.
+              if (await isReplicationLag(error)) return undefined;
               throw error;
             }),
         {

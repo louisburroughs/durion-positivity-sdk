@@ -90,6 +90,7 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible data values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` polling timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` polling interval |
+| `ITEST_STAGING_LOCATION_ID` | `00000000-0000-0000-0000-000000000002` | No | pos-inventory's staging location, mirroring `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID`. Suite D books a goods receipt there because putaway generation refuses a receipt held anywhere else |
 
 Persona credentials are optional as a set: define **all or none** per persona
 (a username without its password fails config validation). See *Personas,
