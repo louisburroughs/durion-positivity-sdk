@@ -1,4 +1,3 @@
-import type { PutawayTaskResponse } from '@durion-sdk/inventory';
 import { SEED_VENDOR_ID, SeederRandom } from '@durion-sdk/seeder';
 import {
   addLaborLine,
@@ -38,6 +37,14 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
 describe('Suite D — receiving', () => {
   const RECEIVE_QUANTITY = 25;
   const SESSION_QUANTITY = 5;
+  /**
+   * pos-inventory's staging location - the default of
+   * POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID, and what
+   * StagingLocationResolver answers with on alpha. Putaway generation compares
+   * the goods receipt's location against it, so a receipt booked anywhere else
+   * is refused (backend #1496).
+   */
+  const STAGING_LOCATION_ID = '00000000-0000-0000-0000-000000000002';
   const SHORTAGE_QUANTITY = 2;
   const UNIT_COST_MINOR = 1_450;
 
@@ -162,124 +169,107 @@ describe('Suite D — receiving', () => {
       expect(onHandAfter - onHandBefore).toBe(RECEIVE_QUANTITY);
     }, 180_000);
 
-    it('D5 — putaway either has tasks to work, or the backend did it already', async () => {
+    it('D5 — a receipt on the shop floor cannot be put away; one in staging can', async () => {
       const tasks = await call('listPutawayTasks', () =>
         parts.inventory.putawayApi.listPutawayTasks({ locationId }),
       );
-      const mine = tasks.filter((task) => readString(task, 'skuId', 'sku') === product.productEntityId);
-      console.log(`[D5] ${tasks.length} putaway task(s) at the location, ${mine.length} for this SKU`);
+      console.log(`[D5] ${tasks.length} putaway task(s) at the location before anything is asked for`);
 
-      let workable = mine;
-
-      if (workable.length === 0) {
-        // A receipt does not raise putaway tasks here - twelve runs have found
-        // none. That is not the same as putaway being unavailable: tasks are
-        // raised deliberately, one per received line, by asking for them. D5
-        // used to stop at this point and assert the stock was on hand, which
-        // left claim and execute permanently unexercised.
-        let generated: PutawayTaskResponse[] = [];
-        try {
-          generated = await call('generatePutawayTasks', () =>
-            parts.inventory.putawayApi.generatePutawayTasks({
-              generatePutawayTasksRequest: {
-                sourceReceiptId: receiptId,
-                lineItems: [
-                  { productId: product.productEntityId, quantity: RECEIVE_QUANTITY },
-                ],
-              },
-            }),
-          );
-          const sample = generated.length > 0 ? `: ${JSON.stringify(generated[0]).slice(0, 500)}` : '';
-          console.log(`[D5] generatePutawayTasks returned ${generated.length} task(s)${sample}`);
-        } catch (error) {
-          // Recorded rather than failed: the stock is on hand either way, and a
-          // refusal here is a fact about the backend worth reading in the log.
-          console.log(`[D5] generatePutawayTasks refused: ${(await formatError(error)).slice(0, 220)}`);
-        }
-
-        workable = generated.filter(
-          (task) => readString(task, 'productId', 'skuId', 'sku') === product.productEntityId,
-        );
-      }
-
-      if (workable.length === 0) {
-        console.log('[D5] no putaway task to work; the receipt is on hand without one');
-        expect(await readOnHand(parts, product.productEntityId, locationId)).toBeGreaterThanOrEqual(
-          RECEIVE_QUANTITY,
-        );
-        return;
-      }
-
-      const task = workable[0];
-      const taskId = requireField(readString(task, 'taskId', 'id'), 'putaway taskId');
-      await call('claimPutawayTask', () => parts.inventory.putawayApi.claimPutawayTask({ taskId }));
-      // The destination comes from the task, not from the receiving location.
-      // A putaway moves stock out of staging into somewhere enabled for it, so
-      // naming the receiving location as the destination is refused - 422
-      // LOCATION_NOT_VALID_FOR_SKU, "Destination location is not enabled for
-      // putaway", which is exactly what an earlier version of this test got.
-      const destinationLocationId = requireField(
-        readString(task, 'finalSuggestedLocationId', 'suggestedDestinationLocationId', 'originalSuggestedLocationId'),
-        'putaway destination',
+      // Part one: the receipt from D3 landed stock directly on the shop floor,
+      // and putaway generation refuses it by design (backend #1496). It used to
+      // emit a task rooted at staging that could never be executed - from the
+      // staging source because nothing was there, and from the receiving
+      // location because the destination it had suggested was itself rejected.
+      const refusal = await formatError(
+        await parts.inventory.putawayApi
+          .generatePutawayTasks({
+            generatePutawayTasksRequest: {
+              sourceReceiptId: receiptId,
+              lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
+            },
+          })
+          .then(
+            (generated) => {
+              throw new Error(
+                `[D5] generatePutawayTasks accepted a shop-floor receipt and returned ` +
+                  `${generated.length} task(s). Backend #1496 refused this; if that has been ` +
+                  `deliberately reversed, assert the tasks are executable instead.`,
+              );
+            },
+            (error: unknown) => error,
+          ),
       );
-      const sourceLocationId = readString(task, 'sourceLocationId') ?? locationId;
-      console.log(
-        `[D5] putaway task ${taskId}: ${sourceLocationId} -> ${destinationLocationId} (status ${readString(task, 'status')})`,
-      );
+      console.log(`[D5] shop-floor receipt refused: ${refusal.slice(0, 200)}`);
+      expect(refusal).toContain('RECEIPT_NOT_STAGED');
 
-      const execute = (from: string) =>
-        parts.inventory.putawayExecutionApi.executePutaway({
-          taskId,
-          putawayExecutionRequest: {
-            skuId: product.productEntityId,
-            quantity: RECEIVE_QUANTITY,
-            sourceLocationId: from,
-            destinationLocationId,
+      // Part two: the same flow against a receipt booked into staging, which is
+      // where putaway is meant to start. This is the path that had never run.
+      const stagedPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
+        {
+          skuId: product.productEntityId,
+          quantity: RECEIVE_QUANTITY,
+          unitCostMinor: UNIT_COST_MINOR,
+        },
+      ]);
+      const stagedAsnId = await createAsnForPo(parts, ctx, SEED_VENDOR_ID, stagedPo);
+      const stagedReceipt = await call('createGoodsReceipt(staging)', () =>
+        parts.inventory.asnApi.createGoodsReceipt({
+          createGoodsReceiptRequest: {
+            poId: stagedPo.purchaseOrderId,
+            asnId: stagedAsnId,
+            locationId: STAGING_LOCATION_ID,
+            lines: stagedPo.lines.map((line) => ({
+              poLineId: line.poLineId,
+              sku: line.skuId,
+              quantityReceived: RECEIVE_QUANTITY,
+              unitCostMinor: line.unitCostMinor,
+            })),
           },
-        });
+        }),
+      );
+      const stagedReceiptId = requireField(
+        readString(stagedReceipt, 'receiptId', 'id'),
+        'staged receiptId',
+      );
 
-      // Both routes are attempted and both are expected to be refused. The
-      // refusals are asserted, not merely logged, so that the day either one
-      // starts working this test fails and says what changed - the same
-      // property C6 and D7 rely on.
-      const refusals: string[] = [];
-      const attempt = async (from: string, label: string): Promise<unknown> => {
-        try {
-          return await execute(from);
-        } catch (error) {
-          const detail = await formatError(error);
-          refusals.push(detail);
-          console.log(`[D5] execute from ${label} refused: ${detail.slice(0, 400)}`);
-          return undefined;
-        }
-      };
+      // Generation now gets past the staging guard and stops at the next one:
+      // the destination its putaway rule resolves is validated against
+      // replenishment policy, and this SKU was created by D1 moments ago. That
+      // is a property of the fixture, not a defect - and it is where the path
+      // ends until a SKU with a policy at the resolved destination is
+      // available. Recorded so the boundary is visible rather than implied.
+      const stagedRefusal = await formatError(
+        await parts.inventory.putawayApi
+          .generatePutawayTasks({
+            generatePutawayTasksRequest: {
+              sourceReceiptId: stagedReceiptId,
+              lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
+            },
+          })
+          .then(
+            (generated) => ({ generated }),
+            (error: unknown) => error,
+          ),
+      );
 
-      // The task is rooted at the staging location, and this receipt never
-      // passed through staging - createGoodsReceipt puts stock directly on hand
-      // at the receiving location, which is why D4 sees on-hand rise and why no
-      // putaway task is raised on its own.
-      const fromTaskSource = await attempt(sourceLocationId, "the task's staging source");
-      // And the stock's actual home is refused too, against the destination the
-      // task itself suggested.
-      const fromStockLocation =
-        fromTaskSource === undefined ? await attempt(locationId, 'the receiving location') : undefined;
-
-      if (fromTaskSource !== undefined || fromStockLocation !== undefined) {
+      if (!stagedRefusal.includes('LOCATION_NOT_VALID_FOR_SKU')) {
+        // Generation succeeded, or failed for a new reason. Either way the
+        // boundary has moved and claim/execute are now reachable: see the
+        // putaway note in BACKEND_INTERACTION_TEST_SPEC.md.
         throw new Error(
-          '[D5] executePutaway succeeded. Putaway execution now works, so this test has ' +
-            'outlived the behaviour it documents: assert the stock actually moved to the ' +
-            'destination instead of asserting the refusals. See the putaway note in ' +
-            'BACKEND_INTERACTION_TEST_SPEC.md.',
+          `[D5] generatePutawayTasks for a staged receipt no longer stops at ` +
+            `LOCATION_NOT_VALID_FOR_SKU: ${stagedRefusal.slice(0, 300)}. Extend this test ` +
+            `through claimPutawayTask and executePutaway.`,
         );
       }
+      console.log(`[D5] staged receipt reached destination validation: ${stagedRefusal.slice(0, 200)}`);
 
-      expect(refusals[0]).toContain('NO_ON_HAND_AT_SOURCE_LOCATION');
-      expect(refusals[1]).toContain('LOCATION_NOT_VALID_FOR_SKU');
-      // Whichever way execution is refused, the receipt is on hand.
+      // The staged stock is real regardless: it was received into staging, not
+      // onto the shop floor, so the shop floor's on-hand is unchanged by it.
       expect(await readOnHand(parts, product.productEntityId, locationId)).toBeGreaterThanOrEqual(
         RECEIVE_QUANTITY,
       );
-    }, 180_000);
+    }, 300_000);
 
     it('D6 — a receiving session is built from the purchase order\'s lines', async () => {
       const secondPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
@@ -303,8 +293,13 @@ describe('Suite D — receiving', () => {
             .createReceivingSession({
               createReceivingSessionRequest: { sourceDocumentId: secondPo.purchaseOrderId },
             })
-            .catch((error) => {
-              if (isHttpStatus(error, 404)) return undefined;
+            .catch(async (error) => {
+              // Backend #1492: the transient answer used to be a bare 404,
+              // indistinguishable from "this PO has no lines". It is now 409
+              // SOURCE_DOCUMENT_LINES_UNAVAILABLE with a nextAction, and a 404
+              // means the document genuinely is not there - so retrying a 404
+              // would now be waiting for something that will never arrive.
+              if (isHttpStatus(error, 409)) return undefined;
               throw error;
             }),
         {
@@ -438,7 +433,8 @@ describe('Suite D — receiving', () => {
               createReceivingSessionRequest: { sourceDocumentId: crossDockPo.purchaseOrderId },
             })
             .catch((error) => {
-              if (isHttpStatus(error, 404)) return undefined;
+              // Same as D6: the line projection reports 409 while it catches up.
+              if (isHttpStatus(error, 409)) return undefined;
               throw error;
             }),
         {
@@ -506,8 +502,12 @@ describe('Suite D — receiving', () => {
       ]);
       const asnId = await createAsnForPo(parts, ctx, SEED_VENDOR_ID, overPo);
 
-      // 999 against a PO line of 1. Some backends reject it, some accept it as an
-      // over-receipt; the test records which this one does rather than presuming.
+      // 999 against a PO line of 1. This was accepted once, then refused with a
+      // bare 403 - indistinguishable from a missing permission for a persona
+      // acting under its own login - and is now 422 OVER_RECEIPT_NOT_PERMITTED
+      // (backend #1493). The status is asserted rather than merely recorded, so
+      // the next move is visible; the body is checked for the code so a
+      // different 422 does not pass as this one.
       let overReceipt: string;
       try {
         await parts.inventory.asnApi.createGoodsReceipt({
@@ -527,10 +527,11 @@ describe('Suite D — receiving', () => {
         });
         overReceipt = 'accepted';
       } catch (error) {
-        overReceipt = `rejected with HTTP ${(error as { response?: { status?: number } }).response?.status}`;
+        overReceipt = await formatError(error);
       }
-      console.log(`[D11] receiving 999 against a PO line of 1 -> ${overReceipt}`);
-      expect(overReceipt).toBeTruthy();
+      console.log(`[D11] receiving 999 against a PO line of 1 -> ${overReceipt.slice(0, 200)}`);
+      expect(overReceipt).toContain('OVER_RECEIPT_NOT_PERMITTED');
+      expect(overReceipt).toContain('422');
 
       const status = await expectHttpError(
         parts.inventory.receivingApi.crossDockReceivingLine({
