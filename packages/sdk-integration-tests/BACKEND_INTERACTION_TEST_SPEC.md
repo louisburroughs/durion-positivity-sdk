@@ -861,11 +861,13 @@ re-read against the new behaviour rather than trusted:
 - **#1496.** `generatePutawayTasks` refuses a receipt whose stock is not in
   staging, with **422 `RECEIPT_NOT_STAGED`**, instead of emitting a task that
   could never be executed. See the putaway note below.
-- **#1494** is closed, but `inventory:availability:read` is still granted to
-  TECHNICIAN and still required by no endpoint, and a technician's token still
-  decodes without `inventory:on_hand:*`. Nothing in the suites depends on it -
-  stock reads act as the parts clerk - but the original condition looks
-  unchanged.
+- **#1494** is fixed: `getAvailabilityBySku` now requires
+  `inventory:availability:read`, the permission TECHNICIAN already held, and a
+  technician reading availability on alpha gets a 404 for an unknown SKU rather
+  than a 403. An earlier draft of this note said the condition was unchanged;
+  that was read from a local backend checkout 73 commits behind `origin/main`,
+  and is wrong. Stock reads still act as the parts clerk, because stock is the
+  parts clerk's concern in that flow, not because the technician is barred.
 
 **Putaway, corrected 2026-08-24 and again 2026-08-25.** D5 concluded for twelve runs that this
 backend "auto-putaways", on the evidence that a goods receipt raises no putaway

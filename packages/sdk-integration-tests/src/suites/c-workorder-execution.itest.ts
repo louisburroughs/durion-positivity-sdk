@@ -116,11 +116,13 @@ describe('Suite C — workorder execution', () => {
     // The part must be one the shop actually holds: a workorder for an unstocked
     // part never gets a pick list, so C6 would wait for something that cannot
     // arrive.
-    // Read stock as the parts clerk, not the technician. getAvailabilityBySku
-    // requires inventory:on_hand:view / :search, which INVENTORY_LEAD holds and
-    // TECHNICIAN does not - TECHNICIAN carries inventory:availability:read,
-    // which no endpoint actually asks for. Single-credential mode hid this
-    // because every persona was the admin login.
+    // Read stock as the parts clerk. getAvailabilityBySku used to require
+    // inventory:on_hand:view / :search - which INVENTORY_LEAD holds and
+    // TECHNICIAN does not - while TECHNICIAN carried inventory:availability:read
+    // that no endpoint asked for (backend #1494). That is fixed: the endpoint
+    // now requires inventory:availability:read and a technician can read
+    // availability. The parts clerk is kept here because stock is the parts
+    // clerk's concern in this flow, not because the technician is barred.
     const stocked = await findStockedProduct(
       parts,
       context.referenceCache.productEntityIds,

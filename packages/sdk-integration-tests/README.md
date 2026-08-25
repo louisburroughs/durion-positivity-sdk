@@ -252,7 +252,9 @@ personas in itself.
   files a VIN against the party and returns no id; vehicles are registered
   through pos-vehicle-inventory.
 - Purchase orders live in pos-order, not pos-inventory.
-- A technician cannot read availability: `getAvailabilityBySku` requires
-  `inventory:on_hand:view`/`:search`, and TECHNICIAN holds
-  `inventory:availability:read`, which no endpoint asks for. Stock reads act as
-  the parts clerk.
+- Stock reads act as the parts clerk. A technician *used* to be unable to read
+  availability at all - `getAvailabilityBySku` required
+  `inventory:on_hand:view`/`:search` while TECHNICIAN held only
+  `inventory:availability:read`, which no endpoint asked for. Backend #1494
+  fixed that by making the endpoint require the permission the role already
+  had.
