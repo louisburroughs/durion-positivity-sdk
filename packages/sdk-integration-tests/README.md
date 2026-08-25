@@ -92,6 +92,7 @@ usually just credentials are needed.
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` interval |
+| `ITEST_STAGING_LOCATION_ID` | `00000000-…-0002` | No | pos-inventory's staging location; suite D books a receipt there to exercise putaway. Override only if the backend's `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID` was changed |
 | `ITEST_ENV_FILE` | `.env.itest` at the repo root | No | Alternate credentials file |
 
 Persona credentials are **all-or-none per persona**: a username without its
@@ -252,7 +253,9 @@ personas in itself.
   files a VIN against the party and returns no id; vehicles are registered
   through pos-vehicle-inventory.
 - Purchase orders live in pos-order, not pos-inventory.
-- A technician cannot read availability: `getAvailabilityBySku` requires
-  `inventory:on_hand:view`/`:search`, and TECHNICIAN holds
-  `inventory:availability:read`, which no endpoint asks for. Stock reads act as
-  the parts clerk.
+- Stock reads act as the parts clerk. A technician *used* to be unable to read
+  availability at all - `getAvailabilityBySku` required
+  `inventory:on_hand:view`/`:search` while TECHNICIAN held only
+  `inventory:availability:read`, which no endpoint asked for. Backend #1494
+  fixed that by making the endpoint require the permission the role already
+  had.

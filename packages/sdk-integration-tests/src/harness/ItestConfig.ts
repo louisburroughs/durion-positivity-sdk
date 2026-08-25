@@ -34,6 +34,15 @@ export class ItestConfig {
     readonly seed: number | undefined,
     readonly waitTimeoutMs: number,
     readonly waitIntervalMs: number,
+    /**
+     * pos-inventory's staging location. Putaway generation compares a goods
+     * receipt's location against it, so suite D needs to know it to book a
+     * receipt there. The default is the default of
+     * POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID, which is what alpha and a
+     * stock local Compose stack both use; an environment that overrode it must
+     * set ITEST_STAGING_LOCATION_ID to match.
+     */
+    readonly stagingLocationId: string,
   ) {}
 
   get mode(): ItestMode {
@@ -118,6 +127,7 @@ export class ItestConfig {
       seed,
       waitTimeoutMs ?? 30000,
       waitIntervalMs ?? 500,
+      env['ITEST_STAGING_LOCATION_ID'] ?? '00000000-0000-0000-0000-000000000002',
     );
   }
 }

@@ -90,6 +90,7 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible data values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` polling timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` polling interval |
+| `ITEST_STAGING_LOCATION_ID` | `00000000-0000-0000-0000-000000000002` | No | pos-inventory's staging location, mirroring `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID`. Suite D books a goods receipt there because putaway generation refuses a receipt held anywhere else |
 
 Persona credentials are optional as a set: define **all or none** per persona
 (a username without its password fails config validation). See *Personas,
@@ -828,7 +829,8 @@ half-landed rollout.
 Two behaviours did change with it:
 
 - **Over-receipt is now refused.** Receiving 999 against a PO line of 1 was
-  accepted before; it now answers 403.
+  accepted before, then answered 403, and now answers **422
+  `OVER_RECEIPT_NOT_PERMITTED`** (backend #1493).
   `InventoryGlobalExceptionHandler` maps `OverReceiptNotPermittedException` to
   `FORBIDDEN` deliberately, so this is a guard, not an authorization accident.
   Worth noting for role mode: a client cannot distinguish that refusal from a
@@ -843,7 +845,32 @@ unfulfillable pick task is the shortage signal, and D7 records the backorder
 count so a second signal appearing becomes visible rather than being silently
 tolerated.
 
-**Putaway, corrected 2026-08-24.** D5 concluded for twelve runs that this
+**Backend fixes landed 2026-08-25.** #1492, #1493, #1494 and #1496 are all
+closed, and three of them changed what the suites see. Every one of them was
+absorbed *silently* - the run stayed 46/46 - which is why the suites were
+re-read against the new behaviour rather than trusted:
+
+- **#1492.** `createReceivingSession` answers **409
+  `SOURCE_DOCUMENT_LINES_UNAVAILABLE`** with a `nextAction` while
+  `ext_purchase_order_line` catches up; a 404 now means the document genuinely
+  is not there. D6 and D9 were retrying the 404 and would have thrown on a real
+  lag - they passed only because the projection happened to be current. Both now
+  retry the 409.
+- **#1493.** Over-receipt is **422 `OVER_RECEIPT_NOT_PERMITTED`**, not the bare
+  403 that a client could not tell from a missing permission. D11 asserts the
+  code rather than recording whatever arrives.
+- **#1496.** `generatePutawayTasks` refuses a receipt whose stock is not in
+  staging, with **422 `RECEIPT_NOT_STAGED`**, instead of emitting a task that
+  could never be executed. See the putaway note below.
+- **#1494** is fixed: `getAvailabilityBySku` now requires
+  `inventory:availability:read`, the permission TECHNICIAN already held, and a
+  technician reading availability on alpha gets a 404 for an unknown SKU rather
+  than a 403. An earlier draft of this note said the condition was unchanged;
+  that was read from a local backend checkout 73 commits behind `origin/main`,
+  and is wrong. Stock reads still act as the parts clerk, because stock is the
+  parts clerk's concern in that flow, not because the technician is barred.
+
+**Putaway, corrected 2026-08-24 and again 2026-08-25.** D5 concluded for twelve runs that this
 backend "auto-putaways", on the evidence that a goods receipt raises no putaway
 tasks. That was the wrong inference from a true observation: tasks are not
 raised automatically, they are raised *on request*. `generatePutawayTasks`
@@ -863,10 +890,28 @@ route:
   `suggestedDestinationLocationId`, "SKU is not configured in replenishment
   policies".
 
-So generation roots the task at a location the receipt never touched, and
-resolves a destination that execution rejects. Filed as a backend issue. D5
-records both refusals and still asserts the stock is on hand, so it passes today
-and starts failing the day either route begins to work.
+So generation rooted the task at a location the receipt never touched, and
+resolved a destination that execution rejected. Filed as #1496 and **fixed**:
+generation now refuses up front rather than emitting an unworkable task.
+
+D5 was rewritten around that. It asserts two boundaries:
+
+1. A receipt booked to the shop floor - which is what `createGoodsReceipt` does
+   on the ASN path, and why D4 sees on-hand rise - is refused with **422
+   `RECEIPT_NOT_STAGED`**.
+2. A receipt booked into the staging location clears that guard and stops at the
+   next one: **422 `LOCATION_NOT_VALID_FOR_SKU`**, because the destination the
+   putaway rule resolves is validated against replenishment policy and the SKU
+   was created by D1 moments earlier.
+
+The second is a property of the fixture, not a defect. Driving putaway through
+claim and execute needs a SKU that already has a replenishment policy at the
+resolved destination; `inventory:replenishment:manage` is held by no seeded
+role, and the destination is chosen during generation, so the suite cannot
+arrange it without hardcoding a rule-derived location id and writing
+replenishment config into alpha. Left as a known edge: **claim and execute
+remain unexercised**, and D5 fails loudly - naming what to do - the day
+generation stops at neither guard.
 
 ---
 
