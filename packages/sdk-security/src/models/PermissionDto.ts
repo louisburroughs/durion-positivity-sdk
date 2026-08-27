@@ -49,6 +49,12 @@ export interface PermissionDto {
      * @memberof PermissionDto
      */
     name: string;
+    /**
+     * Permission name that replaces this one; absent when there is no successor
+     * @type {string}
+     * @memberof PermissionDto
+     */
+    supersededBy?: string;
 }
 
 /**
@@ -77,6 +83,7 @@ export function PermissionDtoFromJSONTyped(json: any, ignoreDiscriminator: boole
         'domain': json['domain'],
         'id': json['id'],
         'name': json['name'],
+        'supersededBy': json['supersededBy'] == null ? undefined : json['supersededBy'],
     };
 }
 
@@ -91,6 +98,7 @@ export function PermissionDtoToJSON(value?: PermissionDto | null): any {
         'domain': value['domain'],
         'id': value['id'],
         'name': value['name'],
+        'supersededBy': value['supersededBy'],
     };
 }
 

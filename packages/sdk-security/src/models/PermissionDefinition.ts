@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface PermissionDefinition {
     /**
+     * Whether this permission is retired and should no longer be granted
+     * @type {boolean}
+     * @memberof PermissionDefinition
+     */
+    deprecated?: boolean;
+    /**
      * Human-readable description of the permission
      * @type {string}
      * @memberof PermissionDefinition
@@ -31,6 +37,12 @@ export interface PermissionDefinition {
      * @memberof PermissionDefinition
      */
     name: string;
+    /**
+     * Permission name that replaces this one; absent when there is no successor
+     * @type {string}
+     * @memberof PermissionDefinition
+     */
+    supersededBy?: string;
 }
 
 /**
@@ -51,8 +63,10 @@ export function PermissionDefinitionFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'deprecated': json['deprecated'] == null ? undefined : json['deprecated'],
         'description': json['description'] == null ? undefined : json['description'],
         'name': json['name'],
+        'supersededBy': json['supersededBy'] == null ? undefined : json['supersededBy'],
     };
 }
 
@@ -62,8 +76,10 @@ export function PermissionDefinitionToJSON(value?: PermissionDefinition | null):
     }
     return {
         
+        'deprecated': value['deprecated'],
         'description': value['description'],
         'name': value['name'],
+        'supersededBy': value['supersededBy'],
     };
 }
 

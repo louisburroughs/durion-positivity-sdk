@@ -19,6 +19,7 @@ import type {
   DisableEmployeeRequestDto,
   EmployeeIdentityDto,
   EmployeeProfileDto,
+  PagedResponseEmployeeSummaryDto,
   UpdateEmployeeRequest,
 } from '../models/index';
 import {
@@ -30,6 +31,8 @@ import {
     EmployeeIdentityDtoToJSON,
     EmployeeProfileDtoFromJSON,
     EmployeeProfileDtoToJSON,
+    PagedResponseEmployeeSummaryDtoFromJSON,
+    PagedResponseEmployeeSummaryDtoToJSON,
     UpdateEmployeeRequestFromJSON,
     UpdateEmployeeRequestToJSON,
 } from '../models/index';
@@ -49,6 +52,12 @@ export interface GetEmployeeRequest {
 
 export interface GetEmployeeByNumberRequest {
     employeeNumber: string;
+}
+
+export interface SearchEmployeesRequest {
+    q?: string;
+    page?: number;
+    size?: number;
 }
 
 export interface UpdateEmployeeOperationRequest {
@@ -236,6 +245,54 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
      */
     async getEmployeeByNumber(requestParameters: GetEmployeeByNumberRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeIdentityDto> {
         const response = await this.getEmployeeByNumberRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number. Use this tool when listing or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, and do not use getEmployeeByNumber, which resolves one exact employee number rather than searching. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory; q defaults to blank, which lists every employee, page defaults to 0, and size defaults to 20 with a maximum of 100. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state; this is a read-only projection merged in memory from local employment rows and the pos-people-contact identity replica. Returns 200 with an empty items list and correct totals when the page or query matches nothing. 
+     * Search Employees By Name Or Number
+     */
+    async searchEmployeesRaw(requestParameters: SearchEmployeesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseEmployeeSummaryDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/employees`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseEmployeeSummaryDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number. Use this tool when listing or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, and do not use getEmployeeByNumber, which resolves one exact employee number rather than searching. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory; q defaults to blank, which lists every employee, page defaults to 0, and size defaults to 20 with a maximum of 100. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state; this is a read-only projection merged in memory from local employment rows and the pos-people-contact identity replica. Returns 200 with an empty items list and correct totals when the page or query matches nothing. 
+     * Search Employees By Name Or Number
+     */
+    async searchEmployees(requestParameters: SearchEmployeesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseEmployeeSummaryDto> {
+        const response = await this.searchEmployeesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -85,6 +85,12 @@ export interface LocationBulkIngestRecord {
      * @memberof LocationBulkIngestRecord
      */
     stateOrProvince?: string;
+    /**
+     * IANA timezone of the location
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    timezone?: string;
 }
 
 /**
@@ -117,6 +123,7 @@ export function LocationBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimin
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'stateOrProvince': json['stateOrProvince'] == null ? undefined : json['stateOrProvince'],
+        'timezone': json['timezone'] == null ? undefined : json['timezone'],
     };
 }
 
@@ -137,6 +144,7 @@ export function LocationBulkIngestRecordToJSON(value?: LocationBulkIngestRecord 
         'phoneNumber': value['phoneNumber'],
         'postalCode': value['postalCode'],
         'stateOrProvince': value['stateOrProvince'],
+        'timezone': value['timezone'],
     };
 }
 

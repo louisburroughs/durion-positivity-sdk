@@ -87,6 +87,12 @@ export interface LocationResponseDTO {
      */
     name: string;
     /**
+     * Primary phone number for the location
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    phoneNumber?: string;
+    /**
      * Postal or ZIP code of the location
      * @type {string}
      * @memberof LocationResponseDTO
@@ -142,6 +148,7 @@ export function LocationResponseDTOFromJSONTyped(json: any, ignoreDiscriminator:
         'id': json['id'],
         'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
         'name': json['name'],
+        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'responsiblePersonId': json['responsiblePersonId'] == null ? undefined : json['responsiblePersonId'],
         'state': json['state'] == null ? undefined : json['state'],
@@ -165,6 +172,7 @@ export function LocationResponseDTOToJSON(value?: LocationResponseDTO | null): a
         'id': value['id'],
         'mailingAddress': value['mailingAddress'],
         'name': value['name'],
+        'phoneNumber': value['phoneNumber'],
         'postalCode': value['postalCode'],
         'responsiblePersonId': value['responsiblePersonId'],
         'state': value['state'],

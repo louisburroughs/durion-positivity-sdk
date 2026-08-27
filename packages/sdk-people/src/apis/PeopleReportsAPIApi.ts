@@ -107,7 +107,7 @@ export class PeopleReportsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:time:export:read", "accounting:time:export"]);
+            const tokenString = await token("bearerAuth", ["accounting:time:export"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -180,7 +180,7 @@ export class PeopleReportsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:time:export:read", "accounting:time:export"]);
+            const tokenString = await token("bearerAuth", ["accounting:time:export"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

@@ -9,5 +9,6 @@ export * from './PeopleReportsAPIApi';
 export * from './PeopleStaffingAssignmentsApi';
 export * from './PeopleTimeEntriesApi';
 export * from './TimeEntryApprovalAPIApi';
+export * from './TimePeriodManagementAPIApi';
 export * from './TimekeepingApprovalAPIApi';
 export * from './WorkSessionsAPIApi';

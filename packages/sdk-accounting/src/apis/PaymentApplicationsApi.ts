@@ -159,7 +159,7 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reverses one payment application as a new compensating record, restoring the invoice\'s balance and the payment\'s unapplied amount. Use this tool for an application that settled a single invoice; do not use it on an application created by a multi-invoice apply request, which must be reversed as a whole via reversePayment. Preconditions: the application must exist, must not already be reversed, and must not belong to a multi-application request. Required inputs: applicationId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail; the caller needs accounting:payment:reverse or an ACCOUNTING_ADMIN or AR_MANAGER authority. Emits an ACCOUNTING_PAYMENT_APPLICATION_REVERSE event; the reversal is a new record, not a deletion. Returns 404 when the application is not found, 409 when it is already reversed, 422 WHOLE_REQUEST_REVERSAL_REQUIRED when it belongs to a multi-application request, and 204 with no body on success. 
+     * Reverses one payment application as a new compensating record, restoring the invoice\'s balance and the payment\'s unapplied amount. Use this tool for an application that settled a single invoice; do not use it on an application created by a multi-invoice apply request, which must be reversed as a whole via reversePayment. Preconditions: the application must exist, must not already be reversed, and must not belong to a multi-application request. Required inputs: applicationId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail; the caller needs accounting:payment:reverse authority. Emits an ACCOUNTING_PAYMENT_APPLICATION_REVERSE event; the reversal is a new record, not a deletion. Returns 404 when the application is not found, 409 when it is already reversed, 422 WHOLE_REQUEST_REVERSAL_REQUIRED when it belongs to a multi-application request, and 204 with no body on success. 
      * Reverse Payment Application
      */
     async reversePaymentApplicationRaw(requestParameters: ReversePaymentApplicationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -185,7 +185,7 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["accounting:payment:reverse", "ACCOUNTING_ADMIN", "AR_MANAGER"]);
+            const tokenString = await token("bearerAuth", ["accounting:payment:reverse"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -203,7 +203,7 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reverses one payment application as a new compensating record, restoring the invoice\'s balance and the payment\'s unapplied amount. Use this tool for an application that settled a single invoice; do not use it on an application created by a multi-invoice apply request, which must be reversed as a whole via reversePayment. Preconditions: the application must exist, must not already be reversed, and must not belong to a multi-application request. Required inputs: applicationId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail; the caller needs accounting:payment:reverse or an ACCOUNTING_ADMIN or AR_MANAGER authority. Emits an ACCOUNTING_PAYMENT_APPLICATION_REVERSE event; the reversal is a new record, not a deletion. Returns 404 when the application is not found, 409 when it is already reversed, 422 WHOLE_REQUEST_REVERSAL_REQUIRED when it belongs to a multi-application request, and 204 with no body on success. 
+     * Reverses one payment application as a new compensating record, restoring the invoice\'s balance and the payment\'s unapplied amount. Use this tool for an application that settled a single invoice; do not use it on an application created by a multi-invoice apply request, which must be reversed as a whole via reversePayment. Preconditions: the application must exist, must not already be reversed, and must not belong to a multi-application request. Required inputs: applicationId (UUID) as a path parameter and a reason of 10 to 1000 characters for the audit trail; the caller needs accounting:payment:reverse authority. Emits an ACCOUNTING_PAYMENT_APPLICATION_REVERSE event; the reversal is a new record, not a deletion. Returns 404 when the application is not found, 409 when it is already reversed, 422 WHOLE_REQUEST_REVERSAL_REQUIRED when it belongs to a multi-application request, and 204 with no body on success. 
      * Reverse Payment Application
      */
     async reversePaymentApplication(requestParameters: ReversePaymentApplicationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

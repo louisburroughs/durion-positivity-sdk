@@ -15,14 +15,20 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CatalogItemRequestDto,
   CatalogItemResponseDto,
+  ServiceFactReplayResultDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CatalogItemRequestDtoFromJSON,
     CatalogItemRequestDtoToJSON,
     CatalogItemResponseDtoFromJSON,
     CatalogItemResponseDtoToJSON,
+    ServiceFactReplayResultDtoFromJSON,
+    ServiceFactReplayResultDtoToJSON,
 } from '../models/index';
 
 export interface CreateCatalogItemRequest {
@@ -33,6 +39,12 @@ export interface CreateCatalogItemRequest {
 export interface DeleteCatalogItemRequest {
     type: string;
     catalogId: string;
+}
+
+export interface ReplayServiceFactsRequest {
+    afterServiceId?: string;
+    updatedSince?: Date;
+    limit?: number;
 }
 
 export interface UpdateCatalogItemRequest {
@@ -100,7 +112,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. 
+     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event, and for a product or a service queues a catalog fact marking it inactive so event-fed replicas in other modules stop resolving it; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. Authorization: type=product requires catalog:product:delete; type=service or noninventory requires the ADMIN role (unchanged pending a service_type delete permission). 
      * Delete a Catalog Item
      */
     async deleteCatalogItemRaw(requestParameters: DeleteCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -124,7 +136,7 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_DELETE"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:delete"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -141,11 +153,59 @@ export class CatalogItemsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. 
+     * Permanently deletes a product, service or non-inventory product row by id; this is a hard delete with no archive state. Use this tool to remove an item outright; use updateProductLifecycle instead when a product should stop selling but keep its history, and use deleteCatalog to remove a grouping rather than its items. Preconditions: an item of the given type must exist under the supplied id. Required inputs: type (product, service or noninventory, case-insensitive) and catalogId (UUID) as path parameters; there is no request body. Emits a CATALOG_ITEM_DELETE event, and for a product or a service queues a catalog fact marking it inactive so event-fed replicas in other modules stop resolving it; catalogs that referenced the item are not rewritten by this call. Returns 204 when the item is removed, 404 when no item of that type exists for the supplied id, and 400 when the type is not one of the three supported values. Authorization: type=product requires catalog:product:delete; type=service or noninventory requires the ADMIN role (unchanged pending a service_type delete permission). 
      * Delete a Catalog Item
      */
     async deleteCatalogItem(requestParameters: DeleteCatalogItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.deleteCatalogItemRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Re-publishes catalog.service.updated facts for one bounded page of services so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention — pos-marketing resolves a campaign catalogFocusRef of the form service:<name> against such a replica; do not use it to fix one service, which republishes itself on its next ordinary update, and use replayProductFacts for the product half of the same replica. Preconditions: Kafka publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. A deleted service leaves no row to replay, so its tombstone exists only in the live stream. Required inputs: none; afterServiceId resumes a previous page, updatedSince restricts to services changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_SERVICE_FACT_REPLAY event and queues one service fact per service in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the end of the service catalog is reached, 400 when limit is out of range or a parameter is malformed, and 409 when fact publication is disabled. 
+     * Re-emit Service Facts for Replica Consumers
+     */
+    async replayServiceFactsRaw(requestParameters: ReplayServiceFactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceFactReplayResultDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['afterServiceId'] != null) {
+            queryParameters['afterServiceId'] = requestParameters['afterServiceId'];
+        }
+
+        if (requestParameters['updatedSince'] != null) {
+            queryParameters['updatedSince'] = (requestParameters['updatedSince'] as any).toISOString();
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:fact:replay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/catalog-items/services/facts/replay`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceFactReplayResultDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-publishes catalog.service.updated facts for one bounded page of services so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention — pos-marketing resolves a campaign catalogFocusRef of the form service:<name> against such a replica; do not use it to fix one service, which republishes itself on its next ordinary update, and use replayProductFacts for the product half of the same replica. Preconditions: Kafka publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. A deleted service leaves no row to replay, so its tombstone exists only in the live stream. Required inputs: none; afterServiceId resumes a previous page, updatedSince restricts to services changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_SERVICE_FACT_REPLAY event and queues one service fact per service in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the end of the service catalog is reached, 400 when limit is out of range or a parameter is malformed, and 409 when fact publication is disabled. 
+     * Re-emit Service Facts for Replica Consumers
+     */
+    async replayServiceFacts(requestParameters: ReplayServiceFactsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceFactReplayResultDto> {
+        const response = await this.replayServiceFactsRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**

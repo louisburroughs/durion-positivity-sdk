@@ -50,6 +50,7 @@ export * from './ReplacementOption';
 export * from './ResolvePriceRequestDto';
 export * from './ResolvePriceResponseDto';
 export * from './ServiceDto';
+export * from './ServiceFactReplayResultDto';
 export * from './SortObject';
 export * from './SubcategoryDto';
 export * from './SubstitutionGroupCreateRequestDto';

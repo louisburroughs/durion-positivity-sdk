@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateRestrictionRuleRequest,
   RestrictionRuleResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateRestrictionRuleRequestFromJSON,
     CreateRestrictionRuleRequestToJSON,
     RestrictionRuleResponseFromJSON,
@@ -132,7 +135,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single sale-restriction rule, active or inactive, identified by its rule id. Use this tool when the rule id is already known, typically from an evaluation result\'s ruleIds; use listRestrictionRules instead to browse the active rule set. Preconditions: the rule must exist; inactive rules remain readable through this operation. Required inputs: ruleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no restriction rule exists for the supplied id. 
+     * Returns a single sale-restriction rule, active or inactive, identified by its rule id. Use this tool when the rule id is already known, typically from an evaluation result\'s ruleIds; use listRestrictionRules instead to browse the active rule set. Preconditions: none beyond the pricing:rule:view authority; the rule must also exist, and inactive rules remain readable through this operation. Required inputs: ruleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no restriction rule exists for the supplied id. 
      * Get A Restriction Rule By ID
      */
     async getRestrictionRuleByIdRaw(requestParameters: GetRestrictionRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RestrictionRuleResponse>> {
@@ -149,7 +152,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+            const tokenString = await token("bearerAuth", ["pricing:rule:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -166,7 +169,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single sale-restriction rule, active or inactive, identified by its rule id. Use this tool when the rule id is already known, typically from an evaluation result\'s ruleIds; use listRestrictionRules instead to browse the active rule set. Preconditions: the rule must exist; inactive rules remain readable through this operation. Required inputs: ruleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no restriction rule exists for the supplied id. 
+     * Returns a single sale-restriction rule, active or inactive, identified by its rule id. Use this tool when the rule id is already known, typically from an evaluation result\'s ruleIds; use listRestrictionRules instead to browse the active rule set. Preconditions: none beyond the pricing:rule:view authority; the rule must also exist, and inactive rules remain readable through this operation. Required inputs: ruleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no restriction rule exists for the supplied id. 
      * Get A Restriction Rule By ID
      */
     async getRestrictionRuleById(requestParameters: GetRestrictionRuleByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RestrictionRuleResponse> {
@@ -175,7 +178,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists every currently active sale-restriction rule that can affect pricing and sale decisions. Use this tool to review the standing restriction policy; use getRestrictionRuleById instead to fetch one rule, including deactivated rules, which this listing omits. Preconditions: none beyond an authenticated caller. Required inputs: none; there is no request body, filtering, or paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active restriction rules exist. 
+     * Lists every currently active sale-restriction rule that can affect pricing and sale decisions. Use this tool to review the standing restriction policy; use getRestrictionRuleById instead to fetch one rule, including deactivated rules, which this listing omits. Preconditions: none beyond the pricing:rule:view authority. Required inputs: none; there is no request body, filtering, or paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active restriction rules exist. 
      * List All Active Restriction Rules
      */
     async listRestrictionRulesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RestrictionRuleResponse>>> {
@@ -185,7 +188,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+            const tokenString = await token("bearerAuth", ["pricing:rule:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -202,7 +205,7 @@ export class RestrictionRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists every currently active sale-restriction rule that can affect pricing and sale decisions. Use this tool to review the standing restriction policy; use getRestrictionRuleById instead to fetch one rule, including deactivated rules, which this listing omits. Preconditions: none beyond an authenticated caller. Required inputs: none; there is no request body, filtering, or paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active restriction rules exist. 
+     * Lists every currently active sale-restriction rule that can affect pricing and sale decisions. Use this tool to review the standing restriction policy; use getRestrictionRuleById instead to fetch one rule, including deactivated rules, which this listing omits. Preconditions: none beyond the pricing:rule:view authority. Required inputs: none; there is no request body, filtering, or paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no active restriction rules exist. 
      * List All Active Restriction Rules
      */
     async listRestrictionRules(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RestrictionRuleResponse>> {

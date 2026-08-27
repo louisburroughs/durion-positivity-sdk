@@ -123,6 +123,12 @@ export interface LocationRequestDTO {
      */
     parents?: object;
     /**
+     * Primary phone number for the location
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    phoneNumber?: string;
+    /**
      * Postal or ZIP code of the location
      * @type {string}
      * @memberof LocationRequestDTO
@@ -188,6 +194,7 @@ export function LocationRequestDTOFromJSONTyped(json: any, ignoreDiscriminator: 
         'name': json['name'],
         'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
         'parents': json['parents'] == null ? undefined : json['parents'],
+        'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'responsiblePersonId': json['responsiblePersonId'] == null ? undefined : json['responsiblePersonId'],
         'state': json['state'] == null ? undefined : json['state'],
@@ -216,6 +223,7 @@ export function LocationRequestDTOToJSON(value?: LocationRequestDTO | null): any
         'name': value['name'],
         'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),
         'parents': value['parents'],
+        'phoneNumber': value['phoneNumber'],
         'postalCode': value['postalCode'],
         'responsiblePersonId': value['responsiblePersonId'],
         'state': value['state'],

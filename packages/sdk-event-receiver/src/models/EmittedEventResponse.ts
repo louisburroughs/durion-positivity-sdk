@@ -14,66 +14,73 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request payload used to emit and persist an application event
+ * One recorded emitted-event occurrence
  * @export
- * @interface EmitEventRequest
+ * @interface EmittedEventResponse
  */
-export interface EmitEventRequest {
+export interface EmittedEventResponse {
     /**
      * Event API version
      * @type {string}
-     * @memberof EmitEventRequest
+     * @memberof EmittedEventResponse
      */
     apiVersion: string;
     /**
      * Elapsed operation time in milliseconds
      * @type {number}
-     * @memberof EmitEventRequest
+     * @memberof EmittedEventResponse
      */
     elapsedMs: number;
     /**
-     * Optional identifier of the entity this event relates to, enabling later lookup via GET /v1/events?entityId=...; omit when the event has no single associated entity
+     * Entity id this event was recorded against
      * @type {string}
-     * @memberof EmitEventRequest
+     * @memberof EmittedEventResponse
      */
     entityId?: string;
     /**
-     * Preregistered event type code
+     * Emitted event row identifier
      * @type {string}
-     * @memberof EmitEventRequest
+     * @memberof EmittedEventResponse
+     */
+    eventId: string;
+    /**
+     * Event type identifier
+     * @type {string}
+     * @memberof EmittedEventResponse
      */
     id: string;
     /**
      * Event publication time in UTC
      * @type {Date}
-     * @memberof EmitEventRequest
+     * @memberof EmittedEventResponse
      */
     publishedAt: Date;
     /**
      * Event timestamp in epoch milliseconds
      * @type {number}
-     * @memberof EmitEventRequest
+     * @memberof EmittedEventResponse
      */
     timestamp: number;
 }
 
 /**
- * Check if a given object implements the EmitEventRequest interface.
+ * Check if a given object implements the EmittedEventResponse interface.
  */
-export function instanceOfEmitEventRequest(value: object): boolean {
+export function instanceOfEmittedEventResponse(value: object): boolean {
     if (!('apiVersion' in value)) return false;
     if (!('elapsedMs' in value)) return false;
+    if (!('eventId' in value)) return false;
     if (!('id' in value)) return false;
     if (!('publishedAt' in value)) return false;
     if (!('timestamp' in value)) return false;
     return true;
 }
 
-export function EmitEventRequestFromJSON(json: any): EmitEventRequest {
-    return EmitEventRequestFromJSONTyped(json, false);
+export function EmittedEventResponseFromJSON(json: any): EmittedEventResponse {
+    return EmittedEventResponseFromJSONTyped(json, false);
 }
 
-export function EmitEventRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): EmitEventRequest {
+export function EmittedEventResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): EmittedEventResponse {
     if (json == null) {
         return json;
     }
@@ -82,13 +89,14 @@ export function EmitEventRequestFromJSONTyped(json: any, ignoreDiscriminator: bo
         'apiVersion': json['apiVersion'],
         'elapsedMs': json['elapsedMs'],
         'entityId': json['entityId'] == null ? undefined : json['entityId'],
+        'eventId': json['eventId'],
         'id': json['id'],
         'publishedAt': (new Date(json['publishedAt'])),
         'timestamp': json['timestamp'],
     };
 }
 
-export function EmitEventRequestToJSON(value?: EmitEventRequest | null): any {
+export function EmittedEventResponseToJSON(value?: EmittedEventResponse | null): any {
     if (value == null) {
         return value;
     }
@@ -97,6 +105,7 @@ export function EmitEventRequestToJSON(value?: EmitEventRequest | null): any {
         'apiVersion': value['apiVersion'],
         'elapsedMs': value['elapsedMs'],
         'entityId': value['entityId'],
+        'eventId': value['eventId'],
         'id': value['id'],
         'publishedAt': ((value['publishedAt']).toISOString()),
         'timestamp': value['timestamp'],

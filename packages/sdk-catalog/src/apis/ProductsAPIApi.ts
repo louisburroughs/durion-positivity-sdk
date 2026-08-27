@@ -225,7 +225,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -324,7 +324,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:location_price_override:write"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -370,7 +370,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:create"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -429,7 +429,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -479,7 +479,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:location_price_override:read"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -522,7 +522,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:non_inventory:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -565,7 +565,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -608,7 +608,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -662,7 +662,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -705,7 +705,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -748,7 +748,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -791,7 +791,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:non_inventory:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -834,7 +834,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -877,7 +877,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -920,7 +920,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -999,7 +999,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Re-publishes catalog.product.updated facts for one bounded page of products so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one product, which republishes itself on its next ordinary update. Preconditions: Kafka publication must be enabled, or the facts queue in the outbox and reach nobody; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterProductId resumes a previous page, updatedSince restricts to products changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_PRODUCT_FACT_REPLAY event and queues one product fact per product in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the catalog end is reached, and 400 when limit is out of range or a parameter is malformed. 
+     * Re-publishes catalog.product.updated facts for one bounded page of products so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one product, which republishes itself on its next ordinary update. Preconditions: Kafka publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterProductId resumes a previous page, updatedSince restricts to products changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_PRODUCT_FACT_REPLAY event and queues one product fact per product in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the catalog end is reached, 400 when limit is out of range or a parameter is malformed, and 409 when fact publication is disabled. 
      * Re-emit Product Facts for Replica Consumers
      */
     async replayProductFactsRaw(requestParameters: ReplayProductFactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductFactReplayResultDto>> {
@@ -1021,7 +1021,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:fact:replay"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1038,7 +1038,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Re-publishes catalog.product.updated facts for one bounded page of products so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one product, which republishes itself on its next ordinary update. Preconditions: Kafka publication must be enabled, or the facts queue in the outbox and reach nobody; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterProductId resumes a previous page, updatedSince restricts to products changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_PRODUCT_FACT_REPLAY event and queues one product fact per product in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the catalog end is reached, and 400 when limit is out of range or a parameter is malformed. 
+     * Re-publishes catalog.product.updated facts for one bounded page of products so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one product, which republishes itself on its next ordinary update. Preconditions: Kafka publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterProductId resumes a previous page, updatedSince restricts to products changed at or after an instant, and limit bounds the page at 1000. Emits a CATALOG_PRODUCT_FACT_REPLAY event and queues one product fact per product in the page; no catalog state changes. Returns 200 with complete=true and a null cursor once the catalog end is reached, 400 when limit is out of range or a parameter is malformed, and 409 when fact publication is disabled. 
      * Re-emit Product Facts for Replica Consumers
      */
     async replayProductFacts(requestParameters: ReplayProductFactsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductFactReplayResultDto> {
@@ -1085,7 +1085,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1129,7 +1129,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1181,7 +1181,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1234,7 +1234,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT", "product:lifecycle:update"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit", "product:lifecycle:update"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1287,7 +1287,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -1333,7 +1333,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:guardrail_policy:write"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

@@ -80,7 +80,7 @@ export class ProductUoMAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product_uom:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -131,7 +131,7 @@ export class ProductUoMAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product_uom:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -173,7 +173,7 @@ export class ProductUoMAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product_uom:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -232,7 +232,7 @@ export class ProductUoMAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:product_uom:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

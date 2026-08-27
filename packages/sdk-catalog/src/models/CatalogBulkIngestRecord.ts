@@ -26,11 +26,29 @@ export interface CatalogBulkIngestRecord {
      */
     categoryName?: string;
     /**
+     * ISO country of origin
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    countryOfOrigin?: string;
+    /**
      * Long description of the item
      * @type {string}
      * @memberof CatalogBulkIngestRecord
      */
     description?: string;
+    /**
+     * Manufacturer brand
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    manufacturerBrand?: string;
+    /**
+     * Manufacturer display name
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    manufacturerName?: string;
     /**
      * Manufacturer part number; falls back to the SKU when absent
      * @type {string}
@@ -61,6 +79,12 @@ export interface CatalogBulkIngestRecord {
      * @memberof CatalogBulkIngestRecord
      */
     subcategoryName?: string;
+    /**
+     * Product type classification
+     * @type {string}
+     * @memberof CatalogBulkIngestRecord
+     */
+    type?: string;
     /**
      * Unit of measure for the item; defaults to EA when absent
      * @type {string}
@@ -95,12 +119,16 @@ export function CatalogBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimina
     return {
         
         'categoryName': json['categoryName'] == null ? undefined : json['categoryName'],
+        'countryOfOrigin': json['countryOfOrigin'] == null ? undefined : json['countryOfOrigin'],
         'description': json['description'] == null ? undefined : json['description'],
+        'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
+        'manufacturerName': json['manufacturerName'] == null ? undefined : json['manufacturerName'],
         'mpn': json['mpn'] == null ? undefined : json['mpn'],
         'name': json['name'],
         'price': json['price'] == null ? undefined : json['price'],
         'sku': json['sku'],
         'subcategoryName': json['subcategoryName'] == null ? undefined : json['subcategoryName'],
+        'type': json['type'] == null ? undefined : json['type'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
         'upc': json['upc'] == null ? undefined : json['upc'],
     };
@@ -113,12 +141,16 @@ export function CatalogBulkIngestRecordToJSON(value?: CatalogBulkIngestRecord | 
     return {
         
         'categoryName': value['categoryName'],
+        'countryOfOrigin': value['countryOfOrigin'],
         'description': value['description'],
+        'manufacturerBrand': value['manufacturerBrand'],
+        'manufacturerName': value['manufacturerName'],
         'mpn': value['mpn'],
         'name': value['name'],
         'price': value['price'],
         'sku': value['sku'],
         'subcategoryName': value['subcategoryName'],
+        'type': value['type'],
         'unitOfMeasure': value['unitOfMeasure'],
         'upc': value['upc'],
     };

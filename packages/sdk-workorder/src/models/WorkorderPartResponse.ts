@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderPartResponse {
     /**
+     * Backorder opened for this line's shortfall, when owned stock at the servicing site could not cover it. Present means the job is waiting on this part; query it through listBackorders (filter workorderLineId) for the SKU, location and quantity short. Cleared once the shortfall is covered.
+     * @type {string}
+     * @memberof WorkorderPartResponse
+     */
+    backorderId?: string;
+    /**
      * Part description
      * @type {string}
      * @memberof WorkorderPartResponse
@@ -80,6 +86,12 @@ export interface WorkorderPartResponse {
      */
     quantityReturned?: number;
     /**
+     * Reservation pos-inventory holds for this line, once the reservation request has been answered
+     * @type {string}
+     * @memberof WorkorderPartResponse
+     */
+    reservationId?: string;
+    /**
      * Part line status
      * @type {string}
      * @memberof WorkorderPartResponse
@@ -131,6 +143,7 @@ export function WorkorderPartResponseFromJSONTyped(json: any, ignoreDiscriminato
     }
     return {
         
+        'backorderId': json['backorderId'] == null ? undefined : json['backorderId'],
         'description': json['description'] == null ? undefined : json['description'],
         'id': json['id'],
         'lineTotal': json['lineTotal'] == null ? undefined : json['lineTotal'],
@@ -141,6 +154,7 @@ export function WorkorderPartResponseFromJSONTyped(json: any, ignoreDiscriminato
         'quantityConsumed': json['quantityConsumed'] == null ? undefined : json['quantityConsumed'],
         'quantityIssued': json['quantityIssued'] == null ? undefined : json['quantityIssued'],
         'quantityReturned': json['quantityReturned'] == null ? undefined : json['quantityReturned'],
+        'reservationId': json['reservationId'] == null ? undefined : json['reservationId'],
         'status': json['status'] == null ? undefined : json['status'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
         'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
@@ -153,6 +167,7 @@ export function WorkorderPartResponseToJSON(value?: WorkorderPartResponse | null
     }
     return {
         
+        'backorderId': value['backorderId'],
         'description': value['description'],
         'id': value['id'],
         'lineTotal': value['lineTotal'],
@@ -163,6 +178,7 @@ export function WorkorderPartResponseToJSON(value?: WorkorderPartResponse | null
         'quantityConsumed': value['quantityConsumed'],
         'quantityIssued': value['quantityIssued'],
         'quantityReturned': value['quantityReturned'],
+        'reservationId': value['reservationId'],
         'status': value['status'],
         'unitOfMeasure': value['unitOfMeasure'],
         'unitPrice': value['unitPrice'],

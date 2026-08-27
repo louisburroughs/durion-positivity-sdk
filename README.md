@@ -10,7 +10,7 @@ Angular-first but fully framework-agnostic — works in any Node.js or browser e
 
 - [durion-positivity-sdk](#durion-positivity-sdk)
   - [Table of Contents](#table-of-contents)
-  - [Package Catalogue](#package-catalogue) (20 packages)
+  - [Package Catalogue](#package-catalogue)
   - [Architecture](#architecture)
   - [Installation](#installation)
     - [In a monorepo (workspaces)](#in-a-monorepo-workspaces)
@@ -66,9 +66,9 @@ All packages are versioned together at `0.1.0-alpha` and scoped under `@durion-s
 | `@durion-sdk/event-receiver`    | Internal event ingestion                                   |
 | `@durion-sdk/vehicle-fitment`   | Part-to-vehicle compatibility data                         |
 | `@durion-sdk/vehicle-inventory` | Vehicle stock tracking                                     |
-| `@durion-sdk/documents`         | Document generation and management                        |
-| `@durion-sdk/inquiry`           | Customer inquiry and quote management                     |
-| `@durion-sdk/bulk-loader`       | Bulk data import and batch processing                     |
+| `@durion-sdk/documents`         | Document generation and management                         |
+| `@durion-sdk/inquiry`           | Customer inquiry and quote management                      |
+| `@durion-sdk/bulk-loader`       | Bulk data import and batch processing                      |
 
 `@durion-sdk/internal` (private) covers the internal tax service and is not published.
 
@@ -76,7 +76,7 @@ All packages are versioned together at `0.1.0-alpha` and scoped under `@durion-s
 
 ## Architecture
 
-```
+```text
 Consumer application
         │
         ▼
@@ -140,12 +140,12 @@ import { createSecurityClient } from "@durion-sdk/security";
 
 const security = createSecurityClient({
   baseUrl: "https://api.example.com",
-  token: async () => localStorage.getItem("access_token") ?? "",
+  token: async () => localStorage.getItem("access_token") ?? ""
 });
 
 // Login
 const response = await security.authAPIApi.login({
-  loginRequest: { username: "user@example.com", password: "secret" },
+  loginRequest: { username: "user@example.com", password: "secret" }
 });
 
 // Every other domain follows the same pattern
@@ -153,7 +153,7 @@ import { createOrderClient } from "@durion-sdk/order";
 
 const orders = createOrderClient({
   baseUrl: "https://api.example.com",
-  token: async () => getAccessToken(),
+  token: async () => getAccessToken()
 });
 
 const salesOrders = await orders.salesOrdersApi.listOrders();
@@ -183,7 +183,7 @@ const config: DurionSdkConfig = {
 
   // Optional — override the default idempotency key generator
   // Only called for POST, PUT, PATCH, DELETE
-  idempotencyKeyGenerator: (method, url) => `${method}:${url}:${Date.now()}`,
+  idempotencyKeyGenerator: (method, url) => `${method}:${url}:${Date.now()}`
 };
 ```
 
@@ -231,7 +231,7 @@ const {
   roleManagementApi,
   selfRegistrationReviewAPIApi,
   userAPIApi,
-  userRoleManagementApi,
+  userRoleManagementApi
 } = createSecurityClient(config);
 ```
 
@@ -264,7 +264,7 @@ const {
   paymentApplicationsApi,
   postingCategoriesApi,
   postingRulesApi,
-  vendorBillAPIApi,
+  vendorBillAPIApi
 } = createAccountingClient(config);
 ```
 
@@ -286,7 +286,7 @@ const auth = new SecurityAuthWorkflow(client.authAPIApi, client.jwtAPIApi);
 
 const tokens = await auth.login({ loginRequest: { username, password } });
 const refreshed = await auth.refresh({
-  refreshTokenRequest: { refresh_token },
+  refreshTokenRequest: { refresh_token }
 });
 await auth.validate({ token });
 await auth.revoke({ token });
@@ -381,7 +381,7 @@ npm run generate
 
 The generation script (`scripts/generate-openapi.sh`) reads backend specs from the sibling `durion-positivity-backend/` repository:
 
-```
+```text
 ../durion-positivity-backend/pos-security-service/openapi.yaml
 ../durion-positivity-backend/pos-order/openapi.yaml
 ../durion-positivity-backend/pos-inventory/openapi.yaml
@@ -500,7 +500,7 @@ to follow.
 
 ## Project Structure
 
-```
+```text
 durion-positivity-sdk/
 ├── packages/
 │   ├── sdk-transport/            # @durion-sdk/transport — shared HTTP client & error types

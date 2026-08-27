@@ -166,7 +166,7 @@ export class OperationalContextApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["workorder:start"]);
+            const tokenString = await token("bearerAuth", ["workorder:workorder:start"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

@@ -70,7 +70,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:uom_conversion:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -114,7 +114,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:uom_conversion:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -156,7 +156,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:uom_conversion:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -192,7 +192,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_VIEW"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:uom_conversion:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -244,7 +244,7 @@ export class UOMConversionAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "ROLE_CATALOG_EDIT"]);
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:uom_conversion:edit"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

@@ -16,12 +16,18 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  CreateUserRequest,
+  LinkUserPersonRequest,
   UserDto,
   UserUpdateRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    CreateUserRequestFromJSON,
+    CreateUserRequestToJSON,
+    LinkUserPersonRequestFromJSON,
+    LinkUserPersonRequestToJSON,
     UserDtoFromJSON,
     UserDtoToJSON,
     UserUpdateRequestFromJSON,
@@ -33,8 +39,8 @@ export interface AssignUserRolesByUsernameRequest {
     body: object;
 }
 
-export interface CreateUserRequest {
-    body: object;
+export interface CreateUserOperationRequest {
+    createUserRequest: CreateUserRequest;
 }
 
 export interface DeleteUserRequest {
@@ -43,6 +49,11 @@ export interface DeleteUserRequest {
 
 export interface GetUserByIdRequest {
     id: string;
+}
+
+export interface LinkUserPersonOperationRequest {
+    id: string;
+    linkUserPersonRequest: LinkUserPersonRequest;
 }
 
 export interface UpdateUserRequest {
@@ -109,14 +120,14 @@ export class UserAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a user account with a username, a hashed password, and a set of directly attached roles. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 400 when the username already exists or a named role is not found. 
+     * Creates a user account with a username, a hashed password, and a set of directly attached roles. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 409 when the username already exists, and 400 when a field is missing or a named role is not found. 
      * Create a User With Roles
      */
-    async createUserRaw(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
-        if (requestParameters['body'] == null) {
+    async createUserRaw(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserDto>> {
+        if (requestParameters['createUserRequest'] == null) {
             throw new runtime.RequiredError(
-                'body',
-                'Required parameter "body" was null or undefined when calling createUser().'
+                'createUserRequest',
+                'Required parameter "createUserRequest" was null or undefined when calling createUser().'
             );
         }
 
@@ -139,17 +150,17 @@ export class UserAPIApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters['body'] as any,
+            body: CreateUserRequestToJSON(requestParameters['createUserRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => UserDtoFromJSON(jsonValue));
     }
 
     /**
-     * Creates a user account with a username, a hashed password, and a set of directly attached roles. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 400 when the username already exists or a named role is not found. 
+     * Creates a user account with a username, a hashed password, and a set of directly attached roles. Use this tool for operator provisioning of accounts; do not use selfRegisterUser, the anonymous customer flow that fixes the role to SELF_SERVICE_CUSTOMER and runs identity resolution first. Preconditions: the caller must hold security:user:create, the username must be unused, and every named role must already exist. Required inputs: username, password, and roles, a non-empty array of existing role names. Emits a SECURITY_USER_CREATE event; the password is hashed before storage. Returns 409 when the username already exists, and 400 when a field is missing or a named role is not found. 
      * Create a User With Roles
      */
-    async createUser(requestParameters: CreateUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
+    async createUser(requestParameters: CreateUserOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
         const response = await this.createUserRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -237,6 +248,58 @@ export class UserAPIApi extends runtime.BaseAPI {
     async getUserById(requestParameters: GetUserByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserDto> {
         const response = await this.getUserByIdRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Requests a PRIMARY link between a user account and a canonical person over the people-contact command channel; the users.person_id projection updates asynchronously when the confirming link fact arrives. Use this tool for operator provisioning of accounts created via createUser, which performs no identity resolution; do not use selfRegisterUser, which resolves and links its own person. Preconditions: the caller must hold security:user:edit and the user id must exist; the personId is not validated here — an unknown person is rejected by pos-people-contact when it processes the command. Required inputs: the user id as a path parameter and personId in the body. Emits a SECURITY_USER_PERSON_LINK_REQUEST event and queues the link-create command. Returns 202 because the link lands asynchronously, and 404 when the user does not exist. 
+     * Link a User Account to Its Canonical Person
+     */
+    async linkUserPersonRaw(requestParameters: LinkUserPersonOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling linkUserPerson().'
+            );
+        }
+
+        if (requestParameters['linkUserPersonRequest'] == null) {
+            throw new runtime.RequiredError(
+                'linkUserPersonRequest',
+                'Required parameter "linkUserPersonRequest" was null or undefined when calling linkUserPerson().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["security:user:edit"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/users/{id}/person-link`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: LinkUserPersonRequestToJSON(requestParameters['linkUserPersonRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Requests a PRIMARY link between a user account and a canonical person over the people-contact command channel; the users.person_id projection updates asynchronously when the confirming link fact arrives. Use this tool for operator provisioning of accounts created via createUser, which performs no identity resolution; do not use selfRegisterUser, which resolves and links its own person. Preconditions: the caller must hold security:user:edit and the user id must exist; the personId is not validated here — an unknown person is rejected by pos-people-contact when it processes the command. Required inputs: the user id as a path parameter and personId in the body. Emits a SECURITY_USER_PERSON_LINK_REQUEST event and queues the link-create command. Returns 202 because the link lands asynchronously, and 404 when the user does not exist. 
+     * Link a User Account to Its Canonical Person
+     */
+    async linkUserPerson(requestParameters: LinkUserPersonOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.linkUserPersonRaw(requestParameters, initOverrides);
     }
 
     /**

@@ -3,6 +3,7 @@
 export * from './AppointmentAssignmentsApi';
 export * from './AppointmentsAPIApi';
 export * from './ConflictOverrideAPIApi';
+export * from './MechanicSkillsAPIApi';
 export * from './ScheduleAPIApi';
 export * from './ShopAuditApi';
 export * from './TechnicianAPIApi';

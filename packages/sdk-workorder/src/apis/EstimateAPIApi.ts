@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   AddEstimateItemRequest,
+  ApiError,
   ApproveEstimateRequest,
   CreateEstimateRequest,
   EstimateItemResponse,
@@ -28,6 +29,8 @@ import type {
 import {
     AddEstimateItemRequestFromJSON,
     AddEstimateItemRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApproveEstimateRequestFromJSON,
     ApproveEstimateRequestToJSON,
     CreateEstimateRequestFromJSON,
@@ -869,7 +872,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when promotion validation fails, and 400 on invalid arguments. 
+     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when a promotion precondition or the customer\'s requirements verdict refuses it, and 503 when that verdict has not replicated yet — a retryable condition, and the only one worth retrying. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
      * Promote Approved Estimate to Workorder
      */
     async promoteEstimateRaw(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
@@ -907,7 +910,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when promotion validation fails, and 400 on invalid arguments. 
+     * Promotes an APPROVED estimate into a new DRAFT workorder that inherits the estimate\'s customer, location, and CRM references. Use this tool after approveEstimate succeeds; do not use createWorkorder, which builds a workorder from an estimate id without the promotion validations. Preconditions: the estimate must be APPROVED with a valid, unexpired approval, have approved items, and not already be promoted — a prior promotion is answered with the existing workorder instead of a duplicate. Required inputs: estimateId (UUID) as a path parameter; an Idempotency-Key header collapses retries onto the originally created workorder. Emits a WORKORDER_ESTIMATE_PROMOTE event. Returns 200 with the workorder (also on ALREADY_PROMOTED replays that can resolve the existing workorder), 404 when the estimate does not exist, 409 when a promotion precondition or the customer\'s requirements verdict refuses it, and 503 when that verdict has not replicated yet — a retryable condition, and the only one worth retrying. Every non-2xx answer carries the ApiError envelope with a machine-readable code and the correlation id that also appears in the server log line. 
      * Promote Approved Estimate to Workorder
      */
     async promoteEstimate(requestParameters: PromoteEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {

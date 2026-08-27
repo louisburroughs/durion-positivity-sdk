@@ -15,12 +15,16 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ModeResponse,
   TaxCalculationRequest,
   TaxCalculationResponse,
   TaxProviderTransactionResult,
+  TaxRateLookupResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ModeResponseFromJSON,
     ModeResponseToJSON,
     TaxCalculationRequestFromJSON,
@@ -29,6 +33,8 @@ import {
     TaxCalculationResponseToJSON,
     TaxProviderTransactionResultFromJSON,
     TaxProviderTransactionResultToJSON,
+    TaxRateLookupResponseFromJSON,
+    TaxRateLookupResponseToJSON,
 } from '../models/index';
 
 export interface CalculateTaxRequest {
@@ -38,6 +44,14 @@ export interface CalculateTaxRequest {
 export interface CommitTaxDocumentRequest {
     referenceId: string;
     referenceType?: string;
+}
+
+export interface GetTaxRatesRequest {
+    countryCode: string;
+    postalCode: string;
+    regionCode?: string;
+    city?: string;
+    asOf?: Date;
 }
 
 export interface VoidTaxDocumentRequest {
@@ -139,6 +153,76 @@ export class TaxApi extends runtime.BaseAPI {
      */
     async commitTaxDocument(requestParameters: CommitTaxDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxProviderTransactionResult> {
         const response = await this.commitTaxDocumentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Resolves the per-jurisdiction tax rates applicable to a destination address, without calculating tax for any line items. Use this tool to preview or display the rate breakdown for an address; do not use it to compute tax on a cart or invoice, which is calculateTax. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014) — it has no gateway route and is reached only by direct in-cluster calls, never through pos-api-gateway. Required inputs: countryCode (ISO 3166-1 alpha-2) and postalCode; regionCode and city narrow the match further, and asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; components are per-jurisdiction rates as decimal fractions (not a blended estimate), and SPECIAL/DISTRICT jurisdiction types appear only when a configured rule produces them — today\'s test-mode rules emit STATE/COUNTY/CITY. Returns 400 when countryCode or postalCode are missing or malformed, and 501 when the configured tax provider does not support rate-only lookup (every production provider today; AvaTax rate-by-address is a documented follow-up, not yet implemented). 
+     * Look up jurisdiction tax rates
+     */
+    async getTaxRatesRaw(requestParameters: GetTaxRatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TaxRateLookupResponse>> {
+        if (requestParameters['countryCode'] == null) {
+            throw new runtime.RequiredError(
+                'countryCode',
+                'Required parameter "countryCode" was null or undefined when calling getTaxRates().'
+            );
+        }
+
+        if (requestParameters['postalCode'] == null) {
+            throw new runtime.RequiredError(
+                'postalCode',
+                'Required parameter "postalCode" was null or undefined when calling getTaxRates().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['countryCode'] != null) {
+            queryParameters['countryCode'] = requestParameters['countryCode'];
+        }
+
+        if (requestParameters['postalCode'] != null) {
+            queryParameters['postalCode'] = requestParameters['postalCode'];
+        }
+
+        if (requestParameters['regionCode'] != null) {
+            queryParameters['regionCode'] = requestParameters['regionCode'];
+        }
+
+        if (requestParameters['city'] != null) {
+            queryParameters['city'] = requestParameters['city'];
+        }
+
+        if (requestParameters['asOf'] != null) {
+            queryParameters['asOf'] = (requestParameters['asOf'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["tax:rates:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/tax/rates`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TaxRateLookupResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Resolves the per-jurisdiction tax rates applicable to a destination address, without calculating tax for any line items. Use this tool to preview or display the rate breakdown for an address; do not use it to compute tax on a cart or invoice, which is calculateTax. Preconditions: this endpoint is internal-only (ADR-0021/ADR-0014) — it has no gateway route and is reached only by direct in-cluster calls, never through pos-api-gateway. Required inputs: countryCode (ISO 3166-1 alpha-2) and postalCode; regionCode and city narrow the match further, and asOf (ISO-8601 date) defaults to today. No events are emitted and no state changes; components are per-jurisdiction rates as decimal fractions (not a blended estimate), and SPECIAL/DISTRICT jurisdiction types appear only when a configured rule produces them — today\'s test-mode rules emit STATE/COUNTY/CITY. Returns 400 when countryCode or postalCode are missing or malformed, and 501 when the configured tax provider does not support rate-only lookup (every production provider today; AvaTax rate-by-address is a documented follow-up, not yet implemented). 
+     * Look up jurisdiction tax rates
+     */
+    async getTaxRates(requestParameters: GetTaxRatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TaxRateLookupResponse> {
+        const response = await this.getTaxRatesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

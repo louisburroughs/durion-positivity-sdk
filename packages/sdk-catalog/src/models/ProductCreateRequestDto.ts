@@ -32,17 +32,35 @@ export interface ProductCreateRequestDto {
      */
     categoryId?: string;
     /**
+     * ISO country of origin
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    countryOfOrigin?: string;
+    /**
      * Product description
      * @type {string}
      * @memberof ProductCreateRequestDto
      */
     description: string;
     /**
+     * Manufacturer brand
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    manufacturerBrand?: string;
+    /**
      * Manufacturer identifier
      * @type {string}
      * @memberof ProductCreateRequestDto
      */
     manufacturerId?: string;
+    /**
+     * Manufacturer display name
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    manufacturerName?: string;
     /**
      * Manufacturer part number
      * @type {string}
@@ -61,6 +79,12 @@ export interface ProductCreateRequestDto {
      * @memberof ProductCreateRequestDto
      */
     sku: string;
+    /**
+     * Product type classification
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    type?: string;
     /**
      * Unit of measure
      * @type {string}
@@ -99,11 +123,15 @@ export function ProductCreateRequestDtoFromJSONTyped(json: any, ignoreDiscrimina
         
         'attributes': json['attributes'] == null ? undefined : json['attributes'],
         'categoryId': json['categoryId'] == null ? undefined : json['categoryId'],
+        'countryOfOrigin': json['countryOfOrigin'] == null ? undefined : json['countryOfOrigin'],
         'description': json['description'],
+        'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
         'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
+        'manufacturerName': json['manufacturerName'] == null ? undefined : json['manufacturerName'],
         'mpn': json['mpn'],
         'name': json['name'],
         'sku': json['sku'],
+        'type': json['type'] == null ? undefined : json['type'],
         'unitOfMeasure': json['unitOfMeasure'],
         'upc': json['upc'] == null ? undefined : json['upc'],
     };
@@ -117,11 +145,15 @@ export function ProductCreateRequestDtoToJSON(value?: ProductCreateRequestDto | 
         
         'attributes': value['attributes'],
         'categoryId': value['categoryId'],
+        'countryOfOrigin': value['countryOfOrigin'],
         'description': value['description'],
+        'manufacturerBrand': value['manufacturerBrand'],
         'manufacturerId': value['manufacturerId'],
+        'manufacturerName': value['manufacturerName'],
         'mpn': value['mpn'],
         'name': value['name'],
         'sku': value['sku'],
+        'type': value['type'],
         'unitOfMeasure': value['unitOfMeasure'],
         'upc': value['upc'],
     };
