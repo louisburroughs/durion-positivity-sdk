@@ -724,10 +724,13 @@ cannot approve it — INVENTORY_LEAD deliberately holds `create` but not
   line. Assert receipt id; `getGoodsReceipt` round-trips.
 - [x] **D4 — Stock visible.** `waitFor` availability of the new SKU at the
   location to increase by 25 over the D1 snapshot.
-- [x] **D5 — Putaway (observed behavior).** `listPutawayTasks` for the
-  receipt; if tasks exist, `claimPutawayTask` → `executePutaway` and assert
-  completion. If the backend auto-putaways (no tasks), assert that and move
-  on — the test documents which path this backend takes.
+- [x] **D5 — Putaway, refused and then driven.** A shop-floor receipt is
+  refused with **422 `RECEIPT_NOT_STAGED`**. A receipt booked into staging then
+  runs the whole path: `generatePutawayTasks` → `claimPutawayTask` →
+  `executePutaway` against the task's own `suggestedDestinationLocationId`,
+  asserting staging on-hand falls by the received quantity and the
+  destination's rises by it. See *Putaway* in the backend-findings section for
+  what this took (backend #1496, #1514, #1538).
 - [x] **D6 — Receiving-session variant.** For a second small PO:
   `createReceivingSession` (`sourceDocumentId` = PO id),
   `receiveItemsIntoStaging` with its lines, `getReceivingSession` → assert
@@ -870,22 +873,23 @@ re-read against the new behaviour rather than trusted:
   and is wrong. Stock reads still act as the parts clerk, because stock is the
   parts clerk's concern in that flow, not because the technician is barred.
 
-**Putaway, corrected 2026-08-24 and again 2026-08-25.** D5 concluded for twelve runs that this
-backend "auto-putaways", on the evidence that a goods receipt raises no putaway
-tasks. That was the wrong inference from a true observation: tasks are not
-raised automatically, they are raised *on request*. `generatePutawayTasks`
-returns one task per received line, and `claimPutawayTask` works on it - so two
-thirds of the path had never been exercised.
+**Putaway, corrected 2026-08-24, 2026-08-25, and again 2026-08-27.** D5 concluded for twelve runs
+that this backend "auto-putaways", on the evidence that a goods receipt raises
+no putaway tasks. That was the wrong inference from a true observation: tasks
+are not raised automatically, they are raised *on request*.
+`generatePutawayTasks` returns one task per received line, and
+`claimPutawayTask` works on it - so two thirds of the path had never been
+exercised.
 
-The task the backend generates then cannot be executed by either available
+The task the backend generated then could not be executed by either available
 route:
 
 - From the task's own `sourceLocationId` - the staging location, `...0002` -
   **422 `NO_ON_HAND_AT_SOURCE_LOCATION`**, "Data consistency error -
-  reconciliation required". Nothing is in staging, because `createGoodsReceipt`
+  reconciliation required". Nothing was in staging, because `createGoodsReceipt`
   puts stock directly on hand at the receiving location. That is precisely why
   D4 sees on-hand rise and why no task appears on its own.
-- From the receiving location, where the stock actually is - **422
+- From the receiving location, where the stock actually was - **422
   `LOCATION_NOT_VALID_FOR_SKU`** against the task's *own*
   `suggestedDestinationLocationId`, "SKU is not configured in replenishment
   policies".
@@ -894,24 +898,64 @@ So generation rooted the task at a location the receipt never touched, and
 resolved a destination that execution rejected. Filed as #1496 and **fixed**:
 generation now refuses up front rather than emitting an unworkable task.
 
-D5 was rewritten around that. It asserts two boundaries:
+The second refusal outlived that fix, and D5 asserted it as a boundary for a
+while: a receipt booked into staging cleared the `RECEIPT_NOT_STAGED` guard and
+stopped at `LOCATION_NOT_VALID_FOR_SKU`, because the resolved destination was
+validated against replenishment policy and D1's SKU had been created moments
+earlier. That was read as a fixture gap - the ask was to seed policies - and it
+was not. Backend #1514 concluded the model was wrong: no mature WMS gates
+putaway on restock configuration, and using an `(itemSKU, locationId)` policy
+row as a proxy for "this SKU belongs here" made a brand-new SKU unputawayable
+anywhere while letting a tire into oil storage on the strength of a min/max row.
+
+**Backend #1538 replaced it, and D5 now drives the whole path.** What changed:
+
+- Both replenishment-policy gates are gone from putaway validation.
+  `ReplenishmentPolicy` is untouched and keeps its documented job - min/max for
+  the replenishment scan.
+- Eligibility is a seeded `storage_compatibility` matrix keyed on catalog
+  category and subcategory against the location's `storageCategoryCode`.
+  `LOCATION_NOT_VALID_FOR_SKU` survives as a code, but it now means "a tire does
+  not go in oil storage" rather than "nobody wrote a min/max row".
+- Rules match the item. The dead `criteria` JSON column became
+  `match_type`/`match_value`, resolved **per line** with precedence
+  `SKU > SUBCATEGORY > CATEGORY > ANY`. Previously one rule applied to every
+  line of every receipt, which is why every fresh SKU resolved to the same
+  destination and failed there.
+- A seeded `ANY` rule is the terminal fallback, so a brand-new SKU never
+  dead-ends, and the hardcoded `00000000-…-0001` destination is gone.
+
+D5 therefore asserts one refusal and one complete flow:
 
 1. A receipt booked to the shop floor - which is what `createGoodsReceipt` does
    on the ASN path, and why D4 sees on-hand rise - is refused with **422
-   `RECEIPT_NOT_STAGED`**.
-2. A receipt booked into the staging location clears that guard and stops at the
-   next one: **422 `LOCATION_NOT_VALID_FOR_SKU`**, because the destination the
-   putaway rule resolves is validated against replenishment policy and the SKU
-   was created by D1 moments earlier.
+   `RECEIPT_NOT_STAGED`**. Unchanged.
+2. A receipt booked into the staging location generates a task, `parts` claims
+   it, and `parts` executes it against the task's own
+   `suggestedDestinationLocationId`. Staging on-hand falls by the received
+   quantity and the destination's rises by the same amount.
 
-The second is a property of the fixture, not a defect. Driving putaway through
-claim and execute needs a SKU that already has a replenishment policy at the
-resolved destination; `inventory:replenishment:manage` is held by no seeded
-role, and the destination is chosen during generation, so the suite cannot
-arrange it without hardcoding a rule-derived location id and writing
-replenishment config into alpha. Left as a known edge: **claim and execute
-remain unexercised**, and D5 fails loudly - naming what to do - the day
-generation stops at neither guard.
+Both halves run as `parts` (INVENTORY_LEAD), which holds
+`inventory:putaway:view/generate/claim/execute` and deliberately holds neither
+override. So execution succeeds on the merits - the destination is genuinely
+compatible and genuinely has room - and D5 must not start passing
+`overrideCapacity` or `overrideLocationCompatibility` to stay green.
+
+Two environment faults surface here as ordinary 4xx and are fixed outside the
+suite; D5's `executePutaway` failure message names both:
+
+- **The destination storage location does not exist.** pos-inventory's
+  `ext_storage_location` replica has not been hydrated. pos-catalog's
+  product-fact replay carries the new fields, but pos-location's outbox replay
+  re-emits already-serialized payloads, so storage locations need a fresh write
+  via `patchStorageLocation` (backend `docs/OPERATIONS_RUNBOOK.md`).
+- **A capacity refusal.** The resolved bin cannot hold the received quantity;
+  the putaway-rule fixture pack
+  (`scripts/fixtures/seed/alpha/inventory/putaway-rules.csv`) needs a roomier
+  destination.
+
+Note also that #1538 bumped the permission catalog to v64, which invalidates
+every previously issued JWT - the suite re-authenticates after that deploy.
 
 ---
 
@@ -933,9 +977,11 @@ recorded from real runs:
   first call returns `{invoiceId: null, status: PENDING}` and a later call
   returns the invoice; finalized total 286.17, payment event accepted.
 - **D4** a goods receipt raises on-hand by exactly what was received.
-  **D5** no putaway tasks are created for a receipt - but that is not
-  auto-putaway, as this note first concluded. Tasks are raised on request; see
-  *Putaway, corrected 2026-08-24* in the preceding section.
+  **D5** no putaway tasks are created for a receipt on its own - but that is
+  not auto-putaway, as this note first concluded. Tasks are raised on request,
+  and since backend #1538 the requested task can be claimed and executed; see
+  *Putaway, corrected 2026-08-24, 2026-08-25, and again 2026-08-27* in the
+  preceding section.
   **D11** over-receipt is **accepted** - 999 units against a line of 1.
 
 Three specified behaviours do not exist here, and the suites now assert their
