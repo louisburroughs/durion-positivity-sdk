@@ -177,7 +177,11 @@ describe('Suite D — receiving', () => {
       expect(onHandAfter - onHandBefore).toBe(RECEIVE_QUANTITY);
     }, 180_000);
 
-    it('D5 — a receipt on the shop floor cannot be put away; one in staging can', async () => {
+    // The 420s timeout is longer than its neighbours' because this test raises
+    // a second purchase order, ASN and receipt of its own before putting
+    // anything away, then waits on three separate availability reads - any of
+    // which can take the full 90s on a slow alpha.
+    it('D5 — a shop-floor receipt cannot be put away; a staged one is generated, claimed, and executed', async () => {
       const tasks = await call('listPutawayTasks', () =>
         parts.inventory.putawayApi.listPutawayTasks({ locationId }),
       );
@@ -211,7 +215,7 @@ describe('Suite D — receiving', () => {
       expect(refusal).toContain('RECEIPT_NOT_STAGED');
 
       // Part two: the same flow against a receipt booked into staging, which is
-      // where putaway is meant to start. This is the path that had never run.
+      // where putaway is meant to start.
       const stagedPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
         {
           skuId: product.productEntityId,
@@ -240,44 +244,156 @@ describe('Suite D — receiving', () => {
         'staged receiptId',
       );
 
-      // Generation now gets past the staging guard and stops at the next one:
-      // the destination its putaway rule resolves is validated against
-      // replenishment policy, and this SKU was created by D1 moments ago. That
-      // is a property of the fixture, not a defect - and it is where the path
-      // ends until a SKU with a policy at the resolved destination is
-      // available. Recorded so the boundary is visible rather than implied.
-      const stagedRefusal = await formatError(
-        await parts.inventory.putawayApi
-          .generatePutawayTasks({
-            generatePutawayTasksRequest: {
-              sourceReceiptId: stagedReceiptId,
-              lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
-            },
-          })
-          .then(
-            (generated) => ({ generated }),
-            (error: unknown) => error,
-          ),
+      // The move is asserted as a delta at both ends, so both are read before
+      // anything moves. Staging is as shared and long-lived as every other
+      // location on alpha - other runs stage stock too - so only the change of
+      // RECEIVE_QUANTITY is ours to claim.
+      const stagingBefore = await waitFor(
+        async () => {
+          const onHand = await readOnHand(parts, product.productEntityId, STAGING_LOCATION_ID);
+          return onHand >= RECEIVE_QUANTITY ? { onHand } : undefined;
+        },
+        {
+          description: `the staged receipt to put ${RECEIVE_QUANTITY} of ${product.sku} into staging`,
+          timeoutMs: 90_000,
+        },
       );
+      console.log(`[D5] staging on-hand before putaway = ${stagingBefore.onHand}`);
 
-      if (!stagedRefusal.includes('LOCATION_NOT_VALID_FOR_SKU')) {
-        // Generation succeeded, or failed for a new reason. Either way the
-        // boundary has moved and claim/execute are now reachable: see the
-        // putaway note in BACKEND_INTERACTION_TEST_SPEC.md.
-        throw new Error(
-          `[D5] generatePutawayTasks for a staged receipt no longer stops at ` +
-            `LOCATION_NOT_VALID_FOR_SKU: ${stagedRefusal.slice(0, 300)}. Extend this test ` +
-            `through claimPutawayTask and executePutaway.`,
-        );
-      }
-      console.log(`[D5] staged receipt reached destination validation: ${stagedRefusal.slice(0, 200)}`);
+      // Generation now clears the staging guard and runs to completion. It used
+      // to stop at a second guard - 422 LOCATION_NOT_VALID_FOR_SKU, "SKU is not
+      // configured in replenishment policies" - because the destination was
+      // validated against replenishment policy and this SKU was created by D1
+      // moments earlier. Backend #1538 removed that gate (see #1514): putaway
+      // eligibility now asks whether the destination is physically fit for the
+      // item, via a seeded compatibility matrix keyed on catalog category, and
+      // a seeded ANY rule is the terminal fallback so a brand-new SKU never
+      // dead-ends.
+      const generated = await call('generatePutawayTasks(staged)', () =>
+        parts.inventory.putawayApi.generatePutawayTasks({
+          generatePutawayTasksRequest: {
+            sourceReceiptId: stagedReceiptId,
+            lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
+          },
+        }),
+      );
+      console.log(`[D5] generated ${generated.length} task(s) for the staged receipt`);
+      expect(generated).toHaveLength(1);
 
-      // The staged stock is real regardless: it was received into staging, not
-      // onto the shop floor, so the shop floor's on-hand is unchanged by it.
+      const task = generated[0];
+      expect(task.productId).toBe(product.productEntityId);
+      expect(task.quantity).toBe(RECEIVE_QUANTITY);
+      expect(task.sourceLocationId).toBe(STAGING_LOCATION_ID);
+      expect(String(task.status).toUpperCase()).toBe('UNASSIGNED');
+
+      // suggestedDestinationLocationId is the resolved destination whether or
+      // not a fallback was taken; finalSuggestedLocationId is set only on
+      // fallback and repeats the same value, so this is the field to execute
+      // against.
+      const destinationLocationId = requireField(
+        task.suggestedDestinationLocationId,
+        'suggestedDestinationLocationId',
+      );
+      console.log(
+        `[D5] task ${task.taskId}: ${STAGING_LOCATION_ID} -> ${destinationLocationId}` +
+          (task.fallbackReason ? ` (fallback: ${task.fallbackReason})` : ''),
+      );
+      // A rule that resolves back to staging would zero both deltas below and
+      // make the rest of this test vacuous. It is a seeding fault rather than a
+      // code one, but it has to fail here rather than pass silently.
+      expect(destinationLocationId).not.toBe(STAGING_LOCATION_ID);
+
+      const destinationBefore = await readOnHand(
+        parts,
+        product.productEntityId,
+        destinationLocationId,
+      );
+      console.log(`[D5] destination on-hand before putaway = ${destinationBefore}`);
+
+      const claimed = await call('claimPutawayTask', () =>
+        parts.inventory.putawayApi.claimPutawayTask({ taskId: task.taskId }),
+      );
+      expect(claimed.taskId).toBe(task.taskId);
+      expect(String(claimed.status).toUpperCase()).toBe('ASSIGNED');
+      console.log(`[D5] claimed by ${claimed.assigneeId ?? '(unrecorded)'}`);
+
+      // INVENTORY_LEAD holds putaway view/generate/claim/execute but neither
+      // override, so this executes on the merits: the destination has to be
+      // genuinely compatible and genuinely have room. Nothing here passes
+      // overrideCapacity or overrideLocationCompatibility, and it should not
+      // start doing so to get the suite green.
+      const execution = await parts.inventory.putawayExecutionApi
+        .executePutaway({
+          taskId: task.taskId,
+          putawayExecutionRequest: {
+            skuId: product.productEntityId,
+            sourceLocationId: STAGING_LOCATION_ID,
+            destinationLocationId,
+            quantity: RECEIVE_QUANTITY,
+          },
+        })
+        .catch(async (error: unknown) => {
+          // Two environment faults reach here as ordinary 4xx and are worth
+          // naming, because neither is a defect in this test and both are
+          // fixed outside it.
+          const detail = await formatError(error);
+          throw new Error(
+            `[D5] executePutaway ${STAGING_LOCATION_ID} -> ${destinationLocationId} failed: ` +
+              `${detail}. If this says the destination storage location does not exist, ` +
+              `pos-inventory's ext_storage_location replica has not been hydrated: its outbox ` +
+              `replay re-emits already-serialized payloads, so storage locations need a fresh ` +
+              `write via patchStorageLocation (backend docs/OPERATIONS_RUNBOOK.md). If it is a ` +
+              `capacity refusal, the resolved bin cannot hold ${RECEIVE_QUANTITY} units and the ` +
+              `putaway-rule fixture pack needs a roomier destination.`,
+          );
+        });
+
+      expect(execution.taskId).toBe(task.taskId);
+      expect(execution.skuId).toBe(product.productEntityId);
+      expect(execution.sourceLocationId).toBe(STAGING_LOCATION_ID);
+      expect(execution.destinationLocationId).toBe(destinationLocationId);
+      expect(execution.quantityMoved).toBe(RECEIVE_QUANTITY);
+      expect(String(execution.status).toUpperCase()).toBe('COMPLETED');
+      expect(execution.ledgerEntryId).toBeTruthy();
+      console.log(`[D5] executed: ledger entry ${execution.ledgerEntryId} at ${execution.executedAt}`);
+
+      // The point of the whole path: the stock is no longer in staging and is
+      // now at the destination. Both are read through waitFor because the
+      // availability projection the suite reads is not the ledger the execution
+      // wrote - wrapped in an object so an on-hand that legitimately falls to
+      // zero is not mistaken for "not ready yet".
+      const stagingAfter = await waitFor(
+        async () => {
+          const onHand = await readOnHand(parts, product.productEntityId, STAGING_LOCATION_ID);
+          return onHand <= stagingBefore.onHand - RECEIVE_QUANTITY ? { onHand } : undefined;
+        },
+        {
+          description: `staging on-hand for ${product.sku} to fall by ${RECEIVE_QUANTITY}`,
+          timeoutMs: 90_000,
+        },
+      );
+      console.log(`[D5] staging on-hand ${stagingBefore.onHand} -> ${stagingAfter.onHand}`);
+      expect(stagingBefore.onHand - stagingAfter.onHand).toBe(RECEIVE_QUANTITY);
+
+      const destinationAfter = await waitFor(
+        async () => {
+          const onHand = await readOnHand(parts, product.productEntityId, destinationLocationId);
+          return onHand >= destinationBefore + RECEIVE_QUANTITY ? { onHand } : undefined;
+        },
+        {
+          description: `destination on-hand for ${product.sku} to rise by ${RECEIVE_QUANTITY}`,
+          timeoutMs: 90_000,
+        },
+      );
+      console.log(`[D5] destination on-hand ${destinationBefore} -> ${destinationAfter.onHand}`);
+      expect(destinationAfter.onHand - destinationBefore).toBe(RECEIVE_QUANTITY);
+
+      // The staged stock never touched the shop floor, so what D3 and D4 put
+      // there is unchanged by any of the above.
       expect(await readOnHand(parts, product.productEntityId, locationId)).toBeGreaterThanOrEqual(
         RECEIVE_QUANTITY,
       );
-    }, 300_000);
+    }, 420_000);
 
     it('D6 — a receiving session is built from the purchase order\'s lines', async () => {
       const secondPo = await createApprovedPo(parts, manager, ctx, SEED_VENDOR_ID, [
