@@ -5,6 +5,7 @@ import { createInventoryClient } from '@durion-sdk/inventory';
 import { createLocationClient } from '@durion-sdk/location';
 import { createInvoiceClient } from '@durion-sdk/invoice';
 import { createOrderClient } from '@durion-sdk/order';
+import { createPeopleClient } from '@durion-sdk/people';
 import { SeederAuth, SeederConfig } from '@durion-sdk/seeder';
 import { createVehicleInventoryClient } from '@durion-sdk/vehicle-inventory';
 import { createWorkorderClient } from '@durion-sdk/workorder';
@@ -32,6 +33,11 @@ export interface DomainClients {
   catalog: ReturnType<typeof createCatalogClient>;
   /** Sites, storage locations and their declared defaults. */
   location: ReturnType<typeof createLocationClient>;
+  /**
+   * Employees, work sessions and timekeeping. Distinct from the workorder
+   * service's per-service labor tracking: this is the payroll clock.
+   */
+  people: ReturnType<typeof createPeopleClient>;
   shopManager: ShopManagerClient;
   /** The identity behind these clients — for labor-attribution assertions. */
   username: string;
@@ -118,6 +124,7 @@ export class Personas {
         vehicleInventory: createVehicleInventoryClient(auth.buildSdkConfig('vehicle-inventory')),
         catalog: createCatalogClient(auth.buildSdkConfig('catalog')),
         location: createLocationClient(auth.buildSdkConfig('location')),
+        people: createPeopleClient(auth.buildSdkConfig('people')),
         shopManager: createShopManagerClient({
           baseUrl: this.config.baseUrl,
           token: () => auth.getToken(),

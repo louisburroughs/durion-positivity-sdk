@@ -14,6 +14,7 @@
     "@durion-sdk/invoice": "*",
     "@durion-sdk/location": "*",
     "@durion-sdk/order": "*",
+    "@durion-sdk/people": "*",
     "@durion-sdk/seeder": "*",
     "@durion-sdk/shop-manager": "*",
     "@durion-sdk/transport": "*",

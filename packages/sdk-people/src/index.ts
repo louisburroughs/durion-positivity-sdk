@@ -58,11 +58,15 @@ export function createPeopleClient(config: DurionSdkConfig) {
   return {
     employeeApi: new GeneratedApis.EmployeeAPIApi(configuration),
     peopleAvailabilityApi: new GeneratedApis.PeopleAvailabilityAPIApi(configuration),
+    peopleBulkIngestAPIApi: new GeneratedApis.PeopleBulkIngestAPIApi(configuration),
+    peopleComplianceAPIApi: new GeneratedApis.PeopleComplianceAPIApi(configuration),
     peopleExceptionsApi: new GeneratedApis.PeopleExceptionsApi(configuration),
     peopleReportsAPIApi: new GeneratedApis.PeopleReportsAPIApi(configuration),
     peopleStaffingAssignmentsApi: new GeneratedApis.PeopleStaffingAssignmentsApi(configuration),
     peopleTimeEntriesApi: new GeneratedApis.PeopleTimeEntriesApi(configuration),
     timeEntryApprovalAPIApi: new GeneratedApis.TimeEntryApprovalAPIApi(configuration),
+    timePeriodManagementAPIApi: new GeneratedApis.TimePeriodManagementAPIApi(configuration),
+    timekeepingApprovalAPIApi: new GeneratedApis.TimekeepingApprovalAPIApi(configuration),
     workSessionsAPIApi: new GeneratedApis.WorkSessionsAPIApi(configuration),
   };
 }

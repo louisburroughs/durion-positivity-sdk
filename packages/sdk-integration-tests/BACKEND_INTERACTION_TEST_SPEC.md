@@ -761,6 +761,151 @@ cannot approve it — INVENTORY_LEAD deliberately holds `create` but not
   over-receipt behavior; `crossDockReceivingLine` against a bogus workorder
   id: assert 4xx.
 
+### Task 10: Suite E — Cycle Counting
+
+**File:** `src/suites/e-cycle-count.itest.ts`
+
+SDK surface: `@durion-sdk/inventory` (`CycleCountPlansApi`,
+`CycleCountOperationsApi`, `CycleCountQueryApi`, `CycleCountAdjustmentsApi`,
+`InventoryBulkIngestAPIApi`, `StockMovementsApi`) and
+`@durion-sdk/location` (`StorageLocationAPIApi`).
+
+**Isolation is the design.** Task generation counts every stocked
+(bin, SKU) pair in the plan's scope, so a plan aimed at the shop's real bins
+would take an unbounded number of tasks and reconcile stock suites C and D are
+asserting deltas against. The suite creates its own storage location and puts
+two synthetic SKUs in it, which makes expected quantity, variance and the
+posted adjustment exactly predictable.
+
+**Stock is fed through the API, not Flyway.** `harness/stock.ts` mirrors the
+backend's own seed driver: bulk ingest raises one adjustment *request* per row
+and approving that request writes the ledger entry. Ingest alone leaves
+availability at zero — the single most likely way to misread this flow.
+
+**Acting personas:** `admin` throughout the count itself.
+`inventory:cycle_count:initiate|view|complete` are granted to ADMIN and to no
+other role, so INVENTORY_LEAD — the clerk who counts stock in the building —
+cannot plan, generate, record or read a count. `parts` (INVENTORY_LEAD) raises
+the adjustment (`inventory:adjustment:create`) and reads it back
+(`:view`); `admin` approves it, because `inventory:adjustment:approve` goes to
+INVENTORY_CONTROLLER, INVENTORY_MANAGER and ADMIN and never to the raiser.
+
+**Fixed points the assertions rest on.** No tolerance row is configured for a
+synthetic SKU at a brand-new bin, so `CycleCountToleranceResolver` falls
+through to zero tolerance and only an exact match is accepted. The seeded
+`TIER_1_MANAGER` threshold is 0 units, so any variance at all requires a
+decision and nothing auto-approves. `createCycleCountPlan` requires a non-empty
+`zoneIds` and a `scheduledDate` strictly in the future, neither of which the
+generated model marks required.
+
+- [ ] **E1 — Plan.** `createCycleCountPlan` scoped to the run's own bin;
+  assert `PLANNED` and that `zoneIds` carries the bin.
+- [ ] **E2 — RBAC negative.** The parts clerk cannot plan a count; assert
+  401/403 and record the grant gap rather than working around it.
+- [ ] **E3 — Generate.** `generateCycleCountTasks` for the clerk as auditor;
+  assert exactly the two seeded SKUs, `binLocation` equal to the bin's UUID as
+  text, `ASSIGNED`, expected quantity as seeded, and the plan moved to
+  `STARTED`.
+- [ ] **E4 — Read back.** `listCycleCountPlanTasks` and `getCycleCountTask`
+  agree, with no count entries yet.
+- [ ] **E5 — Exact count.** Variance 0, `withinTolerance` true, task
+  `ACCEPTED_WITHIN_TOLERANCE`, and no adjustment is created.
+- [ ] **E6 — Short count.** Variance negative, `withinTolerance` false, task
+  `COUNTED_PENDING_REVIEW` — held for a reviewer rather than auto-reconciled.
+- [ ] **E7 — Recount.** `TRIGGER_RECOUNT_SELF` is the auditor's one immediate
+  recount; assert sequence 1, two count entries, and the task's latest entry
+  pointing at the recount.
+- [ ] **E8 — Adjustment.** The clerk raises it from the task; assert
+  `PENDING_APPROVAL`, tier `TIER_1_MANAGER`, and the quantity change.
+- [ ] **E9 — RBAC negative.** The clerk who raised it cannot approve it.
+- [ ] **E10 — Post.** Approval carries an approver and a `ledgerEntryId`, and
+  the pending-adjustment count falls.
+- [ ] **E11 — Plan completes.** `STARTED` →
+  `COMPLETED_PENDING_APPROVAL` → `APPROVED`.
+- [ ] **E12 — Lifecycle negatives.** `APPROVED` is terminal (409); a closed
+  task is not re-counted (409); an unknown plan is 404, not an empty list.
+- [ ] **E13 — RBAC negative.** A technician can neither read nor record a
+  count.
+
+### Task 11: Suite F — Time Reporting and Approval
+
+**File:** `src/suites/f-time-reporting.itest.ts`
+
+SDK surface: `@durion-sdk/workorder` (`WorkorderLaborAPIApi`,
+`WorkexecTimeTrackingAPIApi`, `TimeEntryAPIApi`) and `@durion-sdk/people`
+(`WorkSessionsAPIApi`, `TimekeepingApprovalAPIApi`,
+`TimeEntryApprovalAPIApi`).
+
+**Two clocks, kept separate.** pos-workorder's labor entries bill a
+technician's time to one service line on one workorder. pos-people's work
+sessions are the payroll clock — in, break, out, submit — and know nothing
+about workorders. F1-F7 cover the first, F8-F9 the second.
+
+**The gap the approval tests are shaped around.** Nothing in either service
+creates a decidable time entry. pos-workorder's `time_entry` table has approve
+and reject endpoints and no writer at all. pos-people's `timekeeping_entry` is
+written by `TimekeepingIngestionService.ingestWorkSession`, whose
+`WorkSessionCompletedEvent` is published nowhere outside that service's unit
+tests — `submitWorkSession` only flips the session's own status. So no call
+this suite can make will reach an APPROVED entry, and a test that waited for
+one would hang rather than report the cause. F10-F13 therefore assert what is
+reachable and stays true either way: who the decision belongs to, and the
+documented batch contract. When the ingestion bridge lands, a positive
+approval belongs alongside them.
+
+**Acting personas:** `tech` (TECHNICIAN) reports time —
+`workorder:labor:add` covers starting, stopping *and adjusting* a labor entry
+and is granted to TECHNICIAN and ADMIN only, so the manager reads labor but
+never rewrites it. `manager` (LOCATION_MANAGER) reads
+(`workorder:labor:view`, `people:timekeeping:view`) and decides
+(`people:timeEntry:approve|reject`, `workorder:timeEntry:approve|reject`).
+The payroll clock itself is `isAuthenticated()` — no permission gates it.
+
+**Shared-environment hazard.** The seeder's shift loop clocks the same seeded
+employees in and out, so F8 closes any session already open for the technician
+before starting its own, and F9 leaves the person clocked out.
+
+- [ ] **F1 — Labor session opens.** Active, stamped with a start time and the
+  technician, no end time.
+- [ ] **F2 — One session per service.** A second concurrent session is
+  refused.
+- [ ] **F3 — Stop records hours.** Real elapsed time, so the entry closes with
+  an end time and hours worked.
+- [ ] **F4 — History.** The manager reads the entry the technician recorded.
+- [ ] **F5 — Adjustment.** The technician corrects the hours; the reason is
+  recorded on the entry.
+- [ ] **F6 — RBAC negative.** The manager cannot rewrite the hours.
+- [ ] **F7 — Timers and totals.** `getActiveTimers` shows the technician's own
+  running timer; `stopTimers` stops it; `getJobTimeTotals` answers for the day.
+- [ ] **F8 — The payroll clock.** Clock in → break start → break stop → clock
+  out → submit, asserting `ACTIVE`, the open and closed break, `ENDED`, then
+  `SUBMITTED` with the submitted minutes.
+- [ ] **F9 — Clock negatives.** A submitted session is not re-submitted (409);
+  a second clock-in while one is open is a conflict (409).
+- [ ] **F10 — Timekeeping is the manager's.** Pay periods list for
+  LOCATION_MANAGER and are refused for TECHNICIAN. Periods are opened by the
+  scheduled rollover, so the per-period read runs only when one exists.
+- [ ] **F11 — Unknown pay period.** 404, not an empty timesheet.
+- [ ] **F12 — Batch decision contract.** An unknown entry comes back as a
+  per-entry `NOT_FOUND` inside a 200 rather than a failed batch; a rejection
+  with no reason is a 400; an empty batch is a 400.
+- [ ] **F13 — Workorder decisions.** The technician is refused; an unknown
+  entry is 404 for both approve and reject.
+
+### SDK client factories were missing generated APIs (2026-08-28)
+
+Writing suites E and F surfaced the same defect in three client factories:
+APIs that the generator produces and the `apis` barrel exports, but that
+`create<Domain>Client` never constructs — so no consumer of the factory can
+reach them at all. `createInventoryClient` already carried a comment noting
+this for availability, backorders and putaway; the same hole covered the whole
+cycle-count family bar adjustments, plus bulk ingest and stock movements.
+`createWorkorderClient` was missing labor and time-entry decisions;
+`createPeopleClient` was missing timekeeping approval, pay-period management,
+compliance and bulk ingest. All were added. Regeneration does not fix this —
+the factory bodies are hand-maintained — so a new endpoint is invisible until
+someone adds the line.
+
 ### Role mode: what the first real run found (2026-08-24)
 
 Suites A-D run green in role mode - **46 passing, 0 skipped, 0 failing** - with
