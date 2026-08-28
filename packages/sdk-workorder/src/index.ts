@@ -19,6 +19,8 @@ import { WorkexecTimeTrackingAPIApi } from './apis/WorkexecTimeTrackingAPIApi';
 import { ChangeRequestAPIApi } from './apis/ChangeRequestAPIApi';
 import { WorkorderDetailApi } from './apis/WorkorderDetailApi';
 import { OperationalContextApi } from './apis/OperationalContextApi';
+import { TimeEntryAPIApi } from './apis/TimeEntryAPIApi';
+import { WorkorderLaborAPIApi } from './apis/WorkorderLaborAPIApi';
 
 export function createWorkorderClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -49,5 +51,11 @@ export function createWorkorderClient(config: DurionSdkConfig) {
     changeRequestAPIApi: new ChangeRequestAPIApi(configuration),
     workorderDetailApi: new WorkorderDetailApi(configuration),
     operationalContextApi: new OperationalContextApi(configuration),
+    // Per-service labor entries and the decisions taken on submitted hours.
+    // Both are generated and exported by the apis barrel but were never
+    // surfaced here, so no consumer of this factory could start a labor
+    // session or approve the time it recorded.
+    workorderLaborAPIApi: new WorkorderLaborAPIApi(configuration),
+    timeEntryAPIApi: new TimeEntryAPIApi(configuration),
   };
 }

@@ -24,8 +24,13 @@ file is the operator's guide.
 | `b-estimates` | Draft → lines → totals → approve/decline → promote |
 | `c-workorder-execution` | Approve → start → timers → assignment → pick → change request → complete → invoice → payment |
 | `d-receiving` | PO → ASN → receipt → availability → putaway, and workorder-directed receiving |
+| `e-cycle-count` | Plan → generate tasks → count → recount → adjustment → approve → post, in an isolated bin |
+| `f-time-reporting` | Labor sessions and timers, the payroll clock, and who decides on reported time |
 
-Current state on alpha: **46 passing, 0 skipped, 0 failing**, in role mode.
+Current state on alpha: **46 passing, 0 skipped, 0 failing**, in role mode, for
+suites 00-D. Suites E and F have not yet had a green run recorded here: the
+alpha `pos-location` service was returning 503 when they were written, which
+stops global setup before any suite starts.
 
 ---
 
@@ -248,12 +253,15 @@ src/
     personas.ts           persona → authenticated domain clients
     builders.ts           shared entity builders (customer, estimate, PO, ASN)
     availability.ts       stock reads
+    stock.ts              seeds on-hand: bulk ingest + adjustment approval
+    stagingLocation.ts    resolves the site's staging bin the way the backend does
     http.ts               call/expectHttpError/retryWhileReplicating/formatError
     waitFor.ts            the only sanctioned way to wait
     loadEnvFile.ts        .env.itest reader
   suites/
     00-harness.itest.ts   a-appointments.itest.ts   b-estimates.itest.ts
     c-workorder-execution.itest.ts                  d-receiving.itest.ts
+    e-cycle-count.itest.ts                          f-time-reporting.itest.ts
 ```
 
 Suites receive the shared reference fixture through `ITEST_CONTEXT_FILE`,
@@ -282,6 +290,37 @@ personas in itself.
   files a VIN against the party and returns no id; vehicles are registered
   through pos-vehicle-inventory.
 - Purchase orders live in pos-order, not pos-inventory.
+- **Cycle counting is ADMIN-only.** `inventory:cycle_count:initiate`, `:view` and
+  `:complete` are granted to ADMIN and to no other role in
+  `R__seed_role_permissions.sql`. INVENTORY_LEAD — the parts clerk who counts
+  stock in the building — holds `inventory:adjustment:create` and `:view` but
+  cannot plan a count, generate its tasks, record one, or read a task. Suite E
+  therefore counts as the admin and raises the adjustment as the clerk, and E2
+  asserts the refusal so the split is visible rather than absorbed.
+  `inventory:adjustment:approve` is separate again: INVENTORY_CONTROLLER,
+  INVENTORY_MANAGER and ADMIN, not the clerk who raised it.
+- **Putting stock on hand takes two calls, not one.** Bulk ingest
+  (`POST /v1/inventory/bulk-ingest/adjustments`) only raises an adjustment
+  *request* per row; the ledger entry is written when that request is approved
+  (`POST /v1/inventory/adjustments/{id}/approve`). Ingesting alone leaves
+  availability at zero. `harness/stock.ts` does both, and needs two personas in
+  role mode because create and approve are different permissions.
+- **Nothing creates a decidable time entry.** pos-workorder's `time_entry` table
+  has approve and reject endpoints and no writer at all. pos-people's
+  `timekeeping_entry` is written by `TimekeepingIngestionService.ingestWorkSession`,
+  but its `WorkSessionCompletedEvent` is published nowhere outside that service's
+  unit tests — submitting a work session does not raise it. So no sequence of API
+  calls reaches an APPROVED time entry today. Suite F covers the reporting half
+  end to end and asserts the approval half's authorization and documented error
+  contract, which stay true once the bridge lands.
+- Time approval is split across two services and two permission families:
+  `workorder:timeEntry:approve|reject` (MANAGER, LOCATION_MANAGER,
+  GENERAL_MANAGER, SERVICE_ADVISOR, ADMIN) decides workorder hours;
+  `people:timeEntry:approve|reject` (LOCATION_MANAGER, ADMIN) and
+  `people:timekeeping:view|approve|reject` (MANAGER, LOCATION_MANAGER,
+  GENERAL_MANAGER, ADMIN) decide payroll time. `workorder:labor:add` — which
+  covers starting, stopping and *adjusting* a labor entry — is TECHNICIAN and
+  ADMIN only, so a manager reads labor but never rewrites it.
 - Stock reads act as the parts clerk. A technician *used* to be unable to read
   availability at all - `getAvailabilityBySku` required
   `inventory:on_hand:view`/`:search` while TECHNICIAN held only

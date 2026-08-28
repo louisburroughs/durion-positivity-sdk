@@ -16,6 +16,12 @@ import { InventoryAvailabilityApi } from './apis/InventoryAvailabilityApi';
 import { PutawayApi } from './apis/PutawayApi';
 import { PutawayExecutionApi } from './apis/PutawayExecutionApi';
 import { PickListsApi } from './apis/PickListsApi';
+import { CycleCountOperationsApi } from './apis/CycleCountOperationsApi';
+import { CycleCountPlansApi } from './apis/CycleCountPlansApi';
+import { CycleCountQueryApi } from './apis/CycleCountQueryApi';
+import { CycleCountTolerancesApi } from './apis/CycleCountTolerancesApi';
+import { InventoryBulkIngestAPIApi } from './apis/InventoryBulkIngestAPIApi';
+import { StockMovementsApi } from './apis/StockMovementsApi';
 
 export function createInventoryClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -48,5 +54,17 @@ export function createInventoryClient(config: DurionSdkConfig) {
     putawayApi: new PutawayApi(configuration),
     putawayExecutionApi: new PutawayExecutionApi(configuration),
     pickListsApi: new PickListsApi(configuration),
+    // The rest of the cycle count family. cycleCountAdjustmentsApi was surfaced
+    // on its own, which left the factory able to settle a count it could not
+    // plan, generate, record or read.
+    cycleCountPlansApi: new CycleCountPlansApi(configuration),
+    cycleCountOperationsApi: new CycleCountOperationsApi(configuration),
+    cycleCountQueryApi: new CycleCountQueryApi(configuration),
+    cycleCountTolerancesApi: new CycleCountTolerancesApi(configuration),
+    // Stock arrives through these two together: bulk ingest raises an
+    // adjustment request per row and stock movements approves it, which is what
+    // posts the ledger entry.
+    inventoryBulkIngestAPIApi: new InventoryBulkIngestAPIApi(configuration),
+    stockMovementsApi: new StockMovementsApi(configuration),
   };
 }
