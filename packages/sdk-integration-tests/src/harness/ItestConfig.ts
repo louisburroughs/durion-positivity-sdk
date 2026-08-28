@@ -45,12 +45,13 @@ export class ItestConfig {
     /**
      * pos-inventory's staging location. Putaway generation compares a goods
      * receipt's location against it, so suite D needs to know it to book a
-     * receipt there. The default is the default of
-     * POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID, which is what alpha and a
-     * stock local Compose stack both use; an environment that overrode it must
-     * set ITEST_STAGING_LOCATION_ID to match.
+     * receipt there. Left undefined unless ITEST_STAGING_LOCATION_ID is set:
+     * the suite asks the owning service for the site's declared staging
+     * location and falls back the way StagingLocationResolver does, so a
+     * constant here would only re-state a backend default this cannot see.
+     * Set it to force a specific bin.
      */
-    readonly stagingLocationId: string,
+    readonly stagingLocationIdOverride: string | undefined,
   ) {}
 
   get mode(): ItestMode {
@@ -135,7 +136,7 @@ export class ItestConfig {
       seed,
       waitTimeoutMs ?? 30000,
       waitIntervalMs ?? 500,
-      env['ITEST_STAGING_LOCATION_ID'] ?? '00000000-0000-0000-0000-000000000002',
+      env['ITEST_STAGING_LOCATION_ID'] || undefined,
     );
   }
 }

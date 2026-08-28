@@ -18,6 +18,7 @@ import {
 } from '../harness/builders';
 import { readAvailability, readOnHand } from '../harness/availability';
 import { call, expectHttpError, formatError, isHttpStatus } from '../harness/http';
+import { resolveStagingLocation } from '../harness/stagingLocation';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -38,14 +39,14 @@ describe('Suite D — receiving', () => {
   const RECEIVE_QUANTITY = 25;
   const SESSION_QUANTITY = 5;
   /**
-   * pos-inventory's staging location, from ITEST_STAGING_LOCATION_ID or the
-   * default of POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID. Putaway generation
-   * compares the goods receipt's location against it, so a receipt booked
-   * anywhere else is refused (backend #1496), and an environment that overrode
-   * the backend default has to say so rather than have this test fail
-   * mysteriously.
+   * pos-inventory's staging location. Resolved at run time rather than pinned
+   * to a constant: putaway generation compares the goods receipt's location
+   * against whatever StagingLocationResolver returns, so a receipt booked
+   * anywhere else is refused (RECEIPT_NOT_STAGED, backend #1496). Asking the
+   * owning service keeps this suite correct on an environment that declares a
+   * site default, instead of matching only the backend's fallback constant.
    */
-  const STAGING_LOCATION_ID = ItestConfig.fromEnv().stagingLocationId;
+  let STAGING_LOCATION_ID: string;
 
   /**
    * True only for the purchase-order line projection still catching up. Any
@@ -106,6 +107,14 @@ describe('Suite D — receiving', () => {
       refs: context.referenceCache,
     };
     locationId = context.referenceCache.locationId;
+
+    const staging = await resolveStagingLocation(
+      parts,
+      locationId,
+      ItestConfig.fromEnv().stagingLocationIdOverride,
+    );
+    STAGING_LOCATION_ID = staging.stagingLocationId;
+    console.log(`[D] staging location ${STAGING_LOCATION_ID} (${staging.source})`);
   }, 180_000);
 
   beforeEach(async () => {

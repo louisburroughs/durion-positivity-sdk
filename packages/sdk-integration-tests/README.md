@@ -33,8 +33,15 @@ Current state on alpha: **46 passing, 0 skipped, 0 failing**, in role mode.
 
 1. **A backend to talk to** — either a local Compose stack or alpha through the
    SSM tunnel (below).
-2. **Credentials** — at minimum an admin login. See *Environment contract*.
-3. **The accelerated profile must be off.** Global setup probes
+2. **A seeded environment.** Backend #1556 retired the Flyway seeds that used to
+   supply locations, storage topology, staffing, putaway rules and stock; that
+   reference data now enters through the API seed pipeline. Run the backend's
+   `scripts/seed-alpha.py` against the target before the first run. Existing
+   databases already carry the old rows — removing a repeatable migration only
+   stops it re-applying — so this bites a *fresh* environment, where suite D
+   fails at putaway with nothing to route to.
+3. **Credentials** — at minimum an admin login. See *Environment contract*.
+4. **The accelerated profile must be off.** Global setup probes
    `GET /system/time`: a 404 means the normal clock and the run proceeds, a 200
    means the backend is mid-accelerated-run and the suite aborts before writing
    anything. Never run these tests against an accelerated backend — the virtual
@@ -93,7 +100,7 @@ usually just credentials are needed.
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` interval |
-| `ITEST_STAGING_LOCATION_ID` | `00000000-…-0002` | No | pos-inventory's staging location; suite D books a receipt there to exercise putaway. Override only if the backend's `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID` was changed |
+| `ITEST_STAGING_LOCATION_ID` | _(resolved)_ | No | Forces suite D's staging bin. Unset, the suite asks the site for its declared staging default and falls back the way `StagingLocationResolver` does |
 | `ITEST_ENV_FILE` | `.env.itest` at the repo root | No | Alternate credentials file |
 
 Persona credentials are **all-or-none per persona**: a username without its
@@ -259,6 +266,18 @@ personas in itself.
 
 - Only 10 of the 30 bootstrap products carry stock, so a test needing a part to
   pick must select a stocked one (`findStockedProduct`).
+- **Reference data comes from the seed pipeline, not Flyway.** The suite creates
+  what it owns — customers, vehicles, estimates, workorders, purchase orders,
+  and its own catalog/inventory bootstrap — through the API, and never writes to
+  a database. What it does *not* create is the storage topology and the terminal
+  `ANY` putaway rule suite D routes through; those come from the backend's
+  fixture packs (`scripts/fixtures/seed/alpha/`). The suite resolves them by
+  name or by asking the owning service, so it does not care what ids they get,
+  but it does need them to exist.
+- No site declares a staging default today: `seed-alpha.py` seeds storage
+  locations but never calls `PUT /v1/locations/{id}/defaults`, so pos-inventory
+  falls through to its constant. The suite mirrors that chain rather than
+  assuming either end of it.
 - `crmAccountsApi.createVehicleForParty` does **not** create a vehicle. It
   files a VIN against the party and returns no id; vehicles are registered
   through pos-vehicle-inventory.
