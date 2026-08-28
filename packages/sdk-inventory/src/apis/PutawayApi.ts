@@ -17,6 +17,8 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   GeneratePutawayTasksRequest,
+  PutawayRuleRequest,
+  PutawayRuleResponse,
   PutawayTaskResponse,
 } from '../models/index';
 import {
@@ -24,6 +26,10 @@ import {
     ApiErrorToJSON,
     GeneratePutawayTasksRequestFromJSON,
     GeneratePutawayTasksRequestToJSON,
+    PutawayRuleRequestFromJSON,
+    PutawayRuleRequestToJSON,
+    PutawayRuleResponseFromJSON,
+    PutawayRuleResponseToJSON,
     PutawayTaskResponseFromJSON,
     PutawayTaskResponseToJSON,
 } from '../models/index';
@@ -32,13 +38,30 @@ export interface ClaimPutawayTaskRequest {
     taskId: string;
 }
 
+export interface CreatePutawayRuleRequest {
+    putawayRuleRequest: PutawayRuleRequest;
+}
+
+export interface DeletePutawayRuleRequest {
+    ruleId: string;
+}
+
 export interface GeneratePutawayTasksOperationRequest {
     generatePutawayTasksRequest: GeneratePutawayTasksRequest;
+}
+
+export interface GetPutawayRuleRequest {
+    ruleId: string;
 }
 
 export interface ListPutawayTasksRequest {
     locationId?: string;
     storageLocationId?: string;
+}
+
+export interface UpdatePutawayRuleRequest {
+    ruleId: string;
+    putawayRuleRequest: PutawayRuleRequest;
 }
 
 /**
@@ -90,7 +113,95 @@ export class PutawayApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates one UNASSIGNED putaway task per received line of a goods receipt, sourced from the staging location, with the suggested destination resolved by the highest-priority enabled putaway rule or the default location when no rule exists. Use this tool once staged goods need storage assignments; do not use executePutaway, which performs the physical move for one task, and do not use claimPutawayTask, which assigns an existing task to a worker. Preconditions: the goods receipt named by sourceReceiptId must exist; putaway rules are optional. Required inputs: sourceReceiptId (UUID string) plus either lineItems, each naming productId (UUID string) and a quantity of at least 1, or the legacy productId/quantity pair, but never both forms together. Emits an INVENTORY_PUTAWAY_TASK_GENERATE event; the tasks are created UNASSIGNED and no stock moves until executePutaway runs. Returns 404 when the goods receipt does not exist, and 400 when both line forms are supplied, neither is supplied, an id is not a valid UUID, or a quantity is below 1. 
+     * Creates a putaway rule that routes matching received lines to a destination bin. Use this tool to configure where an item class should be stored; use updatePutawayRule to change a rule that already exists, and do not use it to move stock — a rule only affects which destination future generatePutawayTasks calls suggest. Preconditions: at most one enabled ANY rule may exist. ANY matches every line, so a second enabled one would be unreachable configuration and is refused with 409. Required inputs: priority (at least 0), matchType (SKU, SUBCATEGORY, CATEGORY or ANY), destinationLocationId (UUID), plus matchValue — a catalog product, subcategory or category id — which is required for every matchType except ANY and must be omitted for ANY. destinationStrategy defaults to FIXED and isEnabled defaults to true. Emits an INVENTORY_PUTAWAY_RULE_CREATE event; no stock moves and existing putaway tasks keep the destinations they were generated with. Returns 400 when matchValue is missing for a typed rule, supplied for an ANY rule, or is not a valid UUID, and 409 when an enabled ANY rule already exists. 
+     * Create Putaway Rule
+     */
+    async createPutawayRuleRaw(requestParameters: CreatePutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PutawayRuleResponse>> {
+        if (requestParameters['putawayRuleRequest'] == null) {
+            throw new runtime.RequiredError(
+                'putawayRuleRequest',
+                'Required parameter "putawayRuleRequest" was null or undefined when calling createPutawayRule().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:putaway_rule:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/putaway/rules`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PutawayRuleRequestToJSON(requestParameters['putawayRuleRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PutawayRuleResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates a putaway rule that routes matching received lines to a destination bin. Use this tool to configure where an item class should be stored; use updatePutawayRule to change a rule that already exists, and do not use it to move stock — a rule only affects which destination future generatePutawayTasks calls suggest. Preconditions: at most one enabled ANY rule may exist. ANY matches every line, so a second enabled one would be unreachable configuration and is refused with 409. Required inputs: priority (at least 0), matchType (SKU, SUBCATEGORY, CATEGORY or ANY), destinationLocationId (UUID), plus matchValue — a catalog product, subcategory or category id — which is required for every matchType except ANY and must be omitted for ANY. destinationStrategy defaults to FIXED and isEnabled defaults to true. Emits an INVENTORY_PUTAWAY_RULE_CREATE event; no stock moves and existing putaway tasks keep the destinations they were generated with. Returns 400 when matchValue is missing for a typed rule, supplied for an ANY rule, or is not a valid UUID, and 409 when an enabled ANY rule already exists. 
+     * Create Putaway Rule
+     */
+    async createPutawayRule(requestParameters: CreatePutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PutawayRuleResponse> {
+        const response = await this.createPutawayRuleRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Deletes a putaway rule permanently. Use this tool to retire configuration outright; do not use it to take a rule out of service temporarily — call updatePutawayRule with isEnabled false instead, since a disabled rule is unreachable but recoverable whereas this is not. Preconditions: the rule must exist. Deleting the only enabled ANY rule is permitted but removes the terminal fallback, after which generatePutawayTasks fails for any line no other rule matches. Required inputs: ruleId (UUID string) path parameter; there is no request body. Emits an INVENTORY_PUTAWAY_RULE_DELETE event; no stock moves and putaway tasks already generated under this rule are unaffected. Returns 404 when the rule does not exist, and 400 when ruleId is not a valid UUID. 
+     * Delete Putaway Rule
+     */
+    async deletePutawayRuleRaw(requestParameters: DeletePutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['ruleId'] == null) {
+            throw new runtime.RequiredError(
+                'ruleId',
+                'Required parameter "ruleId" was null or undefined when calling deletePutawayRule().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:putaway_rule:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/putaway/rules/{ruleId}`.replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Deletes a putaway rule permanently. Use this tool to retire configuration outright; do not use it to take a rule out of service temporarily — call updatePutawayRule with isEnabled false instead, since a disabled rule is unreachable but recoverable whereas this is not. Preconditions: the rule must exist. Deleting the only enabled ANY rule is permitted but removes the terminal fallback, after which generatePutawayTasks fails for any line no other rule matches. Required inputs: ruleId (UUID string) path parameter; there is no request body. Emits an INVENTORY_PUTAWAY_RULE_DELETE event; no stock moves and putaway tasks already generated under this rule are unaffected. Returns 404 when the rule does not exist, and 400 when ruleId is not a valid UUID. 
+     * Delete Putaway Rule
+     */
+    async deletePutawayRule(requestParameters: DeletePutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deletePutawayRuleRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Generates one UNASSIGNED putaway task per received line of a goods receipt, sourced from the staging location, with the suggested destination resolved by the highest-priority enabled putaway rule or the default location when no rule exists. Use this tool once staged goods need storage assignments; do not use executePutaway, which performs the physical move for one task, and do not use claimPutawayTask, which assigns an existing task to a worker. Preconditions: the goods receipt named by sourceReceiptId must exist; putaway rules are optional. Required inputs: sourceReceiptId (UUID string) plus either lineItems, each naming productId (UUID string) and a quantity of at least 1, or the legacy productId/quantity pair, but never both forms together. Emits an INVENTORY_PUTAWAY_TASK_GENERATE event; the tasks are created UNASSIGNED and no stock moves until executePutaway runs. Returns 404 when the goods receipt does not exist, 400 when both line forms are supplied, neither is supplied, an id is not a valid UUID, or a quantity is below 1, and 422 when the receipt is not booked into the staging location (RECEIPT_NOT_STAGED), when no enabled rule matches a line and no ANY fallback rule exists (NO_PUTAWAY_RULE_MATCH), or when the resolved destination is not physically fit for the line\'s catalog class (LOCATION_NOT_VALID_FOR_SKU). 
      * Generate Putaway Tasks
      */
     async generatePutawayTasksRaw(requestParameters: GeneratePutawayTasksOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PutawayTaskResponse>>> {
@@ -127,11 +238,90 @@ export class PutawayApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates one UNASSIGNED putaway task per received line of a goods receipt, sourced from the staging location, with the suggested destination resolved by the highest-priority enabled putaway rule or the default location when no rule exists. Use this tool once staged goods need storage assignments; do not use executePutaway, which performs the physical move for one task, and do not use claimPutawayTask, which assigns an existing task to a worker. Preconditions: the goods receipt named by sourceReceiptId must exist; putaway rules are optional. Required inputs: sourceReceiptId (UUID string) plus either lineItems, each naming productId (UUID string) and a quantity of at least 1, or the legacy productId/quantity pair, but never both forms together. Emits an INVENTORY_PUTAWAY_TASK_GENERATE event; the tasks are created UNASSIGNED and no stock moves until executePutaway runs. Returns 404 when the goods receipt does not exist, and 400 when both line forms are supplied, neither is supplied, an id is not a valid UUID, or a quantity is below 1. 
+     * Generates one UNASSIGNED putaway task per received line of a goods receipt, sourced from the staging location, with the suggested destination resolved by the highest-priority enabled putaway rule or the default location when no rule exists. Use this tool once staged goods need storage assignments; do not use executePutaway, which performs the physical move for one task, and do not use claimPutawayTask, which assigns an existing task to a worker. Preconditions: the goods receipt named by sourceReceiptId must exist; putaway rules are optional. Required inputs: sourceReceiptId (UUID string) plus either lineItems, each naming productId (UUID string) and a quantity of at least 1, or the legacy productId/quantity pair, but never both forms together. Emits an INVENTORY_PUTAWAY_TASK_GENERATE event; the tasks are created UNASSIGNED and no stock moves until executePutaway runs. Returns 404 when the goods receipt does not exist, 400 when both line forms are supplied, neither is supplied, an id is not a valid UUID, or a quantity is below 1, and 422 when the receipt is not booked into the staging location (RECEIPT_NOT_STAGED), when no enabled rule matches a line and no ANY fallback rule exists (NO_PUTAWAY_RULE_MATCH), or when the resolved destination is not physically fit for the line\'s catalog class (LOCATION_NOT_VALID_FOR_SKU). 
      * Generate Putaway Tasks
      */
     async generatePutawayTasks(requestParameters: GeneratePutawayTasksOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PutawayTaskResponse>> {
         const response = await this.generatePutawayTasksRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns one putaway rule by id, with its match tier, match value, destination and strategy. Use this tool to read a single rule\'s current state before replacing it with updatePutawayRule; do not use it to discover which rule governs a SKU, because that depends on tier precedence across all enabled rules — list them with listPutawayRules instead, which is also how you find ids. Preconditions: the rule must exist. Required inputs: ruleId (UUID string) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no rule exists for the supplied id, and 400 when ruleId is not a valid UUID. 
+     * Get Putaway Rule
+     */
+    async getPutawayRuleRaw(requestParameters: GetPutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PutawayRuleResponse>> {
+        if (requestParameters['ruleId'] == null) {
+            throw new runtime.RequiredError(
+                'ruleId',
+                'Required parameter "ruleId" was null or undefined when calling getPutawayRule().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:putaway_rule:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/putaway/rules/{ruleId}`.replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PutawayRuleResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one putaway rule by id, with its match tier, match value, destination and strategy. Use this tool to read a single rule\'s current state before replacing it with updatePutawayRule; do not use it to discover which rule governs a SKU, because that depends on tier precedence across all enabled rules — list them with listPutawayRules instead, which is also how you find ids. Preconditions: the rule must exist. Required inputs: ruleId (UUID string) path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no rule exists for the supplied id, and 400 when ruleId is not a valid UUID. 
+     * Get Putaway Rule
+     */
+    async getPutawayRule(requestParameters: GetPutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PutawayRuleResponse> {
+        const response = await this.getPutawayRuleRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every putaway rule, enabled or not, in the order the matcher tries them: tier precedence first (SKU, then SUBCATEGORY, then CATEGORY, then ANY), then ascending priority within a tier. Use this tool to see which rule will govern an item and to find a ruleId before updating or deleting one; do not use listPutawayTasks, which returns generated work rather than configuration. Preconditions: none. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no rules are configured. That is not an error, but it does mean putaway task generation will fail for every line until at least an ANY rule exists. 
+     * List Putaway Rules
+     */
+    async listPutawayRulesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PutawayRuleResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:putaway_rule:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/putaway/rules`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PutawayRuleResponseFromJSON));
+    }
+
+    /**
+     * Returns every putaway rule, enabled or not, in the order the matcher tries them: tier precedence first (SKU, then SUBCATEGORY, then CATEGORY, then ANY), then ascending priority within a tier. Use this tool to see which rule will govern an item and to find a ruleId before updating or deleting one; do not use listPutawayTasks, which returns generated work rather than configuration. Preconditions: none. Required inputs: none; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when no rules are configured. That is not an error, but it does mean putaway task generation will fail for every line until at least an ANY rule exists. 
+     * List Putaway Rules
+     */
+    async listPutawayRules(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PutawayRuleResponse>> {
+        const response = await this.listPutawayRulesRaw(initOverrides);
         return await response.value();
     }
 
@@ -176,6 +366,59 @@ export class PutawayApi extends runtime.BaseAPI {
      */
     async listPutawayTasks(requestParameters: ListPutawayTasksRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PutawayTaskResponse>> {
         const response = await this.listPutawayTasksRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces every field of an existing putaway rule; this is a full replacement, not a patch, so an omitted destinationStrategy falls back to FIXED. The one exception is isEnabled: omitting it keeps the rule\'s current enabled state, so a PUT that only retunes a priority cannot silently re-enable a rule somebody deliberately disabled. Use this tool to retarget, reprioritise, enable or disable a rule; do not use it to add a rule that does not exist yet — call createPutawayRule instead, and do not use it to redirect stock already on a generated task, which keeps the destination it was given. Preconditions: the rule must exist, and enabling an ANY rule while another enabled ANY rule exists is refused with 409. A rule never conflicts with itself. Required inputs: ruleId (UUID string) path parameter, plus the same body as createPutawayRule — priority, matchType, destinationLocationId and a matchValue required for every matchType except ANY. Emits an INVENTORY_PUTAWAY_RULE_UPDATE event; no stock moves and putaway tasks already generated keep their destinations. Returns 404 when the rule does not exist, 400 on the same validation failures as createPutawayRule, and 409 when another enabled ANY rule already exists. 
+     * Update Putaway Rule
+     */
+    async updatePutawayRuleRaw(requestParameters: UpdatePutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PutawayRuleResponse>> {
+        if (requestParameters['ruleId'] == null) {
+            throw new runtime.RequiredError(
+                'ruleId',
+                'Required parameter "ruleId" was null or undefined when calling updatePutawayRule().'
+            );
+        }
+
+        if (requestParameters['putawayRuleRequest'] == null) {
+            throw new runtime.RequiredError(
+                'putawayRuleRequest',
+                'Required parameter "putawayRuleRequest" was null or undefined when calling updatePutawayRule().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:putaway_rule:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/putaway/rules/{ruleId}`.replace(`{${"ruleId"}}`, encodeURIComponent(String(requestParameters['ruleId']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: PutawayRuleRequestToJSON(requestParameters['putawayRuleRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PutawayRuleResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces every field of an existing putaway rule; this is a full replacement, not a patch, so an omitted destinationStrategy falls back to FIXED. The one exception is isEnabled: omitting it keeps the rule\'s current enabled state, so a PUT that only retunes a priority cannot silently re-enable a rule somebody deliberately disabled. Use this tool to retarget, reprioritise, enable or disable a rule; do not use it to add a rule that does not exist yet — call createPutawayRule instead, and do not use it to redirect stock already on a generated task, which keeps the destination it was given. Preconditions: the rule must exist, and enabling an ANY rule while another enabled ANY rule exists is refused with 409. A rule never conflicts with itself. Required inputs: ruleId (UUID string) path parameter, plus the same body as createPutawayRule — priority, matchType, destinationLocationId and a matchValue required for every matchType except ANY. Emits an INVENTORY_PUTAWAY_RULE_UPDATE event; no stock moves and putaway tasks already generated keep their destinations. Returns 404 when the rule does not exist, 400 on the same validation failures as createPutawayRule, and 409 when another enabled ANY rule already exists. 
+     * Update Putaway Rule
+     */
+    async updatePutawayRule(requestParameters: UpdatePutawayRuleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PutawayRuleResponse> {
+        const response = await this.updatePutawayRuleRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

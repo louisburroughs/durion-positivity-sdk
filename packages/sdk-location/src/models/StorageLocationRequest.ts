@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface StorageLocationRequest {
     /**
+     * Whether the storage location will take stock of a product it is not already holding. Defaults to MIXED.
+     * @type {string}
+     * @memberof StorageLocationRequest
+     */
+    allowNewProduct?: StorageLocationRequestAllowNewProductEnum;
+    /**
      * Barcode identifying the storage location
      * @type {string}
      * @memberof StorageLocationRequest
@@ -32,6 +38,12 @@ export interface StorageLocationRequest {
      */
     capacity?: object;
     /**
+     * Whether the storage location provides spill/hazard containment; required by battery and oil storage capabilities. Omit for false.
+     * @type {boolean}
+     * @memberof StorageLocationRequest
+     */
+    hazardContainment?: boolean;
+    /**
      * Display name of the storage location
      * @type {string}
      * @memberof StorageLocationRequest
@@ -43,6 +55,12 @@ export interface StorageLocationRequest {
      * @memberof StorageLocationRequest
      */
     parentStorageLocationId?: string;
+    /**
+     * Putaway capability of the storage location — what it is fit to hold, independent of the physical type. Omit to leave it undeclared, which reads back as GENERAL (accepts every catalog category).
+     * @type {string}
+     * @memberof StorageLocationRequest
+     */
+    storageCategoryCode?: StorageLocationRequestStorageCategoryCodeEnum;
     /**
      * Temperature attributes of the storage location
      * @type {object}
@@ -57,6 +75,29 @@ export interface StorageLocationRequest {
     type: StorageLocationRequestTypeEnum;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum StorageLocationRequestAllowNewProductEnum {
+    Mixed = 'MIXED',
+    SameProductOnly = 'SAME_PRODUCT_ONLY',
+    EmptyOnly = 'EMPTY_ONLY'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum StorageLocationRequestStorageCategoryCodeEnum {
+    TireRack = 'TIRE_RACK',
+    OilStorage = 'OIL_STORAGE',
+    BatteryRack = 'BATTERY_RACK',
+    SmallPartsBin = 'SMALL_PARTS_BIN',
+    BulkFloor = 'BULK_FLOOR',
+    Staging = 'STAGING',
+    Quarantine = 'QUARANTINE',
+    General = 'GENERAL'
+}
 /**
 * @export
 * @enum {string}
@@ -89,10 +130,13 @@ export function StorageLocationRequestFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'allowNewProduct': json['allowNewProduct'] == null ? undefined : json['allowNewProduct'],
         'barcode': json['barcode'] == null ? undefined : json['barcode'],
         'capacity': json['capacity'] == null ? undefined : json['capacity'],
+        'hazardContainment': json['hazardContainment'] == null ? undefined : json['hazardContainment'],
         'name': json['name'],
         'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
+        'storageCategoryCode': json['storageCategoryCode'] == null ? undefined : json['storageCategoryCode'],
         'temperature': json['temperature'] == null ? undefined : json['temperature'],
         'type': json['type'],
     };
@@ -104,10 +148,13 @@ export function StorageLocationRequestToJSON(value?: StorageLocationRequest | nu
     }
     return {
         
+        'allowNewProduct': value['allowNewProduct'],
         'barcode': value['barcode'],
         'capacity': value['capacity'],
+        'hazardContainment': value['hazardContainment'],
         'name': value['name'],
         'parentStorageLocationId': value['parentStorageLocationId'],
+        'storageCategoryCode': value['storageCategoryCode'],
         'temperature': value['temperature'],
         'type': value['type'],
     };

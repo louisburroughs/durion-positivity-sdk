@@ -80,6 +80,12 @@ export interface ProductCreateRequestDto {
      */
     sku: string;
     /**
+     * Subcategory identifier
+     * @type {string}
+     * @memberof ProductCreateRequestDto
+     */
+    subcategoryId?: string;
+    /**
      * Product type classification
      * @type {string}
      * @memberof ProductCreateRequestDto
@@ -131,6 +137,7 @@ export function ProductCreateRequestDtoFromJSONTyped(json: any, ignoreDiscrimina
         'mpn': json['mpn'],
         'name': json['name'],
         'sku': json['sku'],
+        'subcategoryId': json['subcategoryId'] == null ? undefined : json['subcategoryId'],
         'type': json['type'] == null ? undefined : json['type'],
         'unitOfMeasure': json['unitOfMeasure'],
         'upc': json['upc'] == null ? undefined : json['upc'],
@@ -153,6 +160,7 @@ export function ProductCreateRequestDtoToJSON(value?: ProductCreateRequestDto | 
         'mpn': value['mpn'],
         'name': value['name'],
         'sku': value['sku'],
+        'subcategoryId': value['subcategoryId'],
         'type': value['type'],
         'unitOfMeasure': value['unitOfMeasure'],
         'upc': value['upc'],
