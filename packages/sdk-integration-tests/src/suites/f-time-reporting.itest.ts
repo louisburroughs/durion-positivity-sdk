@@ -88,6 +88,27 @@ describe('Suite F — time reporting and approval', () => {
     }
   };
 
+  /**
+   * Stops whatever workexec timer the acting user has running, tolerating the
+   * one failure that means "there was nothing to stop".
+   *
+   * Timers are per-authenticated-user and outlive the run that started them, so
+   * a suite that failed between start and stop strands one on a shared alpha
+   * and every later run gets TIMER_ALREADY_ACTIVE. Clearing first is what makes
+   * F7 repeatable; the afterAll below is what stops this suite creating the
+   * problem for the next one.
+   */
+  const stopTimersIfRunning = async (as: DomainClients): Promise<void> => {
+    try {
+      await as.workorder.workexecTimeTrackingAPIApi.stopTimers();
+    } catch (error) {
+      // 409 NO_ACTIVE_TIMER: nothing was running for this user.
+      if (!isHttpStatus(error, 409)) {
+        throw error;
+      }
+    }
+  };
+
   const isoDate = (offsetDays: number): Date => {
     const date = new Date();
     date.setUTCDate(date.getUTCDate() + offsetDays);
@@ -252,6 +273,8 @@ describe('Suite F — time reporting and approval', () => {
   }, 120_000);
 
   it('F7 — a running timer is visible to its own technician, and job totals report the day', async () => {
+    await stopTimersIfRunning(tech);
+
     await call('startTimer', () =>
       tech.workorder.workexecTimeTrackingAPIApi.startTimer({
         workexecTimerStartRequest: {
@@ -265,17 +288,20 @@ describe('Suite F — time reporting and approval', () => {
     // getActiveTimers reads the authenticated user's own timers, so this is the
     // technician asking what they have running - not a supervisor view.
     //
-    // The endpoint answers with a *list* (WorkexecTimeTrackingController returns
-    // ResponseEntity.ok(active) over a List), but its @ApiResponse schema names
-    // the element type without array: true, so the generated client types the
-    // result as one WorkexecTimerEntryResponse. Read it as the array it is
-    // rather than trusting the generated shape - see the backend spec issue.
-    const active = await call('getActiveTimers', () =>
-      tech.workorder.workexecTimeTrackingAPIApi.getActiveTimers(),
+    // Deliberately the *raw* response. The endpoint answers with a list
+    // (WorkexecTimeTrackingController returns ResponseEntity.ok over a List),
+    // but its @ApiResponse names the element type without `array: true`, so the
+    // generated client types the result as one WorkexecTimerEntryResponse and
+    // deserializes it with that model's FromJSON. Reading named fields off a
+    // JSON array yields `{}` - the payload is destroyed before any caller sees
+    // it, so the typed accessor cannot be used to assert anything here. Fix the
+    // backend schema and this reverts to `getActiveTimers()`.
+    const activeResponse = await call('getActiveTimers', () =>
+      tech.workorder.workexecTimeTrackingAPIApi.getActiveTimersRaw(),
     );
-    console.log(`[F7] active timers: ${JSON.stringify(active).slice(0, 300)}`);
-    const activeEntries: unknown[] = Array.isArray(active) ? active : [active];
-    expect(activeEntries.length).toBeGreaterThan(0);
+    const activeEntries = (await activeResponse.raw.json()) as unknown[];
+    console.log(`[F7] active timers: ${JSON.stringify(activeEntries).slice(0, 300)}`);
+    expect(Array.isArray(activeEntries)).toBe(true);
     expect(activeEntries.some((entry) => readString(entry, 'workorderId') === workorderId)).toBe(true);
 
     await new Promise((resolve) => setTimeout(resolve, 1_500));
@@ -476,4 +502,15 @@ describe('Suite F — time reporting and approval', () => {
     );
     console.log(`[F13] rejecting an unknown workorder time entry refused with HTTP ${reasonless}`);
   }, 180_000);
+
+  // Both clocks outlive the process that started them, and alpha is shared.
+  // Leaving either running strands state that fails the *next* run rather than
+  // this one, which is the hardest kind of failure to attribute.
+  afterAll(async () => {
+    if (!tech) {
+      return;
+    }
+    await stopTimersIfRunning(tech);
+    await clockOutIfClockedIn(tech, technicianId);
+  }, 60_000);
 });
