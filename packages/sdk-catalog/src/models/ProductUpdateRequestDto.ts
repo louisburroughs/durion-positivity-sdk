@@ -62,6 +62,12 @@ export interface ProductUpdateRequestDto {
      */
     sku?: string;
     /**
+     * Identifier of the product subcategory
+     * @type {string}
+     * @memberof ProductUpdateRequestDto
+     */
+    subcategoryId?: string;
+    /**
      * Unit of measure for the product
      * @type {string}
      * @memberof ProductUpdateRequestDto
@@ -99,6 +105,7 @@ export function ProductUpdateRequestDtoFromJSONTyped(json: any, ignoreDiscrimina
         'mpn': json['mpn'] == null ? undefined : json['mpn'],
         'name': json['name'] == null ? undefined : json['name'],
         'sku': json['sku'] == null ? undefined : json['sku'],
+        'subcategoryId': json['subcategoryId'] == null ? undefined : json['subcategoryId'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
         'upc': json['upc'] == null ? undefined : json['upc'],
     };
@@ -117,6 +124,7 @@ export function ProductUpdateRequestDtoToJSON(value?: ProductUpdateRequestDto | 
         'mpn': value['mpn'],
         'name': value['name'],
         'sku': value['sku'],
+        'subcategoryId': value['subcategoryId'],
         'unitOfMeasure': value['unitOfMeasure'],
         'upc': value['upc'],
     };

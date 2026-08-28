@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface StorageLocationResponse {
     /**
+     * Whether the storage location will take stock of a product it is not already holding.
+     * @type {string}
+     * @memberof StorageLocationResponse
+     */
+    allowNewProduct: StorageLocationResponseAllowNewProductEnum;
+    /**
      * Barcode identifying the storage location
      * @type {string}
      * @memberof StorageLocationResponse
@@ -31,6 +37,12 @@ export interface StorageLocationResponse {
      * @memberof StorageLocationResponse
      */
     capacity?: object;
+    /**
+     * Whether the storage location provides spill/hazard containment; required by battery and oil storage capabilities.
+     * @type {boolean}
+     * @memberof StorageLocationResponse
+     */
+    hazardContainment: boolean;
     /**
      * Unique identifier of the storage location
      * @type {string}
@@ -68,6 +80,12 @@ export interface StorageLocationResponse {
      */
     status?: string;
     /**
+     * Putaway capability of the storage location — what it is fit to hold, independent of the physical type. Always populated: a location that has never declared one reports GENERAL, which accepts every catalog category.
+     * @type {string}
+     * @memberof StorageLocationResponse
+     */
+    storageCategoryCode: StorageLocationResponseStorageCategoryCodeEnum;
+    /**
      * Temperature attributes of the storage location
      * @type {object}
      * @memberof StorageLocationResponse
@@ -85,6 +103,29 @@ export interface StorageLocationResponse {
 * @export
 * @enum {string}
 */
+export enum StorageLocationResponseAllowNewProductEnum {
+    Mixed = 'MIXED',
+    SameProductOnly = 'SAME_PRODUCT_ONLY',
+    EmptyOnly = 'EMPTY_ONLY'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum StorageLocationResponseStorageCategoryCodeEnum {
+    TireRack = 'TIRE_RACK',
+    OilStorage = 'OIL_STORAGE',
+    BatteryRack = 'BATTERY_RACK',
+    SmallPartsBin = 'SMALL_PARTS_BIN',
+    BulkFloor = 'BULK_FLOOR',
+    Staging = 'STAGING',
+    Quarantine = 'QUARANTINE',
+    General = 'GENERAL'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum StorageLocationResponseTypeEnum {
     Floor = 'FLOOR',
     Shelf = 'SHELF',
@@ -98,8 +139,11 @@ export enum StorageLocationResponseTypeEnum {
  * Check if a given object implements the StorageLocationResponse interface.
  */
 export function instanceOfStorageLocationResponse(value: object): boolean {
+    if (!('allowNewProduct' in value)) return false;
+    if (!('hazardContainment' in value)) return false;
     if (!('id' in value)) return false;
     if (!('inventoryCount' in value)) return false;
+    if (!('storageCategoryCode' in value)) return false;
     return true;
 }
 
@@ -113,14 +157,17 @@ export function StorageLocationResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'allowNewProduct': json['allowNewProduct'],
         'barcode': json['barcode'] == null ? undefined : json['barcode'],
         'capacity': json['capacity'] == null ? undefined : json['capacity'],
+        'hazardContainment': json['hazardContainment'],
         'id': json['id'],
         'inventoryCount': json['inventoryCount'],
         'name': json['name'] == null ? undefined : json['name'],
         'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
         'siteId': json['siteId'] == null ? undefined : json['siteId'],
         'status': json['status'] == null ? undefined : json['status'],
+        'storageCategoryCode': json['storageCategoryCode'],
         'temperature': json['temperature'] == null ? undefined : json['temperature'],
         'type': json['type'] == null ? undefined : json['type'],
     };
@@ -132,14 +179,17 @@ export function StorageLocationResponseToJSON(value?: StorageLocationResponse | 
     }
     return {
         
+        'allowNewProduct': value['allowNewProduct'],
         'barcode': value['barcode'],
         'capacity': value['capacity'],
+        'hazardContainment': value['hazardContainment'],
         'id': value['id'],
         'inventoryCount': value['inventoryCount'],
         'name': value['name'],
         'parentStorageLocationId': value['parentStorageLocationId'],
         'siteId': value['siteId'],
         'status': value['status'],
+        'storageCategoryCode': value['storageCategoryCode'],
         'temperature': value['temperature'],
         'type': value['type'],
     };

@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface StorageLocationPatchRequest {
     /**
+     * Whether the storage location will take stock of a product it is not already holding. Omit to leave it unchanged.
+     * @type {string}
+     * @memberof StorageLocationPatchRequest
+     */
+    allowNewProduct?: StorageLocationPatchRequestAllowNewProductEnum;
+    /**
      * Barcode identifying the storage location
      * @type {string}
      * @memberof StorageLocationPatchRequest
@@ -37,6 +43,12 @@ export interface StorageLocationPatchRequest {
      * @memberof StorageLocationPatchRequest
      */
     destinationStorageLocationId?: string;
+    /**
+     * Whether the storage location provides spill/hazard containment; required by battery and oil storage capabilities. Omit to leave it unchanged.
+     * @type {boolean}
+     * @memberof StorageLocationPatchRequest
+     */
+    hazardContainment?: boolean;
     /**
      * Display name of the storage location
      * @type {string}
@@ -56,6 +68,12 @@ export interface StorageLocationPatchRequest {
      */
     status?: StorageLocationPatchRequestStatusEnum;
     /**
+     * Putaway capability of the storage location — what it is fit to hold, independent of the physical type. Omit to leave the current capability unchanged.
+     * @type {string}
+     * @memberof StorageLocationPatchRequest
+     */
+    storageCategoryCode?: StorageLocationPatchRequestStorageCategoryCodeEnum;
+    /**
      * Temperature attributes of the storage location
      * @type {object}
      * @memberof StorageLocationPatchRequest
@@ -67,11 +85,34 @@ export interface StorageLocationPatchRequest {
 * @export
 * @enum {string}
 */
+export enum StorageLocationPatchRequestAllowNewProductEnum {
+    Mixed = 'MIXED',
+    SameProductOnly = 'SAME_PRODUCT_ONLY',
+    EmptyOnly = 'EMPTY_ONLY'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum StorageLocationPatchRequestStatusEnum {
     Active = 'ACTIVE',
     Inactive = 'INACTIVE',
     Maintenance = 'MAINTENANCE',
     Quarantined = 'QUARANTINED'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum StorageLocationPatchRequestStorageCategoryCodeEnum {
+    TireRack = 'TIRE_RACK',
+    OilStorage = 'OIL_STORAGE',
+    BatteryRack = 'BATTERY_RACK',
+    SmallPartsBin = 'SMALL_PARTS_BIN',
+    BulkFloor = 'BULK_FLOOR',
+    Staging = 'STAGING',
+    Quarantine = 'QUARANTINE',
+    General = 'GENERAL'
 }
 
 
@@ -92,12 +133,15 @@ export function StorageLocationPatchRequestFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
+        'allowNewProduct': json['allowNewProduct'] == null ? undefined : json['allowNewProduct'],
         'barcode': json['barcode'] == null ? undefined : json['barcode'],
         'capacity': json['capacity'] == null ? undefined : json['capacity'],
         'destinationStorageLocationId': json['destinationStorageLocationId'] == null ? undefined : json['destinationStorageLocationId'],
+        'hazardContainment': json['hazardContainment'] == null ? undefined : json['hazardContainment'],
         'name': json['name'] == null ? undefined : json['name'],
         'parentStorageLocationId': json['parentStorageLocationId'] == null ? undefined : json['parentStorageLocationId'],
         'status': json['status'] == null ? undefined : json['status'],
+        'storageCategoryCode': json['storageCategoryCode'] == null ? undefined : json['storageCategoryCode'],
         'temperature': json['temperature'] == null ? undefined : json['temperature'],
     };
 }
@@ -108,12 +152,15 @@ export function StorageLocationPatchRequestToJSON(value?: StorageLocationPatchRe
     }
     return {
         
+        'allowNewProduct': value['allowNewProduct'],
         'barcode': value['barcode'],
         'capacity': value['capacity'],
         'destinationStorageLocationId': value['destinationStorageLocationId'],
+        'hazardContainment': value['hazardContainment'],
         'name': value['name'],
         'parentStorageLocationId': value['parentStorageLocationId'],
         'status': value['status'],
+        'storageCategoryCode': value['storageCategoryCode'],
         'temperature': value['temperature'],
     };
 }

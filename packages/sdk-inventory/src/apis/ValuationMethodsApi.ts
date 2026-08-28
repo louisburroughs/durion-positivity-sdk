@@ -18,6 +18,7 @@ import type {
   ApiError,
   CostingMethodConfigRequest,
   CostingMethodConfigResponse,
+  SkuCategoryImpactResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -26,7 +27,13 @@ import {
     CostingMethodConfigRequestToJSON,
     CostingMethodConfigResponseFromJSON,
     CostingMethodConfigResponseToJSON,
+    SkuCategoryImpactResponseFromJSON,
+    SkuCategoryImpactResponseToJSON,
 } from '../models/index';
+
+export interface DeactivateCostingMethodConfigRequest {
+    configId: string;
+}
 
 export interface UpsertCostingMethodConfigRequest {
     costingMethodConfigRequest: CostingMethodConfigRequest;
@@ -36,6 +43,49 @@ export interface UpsertCostingMethodConfigRequest {
  * 
  */
 export class ValuationMethodsApi extends runtime.BaseAPI {
+
+    /**
+     * Deactivates one costing method configuration row so it stops participating in method resolution; this is a soft delete and the row is never removed. Use this tool to retire a scope override and fall back to the next precedence level — this is how a SKU_CATEGORY row is taken out of scope before enabling pos.inventory.sku-category.resolve-from-replica; do not use upsertCostingMethodConfig with a different method when the intent is to remove the override entirely. Preconditions: the configuration row must exist; deactivating an already inactive row is a no-op that returns the row and writes no second audit entry. Required inputs: configId (UUID) path parameter; there is no request body. Emits an INVENTORY_VALUATION_METHOD_DEACTIVATE event, and records a DEACTIVATED row in the cost method change log; subsequent postings fall back to DEFAULT or the deployment default pos.inventory.valuation.default-method. Returns 404 when no configuration exists for the supplied id. 
+     * Deactivate costing method configuration
+     */
+    async deactivateCostingMethodConfigRaw(requestParameters: DeactivateCostingMethodConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CostingMethodConfigResponse>> {
+        if (requestParameters['configId'] == null) {
+            throw new runtime.RequiredError(
+                'configId',
+                'Required parameter "configId" was null or undefined when calling deactivateCostingMethodConfig().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:admin"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/valuation/methods/{configId}`.replace(`{${"configId"}}`, encodeURIComponent(String(requestParameters['configId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CostingMethodConfigResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Deactivates one costing method configuration row so it stops participating in method resolution; this is a soft delete and the row is never removed. Use this tool to retire a scope override and fall back to the next precedence level — this is how a SKU_CATEGORY row is taken out of scope before enabling pos.inventory.sku-category.resolve-from-replica; do not use upsertCostingMethodConfig with a different method when the intent is to remove the override entirely. Preconditions: the configuration row must exist; deactivating an already inactive row is a no-op that returns the row and writes no second audit entry. Required inputs: configId (UUID) path parameter; there is no request body. Emits an INVENTORY_VALUATION_METHOD_DEACTIVATE event, and records a DEACTIVATED row in the cost method change log; subsequent postings fall back to DEFAULT or the deployment default pos.inventory.valuation.default-method. Returns 404 when no configuration exists for the supplied id. 
+     * Deactivate costing method configuration
+     */
+    async deactivateCostingMethodConfig(requestParameters: DeactivateCostingMethodConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CostingMethodConfigResponse> {
+        const response = await this.deactivateCostingMethodConfigRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Returns every costing method configuration row, active and inactive, ordered by scope type and scope value. Use this tool to inspect which costing method each scope resolves to — precedence at posting time is SKU, then SKU_CATEGORY, then DEFAULT, then the deployment default pos.inventory.valuation.default-method (AVERAGE); do not use getInventoryValuation, which reports the values computed under those methods. Preconditions: none beyond the inventory:location:admin authority. Required inputs: none; there is no request body, paging or filtering. Emits an INVENTORY_VALUATION_METHOD_LIST audit event; no configuration changes. Returns 200 with an empty array when nothing is configured, meaning every SKU falls through to the deployment default. 
@@ -74,7 +124,43 @@ export class ValuationMethodsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates or updates the costing method (STANDARD or AVERAGE) for one scope — SKU, SKU_CATEGORY or DEFAULT — reactivating the row and keeping at most one row per scope. Use this tool to switch which method a scope resolves to going forward only; do not use it expecting opening values to be restated — that cut-over is createRevaluation, which this call deliberately does not perform. Preconditions: none; note that SKU_CATEGORY rows are stored but unresolvable until the catalog replica carries a category, so resolution skips them to DEFAULT. Required inputs: scopeType, method, and scopeValue — the stock item id for SKU, the category string for SKU_CATEGORY, and omitted for DEFAULT. Emits an INVENTORY_VALUATION_METHOD_UPSERT event, and an effective method change is recorded as a who/when/from/to row in the cost method change log. Returns 400 when scopeValue is supplied for DEFAULT scope or missing for SKU or SKU_CATEGORY scope. 
+     * Reports which SKUs would change costing method, from what to what, if pos.inventory.sku-category.resolve-from-replica were enabled, and which SKUs would start resolving their sourcing strategy from a SKU_CATEGORY row. Use this tool as the pre-flight for that flag: it is valid and meaningful while the flag is still OFF, which is the only moment the answer is actionable, because it reads the catalog replica directly instead of going through the SPI the flag gates. Do not use listCostingMethodConfigs for this — it lists what is configured, not what would change. Preconditions: none beyond the inventory:location:admin authority; the catalog product replica should be fully populated first, or the report understates the impact. Required inputs: none; there is no request body, paging or filtering. Emits an INVENTORY_VALUATION_METHOD_SKU_CATEGORY_IMPACT audit event; nothing is changed. Returns 200 with zero counts when no SKU_CATEGORY configuration exists; impactedSkuCount counts changes still pending and is computed against the flag\'s current value, so it reaches zero once the cut-over is complete and categoryMatchedSkuCount is what reports how many SKUs the category step governs. When truncated is true the scan hit impactSkuCap and every row-derived count is a lower bound; the full cut-over procedure is in docs/OPERATIONS_RUNBOOK.md. 
+     * Report the SKU_CATEGORY resolution impact
+     */
+    async reportSkuCategoryImpactRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SkuCategoryImpactResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:location:admin"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/valuation/methods/sku-category-impact`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SkuCategoryImpactResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reports which SKUs would change costing method, from what to what, if pos.inventory.sku-category.resolve-from-replica were enabled, and which SKUs would start resolving their sourcing strategy from a SKU_CATEGORY row. Use this tool as the pre-flight for that flag: it is valid and meaningful while the flag is still OFF, which is the only moment the answer is actionable, because it reads the catalog replica directly instead of going through the SPI the flag gates. Do not use listCostingMethodConfigs for this — it lists what is configured, not what would change. Preconditions: none beyond the inventory:location:admin authority; the catalog product replica should be fully populated first, or the report understates the impact. Required inputs: none; there is no request body, paging or filtering. Emits an INVENTORY_VALUATION_METHOD_SKU_CATEGORY_IMPACT audit event; nothing is changed. Returns 200 with zero counts when no SKU_CATEGORY configuration exists; impactedSkuCount counts changes still pending and is computed against the flag\'s current value, so it reaches zero once the cut-over is complete and categoryMatchedSkuCount is what reports how many SKUs the category step governs. When truncated is true the scan hit impactSkuCap and every row-derived count is a lower bound; the full cut-over procedure is in docs/OPERATIONS_RUNBOOK.md. 
+     * Report the SKU_CATEGORY resolution impact
+     */
+    async reportSkuCategoryImpact(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SkuCategoryImpactResponse> {
+        const response = await this.reportSkuCategoryImpactRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates or updates the costing method (STANDARD or AVERAGE) for one scope — SKU, SKU_CATEGORY or DEFAULT — reactivating the row and keeping at most one row per scope. Use this tool to switch which method a scope resolves to going forward only; do not use it expecting opening values to be restated — that cut-over is createRevaluation, which this call deliberately does not perform. Preconditions: none; note that the catalog replica has carried the product\'s category since #1514, and SKU_CATEGORY resolution is gated by pos.inventory.sku-category.resolve-from-replica, which defaults off — call reportSkuCategoryImpact before enabling it. Required inputs: scopeType, method, and scopeValue — the stock item id for SKU, the category string for SKU_CATEGORY, and omitted for DEFAULT. Emits an INVENTORY_VALUATION_METHOD_UPSERT event, and an effective method change is recorded as a who/when/from/to row in the cost method change log. Returns 400 when scopeValue is supplied for DEFAULT scope or missing for SKU or SKU_CATEGORY scope. 
      * Upsert costing method configuration
      */
     async upsertCostingMethodConfigRaw(requestParameters: UpsertCostingMethodConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CostingMethodConfigResponse>> {
@@ -111,7 +197,7 @@ export class ValuationMethodsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates or updates the costing method (STANDARD or AVERAGE) for one scope — SKU, SKU_CATEGORY or DEFAULT — reactivating the row and keeping at most one row per scope. Use this tool to switch which method a scope resolves to going forward only; do not use it expecting opening values to be restated — that cut-over is createRevaluation, which this call deliberately does not perform. Preconditions: none; note that SKU_CATEGORY rows are stored but unresolvable until the catalog replica carries a category, so resolution skips them to DEFAULT. Required inputs: scopeType, method, and scopeValue — the stock item id for SKU, the category string for SKU_CATEGORY, and omitted for DEFAULT. Emits an INVENTORY_VALUATION_METHOD_UPSERT event, and an effective method change is recorded as a who/when/from/to row in the cost method change log. Returns 400 when scopeValue is supplied for DEFAULT scope or missing for SKU or SKU_CATEGORY scope. 
+     * Creates or updates the costing method (STANDARD or AVERAGE) for one scope — SKU, SKU_CATEGORY or DEFAULT — reactivating the row and keeping at most one row per scope. Use this tool to switch which method a scope resolves to going forward only; do not use it expecting opening values to be restated — that cut-over is createRevaluation, which this call deliberately does not perform. Preconditions: none; note that the catalog replica has carried the product\'s category since #1514, and SKU_CATEGORY resolution is gated by pos.inventory.sku-category.resolve-from-replica, which defaults off — call reportSkuCategoryImpact before enabling it. Required inputs: scopeType, method, and scopeValue — the stock item id for SKU, the category string for SKU_CATEGORY, and omitted for DEFAULT. Emits an INVENTORY_VALUATION_METHOD_UPSERT event, and an effective method change is recorded as a who/when/from/to row in the cost method change log. Returns 400 when scopeValue is supplied for DEFAULT scope or missing for SKU or SKU_CATEGORY scope. 
      * Upsert costing method configuration
      */
     async upsertCostingMethodConfig(requestParameters: UpsertCostingMethodConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CostingMethodConfigResponse> {
