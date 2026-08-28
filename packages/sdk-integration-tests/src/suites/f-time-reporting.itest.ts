@@ -264,11 +264,19 @@ describe('Suite F — time reporting and approval', () => {
 
     // getActiveTimers reads the authenticated user's own timers, so this is the
     // technician asking what they have running - not a supervisor view.
+    //
+    // The endpoint answers with a *list* (WorkexecTimeTrackingController returns
+    // ResponseEntity.ok(active) over a List), but its @ApiResponse schema names
+    // the element type without array: true, so the generated client types the
+    // result as one WorkexecTimerEntryResponse. Read it as the array it is
+    // rather than trusting the generated shape - see the backend spec issue.
     const active = await call('getActiveTimers', () =>
       tech.workorder.workexecTimeTrackingAPIApi.getActiveTimers(),
     );
-    console.log(`[F7] active timer: ${JSON.stringify(active).slice(0, 200)}`);
-    expect(readString(active, 'workorderId')).toBe(workorderId);
+    console.log(`[F7] active timers: ${JSON.stringify(active).slice(0, 300)}`);
+    const activeEntries: unknown[] = Array.isArray(active) ? active : [active];
+    expect(activeEntries.length).toBeGreaterThan(0);
+    expect(activeEntries.some((entry) => readString(entry, 'workorderId') === workorderId)).toBe(true);
 
     await new Promise((resolve) => setTimeout(resolve, 1_500));
     const stopped = await call('stopTimers', () =>
