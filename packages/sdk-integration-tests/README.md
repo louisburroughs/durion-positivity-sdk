@@ -89,6 +89,7 @@ usually just credentials are needed.
 | `ITEST_MANAGER_USERNAME` / `_PASSWORD` | _(admin)_ | No | LOCATION_MANAGER persona |
 | `ITEST_PARTS_USERNAME` / `_PASSWORD` | _(admin)_ | No | INVENTORY_LEAD persona |
 | `ITEST_ACCT_USERNAME` / `_PASSWORD` | _(admin)_ | No | ACCOUNT_MANAGER persona |
+| `ITEST_CONTROLLER_USERNAME` / `_PASSWORD` | _(admin)_ | No | CONTROLLER persona; submits C9's accounting event |
 | `ITEST_SEED` | _(random)_ | No | Integer RNG seed for reproducible values |
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` interval |
@@ -155,14 +156,23 @@ the middle of a suite:
 | `manager` | LOCATION_MANAGER | `diana.rowe` |
 | `parts` | INVENTORY_LEAD | `gloria.mendez` |
 | `acct` | ACCOUNT_MANAGER | `irene.torres` |
+| `controller` | CONTROLLER | `margaret.olsen` |
 
 All are seeded by the backend's `R__seed_security_operational_data.sql` and
 share one operational password.
 
-`acct` has no matching employee record — PeopleBootstrap seeds technicians,
-service writers, a manager and a parts clerk, and no accounting employee — so
-labor attributed to it has no person behind it. Reported at startup, not
-silently.
+`acct` and `controller` have no matching employee record — PeopleBootstrap
+seeds technicians, service writers, a manager and a parts clerk, and no
+accounting employee — so labor attributed to either has no person behind it.
+Reported at startup, not silently.
+
+`controller` exists because backend V25 (#1499/#1512) rescoped ACCOUNT_MANAGER
+to customer accounts (AR) and moved accounting management — including
+`accounting:events:submit` — to the new CONTROLLER role. C9's
+`submitAccountingEvent` therefore acts as `controller`; `acct` keeps the
+payment, credit-memo and invoice authorities V25 left it. Leave
+`ITEST_CONTROLLER_*` unset and that call falls back to admin, which still
+passes but no longer proves enforcement.
 
 ---
 

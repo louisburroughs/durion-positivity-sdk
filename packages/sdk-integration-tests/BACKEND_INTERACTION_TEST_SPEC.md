@@ -944,11 +944,23 @@ compatible and genuinely has room - and D5 must not start passing
 Two environment faults surface here as ordinary 4xx and are fixed outside the
 suite; D5's `executePutaway` failure message names both:
 
-- **The destination storage location does not exist.** pos-inventory's
-  `ext_storage_location` replica has not been hydrated. pos-catalog's
-  product-fact replay carries the new fields, but pos-location's outbox replay
-  re-emits already-serialized payloads, so storage locations need a fresh write
-  via `patchStorageLocation` (backend `docs/OPERATIONS_RUNBOOK.md`).
+- **The destination storage location does not exist.** The resolved
+  destination has no row in pos-inventory's `ext_storage_location`:
+  `StorageLocationValidationService` resolves the replica by primary key and
+  reports `exists=false` on a miss. Two different faults produce this, and they
+  have opposite fixes, so establish which one first with
+  `SELECT * FROM storage_location WHERE id = '<destination>'` on pos-location.
+  - *No row there either* — the terminal `ANY` `putaway_rule` targets a bin that
+    never existed. This is what alpha hit (backend
+    [#1543](https://github.com/louisburroughs/durion-positivity-backend/issues/1543)):
+    the seeded rule's retarget lives in a repeatable migration under
+    `ON CONFLICT (rule_id) DO NOTHING`, so it never reaches an environment whose
+    rule row already exists. The fix is to retarget the rule; hydration would
+    achieve nothing, because there is no bin to replicate.
+  - *A row there but not in the replica* — a real bin pos-inventory has not seen.
+    pos-location's outbox replay re-emits already-serialized payloads, so this
+    one does need a fresh write via `patchStorageLocation` (backend
+    `docs/OPERATIONS_RUNBOOK.md`).
 - **A capacity refusal.** The resolved bin cannot hold the received quantity;
   the putaway-rule fixture pack
   (`scripts/fixtures/seed/alpha/inventory/putaway-rules.csv`) needs a roomier

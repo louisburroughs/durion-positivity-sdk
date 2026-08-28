@@ -339,12 +339,21 @@ describe('Suite D — receiving', () => {
           const detail = await formatError(error);
           throw new Error(
             `[D5] executePutaway ${STAGING_LOCATION_ID} -> ${destinationLocationId} failed: ` +
-              `${detail}. If this says the destination storage location does not exist, ` +
-              `pos-inventory's ext_storage_location replica has not been hydrated: its outbox ` +
-              `replay re-emits already-serialized payloads, so storage locations need a fresh ` +
-              `write via patchStorageLocation (backend docs/OPERATIONS_RUNBOOK.md). If it is a ` +
-              `capacity refusal, the resolved bin cannot hold ${RECEIVE_QUANTITY} units and the ` +
-              `putaway-rule fixture pack needs a roomier destination.`,
+              `${detail}. If this says the destination storage location does not exist, the ` +
+              `destination above has no row in pos-inventory's ext_storage_location: ` +
+              `StorageLocationValidationService resolves the replica by primary key and reports ` +
+              `exists=false when it misses. Check which of the two causes it is before acting - ` +
+              `SELECT * FROM storage_location WHERE id = '<destination>' on pos-location. No row ` +
+              `there means the terminal ANY putaway_rule is targeting a bin that never existed ` +
+              `(backend #1543: the seeded rule's retarget sits in a repeatable migration under ` +
+              `ON CONFLICT DO NOTHING, so it never reaches an environment whose rule row already ` +
+              `exists); the fix is to retarget the rule, not to hydrate anything. A row there but ` +
+              `not in the replica is the other case - a real bin pos-inventory has not seen - and ` +
+              `that one needs the fresh write via patchStorageLocation described in backend ` +
+              `docs/OPERATIONS_RUNBOOK.md, because outbox replay re-emits already-serialized ` +
+              `payloads. If it is a capacity refusal, the resolved bin cannot hold ` +
+              `${RECEIVE_QUANTITY} units and the putaway-rule fixture pack needs a roomier ` +
+              `destination.`,
           );
         });
 

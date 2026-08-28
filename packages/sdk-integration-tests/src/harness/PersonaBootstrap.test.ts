@@ -176,7 +176,7 @@ describe('PersonaBootstrap.verifyAndProvision', () => {
 
     const message = (error as Error).message;
     expect(message).toContain('no user named "gloria.mendez"');
-    expect(message).toContain('workorder:start');
+    expect(message).toContain('workorder:workorder:start');
     expect(message).toContain('BACKEND_INTERACTION_TEST_SPEC.md');
   });
 

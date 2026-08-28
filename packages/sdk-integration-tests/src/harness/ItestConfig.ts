@@ -1,4 +1,11 @@
-export type PersonaName = 'admin' | 'advisor' | 'tech' | 'manager' | 'parts' | 'acct';
+export type PersonaName =
+  | 'admin'
+  | 'advisor'
+  | 'tech'
+  | 'manager'
+  | 'parts'
+  | 'acct'
+  | 'controller';
 
 export type CredentialedPersona = Exclude<PersonaName, 'admin'>;
 
@@ -15,6 +22,7 @@ const PERSONA_ENV_PREFIX: Record<CredentialedPersona, string> = {
   manager: 'ITEST_MANAGER',
   parts: 'ITEST_PARTS',
   acct: 'ITEST_ACCT',
+  controller: 'ITEST_CONTROLLER',
 };
 
 type EnvShape = Record<string, string | undefined>;

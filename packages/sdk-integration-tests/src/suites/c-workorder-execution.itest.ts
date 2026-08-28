@@ -66,7 +66,7 @@ describe('Suite C — workorder execution', () => {
   let tech: DomainClients;
   /** Stock reads only: see the note at findStockedProduct. */
   let parts: DomainClients;
-  let acct: DomainClients;
+  let controller: DomainClients;
   let customer: CreatedCustomer;
   let promoted: PromotedWorkorder;
   let workorderId: string;
@@ -103,7 +103,7 @@ describe('Suite C — workorder execution', () => {
     manager = personas.as('manager');
     tech = personas.as('tech');
     parts = personas.as('parts');
-    acct = personas.as('acct');
+    controller = personas.as('controller');
     ctx = {
       runId: context.runId,
       // Seeded per suite, not per run: a shared seed makes every suite generate
@@ -465,7 +465,7 @@ describe('Suite C — workorder execution', () => {
     expect(total).toBeGreaterThanOrEqual(LABOR_ONE_PRICE);
 
     const accepted = await call('submitAccountingEvent', () =>
-      acct.accounting.accountingEventsApi.submitAccountingEvent({
+      controller.accounting.accountingEventsApi.submitAccountingEvent({
         accountingEventSubmitRequest: {
           eventType: 'INVOICE_PAYMENT',
           organizationId: context.referenceCache.locationId,

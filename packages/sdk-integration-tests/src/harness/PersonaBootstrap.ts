@@ -32,6 +32,7 @@ const PERSONA_ROLE: Record<CredentialedPersona, string> = {
   manager: 'LOCATION_MANAGER',
   parts: 'INVENTORY_LEAD',
   acct: 'ACCOUNT_MANAGER',
+  controller: 'CONTROLLER',
 };
 
 /**
@@ -42,7 +43,11 @@ const PERSONA_ROLE: Record<CredentialedPersona, string> = {
  */
 const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
   advisor: ['appointments:create', 'workorder:estimate:create', 'workorder:estimate:submit'],
-  tech: ['workorder:start', 'workorder:labor:add', 'workorder:parts:consume'],
+  // workorder:workorder:start, not workorder:start: backend V26 (#1499/#1512)
+  // retired the latter after finding the start endpoint and the detail-response
+  // capability flag enforced different codes, and granted the conformant name to
+  // TECHNICIAN. The generated OperationalContextApi asks for it by that name.
+  tech: ['workorder:workorder:start', 'workorder:labor:add', 'workorder:parts:consume'],
   manager: [
     'workorder:workorder:approve',
     'workorder:workorder:complete',
@@ -58,20 +63,25 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'inventory:goods_receipt:create',
     'inventory:receiving:create',
   ],
-  // The acct persona makes exactly one call in the suites - submitting an
-  // INVOICE_PAYMENT through accountingEventsApi. Applying payments and managing
-  // invoices are ACCOUNT_MANAGER's on paper but nothing here exercises them,
-  // and the advisor is what finalizes the invoice.
-  acct: ['accounting:events:submit'],
+  // Backend V25 (#1499/#1512) rescoped ACCOUNT_MANAGER to customer accounts
+  // (AR) and moved accounting management - accounting:events:submit included -
+  // to the new CONTROLLER role. These three are what V25 deliberately left
+  // behind, so they are what proves irene.torres is still wired to the
+  // rescoped role rather than a hollowed-out one.
+  acct: ['accounting:payment:apply', 'accounting:credit-memo:create', 'invoice:manage'],
+  // C9's submitAccountingEvent moved here with the permission. margaret.olsen
+  // is the seeded CONTROLLER and shares the operational password.
+  controller: ['accounting:events:submit'],
 };
 
 /**
  * Personas whose login should point at the matching seeded employee, so labor
  * and assignment views attribute to a real person record.
  *
- * `acct` is absent on purpose: PeopleBootstrap seeds technicians, service
- * writers, a manager and a parts clerk, and no accounting employee, so there is
- * nothing to link it to. That is reported as a limitation, not a failure.
+ * `acct` and `controller` are absent on purpose: PeopleBootstrap seeds
+ * technicians, service writers, a manager and a parts clerk, and no accounting
+ * employee, so there is nothing to link either of them to. That is reported as
+ * a limitation, not a failure.
  */
 const PERSONA_EMPLOYEE: Partial<Record<CredentialedPersona, (refs: EmployeeRefs) => string | undefined>> =
   {
