@@ -13,7 +13,6 @@ import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
 import { seedOnHand, type SeededStock } from '../harness/stock';
-import { waitFor } from '../harness/waitFor';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
 const itInRoleMode = ROLE_MODE ? it : it.skip;
@@ -304,9 +303,10 @@ describe('Suite E — cycle counting', () => {
   }, 120_000);
 
   it('E10 — approving the adjustment posts it to the ledger', async () => {
-    const pendingBefore = await call('countPendingCycleCountAdjustments', () =>
-      admin.inventory.cycleCountAdjustmentsApi.countPendingCycleCountAdjustments(),
+    const pending = await call('listPendingCycleCountAdjustments', () =>
+      admin.inventory.cycleCountAdjustmentsApi.listPendingCycleCountAdjustments(),
     );
+    expect(pending.map((item) => item.adjustmentId)).toContain(adjustmentId);
 
     const approved = await call('approveCycleCountAdjustment', () =>
       admin.inventory.cycleCountAdjustmentsApi.approveCycleCountAdjustment({
@@ -323,14 +323,19 @@ describe('Suite E — cycle counting', () => {
     expect(approved.approvedByUserId).toBeTruthy();
     expect(approved.ledgerEntryId).toBeTruthy();
 
-    const pendingAfter = await waitFor(
-      async () => {
-        const current = await admin.inventory.cycleCountAdjustmentsApi.countPendingCycleCountAdjustments();
-        return current < pendingBefore ? current : undefined;
-      },
-      { description: 'the pending adjustment count to fall', timeoutMs: 30_000 },
+    // Deliberately the adjustment's own row, not the environment-wide pending
+    // count: alpha is shared and the seeder's inventory loop raises adjustments
+    // of its own, so a global tally can stay flat while this one is decided.
+    const settled = await call('getCycleCountAdjustment', () =>
+      admin.inventory.cycleCountAdjustmentsApi.getCycleCountAdjustment({ adjustmentId }),
     );
-    console.log(`[E10] pending adjustments ${pendingBefore} -> ${pendingAfter}`);
+    console.log(`[E10] adjustment re-read as ${settled.status}, posted ${settled.postedAt?.toISOString()}`);
+    expect(['APPROVED', 'POSTED']).toContain(settled.status);
+
+    const stillPending = await call('listPendingCycleCountAdjustments', () =>
+      admin.inventory.cycleCountAdjustmentsApi.listPendingCycleCountAdjustments(),
+    );
+    expect(stillPending.map((item) => item.adjustmentId)).not.toContain(adjustmentId);
   }, 180_000);
 
   it('E11 — the counted plan completes and is approved', async () => {
