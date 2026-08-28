@@ -50,7 +50,7 @@ export interface CreateAdjustmentRequest {
      */
     reasonCode: string;
     /**
-     * Identifier of the stock item being adjusted
+     * Stock reference being adjusted — the ledger's freeform stock_item_id text: a SKU code (e.g. OIL-5W30-5QT), or a catalog product UUID rendered as text. Not a product id.
      * @type {string}
      * @memberof CreateAdjustmentRequest
      */

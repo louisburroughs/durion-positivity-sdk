@@ -128,7 +128,7 @@ export interface AdjustmentResponse {
      */
     status: AdjustmentResponseStatusEnum;
     /**
-     * Identifier of the stock item the adjustment applies to
+     * Stock reference the adjustment applies to — the ledger's freeform stock_item_id text: a SKU code, or a catalog product UUID rendered as text
      * @type {string}
      * @memberof AdjustmentResponse
      */

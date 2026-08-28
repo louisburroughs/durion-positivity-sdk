@@ -68,6 +68,12 @@ export interface CycleCountTaskResponse {
      */
     latestCountEntryId?: string;
     /**
+     * Cycle count plan the task was generated from; null for tasks created outside a plan
+     * @type {string}
+     * @memberof CycleCountTaskResponse
+     */
+    planId?: string;
+    /**
      * Current status of the cycle count task
      * @type {string}
      * @memberof CycleCountTaskResponse
@@ -141,6 +147,7 @@ export function CycleCountTaskResponseFromJSONTyped(json: any, ignoreDiscriminat
         'itemDescription': json['itemDescription'] == null ? undefined : json['itemDescription'],
         'itemSku': json['itemSku'],
         'latestCountEntryId': json['latestCountEntryId'] == null ? undefined : json['latestCountEntryId'],
+        'planId': json['planId'] == null ? undefined : json['planId'],
         'status': json['status'],
         'taskId': json['taskId'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
@@ -162,6 +169,7 @@ export function CycleCountTaskResponseToJSON(value?: CycleCountTaskResponse | nu
         'itemDescription': value['itemDescription'],
         'itemSku': value['itemSku'],
         'latestCountEntryId': value['latestCountEntryId'],
+        'planId': value['planId'],
         'status': value['status'],
         'taskId': value['taskId'],
         'unitOfMeasure': value['unitOfMeasure'],
