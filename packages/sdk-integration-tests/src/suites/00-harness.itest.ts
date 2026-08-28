@@ -33,7 +33,15 @@ describe('integration harness', () => {
     const random = new SeederRandom(1422);
     void random; // deterministic data source, shared pattern for later suites
 
-    for (const persona of ['admin', 'advisor', 'tech', 'manager', 'parts', 'acct'] as const) {
+    for (const persona of [
+      'admin',
+      'advisor',
+      'tech',
+      'manager',
+      'parts',
+      'acct',
+      'controller',
+    ] as const) {
       const clients = personas.as(persona);
       // Cheapest authenticated round-trip: token issuance already succeeded
       // in beforeAll; this asserts the registry hands out per-persona clients.

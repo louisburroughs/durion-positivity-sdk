@@ -55,7 +55,15 @@ export class Personas {
 
   /** Logs in every distinct identity. Call once per suite file (beforeAll). */
   async login(): Promise<void> {
-    const personas: PersonaName[] = ['admin', 'advisor', 'tech', 'manager', 'parts', 'acct'];
+    const personas: PersonaName[] = [
+      'admin',
+      'advisor',
+      'tech',
+      'manager',
+      'parts',
+      'acct',
+      'controller',
+    ];
     for (const persona of personas) {
       const auth = this.authFor(persona);
       void auth; // creation registers it in authsByUsername
