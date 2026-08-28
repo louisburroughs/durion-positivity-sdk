@@ -2,6 +2,7 @@ import { createAccountingClient } from '@durion-sdk/accounting';
 import { createCatalogClient } from '@durion-sdk/catalog';
 import { createCustomerClient } from '@durion-sdk/customer';
 import { createInventoryClient } from '@durion-sdk/inventory';
+import { createLocationClient } from '@durion-sdk/location';
 import { createInvoiceClient } from '@durion-sdk/invoice';
 import { createOrderClient } from '@durion-sdk/order';
 import { SeederAuth, SeederConfig } from '@durion-sdk/seeder';
@@ -29,6 +30,8 @@ export interface DomainClients {
    */
   vehicleInventory: ReturnType<typeof createVehicleInventoryClient>;
   catalog: ReturnType<typeof createCatalogClient>;
+  /** Sites, storage locations and their declared defaults. */
+  location: ReturnType<typeof createLocationClient>;
   shopManager: ShopManagerClient;
   /** The identity behind these clients — for labor-attribution assertions. */
   username: string;
@@ -114,6 +117,7 @@ export class Personas {
         order: createOrderClient(auth.buildSdkConfig('order')),
         vehicleInventory: createVehicleInventoryClient(auth.buildSdkConfig('vehicle-inventory')),
         catalog: createCatalogClient(auth.buildSdkConfig('catalog')),
+        location: createLocationClient(auth.buildSdkConfig('location')),
         shopManager: createShopManagerClient({
           baseUrl: this.config.baseUrl,
           token: () => auth.getToken(),
