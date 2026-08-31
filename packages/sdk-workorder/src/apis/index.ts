@@ -9,7 +9,6 @@ export * from './EstimatesFromAppointmentsApi';
 export * from './OperationalContextApi';
 export * from './SubstituteLinkAPIApi';
 export * from './TechnicianAssignmentAPIApi';
-export * from './TimeEntryAPIApi';
 export * from './TravelSegmentAPIApi';
 export * from './WIPDashboardApi';
 export * from './WorkOrderAPIApi';

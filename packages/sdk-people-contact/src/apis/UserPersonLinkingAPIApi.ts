@@ -110,7 +110,7 @@ export class UserPersonLinkingAPIApi extends runtime.BaseAPI {
      * Returns the full user-person link records for a person, including linkType, notes, creator and creation time. Use this tool when link metadata is needed; use listUsernamesForPerson instead when only the usernames matter, and getPersonByUsername to go from a username to its person. Preconditions: the person record must exist; a person with no links yields an empty list. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CONTACT_USER_LINK_GET audit event; no state changes. Returns 404 when the person does not exist. 
      * Get User Links for Person
      */
-    async getLinksByPersonIdRaw(requestParameters: GetLinksByPersonIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UserPersonLinkResponse>> {
+    async getLinksByPersonIdRaw(requestParameters: GetLinksByPersonIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserPersonLinkResponse>>> {
         if (requestParameters['personId'] == null) {
             throw new runtime.RequiredError(
                 'personId',
@@ -137,14 +137,14 @@ export class UserPersonLinkingAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => UserPersonLinkResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserPersonLinkResponseFromJSON));
     }
 
     /**
      * Returns the full user-person link records for a person, including linkType, notes, creator and creation time. Use this tool when link metadata is needed; use listUsernamesForPerson instead when only the usernames matter, and getPersonByUsername to go from a username to its person. Preconditions: the person record must exist; a person with no links yields an empty list. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CONTACT_USER_LINK_GET audit event; no state changes. Returns 404 when the person does not exist. 
      * Get User Links for Person
      */
-    async getLinksByPersonId(requestParameters: GetLinksByPersonIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UserPersonLinkResponse> {
+    async getLinksByPersonId(requestParameters: GetLinksByPersonIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserPersonLinkResponse>> {
         const response = await this.getLinksByPersonIdRaw(requestParameters, initOverrides);
         return await response.value();
     }

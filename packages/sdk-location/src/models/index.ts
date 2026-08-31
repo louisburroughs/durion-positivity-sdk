@@ -1,10 +1,14 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './BayBulkIngestRecord';
 export * from './BayCapacityRequest';
 export * from './BayPatchRequest';
 export * from './BayRequest';
 export * from './BayResponse';
+export * from './BulkIngestRequestBayBulkIngestRecord';
 export * from './BulkIngestRequestLocationBulkIngestRecord';
+export * from './BulkIngestRequestMobileUnitBulkIngestRecord';
+export * from './BulkIngestRequestStorageLocationBulkIngestRecord';
 export * from './BulkIngestResponse';
 export * from './BulkIngestResult';
 export * from './CoverageRuleRequest';
@@ -20,6 +24,7 @@ export * from './LocationRequestDTO';
 export * from './LocationResponseDTO';
 export * from './LocationTypeDTO';
 export * from './LocationValidationResponseDTO';
+export * from './MobileUnitBulkIngestRecord';
 export * from './MobileUnitRequest';
 export * from './MobileUnitResponse';
 export * from './OperatingHoursRequest';
@@ -35,6 +40,7 @@ export * from './ServiceAreaResponse';
 export * from './SiteDefaultsRequest';
 export * from './SiteDefaultsResponse';
 export * from './SortObject';
+export * from './StorageLocationBulkIngestRecord';
 export * from './StorageLocationPatchRequest';
 export * from './StorageLocationRequest';
 export * from './StorageLocationResponse';

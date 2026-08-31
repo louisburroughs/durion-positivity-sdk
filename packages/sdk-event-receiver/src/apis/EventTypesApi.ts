@@ -202,7 +202,7 @@ export class EventTypesApi extends runtime.BaseAPI {
      * Lists the event types whose active flag is true, which are the types currently expected to appear in event traffic and latency monitoring. Use this tool when only live, monitorable event types matter; use listEventTypes instead to audit the whole registry including deactivated types. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table filtered on active = true. Returns 200 with the active list, which is empty when every registered type is inactive. 
      * List only active event types
      */
-    async listActiveEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
+    async listActiveEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventTypeResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -214,14 +214,14 @@ export class EventTypesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => EventTypeResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventTypeResponseFromJSON));
     }
 
     /**
      * Lists the event types whose active flag is true, which are the types currently expected to appear in event traffic and latency monitoring. Use this tool when only live, monitorable event types matter; use listEventTypes instead to audit the whole registry including deactivated types. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table filtered on active = true. Returns 200 with the active list, which is empty when every registered type is inactive. 
      * List only active event types
      */
-    async listActiveEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
+    async listActiveEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventTypeResponse>> {
         const response = await this.listActiveEventTypesRaw(initOverrides);
         return await response.value();
     }
@@ -230,7 +230,7 @@ export class EventTypesApi extends runtime.BaseAPI {
      * Lists every registered event type, active and inactive, with its typeCode, description, apiVersion and p50/p95/p99 latency thresholds in microseconds. Use this tool when auditing the full event-type registry including deactivated types; use listActiveEventTypes instead when only the types currently accepted for monitoring matter. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table. Returns 200 with the full list, which is empty when no event types have been registered. 
      * List all registered event types
      */
-    async listEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventTypeResponse>> {
+    async listEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventTypeResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -242,14 +242,14 @@ export class EventTypesApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => EventTypeResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EventTypeResponseFromJSON));
     }
 
     /**
      * Lists every registered event type, active and inactive, with its typeCode, description, apiVersion and p50/p95/p99 latency thresholds in microseconds. Use this tool when auditing the full event-type registry including deactivated types; use listActiveEventTypes instead when only the types currently accepted for monitoring matter. Preconditions: none beyond service availability; GET requests pass the shared-secret filter without authentication. Required inputs: none; there are no parameters, no paging and no filtering. No events are emitted and no state changes; this is a read-only projection of the event_type table. Returns 200 with the full list, which is empty when no event types have been registered. 
      * List all registered event types
      */
-    async listEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventTypeResponse> {
+    async listEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventTypeResponse>> {
         const response = await this.listEventTypesRaw(initOverrides);
         return await response.value();
     }

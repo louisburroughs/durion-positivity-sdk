@@ -208,7 +208,7 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
      * Lists the unresolved, scored candidate bills persisted when an invoice match came back AMBIGUOUS, ordered by score descending. Use this tool to review the choices before calling selectVendorBillMatchCandidate; do not use resolveVendorBillMatchException, which handles single-bill discrepancies rather than ambiguity. Preconditions: a matchVendorInvoice call for this invoice event must have produced an AMBIGUOUS outcome. Required inputs: invoiceEventId (UUID of the triggering invoice event) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_BILL_MATCH_CANDIDATES_LIST audit event; no state changes. Returns 200 with an empty list when no unresolved candidates exist for the event. 
      * List Vendor Bill Match Candidates
      */
-    async listVendorBillMatchCandidatesRaw(requestParameters: ListVendorBillMatchCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VendorBillMatchCandidateResponse>> {
+    async listVendorBillMatchCandidatesRaw(requestParameters: ListVendorBillMatchCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<VendorBillMatchCandidateResponse>>> {
         if (requestParameters['invoiceEventId'] == null) {
             throw new runtime.RequiredError(
                 'invoiceEventId',
@@ -235,14 +235,14 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => VendorBillMatchCandidateResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(VendorBillMatchCandidateResponseFromJSON));
     }
 
     /**
      * Lists the unresolved, scored candidate bills persisted when an invoice match came back AMBIGUOUS, ordered by score descending. Use this tool to review the choices before calling selectVendorBillMatchCandidate; do not use resolveVendorBillMatchException, which handles single-bill discrepancies rather than ambiguity. Preconditions: a matchVendorInvoice call for this invoice event must have produced an AMBIGUOUS outcome. Required inputs: invoiceEventId (UUID of the triggering invoice event) as a path parameter; there is no request body. Emits an ACCOUNTING_VENDOR_BILL_MATCH_CANDIDATES_LIST audit event; no state changes. Returns 200 with an empty list when no unresolved candidates exist for the event. 
      * List Vendor Bill Match Candidates
      */
-    async listVendorBillMatchCandidates(requestParameters: ListVendorBillMatchCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VendorBillMatchCandidateResponse> {
+    async listVendorBillMatchCandidates(requestParameters: ListVendorBillMatchCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<VendorBillMatchCandidateResponse>> {
         const response = await this.listVendorBillMatchCandidatesRaw(requestParameters, initOverrides);
         return await response.value();
     }

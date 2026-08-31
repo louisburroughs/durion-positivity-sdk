@@ -120,7 +120,7 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
      * Returns the ISSUE, CONSUME, and RETURN usage events for a workorder\'s parts, either for the whole workorder or filtered to one part line. Use this tool when auditing how part quantities moved; use getPartAdjustmentHistory instead for substitutions, corrections, and reasoned returns from the adjustment flow. Preconditions: when partLineId is supplied, the part must belong to the workorder. Required inputs: workorderId (UUID) as a path parameter; partLineId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the events, 400 when the filtered part cannot be found, 404 when the workorder does not exist, and 409 when the filtered part belongs to a different workorder. 
      * Get Parts Usage History
      */
-    async getPartsUsageHistoryRaw(requestParameters: GetPartsUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartUsageEventResponse>> {
+    async getPartsUsageHistoryRaw(requestParameters: GetPartsUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderPartUsageEventResponse>>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -151,14 +151,14 @@ export class WorkorderPartsUsageApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartUsageEventResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(WorkorderPartUsageEventResponseFromJSON));
     }
 
     /**
      * Returns the ISSUE, CONSUME, and RETURN usage events for a workorder\'s parts, either for the whole workorder or filtered to one part line. Use this tool when auditing how part quantities moved; use getPartAdjustmentHistory instead for substitutions, corrections, and reasoned returns from the adjustment flow. Preconditions: when partLineId is supplied, the part must belong to the workorder. Required inputs: workorderId (UUID) as a path parameter; partLineId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the events, 400 when the filtered part cannot be found, 404 when the workorder does not exist, and 409 when the filtered part belongs to a different workorder. 
      * Get Parts Usage History
      */
-    async getPartsUsageHistory(requestParameters: GetPartsUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartUsageEventResponse> {
+    async getPartsUsageHistory(requestParameters: GetPartsUsageHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderPartUsageEventResponse>> {
         const response = await this.getPartsUsageHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }

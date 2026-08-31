@@ -99,7 +99,7 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
      * Returns every cycle count task assigned to one auditor, regardless of task status. Use this tool to build an auditor\'s work queue and discover taskIds; use getCycleCountTask instead when the taskId is already known. Preconditions: none; an auditor with no assignments yields an empty array. Required inputs: auditorId (string) as a path parameter; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the auditor has no tasks, so an empty result is not an error condition. 
      * Get tasks assigned to an auditor
      */
-    async listCycleCountAuditorTasksRaw(requestParameters: ListCycleCountAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CycleCountTaskResponse>> {
+    async listCycleCountAuditorTasksRaw(requestParameters: ListCycleCountAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CycleCountTaskResponse>>> {
         if (requestParameters['auditorId'] == null) {
             throw new runtime.RequiredError(
                 'auditorId',
@@ -126,14 +126,14 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CycleCountTaskResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CycleCountTaskResponseFromJSON));
     }
 
     /**
      * Returns every cycle count task assigned to one auditor, regardless of task status. Use this tool to build an auditor\'s work queue and discover taskIds; use getCycleCountTask instead when the taskId is already known. Preconditions: none; an auditor with no assignments yields an empty array. Required inputs: auditorId (string) as a path parameter; there is no request body, paging or filtering. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the auditor has no tasks, so an empty result is not an error condition. 
      * Get tasks assigned to an auditor
      */
-    async listCycleCountAuditorTasks(requestParameters: ListCycleCountAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CycleCountTaskResponse> {
+    async listCycleCountAuditorTasks(requestParameters: ListCycleCountAuditorTasksRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CycleCountTaskResponse>> {
         const response = await this.listCycleCountAuditorTasksRaw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -142,7 +142,7 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
      * Returns every count entry recorded for a cycle count task — the original count and any recounts — ordered by recount sequence number. Use this tool to review how counted quantities and variances evolved across recounts; use listCycleCountInterferingMovements instead for the stock movements that made the task\'s snapshot stale. Preconditions: none are enforced; an unknown taskId yields an empty array rather than 404. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the task has no counts or the id is unknown, so an empty result is not an error condition. 
      * Get count history for a task
      */
-    async listCycleCountHistoryRaw(requestParameters: ListCycleCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CountEntryResponse>> {
+    async listCycleCountHistoryRaw(requestParameters: ListCycleCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CountEntryResponse>>> {
         if (requestParameters['taskId'] == null) {
             throw new runtime.RequiredError(
                 'taskId',
@@ -169,14 +169,14 @@ export class CycleCountQueryApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CountEntryResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CountEntryResponseFromJSON));
     }
 
     /**
      * Returns every count entry recorded for a cycle count task — the original count and any recounts — ordered by recount sequence number. Use this tool to review how counted quantities and variances evolved across recounts; use listCycleCountInterferingMovements instead for the stock movements that made the task\'s snapshot stale. Preconditions: none are enforced; an unknown taskId yields an empty array rather than 404. Required inputs: taskId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the task has no counts or the id is unknown, so an empty result is not an error condition. 
      * Get count history for a task
      */
-    async listCycleCountHistory(requestParameters: ListCycleCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CountEntryResponse> {
+    async listCycleCountHistory(requestParameters: ListCycleCountHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CountEntryResponse>> {
         const response = await this.listCycleCountHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }

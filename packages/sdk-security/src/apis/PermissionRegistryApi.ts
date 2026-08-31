@@ -47,23 +47,11 @@ export interface CheckPermissionExistsRequest {
     permissionName: string;
 }
 
-export interface CheckPermissionExists1Request {
-    permissionName: string;
-}
-
 export interface DecodePermissionBitsRequest {
     permissionDecodeRequest: PermissionDecodeRequest;
 }
 
-export interface DecodePermissionBits1Request {
-    permissionDecodeRequest: PermissionDecodeRequest;
-}
-
 export interface GetPermissionByIdRequest {
-    id: string;
-}
-
-export interface GetPermissionById1Request {
     id: string;
 }
 
@@ -74,18 +62,7 @@ export interface ListPermissionsRequest {
     sort?: Array<string>;
 }
 
-export interface ListPermissions1Request {
-    domain?: string;
-    page?: number;
-    size?: number;
-    sort?: Array<string>;
-}
-
 export interface ListPermissionsByDomainRequest {
-    domain: string;
-}
-
-export interface ListPermissionsByDomain1Request {
     domain: string;
 }
 
@@ -93,23 +70,11 @@ export interface RegisterModulePermissionsRequest {
     permissionRegistrationRequest: PermissionRegistrationRequest;
 }
 
-export interface RegisterModulePermissions1Request {
-    permissionRegistrationRequest: PermissionRegistrationRequest;
-}
-
 export interface RegisterPermissionsContractRequest {
     permissionRegistrationRequest: PermissionRegistrationRequest;
 }
 
-export interface RegisterPermissionsContract1Request {
-    permissionRegistrationRequest: PermissionRegistrationRequest;
-}
-
 export interface ValidatePermissionNameRequest {
-    permissionName: string;
-}
-
-export interface ValidatePermissionName1Request {
     permissionName: string;
 }
 
@@ -143,7 +108,7 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/v1/users/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
+            path: `/v1/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -166,53 +131,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Checks whether a permission with the given name is registered in the central registry. Use this tool to test registration state; use validatePermissionName instead for a pure format check that ignores the database. Preconditions: the caller must hold security:permission:view. Required inputs: permissionName as a path parameter in domain:resource:action format. No events are emitted and no state changes; this is a read-only existence check. Returns 200 with a plain boolean body; an unregistered name yields false, never an error status. 
-     * Check Whether a Permission Is Registered
-     */
-    async checkPermissionExists1Raw(requestParameters: CheckPermissionExists1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
-        if (requestParameters['permissionName'] == null) {
-            throw new runtime.RequiredError(
-                'permissionName',
-                'Required parameter "permissionName" was null or undefined when calling checkPermissionExists1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/permissions/exists/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<boolean>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
-    }
-
-    /**
-     * Checks whether a permission with the given name is registered in the central registry. Use this tool to test registration state; use validatePermissionName instead for a pure format check that ignores the database. Preconditions: the caller must hold security:permission:view. Required inputs: permissionName as a path parameter in domain:resource:action format. No events are emitted and no state changes; this is a read-only existence check. Returns 200 with a plain boolean body; an unregistered name yields false, never an error status. 
-     * Check Whether a Permission Is Registered
-     */
-    async checkPermissionExists1(requestParameters: CheckPermissionExists1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
-        const response = await this.checkPermissionExists1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Decodes a Base64URL perm_bits bitset taken from an access token back into sorted permission code strings for diagnostics. Use this tool to inspect what a token\'s perm_bits claim grants; do not use getUserPermissions, which reads a user\'s effective permissions from role assignments instead of from a token. Preconditions: the caller must hold security:permission:view, and perm_ver must equal the catalog version currently compiled into the service (see getPermissionCatalogVersion). Required inputs: perm_bits, the Base64URL-encoded BitSet string, and perm_ver, a positive integer catalog version. Emits a SECURITY_PERMISSION_DECODE_EXECUTE event; no records are changed. Returns 400 when perm_bits is blank, perm_ver is not positive, or perm_ver does not match the current catalog version. 
      * Decode Permission Bits for Diagnostics
      */
@@ -221,52 +139,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'permissionDecodeRequest',
                 'Required parameter "permissionDecodeRequest" was null or undefined when calling decodePermissionBits().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions/decode`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PermissionDecodeRequestToJSON(requestParameters['permissionDecodeRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PermissionDecodeResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Decodes a Base64URL perm_bits bitset taken from an access token back into sorted permission code strings for diagnostics. Use this tool to inspect what a token\'s perm_bits claim grants; do not use getUserPermissions, which reads a user\'s effective permissions from role assignments instead of from a token. Preconditions: the caller must hold security:permission:view, and perm_ver must equal the catalog version currently compiled into the service (see getPermissionCatalogVersion). Required inputs: perm_bits, the Base64URL-encoded BitSet string, and perm_ver, a positive integer catalog version. Emits a SECURITY_PERMISSION_DECODE_EXECUTE event; no records are changed. Returns 400 when perm_bits is blank, perm_ver is not positive, or perm_ver does not match the current catalog version. 
-     * Decode Permission Bits for Diagnostics
-     */
-    async decodePermissionBits(requestParameters: DecodePermissionBitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionDecodeResponse> {
-        const response = await this.decodePermissionBitsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Decodes a Base64URL perm_bits bitset taken from an access token back into sorted permission code strings for diagnostics. Use this tool to inspect what a token\'s perm_bits claim grants; do not use getUserPermissions, which reads a user\'s effective permissions from role assignments instead of from a token. Preconditions: the caller must hold security:permission:view, and perm_ver must equal the catalog version currently compiled into the service (see getPermissionCatalogVersion). Required inputs: perm_bits, the Base64URL-encoded BitSet string, and perm_ver, a positive integer catalog version. Emits a SECURITY_PERMISSION_DECODE_EXECUTE event; no records are changed. Returns 400 when perm_bits is blank, perm_ver is not positive, or perm_ver does not match the current catalog version. 
-     * Decode Permission Bits for Diagnostics
-     */
-    async decodePermissionBits1Raw(requestParameters: DecodePermissionBits1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PermissionDecodeResponse>> {
-        if (requestParameters['permissionDecodeRequest'] == null) {
-            throw new runtime.RequiredError(
-                'permissionDecodeRequest',
-                'Required parameter "permissionDecodeRequest" was null or undefined when calling decodePermissionBits1().'
             );
         }
 
@@ -299,8 +171,8 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      * Decodes a Base64URL perm_bits bitset taken from an access token back into sorted permission code strings for diagnostics. Use this tool to inspect what a token\'s perm_bits claim grants; do not use getUserPermissions, which reads a user\'s effective permissions from role assignments instead of from a token. Preconditions: the caller must hold security:permission:view, and perm_ver must equal the catalog version currently compiled into the service (see getPermissionCatalogVersion). Required inputs: perm_bits, the Base64URL-encoded BitSet string, and perm_ver, a positive integer catalog version. Emits a SECURITY_PERMISSION_DECODE_EXECUTE event; no records are changed. Returns 400 when perm_bits is blank, perm_ver is not positive, or perm_ver does not match the current catalog version. 
      * Decode Permission Bits for Diagnostics
      */
-    async decodePermissionBits1(requestParameters: DecodePermissionBits1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionDecodeResponse> {
-        const response = await this.decodePermissionBits1Raw(requestParameters, initOverrides);
+    async decodePermissionBits(requestParameters: DecodePermissionBitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionDecodeResponse> {
+        const response = await this.decodePermissionBitsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -313,49 +185,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'id',
                 'Required parameter "id" was null or undefined when calling getPermissionById().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PermissionDtoFromJSON(jsonValue));
-    }
-
-    /**
-     * Returns a single registered permission by its UUID identifier, including name, domain, description, and deprecation flag. Use this tool when the permission id is already known; use listPermissions instead to search by domain or page through the registry. Preconditions: the caller must hold security:permission:view and the permission must exist in the registry. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no permission exists for the supplied id. 
-     * Get Permission by Identifier
-     */
-    async getPermissionById(requestParameters: GetPermissionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionDto> {
-        const response = await this.getPermissionByIdRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns a single registered permission by its UUID identifier, including name, domain, description, and deprecation flag. Use this tool when the permission id is already known; use listPermissions instead to search by domain or page through the registry. Preconditions: the caller must hold security:permission:view and the permission must exist in the registry. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no permission exists for the supplied id. 
-     * Get Permission by Identifier
-     */
-    async getPermissionById1Raw(requestParameters: GetPermissionById1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PermissionDto>> {
-        if (requestParameters['id'] == null) {
-            throw new runtime.RequiredError(
-                'id',
-                'Required parameter "id" was null or undefined when calling getPermissionById1().'
             );
         }
 
@@ -385,8 +214,8 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      * Returns a single registered permission by its UUID identifier, including name, domain, description, and deprecation flag. Use this tool when the permission id is already known; use listPermissions instead to search by domain or page through the registry. Preconditions: the caller must hold security:permission:view and the permission must exist in the registry. Required inputs: id (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no permission exists for the supplied id. 
      * Get Permission by Identifier
      */
-    async getPermissionById1(requestParameters: GetPermissionById1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionDto> {
-        const response = await this.getPermissionById1Raw(requestParameters, initOverrides);
+    async getPermissionById(requestParameters: GetPermissionByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionDto> {
+        const response = await this.getPermissionByIdRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -419,90 +248,10 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the permission catalog version compiled into this service build and the total number of permission codes in that catalog. Use this tool to check whether a cached perm_bits decoding is stale before calling decodePermissionBits; do not use listPermissions, which pages the database registry rather than the compiled catalog. Preconditions: none; the endpoint is public and requires no authentication. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection of the compiled PermissionCode catalog. Returns 200 in all cases; there are no business error conditions. 
-     * Get Current Permission Catalog Version
-     */
-    async getPermissionCatalogVersion1Raw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogVersionResponse>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/v1/users/permissions/catalog-version`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => CatalogVersionResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Returns the permission catalog version compiled into this service build and the total number of permission codes in that catalog. Use this tool to check whether a cached perm_bits decoding is stale before calling decodePermissionBits; do not use listPermissions, which pages the database registry rather than the compiled catalog. Preconditions: none; the endpoint is public and requires no authentication. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection of the compiled PermissionCode catalog. Returns 200 in all cases; there are no business error conditions. 
-     * Get Current Permission Catalog Version
-     */
-    async getPermissionCatalogVersion1(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogVersionResponse> {
-        const response = await this.getPermissionCatalogVersion1Raw(initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Returns a paged list of registered permissions, optionally filtered to a single domain. Use this tool to browse or search the permission registry; use getPermissionById instead when the UUID is already known, and getRoleDefaultPermissions to see what a role name expands to. Preconditions: the caller must hold security:permission:view. Required inputs: none are mandatory; domain is an optional filter, and page, size, and sort follow Spring pageable defaults (page 0, size 20). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when nothing matches, and 400 when pagination parameters are malformed. 
      * List Registered Permissions
      */
     async listPermissionsRaw(requestParameters: ListPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Page>> {
-        const queryParameters: any = {};
-
-        if (requestParameters['domain'] != null) {
-            queryParameters['domain'] = requestParameters['domain'];
-        }
-
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
-
-        if (requestParameters['size'] != null) {
-            queryParameters['size'] = requestParameters['size'];
-        }
-
-        if (requestParameters['sort'] != null) {
-            queryParameters['sort'] = requestParameters['sort'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PageFromJSON(jsonValue));
-    }
-
-    /**
-     * Returns a paged list of registered permissions, optionally filtered to a single domain. Use this tool to browse or search the permission registry; use getPermissionById instead when the UUID is already known, and getRoleDefaultPermissions to see what a role name expands to. Preconditions: the caller must hold security:permission:view. Required inputs: none are mandatory; domain is an optional filter, and page, size, and sort follow Spring pageable defaults (page 0, size 20). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when nothing matches, and 400 when pagination parameters are malformed. 
-     * List Registered Permissions
-     */
-    async listPermissions(requestParameters: ListPermissionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Page> {
-        const response = await this.listPermissionsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns a paged list of registered permissions, optionally filtered to a single domain. Use this tool to browse or search the permission registry; use getPermissionById instead when the UUID is already known, and getRoleDefaultPermissions to see what a role name expands to. Preconditions: the caller must hold security:permission:view. Required inputs: none are mandatory; domain is an optional filter, and page, size, and sort follow Spring pageable defaults (page 0, size 20). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when nothing matches, and 400 when pagination parameters are malformed. 
-     * List Registered Permissions
-     */
-    async listPermissions1Raw(requestParameters: ListPermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Page>> {
         const queryParameters: any = {};
 
         if (requestParameters['domain'] != null) {
@@ -545,8 +294,8 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      * Returns a paged list of registered permissions, optionally filtered to a single domain. Use this tool to browse or search the permission registry; use getPermissionById instead when the UUID is already known, and getRoleDefaultPermissions to see what a role name expands to. Preconditions: the caller must hold security:permission:view. Required inputs: none are mandatory; domain is an optional filter, and page, size, and sort follow Spring pageable defaults (page 0, size 20). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty page when nothing matches, and 400 when pagination parameters are malformed. 
      * List Registered Permissions
      */
-    async listPermissions1(requestParameters: ListPermissions1Request = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Page> {
-        const response = await this.listPermissions1Raw(requestParameters, initOverrides);
+    async listPermissions(requestParameters: ListPermissionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Page> {
+        const response = await this.listPermissionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -559,49 +308,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'domain',
                 'Required parameter "domain" was null or undefined when calling listPermissionsByDomain().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions/domain/{domain}`.replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters['domain']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PermissionDtoFromJSON));
-    }
-
-    /**
-     * Returns every registered permission for one domain as an unpaged list. Use this tool when a complete domain snapshot is needed; use listPermissions instead when paging or when no domain filter applies. Preconditions: the caller must hold security:permission:view. Required inputs: domain as a path parameter, matching the first segment of the permission name (for example catalog in catalog:product:view). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the domain has no registered permissions; an unknown domain is not an error. 
-     * List Permissions for One Domain
-     */
-    async listPermissionsByDomain(requestParameters: ListPermissionsByDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PermissionDto>> {
-        const response = await this.listPermissionsByDomainRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns every registered permission for one domain as an unpaged list. Use this tool when a complete domain snapshot is needed; use listPermissions instead when paging or when no domain filter applies. Preconditions: the caller must hold security:permission:view. Required inputs: domain as a path parameter, matching the first segment of the permission name (for example catalog in catalog:product:view). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the domain has no registered permissions; an unknown domain is not an error. 
-     * List Permissions for One Domain
-     */
-    async listPermissionsByDomain1Raw(requestParameters: ListPermissionsByDomain1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PermissionDto>>> {
-        if (requestParameters['domain'] == null) {
-            throw new runtime.RequiredError(
-                'domain',
-                'Required parameter "domain" was null or undefined when calling listPermissionsByDomain1().'
             );
         }
 
@@ -631,8 +337,8 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      * Returns every registered permission for one domain as an unpaged list. Use this tool when a complete domain snapshot is needed; use listPermissions instead when paging or when no domain filter applies. Preconditions: the caller must hold security:permission:view. Required inputs: domain as a path parameter, matching the first segment of the permission name (for example catalog in catalog:product:view). No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the domain has no registered permissions; an unknown domain is not an error. 
      * List Permissions for One Domain
      */
-    async listPermissionsByDomain1(requestParameters: ListPermissionsByDomain1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PermissionDto>> {
-        const response = await this.listPermissionsByDomain1Raw(requestParameters, initOverrides);
+    async listPermissionsByDomain(requestParameters: ListPermissionsByDomainRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PermissionDto>> {
+        const response = await this.listPermissionsByDomainRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -645,52 +351,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'permissionRegistrationRequest',
                 'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerModulePermissions().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:register"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions/register`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PermissionRegistrationRequestToJSON(requestParameters['permissionRegistrationRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PermissionRegistrationResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Registers or updates a module\'s permission manifest in the central registry; this is the endpoint every pos module\'s permission-registry initializer calls at startup. Use this tool for idempotent bulk manifest registration that tolerates partial failure; do not use registerPermissionsContract, which rejects the entire payload on the first invalid key. Preconditions: the caller must hold security:permission:register (module initializers authenticate with an internal service token). Required inputs: serviceName and a non-empty permissions list of name and description entries; names must match domain:resource:action, while domain and version are informational. Emits a SECURITY_PERMISSION_REGISTER event; new names are inserted (with a bit index when the compiled catalog defines one), changed descriptions are updated, and unchanged or invalid entries are counted as skipped. Returns 400 when serviceName is blank or permissions is empty, and 400 with success=false and a per-entry errors list when every entry failed; partial failures still return 200 with the errors listed in the response. 
-     * Register Module Permission Manifest
-     */
-    async registerModulePermissions(requestParameters: RegisterModulePermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionRegistrationResponse> {
-        const response = await this.registerModulePermissionsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Registers or updates a module\'s permission manifest in the central registry; this is the endpoint every pos module\'s permission-registry initializer calls at startup. Use this tool for idempotent bulk manifest registration that tolerates partial failure; do not use registerPermissionsContract, which rejects the entire payload on the first invalid key. Preconditions: the caller must hold security:permission:register (module initializers authenticate with an internal service token). Required inputs: serviceName and a non-empty permissions list of name and description entries; names must match domain:resource:action, while domain and version are informational. Emits a SECURITY_PERMISSION_REGISTER event; new names are inserted (with a bit index when the compiled catalog defines one), changed descriptions are updated, and unchanged or invalid entries are counted as skipped. Returns 400 when serviceName is blank or permissions is empty, and 400 with success=false and a per-entry errors list when every entry failed; partial failures still return 200 with the errors listed in the response. 
-     * Register Module Permission Manifest
-     */
-    async registerModulePermissions1Raw(requestParameters: RegisterModulePermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PermissionRegistrationResponse>> {
-        if (requestParameters['permissionRegistrationRequest'] == null) {
-            throw new runtime.RequiredError(
-                'permissionRegistrationRequest',
-                'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerModulePermissions1().'
             );
         }
 
@@ -723,8 +383,8 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      * Registers or updates a module\'s permission manifest in the central registry; this is the endpoint every pos module\'s permission-registry initializer calls at startup. Use this tool for idempotent bulk manifest registration that tolerates partial failure; do not use registerPermissionsContract, which rejects the entire payload on the first invalid key. Preconditions: the caller must hold security:permission:register (module initializers authenticate with an internal service token). Required inputs: serviceName and a non-empty permissions list of name and description entries; names must match domain:resource:action, while domain and version are informational. Emits a SECURITY_PERMISSION_REGISTER event; new names are inserted (with a bit index when the compiled catalog defines one), changed descriptions are updated, and unchanged or invalid entries are counted as skipped. Returns 400 when serviceName is blank or permissions is empty, and 400 with success=false and a per-entry errors list when every entry failed; partial failures still return 200 with the errors listed in the response. 
      * Register Module Permission Manifest
      */
-    async registerModulePermissions1(requestParameters: RegisterModulePermissions1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionRegistrationResponse> {
-        const response = await this.registerModulePermissions1Raw(requestParameters, initOverrides);
+    async registerModulePermissions(requestParameters: RegisterModulePermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PermissionRegistrationResponse> {
+        const response = await this.registerModulePermissionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -775,52 +435,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Registers or updates permissions from an RBAC contract payload, upserting each named permission and returning the resulting permission list. Use this tool for strict all-or-nothing permission upserts; do not use registerModulePermissions, the lenient startup manifest endpoint that skips invalid entries and reports per-entry counters instead of failing the request. Preconditions: the caller must hold security:permission:register, and every permission name must match domain:resource:action (or the legacy domain:action form). Required inputs: permissions, a list of name and description definitions; serviceName is optional here and defaults to pos-security-service as the registering service. Emits a SECURITY_PERMISSION_REGISTER event; existing permissions with the same name are overwritten in place, including description and registering service. Returns 400 when any permission key fails the format check, rejecting the entire request. 
-     * Register Permissions via RBAC Contract
-     */
-    async registerPermissionsContract1Raw(requestParameters: RegisterPermissionsContract1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PermissionDto>>> {
-        if (requestParameters['permissionRegistrationRequest'] == null) {
-            throw new runtime.RequiredError(
-                'permissionRegistrationRequest',
-                'Required parameter "permissionRegistrationRequest" was null or undefined when calling registerPermissionsContract1().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:register"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions/registerPermissions`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: PermissionRegistrationRequestToJSON(requestParameters['permissionRegistrationRequest']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PermissionDtoFromJSON));
-    }
-
-    /**
-     * Registers or updates permissions from an RBAC contract payload, upserting each named permission and returning the resulting permission list. Use this tool for strict all-or-nothing permission upserts; do not use registerModulePermissions, the lenient startup manifest endpoint that skips invalid entries and reports per-entry counters instead of failing the request. Preconditions: the caller must hold security:permission:register, and every permission name must match domain:resource:action (or the legacy domain:action form). Required inputs: permissions, a list of name and description definitions; serviceName is optional here and defaults to pos-security-service as the registering service. Emits a SECURITY_PERMISSION_REGISTER event; existing permissions with the same name are overwritten in place, including description and registering service. Returns 400 when any permission key fails the format check, rejecting the entire request. 
-     * Register Permissions via RBAC Contract
-     */
-    async registerPermissionsContract1(requestParameters: RegisterPermissionsContract1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PermissionDto>> {
-        const response = await this.registerPermissionsContract1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Checks whether a permission name string matches the required domain:resource:action format (or the legacy two-segment domain:action form) without touching the database. Use this tool to pre-validate a name before registration; use checkPermissionExists instead to test whether the name is actually registered. Preconditions: the caller must hold security:permission:view. Required inputs: permissionName as a path parameter; each segment must start with a letter and may contain letters, digits, underscores, and hyphens. No events are emitted and no state changes; this is a pure format check. Returns 200 with a plain boolean body; a malformed name yields false, never an error status. 
      * Validate Permission Name Format
      */
@@ -829,53 +443,6 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'permissionName',
                 'Required parameter "permissionName" was null or undefined when calling validatePermissionName().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/permissions/validate/{permissionName}`.replace(`{${"permissionName"}}`, encodeURIComponent(String(requestParameters['permissionName']))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<boolean>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
-    }
-
-    /**
-     * Checks whether a permission name string matches the required domain:resource:action format (or the legacy two-segment domain:action form) without touching the database. Use this tool to pre-validate a name before registration; use checkPermissionExists instead to test whether the name is actually registered. Preconditions: the caller must hold security:permission:view. Required inputs: permissionName as a path parameter; each segment must start with a letter and may contain letters, digits, underscores, and hyphens. No events are emitted and no state changes; this is a pure format check. Returns 200 with a plain boolean body; a malformed name yields false, never an error status. 
-     * Validate Permission Name Format
-     */
-    async validatePermissionName(requestParameters: ValidatePermissionNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
-        const response = await this.validatePermissionNameRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Checks whether a permission name string matches the required domain:resource:action format (or the legacy two-segment domain:action form) without touching the database. Use this tool to pre-validate a name before registration; use checkPermissionExists instead to test whether the name is actually registered. Preconditions: the caller must hold security:permission:view. Required inputs: permissionName as a path parameter; each segment must start with a letter and may contain letters, digits, underscores, and hyphens. No events are emitted and no state changes; this is a pure format check. Returns 200 with a plain boolean body; a malformed name yields false, never an error status. 
-     * Validate Permission Name Format
-     */
-    async validatePermissionName1Raw(requestParameters: ValidatePermissionName1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
-        if (requestParameters['permissionName'] == null) {
-            throw new runtime.RequiredError(
-                'permissionName',
-                'Required parameter "permissionName" was null or undefined when calling validatePermissionName1().'
             );
         }
 
@@ -909,8 +476,8 @@ export class PermissionRegistryApi extends runtime.BaseAPI {
      * Checks whether a permission name string matches the required domain:resource:action format (or the legacy two-segment domain:action form) without touching the database. Use this tool to pre-validate a name before registration; use checkPermissionExists instead to test whether the name is actually registered. Preconditions: the caller must hold security:permission:view. Required inputs: permissionName as a path parameter; each segment must start with a letter and may contain letters, digits, underscores, and hyphens. No events are emitted and no state changes; this is a pure format check. Returns 200 with a plain boolean body; a malformed name yields false, never an error status. 
      * Validate Permission Name Format
      */
-    async validatePermissionName1(requestParameters: ValidatePermissionName1Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
-        const response = await this.validatePermissionName1Raw(requestParameters, initOverrides);
+    async validatePermissionName(requestParameters: ValidatePermissionNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
+        const response = await this.validatePermissionNameRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

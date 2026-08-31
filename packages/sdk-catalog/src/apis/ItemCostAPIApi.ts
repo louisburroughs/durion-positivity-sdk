@@ -50,7 +50,7 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
      * Returns every recorded cost change for an item, newest first, each entry naming the cost type changed, old and new value, the actor, the change source and any reason code. Use this tool to trace how a cost reached its current value; use getItemCosts instead for just the current numbers. Preconditions: none; entries exist only after manual standard-cost updates or purchase-order receipt events have touched the item. Required inputs: itemId (UUID) as a path parameter; there is no request body and no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the item has no cost history, so an empty result is not an error condition. 
      * Get Item Cost Audit History
      */
-    async getItemCostAuditHistoryRaw(requestParameters: GetItemCostAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ItemCostAuditDto>> {
+    async getItemCostAuditHistoryRaw(requestParameters: GetItemCostAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ItemCostAuditDto>>> {
         if (requestParameters['itemId'] == null) {
             throw new runtime.RequiredError(
                 'itemId',
@@ -77,14 +77,14 @@ export class ItemCostAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ItemCostAuditDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ItemCostAuditDtoFromJSON));
     }
 
     /**
      * Returns every recorded cost change for an item, newest first, each entry naming the cost type changed, old and new value, the actor, the change source and any reason code. Use this tool to trace how a cost reached its current value; use getItemCosts instead for just the current numbers. Preconditions: none; entries exist only after manual standard-cost updates or purchase-order receipt events have touched the item. Required inputs: itemId (UUID) as a path parameter; there is no request body and no paging. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the item has no cost history, so an empty result is not an error condition. 
      * Get Item Cost Audit History
      */
-    async getItemCostAuditHistory(requestParameters: GetItemCostAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ItemCostAuditDto> {
+    async getItemCostAuditHistory(requestParameters: GetItemCostAuditHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ItemCostAuditDto>> {
         const response = await this.getItemCostAuditHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }

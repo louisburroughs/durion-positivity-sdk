@@ -157,7 +157,7 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
      * Returns every MSRP record for a product — past, current and scheduled — ordered by effective start date, newest first. Use this tool to audit price history or find an msrpId to edit; use getActiveProductMsrp instead for just the record in force on a date. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no filtering or paging. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist, and 200 with an empty array when it has no MSRP records. 
      * List Product MSRP History
      */
-    async listProductMsrpHistoryRaw(requestParameters: ListProductMsrpHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductMsrpDto>> {
+    async listProductMsrpHistoryRaw(requestParameters: ListProductMsrpHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ProductMsrpDto>>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -184,14 +184,14 @@ export class ProductMSRPAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ProductMsrpDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ProductMsrpDtoFromJSON));
     }
 
     /**
      * Returns every MSRP record for a product — past, current and scheduled — ordered by effective start date, newest first. Use this tool to audit price history or find an msrpId to edit; use getActiveProductMsrp instead for just the record in force on a date. Preconditions: the product must exist. Required inputs: productId (UUID) as a path parameter; there is no filtering or paging. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the product does not exist, and 200 with an empty array when it has no MSRP records. 
      * List Product MSRP History
      */
-    async listProductMsrpHistory(requestParameters: ListProductMsrpHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductMsrpDto> {
+    async listProductMsrpHistory(requestParameters: ListProductMsrpHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ProductMsrpDto>> {
         const response = await this.listProductMsrpHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }

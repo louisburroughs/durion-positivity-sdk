@@ -551,7 +551,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
      * Returns the full product records of a product\'s recorded replacements, resolved from its replacement options in priority order with duplicates and dangling references dropped. Use this tool when selling and a substitute product\'s details are needed directly; use listProductReplacements instead for the raw option rows with priority and notes. Preconditions: the product must exist; substitutes appear only after replacements were recorded via addProductReplacement. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id, and 200 with an empty array when no replacement products resolve. 
      * Get Substitute Parts
      */
-    async getPartSubstitutesRaw(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ProductDto>> {
+    async getPartSubstitutesRaw(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<ProductDto>>> {
         if (requestParameters['productId'] == null) {
             throw new runtime.RequiredError(
                 'productId',
@@ -578,14 +578,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ProductDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ProductDtoFromJSON));
     }
 
     /**
      * Returns the full product records of a product\'s recorded replacements, resolved from its replacement options in priority order with duplicates and dangling references dropped. Use this tool when selling and a substitute product\'s details are needed directly; use listProductReplacements instead for the raw option rows with priority and notes. Preconditions: the product must exist; substitutes appear only after replacements were recorded via addProductReplacement. Required inputs: productId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no product exists for the supplied id, and 200 with an empty array when no replacement products resolve. 
      * Get Substitute Parts
      */
-    async getPartSubstitutes(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProductDto> {
+    async getPartSubstitutes(requestParameters: GetPartSubstitutesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<ProductDto>> {
         const response = await this.getPartSubstitutesRaw(requestParameters, initOverrides);
         return await response.value();
     }

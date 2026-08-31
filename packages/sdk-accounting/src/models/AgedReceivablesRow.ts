@@ -32,7 +32,7 @@ export interface AgedReceivablesRow {
      */
     customerId: string;
     /**
-     * Customer display name
+     * Customer display name. Always null on this report — no directory lookup is performed; resolve the name from the customer directory using customerId.
      * @type {string}
      * @memberof AgedReceivablesRow
      */

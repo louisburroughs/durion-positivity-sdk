@@ -120,7 +120,7 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
      * Returns the substitution, reasoned-return, and correction adjustment events for a workorder\'s parts, newest first, either for the whole workorder or filtered to one part. Use this tool when auditing part swaps and corrections; use getPartsUsageHistory instead for the plain issue, consume, and return quantity movements. Preconditions: none — an unknown workorder or part simply yields an empty list, and the partId filter is not validated against the workorder in the path. Required inputs: workorderId (UUID) as a path parameter; partId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the adjustment events, possibly empty. 
      * Get Part Adjustment History
      */
-    async getPartAdjustmentHistoryRaw(requestParameters: GetPartAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderPartAdjustmentEventResponse>> {
+    async getPartAdjustmentHistoryRaw(requestParameters: GetPartAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderPartAdjustmentEventResponse>>> {
         if (requestParameters['workorderId'] == null) {
             throw new runtime.RequiredError(
                 'workorderId',
@@ -151,14 +151,14 @@ export class WorkorderPartAdjustmentsApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkorderPartAdjustmentEventResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(WorkorderPartAdjustmentEventResponseFromJSON));
     }
 
     /**
      * Returns the substitution, reasoned-return, and correction adjustment events for a workorder\'s parts, newest first, either for the whole workorder or filtered to one part. Use this tool when auditing part swaps and corrections; use getPartsUsageHistory instead for the plain issue, consume, and return quantity movements. Preconditions: none — an unknown workorder or part simply yields an empty list, and the partId filter is not validated against the workorder in the path. Required inputs: workorderId (UUID) as a path parameter; partId (UUID) is an optional query filter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the adjustment events, possibly empty. 
      * Get Part Adjustment History
      */
-    async getPartAdjustmentHistory(requestParameters: GetPartAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderPartAdjustmentEventResponse> {
+    async getPartAdjustmentHistory(requestParameters: GetPartAdjustmentHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderPartAdjustmentEventResponse>> {
         const response = await this.getPartAdjustmentHistoryRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -8,6 +8,7 @@ export * from './PeopleExceptionsApi';
 export * from './PeopleReportsAPIApi';
 export * from './PeopleStaffingAssignmentsApi';
 export * from './PeopleTimeEntriesApi';
+export * from './StaffingAssignmentBulkIngestAPIApi';
 export * from './TimeEntryApprovalAPIApi';
 export * from './TimePeriodManagementAPIApi';
 export * from './TimekeepingApprovalAPIApi';

@@ -123,7 +123,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
      * Returns the authenticated mechanic\'s currently running timer entries, each with its workorder, workorder item, labor code, and start time. Use this tool to check whether a timer is already running before startTimer; do not use getJobTimeTotals, which aggregates completed time rather than live timers. Preconditions: the authenticated user id in the security context must be a UUID — the mechanic is always the caller, never a parameter. Required inputs: none; identity comes entirely from the security context. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the authenticated user id is missing or not a UUID, and 200 with an empty list when no timer is running. 
      * Get Authenticated Mechanic Active Timers
      */
-    async getActiveTimersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkexecTimerEntryResponse>> {
+    async getActiveTimersRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkexecTimerEntryResponse>>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -143,14 +143,14 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => WorkexecTimerEntryResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(WorkexecTimerEntryResponseFromJSON));
     }
 
     /**
      * Returns the authenticated mechanic\'s currently running timer entries, each with its workorder, workorder item, labor code, and start time. Use this tool to check whether a timer is already running before startTimer; do not use getJobTimeTotals, which aggregates completed time rather than live timers. Preconditions: the authenticated user id in the security context must be a UUID — the mechanic is always the caller, never a parameter. Required inputs: none; identity comes entirely from the security context. No events are emitted and no state changes; this is a read-only projection. Returns 400 when the authenticated user id is missing or not a UUID, and 200 with an empty list when no timer is running. 
      * Get Authenticated Mechanic Active Timers
      */
-    async getActiveTimers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkexecTimerEntryResponse> {
+    async getActiveTimers(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkexecTimerEntryResponse>> {
         const response = await this.getActiveTimersRaw(initOverrides);
         return await response.value();
     }

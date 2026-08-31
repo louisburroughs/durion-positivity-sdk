@@ -63,6 +63,18 @@ export interface RoleDto {
      */
     lastModifiedBy?: string;
     /**
+     * Whether the role participates in MCP persona resolution
+     * @type {boolean}
+     * @memberof RoleDto
+     */
+    mcpPersonaEligible?: boolean;
+    /**
+     * MCP persona resolution priority, lowest first; null leaves the role unranked
+     * @type {number}
+     * @memberof RoleDto
+     */
+    mcpPersonaRank?: number;
+    /**
      * Role name
      * @type {string}
      * @memberof RoleDto
@@ -74,6 +86,24 @@ export interface RoleDto {
      * @memberof RoleDto
      */
     permissions?: Set<PermissionDto>;
+    /**
+     * MCP persona slot: what the caller works on
+     * @type {string}
+     * @memberof RoleDto
+     */
+    personaFocus?: string;
+    /**
+     * MCP persona slot: who the caller is, in the second person (#1613)
+     * @type {string}
+     * @memberof RoleDto
+     */
+    personaTitle?: string;
+    /**
+     * MCP persona slot: how to speak to the caller
+     * @type {string}
+     * @memberof RoleDto
+     */
+    personaTone?: string;
 }
 
 /**
@@ -101,8 +131,13 @@ export function RoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): R
         'id': json['id'],
         'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
+        'mcpPersonaEligible': json['mcpPersonaEligible'] == null ? undefined : json['mcpPersonaEligible'],
+        'mcpPersonaRank': json['mcpPersonaRank'] == null ? undefined : json['mcpPersonaRank'],
         'name': json['name'],
         'permissions': json['permissions'] == null ? undefined : (new Set((json['permissions'] as Array<any>).map(PermissionDtoFromJSON))),
+        'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
+        'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
+        'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
     };
 }
 
@@ -118,8 +153,13 @@ export function RoleDtoToJSON(value?: RoleDto | null): any {
         'id': value['id'],
         'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'lastModifiedBy': value['lastModifiedBy'],
+        'mcpPersonaEligible': value['mcpPersonaEligible'],
+        'mcpPersonaRank': value['mcpPersonaRank'],
         'name': value['name'],
         'permissions': value['permissions'] == null ? undefined : (Array.from(value['permissions'] as Set<any>).map(PermissionDtoToJSON)),
+        'personaFocus': value['personaFocus'],
+        'personaTitle': value['personaTitle'],
+        'personaTone': value['personaTone'],
     };
 }
 

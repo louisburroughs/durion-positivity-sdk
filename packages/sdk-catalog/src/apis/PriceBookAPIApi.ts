@@ -274,7 +274,7 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
      * Returns every rule in a price book — ACTIVE and INACTIVE alike — with target, pricing logic, condition, priority, effective window, status and version. Use this tool to inspect a book\'s rule set; use resolveProductPrice instead to evaluate which rule wins for a concrete product and context. Preconditions: the price book must exist. Required inputs: priceBookId (UUID) as a path parameter; there is no filtering or paging. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no price book exists for the supplied id, and 200 with an empty array when the book has no rules. 
      * List Price Book Rules
      */
-    async listPriceBookRulesRaw(requestParameters: ListPriceBookRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceBookRuleDto>> {
+    async listPriceBookRulesRaw(requestParameters: ListPriceBookRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PriceBookRuleDto>>> {
         if (requestParameters['priceBookId'] == null) {
             throw new runtime.RequiredError(
                 'priceBookId',
@@ -301,14 +301,14 @@ export class PriceBookAPIApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => PriceBookRuleDtoFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PriceBookRuleDtoFromJSON));
     }
 
     /**
      * Returns every rule in a price book — ACTIVE and INACTIVE alike — with target, pricing logic, condition, priority, effective window, status and version. Use this tool to inspect a book\'s rule set; use resolveProductPrice instead to evaluate which rule wins for a concrete product and context. Preconditions: the price book must exist. Required inputs: priceBookId (UUID) as a path parameter; there is no filtering or paging. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no price book exists for the supplied id, and 200 with an empty array when the book has no rules. 
      * List Price Book Rules
      */
-    async listPriceBookRules(requestParameters: ListPriceBookRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceBookRuleDto> {
+    async listPriceBookRules(requestParameters: ListPriceBookRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PriceBookRuleDto>> {
         const response = await this.listPriceBookRulesRaw(requestParameters, initOverrides);
         return await response.value();
     }

@@ -15,16 +15,37 @@
 
 import * as runtime from '../runtime';
 import type {
+  PagedResponseTimeEntrySummary,
   TimeEntryDecisionBatchRequest,
+  TimeEntrySummary,
 } from '../models/index';
 import {
+    PagedResponseTimeEntrySummaryFromJSON,
+    PagedResponseTimeEntrySummaryToJSON,
     TimeEntryDecisionBatchRequestFromJSON,
     TimeEntryDecisionBatchRequestToJSON,
+    TimeEntrySummaryFromJSON,
+    TimeEntrySummaryToJSON,
 } from '../models/index';
 
 export interface ApproveTimeEntriesBatchRequest {
     timeEntryDecisionBatchRequest: TimeEntryDecisionBatchRequest;
     xCorrelationId?: string;
+}
+
+export interface GetTimeEntryRequest {
+    timeEntryId: string;
+    timeZone?: string;
+}
+
+export interface ListTimeEntriesRequest {
+    status?: ListTimeEntriesStatusEnum;
+    workDate?: Date;
+    timeZone?: string;
+    employeeId?: string;
+    locationId?: string;
+    page?: number;
+    size?: number;
 }
 
 export interface RejectTimeEntriesBatchRequest {
@@ -88,6 +109,117 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns a single attendance time entry by id, with its clock-in, clock-out, break minutes, status and approval decision. Use this tool for the detail view opened from an approvals-queue row; do not use listTimeEntries, which pages over many entries, and do not use getTimeEntryAdjustments, which returns the proposed corrections attached to an entry rather than the entry itself. Preconditions: an entry must exist for the supplied timeEntryId. Required inputs: timeEntryId (UUID) path parameter; timeZone is optional and defaults to UTC, affecting only the derived workDate. Emits a PEOPLE_TIME_ENTRY_GET audit event but changes no state. Returns 404 when no entry has that id, and 400 when timeZone is not a known zone id. 
+     * Get One Attendance Time Entry
+     */
+    async getTimeEntryRaw(requestParameters: GetTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimeEntrySummary>> {
+        if (requestParameters['timeEntryId'] == null) {
+            throw new runtime.RequiredError(
+                'timeEntryId',
+                'Required parameter "timeEntryId" was null or undefined when calling getTimeEntry().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['timeZone'] != null) {
+            queryParameters['timeZone'] = requestParameters['timeZone'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeEntry:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/timeEntries/{timeEntryId}`.replace(`{${"timeEntryId"}}`, encodeURIComponent(String(requestParameters['timeEntryId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TimeEntrySummaryFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a single attendance time entry by id, with its clock-in, clock-out, break minutes, status and approval decision. Use this tool for the detail view opened from an approvals-queue row; do not use listTimeEntries, which pages over many entries, and do not use getTimeEntryAdjustments, which returns the proposed corrections attached to an entry rather than the entry itself. Preconditions: an entry must exist for the supplied timeEntryId. Required inputs: timeEntryId (UUID) path parameter; timeZone is optional and defaults to UTC, affecting only the derived workDate. Emits a PEOPLE_TIME_ENTRY_GET audit event but changes no state. Returns 404 when no entry has that id, and 400 when timeZone is not a known zone id. 
+     * Get One Attendance Time Entry
+     */
+    async getTimeEntry(requestParameters: GetTimeEntryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimeEntrySummary> {
+        const response = await this.getTimeEntryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a page of attendance time entries — clock-in, clock-out and the break minutes inside that window — with each entry\'s status and approval decision, oldest submission first. Use this tool to build the approvals queue or to find the timeEntryId an approve or reject call needs; do not use listWorkexecWorkSessions, which returns time a technician spent on a workorder task. A time entry is attendance only and carries no workorder reference, so this endpoint cannot answer how long a job took. Preconditions: none; a page with an empty items list is returned rather than an error when nothing matches. Required inputs: none are mandatory. status, workDate, employeeId and locationId each narrow the result and are unfiltered when omitted; workDate is a calendar day resolved in timeZone, which defaults to UTC; page defaults to 0 and size to 20 with a maximum of 100. Emits a PEOPLE_TIME_ENTRY_LIST audit event but changes no state. Returns 200 with the page envelope, and 400 when timeZone is not a known zone id or the paging parameters are out of range. 
+     * List Attendance Time Entries For Approval
+     */
+    async listTimeEntriesRaw(requestParameters: ListTimeEntriesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseTimeEntrySummary>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['workDate'] != null) {
+            queryParameters['workDate'] = (requestParameters['workDate'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['timeZone'] != null) {
+            queryParameters['timeZone'] = requestParameters['timeZone'];
+        }
+
+        if (requestParameters['employeeId'] != null) {
+            queryParameters['employeeId'] = requestParameters['employeeId'];
+        }
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:timeEntry:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/timeEntries`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseTimeEntrySummaryFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a page of attendance time entries — clock-in, clock-out and the break minutes inside that window — with each entry\'s status and approval decision, oldest submission first. Use this tool to build the approvals queue or to find the timeEntryId an approve or reject call needs; do not use listWorkexecWorkSessions, which returns time a technician spent on a workorder task. A time entry is attendance only and carries no workorder reference, so this endpoint cannot answer how long a job took. Preconditions: none; a page with an empty items list is returned rather than an error when nothing matches. Required inputs: none are mandatory. status, workDate, employeeId and locationId each narrow the result and are unfiltered when omitted; workDate is a calendar day resolved in timeZone, which defaults to UTC; page defaults to 0 and size to 20 with a maximum of 100. Emits a PEOPLE_TIME_ENTRY_LIST audit event but changes no state. Returns 200 with the page envelope, and 400 when timeZone is not a known zone id or the paging parameters are out of range. 
+     * List Attendance Time Entries For Approval
+     */
+    async listTimeEntries(requestParameters: ListTimeEntriesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseTimeEntrySummary> {
+        const response = await this.listTimeEntriesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Rejects a batch of time entries, marking each SUBMITTED or PENDING_APPROVAL entry REJECTED with the supplied reason stored on the entry. Use this tool to send individually selected entries back with a reason; do not use approveTimeEntriesBatch, which approves them, and do not use rejectTimePeriod, which rejects a whole pay period per person. Preconditions: each entry must exist and be in SUBMITTED or PENDING_APPROVAL status, and the caller needs the people:timeEntry:reject authority for individual entries to succeed. Required inputs: decisions, a non-empty list where every element carries timeEntryId and a non-blank rejectionReason; one missing reason fails the entire request before any entry is touched. Emits a PEOPLE_TIME_ENTRY_REJECT event and writes an audit row per decision. Returns 200 with a per-entry result list (failure codes NOT_FOUND, ENTRY_NOT_PENDING, FORBIDDEN), and 400 when any decision lacks a rejectionReason. 
      * Batch Reject Submitted Time Entries
      */
@@ -137,4 +269,16 @@ export class TimeEntryApprovalAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListTimeEntriesStatusEnum {
+    Draft = 'DRAFT',
+    Submitted = 'SUBMITTED',
+    PendingApproval = 'PENDING_APPROVAL',
+    Approved = 'APPROVED',
+    Rejected = 'REJECTED'
 }
