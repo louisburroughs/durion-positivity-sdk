@@ -540,7 +540,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the user must exist, and the caller must either hold security:permission:view or be asking about themselves. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 403 when the caller is asking about another user without security:permission:view, and 404 when the user does not exist. 
      * Get User Permissions at Legacy Path
      */
     async getUserPermissionsLegacyRaw(requestParameters: GetUserPermissionsLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<PermissionDto>>> {
@@ -574,7 +574,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Returns the union of permissions granted through a user\'s currently effective role assignments, served at the legacy /permissions/user/{userId} path. Use this tool only for legacy callers; use getUserPermissions instead, which returns the same data at the canonical /v1/users/{userId}/permissions path. Preconditions: the user must exist, and the caller must either hold security:permission:view or be asking about themselves. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 403 when the caller is asking about another user without security:permission:view, and 404 when the user does not exist. 
      * Get User Permissions at Legacy Path
      */
     async getUserPermissionsLegacy(requestParameters: GetUserPermissionsLegacyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<PermissionDto>> {

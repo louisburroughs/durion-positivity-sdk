@@ -18,6 +18,7 @@ import type {
   CandidateSelectionRequest,
   ExceptionResolutionRequest,
   GoodsReceivedEvent,
+  PageVendorBillListRow,
   VendorBillMatchCandidateResponse,
   VendorBillResponse,
   VendorInvoiceReceivedEvent,
@@ -29,6 +30,8 @@ import {
     ExceptionResolutionRequestToJSON,
     GoodsReceivedEventFromJSON,
     GoodsReceivedEventToJSON,
+    PageVendorBillListRowFromJSON,
+    PageVendorBillListRowToJSON,
     VendorBillMatchCandidateResponseFromJSON,
     VendorBillMatchCandidateResponseToJSON,
     VendorBillResponseFromJSON,
@@ -51,6 +54,15 @@ export interface GetVendorBillByOriginEventIdRequest {
 
 export interface ListVendorBillMatchCandidatesRequest {
     invoiceEventId: string;
+}
+
+export interface ListVendorBillsRequest {
+    dueFrom: Date;
+    dueTo: Date;
+    status?: ListVendorBillsStatusEnum;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface MatchVendorInvoiceRequest {
@@ -248,6 +260,80 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Lists vendor bills whose due date falls in [dueFrom, dueTo], optionally filtered by status, ordered by due date ascending. Use this tool to browse or triage upcoming/overdue payables across vendors; do not use listApBills for this, which is scoped to APPROVED-only bills sorted for payment selection, and use getVendorBillById when the bill id is already known. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: dueFrom and dueTo (ISO dates, dueTo on or after dueFrom); the window cannot exceed 366 days, to bound the scan. status is an optional filter (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, APPROVED, REJECTED, PAID, VOIDED); page/size/sort are standard, though the due-date-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_VENDOR_BILL_LIST_VIEW audit event; no state changes. Returns 400 when dueTo is before dueFrom, the window exceeds 366 days, or status is not a recognized VendorBillStatus value. 
+     * List Vendor Bills By Due Date
+     */
+    async listVendorBillsRaw(requestParameters: ListVendorBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageVendorBillListRow>> {
+        if (requestParameters['dueFrom'] == null) {
+            throw new runtime.RequiredError(
+                'dueFrom',
+                'Required parameter "dueFrom" was null or undefined when calling listVendorBills().'
+            );
+        }
+
+        if (requestParameters['dueTo'] == null) {
+            throw new runtime.RequiredError(
+                'dueTo',
+                'Required parameter "dueTo" was null or undefined when calling listVendorBills().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['dueFrom'] != null) {
+            queryParameters['dueFrom'] = (requestParameters['dueFrom'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['dueTo'] != null) {
+            queryParameters['dueTo'] = (requestParameters['dueTo'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:analytics:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/vendor-bills`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PageVendorBillListRowFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists vendor bills whose due date falls in [dueFrom, dueTo], optionally filtered by status, ordered by due date ascending. Use this tool to browse or triage upcoming/overdue payables across vendors; do not use listApBills for this, which is scoped to APPROVED-only bills sorted for payment selection, and use getVendorBillById when the bill id is already known. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: dueFrom and dueTo (ISO dates, dueTo on or after dueFrom); the window cannot exceed 366 days, to bound the scan. status is an optional filter (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION, APPROVED, REJECTED, PAID, VOIDED); page/size/sort are standard, though the due-date-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_VENDOR_BILL_LIST_VIEW audit event; no state changes. Returns 400 when dueTo is before dueFrom, the window exceeds 366 days, or status is not a recognized VendorBillStatus value. 
+     * List Vendor Bills By Due Date
+     */
+    async listVendorBills(requestParameters: ListVendorBillsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageVendorBillListRow> {
+        const response = await this.listVendorBillsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Runs the three-way match of a received vendor invoice against pending goods-received bills: a HIGH_CONFIDENCE match with consistent quantities and prices auto-approves the bill, while a discrepancy, a MEDIUM confidence score or an AMBIGUOUS match parks it in MATCH_EXCEPTION. Use this tool when a vendor invoice arrives; do not use createVendorBillFromGoodsReceived, which records the receipt, and use resolveVendorBillMatchException or selectVendorBillMatchCandidate to clear exceptions. Preconditions: a bill in PENDING_RECEIPT_MATCH must exist for the vendor; an ambiguous outcome persists scored candidates for later operator selection. Required inputs: eventId, organizationId and vendorId (UUIDs), invoiceReference, invoiceDate and lineItems; dueDate is optional. Emits an ACCOUNTING_VENDOR_BILL_MATCH event; the returned bill\'s status conveys the outcome (APPROVED or MATCH_EXCEPTION), so callers must inspect it rather than assume approval. Returns 400 when no pending receipt matches the invoice or the payload fails validation. 
      * Match Vendor Invoice
      */
@@ -399,4 +485,17 @@ export class VendorBillAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListVendorBillsStatusEnum {
+    PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
+    MatchException = 'MATCH_EXCEPTION',
+    Approved = 'APPROVED',
+    Rejected = 'REJECTED',
+    Paid = 'PAID',
+    Voided = 'VOIDED'
 }

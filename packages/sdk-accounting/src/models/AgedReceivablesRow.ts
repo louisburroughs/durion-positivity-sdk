@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Per-customer aged receivables row with bucketed open invoice balances
+ * Per-customer aged receivables row with bucketed open invoice balances. Age is measured from the invoice due date, falling back to the invoice date when no due date is recorded; not-yet-due invoices are reported in the current bucket.
  * @export
  * @interface AgedReceivablesRow
  */

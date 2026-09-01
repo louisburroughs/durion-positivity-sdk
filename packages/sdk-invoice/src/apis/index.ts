@@ -4,6 +4,7 @@ export * from './BillingAuthorizationApi';
 export * from './BillingRulesApi';
 export * from './DepositCreditsApi';
 export * from './InvoiceApi';
+export * from './InvoiceAnalyticsApi';
 export * from './InvoiceArtifactControllerApi';
 export * from './InvoiceArtifactDownloadControllerApi';
 export * from './InvoiceSearchApi';

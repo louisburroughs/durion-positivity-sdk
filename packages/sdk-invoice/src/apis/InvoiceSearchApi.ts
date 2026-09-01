@@ -35,6 +35,10 @@ export interface SearchInvoiceLinesRequest {
 
 export interface SearchInvoicesRequest {
     q?: string;
+    status?: SearchInvoicesStatusEnum;
+    issuedFrom?: Date;
+    issuedTo?: Date;
+    customerId?: string;
     page?: number;
     size?: number;
     sort?: Array<string>;
@@ -71,7 +75,7 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+            const tokenString = await token("bearerAuth", ["invoice:invoice:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -97,14 +101,30 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Use this tool to locate an invoice when its id is unknown; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank or missing q short-circuits to an empty page rather than listing all invoices. Required inputs: q (free-text term) plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed. 
-     * Search Invoices by Free Text
+     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Combinable with structured filters — status, an issued-date window, and customerId — each independently optional and ANDed against the free-text match and against each other. Use this tool to locate an invoice when its id is unknown; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank/missing q with every structured filter also absent short-circuits to an empty page rather than listing all invoices; a blank q with at least one structured filter set performs a filtered listing instead. Required inputs: none are individually required — q, status, issuedFrom, issuedTo and customerId are all optional and combinable, plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. status must be one of the InvoiceStatus values (DRAFT, FINALIZED, POSTED, ERROR, CANCELLED); an unrecognized value returns 400 rather than an empty page. issuedFrom/issuedTo bound Invoice.finalizedAt (the timestamp an invoice was finalized/issued to the customer, inclusive on both ends) — a DRAFT invoice has no finalizedAt and is excluded whenever either bound is set. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed, when status is not a recognized InvoiceStatus value, or when issuedTo is before issuedFrom. 
+     * Search Invoices by Free Text and Structured Filters
      */
     async searchInvoicesRaw(requestParameters: SearchInvoicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageInvoiceSearchResult>> {
         const queryParameters: any = {};
 
         if (requestParameters['q'] != null) {
             queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['issuedFrom'] != null) {
+            queryParameters['issuedFrom'] = (requestParameters['issuedFrom'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['issuedTo'] != null) {
+            queryParameters['issuedTo'] = (requestParameters['issuedTo'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['customerId'] != null) {
+            queryParameters['customerId'] = requestParameters['customerId'];
         }
 
         if (requestParameters['page'] != null) {
@@ -123,7 +143,7 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+            const tokenString = await token("bearerAuth", ["invoice:invoice:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -140,12 +160,24 @@ export class InvoiceSearchApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Use this tool to locate an invoice when its id is unknown; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank or missing q short-circuits to an empty page rather than listing all invoices. Required inputs: q (free-text term) plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed. 
-     * Search Invoices by Free Text
+     * Searches invoices by a free-text term matched against the invoice number, the customer name (resolved via the customer service), or the workorder number, returning a page of finder rows. Combinable with structured filters — status, an issued-date window, and customerId — each independently optional and ANDed against the free-text match and against each other. Use this tool to locate an invoice when its id is unknown; use getInvoice instead once the invoiceId is known, and searchInvoiceLines for line-level warranty correlation. Preconditions: none — but a blank/missing q with every structured filter also absent short-circuits to an empty page rather than listing all invoices; a blank q with at least one structured filter set performs a filtered listing instead. Required inputs: none are individually required — q, status, issuedFrom, issuedTo and customerId are all optional and combinable, plus optional page, size and sort parameters; size defaults to 25, is hard-capped at 50, and the default sort is createdAt descending. status must be one of the InvoiceStatus values (DRAFT, FINALIZED, POSTED, ERROR, CANCELLED); an unrecognized value returns 400 rather than an empty page. issuedFrom/issuedTo bound Invoice.finalizedAt (the timestamp an invoice was finalized/issued to the customer, inclusive on both ends) — a DRAFT invoice has no finalizedAt and is excluded whenever either bound is set. Emits an INVOICE_SEARCH audit event; no state changes — this is a read-only projection. Returns 400 when pagination parameters are malformed, when status is not a recognized InvoiceStatus value, or when issuedTo is before issuedFrom. 
+     * Search Invoices by Free Text and Structured Filters
      */
     async searchInvoices(requestParameters: SearchInvoicesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageInvoiceSearchResult> {
         const response = await this.searchInvoicesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum SearchInvoicesStatusEnum {
+    Draft = 'DRAFT',
+    Finalized = 'FINALIZED',
+    Posted = 'POSTED',
+    Error = 'ERROR',
+    Cancelled = 'CANCELLED'
 }

@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './APPaymentsApi';
+export * from './AccountingAnalyticsApi';
 export * from './AccountingEventsApi';
 export * from './AccountingExportsApi';
 export * from './AccountingPeriodsApi';

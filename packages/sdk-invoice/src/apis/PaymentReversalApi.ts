@@ -53,7 +53,7 @@ export interface VoidPaymentOperationRequest {
 export class PaymentReversalApi extends runtime.BaseAPI {
 
     /**
-     * Returns every refund record anchored to the invoice — refunds of captured payment intents and standalone invoice-anchored refunds alike — for warranty-settlement reconciliation. Use this tool to reconcile what has already been returned before issuing another refund; do not use refundPayment or createStandaloneInvoiceRefund, which create refunds rather than list them. Preconditions: the invoice must exist; the caller needs the invoice:manage authority. Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_REFUND_LIST audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
+     * Returns every refund record anchored to the invoice — refunds of captured payment intents and standalone invoice-anchored refunds alike — for warranty-settlement reconciliation. Use this tool to reconcile what has already been returned before issuing another refund; do not use refundPayment or createStandaloneInvoiceRefund, which create refunds rather than list them. Preconditions: the invoice must exist; the caller needs the invoice:invoice:view authority. Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_REFUND_LIST audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
      * List Refunds for an Invoice
      */
     async listInvoiceRefundsRaw(requestParameters: ListInvoiceRefundsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<InvoiceRefundResponse>>> {
@@ -87,7 +87,7 @@ export class PaymentReversalApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every refund record anchored to the invoice — refunds of captured payment intents and standalone invoice-anchored refunds alike — for warranty-settlement reconciliation. Use this tool to reconcile what has already been returned before issuing another refund; do not use refundPayment or createStandaloneInvoiceRefund, which create refunds rather than list them. Preconditions: the invoice must exist; the caller needs the invoice:manage authority. Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_REFUND_LIST audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
+     * Returns every refund record anchored to the invoice — refunds of captured payment intents and standalone invoice-anchored refunds alike — for warranty-settlement reconciliation. Use this tool to reconcile what has already been returned before issuing another refund; do not use refundPayment or createStandaloneInvoiceRefund, which create refunds rather than list them. Preconditions: the invoice must exist; the caller needs the invoice:invoice:view authority. Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_REFUND_LIST audit event; no state changes — this is a read-only projection. Returns 404 when no invoice exists for the supplied id. 
      * List Refunds for an Invoice
      */
     async listInvoiceRefunds(requestParameters: ListInvoiceRefundsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<InvoiceRefundResponse>> {

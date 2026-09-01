@@ -94,7 +94,7 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the union of permissions granted through a user\'s currently effective role assignments. Use this tool for a user\'s flattened effective permission set; use listUserRoleAssignments instead to see the assignments and scopes behind it. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Returns the union of permissions granted through a user\'s currently effective role assignments. Use this tool for a user\'s flattened effective permission set; use listUserRoleAssignments instead to see the assignments and scopes behind it. Preconditions: the user must exist, and the caller must either hold security:permission:view or be asking about themselves. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 403 when the caller is asking about another user without security:permission:view, and 404 when the user does not exist. 
      * Get a User\'s Effective Permissions
      */
     async getUserPermissionsRaw(requestParameters: GetUserPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Set<PermissionDto>>> {
@@ -128,7 +128,7 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the union of permissions granted through a user\'s currently effective role assignments. Use this tool for a user\'s flattened effective permission set; use listUserRoleAssignments instead to see the assignments and scopes behind it. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Returns the union of permissions granted through a user\'s currently effective role assignments. Use this tool for a user\'s flattened effective permission set; use listUserRoleAssignments instead to see the assignments and scopes behind it. Preconditions: the user must exist, and the caller must either hold security:permission:view or be asking about themselves. Required inputs: userId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 403 when the caller is asking about another user without security:permission:view, and 404 when the user does not exist. 
      * Get a User\'s Effective Permissions
      */
     async getUserPermissions(requestParameters: GetUserPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Set<PermissionDto>> {

@@ -338,7 +338,7 @@ export class InvoiceApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["invoice:manage"]);
+            const tokenString = await token("bearerAuth", ["invoice:invoice:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;

@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  PagePaymentApplicationListRow,
   PaymentApplicationRequest,
   PaymentApplicationResponse,
   PaymentApplicationReversalRequest,
 } from '../models/index';
 import {
+    PagePaymentApplicationListRowFromJSON,
+    PagePaymentApplicationListRowToJSON,
     PaymentApplicationRequestFromJSON,
     PaymentApplicationRequestToJSON,
     PaymentApplicationResponseFromJSON,
@@ -31,6 +34,15 @@ import {
 export interface ApplyPaymentRequest {
     paymentId: string;
     paymentApplicationRequest: PaymentApplicationRequest;
+}
+
+export interface ListPaymentApplicationsRequest {
+    appliedFrom: Date;
+    appliedTo: Date;
+    includeReversed?: boolean;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ReversePaymentRequest {
@@ -103,6 +115,80 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
      */
     async applyPayment(requestParameters: ApplyPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaymentApplicationResponse> {
         const response = await this.applyPaymentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists pos-accounting cash applications of customer payments to invoices whose applied date falls in [appliedFrom, appliedTo], ordered by appliedAt ascending. Use this tool to review A/R cash application activity in a period; do not use getPaymentLagCohorts or getCollectionsAnalytics for this, which are aggregate reports rather than a row-level application list, and note this endpoint is SCOPED TO pos-accounting cash applications only — it does not include pos-invoice deposit-credit draw-downs (DepositCreditApplication) or refunds (RefundRecord); see issue #1605 for that open cross-module question. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: appliedFrom and appliedTo (ISO dates, appliedTo on or after appliedFrom); the window cannot exceed 366 days, to bound the scan. includeReversed is optional and defaults to false, in which case applications later reversed via PaymentApplicationReversal are EXCLUDED from the list entirely (not merely flagged); pass includeReversed=true to include them, with each row\'s reversed field then reporting whether that application was reversed. That exclusion default is a DELIBERATELY DIFFERENT basis from getCollectionsAnalytics, which nets reversals on a movement basis (reducing the window a reversal was recorded in rather than the window its application landed in) because it measures movement in a window while this endpoint answers the point-in-time question of which applications are currently live; do not unify the two. page/size/sort are standard, though the appliedAt-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_PAYMENT_APPLICATION_LIST_VIEW audit event; no state changes. Returns 400 when appliedTo is before appliedFrom or the window exceeds 366 days. 
+     * List Payment Applications By Applied Date
+     */
+    async listPaymentApplicationsRaw(requestParameters: ListPaymentApplicationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagePaymentApplicationListRow>> {
+        if (requestParameters['appliedFrom'] == null) {
+            throw new runtime.RequiredError(
+                'appliedFrom',
+                'Required parameter "appliedFrom" was null or undefined when calling listPaymentApplications().'
+            );
+        }
+
+        if (requestParameters['appliedTo'] == null) {
+            throw new runtime.RequiredError(
+                'appliedTo',
+                'Required parameter "appliedTo" was null or undefined when calling listPaymentApplications().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['appliedFrom'] != null) {
+            queryParameters['appliedFrom'] = (requestParameters['appliedFrom'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['appliedTo'] != null) {
+            queryParameters['appliedTo'] = (requestParameters['appliedTo'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['includeReversed'] != null) {
+            queryParameters['includeReversed'] = requestParameters['includeReversed'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:analytics:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/payment-applications`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagePaymentApplicationListRowFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists pos-accounting cash applications of customer payments to invoices whose applied date falls in [appliedFrom, appliedTo], ordered by appliedAt ascending. Use this tool to review A/R cash application activity in a period; do not use getPaymentLagCohorts or getCollectionsAnalytics for this, which are aggregate reports rather than a row-level application list, and note this endpoint is SCOPED TO pos-accounting cash applications only — it does not include pos-invoice deposit-credit draw-downs (DepositCreditApplication) or refunds (RefundRecord); see issue #1605 for that open cross-module question. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: appliedFrom and appliedTo (ISO dates, appliedTo on or after appliedFrom); the window cannot exceed 366 days, to bound the scan. includeReversed is optional and defaults to false, in which case applications later reversed via PaymentApplicationReversal are EXCLUDED from the list entirely (not merely flagged); pass includeReversed=true to include them, with each row\'s reversed field then reporting whether that application was reversed. That exclusion default is a DELIBERATELY DIFFERENT basis from getCollectionsAnalytics, which nets reversals on a movement basis (reducing the window a reversal was recorded in rather than the window its application landed in) because it measures movement in a window while this endpoint answers the point-in-time question of which applications are currently live; do not unify the two. page/size/sort are standard, though the appliedAt-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_PAYMENT_APPLICATION_LIST_VIEW audit event; no state changes. Returns 400 when appliedTo is before appliedFrom or the window exceeds 366 days. 
+     * List Payment Applications By Applied Date
+     */
+    async listPaymentApplications(requestParameters: ListPaymentApplicationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagePaymentApplicationListRow> {
+        const response = await this.listPaymentApplicationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
