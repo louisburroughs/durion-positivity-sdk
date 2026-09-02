@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface CatalogItemResponseDto {
     /**
+     * Vehicle-agnostic fallback labor hours in tenths; service items only
+     * @type {number}
+     * @memberof CatalogItemResponseDto
+     */
+    defaultLaborHours?: number;
+    /**
      * Item identifier
      * @type {string}
      * @memberof CatalogItemResponseDto
@@ -44,12 +50,36 @@ export interface CatalogItemResponseDto {
      */
     name?: string;
     /**
+     * Operation category; service items only
+     * @type {string}
+     * @memberof CatalogItemResponseDto
+     */
+    operationCategory?: CatalogItemResponseDtoOperationCategoryEnum;
+    /**
+     * Durion operation code; service items only
+     * @type {string}
+     * @memberof CatalogItemResponseDto
+     */
+    operationCode?: string;
+    /**
      * Short description
      * @type {string}
      * @memberof CatalogItemResponseDto
      */
     shortDescription?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CatalogItemResponseDtoOperationCategoryEnum {
+    Repair = 'REPAIR',
+    Diagnostic = 'DIAGNOSTIC',
+    Maintenance = 'MAINTENANCE',
+    TireService = 'TIRE_SERVICE'
+}
+
 
 /**
  * Check if a given object implements the CatalogItemResponseDto interface.
@@ -70,10 +100,13 @@ export function CatalogItemResponseDtoFromJSONTyped(json: any, ignoreDiscriminat
     }
     return {
         
+        'defaultLaborHours': json['defaultLaborHours'] == null ? undefined : json['defaultLaborHours'],
         'id': json['id'],
         'itemType': json['itemType'],
         'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
         'name': json['name'] == null ? undefined : json['name'],
+        'operationCategory': json['operationCategory'] == null ? undefined : json['operationCategory'],
+        'operationCode': json['operationCode'] == null ? undefined : json['operationCode'],
         'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
     };
 }
@@ -84,10 +117,13 @@ export function CatalogItemResponseDtoToJSON(value?: CatalogItemResponseDto | nu
     }
     return {
         
+        'defaultLaborHours': value['defaultLaborHours'],
         'id': value['id'],
         'itemType': value['itemType'],
         'longDescription': value['longDescription'],
         'name': value['name'],
+        'operationCategory': value['operationCategory'],
+        'operationCode': value['operationCode'],
         'shortDescription': value['shortDescription'],
     };
 }

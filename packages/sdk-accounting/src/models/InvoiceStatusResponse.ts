@@ -56,7 +56,7 @@ export interface InvoiceStatusResponse {
      */
     status: InvoiceStatusResponseStatusEnum;
     /**
-     * Total amount paid to date
+     * Total settled against the invoice to date. On replica-derived responses (no payment-status view) this includes posted credit memos and applied customer credits, not only cash payments.
      * @type {number}
      * @memberof InvoiceStatusResponse
      */

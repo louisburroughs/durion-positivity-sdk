@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   PagedResponse,
+  PriceCatalogFreshnessView,
   PriceCatalogImportSummary,
 } from '../models/index';
 import {
@@ -24,18 +25,33 @@ import {
     ApiErrorToJSON,
     PagedResponseFromJSON,
     PagedResponseToJSON,
+    PriceCatalogFreshnessViewFromJSON,
+    PriceCatalogFreshnessViewToJSON,
     PriceCatalogImportSummaryFromJSON,
     PriceCatalogImportSummaryToJSON,
 } from '../models/index';
 
+export interface GetSupplierPriceCatalogFreshnessRequest {
+    vendorProfileId: string;
+}
+
 export interface ListSupplierPriceCatalogImportsRequest {
     vendorProfileId: string;
+    bindingId?: string;
+    status?: ListSupplierPriceCatalogImportsStatusEnum;
+    dateFrom?: Date;
+    dateTo?: Date;
     page?: number;
     size?: number;
 }
 
 export interface ListSupplierPriceCatalogUnmatchedLinesRequest {
     vendorProfileId: string;
+    reason?: ListSupplierPriceCatalogUnmatchedLinesReasonEnum;
+    search?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    resolved?: boolean;
     page?: number;
     size?: number;
 }
@@ -54,7 +70,50 @@ export interface TriggerSupplierPriceCatalogImportRequest {
 export class SupplierPriceCatalogApi extends runtime.BaseAPI {
 
     /**
-     * Returns a page of PRICAT import runs for one vendor profile, newest first, including failed and empty runs with their line counters. Use this tool to answer whether a catalog feed is healthy and how much of it matched; do not use it to see which specific lines are waiting on catalog work, which is listSupplierPriceCatalogUnmatchedLines instead. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything, in which case the page is empty. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Emits a SUPPLIER_PRICECATALOG_IMPORT_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the profile has never imported, so an empty result is not an error, and 400 when the page size is outside the permitted range. 
+     * Returns how fresh one vendor profile\'s price catalog is: latestEffectiveDate — the newest catalog document date the vendor itself stated on a completed import, which is vendor document metadata — kept strictly apart from lastFetchedAt, the platform\'s own last retrieval attempt over every run including failed and empty ones. Alongside them: lastCompletedAt, the open unmatched-line count, the backend-configured staleness threshold (ISO-8601 duration) with the stale verdict it implies, and each PRICE_CATALOG binding\'s schedule plus its scheduler-lease state (checkpointAt, lastRunOutcome, lastRunStartedAt). Window and checkpoint fields are null for full-snapshot protocols — every current PRICAT protocol: B4.0 fetches the vendor\'s whole catalog, so there is no retrieval window to advance. Use this tool to answer \"can these vendor prices be trusted today\" in one read; do not use it for run-by-run history, which is listSupplierPriceCatalogImports. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything — a profile with no completed import reports stale=true with null timestamps, not an error. Required inputs: vendorProfileId (UUIDv7) as a path parameter. Emits a SUPPLIER_PRICECATALOG_FRESHNESS_GET event; no state changes and no vendor call is made, and the stale verdict is computed server-side from lastCompletedAt, the last successful import, against the returned threshold — catalog-currency policy unrelated to any cache TTL — so every client behaves consistently. Returns 200 with the freshness view, and 404 only when the vendor profile does not exist. 
+     * Read a vendor price-catalog\'s freshness
+     */
+    async getSupplierPriceCatalogFreshnessRaw(requestParameters: GetSupplierPriceCatalogFreshnessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PriceCatalogFreshnessView>> {
+        if (requestParameters['vendorProfileId'] == null) {
+            throw new runtime.RequiredError(
+                'vendorProfileId',
+                'Required parameter "vendorProfileId" was null or undefined when calling getSupplierPriceCatalogFreshness().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/admin/price-catalog/{vendorProfileId}/freshness`.replace(`{${"vendorProfileId"}}`, encodeURIComponent(String(requestParameters['vendorProfileId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PriceCatalogFreshnessViewFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns how fresh one vendor profile\'s price catalog is: latestEffectiveDate — the newest catalog document date the vendor itself stated on a completed import, which is vendor document metadata — kept strictly apart from lastFetchedAt, the platform\'s own last retrieval attempt over every run including failed and empty ones. Alongside them: lastCompletedAt, the open unmatched-line count, the backend-configured staleness threshold (ISO-8601 duration) with the stale verdict it implies, and each PRICE_CATALOG binding\'s schedule plus its scheduler-lease state (checkpointAt, lastRunOutcome, lastRunStartedAt). Window and checkpoint fields are null for full-snapshot protocols — every current PRICAT protocol: B4.0 fetches the vendor\'s whole catalog, so there is no retrieval window to advance. Use this tool to answer \"can these vendor prices be trusted today\" in one read; do not use it for run-by-run history, which is listSupplierPriceCatalogImports. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything — a profile with no completed import reports stale=true with null timestamps, not an error. Required inputs: vendorProfileId (UUIDv7) as a path parameter. Emits a SUPPLIER_PRICECATALOG_FRESHNESS_GET event; no state changes and no vendor call is made, and the stale verdict is computed server-side from lastCompletedAt, the last successful import, against the returned threshold — catalog-currency policy unrelated to any cache TTL — so every client behaves consistently. Returns 200 with the freshness view, and 404 only when the vendor profile does not exist. 
+     * Read a vendor price-catalog\'s freshness
+     */
+    async getSupplierPriceCatalogFreshness(requestParameters: GetSupplierPriceCatalogFreshnessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PriceCatalogFreshnessView> {
+        const response = await this.getSupplierPriceCatalogFreshnessRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a page of PRICAT import runs for one vendor profile, newest first, including failed and empty runs with their line counters. Use this tool to answer whether a catalog feed is healthy and how much of it matched; do not use it to see which specific lines are waiting on catalog work, which is listSupplierPriceCatalogUnmatchedLines instead. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything, in which case the page is empty. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Optional filters: bindingId narrows a profile\'s history to one endpoint binding (runs recorded before binding ids were persisted carry none and never match), status keeps one run status, and dateFrom/dateTo bound fetchedAt as a half-open window — dateFrom inclusive, dateTo exclusive. Emits a SUPPLIER_PRICECATALOG_IMPORT_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the profile has never imported or nothing matches the filters, so an empty result is not an error, and 400 when the page size is outside the permitted range or a filter value does not parse. 
      * List vendor price-catalog imports
      */
     async listSupplierPriceCatalogImportsRaw(requestParameters: ListSupplierPriceCatalogImportsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponse>> {
@@ -66,6 +125,22 @@ export class SupplierPriceCatalogApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['bindingId'] != null) {
+            queryParameters['bindingId'] = requestParameters['bindingId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = (requestParameters['dateFrom'] as any).toISOString();
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = (requestParameters['dateTo'] as any).toISOString();
+        }
 
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
@@ -96,7 +171,7 @@ export class SupplierPriceCatalogApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a page of PRICAT import runs for one vendor profile, newest first, including failed and empty runs with their line counters. Use this tool to answer whether a catalog feed is healthy and how much of it matched; do not use it to see which specific lines are waiting on catalog work, which is listSupplierPriceCatalogUnmatchedLines instead. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything, in which case the page is empty. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Emits a SUPPLIER_PRICECATALOG_IMPORT_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the profile has never imported, so an empty result is not an error, and 400 when the page size is outside the permitted range. 
+     * Returns a page of PRICAT import runs for one vendor profile, newest first, including failed and empty runs with their line counters. Use this tool to answer whether a catalog feed is healthy and how much of it matched; do not use it to see which specific lines are waiting on catalog work, which is listSupplierPriceCatalogUnmatchedLines instead. Preconditions: the caller must hold supplier:pricecatalog:read; the profile need not have imported anything, in which case the page is empty. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Optional filters: bindingId narrows a profile\'s history to one endpoint binding (runs recorded before binding ids were persisted carry none and never match), status keeps one run status, and dateFrom/dateTo bound fetchedAt as a half-open window — dateFrom inclusive, dateTo exclusive. Emits a SUPPLIER_PRICECATALOG_IMPORT_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the profile has never imported or nothing matches the filters, so an empty result is not an error, and 400 when the page size is outside the permitted range or a filter value does not parse. 
      * List vendor price-catalog imports
      */
     async listSupplierPriceCatalogImports(requestParameters: ListSupplierPriceCatalogImportsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponse> {
@@ -105,7 +180,7 @@ export class SupplierPriceCatalogApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a page of PRICAT lines that could not be attached to a catalog product and are still open, newest first, each with the reason it was quarantined. Use this tool to work the catalog-data backlog a vendor catalog exposes; do not use it for the run-level totals those lines roll up into, which is listSupplierPriceCatalogImports instead. Preconditions: the caller must hold supplier:pricecatalog:read; a line stays listed until a later import or re-application matches it, so an empty page means nothing is waiting. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Emits a SUPPLIER_PRICECATALOG_UNMATCHED_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the quarantine is clear, and 400 when the page size is outside the permitted range. 
+     * Returns a page of PRICAT lines that could not be attached to a catalog product, newest first, each with the reason it was quarantined. By default only open lines are listed — a line stays listed until a later import or re-application matches it — and resolved=true flips the listing to closed lines instead, for auditing what a catalog fix healed. Use this tool to work the catalog-data backlog a vendor catalog exposes; do not use it for the run-level totals those lines roll up into, which is listSupplierPriceCatalogImports instead. Preconditions: the caller must hold supplier:pricecatalog:read. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Optional filters: reason keeps one quarantine reason, search is a case-insensitive contains-match over the line\'s EAN, vendor article code and cross-reference code (LIKE metacharacters are treated literally), and dateFrom/dateTo bound fetchedAt as a half-open window — dateFrom inclusive, dateTo exclusive. Emits a SUPPLIER_PRICECATALOG_UNMATCHED_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the quarantine is clear or nothing matches the filters, and 400 when the page size is outside the permitted range or a filter value does not parse. 
      * List quarantined price-catalog lines
      */
     async listSupplierPriceCatalogUnmatchedLinesRaw(requestParameters: ListSupplierPriceCatalogUnmatchedLinesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponse>> {
@@ -117,6 +192,26 @@ export class SupplierPriceCatalogApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['reason'] != null) {
+            queryParameters['reason'] = requestParameters['reason'];
+        }
+
+        if (requestParameters['search'] != null) {
+            queryParameters['search'] = requestParameters['search'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = (requestParameters['dateFrom'] as any).toISOString();
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = (requestParameters['dateTo'] as any).toISOString();
+        }
+
+        if (requestParameters['resolved'] != null) {
+            queryParameters['resolved'] = requestParameters['resolved'];
+        }
 
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
@@ -147,7 +242,7 @@ export class SupplierPriceCatalogApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a page of PRICAT lines that could not be attached to a catalog product and are still open, newest first, each with the reason it was quarantined. Use this tool to work the catalog-data backlog a vendor catalog exposes; do not use it for the run-level totals those lines roll up into, which is listSupplierPriceCatalogImports instead. Preconditions: the caller must hold supplier:pricecatalog:read; a line stays listed until a later import or re-application matches it, so an empty page means nothing is waiting. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Emits a SUPPLIER_PRICECATALOG_UNMATCHED_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the quarantine is clear, and 400 when the page size is outside the permitted range. 
+     * Returns a page of PRICAT lines that could not be attached to a catalog product, newest first, each with the reason it was quarantined. By default only open lines are listed — a line stays listed until a later import or re-application matches it — and resolved=true flips the listing to closed lines instead, for auditing what a catalog fix healed. Use this tool to work the catalog-data backlog a vendor catalog exposes; do not use it for the run-level totals those lines roll up into, which is listSupplierPriceCatalogImports instead. Preconditions: the caller must hold supplier:pricecatalog:read. Required inputs: vendorProfileId (UUIDv7) path parameter; page defaults to 0 and size defaults to 50 with a maximum of 200. Optional filters: reason keeps one quarantine reason, search is a case-insensitive contains-match over the line\'s EAN, vendor article code and cross-reference code (LIKE metacharacters are treated literally), and dateFrom/dateTo bound fetchedAt as a half-open window — dateFrom inclusive, dateTo exclusive. Emits a SUPPLIER_PRICECATALOG_UNMATCHED_LIST event; no state changes and no vendor call is made. Returns 200 with an empty items array when the quarantine is clear or nothing matches the filters, and 400 when the page size is outside the permitted range or a filter value does not parse. 
      * List quarantined price-catalog lines
      */
     async listSupplierPriceCatalogUnmatchedLines(requestParameters: ListSupplierPriceCatalogUnmatchedLinesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponse> {
@@ -248,4 +343,27 @@ export class SupplierPriceCatalogApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListSupplierPriceCatalogImportsStatusEnum {
+    InProgress = 'IN_PROGRESS',
+    Completed = 'COMPLETED',
+    Empty = 'EMPTY',
+    Failed = 'FAILED'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListSupplierPriceCatalogUnmatchedLinesReasonEnum {
+    NoIdentifier = 'NO_IDENTIFIER',
+    NoCatalogMatch = 'NO_CATALOG_MATCH',
+    AmbiguousCatalogMatch = 'AMBIGUOUS_CATALOG_MATCH',
+    CatalogUnavailable = 'CATALOG_UNAVAILABLE',
+    DuplicateLine = 'DUPLICATE_LINE',
+    MalformedLine = 'MALFORMED_LINE'
 }

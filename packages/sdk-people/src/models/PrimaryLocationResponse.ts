@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface PrimaryLocationResponse {
     /**
+     * True when the caller has no active primary assignment and locationId carries the platform's top-level default location instead
+     * @type {boolean}
+     * @memberof PrimaryLocationResponse
+     */
+    defaulted?: boolean;
+    /**
      * Location identifier of the user's primary active assignment
      * @type {string}
      * @memberof PrimaryLocationResponse
@@ -45,6 +51,7 @@ export function PrimaryLocationResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'defaulted': json['defaulted'] == null ? undefined : json['defaulted'],
         'locationId': json['locationId'],
     };
 }
@@ -55,6 +62,7 @@ export function PrimaryLocationResponseToJSON(value?: PrimaryLocationResponse | 
     }
     return {
         
+        'defaulted': value['defaulted'],
         'locationId': value['locationId'],
     };
 }

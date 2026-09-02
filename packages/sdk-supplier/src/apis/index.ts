@@ -9,5 +9,7 @@ export * from './SupplierInvoicesApi';
 export * from './SupplierMarketingCatalogApi';
 export * from './SupplierOrderTransmissionApi';
 export * from './SupplierPriceCatalogApi';
+export * from './SupplierStockAvailabilityApi';
 export * from './SupplierStockInquiryApi';
+export * from './SupplierStockSnapshotsApi';
 export * from './SupplierVendorProfilesApi';

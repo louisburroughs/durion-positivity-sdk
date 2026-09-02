@@ -394,6 +394,42 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the platform\'s top-level location: the active root of the parent-child hierarchy (a location that is a parent of others but a child of none), falling back to the oldest active location when no hierarchy edges exist. The pick is deterministic (ties break on id). Use this tool when a caller needs a default location, e.g. resolving a fallback for users with no primary staffing assignment; do not use it when the id is already known — call getLocationById instead. Preconditions: at least one active location must exist. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no active location exists. 
+     * Get Top-Level Default Location
+     */
+    async getTopLevelLocationRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:read"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/top-level`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => LocationResponseDTOFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the platform\'s top-level location: the active root of the parent-child hierarchy (a location that is a parent of others but a child of none), falling back to the oldest active location when no hierarchy edges exist. The pick is deterministic (ties break on id). Use this tool when a caller needs a default location, e.g. resolving a fallback for users with no primary staffing assignment; do not use it when the id is already known — call getLocationById instead. Preconditions: at least one active location must exist. Required inputs: none; there are no parameters and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no active location exists. 
+     * Get Top-Level Default Location
+     */
+    async getTopLevelLocation(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
+        const response = await this.getTopLevelLocationRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns the direct child locations of a parent location, optionally restricted to one relationship type. Use this tool for one level of hierarchy; use listLocationDescendants instead when the whole subtree with depth information is needed. Preconditions: none; an unknown or childless parent id yields an empty list rather than an error. Required inputs: locationId (UUID) as a path parameter; parentType is optional and, when omitted, edges of every relationship type are returned. No events are emitted and no state changes; this is a read-only projection. Returns 400 when parentType is supplied but is not a recognized ParentType value. 
      * List Direct Children of a Location
      */

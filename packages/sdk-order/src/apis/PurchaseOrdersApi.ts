@@ -19,6 +19,7 @@ import type {
   ApprovePurchaseOrderRequest,
   CreatePurchaseOrderRequest,
   PagePurchaseOrderResponse,
+  PagePurchaseOrderTransmissionEvent,
   ProcurementAvailability,
   PurchaseOrderResponse,
   RevisePurchaseOrderRequest,
@@ -32,6 +33,8 @@ import {
     CreatePurchaseOrderRequestToJSON,
     PagePurchaseOrderResponseFromJSON,
     PagePurchaseOrderResponseToJSON,
+    PagePurchaseOrderTransmissionEventFromJSON,
+    PagePurchaseOrderTransmissionEventToJSON,
     ProcurementAvailabilityFromJSON,
     ProcurementAvailabilityToJSON,
     PurchaseOrderResponseFromJSON,
@@ -61,6 +64,13 @@ export interface GetPurchaseOrderSupplierAvailabilityRequest {
     poId: string;
     vendorProfileId: string;
     deliveryLocationId: string;
+}
+
+export interface ListPurchaseOrderTransmissionEventsRequest {
+    poId: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 export interface ListPurchaseOrdersRequest {
@@ -334,6 +344,61 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
      */
     async getPurchaseOrderSupplierAvailability(requestParameters: GetPurchaseOrderSupplierAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ProcurementAvailability> {
         const response = await this.getPurchaseOrderSupplierAvailabilityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a page of the purchase order\'s append-only vendor transmission timeline: every confirmation, rejection, status observation and review escalation heard about the order, including the despatchDate and estimatedDeliveryDate a status observation may carry. Use this tool when a buyer chasing an order needs what happened to it, not just where it stands; use getPurchaseOrder instead for the order\'s current transmission state, which this timeline never collapses to. Preconditions: the purchase order must exist; an order that was never transmitted simply has an empty timeline. Required inputs: poId (UUIDv7) path parameter; standard page and size parameters control pagination, and the sort parameter is ignored because the ordering is the semantics of the timeline. Entries are ordered by the vendor\'s clock (observedAt ascending), with ties broken by platform receipt time (recordedAt) and then by event id, so a late-arriving observation sits where the vendor observed it and the sequence is stable across reads. Emits an ORDER_PURCHASE_ORDER_TRANSMISSION_EVENTS audit event; no state changes, this is a read-only projection. Returns 200 with an empty page when the order has no timeline yet, and 404 when the purchase order does not exist. 
+     * List Purchase Order Transmission Events
+     */
+    async listPurchaseOrderTransmissionEventsRaw(requestParameters: ListPurchaseOrderTransmissionEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagePurchaseOrderTransmissionEvent>> {
+        if (requestParameters['poId'] == null) {
+            throw new runtime.RequiredError(
+                'poId',
+                'Required parameter "poId" was null or undefined when calling listPurchaseOrderTransmissionEvents().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-orders/{poId}/transmission-events`.replace(`{${"poId"}}`, encodeURIComponent(String(requestParameters['poId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagePurchaseOrderTransmissionEventFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a page of the purchase order\'s append-only vendor transmission timeline: every confirmation, rejection, status observation and review escalation heard about the order, including the despatchDate and estimatedDeliveryDate a status observation may carry. Use this tool when a buyer chasing an order needs what happened to it, not just where it stands; use getPurchaseOrder instead for the order\'s current transmission state, which this timeline never collapses to. Preconditions: the purchase order must exist; an order that was never transmitted simply has an empty timeline. Required inputs: poId (UUIDv7) path parameter; standard page and size parameters control pagination, and the sort parameter is ignored because the ordering is the semantics of the timeline. Entries are ordered by the vendor\'s clock (observedAt ascending), with ties broken by platform receipt time (recordedAt) and then by event id, so a late-arriving observation sits where the vendor observed it and the sequence is stable across reads. Emits an ORDER_PURCHASE_ORDER_TRANSMISSION_EVENTS audit event; no state changes, this is a read-only projection. Returns 200 with an empty page when the order has no timeline yet, and 404 when the purchase order does not exist. 
+     * List Purchase Order Transmission Events
+     */
+    async listPurchaseOrderTransmissionEvents(requestParameters: ListPurchaseOrderTransmissionEventsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagePurchaseOrderTransmissionEvent> {
+        const response = await this.listPurchaseOrderTransmissionEventsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

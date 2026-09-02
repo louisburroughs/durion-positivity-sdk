@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   OrderTransmissionStatus,
+  PagedResponse,
   TransmissionResolutionRequest,
 } from '../models/index';
 import {
@@ -24,6 +25,8 @@ import {
     ApiErrorToJSON,
     OrderTransmissionStatusFromJSON,
     OrderTransmissionStatusToJSON,
+    PagedResponseFromJSON,
+    PagedResponseToJSON,
     TransmissionResolutionRequestFromJSON,
     TransmissionResolutionRequestToJSON,
 } from '../models/index';
@@ -39,6 +42,16 @@ export interface ListSupplierTransmissionsForPurchaseOrderRequest {
 export interface ResolveSupplierTransmissionRequest {
     transmissionIntentId: string;
     transmissionResolutionRequest: TransmissionResolutionRequest;
+}
+
+export interface SearchSupplierTransmissionsRequest {
+    attemptState?: SearchSupplierTransmissionsAttemptStateEnum;
+    vendorProfileId?: string;
+    search?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
+    page?: number;
+    size?: number;
 }
 
 /**
@@ -185,4 +198,83 @@ export class SupplierOrderTransmissionApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+    /**
+     * Returns one page of transmission intents across every purchase order, newest first, filterable to the states, vendor and window an operator is working — above all attemptState=MANUAL_REVIEW, which is the queue of transmissions waiting on a human (issue #1638 decision 6). Use this tool for the operator worklist and for ledger-wide searches by order reference; use listSupplierTransmissionsForPurchaseOrder instead for one purchase order\'s history, and getSupplierTransmission when the intent id is already known. Preconditions: the caller must hold supplier:transmission:read; no filter is required and an unfiltered call pages the whole ledger. Optional inputs: attemptState (PENDING, DISPATCHING, SENT_AWAITING_RESULT, CONFIRMED, REJECTED, MANUAL_REVIEW, FAILED, CANCELLED); vendorProfileId (UUIDv7); search, matched case-insensitively as a contains-match against the purchase-order number and the vendor\'s own order number — the two references either side of a phone call would quote; dateFrom (inclusive) and dateTo (exclusive), which bound the intent\'s createdAt — the moment the order entered the vendor queue — chosen over the last-update time because it is immutable, so a row cannot move out of a window an operator has already searched, and adjacent half-open windows tile without listing an intent twice. Results are sorted newest-first on that same createdAt. page defaults to 0 and size to 50, at most 200. Emits a SUPPLIER_TRANSMISSION_SEARCH event. Read-only: nothing is transmitted, retried or changed — resolving a MANUAL_REVIEW row found here is resolveSupplierTransmission, and no endpoint re-sends. Returns 200 with an empty items array when nothing matches — a clear queue is the healthy answer, not an error — and 400 when the page size is outside the permitted range or dates are malformed. 
+     * Search the transmission ledger across purchase orders
+     */
+    async searchSupplierTransmissionsRaw(requestParameters: SearchSupplierTransmissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['attemptState'] != null) {
+            queryParameters['attemptState'] = requestParameters['attemptState'];
+        }
+
+        if (requestParameters['vendorProfileId'] != null) {
+            queryParameters['vendorProfileId'] = requestParameters['vendorProfileId'];
+        }
+
+        if (requestParameters['search'] != null) {
+            queryParameters['search'] = requestParameters['search'];
+        }
+
+        if (requestParameters['dateFrom'] != null) {
+            queryParameters['dateFrom'] = (requestParameters['dateFrom'] as any).toISOString();
+        }
+
+        if (requestParameters['dateTo'] != null) {
+            queryParameters['dateTo'] = (requestParameters['dateTo'] as any).toISOString();
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/supplier/transmissions`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one page of transmission intents across every purchase order, newest first, filterable to the states, vendor and window an operator is working — above all attemptState=MANUAL_REVIEW, which is the queue of transmissions waiting on a human (issue #1638 decision 6). Use this tool for the operator worklist and for ledger-wide searches by order reference; use listSupplierTransmissionsForPurchaseOrder instead for one purchase order\'s history, and getSupplierTransmission when the intent id is already known. Preconditions: the caller must hold supplier:transmission:read; no filter is required and an unfiltered call pages the whole ledger. Optional inputs: attemptState (PENDING, DISPATCHING, SENT_AWAITING_RESULT, CONFIRMED, REJECTED, MANUAL_REVIEW, FAILED, CANCELLED); vendorProfileId (UUIDv7); search, matched case-insensitively as a contains-match against the purchase-order number and the vendor\'s own order number — the two references either side of a phone call would quote; dateFrom (inclusive) and dateTo (exclusive), which bound the intent\'s createdAt — the moment the order entered the vendor queue — chosen over the last-update time because it is immutable, so a row cannot move out of a window an operator has already searched, and adjacent half-open windows tile without listing an intent twice. Results are sorted newest-first on that same createdAt. page defaults to 0 and size to 50, at most 200. Emits a SUPPLIER_TRANSMISSION_SEARCH event. Read-only: nothing is transmitted, retried or changed — resolving a MANUAL_REVIEW row found here is resolveSupplierTransmission, and no endpoint re-sends. Returns 200 with an empty items array when nothing matches — a clear queue is the healthy answer, not an error — and 400 when the page size is outside the permitted range or dates are malformed. 
+     * Search the transmission ledger across purchase orders
+     */
+    async searchSupplierTransmissions(requestParameters: SearchSupplierTransmissionsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponse> {
+        const response = await this.searchSupplierTransmissionsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum SearchSupplierTransmissionsAttemptStateEnum {
+    Pending = 'PENDING',
+    Dispatching = 'DISPATCHING',
+    SentAwaitingResult = 'SENT_AWAITING_RESULT',
+    Confirmed = 'CONFIRMED',
+    Rejected = 'REJECTED',
+    ManualReview = 'MANUAL_REVIEW',
+    Failed = 'FAILED',
+    Cancelled = 'CANCELLED'
 }

@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BillingRuleRefResponse,
   InvoiceGenerationResponse,
   InvoiceStatusResponse,
   RegenerateInvoiceFromWorkorderRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BillingRuleRefResponseFromJSON,
     BillingRuleRefResponseToJSON,
     InvoiceGenerationResponseFromJSON,
@@ -92,7 +95,7 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current payment status of an invoice as tracked by the accounting module\'s invoice replica. Use this tool to check whether an invoice is open, partially paid or paid before applying payments or credits; do not use applyPayment, which changes the status. Preconditions: the invoice must be known to the accounting module. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the invoice is not found, and 400 when the identifier is rejected by the status service. 
+     * Returns the current payment status of an invoice as tracked by the accounting module\'s invoice replica. Use this tool to check whether an invoice is open, partially paid or paid before applying payments or credits; do not use applyPayment, which changes the status. Preconditions: the invoice must be known to the accounting module. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. An invoice with no payment history answers 200 with status UNPAID, derived from the ext_invoice replica and accounting\'s own application/credit records. Returns 404 only when accounting has no record of the invoice at all, and 400 when the identifier is rejected (malformed or invalid invoiceId). 
      * Get Invoice Payment Status
      */
     async getInvoiceStatusRaw(requestParameters: GetInvoiceStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceStatusResponse>> {
@@ -126,7 +129,7 @@ export class InvoicePaymentsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current payment status of an invoice as tracked by the accounting module\'s invoice replica. Use this tool to check whether an invoice is open, partially paid or paid before applying payments or credits; do not use applyPayment, which changes the status. Preconditions: the invoice must be known to the accounting module. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the invoice is not found, and 400 when the identifier is rejected by the status service. 
+     * Returns the current payment status of an invoice as tracked by the accounting module\'s invoice replica. Use this tool to check whether an invoice is open, partially paid or paid before applying payments or credits; do not use applyPayment, which changes the status. Preconditions: the invoice must be known to the accounting module. Required inputs: invoiceId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. An invoice with no payment history answers 200 with status UNPAID, derived from the ext_invoice replica and accounting\'s own application/credit records. Returns 404 only when accounting has no record of the invoice at all, and 400 when the identifier is rejected (malformed or invalid invoiceId). 
      * Get Invoice Payment Status
      */
     async getInvoiceStatus(requestParameters: GetInvoiceStatusRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceStatusResponse> {

@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface ServiceDto {
     /**
+     * Vehicle-agnostic fallback labor hours in tenths
+     * @type {number}
+     * @memberof ServiceDto
+     */
+    defaultLaborHours?: number;
+    /**
      * Service identifier
      * @type {string}
      * @memberof ServiceDto
@@ -38,12 +44,36 @@ export interface ServiceDto {
      */
     name?: string;
     /**
+     * Operation category
+     * @type {string}
+     * @memberof ServiceDto
+     */
+    operationCategory?: ServiceDtoOperationCategoryEnum;
+    /**
+     * Durion operation code
+     * @type {string}
+     * @memberof ServiceDto
+     */
+    operationCode?: string;
+    /**
      * Short service description
      * @type {string}
      * @memberof ServiceDto
      */
     shortDescription?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ServiceDtoOperationCategoryEnum {
+    Repair = 'REPAIR',
+    Diagnostic = 'DIAGNOSTIC',
+    Maintenance = 'MAINTENANCE',
+    TireService = 'TIRE_SERVICE'
+}
+
 
 /**
  * Check if a given object implements the ServiceDto interface.
@@ -62,9 +92,12 @@ export function ServiceDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
+        'defaultLaborHours': json['defaultLaborHours'] == null ? undefined : json['defaultLaborHours'],
         'id': json['id'] == null ? undefined : json['id'],
         'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
         'name': json['name'] == null ? undefined : json['name'],
+        'operationCategory': json['operationCategory'] == null ? undefined : json['operationCategory'],
+        'operationCode': json['operationCode'] == null ? undefined : json['operationCode'],
         'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
     };
 }
@@ -75,9 +108,12 @@ export function ServiceDtoToJSON(value?: ServiceDto | null): any {
     }
     return {
         
+        'defaultLaborHours': value['defaultLaborHours'],
         'id': value['id'],
         'longDescription': value['longDescription'],
         'name': value['name'],
+        'operationCategory': value['operationCategory'],
+        'operationCode': value['operationCode'],
         'shortDescription': value['shortDescription'],
     };
 }

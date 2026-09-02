@@ -20,6 +20,24 @@ import { mapValues } from '../runtime';
  */
 export interface PriceCatalogImportSummary {
     /**
+     * Endpoint binding the run was fetched over. Null on runs recorded before the binding was persisted (forward-only) and on quarantine re-application manifests, which make no vendor call.
+     * @type {string}
+     * @memberof PriceCatalogImportSummary
+     */
+    bindingId?: string;
+    /**
+     * When the checkpoint state was committed; null whenever checkpointState is null.
+     * @type {Date}
+     * @memberof PriceCatalogImportSummary
+     */
+    checkpointAt?: Date;
+    /**
+     * Opaque continuation state committed for the next incremental run; null for full-snapshot protocols, which have nothing to resume from.
+     * @type {string}
+     * @memberof PriceCatalogImportSummary
+     */
+    checkpointState?: string;
+    /**
      * Number of chunk events published for the import.
      * @type {number}
      * @memberof PriceCatalogImportSummary
@@ -43,6 +61,12 @@ export interface PriceCatalogImportSummary {
      * @memberof PriceCatalogImportSummary
      */
     currency?: string;
+    /**
+     * Stable machine-readable failure category for a failed import, alongside the free-text failureDetail. Null unless the run failed.
+     * @type {string}
+     * @memberof PriceCatalogImportSummary
+     */
+    errorCode?: PriceCatalogImportSummaryErrorCodeEnum;
     /**
      * Operator-facing failure summary for a failed import.
      * @type {string}
@@ -115,8 +139,28 @@ export interface PriceCatalogImportSummary {
      * @memberof PriceCatalogImportSummary
      */
     vendorProfileId?: string;
+    /**
+     * Inclusive start of the incremental retrieval interval requested for the run. Null for full-snapshot protocols — every current PRICAT protocol: B4.0 fetches the vendor's whole catalog, so there is no window.
+     * @type {Date}
+     * @memberof PriceCatalogImportSummary
+     */
+    windowFrom?: Date;
+    /**
+     * Exclusive end of the requested retrieval interval; null for full-snapshot protocols.
+     * @type {Date}
+     * @memberof PriceCatalogImportSummary
+     */
+    windowTo?: Date;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum PriceCatalogImportSummaryErrorCodeEnum {
+    FetchFailed = 'FETCH_FAILED',
+    DecodeFailed = 'DECODE_FAILED'
+}
 /**
 * @export
 * @enum {string}
@@ -146,10 +190,14 @@ export function PriceCatalogImportSummaryFromJSONTyped(json: any, ignoreDiscrimi
     }
     return {
         
+        'bindingId': json['bindingId'] == null ? undefined : json['bindingId'],
+        'checkpointAt': json['checkpointAt'] == null ? undefined : (new Date(json['checkpointAt'])),
+        'checkpointState': json['checkpointState'] == null ? undefined : json['checkpointState'],
         'chunkCount': json['chunkCount'] == null ? undefined : json['chunkCount'],
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
         'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
         'currency': json['currency'] == null ? undefined : json['currency'],
+        'errorCode': json['errorCode'] == null ? undefined : json['errorCode'],
         'failureDetail': json['failureDetail'] == null ? undefined : json['failureDetail'],
         'fetchedAt': json['fetchedAt'] == null ? undefined : (new Date(json['fetchedAt'])),
         'importManifestId': json['importManifestId'] == null ? undefined : json['importManifestId'],
@@ -162,6 +210,8 @@ export function PriceCatalogImportSummaryFromJSONTyped(json: any, ignoreDiscrimi
         'status': json['status'] == null ? undefined : json['status'],
         'supplierRef': json['supplierRef'] == null ? undefined : json['supplierRef'],
         'vendorProfileId': json['vendorProfileId'] == null ? undefined : json['vendorProfileId'],
+        'windowFrom': json['windowFrom'] == null ? undefined : (new Date(json['windowFrom'])),
+        'windowTo': json['windowTo'] == null ? undefined : (new Date(json['windowTo'])),
     };
 }
 
@@ -171,10 +221,14 @@ export function PriceCatalogImportSummaryToJSON(value?: PriceCatalogImportSummar
     }
     return {
         
+        'bindingId': value['bindingId'],
+        'checkpointAt': value['checkpointAt'] == null ? undefined : ((value['checkpointAt']).toISOString()),
+        'checkpointState': value['checkpointState'],
         'chunkCount': value['chunkCount'],
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
         'countryCode': value['countryCode'],
         'currency': value['currency'],
+        'errorCode': value['errorCode'],
         'failureDetail': value['failureDetail'],
         'fetchedAt': value['fetchedAt'] == null ? undefined : ((value['fetchedAt']).toISOString()),
         'importManifestId': value['importManifestId'],
@@ -187,6 +241,8 @@ export function PriceCatalogImportSummaryToJSON(value?: PriceCatalogImportSummar
         'status': value['status'],
         'supplierRef': value['supplierRef'],
         'vendorProfileId': value['vendorProfileId'],
+        'windowFrom': value['windowFrom'] == null ? undefined : ((value['windowFrom']).toISOString()),
+        'windowTo': value['windowTo'] == null ? undefined : ((value['windowTo']).toISOString()),
     };
 }
 

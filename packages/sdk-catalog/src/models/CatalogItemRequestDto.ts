@@ -32,6 +32,12 @@ export interface CatalogItemRequestDto {
      */
     countryOfOrigin?: string;
     /**
+     * Vehicle-agnostic fallback labor hours for service type, decimal hours in tenths (0.1 hr = 6 min); vehicle-specific times live on the service's labor standards instead
+     * @type {number}
+     * @memberof CatalogItemRequestDto
+     */
+    defaultLaborHours?: number;
+    /**
      * Product image URLs for product type
      * @type {Array<string>}
      * @memberof CatalogItemRequestDto
@@ -86,6 +92,18 @@ export interface CatalogItemRequestDto {
      */
     name?: string;
     /**
+     * Operation category for service type
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    operationCategory?: CatalogItemRequestDtoOperationCategoryEnum;
+    /**
+     * Durion operation code for service type; uppercase alphanumeric segments joined by single dashes, unique across services when present
+     * @type {string}
+     * @memberof CatalogItemRequestDto
+     */
+    operationCode?: string;
+    /**
      * Product code for product type
      * @type {string}
      * @memberof CatalogItemRequestDto
@@ -124,6 +142,18 @@ export interface CatalogItemRequestDto {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum CatalogItemRequestDtoOperationCategoryEnum {
+    Repair = 'REPAIR',
+    Diagnostic = 'DIAGNOSTIC',
+    Maintenance = 'MAINTENANCE',
+    TireService = 'TIRE_SERVICE'
+}
+
+
+/**
  * Check if a given object implements the CatalogItemRequestDto interface.
  */
 export function instanceOfCatalogItemRequestDto(value: object): boolean {
@@ -142,6 +172,7 @@ export function CatalogItemRequestDtoFromJSONTyped(json: any, ignoreDiscriminato
         
         'color': json['color'] == null ? undefined : json['color'],
         'countryOfOrigin': json['countryOfOrigin'] == null ? undefined : json['countryOfOrigin'],
+        'defaultLaborHours': json['defaultLaborHours'] == null ? undefined : json['defaultLaborHours'],
         'images': json['images'] == null ? undefined : json['images'],
         'longDescription': json['longDescription'] == null ? undefined : json['longDescription'],
         'manufacturerBrand': json['manufacturerBrand'] == null ? undefined : json['manufacturerBrand'],
@@ -151,6 +182,8 @@ export function CatalogItemRequestDtoFromJSONTyped(json: any, ignoreDiscriminato
         'manufacturerWarranty': json['manufacturerWarranty'] == null ? undefined : json['manufacturerWarranty'],
         'material': json['material'] == null ? undefined : json['material'],
         'name': json['name'] == null ? undefined : json['name'],
+        'operationCategory': json['operationCategory'] == null ? undefined : json['operationCategory'],
+        'operationCode': json['operationCode'] == null ? undefined : json['operationCode'],
         'productCode': json['productCode'] == null ? undefined : json['productCode'],
         'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
         'sku': json['sku'] == null ? undefined : json['sku'],
@@ -168,6 +201,7 @@ export function CatalogItemRequestDtoToJSON(value?: CatalogItemRequestDto | null
         
         'color': value['color'],
         'countryOfOrigin': value['countryOfOrigin'],
+        'defaultLaborHours': value['defaultLaborHours'],
         'images': value['images'],
         'longDescription': value['longDescription'],
         'manufacturerBrand': value['manufacturerBrand'],
@@ -177,6 +211,8 @@ export function CatalogItemRequestDtoToJSON(value?: CatalogItemRequestDto | null
         'manufacturerWarranty': value['manufacturerWarranty'],
         'material': value['material'],
         'name': value['name'],
+        'operationCategory': value['operationCategory'],
+        'operationCode': value['operationCode'],
         'productCode': value['productCode'],
         'shortDescription': value['shortDescription'],
         'sku': value['sku'],
