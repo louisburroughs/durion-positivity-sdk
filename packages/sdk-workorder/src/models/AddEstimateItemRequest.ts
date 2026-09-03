@@ -38,11 +38,11 @@ export interface AddEstimateItemRequest {
      */
     productId?: string;
     /**
-     * Requested quantity
+     * Requested quantity (hours for LABOR). Required, EXCEPT on a LABOR item that names a serviceId: omitting it there asks the labor guide to prefill the book time (#1569); when no guide time is available the request is rejected and an explicit quantity must be sent. A supplied quantity always wins over the guide.
      * @type {number}
      * @memberof AddEstimateItemRequest
      */
-    quantity: number;
+    quantity?: number;
     /**
      * Referenced service identifier for LABOR items
      * @type {string}
@@ -84,7 +84,6 @@ export enum AddEstimateItemRequestItemTypeEnum {
  */
 export function instanceOfAddEstimateItemRequest(value: object): boolean {
     if (!('itemType' in value)) return false;
-    if (!('quantity' in value)) return false;
     if (!('unitPrice' in value)) return false;
     return true;
 }
@@ -102,7 +101,7 @@ export function AddEstimateItemRequestFromJSONTyped(json: any, ignoreDiscriminat
         'description': json['description'] == null ? undefined : json['description'],
         'itemType': json['itemType'],
         'productId': json['productId'] == null ? undefined : json['productId'],
-        'quantity': json['quantity'],
+        'quantity': json['quantity'] == null ? undefined : json['quantity'],
         'serviceId': json['serviceId'] == null ? undefined : json['serviceId'],
         'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
         'unitPrice': json['unitPrice'],

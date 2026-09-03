@@ -32,12 +32,6 @@ export interface OperationalContextOverrideRequest {
      */
     assignedResources?: Array<string>;
     /**
-     * Optional bay identifier
-     * @type {string}
-     * @memberof OperationalContextOverrideRequest
-     */
-    bayId?: string;
-    /**
      * Optional execution constraints
      * @type {Array<string>}
      * @memberof OperationalContextOverrideRequest
@@ -49,7 +43,23 @@ export interface OperationalContextOverrideRequest {
      * @memberof OperationalContextOverrideRequest
      */
     locationId: string;
+    /**
+     * Kind of resource the first assignedResources entry points at. Optional: an absent value is interpreted as BAY.
+     * @type {string}
+     * @memberof OperationalContextOverrideRequest
+     */
+    resourceType?: OperationalContextOverrideRequestResourceTypeEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum OperationalContextOverrideRequestResourceTypeEnum {
+    Bay = 'BAY',
+    MobileUnit = 'MOBILE_UNIT'
+}
+
 
 /**
  * Check if a given object implements the OperationalContextOverrideRequest interface.
@@ -71,9 +81,9 @@ export function OperationalContextOverrideRequestFromJSONTyped(json: any, ignore
         
         'assignedMechanics': json['assignedMechanics'] == null ? undefined : json['assignedMechanics'],
         'assignedResources': json['assignedResources'] == null ? undefined : json['assignedResources'],
-        'bayId': json['bayId'] == null ? undefined : json['bayId'],
         'constraints': json['constraints'] == null ? undefined : json['constraints'],
         'locationId': json['locationId'],
+        'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
     };
 }
 
@@ -85,9 +95,9 @@ export function OperationalContextOverrideRequestToJSON(value?: OperationalConte
         
         'assignedMechanics': value['assignedMechanics'],
         'assignedResources': value['assignedResources'],
-        'bayId': value['bayId'],
         'constraints': value['constraints'],
         'locationId': value['locationId'],
+        'resourceType': value['resourceType'],
     };
 }
 

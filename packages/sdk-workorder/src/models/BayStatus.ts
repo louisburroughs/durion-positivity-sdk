@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface BayStatus {
     /**
-     * Identifier of the workorder currently assigned to the bay
+     * Identifier of the workorder currently assigned to the bay, or null when idle
      * @type {string}
      * @memberof BayStatus
      */
@@ -38,7 +38,7 @@ export interface BayStatus {
      */
     bayId: string;
     /**
-     * Human-readable bay name
+     * Human-readable bay name, resolved from the location replica. Null when the bay's own replica row has not arrived yet.
      * @type {string}
      * @memberof BayStatus
      */

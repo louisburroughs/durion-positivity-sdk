@@ -31,6 +31,12 @@ import {
     MechanicStatusFromJSONTyped,
     MechanicStatusToJSON,
 } from './MechanicStatus';
+import type { MobileUnitStatus } from './MobileUnitStatus';
+import {
+    MobileUnitStatusFromJSON,
+    MobileUnitStatusFromJSONTyped,
+    MobileUnitStatusToJSON,
+} from './MobileUnitStatus';
 import type { WorkorderSummary } from './WorkorderSummary';
 import {
     WorkorderSummaryFromJSON,
@@ -45,7 +51,7 @@ import {
  */
 export interface DashboardResponse {
     /**
-     * Service bay statuses
+     * Service bay statuses — every active bay at the location, including idle ones
      * @type {Array<BayStatus>}
      * @memberof DashboardResponse
      */
@@ -87,6 +93,12 @@ export interface DashboardResponse {
      */
     mechanics?: Array<MechanicStatus>;
     /**
+     * Mobile service unit statuses — every active mobile unit based at the location, including idle ones. Reported alongside bays, not instead of them: a shop can dispatch to both.
+     * @type {Array<MobileUnitStatus>}
+     * @memberof DashboardResponse
+     */
+    mobileUnits?: Array<MobileUnitStatus>;
+    /**
      * Workorder summaries for the day
      * @type {Array<WorkorderSummary>}
      * @memberof DashboardResponse
@@ -122,6 +134,7 @@ export function DashboardResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         'lastRefreshed': (new Date(json['lastRefreshed'])),
         'locationId': json['locationId'],
         'mechanics': json['mechanics'] == null ? undefined : ((json['mechanics'] as Array<any>).map(MechanicStatusFromJSON)),
+        'mobileUnits': json['mobileUnits'] == null ? undefined : ((json['mobileUnits'] as Array<any>).map(MobileUnitStatusFromJSON)),
         'workorders': ((json['workorders'] as Array<any>).map(WorkorderSummaryFromJSON)),
     };
 }
@@ -139,6 +152,7 @@ export function DashboardResponseToJSON(value?: DashboardResponse | null): any {
         'lastRefreshed': ((value['lastRefreshed']).toISOString()),
         'locationId': value['locationId'],
         'mechanics': value['mechanics'] == null ? undefined : ((value['mechanics'] as Array<any>).map(MechanicStatusToJSON)),
+        'mobileUnits': value['mobileUnits'] == null ? undefined : ((value['mobileUnits'] as Array<any>).map(MobileUnitStatusToJSON)),
         'workorders': ((value['workorders'] as Array<any>).map(WorkorderSummaryToJSON)),
     };
 }

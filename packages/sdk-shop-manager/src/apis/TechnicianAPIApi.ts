@@ -15,9 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
+  PagedModelLocationTechnicianRosterEntryResponse,
   PersonDTO,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
+    PagedModelLocationTechnicianRosterEntryResponseFromJSON,
+    PagedModelLocationTechnicianRosterEntryResponseToJSON,
     PersonDTOFromJSON,
     PersonDTOToJSON,
 } from '../models/index';
@@ -25,6 +31,15 @@ import {
 export interface GetTechnicianPersonRequest {
     locationId: string;
     personId: string;
+}
+
+export interface ListLocationTechniciansRequest {
+    locationId: string;
+    status?: ListLocationTechniciansStatusEnum;
+    skillCode?: string;
+    page?: number;
+    size?: number;
+    sort?: Array<string>;
 }
 
 /**
@@ -82,4 +97,77 @@ export class TechnicianAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+    /**
+     * Returns the technicians assigned to one shop location, enriched with mechanic identity and skills from the eventually consistent HR read model. Use this tool when staffing or dispatching work at a single location; use listMechanics instead for the shop-wide roster, and getTechnicianPerson instead for one technician\'s contact details. Preconditions: the location must exist as a shop, and both the technician assignments and their mechanic projection must have arrived over Kafka. Required inputs: locationId (UUID) as a path parameter, and there is no request body; optionally narrow with status and skillCode, both exact matches, where an omitted status defaults to ACTIVE, and page with page and size, since sort is accepted but ignored and the location roster is returned in a fixed order. Emits a SHOPMGR_LOCATION_TECHNICIAN_LIST audit event; no state changes occur, and the enrichment trails the People/HR authority by the event-propagation delay. Returns 404 when no shop exists for the location id, 403 when the caller lacks shop:technician:view, and an empty page rather than an error when no technician matches the filters. 
+     * List technicians assigned to a location
+     */
+    async listLocationTechniciansRaw(requestParameters: ListLocationTechniciansRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedModelLocationTechnicianRosterEntryResponse>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling listLocationTechnicians().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['skillCode'] != null) {
+            queryParameters['skillCode'] = requestParameters['skillCode'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:technician:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/shop-manager/{locationId}/technicians`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PagedModelLocationTechnicianRosterEntryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the technicians assigned to one shop location, enriched with mechanic identity and skills from the eventually consistent HR read model. Use this tool when staffing or dispatching work at a single location; use listMechanics instead for the shop-wide roster, and getTechnicianPerson instead for one technician\'s contact details. Preconditions: the location must exist as a shop, and both the technician assignments and their mechanic projection must have arrived over Kafka. Required inputs: locationId (UUID) as a path parameter, and there is no request body; optionally narrow with status and skillCode, both exact matches, where an omitted status defaults to ACTIVE, and page with page and size, since sort is accepted but ignored and the location roster is returned in a fixed order. Emits a SHOPMGR_LOCATION_TECHNICIAN_LIST audit event; no state changes occur, and the enrichment trails the People/HR authority by the event-propagation delay. Returns 404 when no shop exists for the location id, 403 when the caller lacks shop:technician:view, and an empty page rather than an error when no technician matches the filters. 
+     * List technicians assigned to a location
+     */
+    async listLocationTechnicians(requestParameters: ListLocationTechniciansRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedModelLocationTechnicianRosterEntryResponse> {
+        const response = await this.listLocationTechniciansRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListLocationTechniciansStatusEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE',
+    OnLeave = 'ON_LEAVE'
 }

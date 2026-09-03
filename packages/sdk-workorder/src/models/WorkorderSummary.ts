@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface WorkorderSummary {
     /**
-     * Identifier of the assigned bay
-     * @type {string}
-     * @memberof WorkorderSummary
-     */
-    assignedBayId?: string;
-    /**
      * Identifier of the assigned mechanic
      * @type {string}
      * @memberof WorkorderSummary
      */
     assignedMechanicId?: string;
+    /**
+     * Identifier of the resource assigned to the workorder; read together with resourceType, which says whether it is a bay or a mobile unit
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    assignedResourceId?: string;
     /**
      * Name of the customer
      * @type {string}
@@ -43,6 +43,12 @@ export interface WorkorderSummary {
      * @memberof WorkorderSummary
      */
     estimatedLaborHours?: number;
+    /**
+     * Kind of resource assignedResourceId points at. Null exactly when assignedResourceId is null
+     * @type {string}
+     * @memberof WorkorderSummary
+     */
+    resourceType?: WorkorderSummaryResourceTypeEnum;
     /**
      * Date the workorder is scheduled for
      * @type {Date}
@@ -76,6 +82,16 @@ export interface WorkorderSummary {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum WorkorderSummaryResourceTypeEnum {
+    Bay = 'BAY',
+    MobileUnit = 'MOBILE_UNIT'
+}
+
+
+/**
  * Check if a given object implements the WorkorderSummary interface.
  */
 export function instanceOfWorkorderSummary(value: object): boolean {
@@ -93,10 +109,11 @@ export function WorkorderSummaryFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'assignedBayId': json['assignedBayId'] == null ? undefined : json['assignedBayId'],
         'assignedMechanicId': json['assignedMechanicId'] == null ? undefined : json['assignedMechanicId'],
+        'assignedResourceId': json['assignedResourceId'] == null ? undefined : json['assignedResourceId'],
         'customerName': json['customerName'] == null ? undefined : json['customerName'],
         'estimatedLaborHours': json['estimatedLaborHours'] == null ? undefined : json['estimatedLaborHours'],
+        'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
         'scheduledDate': json['scheduledDate'] == null ? undefined : (new Date(json['scheduledDate'])),
         'status': json['status'] == null ? undefined : json['status'],
         'vehicleDescription': json['vehicleDescription'] == null ? undefined : json['vehicleDescription'],
@@ -111,10 +128,11 @@ export function WorkorderSummaryToJSON(value?: WorkorderSummary | null): any {
     }
     return {
         
-        'assignedBayId': value['assignedBayId'],
         'assignedMechanicId': value['assignedMechanicId'],
+        'assignedResourceId': value['assignedResourceId'],
         'customerName': value['customerName'],
         'estimatedLaborHours': value['estimatedLaborHours'],
+        'resourceType': value['resourceType'],
         'scheduledDate': value['scheduledDate'] == null ? undefined : ((value['scheduledDate']).toISOString().substring(0,10)),
         'status': value['status'],
         'vehicleDescription': value['vehicleDescription'],

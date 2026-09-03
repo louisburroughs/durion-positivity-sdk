@@ -32,12 +32,6 @@ export interface OperationalContextResponse {
      */
     assignedResources?: Array<string>;
     /**
-     * Bay identifier
-     * @type {string}
-     * @memberof OperationalContextResponse
-     */
-    bayId?: string;
-    /**
      * Operational constraints
      * @type {Array<string>}
      * @memberof OperationalContextResponse
@@ -55,6 +49,18 @@ export interface OperationalContextResponse {
      * @memberof OperationalContextResponse
      */
     locked: boolean;
+    /**
+     * Identifier of the workorder's primary assigned resource; read together with resourceType, which says whether it is a bay or a mobile unit
+     * @type {string}
+     * @memberof OperationalContextResponse
+     */
+    resourceId?: string;
+    /**
+     * Kind of resource resourceId points at. Null exactly when resourceId is null
+     * @type {string}
+     * @memberof OperationalContextResponse
+     */
+    resourceType?: OperationalContextResponseResourceTypeEnum;
     /**
      * Scheduled end time
      * @type {Date}
@@ -76,6 +82,16 @@ export interface OperationalContextResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum OperationalContextResponseResourceTypeEnum {
+    Bay = 'BAY',
+    MobileUnit = 'MOBILE_UNIT'
+}
+
+
+/**
  * Check if a given object implements the OperationalContextResponse interface.
  */
 export function instanceOfOperationalContextResponse(value: object): boolean {
@@ -95,10 +111,11 @@ export function OperationalContextResponseFromJSONTyped(json: any, ignoreDiscrim
         
         'assignedMechanics': json['assignedMechanics'] == null ? undefined : json['assignedMechanics'],
         'assignedResources': json['assignedResources'] == null ? undefined : json['assignedResources'],
-        'bayId': json['bayId'] == null ? undefined : json['bayId'],
         'constraints': json['constraints'] == null ? undefined : json['constraints'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'locked': json['locked'],
+        'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
+        'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
         'scheduledEndAt': json['scheduledEndAt'] == null ? undefined : (new Date(json['scheduledEndAt'])),
         'scheduledStartAt': json['scheduledStartAt'] == null ? undefined : (new Date(json['scheduledStartAt'])),
         'version': json['version'] == null ? undefined : json['version'],
@@ -113,10 +130,11 @@ export function OperationalContextResponseToJSON(value?: OperationalContextRespo
         
         'assignedMechanics': value['assignedMechanics'],
         'assignedResources': value['assignedResources'],
-        'bayId': value['bayId'],
         'constraints': value['constraints'],
         'locationId': value['locationId'],
         'locked': value['locked'],
+        'resourceId': value['resourceId'],
+        'resourceType': value['resourceType'],
         'scheduledEndAt': value['scheduledEndAt'] == null ? undefined : ((value['scheduledEndAt']).toISOString()),
         'scheduledStartAt': value['scheduledStartAt'] == null ? undefined : ((value['scheduledStartAt']).toISOString()),
         'version': value['version'],

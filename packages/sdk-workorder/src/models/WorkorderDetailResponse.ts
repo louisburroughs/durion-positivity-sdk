@@ -39,6 +39,12 @@ import {
  */
 export interface WorkorderDetailResponse {
     /**
+     * Actual technician hours clocked across all service lines, in hours.
+     * @type {number}
+     * @memberof WorkorderDetailResponse
+     */
+    actualLaborHours?: number;
+    /**
      * Assigned technician ID
      * @type {string}
      * @memberof WorkorderDetailResponse
@@ -75,6 +81,12 @@ export interface WorkorderDetailResponse {
      */
     customerName?: string;
     /**
+     * Overlap-aware sum of the agreed labor hours across active service lines, in tenths. Null when no line carries hours.
+     * @type {number}
+     * @memberof WorkorderDetailResponse
+     */
+    estimatedLaborHours?: number;
+    /**
      * Estimated total (conditionally included based on canViewFinancials)
      * @type {number}
      * @memberof WorkorderDetailResponse
@@ -104,6 +116,18 @@ export interface WorkorderDetailResponse {
      * @memberof WorkorderDetailResponse
      */
     laborTotal?: number;
+    /**
+     * actualLaborHours minus estimatedLaborHours; positive means the job ran over the estimate. Null unless both operands exist.
+     * @type {number}
+     * @memberof WorkorderDetailResponse
+     */
+    laborVarianceHours?: number;
+    /**
+     * Labor variance as a percentage of the estimate. Null unless both operands exist and the estimate is non-zero.
+     * @type {number}
+     * @memberof WorkorderDetailResponse
+     */
+    laborVariancePct?: number;
     /**
      * Part line items with usage totals
      * @type {Array<WorkorderPartResponse>}
@@ -207,17 +231,21 @@ export function WorkorderDetailResponseFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
+        'actualLaborHours': json['actualLaborHours'] == null ? undefined : json['actualLaborHours'],
         'assignedTechnicianId': json['assignedTechnicianId'] == null ? undefined : json['assignedTechnicianId'],
         'capabilities': WorkorderCapabilitiesFromJSON(json['capabilities']),
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'],
         'customerId': json['customerId'],
         'customerName': json['customerName'] == null ? undefined : json['customerName'],
+        'estimatedLaborHours': json['estimatedLaborHours'] == null ? undefined : json['estimatedLaborHours'],
         'estimatedTotal': json['estimatedTotal'] == null ? undefined : json['estimatedTotal'],
         'isCompleted': json['isCompleted'] == null ? undefined : json['isCompleted'],
         'isInProgress': json['isInProgress'] == null ? undefined : json['isInProgress'],
         'isStarted': json['isStarted'] == null ? undefined : json['isStarted'],
         'laborTotal': json['laborTotal'] == null ? undefined : json['laborTotal'],
+        'laborVarianceHours': json['laborVarianceHours'] == null ? undefined : json['laborVarianceHours'],
+        'laborVariancePct': json['laborVariancePct'] == null ? undefined : json['laborVariancePct'],
         'parts': json['parts'] == null ? undefined : ((json['parts'] as Array<any>).map(WorkorderPartResponseFromJSON)),
         'partsTotal': json['partsTotal'] == null ? undefined : json['partsTotal'],
         'services': json['services'] == null ? undefined : ((json['services'] as Array<any>).map(WorkorderServiceResponseFromJSON)),
@@ -237,17 +265,21 @@ export function WorkorderDetailResponseToJSON(value?: WorkorderDetailResponse | 
     }
     return {
         
+        'actualLaborHours': value['actualLaborHours'],
         'assignedTechnicianId': value['assignedTechnicianId'],
         'capabilities': WorkorderCapabilitiesToJSON(value['capabilities']),
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'customerId': value['customerId'],
         'customerName': value['customerName'],
+        'estimatedLaborHours': value['estimatedLaborHours'],
         'estimatedTotal': value['estimatedTotal'],
         'isCompleted': value['isCompleted'],
         'isInProgress': value['isInProgress'],
         'isStarted': value['isStarted'],
         'laborTotal': value['laborTotal'],
+        'laborVarianceHours': value['laborVarianceHours'],
+        'laborVariancePct': value['laborVariancePct'],
         'parts': value['parts'] == null ? undefined : ((value['parts'] as Array<any>).map(WorkorderPartResponseToJSON)),
         'partsTotal': value['partsTotal'],
         'services': value['services'] == null ? undefined : ((value['services'] as Array<any>).map(WorkorderServiceResponseToJSON)),

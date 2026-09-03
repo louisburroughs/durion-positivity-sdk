@@ -26,6 +26,12 @@ export interface LocationRef {
      */
     code?: string;
     /**
+     * Whether the location can perform repairs, true when it has at least one ACTIVE bay or at least one ACTIVE mobile unit based there; always false for an inactive location
+     * @type {boolean}
+     * @memberof LocationRef
+     */
+    hasRepairCapability: boolean;
+    /**
      * Identifier of the location in the HR system of record
      * @type {string}
      * @memberof LocationRef
@@ -67,6 +73,7 @@ export interface LocationRef {
  * Check if a given object implements the LocationRef interface.
  */
 export function instanceOfLocationRef(value: object): boolean {
+    if (!('hasRepairCapability' in value)) return false;
     if (!('id' in value)) return false;
     return true;
 }
@@ -82,6 +89,7 @@ export function LocationRefFromJSONTyped(json: any, ignoreDiscriminator: boolean
     return {
         
         'code': json['code'] == null ? undefined : json['code'],
+        'hasRepairCapability': json['hasRepairCapability'],
         'hrLocationId': json['hrLocationId'] == null ? undefined : json['hrLocationId'],
         'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
@@ -98,6 +106,7 @@ export function LocationRefToJSON(value?: LocationRef | null): any {
     return {
         
         'code': value['code'],
+        'hasRepairCapability': value['hasRepairCapability'],
         'hrLocationId': value['hrLocationId'],
         'id': value['id'],
         'name': value['name'],

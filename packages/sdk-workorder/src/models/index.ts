@@ -50,6 +50,7 @@ export * from './IssuePartRequest';
 export * from './LaborQuantity';
 export * from './LineItemApprovalDto';
 export * from './MechanicStatus';
+export * from './MobileUnitStatus';
 export * from './OperationalContextOverrideRequest';
 export * from './OperationalContextResponse';
 export * from './PageEstimateSummaryResponse';

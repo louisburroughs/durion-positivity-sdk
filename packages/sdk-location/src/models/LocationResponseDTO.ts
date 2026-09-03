@@ -33,6 +33,18 @@ export interface LocationResponseDTO {
      */
     active: boolean;
     /**
+     * Number of bays owned by the location with status ACTIVE; OUT_OF_SERVICE bays are excluded and an inactive location always reports 0
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    activeBayCount: number;
+    /**
+     * Number of mobile units based at the location with status ACTIVE; INACTIVE units are excluded and an inactive location always reports 0
+     * @type {number}
+     * @memberof LocationResponseDTO
+     */
+    activeMobileUnitCount: number;
+    /**
      * First line of the street address
      * @type {string}
      * @memberof LocationResponseDTO
@@ -68,6 +80,12 @@ export interface LocationResponseDTO {
      * @memberof LocationResponseDTO
      */
     geographicalLocationId?: string;
+    /**
+     * Whether the location can perform repairs, true when it has at least one ACTIVE bay or at least one ACTIVE mobile unit based there; always false for an inactive location
+     * @type {boolean}
+     * @memberof LocationResponseDTO
+     */
+    hasRepairCapability: boolean;
     /**
      * Unique identifier of the location
      * @type {string}
@@ -123,6 +141,9 @@ export interface LocationResponseDTO {
  */
 export function instanceOfLocationResponseDTO(value: object): boolean {
     if (!('active' in value)) return false;
+    if (!('activeBayCount' in value)) return false;
+    if (!('activeMobileUnitCount' in value)) return false;
+    if (!('hasRepairCapability' in value)) return false;
     if (!('id' in value)) return false;
     if (!('name' in value)) return false;
     return true;
@@ -139,12 +160,15 @@ export function LocationResponseDTOFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'active': json['active'],
+        'activeBayCount': json['activeBayCount'],
+        'activeMobileUnitCount': json['activeMobileUnitCount'],
         'addressLine1': json['addressLine1'] == null ? undefined : json['addressLine1'],
         'addressLine2': json['addressLine2'] == null ? undefined : json['addressLine2'],
         'city': json['city'] == null ? undefined : json['city'],
         'code': json['code'] == null ? undefined : json['code'],
         'country': json['country'] == null ? undefined : json['country'],
         'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
+        'hasRepairCapability': json['hasRepairCapability'],
         'id': json['id'],
         'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
         'name': json['name'],
@@ -163,12 +187,15 @@ export function LocationResponseDTOToJSON(value?: LocationResponseDTO | null): a
     return {
         
         'active': value['active'],
+        'activeBayCount': value['activeBayCount'],
+        'activeMobileUnitCount': value['activeMobileUnitCount'],
         'addressLine1': value['addressLine1'],
         'addressLine2': value['addressLine2'],
         'city': value['city'],
         'code': value['code'],
         'country': value['country'],
         'geographicalLocationId': value['geographicalLocationId'],
+        'hasRepairCapability': value['hasRepairCapability'],
         'id': value['id'],
         'mailingAddress': value['mailingAddress'],
         'name': value['name'],
