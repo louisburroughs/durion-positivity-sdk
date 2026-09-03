@@ -36,6 +36,11 @@ export interface CreateBayRequest {
     bayRequest: BayRequest;
 }
 
+export interface DeleteBayRequest {
+    locationId: string;
+    bayId: string;
+}
+
 export interface GetBayRequest {
     locationId: string;
     bayId: string;
@@ -111,6 +116,55 @@ export class BayAPIApi extends runtime.BaseAPI {
     async createBay(requestParameters: CreateBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BayResponse> {
         const response = await this.createBayRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Deletes a bay permanently by id and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a bay was created in error; use patchBay with status OUT_OF_SERVICE instead to take a real bay out of service, which keeps it visible as inactive rather than removing it. Preconditions: the location must exist and the bay must belong to it; there is no usage check, so callers must confirm the bay is not referenced by scheduled work first. Required inputs: locationId and bayId (UUIDs) as path parameters; there is no request body. Emits a LOCATION_BAY_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location or bay does not exist. 
+     * Delete a Service Bay
+     */
+    async deleteBayRaw(requestParameters: DeleteBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling deleteBay().'
+            );
+        }
+
+        if (requestParameters['bayId'] == null) {
+            throw new runtime.RequiredError(
+                'bayId',
+                'Required parameter "bayId" was null or undefined when calling deleteBay().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:bay:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/locations/{locationId}/bays/{bayId}`.replace(`{${"locationId"}}`, encodeURIComponent(String(requestParameters['locationId']))).replace(`{${"bayId"}}`, encodeURIComponent(String(requestParameters['bayId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Deletes a bay permanently by id and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a bay was created in error; use patchBay with status OUT_OF_SERVICE instead to take a real bay out of service, which keeps it visible as inactive rather than removing it. Preconditions: the location must exist and the bay must belong to it; there is no usage check, so callers must confirm the bay is not referenced by scheduled work first. Required inputs: locationId and bayId (UUIDs) as path parameters; there is no request body. Emits a LOCATION_BAY_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location or bay does not exist. 
+     * Delete a Service Bay
+     */
+    async deleteBay(requestParameters: DeleteBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteBayRaw(requestParameters, initOverrides);
     }
 
     /**

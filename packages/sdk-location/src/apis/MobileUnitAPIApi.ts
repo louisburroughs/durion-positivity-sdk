@@ -35,6 +35,10 @@ export interface CreateMobileUnitRequest {
     mobileUnitRequest: MobileUnitRequest;
 }
 
+export interface DeleteMobileUnitRequest {
+    id: string;
+}
+
 export interface GetMobileUnitByIdRequest {
     id: string;
 }
@@ -107,6 +111,48 @@ export class MobileUnitAPIApi extends runtime.BaseAPI {
     async createMobileUnit(requestParameters: CreateMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MobileUnitResponse> {
         const response = await this.createMobileUnitRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Deletes a mobile unit permanently by id, removing its coverage rules and capability assignments, and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a unit was created in error; use patchMobileUnit with status INACTIVE instead to stand down a real unit, which keeps it visible as inactive rather than removing it. Preconditions: the unit must exist; there is no usage check, so callers must confirm the unit is not referenced by scheduled work first. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a LOCATION_MOBILE_UNIT_DELETE event; the row is hard-deleted, not soft-deleted, and its coverage rules are deleted with it. Returns 204 on success and 404 when the mobile unit does not exist. 
+     * Delete a Mobile Unit
+     */
+    async deleteMobileUnitRaw(requestParameters: DeleteMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling deleteMobileUnit().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:mobile-unit:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/mobile-units/{id}`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Deletes a mobile unit permanently by id, removing its coverage rules and capability assignments, and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a unit was created in error; use patchMobileUnit with status INACTIVE instead to stand down a real unit, which keeps it visible as inactive rather than removing it. Preconditions: the unit must exist; there is no usage check, so callers must confirm the unit is not referenced by scheduled work first. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a LOCATION_MOBILE_UNIT_DELETE event; the row is hard-deleted, not soft-deleted, and its coverage rules are deleted with it. Returns 204 on success and 404 when the mobile unit does not exist. 
+     * Delete a Mobile Unit
+     */
+    async deleteMobileUnit(requestParameters: DeleteMobileUnitRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.deleteMobileUnitRaw(requestParameters, initOverrides);
     }
 
     /**

@@ -14,23 +14,23 @@
 
 import { mapValues } from '../runtime';
 /**
- * One vendor's spend over the report window; see field descriptions for the paidAmount vs billCount/avgBillAmount population split
+ * One vendor's spend over the report window; see field descriptions for the paidAmount vs billsIssuedInWindow/avgIssuedBillAmount population split
  * @export
  * @interface VendorSpendRow
  */
 export interface VendorSpendRow {
     /**
-     * Sum of VendorBill.totalAmount for this vendor's bills in the window divided by billCount; 0 (never null) when billCount is 0 — there is nothing to average, and 0 keeps this field a well-defined BigDecimal for every row
+     * Sum of VendorBill.totalAmount for this vendor's bills in the window divided by billsIssuedInWindow; 0 (never null) when billsIssuedInWindow is 0 — there is nothing to average, and 0 keeps this field a well-defined BigDecimal for every row
      * @type {number}
      * @memberof VendorSpendRow
      */
-    avgBillAmount: number;
+    avgIssuedBillAmount: number;
     /**
-     * Count of VendorBill records for this vendor whose billDate falls in the window, regardless of status; 0 when none billed in the window. Bill-side figure, a DIFFERENT population from paidAmount above — see class Javadoc.
+     * Count of VendorBill records for this vendor whose billDate falls in the window, regardless of payment status; 0 when none issued in the window. Bill-side figure, a DIFFERENT population from paidAmount above — see class Javadoc.
      * @type {number}
      * @memberof VendorSpendRow
      */
-    billCount: number;
+    billsIssuedInWindow: number;
     /**
      * Resolved vendor display name, from the AP vendor directory; falls back to the vendor name snapshot recorded on the vendor's own bills/payments when the vendor has no directory entry, and is null only if neither source has a name
      * @type {string}
@@ -38,7 +38,7 @@ export interface VendorSpendRow {
      */
     name?: string;
     /**
-     * Sum of APPayment.grossAmount for settled payments (status GATEWAY_SUCCEEDED or later) to this vendor whose paymentDate falls in the window; 0 when none settled in the window. This is A/P cash, a DIFFERENT population from billCount/avgBillAmount below — see class Javadoc.
+     * Sum of APPayment.grossAmount for settled payments (status GATEWAY_SUCCEEDED or later) to this vendor whose paymentDate falls in the window; 0 when none settled in the window. This is A/P cash, a DIFFERENT population from billsIssuedInWindow/avgIssuedBillAmount below — see class Javadoc.
      * @type {number}
      * @memberof VendorSpendRow
      */
@@ -55,8 +55,8 @@ export interface VendorSpendRow {
  * Check if a given object implements the VendorSpendRow interface.
  */
 export function instanceOfVendorSpendRow(value: object): boolean {
-    if (!('avgBillAmount' in value)) return false;
-    if (!('billCount' in value)) return false;
+    if (!('avgIssuedBillAmount' in value)) return false;
+    if (!('billsIssuedInWindow' in value)) return false;
     if (!('paidAmount' in value)) return false;
     if (!('vendorId' in value)) return false;
     return true;
@@ -72,8 +72,8 @@ export function VendorSpendRowFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'avgBillAmount': json['avgBillAmount'],
-        'billCount': json['billCount'],
+        'avgIssuedBillAmount': json['avgIssuedBillAmount'],
+        'billsIssuedInWindow': json['billsIssuedInWindow'],
         'name': json['name'] == null ? undefined : json['name'],
         'paidAmount': json['paidAmount'],
         'vendorId': json['vendorId'],
@@ -86,8 +86,8 @@ export function VendorSpendRowToJSON(value?: VendorSpendRow | null): any {
     }
     return {
         
-        'avgBillAmount': value['avgBillAmount'],
-        'billCount': value['billCount'],
+        'avgIssuedBillAmount': value['avgIssuedBillAmount'],
+        'billsIssuedInWindow': value['billsIssuedInWindow'],
         'name': value['name'],
         'paidAmount': value['paidAmount'],
         'vendorId': value['vendorId'],
