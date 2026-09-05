@@ -48,7 +48,7 @@ export interface UpdateSystemPromptRequest {
 export class SystemPromptsApi extends runtime.BaseAPI {
 
     /**
-     * Creates a reusable MCP system prompt that agent orchestration can assign to assistant agents. Use this tool to add a new named prompt; do not use updateSystemPrompt, which edits a prompt that already exists. Preconditions: no prompt may already use the requested name, which is unique across prompts. Required inputs: name (unique, human-readable) and content (the prompt text); both are mandatory and non-blank. Emits a MCP_SYSTEM_PROMPT_CREATE event and invalidates any cached agents built from a prompt of that name so they rebuild with the new content. Returns 201 with the stored prompt, and 400 when a prompt with the same name already exists. 
+     * Creates a reusable MCP system prompt that agent orchestration can assign to assistant agents. Use this tool to add a new named prompt; do not use updateSystemPrompt, which edits a prompt that already exists. Preconditions: no prompt may already use the requested name, which is unique across prompts. Required inputs: name (unique, human-readable) and content (the prompt text); both are mandatory and non-blank. Emits a MCP_SYSTEM_PROMPT_CREATE event and invalidates any cached agents built from a prompt of that name so they rebuild with the new content. Returns 201 with the stored prompt, and 409 when a prompt with the same name already exists. 
      * Create an MCP System Prompt
      */
     async createSystemPromptRaw(requestParameters: CreateSystemPromptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SystemPromptResponse>> {
@@ -77,7 +77,7 @@ export class SystemPromptsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a reusable MCP system prompt that agent orchestration can assign to assistant agents. Use this tool to add a new named prompt; do not use updateSystemPrompt, which edits a prompt that already exists. Preconditions: no prompt may already use the requested name, which is unique across prompts. Required inputs: name (unique, human-readable) and content (the prompt text); both are mandatory and non-blank. Emits a MCP_SYSTEM_PROMPT_CREATE event and invalidates any cached agents built from a prompt of that name so they rebuild with the new content. Returns 201 with the stored prompt, and 400 when a prompt with the same name already exists. 
+     * Creates a reusable MCP system prompt that agent orchestration can assign to assistant agents. Use this tool to add a new named prompt; do not use updateSystemPrompt, which edits a prompt that already exists. Preconditions: no prompt may already use the requested name, which is unique across prompts. Required inputs: name (unique, human-readable) and content (the prompt text); both are mandatory and non-blank. Emits a MCP_SYSTEM_PROMPT_CREATE event and invalidates any cached agents built from a prompt of that name so they rebuild with the new content. Returns 201 with the stored prompt, and 409 when a prompt with the same name already exists. 
      * Create an MCP System Prompt
      */
     async createSystemPrompt(requestParameters: CreateSystemPromptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SystemPromptResponse> {
@@ -183,7 +183,7 @@ export class SystemPromptsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the name and content of an existing MCP system prompt. Use this tool to edit prompt text or rename a prompt; do not use createSystemPrompt, which adds a new prompt alongside the existing ones. Preconditions: the prompt must exist, and when the name is being changed no other prompt may already use the new name. Required inputs: id (UUID) as a path parameter plus name and content in the body; both body fields are mandatory and fully replace the stored values. Emits a MCP_SYSTEM_PROMPT_UPDATE event and invalidates cached agents built from the prompt so subsequent chats use the new content. Returns 200 with the updated prompt, 404 when no prompt exists for the id, and 400 when the new name is already used by another prompt. 
+     * Replaces the name and content of an existing MCP system prompt. Use this tool to edit prompt text or rename a prompt; do not use createSystemPrompt, which adds a new prompt alongside the existing ones. Preconditions: the prompt must exist, and when the name is being changed no other prompt may already use the new name. Required inputs: id (UUID) as a path parameter plus name and content in the body; both body fields are mandatory and fully replace the stored values. Emits a MCP_SYSTEM_PROMPT_UPDATE event and invalidates cached agents built from the prompt so subsequent chats use the new content. Returns 200 with the updated prompt, 404 when no prompt exists for the id, and 409 when the new name is already used by another prompt. 
      * Update an MCP System Prompt
      */
     async updateSystemPromptRaw(requestParameters: UpdateSystemPromptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SystemPromptResponse>> {
@@ -219,7 +219,7 @@ export class SystemPromptsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the name and content of an existing MCP system prompt. Use this tool to edit prompt text or rename a prompt; do not use createSystemPrompt, which adds a new prompt alongside the existing ones. Preconditions: the prompt must exist, and when the name is being changed no other prompt may already use the new name. Required inputs: id (UUID) as a path parameter plus name and content in the body; both body fields are mandatory and fully replace the stored values. Emits a MCP_SYSTEM_PROMPT_UPDATE event and invalidates cached agents built from the prompt so subsequent chats use the new content. Returns 200 with the updated prompt, 404 when no prompt exists for the id, and 400 when the new name is already used by another prompt. 
+     * Replaces the name and content of an existing MCP system prompt. Use this tool to edit prompt text or rename a prompt; do not use createSystemPrompt, which adds a new prompt alongside the existing ones. Preconditions: the prompt must exist, and when the name is being changed no other prompt may already use the new name. Required inputs: id (UUID) as a path parameter plus name and content in the body; both body fields are mandatory and fully replace the stored values. Emits a MCP_SYSTEM_PROMPT_UPDATE event and invalidates cached agents built from the prompt so subsequent chats use the new content. Returns 200 with the updated prompt, 404 when no prompt exists for the id, and 409 when the new name is already used by another prompt. 
      * Update an MCP System Prompt
      */
     async updateSystemPrompt(requestParameters: UpdateSystemPromptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SystemPromptResponse> {

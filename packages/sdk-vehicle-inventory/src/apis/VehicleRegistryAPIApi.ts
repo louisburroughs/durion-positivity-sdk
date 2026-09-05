@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateVehicleRequest,
   UpdateVehicleRequest,
   VehicleFactReplayResultDto,
   VehicleResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateVehicleRequestFromJSON,
     CreateVehicleRequestToJSON,
     UpdateVehicleRequestFromJSON,
@@ -64,7 +67,7 @@ export interface UpdateVehicleOperationRequest {
 export class VehicleRegistryAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates an active vehicle registry record after validating and normalizing the VIN, which must be globally unique among active vehicles. Use this tool to register a single vehicle whose changes replicate to consumer services; do not use bulkIngestVehicles, which loads batches with per-row results, and do not use createVehicleLegacy, which writes the unreplicated legacy store. Preconditions: no active vehicle may already hold the same normalized VIN; a deactivated vehicle releases its VIN for reuse. Required inputs: accountId (UUID) and vin (17 characters after separators are stripped, with letters I, O and Q rejected); unitNumber and description are optional and stored as empty strings when omitted, and licensePlate, licensePlateJurisdiction, year, make, model and trim are optional. Emits a VEHICLE_CREATE event and queues a vehicle.vehicle.updated fact on the vehicle.events.v1 outbox for downstream replicas. Returns 201 with the created record, and 400 with a VALIDATION_ERROR ApiError when the VIN is malformed or an active vehicle already holds the same normalized VIN; the duplicate-VIN case is reported as 400, not 409. 
+     * Creates an active vehicle registry record after validating and normalizing the VIN, which must be globally unique among active vehicles. Use this tool to register a single vehicle whose changes replicate to consumer services; do not use bulkIngestVehicles, which loads batches with per-row results, and do not use createVehicleLegacy, which writes the unreplicated legacy store. Preconditions: no active vehicle may already hold the same normalized VIN; a deactivated vehicle releases its VIN for reuse. Required inputs: accountId (UUID) and vin (17 characters after separators are stripped, with letters I, O and Q rejected); unitNumber and description are optional and stored as empty strings when omitted, and licensePlate, licensePlateJurisdiction, year, make, model and trim are optional. Emits a VEHICLE_CREATE event and queues a vehicle.vehicle.updated fact on the vehicle.events.v1 outbox for downstream replicas. Returns 201 with the created record, 400 with a VALIDATION_ERROR ApiError when the VIN is malformed, and 409 with a VEHICLE_VIN_CONFLICT ApiError when an active vehicle already holds the same normalized VIN, since that is a collision with existing state rather than a malformed request. 
      * Create vehicle
      */
     async createVehicleRaw(requestParameters: CreateVehicleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
@@ -101,7 +104,7 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an active vehicle registry record after validating and normalizing the VIN, which must be globally unique among active vehicles. Use this tool to register a single vehicle whose changes replicate to consumer services; do not use bulkIngestVehicles, which loads batches with per-row results, and do not use createVehicleLegacy, which writes the unreplicated legacy store. Preconditions: no active vehicle may already hold the same normalized VIN; a deactivated vehicle releases its VIN for reuse. Required inputs: accountId (UUID) and vin (17 characters after separators are stripped, with letters I, O and Q rejected); unitNumber and description are optional and stored as empty strings when omitted, and licensePlate, licensePlateJurisdiction, year, make, model and trim are optional. Emits a VEHICLE_CREATE event and queues a vehicle.vehicle.updated fact on the vehicle.events.v1 outbox for downstream replicas. Returns 201 with the created record, and 400 with a VALIDATION_ERROR ApiError when the VIN is malformed or an active vehicle already holds the same normalized VIN; the duplicate-VIN case is reported as 400, not 409. 
+     * Creates an active vehicle registry record after validating and normalizing the VIN, which must be globally unique among active vehicles. Use this tool to register a single vehicle whose changes replicate to consumer services; do not use bulkIngestVehicles, which loads batches with per-row results, and do not use createVehicleLegacy, which writes the unreplicated legacy store. Preconditions: no active vehicle may already hold the same normalized VIN; a deactivated vehicle releases its VIN for reuse. Required inputs: accountId (UUID) and vin (17 characters after separators are stripped, with letters I, O and Q rejected); unitNumber and description are optional and stored as empty strings when omitted, and licensePlate, licensePlateJurisdiction, year, make, model and trim are optional. Emits a VEHICLE_CREATE event and queues a vehicle.vehicle.updated fact on the vehicle.events.v1 outbox for downstream replicas. Returns 201 with the created record, 400 with a VALIDATION_ERROR ApiError when the VIN is malformed, and 409 with a VEHICLE_VIN_CONFLICT ApiError when an active vehicle already holds the same normalized VIN, since that is a collision with existing state rather than a malformed request. 
      * Create vehicle
      */
     async createVehicle(requestParameters: CreateVehicleOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
@@ -152,7 +155,7 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single vehicle registry record by its vehicleId, whether the vehicle is active or deactivated. Use this tool when the registry id is already known; use getVehicleByVin instead for VIN lookups, use searchVehicles for free-text discovery, and do not use getVehicleLegacy, which reads the legacy store. Preconditions: the record must exist in the registry; deactivated vehicles are still returned, so callers must check the isActive flag. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no registry record exists for the supplied vehicleId. 
+     * Returns a single vehicle registry record by its vehicleId, whether the vehicle is active or deactivated. Use this tool when the registry id is already known; use getVehicleByVin instead for VIN lookups, use searchVehicles for free-text discovery, and do not use getVehicleLegacy, which reads the legacy store. Preconditions: the record must exist in the registry; deactivated vehicles are still returned, so callers must check the isActive flag. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with a RESOURCE_NOT_FOUND ApiError when no registry record exists for the supplied vehicleId. 
      * Get vehicle by ID
      */
     async getVehicleRaw(requestParameters: GetVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
@@ -186,7 +189,7 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single vehicle registry record by its vehicleId, whether the vehicle is active or deactivated. Use this tool when the registry id is already known; use getVehicleByVin instead for VIN lookups, use searchVehicles for free-text discovery, and do not use getVehicleLegacy, which reads the legacy store. Preconditions: the record must exist in the registry; deactivated vehicles are still returned, so callers must check the isActive flag. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no registry record exists for the supplied vehicleId. 
+     * Returns a single vehicle registry record by its vehicleId, whether the vehicle is active or deactivated. Use this tool when the registry id is already known; use getVehicleByVin instead for VIN lookups, use searchVehicles for free-text discovery, and do not use getVehicleLegacy, which reads the legacy store. Preconditions: the record must exist in the registry; deactivated vehicles are still returned, so callers must check the isActive flag. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with a RESOURCE_NOT_FOUND ApiError when no registry record exists for the supplied vehicleId. 
      * Get vehicle by ID
      */
     async getVehicle(requestParameters: GetVehicleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {
@@ -195,7 +198,7 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single vehicle registry record by VIN, normalizing the supplied value by trimming, uppercasing and stripping separators before the lookup. Use this tool when the full 17-character VIN is known; use searchVehicles instead for partial VIN prefixes, and do not use getVehicleLegacyByVin, which reads the legacy store. Preconditions: a record with the normalized VIN must exist in the registry; active and deactivated vehicles are both returned. Required inputs: vin as a path parameter, exactly 17 characters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no registry record carries the normalized VIN, and 400 with a VALIDATION_FAILED ApiError when the path VIN is not exactly 17 characters. 
+     * Returns a single vehicle registry record by VIN, normalizing the supplied value by trimming, uppercasing and stripping separators before the lookup. Use this tool when the full 17-character VIN is known; use searchVehicles instead for partial VIN prefixes, and do not use getVehicleLegacyByVin, which reads the legacy store. Preconditions: a record with the normalized VIN must exist in the registry; active and deactivated vehicles are both returned. Required inputs: vin as a path parameter, exactly 17 characters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with a RESOURCE_NOT_FOUND ApiError when no registry record carries the normalized VIN, and 400 with a VALIDATION_FAILED ApiError when the path VIN is not exactly 17 characters. 
      * Get vehicle by VIN
      */
     async getVehicleByVinRaw(requestParameters: GetVehicleByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleResponse>> {
@@ -229,7 +232,7 @@ export class VehicleRegistryAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single vehicle registry record by VIN, normalizing the supplied value by trimming, uppercasing and stripping separators before the lookup. Use this tool when the full 17-character VIN is known; use searchVehicles instead for partial VIN prefixes, and do not use getVehicleLegacyByVin, which reads the legacy store. Preconditions: a record with the normalized VIN must exist in the registry; active and deactivated vehicles are both returned. Required inputs: vin as a path parameter, exactly 17 characters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no registry record carries the normalized VIN, and 400 with a VALIDATION_FAILED ApiError when the path VIN is not exactly 17 characters. 
+     * Returns a single vehicle registry record by VIN, normalizing the supplied value by trimming, uppercasing and stripping separators before the lookup. Use this tool when the full 17-character VIN is known; use searchVehicles instead for partial VIN prefixes, and do not use getVehicleLegacyByVin, which reads the legacy store. Preconditions: a record with the normalized VIN must exist in the registry; active and deactivated vehicles are both returned. Required inputs: vin as a path parameter, exactly 17 characters; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with a RESOURCE_NOT_FOUND ApiError when no registry record carries the normalized VIN, and 400 with a VALIDATION_FAILED ApiError when the path VIN is not exactly 17 characters. 
      * Get vehicle by VIN
      */
     async getVehicleByVin(requestParameters: GetVehicleByVinRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleResponse> {

@@ -15,14 +15,16 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AuditRecordResponse,
   BulkCorrectionItem,
   BulkCorrectionRequest,
   BulkCorrectionResponse,
   CorrectionResultDto,
-  ProblemDetail,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AuditRecordResponseFromJSON,
     AuditRecordResponseToJSON,
     BulkCorrectionItemFromJSON,
@@ -33,8 +35,6 @@ import {
     BulkCorrectionResponseToJSON,
     CorrectionResultDtoFromJSON,
     CorrectionResultDtoToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
 } from '../models/index';
 
 export interface DownloadErrorReportRequest {

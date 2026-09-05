@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ApprovalConfigurationRequest,
   ApprovalConfigurationResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApprovalConfigurationRequestFromJSON,
     ApprovalConfigurationRequestToJSON,
     ApprovalConfigurationResponseFromJSON,
@@ -264,7 +267,7 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces every field of an existing approval configuration with the values in the request, including nulling fields that are omitted. Use this tool when changing an existing approval rule; do not use createApprovalConfiguration, which adds a new rule rather than replacing one. Preconditions: the configuration must exist; this is a full replacement, so send all fields that should remain set. Required inputs: approvalId (UUID) as a path parameter and approvalMethod (CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION) in the body; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_UPDATE event. Returns 404 when the configuration does not exist and also when approvalMethod is not a valid value, because both surface as the same IllegalArgumentException in this operation. 
+     * Replaces every field of an existing approval configuration with the values in the request, including nulling fields that are omitted. Use this tool when changing an existing approval rule; do not use createApprovalConfiguration, which adds a new rule rather than replacing one. Preconditions: the configuration must exist; this is a full replacement, so send all fields that should remain set. Required inputs: approvalId (UUID) as a path parameter and approvalMethod (CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION) in the body; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_UPDATE event. Returns 404 when the configuration does not exist, and 400 when approvalMethod is not one of the accepted values. 
      * Update Approval Configuration
      */
     async updateApprovalConfigurationRaw(requestParameters: UpdateApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ApprovalConfigurationResponse>> {
@@ -308,7 +311,7 @@ export class ApprovalConfigurationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces every field of an existing approval configuration with the values in the request, including nulling fields that are omitted. Use this tool when changing an existing approval rule; do not use createApprovalConfiguration, which adds a new rule rather than replacing one. Preconditions: the configuration must exist; this is a full replacement, so send all fields that should remain set. Required inputs: approvalId (UUID) as a path parameter and approvalMethod (CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION) in the body; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_UPDATE event. Returns 404 when the configuration does not exist and also when approvalMethod is not a valid value, because both surface as the same IllegalArgumentException in this operation. 
+     * Replaces every field of an existing approval configuration with the values in the request, including nulling fields that are omitted. Use this tool when changing an existing approval rule; do not use createApprovalConfiguration, which adds a new rule rather than replacing one. Preconditions: the configuration must exist; this is a full replacement, so send all fields that should remain set. Required inputs: approvalId (UUID) as a path parameter and approvalMethod (CLICK_CONFIRM, SIGNATURE, ELECTRONIC_SIGNATURE, or VERBAL_CONFIRMATION) in the body; locationId, customerId, declineExpiryDays, requireSignature, and priority are optional. Emits a WORKORDER_APPROVAL_CONFIG_UPDATE event. Returns 404 when the configuration does not exist, and 400 when approvalMethod is not one of the accepted values. 
      * Update Approval Configuration
      */
     async updateApprovalConfiguration(requestParameters: UpdateApprovalConfigurationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ApprovalConfigurationResponse> {

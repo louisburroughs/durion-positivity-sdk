@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ApproveWorkorderRequest,
   CompleteWorkorderRequest,
   CompleteWorkorderResponse,
@@ -30,6 +31,8 @@ import type {
   WorkorderStateTransitionResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApproveWorkorderRequestFromJSON,
     ApproveWorkorderRequestToJSON,
     CompleteWorkorderRequestFromJSON,
@@ -124,7 +127,7 @@ export interface ReopenWorkorderOperationRequest {
 export class WorkOrderAPIApi extends runtime.BaseAPI {
 
     /**
-     * Approves a DRAFT workorder, transitioning it to APPROVED and storing the captured customer signature, signer name, and approval notes. Use this tool for workorder-level customer authorization; do not use approveEstimate, which approves the estimate before a workorder exists, or approveChangeRequest, which approves mid-job additional work. Preconditions: the workorder must exist, be in DRAFT status, and belong to the customerId in the request — a mismatched customer is rejected. Required inputs: workorderId (UUID) as a path parameter and customerId (UUID) in the body; signatureData (base64 image), signerName, and notes are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_APPROVE event and marks the workorder fact changed for downstream replication. Returns 400 when the workorder is missing, the customer does not match, or the status is not DRAFT — all failures surface as 400 in this operation. 
+     * Approves a DRAFT workorder, transitioning it to APPROVED and storing the captured customer signature, signer name, and approval notes. Use this tool for workorder-level customer authorization; do not use approveEstimate, which approves the estimate before a workorder exists, or approveChangeRequest, which approves mid-job additional work. Preconditions: the workorder must exist, be in DRAFT status, and belong to the customerId in the request — a mismatched customer is rejected. Required inputs: workorderId (UUID) as a path parameter and customerId (UUID) in the body; signatureData (base64 image), signerName, and notes are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_APPROVE event and marks the workorder fact changed for downstream replication. Returns 404 when the workorder does not exist, and 400 when the status is not DRAFT or the customerId in the request does not match the workorder\'s own customer. 
      * Approve Workorder With Customer Signature
      */
     async approveWorkorderRaw(requestParameters: ApproveWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
@@ -168,7 +171,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Approves a DRAFT workorder, transitioning it to APPROVED and storing the captured customer signature, signer name, and approval notes. Use this tool for workorder-level customer authorization; do not use approveEstimate, which approves the estimate before a workorder exists, or approveChangeRequest, which approves mid-job additional work. Preconditions: the workorder must exist, be in DRAFT status, and belong to the customerId in the request — a mismatched customer is rejected. Required inputs: workorderId (UUID) as a path parameter and customerId (UUID) in the body; signatureData (base64 image), signerName, and notes are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_APPROVE event and marks the workorder fact changed for downstream replication. Returns 400 when the workorder is missing, the customer does not match, or the status is not DRAFT — all failures surface as 400 in this operation. 
+     * Approves a DRAFT workorder, transitioning it to APPROVED and storing the captured customer signature, signer name, and approval notes. Use this tool for workorder-level customer authorization; do not use approveEstimate, which approves the estimate before a workorder exists, or approveChangeRequest, which approves mid-job additional work. Preconditions: the workorder must exist, be in DRAFT status, and belong to the customerId in the request — a mismatched customer is rejected. Required inputs: workorderId (UUID) as a path parameter and customerId (UUID) in the body; signatureData (base64 image), signerName, and notes are optional, and signatureMimeType defaults to image/png. Emits a WORKORDER_APPROVE event and marks the workorder fact changed for downstream replication. Returns 404 when the workorder does not exist, and 400 when the status is not DRAFT or the customerId in the request does not match the workorder\'s own customer. 
      * Approve Workorder With Customer Signature
      */
     async approveWorkorder(requestParameters: ApproveWorkorderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {

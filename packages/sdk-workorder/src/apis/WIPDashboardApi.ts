@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PageWorkorderStatusView,
   WorkorderStatusDetail,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PageWorkorderStatusViewFromJSON,
     PageWorkorderStatusViewToJSON,
     WorkorderStatusDetailFromJSON,
@@ -43,7 +46,7 @@ export interface ListWipWorkordersRequest {
 export class WIPDashboardApi extends runtime.BaseAPI {
 
     /**
-     * Returns the full work-in-progress detail for one workorder: current status, the complete status transition history with actors and reasons, blocking part numbers, and the currently assigned technician. Use this tool when drilling into a single workorder from the WIP board; use listWipWorkorders instead for the paginated board itself. Preconditions: the workorder must exist; it does not need to be in an active WIP status to be viewed. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_WIP_VIEW audit event; no workorder state changes — this is a read-only projection. Returns 400 with code INVALID_ARGUMENT when no workorder exists for the id — the not-found case surfaces as 400 rather than 404 in this operation. 
+     * Returns the full work-in-progress detail for one workorder: current status, the complete status transition history with actors and reasons, blocking part numbers, and the currently assigned technician. Use this tool when drilling into a single workorder from the WIP board; use listWipWorkorders instead for the paginated board itself. Preconditions: the workorder must exist; it does not need to be in an active WIP status to be viewed. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_WIP_VIEW audit event; no workorder state changes — this is a read-only projection. Returns 404 when no workorder exists for the id. 
      * Get WIP Detail for Workorder
      */
     async getWipDetailRaw(requestParameters: GetWipDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderStatusDetail>> {
@@ -77,7 +80,7 @@ export class WIPDashboardApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the full work-in-progress detail for one workorder: current status, the complete status transition history with actors and reasons, blocking part numbers, and the currently assigned technician. Use this tool when drilling into a single workorder from the WIP board; use listWipWorkorders instead for the paginated board itself. Preconditions: the workorder must exist; it does not need to be in an active WIP status to be viewed. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_WIP_VIEW audit event; no workorder state changes — this is a read-only projection. Returns 400 with code INVALID_ARGUMENT when no workorder exists for the id — the not-found case surfaces as 400 rather than 404 in this operation. 
+     * Returns the full work-in-progress detail for one workorder: current status, the complete status transition history with actors and reasons, blocking part numbers, and the currently assigned technician. Use this tool when drilling into a single workorder from the WIP board; use listWipWorkorders instead for the paginated board itself. Preconditions: the workorder must exist; it does not need to be in an active WIP status to be viewed. Required inputs: workorderId (UUID) as a path parameter. Emits a WORKORDER_WIP_VIEW audit event; no workorder state changes — this is a read-only projection. Returns 404 when no workorder exists for the id. 
      * Get WIP Detail for Workorder
      */
     async getWipDetail(requestParameters: GetWipDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderStatusDetail> {

@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface ChatRequest {
     /**
+     * Optional conversation id. Turns sharing an id share one memory; omit it to use the caller's default per-role conversation, and supply a distinct id per request to ask independent questions that do not inherit each other's history (#1735).
+     * @type {string}
+     * @memberof ChatRequest
+     */
+    conversationId?: string;
+    /**
      * User chat message to send to the agent
      * @type {string}
      * @memberof ChatRequest
@@ -45,6 +51,7 @@ export function ChatRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
+        'conversationId': json['conversationId'] == null ? undefined : json['conversationId'],
         'message': json['message'],
     };
 }
@@ -55,6 +62,7 @@ export function ChatRequestToJSON(value?: ChatRequest | null): any {
     }
     return {
         
+        'conversationId': value['conversationId'],
         'message': value['message'],
     };
 }

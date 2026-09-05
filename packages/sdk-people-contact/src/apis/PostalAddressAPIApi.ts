@@ -15,14 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PostalAddressDto,
-  ProblemDetail,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PostalAddressDtoFromJSON,
     PostalAddressDtoToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
 } from '../models/index';
 
 export interface DeleteOrganizationPostalAddressRequest {

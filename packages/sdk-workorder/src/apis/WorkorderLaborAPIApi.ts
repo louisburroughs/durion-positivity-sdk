@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   AdjustLaborRequest,
+  ApiError,
   StartLaborRequest,
   WorkorderLaborEntryResponse,
 } from '../models/index';
 import {
     AdjustLaborRequestFromJSON,
     AdjustLaborRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     StartLaborRequestFromJSON,
     StartLaborRequestToJSON,
     WorkorderLaborEntryResponseFromJSON,

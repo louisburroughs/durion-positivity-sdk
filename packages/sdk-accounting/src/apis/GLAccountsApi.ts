@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   GLAccountActivateRequest,
   GLAccountBalanceResponse,
   GLAccountCreateRequest,
@@ -23,6 +24,8 @@ import type {
   GLAccountUpdateRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     GLAccountActivateRequestFromJSON,
     GLAccountActivateRequestToJSON,
     GLAccountBalanceResponseFromJSON,
@@ -135,7 +138,7 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Archives an inactive GL account as a soft delete, tagging it [ARCHIVED] while keeping the record and its posting history. Use this tool only after deactivateGLAccount has succeeded; do not use it on an ACTIVE account, which must be deactivated to zero balance first. Preconditions: the GL account must exist and its derived status must be INACTIVE. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_ARCHIVE event; the row is never physically deleted. Returns 404 when no GL account exists for the supplied id, and 400 when the account is not INACTIVE. 
+     * Archives an inactive GL account as a soft delete, tagging it [ARCHIVED] while keeping the record and its posting history. Use this tool only after deactivateGLAccount has succeeded; do not use it on an ACTIVE account, which must be deactivated to zero balance first. Preconditions: the GL account must exist and its derived status must be INACTIVE. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_ARCHIVE event; the row is never physically deleted. Returns 404 when no GL account exists for the supplied id, and 409 ACCOUNT_NOT_INACTIVE when the account is not INACTIVE. 
      * Archive GL Account
      */
     async archiveGLAccountRaw(requestParameters: ArchiveGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
@@ -172,7 +175,7 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Archives an inactive GL account as a soft delete, tagging it [ARCHIVED] while keeping the record and its posting history. Use this tool only after deactivateGLAccount has succeeded; do not use it on an ACTIVE account, which must be deactivated to zero balance first. Preconditions: the GL account must exist and its derived status must be INACTIVE. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_ARCHIVE event; the row is never physically deleted. Returns 404 when no GL account exists for the supplied id, and 400 when the account is not INACTIVE. 
+     * Archives an inactive GL account as a soft delete, tagging it [ARCHIVED] while keeping the record and its posting history. Use this tool only after deactivateGLAccount has succeeded; do not use it on an ACTIVE account, which must be deactivated to zero balance first. Preconditions: the GL account must exist and its derived status must be INACTIVE. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_ARCHIVE event; the row is never physically deleted. Returns 404 when no GL account exists for the supplied id, and 409 ACCOUNT_NOT_INACTIVE when the account is not INACTIVE. 
      * Archive GL Account
      */
     async archiveGLAccount(requestParameters: ArchiveGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {
@@ -227,7 +230,7 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates a GL account by stamping its deactivation date now, preventing future postings to it. Use this tool when retiring an account from active use; do not use archiveGLAccount, which additionally flags an already-INACTIVE account as archived, and do not use it while the account still carries a balance. Preconditions: the GL account must exist and its posted balance must be exactly zero. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_DEACTIVATE event; historical journal entries remain intact. Returns 404 when no GL account exists for the supplied id, and 400 when the account balance is not zero. 
+     * Deactivates a GL account by stamping its deactivation date now, preventing future postings to it. Use this tool when retiring an account from active use; do not use archiveGLAccount, which additionally flags an already-INACTIVE account as archived, and do not use it while the account still carries a balance. Preconditions: the GL account must exist and its posted balance must be exactly zero. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_DEACTIVATE event; historical journal entries remain intact. Returns 404 when no GL account exists for the supplied id, and 409 ACCOUNT_NOT_ZERO_BALANCE when the account balance is not zero. 
      * Deactivate GL Account
      */
     async deactivateGLAccountRaw(requestParameters: DeactivateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GLAccountResponse>> {
@@ -264,7 +267,7 @@ export class GLAccountsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deactivates a GL account by stamping its deactivation date now, preventing future postings to it. Use this tool when retiring an account from active use; do not use archiveGLAccount, which additionally flags an already-INACTIVE account as archived, and do not use it while the account still carries a balance. Preconditions: the GL account must exist and its posted balance must be exactly zero. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_DEACTIVATE event; historical journal entries remain intact. Returns 404 when no GL account exists for the supplied id, and 400 when the account balance is not zero. 
+     * Deactivates a GL account by stamping its deactivation date now, preventing future postings to it. Use this tool when retiring an account from active use; do not use archiveGLAccount, which additionally flags an already-INACTIVE account as archived, and do not use it while the account still carries a balance. Preconditions: the GL account must exist and its posted balance must be exactly zero. Required inputs: glAccountId (UUID) as a path parameter; the request body is optional and ignored. Emits an ACCOUNTING_GL_ACCOUNT_DEACTIVATE event; historical journal entries remain intact. Returns 404 when no GL account exists for the supplied id, and 409 ACCOUNT_NOT_ZERO_BALANCE when the account balance is not zero. 
      * Deactivate GL Account
      */
     async deactivateGLAccount(requestParameters: DeactivateGLAccountRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GLAccountResponse> {

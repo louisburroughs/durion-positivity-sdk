@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateDepositRequest,
   DepositCreditResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateDepositRequestFromJSON,
     CreateDepositRequestToJSON,
     DepositCreditResponseFromJSON,
@@ -49,7 +52,7 @@ export interface RefundDepositCreditRequest {
 export class DepositCreditsApi extends runtime.BaseAPI {
 
     /**
-     * Creates an AVAILABLE deposit credit for a down-payment taken at pos-order checkout, holding the amount against its source document until a settlement invoice draws it down. Use this tool when a deposit was tendered against an estimate, workorder, or order; do not use refundDepositCredit, which returns a credit\'s remaining balance when the source is cancelled. Preconditions: none beyond a priced source document — the call is idempotent on orderId, so a replay for an order that already registered a credit returns the existing record unchanged. Required inputs: orderId (UUID, idempotency anchor), sourceType (ESTIMATE, WORKORDER or ORDER), sourceId (UUID) and amount (positive); partyId is optional and currencyCode defaults to USD. Emits an INVOICE_DEPOSIT_CREATE event; no invoice records are touched until settlement applies the credit. Returns 201 with the credit (existing or new), and 422 when the amount is not positive or the sourceType is not a known value. 
+     * Creates an AVAILABLE deposit credit for a down-payment taken at pos-order checkout, holding the amount against its source document until a settlement invoice draws it down. Use this tool when a deposit was tendered against an estimate, workorder, or order; do not use refundDepositCredit, which returns a credit\'s remaining balance when the source is cancelled. Preconditions: none beyond a priced source document — the call is idempotent on orderId, so a replay for an order that already registered a credit returns the existing record unchanged. Required inputs: orderId (UUID, idempotency anchor), sourceType (ESTIMATE, WORKORDER or ORDER), sourceId (UUID) and amount (positive); partyId is optional and currencyCode defaults to USD. Emits an INVOICE_DEPOSIT_CREATE event; no invoice records are touched until settlement applies the credit. Returns 201 with the credit (existing or new), and 400 when amount is missing or not positive, or sourceType is not a known value. 
      * Register a Deposit Credit
      */
     async createDepositCreditRaw(requestParameters: CreateDepositCreditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DepositCreditResponse>> {
@@ -86,7 +89,7 @@ export class DepositCreditsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an AVAILABLE deposit credit for a down-payment taken at pos-order checkout, holding the amount against its source document until a settlement invoice draws it down. Use this tool when a deposit was tendered against an estimate, workorder, or order; do not use refundDepositCredit, which returns a credit\'s remaining balance when the source is cancelled. Preconditions: none beyond a priced source document — the call is idempotent on orderId, so a replay for an order that already registered a credit returns the existing record unchanged. Required inputs: orderId (UUID, idempotency anchor), sourceType (ESTIMATE, WORKORDER or ORDER), sourceId (UUID) and amount (positive); partyId is optional and currencyCode defaults to USD. Emits an INVOICE_DEPOSIT_CREATE event; no invoice records are touched until settlement applies the credit. Returns 201 with the credit (existing or new), and 422 when the amount is not positive or the sourceType is not a known value. 
+     * Creates an AVAILABLE deposit credit for a down-payment taken at pos-order checkout, holding the amount against its source document until a settlement invoice draws it down. Use this tool when a deposit was tendered against an estimate, workorder, or order; do not use refundDepositCredit, which returns a credit\'s remaining balance when the source is cancelled. Preconditions: none beyond a priced source document — the call is idempotent on orderId, so a replay for an order that already registered a credit returns the existing record unchanged. Required inputs: orderId (UUID, idempotency anchor), sourceType (ESTIMATE, WORKORDER or ORDER), sourceId (UUID) and amount (positive); partyId is optional and currencyCode defaults to USD. Emits an INVOICE_DEPOSIT_CREATE event; no invoice records are touched until settlement applies the credit. Returns 201 with the credit (existing or new), and 400 when amount is missing or not positive, or sourceType is not a known value. 
      * Register a Deposit Credit
      */
     async createDepositCredit(requestParameters: CreateDepositCreditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DepositCreditResponse> {
@@ -138,7 +141,7 @@ export class DepositCreditsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists every deposit credit held against one source document, identified by its type and id. Use this tool when checking what down-payments a settlement can draw on; use getDepositCredit instead when a specific depositCreditId is already known. Preconditions: none — an unknown or credit-free source returns an empty list rather than an error. Required inputs: sourceType query parameter (ESTIMATE, WORKORDER or ORDER, case-insensitive) and sourceId (UUID) query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 422 when sourceType is not one of the known values. 
+     * Lists every deposit credit held against one source document, identified by its type and id. Use this tool when checking what down-payments a settlement can draw on; use getDepositCredit instead when a specific depositCreditId is already known. Preconditions: none — an unknown or credit-free source returns an empty list rather than an error. Required inputs: sourceType query parameter (ESTIMATE, WORKORDER or ORDER, case-insensitive) and sourceId (UUID) query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when sourceType is not one of the known values. 
      * List Deposit Credits by Source
      */
     async listDepositCreditsBySourceRaw(requestParameters: ListDepositCreditsBySourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<DepositCreditResponse>>> {
@@ -187,7 +190,7 @@ export class DepositCreditsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists every deposit credit held against one source document, identified by its type and id. Use this tool when checking what down-payments a settlement can draw on; use getDepositCredit instead when a specific depositCreditId is already known. Preconditions: none — an unknown or credit-free source returns an empty list rather than an error. Required inputs: sourceType query parameter (ESTIMATE, WORKORDER or ORDER, case-insensitive) and sourceId (UUID) query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 422 when sourceType is not one of the known values. 
+     * Lists every deposit credit held against one source document, identified by its type and id. Use this tool when checking what down-payments a settlement can draw on; use getDepositCredit instead when a specific depositCreditId is already known. Preconditions: none — an unknown or credit-free source returns an empty list rather than an error. Required inputs: sourceType query parameter (ESTIMATE, WORKORDER or ORDER, case-insensitive) and sourceId (UUID) query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when sourceType is not one of the known values. 
      * List Deposit Credits by Source
      */
     async listDepositCreditsBySource(requestParameters: ListDepositCreditsBySourceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<DepositCreditResponse>> {

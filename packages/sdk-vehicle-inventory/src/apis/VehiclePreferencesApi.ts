@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PreferencesMergeDto,
   PreferencesUpsertDto,
   VehicleCarePreferenceResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PreferencesMergeDtoFromJSON,
     PreferencesMergeDtoToJSON,
     PreferencesUpsertDtoFromJSON,
@@ -94,7 +97,7 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the care-preference document for a vehicle, including the free-form preferences map, the structured service interval in months and any service notes. Use this tool to read what a customer wants for vehicle care; do not use getVehicle, which returns the registry record itself and carries no preferences. Preconditions: a preference document must already have been stored for the vehicle, because vehicles start with no preferences. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no preference document exists for the vehicle. 
+     * Returns the care-preference document for a vehicle, including the free-form preferences map, the structured service interval in months and any service notes. Use this tool to read what a customer wants for vehicle care; do not use getVehicle, which returns the registry record itself and carries no preferences. Preconditions: a preference document must already have been stored for the vehicle, because vehicles start with no preferences. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with a RESOURCE_NOT_FOUND ApiError when no preference document exists for the vehicle. 
      * Get vehicle care preferences
      */
     async getVehiclePreferencesRaw(requestParameters: GetVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VehicleCarePreferenceResponse>> {
@@ -128,7 +131,7 @@ export class VehiclePreferencesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the care-preference document for a vehicle, including the free-form preferences map, the structured service interval in months and any service notes. Use this tool to read what a customer wants for vehicle care; do not use getVehicle, which returns the registry record itself and carries no preferences. Preconditions: a preference document must already have been stored for the vehicle, because vehicles start with no preferences. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with an empty body when no preference document exists for the vehicle. 
+     * Returns the care-preference document for a vehicle, including the free-form preferences map, the structured service interval in months and any service notes. Use this tool to read what a customer wants for vehicle care; do not use getVehicle, which returns the registry record itself and carries no preferences. Preconditions: a preference document must already have been stored for the vehicle, because vehicles start with no preferences. Required inputs: vehicleId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 with a RESOURCE_NOT_FOUND ApiError when no preference document exists for the vehicle. 
      * Get vehicle care preferences
      */
     async getVehiclePreferences(requestParameters: GetVehiclePreferencesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VehicleCarePreferenceResponse> {

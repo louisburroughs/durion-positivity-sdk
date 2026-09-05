@@ -15,16 +15,16 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PersonRoleAssignmentRequest,
-  ProblemDetail,
   RoleDto,
   UserRoleDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PersonRoleAssignmentRequestFromJSON,
     PersonRoleAssignmentRequestToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
     RoleDtoFromJSON,
     RoleDtoToJSON,
     UserRoleDtoFromJSON,

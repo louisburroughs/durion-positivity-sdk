@@ -15,19 +15,19 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ContactPointDto,
   Person,
-  ProblemDetail,
   ResolvePersonRequest,
   ResolvePersonResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ContactPointDtoFromJSON,
     ContactPointDtoToJSON,
     PersonFromJSON,
     PersonToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
     ResolvePersonRequestFromJSON,
     ResolvePersonRequestToJSON,
     ResolvePersonResponseFromJSON,

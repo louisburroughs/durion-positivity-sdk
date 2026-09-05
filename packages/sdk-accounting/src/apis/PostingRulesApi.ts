@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PostingRuleSetCreateRequest,
   PostingRuleSetListResponse,
   PostingRuleSetResponse,
   PostingRuleVersionResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PostingRuleSetCreateRequestFromJSON,
     PostingRuleSetCreateRequestToJSON,
     PostingRuleSetListResponseFromJSON,
@@ -70,7 +73,7 @@ export interface UpdatePostingRuleSetRequest {
 export class PostingRulesApi extends runtime.BaseAPI {
 
     /**
-     * Archives the rule set\'s PUBLISHED version (PUBLISHED to ARCHIVED), taking it out of live event-to-journal-entry conversion. Use this tool to retire live rules deliberately; do not use publishPostingRuleSet, which already archives the old version automatically when a replacement draft is published. Preconditions: the rule set must have a PUBLISHED version; after archiving, events of this type fall back to default GL mappings or fail as UNMAPPED_EVENT_TYPE. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_ARCHIVE event. Returns 400 when no PUBLISHED version exists to archive. 
+     * Archives the rule set\'s PUBLISHED version (PUBLISHED to ARCHIVED), taking it out of live event-to-journal-entry conversion. Use this tool to retire live rules deliberately; do not use publishPostingRuleSet, which already archives the old version automatically when a replacement draft is published. Preconditions: the rule set must have a PUBLISHED version; after archiving, events of this type fall back to default GL mappings or fail as UNMAPPED_EVENT_TYPE. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_ARCHIVE event. Returns 400 when no PUBLISHED version exists to archive, and 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id. 
      * Archive Posting Rule Set
      */
     async archivePostingRuleSetRaw(requestParameters: ArchivePostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingRuleVersionResponse>> {
@@ -104,7 +107,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Archives the rule set\'s PUBLISHED version (PUBLISHED to ARCHIVED), taking it out of live event-to-journal-entry conversion. Use this tool to retire live rules deliberately; do not use publishPostingRuleSet, which already archives the old version automatically when a replacement draft is published. Preconditions: the rule set must have a PUBLISHED version; after archiving, events of this type fall back to default GL mappings or fail as UNMAPPED_EVENT_TYPE. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_ARCHIVE event. Returns 400 when no PUBLISHED version exists to archive. 
+     * Archives the rule set\'s PUBLISHED version (PUBLISHED to ARCHIVED), taking it out of live event-to-journal-entry conversion. Use this tool to retire live rules deliberately; do not use publishPostingRuleSet, which already archives the old version automatically when a replacement draft is published. Preconditions: the rule set must have a PUBLISHED version; after archiving, events of this type fall back to default GL mappings or fail as UNMAPPED_EVENT_TYPE. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_ARCHIVE event. Returns 400 when no PUBLISHED version exists to archive, and 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id. 
      * Archive Posting Rule Set
      */
     async archivePostingRuleSet(requestParameters: ArchivePostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingRuleVersionResponse> {
@@ -159,7 +162,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one posting rule set with its metadata and current version state. Use this tool when the rule set id is already known; use listPostingRuleSets instead when searching, or listPostingRuleVersions for the full version history. Preconditions: the posting rule set must exist. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when no posting rule set exists for the supplied id (mapped as VALIDATION_ERROR, not 404). 
+     * Returns one posting rule set with its metadata and current version state. Use this tool when the rule set id is already known; use listPostingRuleSets instead when searching, or listPostingRuleVersions for the full version history. Preconditions: the posting rule set must exist. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id. 
      * Get Posting Rule Set
      */
     async getPostingRuleSetRaw(requestParameters: GetPostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingRuleSetResponse>> {
@@ -193,7 +196,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one posting rule set with its metadata and current version state. Use this tool when the rule set id is already known; use listPostingRuleSets instead when searching, or listPostingRuleVersions for the full version history. Preconditions: the posting rule set must exist. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 400 when no posting rule set exists for the supplied id (mapped as VALIDATION_ERROR, not 404). 
+     * Returns one posting rule set with its metadata and current version state. Use this tool when the rule set id is already known; use listPostingRuleSets instead when searching, or listPostingRuleVersions for the full version history. Preconditions: the posting rule set must exist. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id. 
      * Get Posting Rule Set
      */
     async getPostingRuleSet(requestParameters: GetPostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingRuleSetResponse> {
@@ -257,7 +260,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the version history of one posting rule set with each version\'s DRAFT, PUBLISHED or ARCHIVED state and timestamps. Use this tool to audit how a rule set evolved; use getPostingRuleSet instead for the set\'s current metadata only. Preconditions: the posting rule set must exist; a set always has at least its initial version. Required inputs: postingRuleSetId (UUID) as a path parameter; page defaults to 0 and size to 10. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the page index is beyond the version history. 
+     * Lists the version history of one posting rule set with each version\'s DRAFT, PUBLISHED or ARCHIVED state and timestamps. Use this tool to audit how a rule set evolved; use getPostingRuleSet instead for the set\'s current metadata only. Preconditions: the posting rule set must exist; a set always has at least its initial version. Required inputs: postingRuleSetId (UUID) as a path parameter; page defaults to 0 and size to 10. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the page index is beyond the version history, and 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id. 
      * List Posting Rule Versions
      */
     async listPostingRuleVersionsRaw(requestParameters: ListPostingRuleVersionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PostingRuleVersionResponse>>> {
@@ -299,7 +302,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the version history of one posting rule set with each version\'s DRAFT, PUBLISHED or ARCHIVED state and timestamps. Use this tool to audit how a rule set evolved; use getPostingRuleSet instead for the set\'s current metadata only. Preconditions: the posting rule set must exist; a set always has at least its initial version. Required inputs: postingRuleSetId (UUID) as a path parameter; page defaults to 0 and size to 10. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the page index is beyond the version history. 
+     * Lists the version history of one posting rule set with each version\'s DRAFT, PUBLISHED or ARCHIVED state and timestamps. Use this tool to audit how a rule set evolved; use getPostingRuleSet instead for the set\'s current metadata only. Preconditions: the posting rule set must exist; a set always has at least its initial version. Required inputs: postingRuleSetId (UUID) as a path parameter; page defaults to 0 and size to 10. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty list when the page index is beyond the version history, and 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id. 
      * List Posting Rule Versions
      */
     async listPostingRuleVersions(requestParameters: ListPostingRuleVersionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PostingRuleVersionResponse>> {
@@ -308,7 +311,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Publishes the rule set\'s DRAFT version (DRAFT to PUBLISHED), making it the live conversion definition for its event type; any previously PUBLISHED version is archived atomically in the same call. Use this tool to activate reviewed rules; do not use archivePostingRuleSet, which retires the live version without a replacement, and use resolveTestMapping to dry-run the rules first. Preconditions: the set must have a DRAFT version with a non-empty rules definition that passes split-group and condition-predicate validation. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_PUBLISH event; subsequent accounting events for the event type post through the new version. Returns 400 when no DRAFT version exists or its definition is empty, and 422 UNBALANCED_RULES listing every offending condition, group or line in fieldErrors when publish-time validation fails. 
+     * Publishes the rule set\'s DRAFT version (DRAFT to PUBLISHED), making it the live conversion definition for its event type; any previously PUBLISHED version is archived atomically in the same call. Use this tool to activate reviewed rules; do not use archivePostingRuleSet, which retires the live version without a replacement, and use resolveTestMapping to dry-run the rules first. Preconditions: the set must have a DRAFT version with a non-empty rules definition that passes split-group and condition-predicate validation. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_PUBLISH event; subsequent accounting events for the event type post through the new version. Returns 400 when no DRAFT version exists or its definition is empty, 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id, and 422 UNBALANCED_RULES listing every offending condition, group or line in fieldErrors when publish-time validation fails. 
      * Publish Posting Rule Set
      */
     async publishPostingRuleSetRaw(requestParameters: PublishPostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingRuleVersionResponse>> {
@@ -342,7 +345,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Publishes the rule set\'s DRAFT version (DRAFT to PUBLISHED), making it the live conversion definition for its event type; any previously PUBLISHED version is archived atomically in the same call. Use this tool to activate reviewed rules; do not use archivePostingRuleSet, which retires the live version without a replacement, and use resolveTestMapping to dry-run the rules first. Preconditions: the set must have a DRAFT version with a non-empty rules definition that passes split-group and condition-predicate validation. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_PUBLISH event; subsequent accounting events for the event type post through the new version. Returns 400 when no DRAFT version exists or its definition is empty, and 422 UNBALANCED_RULES listing every offending condition, group or line in fieldErrors when publish-time validation fails. 
+     * Publishes the rule set\'s DRAFT version (DRAFT to PUBLISHED), making it the live conversion definition for its event type; any previously PUBLISHED version is archived atomically in the same call. Use this tool to activate reviewed rules; do not use archivePostingRuleSet, which retires the live version without a replacement, and use resolveTestMapping to dry-run the rules first. Preconditions: the set must have a DRAFT version with a non-empty rules definition that passes split-group and condition-predicate validation. Required inputs: postingRuleSetId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_POSTING_RULE_PUBLISH event; subsequent accounting events for the event type post through the new version. Returns 400 when no DRAFT version exists or its definition is empty, 404 POSTING_RULE_SET_NOT_FOUND when no posting rule set exists for the supplied id, and 422 UNBALANCED_RULES listing every offending condition, group or line in fieldErrors when publish-time validation fails. 
      * Publish Posting Rule Set
      */
     async publishPostingRuleSet(requestParameters: PublishPostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingRuleVersionResponse> {
@@ -351,7 +354,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates a posting rule set\'s metadata and draft rules definition while no PUBLISHED version exists. Use this tool to iterate on a draft before publishing; do not use it once a version is PUBLISHED, and do not use publishPostingRuleSet, which is the activation step. Preconditions: the rule set must exist and must not have a PUBLISHED version. Required inputs: postingRuleSetId (UUID) as a path parameter plus the same body shape as createPostingRuleSet (name, eventType, rulesDefinition, createdBy). Emits an ACCOUNTING_POSTING_RULE_UPDATE event. Returns 409 when a PUBLISHED version already exists, and 400 when the rule set id cannot be resolved (mapped as VALIDATION_ERROR, not 404). 
+     * Updates a posting rule set\'s metadata and draft rules definition while no PUBLISHED version exists. Use this tool to iterate on a draft before publishing; do not use it once a version is PUBLISHED, and do not use publishPostingRuleSet, which is the activation step. Preconditions: the rule set must exist and must not have a PUBLISHED version. Required inputs: postingRuleSetId (UUID) as a path parameter plus the same body shape as createPostingRuleSet (name, eventType, rulesDefinition, createdBy). Emits an ACCOUNTING_POSTING_RULE_UPDATE event. Returns 404 POSTING_RULE_SET_NOT_FOUND when the rule set id cannot be resolved, and 409 when a PUBLISHED version already exists. 
      * Update Posting Rule Set
      */
     async updatePostingRuleSetRaw(requestParameters: UpdatePostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PostingRuleSetResponse>> {
@@ -395,7 +398,7 @@ export class PostingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates a posting rule set\'s metadata and draft rules definition while no PUBLISHED version exists. Use this tool to iterate on a draft before publishing; do not use it once a version is PUBLISHED, and do not use publishPostingRuleSet, which is the activation step. Preconditions: the rule set must exist and must not have a PUBLISHED version. Required inputs: postingRuleSetId (UUID) as a path parameter plus the same body shape as createPostingRuleSet (name, eventType, rulesDefinition, createdBy). Emits an ACCOUNTING_POSTING_RULE_UPDATE event. Returns 409 when a PUBLISHED version already exists, and 400 when the rule set id cannot be resolved (mapped as VALIDATION_ERROR, not 404). 
+     * Updates a posting rule set\'s metadata and draft rules definition while no PUBLISHED version exists. Use this tool to iterate on a draft before publishing; do not use it once a version is PUBLISHED, and do not use publishPostingRuleSet, which is the activation step. Preconditions: the rule set must exist and must not have a PUBLISHED version. Required inputs: postingRuleSetId (UUID) as a path parameter plus the same body shape as createPostingRuleSet (name, eventType, rulesDefinition, createdBy). Emits an ACCOUNTING_POSTING_RULE_UPDATE event. Returns 404 POSTING_RULE_SET_NOT_FOUND when the rule set id cannot be resolved, and 409 when a PUBLISHED version already exists. 
      * Update Posting Rule Set
      */
     async updatePostingRuleSet(requestParameters: UpdatePostingRuleSetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostingRuleSetResponse> {

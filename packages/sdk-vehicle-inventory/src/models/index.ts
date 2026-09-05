@@ -1,9 +1,11 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ApiError';
 export * from './BulkIngestRequestVehicleBulkIngestRecord';
 export * from './BulkIngestResponse';
 export * from './BulkIngestResult';
 export * from './CreateVehicleRequest';
+export * from './FieldError';
 export * from './PreferencesMergeDto';
 export * from './PreferencesUpsertDto';
 export * from './SearchVehiclesRequest';

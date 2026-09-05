@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BulkLoadJobCreateRequest,
   BulkLoadJobResponse,
   PageBulkLoadJobResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BulkLoadJobCreateRequestFromJSON,
     BulkLoadJobCreateRequestToJSON,
     BulkLoadJobResponseFromJSON,

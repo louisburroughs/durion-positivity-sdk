@@ -65,7 +65,7 @@ export interface WaiveTimeEntryExceptionRequest {
 export class PeopleExceptionsApi extends runtime.BaseAPI {
 
     /**
-     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
      * Acknowledge An Open Time Entry Exception
      */
     async acknowledgeTimeEntryExceptionRaw(requestParameters: AcknowledgeTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
@@ -103,7 +103,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Marks an OPEN time entry exception as ACKNOWLEDGED, stamping the acting user and timestamp. Use this tool to signal an exception has been seen but not yet fixed; use resolveTimeEntryException or waiveTimeEntryException instead to close it. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; there is no request body, and an optional X-Correlation-Id header is carried into the audit trail. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_ACKNOWLEDGE event and writes an EXCEPTION_ACKNOWLEDGED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
      * Acknowledge An Open Time Entry Exception
      */
     async acknowledgeTimeEntryException(requestParameters: AcknowledgeTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
@@ -198,7 +198,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
      * Resolve A Time Entry Exception
      */
     async resolveTimeEntryExceptionRaw(requestParameters: ResolveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
@@ -239,7 +239,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 400 when it is already RESOLVED or WAIVED. 
+     * Marks a time entry exception as RESOLVED with optional resolution notes, stamping the acting user and timestamp. Use this tool when the underlying issue has been fixed; use waiveTimeEntryException instead to close it without a fix, or acknowledgeTimeEntryException to flag it as merely seen. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter; the body is optional and may carry resolutionNotes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_RESOLVE event and writes an EXCEPTION_RESOLVED audit row. Returns 404 when the exception does not exist, and 409 when it is already RESOLVED or WAIVED. 
      * Resolve A Time Entry Exception
      */
     async resolveTimeEntryException(requestParameters: ResolveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
@@ -248,7 +248,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, and 400 when waiveReason is blank or the exception is already RESOLVED or WAIVED. 
+     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, 400 when waiveReason is blank, and 409 when the exception is already RESOLVED or WAIVED. 
      * Waive A Time Entry Exception
      */
     async waiveTimeEntryExceptionRaw(requestParameters: WaiveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
@@ -296,7 +296,7 @@ export class PeopleExceptionsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, and 400 when waiveReason is blank or the exception is already RESOLVED or WAIVED. 
+     * Marks a time entry exception as WAIVED with a mandatory reason, closing it without a correction. Use this tool to deliberately dismiss an exception; use resolveTimeEntryException instead when the underlying issue was actually fixed. Preconditions: the exception must exist and must not already be RESOLVED or WAIVED, which are terminal states. Required inputs: exceptionId (UUID) path parameter and a body with a non-blank waiveReason, which is stored as the exception\'s resolution notes. Emits a PEOPLE_TIME_ENTRY_EXCEPTION_WAIVE event and writes an EXCEPTION_WAIVED audit row. Returns 404 when the exception does not exist, 400 when waiveReason is blank, and 409 when the exception is already RESOLVED or WAIVED. 
      * Waive A Time Entry Exception
      */
     async waiveTimeEntryException(requestParameters: WaiveTimeEntryExceptionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {

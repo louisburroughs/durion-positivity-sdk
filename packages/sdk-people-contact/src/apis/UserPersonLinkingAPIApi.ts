@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateUserLinkRequest,
   LinkUserToPersonRequest,
   PersonResponse,
   UserPersonLinkResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateUserLinkRequestFromJSON,
     CreateUserLinkRequestToJSON,
     LinkUserToPersonRequestFromJSON,

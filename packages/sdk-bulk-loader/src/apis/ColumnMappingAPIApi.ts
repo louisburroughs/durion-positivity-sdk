@@ -15,17 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ColumnMappingApproveRequest,
   ColumnMappingResponse,
-  ProblemDetail,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ColumnMappingApproveRequestFromJSON,
     ColumnMappingApproveRequestToJSON,
     ColumnMappingResponseFromJSON,
     ColumnMappingResponseToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
 } from '../models/index';
 
 export interface ApproveColumnMappingsRequest {

@@ -15,17 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BulkLoadJobResponse,
   FileUploadResponse,
-  ProblemDetail,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BulkLoadJobResponseFromJSON,
     BulkLoadJobResponseToJSON,
     FileUploadResponseFromJSON,
     FileUploadResponseToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
 } from '../models/index';
 
 export interface StartJobProcessingRequest {
