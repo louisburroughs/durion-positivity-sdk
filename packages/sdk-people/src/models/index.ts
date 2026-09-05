@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ApiError';
 export * from './ApprovalPersonDto';
 export * from './ApprovedTimeExportResponse';
 export * from './AttendanceDiscrepancyReportResponse';
@@ -19,13 +20,13 @@ export * from './EmployeeEmergencyContactDto';
 export * from './EmployeeIdentityDto';
 export * from './EmployeeProfileDto';
 export * from './EmployeeSummaryDto';
+export * from './FieldError';
 export * from './InactivePersonActiveUserResponse';
 export * from './PagedResponseEmployeeSummaryDto';
 export * from './PagedResponseTimeEntrySummary';
 export * from './PeopleAvailabilityResponse';
 export * from './PersonBulkIngestRecord';
 export * from './PrimaryLocationResponse';
-export * from './ProblemDetail';
 export * from './RejectTimePeriodRequest';
 export * from './StaffingAssignmentBulkIngestRecord';
 export * from './StaffingAssignmentResponse';

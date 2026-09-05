@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PagedResponseTimeEntrySummary,
   TimeEntryDecisionBatchRequest,
   TimeEntrySummary,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PagedResponseTimeEntrySummaryFromJSON,
     PagedResponseTimeEntrySummaryToJSON,
     TimeEntryDecisionBatchRequestFromJSON,

@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BillingRulesDTO,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BillingRulesDTOFromJSON,
     BillingRulesDTOToJSON,
 } from '../models/index';
@@ -37,7 +40,7 @@ export interface UpsertBillingRulesRequest {
 export class BillingRulesApi extends runtime.BaseAPI {
 
     /**
-     * Returns the billing rules configured for a commercial account party: purchase-order requirement, payment terms code, invoice delivery method, and invoice grouping strategy. Use this tool when the billing configuration of a known party is needed before invoicing; do not use upsertBillingRules, which creates or replaces the configuration. Preconditions: a billing rules record must already exist for the party, created explicitly or defaulted when the commercial account was provisioned. Required inputs: partyId (UUID) as a path parameter; there is no request body. Emits a BILLING_RULES_GET audit event; no state changes — this is a read-only projection. Returns 404 when no billing rules are configured for the party, and 400 with an empty body when partyId is not a well-formed UUID. 
+     * Returns the billing rules configured for a commercial account party: purchase-order requirement, payment terms code, invoice delivery method, and invoice grouping strategy. Use this tool when the billing configuration of a known party is needed before invoicing; do not use upsertBillingRules, which creates or replaces the configuration. Preconditions: a billing rules record must already exist for the party, created explicitly or defaulted when the commercial account was provisioned. Required inputs: partyId (UUID) as a path parameter; there is no request body. Emits a BILLING_RULES_GET audit event; no state changes — this is a read-only projection. Returns 404 with an empty body when no billing rules are configured for the party, and 400 with a VALIDATION_ERROR ApiError when partyId is not a well-formed UUID. 
      * Get Billing Rules for a Party
      */
     async getBillingRulesRaw(requestParameters: GetBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillingRulesDTO>> {
@@ -71,7 +74,7 @@ export class BillingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the billing rules configured for a commercial account party: purchase-order requirement, payment terms code, invoice delivery method, and invoice grouping strategy. Use this tool when the billing configuration of a known party is needed before invoicing; do not use upsertBillingRules, which creates or replaces the configuration. Preconditions: a billing rules record must already exist for the party, created explicitly or defaulted when the commercial account was provisioned. Required inputs: partyId (UUID) as a path parameter; there is no request body. Emits a BILLING_RULES_GET audit event; no state changes — this is a read-only projection. Returns 404 when no billing rules are configured for the party, and 400 with an empty body when partyId is not a well-formed UUID. 
+     * Returns the billing rules configured for a commercial account party: purchase-order requirement, payment terms code, invoice delivery method, and invoice grouping strategy. Use this tool when the billing configuration of a known party is needed before invoicing; do not use upsertBillingRules, which creates or replaces the configuration. Preconditions: a billing rules record must already exist for the party, created explicitly or defaulted when the commercial account was provisioned. Required inputs: partyId (UUID) as a path parameter; there is no request body. Emits a BILLING_RULES_GET audit event; no state changes — this is a read-only projection. Returns 404 with an empty body when no billing rules are configured for the party, and 400 with a VALIDATION_ERROR ApiError when partyId is not a well-formed UUID. 
      * Get Billing Rules for a Party
      */
     async getBillingRules(requestParameters: GetBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillingRulesDTO> {
@@ -80,7 +83,7 @@ export class BillingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates or replaces the billing rules for a commercial account party in one idempotent upsert keyed on the path partyId, which overrides any partyId carried in the body. Use this tool when configuring how a party is invoiced; use getBillingRules instead to read the current configuration without changing it. Preconditions: paymentTermsCode must belong to the validated vocabulary (DUE_ON_RECEIPT, NET_10, NET_15, NET_30, NET_45, NET_60); a missing record is created and an existing one is updated in place. Required inputs: partyId (UUID path), purchaseOrderRequired (boolean), paymentTermsCode, invoiceDeliveryMethod (EMAIL, PORTAL, MAIL) and invoiceGroupingStrategy (PER_WORKORDER, PER_VEHICLE, SINGLE_INVOICE); updatedBy is taken from the security context, never from the body. Emits a BILLING_RULES_UPSERT event and publishes a billing-rules-updated notification; due dates of already-finalized invoices are never recomputed from a terms change. Returns 201 when the record is created, 200 when an existing record is updated, and 400 with an empty body when partyId is not a well-formed UUID. 
+     * Creates or replaces the billing rules for a commercial account party in one idempotent upsert keyed on the path partyId, which overrides any partyId carried in the body. Use this tool when configuring how a party is invoiced; use getBillingRules instead to read the current configuration without changing it. Preconditions: paymentTermsCode must belong to the validated vocabulary (DUE_ON_RECEIPT, NET_10, NET_15, NET_30, NET_45, NET_60); a missing record is created and an existing one is updated in place. Required inputs: partyId (UUID path), purchaseOrderRequired (boolean), paymentTermsCode, invoiceDeliveryMethod (EMAIL, PORTAL, MAIL) and invoiceGroupingStrategy (PER_WORKORDER, PER_VEHICLE, SINGLE_INVOICE); updatedBy is taken from the security context, never from the body. Emits a BILLING_RULES_UPSERT event and publishes a billing-rules-updated notification; due dates of already-finalized invoices are never recomputed from a terms change. Returns 201 when the record is created and 200 when an existing record is updated. A paymentTermsCode outside the vocabulary answers 400 VALIDATION_ERROR in the ApiError envelope; a partyId that is not a well-formed UUID answers the same 400 VALIDATION_ERROR envelope. 
      * Create or Update Billing Rules
      */
     async upsertBillingRulesRaw(requestParameters: UpsertBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BillingRulesDTO>> {
@@ -124,7 +127,7 @@ export class BillingRulesApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates or replaces the billing rules for a commercial account party in one idempotent upsert keyed on the path partyId, which overrides any partyId carried in the body. Use this tool when configuring how a party is invoiced; use getBillingRules instead to read the current configuration without changing it. Preconditions: paymentTermsCode must belong to the validated vocabulary (DUE_ON_RECEIPT, NET_10, NET_15, NET_30, NET_45, NET_60); a missing record is created and an existing one is updated in place. Required inputs: partyId (UUID path), purchaseOrderRequired (boolean), paymentTermsCode, invoiceDeliveryMethod (EMAIL, PORTAL, MAIL) and invoiceGroupingStrategy (PER_WORKORDER, PER_VEHICLE, SINGLE_INVOICE); updatedBy is taken from the security context, never from the body. Emits a BILLING_RULES_UPSERT event and publishes a billing-rules-updated notification; due dates of already-finalized invoices are never recomputed from a terms change. Returns 201 when the record is created, 200 when an existing record is updated, and 400 with an empty body when partyId is not a well-formed UUID. 
+     * Creates or replaces the billing rules for a commercial account party in one idempotent upsert keyed on the path partyId, which overrides any partyId carried in the body. Use this tool when configuring how a party is invoiced; use getBillingRules instead to read the current configuration without changing it. Preconditions: paymentTermsCode must belong to the validated vocabulary (DUE_ON_RECEIPT, NET_10, NET_15, NET_30, NET_45, NET_60); a missing record is created and an existing one is updated in place. Required inputs: partyId (UUID path), purchaseOrderRequired (boolean), paymentTermsCode, invoiceDeliveryMethod (EMAIL, PORTAL, MAIL) and invoiceGroupingStrategy (PER_WORKORDER, PER_VEHICLE, SINGLE_INVOICE); updatedBy is taken from the security context, never from the body. Emits a BILLING_RULES_UPSERT event and publishes a billing-rules-updated notification; due dates of already-finalized invoices are never recomputed from a terms change. Returns 201 when the record is created and 200 when an existing record is updated. A paymentTermsCode outside the vocabulary answers 400 VALIDATION_ERROR in the ApiError envelope; a partyId that is not a well-formed UUID answers the same 400 VALIDATION_ERROR envelope. 
      * Create or Update Billing Rules
      */
     async upsertBillingRules(requestParameters: UpsertBillingRulesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BillingRulesDTO> {

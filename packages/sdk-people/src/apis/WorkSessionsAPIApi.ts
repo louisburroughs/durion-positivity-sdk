@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BreakDto,
   WorkSessionDto,
   WorkSessionRequest,
   WorkSessionSubmitRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BreakDtoFromJSON,
     BreakDtoToJSON,
     WorkSessionDtoFromJSON,

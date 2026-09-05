@@ -1,11 +1,13 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ApiError';
 export * from './AuditEventResponse';
 export * from './ChatRequest';
 export * from './ChatResponse';
 export * from './ConfirmWritePlanRequest';
 export * from './DocumentIngestionJobResponse';
 export * from './DocumentIngestionRequest';
+export * from './FieldError';
 export * from './LlmApiConfigRequest';
 export * from './LlmApiConfigResponse';
 export * from './NltiRequestDTO';

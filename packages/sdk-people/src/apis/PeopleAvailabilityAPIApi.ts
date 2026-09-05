@@ -15,18 +15,18 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PeopleAvailabilityResponse,
   PrimaryLocationResponse,
-  ProblemDetail,
   StaffingAssignmentResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PeopleAvailabilityResponseFromJSON,
     PeopleAvailabilityResponseToJSON,
     PrimaryLocationResponseFromJSON,
     PrimaryLocationResponseToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
     StaffingAssignmentResponseFromJSON,
     StaffingAssignmentResponseToJSON,
 } from '../models/index';

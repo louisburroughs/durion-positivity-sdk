@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   InactivePersonActiveUserResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     InactivePersonActiveUserResponseFromJSON,
     InactivePersonActiveUserResponseToJSON,
 } from '../models/index';

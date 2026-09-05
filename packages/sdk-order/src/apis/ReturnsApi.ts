@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateReturnRequest,
   RejectReturnRequest,
   ReturnOrderResponse,
   ReturnableLineResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateReturnRequestFromJSON,
     CreateReturnRequestToJSON,
     RejectReturnRequestFromJSON,
@@ -301,7 +304,7 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Runs the return orchestration saga from RETURN_REQUESTED: issues the refund (ORIGINAL_TENDER reverses the original order\'s settled payments through pos-invoice up to the refund total; STORE_CREDIT and ON_ACCOUNT_CREDIT record the credit intent and require a customer on the return), then completes the return. Use this tool to execute an approved or under-threshold return; do not use retryReturn, which only re-drives a return already parked at REFUND_FAILED. Preconditions: the return must be in RETURN_REQUESTED (an already COMPLETED return is an idempotent no-op), and an ORIGINAL_TENDER refund needs an invoice and sufficient settled tender on the original order. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_PROCESS event and publishes an order.order.returned fact after completion, which pos-inventory consumes to restock RESTOCK-condition lines (SCRAP lines are skipped); a refund failure parks the return at REFUND_FAILED before any stock signal. Returns 200 when the saga completes (or the return was already COMPLETED), 404 when the return does not exist, and 409 when the status is not RETURN_REQUESTED or the refund leg fails. 
+     * Runs the return orchestration saga from RETURN_REQUESTED: issues the refund (ORIGINAL_TENDER reverses the original order\'s settled payments through pos-invoice up to the refund total; STORE_CREDIT and ON_ACCOUNT_CREDIT record the credit intent and require a customer on the return), then completes the return. Use this tool to execute an approved or under-threshold return; do not use retryReturn, which only re-drives a return already parked at REFUND_FAILED. Preconditions: the return must be in RETURN_REQUESTED (an already COMPLETED return is an idempotent no-op), and an ORIGINAL_TENDER refund needs an invoice and sufficient settled tender on the original order. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_PROCESS event and publishes an order.order.returned fact after completion, which pos-inventory consumes to restock RESTOCK-condition lines (SCRAP lines are skipped); a refund failure parks the return at REFUND_FAILED before any stock signal. Returns 200 when the saga completes (or the return was already COMPLETED), 404 when the return does not exist, 409 when the status is not RETURN_REQUESTED, 422 when the refund is refused on its own terms (no invoice to refund against, insufficient settled tender, or a credit refund with no customer on the return), and 500 when the refund leg itself fails downstream. 
      * Run the Return Refund Saga
      */
     async processReturnRaw(requestParameters: ProcessReturnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReturnOrderResponse>> {
@@ -335,7 +338,7 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Runs the return orchestration saga from RETURN_REQUESTED: issues the refund (ORIGINAL_TENDER reverses the original order\'s settled payments through pos-invoice up to the refund total; STORE_CREDIT and ON_ACCOUNT_CREDIT record the credit intent and require a customer on the return), then completes the return. Use this tool to execute an approved or under-threshold return; do not use retryReturn, which only re-drives a return already parked at REFUND_FAILED. Preconditions: the return must be in RETURN_REQUESTED (an already COMPLETED return is an idempotent no-op), and an ORIGINAL_TENDER refund needs an invoice and sufficient settled tender on the original order. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_PROCESS event and publishes an order.order.returned fact after completion, which pos-inventory consumes to restock RESTOCK-condition lines (SCRAP lines are skipped); a refund failure parks the return at REFUND_FAILED before any stock signal. Returns 200 when the saga completes (or the return was already COMPLETED), 404 when the return does not exist, and 409 when the status is not RETURN_REQUESTED or the refund leg fails. 
+     * Runs the return orchestration saga from RETURN_REQUESTED: issues the refund (ORIGINAL_TENDER reverses the original order\'s settled payments through pos-invoice up to the refund total; STORE_CREDIT and ON_ACCOUNT_CREDIT record the credit intent and require a customer on the return), then completes the return. Use this tool to execute an approved or under-threshold return; do not use retryReturn, which only re-drives a return already parked at REFUND_FAILED. Preconditions: the return must be in RETURN_REQUESTED (an already COMPLETED return is an idempotent no-op), and an ORIGINAL_TENDER refund needs an invoice and sufficient settled tender on the original order. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_PROCESS event and publishes an order.order.returned fact after completion, which pos-inventory consumes to restock RESTOCK-condition lines (SCRAP lines are skipped); a refund failure parks the return at REFUND_FAILED before any stock signal. Returns 200 when the saga completes (or the return was already COMPLETED), 404 when the return does not exist, 409 when the status is not RETURN_REQUESTED, 422 when the refund is refused on its own terms (no invoice to refund against, insufficient settled tender, or a credit refund with no customer on the return), and 500 when the refund leg itself fails downstream. 
      * Run the Return Refund Saga
      */
     async processReturn(requestParameters: ProcessReturnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReturnOrderResponse> {
@@ -397,7 +400,7 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Re-runs the return refund saga for a return parked at REFUND_FAILED, using the same per-intent idempotency so already-reversed payments are never refunded twice. Use this tool after fixing the cause of a refund failure; do not use processReturn, which only accepts a return in RETURN_REQUESTED. Preconditions: the return must be in REFUND_FAILED; an already COMPLETED return is an idempotent no-op. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_RETRY event and, on success, publishes the order.order.returned fact that drives the pos-inventory restock of RESTOCK lines. Returns 200 when the retry completes (or the return was already COMPLETED), 404 when the return does not exist, and 409 when the status is not REFUND_FAILED or the refund fails again. 
+     * Re-runs the return refund saga for a return parked at REFUND_FAILED, using the same per-intent idempotency so already-reversed payments are never refunded twice. Use this tool after fixing the cause of a refund failure; do not use processReturn, which only accepts a return in RETURN_REQUESTED. Preconditions: the return must be in REFUND_FAILED; an already COMPLETED return is an idempotent no-op. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_RETRY event and, on success, publishes the order.order.returned fact that drives the pos-inventory restock of RESTOCK lines. Returns 200 when the retry completes (or the return was already COMPLETED), 404 when the return does not exist, 409 when the status is not REFUND_FAILED, 422 when the refund is refused on its own terms, and 500 when the refund leg fails downstream again. 
      * Retry a Failed Return Refund
      */
     async retryReturnRaw(requestParameters: RetryReturnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReturnOrderResponse>> {
@@ -431,7 +434,7 @@ export class ReturnsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Re-runs the return refund saga for a return parked at REFUND_FAILED, using the same per-intent idempotency so already-reversed payments are never refunded twice. Use this tool after fixing the cause of a refund failure; do not use processReturn, which only accepts a return in RETURN_REQUESTED. Preconditions: the return must be in REFUND_FAILED; an already COMPLETED return is an idempotent no-op. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_RETRY event and, on success, publishes the order.order.returned fact that drives the pos-inventory restock of RESTOCK lines. Returns 200 when the retry completes (or the return was already COMPLETED), 404 when the return does not exist, and 409 when the status is not REFUND_FAILED or the refund fails again. 
+     * Re-runs the return refund saga for a return parked at REFUND_FAILED, using the same per-intent idempotency so already-reversed payments are never refunded twice. Use this tool after fixing the cause of a refund failure; do not use processReturn, which only accepts a return in RETURN_REQUESTED. Preconditions: the return must be in REFUND_FAILED; an already COMPLETED return is an idempotent no-op. Required inputs: returnOrderId (UUID) as a path parameter; there is no request body. Emits an ORDER_RETURN_RETRY event and, on success, publishes the order.order.returned fact that drives the pos-inventory restock of RESTOCK lines. Returns 200 when the retry completes (or the return was already COMPLETED), 404 when the return does not exist, 409 when the status is not REFUND_FAILED, 422 when the refund is refused on its own terms, and 500 when the refund leg fails downstream again. 
      * Retry a Failed Return Refund
      */
     async retryReturn(requestParameters: RetryReturnRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReturnOrderResponse> {

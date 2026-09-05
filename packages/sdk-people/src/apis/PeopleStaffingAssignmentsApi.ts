@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateStaffingAssignmentRequest,
   StaffingAssignmentResponse,
   UpdateStaffingAssignmentRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateStaffingAssignmentRequestFromJSON,
     CreateStaffingAssignmentRequestToJSON,
     StaffingAssignmentResponseFromJSON,

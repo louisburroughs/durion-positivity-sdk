@@ -88,7 +88,7 @@ export interface SubmitAccountingEventRequest {
 export class AccountingEventsApi extends runtime.BaseAPI {
 
     /**
-     * Returns one ingested accounting event with its payload, processing status and idempotency outcome. Use this tool when the event id is already known; use listAccountingEvents instead when searching by type, status or time range. Preconditions: the event must exist. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 EVENT_NOT_FOUND when no accounting event exists for the supplied id. 
+     * Returns one ingested accounting event with its payload, processing status and idempotency outcome. Use this tool when the event id is already known; use listAccountingEvents instead when searching by type, status or time range. Preconditions: the event must exist. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. The payload is returned unchanged for audit; payloadReferences adds a display projection of the UUID-backed values recognized inside it, whose displayName and displayReference are null when accounting cannot resolve them and are never the UUID rendered as text. listAccountingEvents omits payloadReferences. Returns 404 EVENT_NOT_FOUND when no accounting event exists for the supplied id. 
      * Get Accounting Event
      */
     async getAccountingEventRaw(requestParameters: GetAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
@@ -122,7 +122,7 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one ingested accounting event with its payload, processing status and idempotency outcome. Use this tool when the event id is already known; use listAccountingEvents instead when searching by type, status or time range. Preconditions: the event must exist. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 404 EVENT_NOT_FOUND when no accounting event exists for the supplied id. 
+     * Returns one ingested accounting event with its payload, processing status and idempotency outcome. Use this tool when the event id is already known; use listAccountingEvents instead when searching by type, status or time range. Preconditions: the event must exist. Required inputs: eventId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. The payload is returned unchanged for audit; payloadReferences adds a display projection of the UUID-backed values recognized inside it, whose displayName and displayReference are null when accounting cannot resolve them and are never the UUID rendered as text. listAccountingEvents omits payloadReferences. Returns 404 EVENT_NOT_FOUND when no accounting event exists for the supplied id. 
      * Get Accounting Event
      */
     async getAccountingEvent(requestParameters: GetAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {

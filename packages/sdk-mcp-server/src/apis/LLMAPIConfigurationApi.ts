@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   LlmApiConfigRequest,
   LlmApiConfigResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     LlmApiConfigRequestFromJSON,
     LlmApiConfigRequestToJSON,
     LlmApiConfigResponseFromJSON,
@@ -48,7 +51,7 @@ export interface UpdateLlmApiConfigRequest {
 export class LLMAPIConfigurationApi extends runtime.BaseAPI {
 
     /**
-     * Creates a new LLM provider API configuration that the MCP server can use to invoke an external model. Use this tool to register a new provider endpoint and credential; do not use updateLlmApiConfig, which modifies a configuration that already exists. Preconditions: no configuration may already use the requested apiId, which is unique across configurations. Required inputs: apiId (stable string identifier), model, baseUrl and apiKey; headers is an optional map of extra HTTP headers and defaults to empty. Emits a MCP_LLM_API_CREATE event and stores the credential for later provider calls. Returns 201 with the stored configuration; a duplicate apiId is rejected, though this module surfaces that failure as a 500 rather than a 409. 
+     * Creates a new LLM provider API configuration that the MCP server can use to invoke an external model. Use this tool to register a new provider endpoint and credential; do not use updateLlmApiConfig, which modifies a configuration that already exists. Preconditions: no configuration may already use the requested apiId, which is unique across configurations. Required inputs: apiId (stable string identifier), model, baseUrl and apiKey; headers is an optional map of extra HTTP headers and defaults to empty. Emits a MCP_LLM_API_CREATE event and stores the credential for later provider calls. Returns 201 with the stored configuration, and 409 LLM_API_ID_CONFLICT in the ApiError envelope when another configuration already uses the requested apiId. 
      * Create an LLM API Configuration
      */
     async createLlmApiConfigRaw(requestParameters: CreateLlmApiConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LlmApiConfigResponse>> {
@@ -77,7 +80,7 @@ export class LLMAPIConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a new LLM provider API configuration that the MCP server can use to invoke an external model. Use this tool to register a new provider endpoint and credential; do not use updateLlmApiConfig, which modifies a configuration that already exists. Preconditions: no configuration may already use the requested apiId, which is unique across configurations. Required inputs: apiId (stable string identifier), model, baseUrl and apiKey; headers is an optional map of extra HTTP headers and defaults to empty. Emits a MCP_LLM_API_CREATE event and stores the credential for later provider calls. Returns 201 with the stored configuration; a duplicate apiId is rejected, though this module surfaces that failure as a 500 rather than a 409. 
+     * Creates a new LLM provider API configuration that the MCP server can use to invoke an external model. Use this tool to register a new provider endpoint and credential; do not use updateLlmApiConfig, which modifies a configuration that already exists. Preconditions: no configuration may already use the requested apiId, which is unique across configurations. Required inputs: apiId (stable string identifier), model, baseUrl and apiKey; headers is an optional map of extra HTTP headers and defaults to empty. Emits a MCP_LLM_API_CREATE event and stores the credential for later provider calls. Returns 201 with the stored configuration, and 409 LLM_API_ID_CONFLICT in the ApiError envelope when another configuration already uses the requested apiId. 
      * Create an LLM API Configuration
      */
     async createLlmApiConfig(requestParameters: CreateLlmApiConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LlmApiConfigResponse> {
@@ -120,7 +123,7 @@ export class LLMAPIConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single LLM provider API configuration by its identifier. Use this tool when the configuration id (UUID) is already known; use listLlmApiConfigs instead to discover ids. Preconditions: a configuration with the given id must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 when the configuration exists; an unknown id is not mapped to a 404 by this module and currently surfaces as a 500 error. 
+     * Returns a single LLM provider API configuration by its identifier. Use this tool when the configuration id (UUID) is already known; use listLlmApiConfigs instead to discover ids. Preconditions: a configuration with the given id must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 when the configuration exists, and 404 LLM_API_NOT_FOUND in the ApiError envelope when the id is unknown. 
      * Get an LLM API Configuration
      */
     async getLlmApiConfigRaw(requestParameters: GetLlmApiConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LlmApiConfigResponse>> {
@@ -146,7 +149,7 @@ export class LLMAPIConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single LLM provider API configuration by its identifier. Use this tool when the configuration id (UUID) is already known; use listLlmApiConfigs instead to discover ids. Preconditions: a configuration with the given id must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 when the configuration exists; an unknown id is not mapped to a 404 by this module and currently surfaces as a 500 error. 
+     * Returns a single LLM provider API configuration by its identifier. Use this tool when the configuration id (UUID) is already known; use listLlmApiConfigs instead to discover ids. Preconditions: a configuration with the given id must exist. Required inputs: id (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 when the configuration exists, and 404 LLM_API_NOT_FOUND in the ApiError envelope when the id is unknown. 
      * Get an LLM API Configuration
      */
     async getLlmApiConfig(requestParameters: GetLlmApiConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LlmApiConfigResponse> {
@@ -183,7 +186,7 @@ export class LLMAPIConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces every editable field of an existing LLM provider API configuration identified by id. Use this tool to change a provider\'s model, base URL, credential or headers; do not use createLlmApiConfig, which registers an additional configuration. Preconditions: the configuration must exist, and when apiId is being changed the new apiId must not already be used by another configuration. Required inputs: id (UUID) as a path parameter plus a full body with apiId, model, baseUrl and apiKey; headers defaults to empty when omitted, so a partial body is not merged. Emits a MCP_LLM_API_UPDATE event. Returns 200 with the updated configuration; an unknown id or a duplicate apiId is rejected, though this module surfaces both as a 500 rather than a 404 or 409. 
+     * Replaces every editable field of an existing LLM provider API configuration identified by id. Use this tool to change a provider\'s model, base URL, credential or headers; do not use createLlmApiConfig, which registers an additional configuration. Preconditions: the configuration must exist, and when apiId is being changed the new apiId must not already be used by another configuration. Required inputs: id (UUID) as a path parameter plus a full body with apiId, model, baseUrl and apiKey; headers defaults to empty when omitted, so a partial body is not merged. Emits a MCP_LLM_API_UPDATE event. Returns 200 with the updated configuration, 404 LLM_API_NOT_FOUND when the id is unknown, and 409 LLM_API_ID_CONFLICT when another configuration already uses the requested apiId — both in the ApiError envelope. 
      * Update an LLM API Configuration
      */
     async updateLlmApiConfigRaw(requestParameters: UpdateLlmApiConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LlmApiConfigResponse>> {
@@ -219,7 +222,7 @@ export class LLMAPIConfigurationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces every editable field of an existing LLM provider API configuration identified by id. Use this tool to change a provider\'s model, base URL, credential or headers; do not use createLlmApiConfig, which registers an additional configuration. Preconditions: the configuration must exist, and when apiId is being changed the new apiId must not already be used by another configuration. Required inputs: id (UUID) as a path parameter plus a full body with apiId, model, baseUrl and apiKey; headers defaults to empty when omitted, so a partial body is not merged. Emits a MCP_LLM_API_UPDATE event. Returns 200 with the updated configuration; an unknown id or a duplicate apiId is rejected, though this module surfaces both as a 500 rather than a 404 or 409. 
+     * Replaces every editable field of an existing LLM provider API configuration identified by id. Use this tool to change a provider\'s model, base URL, credential or headers; do not use createLlmApiConfig, which registers an additional configuration. Preconditions: the configuration must exist, and when apiId is being changed the new apiId must not already be used by another configuration. Required inputs: id (UUID) as a path parameter plus a full body with apiId, model, baseUrl and apiKey; headers defaults to empty when omitted, so a partial body is not merged. Emits a MCP_LLM_API_UPDATE event. Returns 200 with the updated configuration, 404 LLM_API_NOT_FOUND when the id is unknown, and 409 LLM_API_ID_CONFLICT when another configuration already uses the requested apiId — both in the ApiError envelope. 
      * Update an LLM API Configuration
      */
     async updateLlmApiConfig(requestParameters: UpdateLlmApiConfigRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LlmApiConfigResponse> {

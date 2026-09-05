@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateEmployeeRequest,
   DisableEmployeeRequestDto,
   EmployeeIdentityDto,
@@ -23,6 +24,8 @@ import type {
   UpdateEmployeeRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateEmployeeRequestFromJSON,
     CreateEmployeeRequestToJSON,
     DisableEmployeeRequestDtoFromJSON,

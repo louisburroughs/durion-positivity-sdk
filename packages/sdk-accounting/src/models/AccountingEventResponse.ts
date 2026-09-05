@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { EventPayloadReference } from './EventPayloadReference';
+import {
+    EventPayloadReferenceFromJSON,
+    EventPayloadReferenceFromJSONTyped,
+    EventPayloadReferenceToJSON,
+} from './EventPayloadReference';
+
 /**
  * Accounting event ingestion record and its processing outcome
  * @export
@@ -116,6 +123,12 @@ export interface AccountingEventResponse {
      */
     payload?: object;
     /**
+     * Display projection for the UUID-backed values recognized inside the raw payload (issue #1778). The payload above is unchanged and remains the audit record; this list carries the human-readable identity of each recognized reference, with null display values where accounting cannot resolve one. Populated on the event detail endpoint only — list responses omit it.
+     * @type {Array<EventPayloadReference>}
+     * @memberof AccountingEventResponse
+     */
+    payloadReferences?: Array<EventPayloadReference>;
+    /**
      * Timestamp when the event was processed (ISO 8601)
      * @type {Date}
      * @memberof AccountingEventResponse
@@ -210,6 +223,7 @@ export function AccountingEventResponseFromJSONTyped(json: any, ignoreDiscrimina
         'mappingVersionAttempted': json['mappingVersionAttempted'] == null ? undefined : json['mappingVersionAttempted'],
         'organizationId': json['organizationId'],
         'payload': json['payload'] == null ? undefined : json['payload'],
+        'payloadReferences': json['payloadReferences'] == null ? undefined : ((json['payloadReferences'] as Array<any>).map(EventPayloadReferenceFromJSON)),
         'processedAt': json['processedAt'] == null ? undefined : (new Date(json['processedAt'])),
         'receivedAt': (new Date(json['receivedAt'])),
         'resolvedByUserId': json['resolvedByUserId'] == null ? undefined : json['resolvedByUserId'],
@@ -242,6 +256,7 @@ export function AccountingEventResponseToJSON(value?: AccountingEventResponse | 
         'mappingVersionAttempted': value['mappingVersionAttempted'],
         'organizationId': value['organizationId'],
         'payload': value['payload'],
+        'payloadReferences': value['payloadReferences'] == null ? undefined : ((value['payloadReferences'] as Array<any>).map(EventPayloadReferenceToJSON)),
         'processedAt': value['processedAt'] == null ? undefined : ((value['processedAt']).toISOString()),
         'receivedAt': ((value['receivedAt']).toISOString()),
         'resolvedByUserId': value['resolvedByUserId'],

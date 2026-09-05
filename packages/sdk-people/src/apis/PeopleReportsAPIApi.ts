@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ApprovedTimeExportResponse,
   AttendanceDiscrepancyReportResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApprovedTimeExportResponseFromJSON,
     ApprovedTimeExportResponseToJSON,
     AttendanceDiscrepancyReportResponseFromJSON,

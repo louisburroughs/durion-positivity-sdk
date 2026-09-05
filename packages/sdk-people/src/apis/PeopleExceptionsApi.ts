@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   TimeEntryException,
   TimeEntryExceptionRequest,
   TimeEntryExceptionResolveRequest,
@@ -22,6 +23,8 @@ import type {
   TimeEntryExceptionWaiveRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     TimeEntryExceptionFromJSON,
     TimeEntryExceptionToJSON,
     TimeEntryExceptionRequestFromJSON,

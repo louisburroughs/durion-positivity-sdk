@@ -39,7 +39,7 @@ export interface ApiError {
      */
     correlationId: string;
     /**
-     * Field-level validation errors; present (non-null) for validation-related errors such as VALIDATION_ERROR or VALIDATION_FAILED; omitted for all other error types
+     * Field-level validation errors. Optional and module-dependent: a module populates it for validation-related errors such as VALIDATION_ERROR or VALIDATION_FAILED where doing so is safe, and omits it otherwise — some modules deliberately withhold it because the binding result names internal property names and the response is provokable by any caller. Never present for non-validation errors. Treat it as absent unless the endpoint's own documentation says otherwise
      * @type {Array<FieldError>}
      * @memberof ApiError
      */

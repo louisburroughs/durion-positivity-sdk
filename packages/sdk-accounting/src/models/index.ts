@@ -41,6 +41,7 @@ export * from './DefaultGLMappingResponse';
 export * from './Entry';
 export * from './EntryNumberGapCheck';
 export * from './EventEnvelopeContract';
+export * from './EventPayloadReference';
 export * from './EventProcessingLogEntry';
 export * from './ExceptionResolutionRequest';
 export * from './ExecuteAPPaymentRequest';

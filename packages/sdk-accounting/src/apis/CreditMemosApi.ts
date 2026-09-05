@@ -108,7 +108,7 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one credit memo with its amounts, status, audit trail and the invoice\'s current balance. Use this tool when the memo id is already known; use listCreditMemos instead when searching by customer, invoice or status. Preconditions: the credit memo must exist. Required inputs: creditMemoId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_CREDIT_MEMO_GET audit event; no state changes. Returns 404 when no credit memo exists for the supplied id. 
+     * Returns one credit memo with its amounts, status, audit trail and the invoice\'s current balance. Use this tool when the memo id is already known; use listCreditMemos instead when searching by customer, invoice or status. Preconditions: the credit memo must exist. Required inputs: creditMemoId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_CREDIT_MEMO_GET audit event; no state changes. Responses carry display-ready values alongside the identifiers (creditMemoReference, originalInvoiceReference, customerDisplayName, customerReference); each is null when accounting cannot resolve it and is never a UUID rendered as text. Returns 404 when no credit memo exists for the supplied id. 
      * Get Credit Memo
      */
     async getCreditMemoRaw(requestParameters: GetCreditMemoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CreditMemoResponse>> {
@@ -142,7 +142,7 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one credit memo with its amounts, status, audit trail and the invoice\'s current balance. Use this tool when the memo id is already known; use listCreditMemos instead when searching by customer, invoice or status. Preconditions: the credit memo must exist. Required inputs: creditMemoId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_CREDIT_MEMO_GET audit event; no state changes. Returns 404 when no credit memo exists for the supplied id. 
+     * Returns one credit memo with its amounts, status, audit trail and the invoice\'s current balance. Use this tool when the memo id is already known; use listCreditMemos instead when searching by customer, invoice or status. Preconditions: the credit memo must exist. Required inputs: creditMemoId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_CREDIT_MEMO_GET audit event; no state changes. Responses carry display-ready values alongside the identifiers (creditMemoReference, originalInvoiceReference, customerDisplayName, customerReference); each is null when accounting cannot resolve it and is never a UUID rendered as text. Returns 404 when no credit memo exists for the supplied id. 
      * Get Credit Memo
      */
     async getCreditMemo(requestParameters: GetCreditMemoRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CreditMemoResponse> {
@@ -151,7 +151,7 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists credit memos as a paginated projection, optionally filtered by customer, original invoice or lifecycle status. Use this tool when browsing or reconciling memos; do not use getCreditMemo, which fetches one memo by its known id. Preconditions: none beyond the caller holding accounting:credit-memo:read. Required inputs: none; customerId, originalInvoiceId and status (DRAFT, POSTED, APPLIED, VOIDED) are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CREDIT_MEMO_LIST audit event; no state changes. Returns 400 when pagination or filter parameters are invalid. 
+     * Lists credit memos as a paginated projection, optionally filtered by customer, original invoice or lifecycle status. Use this tool when browsing or reconciling memos; do not use getCreditMemo, which fetches one memo by its known id. Preconditions: none beyond the caller holding accounting:credit-memo:read. Required inputs: none; customerId, originalInvoiceId and status (DRAFT, POSTED, APPLIED, VOIDED) are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CREDIT_MEMO_LIST audit event; no state changes. Responses carry display-ready values alongside the identifiers (creditMemoReference, originalInvoiceReference, customerDisplayName, customerReference); each is null when accounting cannot resolve it and is never a UUID rendered as text. Returns 400 when pagination or filter parameters are invalid. 
      * List Credit Memos
      */
     async listCreditMemosRaw(requestParameters: ListCreditMemosRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageCreditMemoResponse>> {
@@ -202,7 +202,7 @@ export class CreditMemosApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists credit memos as a paginated projection, optionally filtered by customer, original invoice or lifecycle status. Use this tool when browsing or reconciling memos; do not use getCreditMemo, which fetches one memo by its known id. Preconditions: none beyond the caller holding accounting:credit-memo:read. Required inputs: none; customerId, originalInvoiceId and status (DRAFT, POSTED, APPLIED, VOIDED) are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CREDIT_MEMO_LIST audit event; no state changes. Returns 400 when pagination or filter parameters are invalid. 
+     * Lists credit memos as a paginated projection, optionally filtered by customer, original invoice or lifecycle status. Use this tool when browsing or reconciling memos; do not use getCreditMemo, which fetches one memo by its known id. Preconditions: none beyond the caller holding accounting:credit-memo:read. Required inputs: none; customerId, originalInvoiceId and status (DRAFT, POSTED, APPLIED, VOIDED) are optional filters, with standard page, size and sort parameters. Emits an ACCOUNTING_CREDIT_MEMO_LIST audit event; no state changes. Responses carry display-ready values alongside the identifiers (creditMemoReference, originalInvoiceReference, customerDisplayName, customerReference); each is null when accounting cannot resolve it and is never a UUID rendered as text. Returns 400 when pagination or filter parameters are invalid. 
      * List Credit Memos
      */
     async listCreditMemos(requestParameters: ListCreditMemosRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageCreditMemoResponse> {

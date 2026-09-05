@@ -44,17 +44,35 @@ export interface CreditMemoResponse {
      */
     creditMemoId: string;
     /**
+     * Short human-readable reference for the credit memo, shown in place of the raw creditMemoId UUID (CM-{YYYYMM}-{n}). Assigned at creation, and backfilled for memos that predate the field, so it is normally present. Nullable because assignment is a service-layer concern rather than a database invariant; when absent, render nothing rather than falling back to the UUID.
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    creditMemoReference?: string;
+    /**
      * ISO 4217 currency code
      * @type {string}
      * @memberof CreditMemoResponse
      */
     currency?: string;
     /**
+     * Customer display name resolved from accounting's customer-party replica. Null when the owner knows no name for the party or the replica has not seen it; never the customer UUID as fallback text.
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    customerDisplayName?: string;
+    /**
      * Identifier of the customer the credit memo applies to
      * @type {string}
      * @memberof CreditMemoResponse
      */
     customerId?: string;
+    /**
+     * Stable human-facing customer number resolved from accounting's customer-party replica. Null when the owner never numbered the party or the replica has not seen it; never the customer UUID as fallback text.
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    customerReference?: string;
     /**
      * Invoice outstanding balance after the credit was applied
      * @type {number}
@@ -73,6 +91,12 @@ export interface CreditMemoResponse {
      * @memberof CreditMemoResponse
      */
     originalInvoiceId: string;
+    /**
+     * Human-readable number of the original invoice, resolved from accounting's invoice replica. Null when the replica holds no number for the invoice; never the invoice UUID as fallback text.
+     * @type {string}
+     * @memberof CreditMemoResponse
+     */
+    originalInvoiceReference?: string;
     /**
      * Identifier of the original accounting period
      * @type {string}
@@ -173,11 +197,15 @@ export function CreditMemoResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'creationTimestamp': (new Date(json['creationTimestamp'])),
         'creditAmount': json['creditAmount'],
         'creditMemoId': json['creditMemoId'],
+        'creditMemoReference': json['creditMemoReference'] == null ? undefined : json['creditMemoReference'],
         'currency': json['currency'] == null ? undefined : json['currency'],
+        'customerDisplayName': json['customerDisplayName'] == null ? undefined : json['customerDisplayName'],
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
+        'customerReference': json['customerReference'] == null ? undefined : json['customerReference'],
         'invoiceBalanceAfter': json['invoiceBalanceAfter'] == null ? undefined : json['invoiceBalanceAfter'],
         'justificationNote': json['justificationNote'] == null ? undefined : json['justificationNote'],
         'originalInvoiceId': json['originalInvoiceId'],
+        'originalInvoiceReference': json['originalInvoiceReference'] == null ? undefined : json['originalInvoiceReference'],
         'originalPeriodId': json['originalPeriodId'] == null ? undefined : json['originalPeriodId'],
         'postedTimestamp': json['postedTimestamp'] == null ? undefined : (new Date(json['postedTimestamp'])),
         'priorPeriodAdjustment': json['priorPeriodAdjustment'] == null ? undefined : json['priorPeriodAdjustment'],
@@ -201,11 +229,15 @@ export function CreditMemoResponseToJSON(value?: CreditMemoResponse | null): any
         'creationTimestamp': ((value['creationTimestamp']).toISOString()),
         'creditAmount': value['creditAmount'],
         'creditMemoId': value['creditMemoId'],
+        'creditMemoReference': value['creditMemoReference'],
         'currency': value['currency'],
+        'customerDisplayName': value['customerDisplayName'],
         'customerId': value['customerId'],
+        'customerReference': value['customerReference'],
         'invoiceBalanceAfter': value['invoiceBalanceAfter'],
         'justificationNote': value['justificationNote'],
         'originalInvoiceId': value['originalInvoiceId'],
+        'originalInvoiceReference': value['originalInvoiceReference'],
         'originalPeriodId': value['originalPeriodId'],
         'postedTimestamp': value['postedTimestamp'] == null ? undefined : ((value['postedTimestamp']).toISOString()),
         'priorPeriodAdjustment': value['priorPeriodAdjustment'],

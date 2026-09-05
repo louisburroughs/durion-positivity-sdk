@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ApprovalPersonDto,
   RejectTimePeriodRequest,
   TimePeriodApprovalDto,
@@ -23,6 +24,8 @@ import type {
   TimekeepingEntryDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApprovalPersonDtoFromJSON,
     ApprovalPersonDtoToJSON,
     RejectTimePeriodRequestFromJSON,

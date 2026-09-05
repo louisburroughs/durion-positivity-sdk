@@ -15,16 +15,16 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateTimePeriodRequest,
-  ProblemDetail,
   TimePeriodDto,
   TransitionTimePeriodRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateTimePeriodRequestFromJSON,
     CreateTimePeriodRequestToJSON,
-    ProblemDetailFromJSON,
-    ProblemDetailToJSON,
     TimePeriodDtoFromJSON,
     TimePeriodDtoToJSON,
     TransitionTimePeriodRequestFromJSON,

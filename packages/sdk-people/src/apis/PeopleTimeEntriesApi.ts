@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   TimeEntryAdjustment,
   TimeEntryAdjustmentRequest,
   TimeEntryAdjustmentResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     TimeEntryAdjustmentFromJSON,
     TimeEntryAdjustmentToJSON,
     TimeEntryAdjustmentRequestFromJSON,
