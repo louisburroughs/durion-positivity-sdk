@@ -44,6 +44,12 @@ export interface CycleCountPlanResponse {
      */
     locationId: string;
     /**
+     * Human-readable name of the location the plan applies to; null when the location replica has no matching row (e.g. replica lag or unknown location)
+     * @type {string}
+     * @memberof CycleCountPlanResponse
+     */
+    locationName?: string;
+    /**
      * Unique identifier of the cycle count plan
      * @type {string}
      * @memberof CycleCountPlanResponse
@@ -116,6 +122,7 @@ export function CycleCountPlanResponseFromJSONTyped(json: any, ignoreDiscriminat
         'createdBy': json['createdBy'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'locationId': json['locationId'],
+        'locationName': json['locationName'] == null ? undefined : json['locationName'],
         'planId': json['planId'],
         'planName': json['planName'],
         'scheduleId': json['scheduleId'] == null ? undefined : json['scheduleId'],
@@ -136,6 +143,7 @@ export function CycleCountPlanResponseToJSON(value?: CycleCountPlanResponse | nu
         'createdBy': value['createdBy'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString().substring(0,10)),
         'locationId': value['locationId'],
+        'locationName': value['locationName'],
         'planId': value['planId'],
         'planName': value['planName'],
         'scheduleId': value['scheduleId'],

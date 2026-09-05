@@ -31,6 +31,12 @@ export interface PrimaryLocationResponse {
      * @memberof PrimaryLocationResponse
      */
     locationId: string;
+    /**
+     * Denormalized display name of locationId, resolved from the location replica. Null when the replica has no matching row yet or the name is blank; never falls back to the raw id.
+     * @type {string}
+     * @memberof PrimaryLocationResponse
+     */
+    locationName?: string;
 }
 
 /**
@@ -53,6 +59,7 @@ export function PrimaryLocationResponseFromJSONTyped(json: any, ignoreDiscrimina
         
         'defaulted': json['defaulted'] == null ? undefined : json['defaulted'],
         'locationId': json['locationId'],
+        'locationName': json['locationName'] == null ? undefined : json['locationName'],
     };
 }
 
@@ -64,6 +71,7 @@ export function PrimaryLocationResponseToJSON(value?: PrimaryLocationResponse | 
         
         'defaulted': value['defaulted'],
         'locationId': value['locationId'],
+        'locationName': value['locationName'],
     };
 }
 

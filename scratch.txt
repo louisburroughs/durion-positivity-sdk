@@ -1,0 +1,28 @@
+Work through every open platform issue in louisburroughs/durion-positivity-backend
+until none are fixable without me. Do not wait for me to hand you issues one at a time.
+
+Discover the queue yourself: search open issues titled "platform:",
+or the tech-debt label. Read each issue's body and comments, and check open PRs so you
+don't redo in-flight work.
+
+Triage every issue into exactly one bucket: FIX_NOW (provable here with a test, replay
+fixture, ArchitectureTest, or script), IN_FLIGHT (open PR exists), BLOCKED_DEPENDS
+(issue says "only after #X" and X is open), BLOCKED_ENV (needs alpha/Ollama/live gate run
+and has no code-only part), BLOCKED_DECISION (two readings, materially different code,
+picking wrong is worse than waiting — should be near-empty), ALREADY_FIXED (comment with
+the proving commit and test; don't close). Split mixed issues and do the code part.
+
+Order FIX_NOW: bugs first, no open dependency first, unblockers first, smallest blast
+radius first, oldest as tiebreak.
+
+For each: branch claude/fix-<n> from origin/main, reproduce with a failing test first,
+fix only inside platform, run spotless:apply, compile, focused tests, ArchitectureTest,
+and full module tests. Two repair attempts, then revert, record the failure, and move on.
+Commit as fix(mcp): ... (#n), push, open a PR with "Closes #n", your assumptions, the exact
+commands run, and a "Not verified here" section for anything that needs a model or database.
+Subscribe to the PR so red CI comes back to you. Use babysit-pr and pr-review to check on PRs you have created.
+
+Never stop to ask. State assumptions in the PR body and keep going. Never skip or disable a
+test. Re-discover the queue after every item. Stop only when every open issue is SHIPPED,
+IN_FLIGHT, ALREADY_FIXED, or BLOCKED with a recorded unblocker, then give one report:
+shipped, already fixed, blocked by bucket with the concrete unblocker, PRs still red.

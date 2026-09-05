@@ -44,6 +44,12 @@ export interface AccountingEventResponse {
      */
     eventId: string;
     /**
+     * Short human-readable reference for display in place of the raw event UUID
+     * @type {string}
+     * @memberof AccountingEventResponse
+     */
+    eventReference?: string;
+    /**
      * Event type identifier
      * @type {string}
      * @memberof AccountingEventResponse
@@ -192,6 +198,7 @@ export function AccountingEventResponseFromJSONTyped(json: any, ignoreDiscrimina
         'domainKeyId': json['domainKeyId'] == null ? undefined : json['domainKeyId'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
         'eventId': json['eventId'],
+        'eventReference': json['eventReference'] == null ? undefined : json['eventReference'],
         'eventType': json['eventType'],
         'failureDetails': json['failureDetails'] == null ? undefined : json['failureDetails'],
         'failureReasonCode': json['failureReasonCode'] == null ? undefined : json['failureReasonCode'],
@@ -223,6 +230,7 @@ export function AccountingEventResponseToJSON(value?: AccountingEventResponse | 
         'domainKeyId': value['domainKeyId'],
         'errorMessage': value['errorMessage'],
         'eventId': value['eventId'],
+        'eventReference': value['eventReference'],
         'eventType': value['eventType'],
         'failureDetails': value['failureDetails'],
         'failureReasonCode': value['failureReasonCode'],

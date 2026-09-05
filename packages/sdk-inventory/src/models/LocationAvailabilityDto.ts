@@ -38,11 +38,11 @@ export interface LocationAvailabilityDto {
      */
     locationId: string;
     /**
-     * Human-readable name of the location
+     * Human-readable name of the location; null when the location replica has no matching row (e.g. replica lag or unknown location)
      * @type {string}
      * @memberof LocationAvailabilityDto
      */
-    locationName: string;
+    locationName?: string;
     /**
      * On-hand quantity at the location
      * @type {number}
@@ -68,7 +68,6 @@ export interface LocationAvailabilityDto {
  */
 export function instanceOfLocationAvailabilityDto(value: object): boolean {
     if (!('locationId' in value)) return false;
-    if (!('locationName' in value)) return false;
     if (!('onHandQuantity' in value)) return false;
     return true;
 }
@@ -86,7 +85,7 @@ export function LocationAvailabilityDtoFromJSONTyped(json: any, ignoreDiscrimina
         'availableToPromiseQuantity': json['availableToPromiseQuantity'] == null ? undefined : json['availableToPromiseQuantity'],
         'incomingQty': json['incomingQty'] == null ? undefined : json['incomingQty'],
         'locationId': json['locationId'],
-        'locationName': json['locationName'],
+        'locationName': json['locationName'] == null ? undefined : json['locationName'],
         'onHandQuantity': json['onHandQuantity'],
         'outgoingQty': json['outgoingQty'] == null ? undefined : json['outgoingQty'],
         'projectedAvailable': json['projectedAvailable'] == null ? undefined : json['projectedAvailable'],
