@@ -115,6 +115,16 @@ cleanup_accounting_duplicate_exports() {
 	fi
 }
 
+prune_orphans() {
+	# The generator writes what a spec calls for and never deletes what it stops
+	# writing. A file it no longer emits keeps its old imports, and because tsc
+	# type-checks everything under src/ a file nothing imports can still break the
+	# build -- sdk-workorder's TimeEntryAPIApi.ts did exactly that and made
+	# `npm ci` fail for the whole repo. Prune per module, right after generation.
+	local module="$1"
+	node scripts/prune-orphans.mjs --module "$module"
+}
+
 # ---------------------------------------------------------------------------
 # Protected-file guard
 #
@@ -247,6 +257,7 @@ if [[ -n "$module" ]]; then
 	if [[ "$module" == "vehicle-inventory" ]]; then
 		cleanup_vehicle_inventory_duplicate_exports
 	fi
+	prune_orphans "$module"
 else
 	# Generate all SDK modules in deterministic order
 	for m in "${MODULES[@]}"; do
@@ -263,6 +274,7 @@ else
 		if [[ "$m" == "vehicle-inventory" ]]; then
 			cleanup_vehicle_inventory_duplicate_exports
 		fi
+		prune_orphans "$m"
 	done
 fi
 

@@ -2,7 +2,7 @@
   "name": "durion-positivity-sdk",
   "version": "0.1.0-alpha",
   "private": true,
-  "description": "Durion Positivity Backend SDK — TypeScript client library",
+  "description": "Durion Positivity Backend SDK \u2014 TypeScript client library",
   "workspaces": [
     "packages/*"
   ],
@@ -11,7 +11,8 @@
     "test": "jest",
     "test:integration": "jest --config packages/sdk-integration-tests/jest.integration.config.js --runInBand",
     "lint": "eslint . --ext .ts,.tsx",
-    "generate": "bash scripts/generate-openapi.sh"
+    "generate": "bash scripts/generate-openapi.sh",
+    "prune": "node scripts/prune-orphans.mjs"
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "^2.31.1",
