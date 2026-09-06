@@ -2,69 +2,87 @@
 // Delete generated files the generator no longer produces.
 //
 // OpenAPI Generator writes the files a spec calls for and never removes the
-// ones it stops writing. When an endpoint or schema leaves a spec, its client
+// ones it stops writing. When an endpoint or schema leaves a spec its client
 // lingers, and because tsc type-checks every file under src/ a file nothing
-// imports can still break the build. That is what happened to sdk-workorder:
-// TimeEntryAPIApi.ts outlived its spec, kept importing two models that were no
-// longer exported, and made `npm ci` fail for the whole repository.
+// imports can still break the build. sdk-workorder's TimeEntryAPIApi.ts did
+// exactly that and made `npm ci` fail for the whole repository.
 //
-// What counts as an orphan
-// ------------------------
-// Reachability, not barrel membership. A file is kept when anything reachable
-// from the package's entry points imports it, and removed only when nothing
-// does.
+// The oracle
+// ----------
+// `.openapi-generator/FILES`, which the generator rewrites on every run and
+// which lists exactly the files the current spec produced. A file under
+// src/apis or src/models that is absent from it was not emitted this run.
 //
-// Barrel membership looked like the obvious test and is wrong: PageableObject
-// and SortObject are absent from most models/index.ts yet are imported directly
-// by the PageXxx models, so "not re-exported" would have deleted live code in
-// 91 places. Reachability keeps them, because the models that need them are
-// themselves reachable.
+// An earlier version of this script inferred the same thing from import
+// reachability and got it wrong in the one case that mattered: the broken
+// TimeEntryAPIApi.ts was imported by the hand-written src/index.ts, so it was
+// reachable and kept, while the two models it imported were unreachable and
+// deleted -- taking a broken tree and leaving it broken, with real files gone
+// and exit 0. Reachability answers "does anything point at this?", which is a
+// different question from "did the generator make this?".
 //
-// The cascade falls out for free: dropping a file removes the only importer of
-// whatever only it referenced, and a single reachability pass from the roots
-// already accounts for that.
+// Imports are still parsed, but only to answer the second question: is an
+// orphan still referenced by something that survives? If it is, deleting it
+// would trade a dangling symbol for a dangling path, so it is reported and the
+// run fails instead. That is the signal this repository lacked -- hand-written
+// code still naming a surface the backend has dropped.
 //
-// What is never touched
-// ---------------------
-// - index.ts barrels, which the generator rewrites every run and which seed the walk
-// - anything listed in the package's .openapi-generator-ignore, the repo's
-//   existing record of hand-maintained files inside generated directories
-//   (sdk-customer's VehicleSummary.ts is the live example)
-// - anything outside src/apis/ and src/models/
-//
-// A file that is unreachable but still imported by hand-written code is a
-// different problem and is reported, not deleted: removing it would only trade
-// a dangling symbol for a dangling path. That report is the signal that a
-// hand-written factory still refers to a surface the backend dropped.
+// Safety
+// ------
+// - FILES missing => that package is skipped, never pruned by guesswork. Run
+//   this after generation, which is where generate-openapi.sh calls it.
+// - A blast-radius ceiling refuses a package whose orphan count looks like a
+//   half-finished generation rather than a few removed endpoints. A truncated
+//   (not merely empty) barrel is the case that motivated it.
+// - Anything in .openapi-generator-ignore is hand-maintained and untouchable.
+// - Deletions are computed per package, checked, and only then applied, and a
+//   refusal never aborts the run mid-loop with earlier packages already cut.
 //
 // Usage:
 //   node scripts/prune-orphans.mjs                 # every package
 //   node scripts/prune-orphans.mjs --module order  # one package
 //   node scripts/prune-orphans.mjs --dry-run       # report, delete nothing
+//   node scripts/prune-orphans.mjs --force         # bypass the ceiling
 
 import { existsSync, readdirSync, readFileSync, statSync, unlinkSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-const args = process.argv.slice(2);
-const dryRun = args.includes('--dry-run');
+const KNOWN_FLAGS = new Set(['--dry-run', '--module', '--force']);
+const GENERATED_DIRS = ['src/apis', 'src/models'];
+// Below this many files a package is too small for a percentage to mean much.
+const CEILING_MIN_FILES = 10;
+const CEILING_FRACTION = 0.25;
 
-// `--module` with nothing after it must not silently widen the blast radius.
-// Taking args[i + 1] unchecked yields undefined when the flag is last, and a
-// falsy moduleArg reads downstream as "no module given" — so an operator who
-// believed they had scoped the run to one package would have pruned every one
-// of them. A destructive tool fails fast here instead.
+// ---------------------------------------------------------------------------
+// Arguments. Every unrecognised token is fatal: this deletes files, and the
+// failure mode of a silently ignored argument is a run that quietly widens from
+// one package to all of them.
+// ---------------------------------------------------------------------------
+const args = process.argv.slice(2);
+let dryRun = false;
+let force = false;
 let moduleArg = null;
-const moduleIndex = args.indexOf('--module');
-if (moduleIndex !== -1) {
-  moduleArg = args[moduleIndex + 1];
-  if (!moduleArg || moduleArg.startsWith('-')) {
-    console.error('[prune] --module requires a package name, for example: --module order');
+
+for (let i = 0; i < args.length; i += 1) {
+  const arg = args[i];
+  if (arg === '--dry-run') {
+    dryRun = true;
+  } else if (arg === '--force') {
+    force = true;
+  } else if (arg === '--module') {
+    moduleArg = args[i + 1];
+    if (!moduleArg || KNOWN_FLAGS.has(moduleArg) || moduleArg.startsWith('-')) {
+      console.error('[prune] --module requires a package name, for example: --module order');
+      process.exit(2);
+    }
+    i += 1;
+  } else {
+    console.error(`[prune] unknown argument: ${arg}`);
+    console.error('[prune] usage: prune-orphans.mjs [--module <name>] [--dry-run] [--force]');
     process.exit(2);
   }
 }
-
-const GENERATED_DIRS = ['src/apis', 'src/models'];
 
 function listPackages() {
   if (moduleArg) return [`packages/sdk-${moduleArg}`];
@@ -75,54 +93,70 @@ function listPackages() {
     .sort();
 }
 
-// Every relative specifier in a file: import/export ... from './x', and the
-// bare `import './x'` side-effect form.
+// ---------------------------------------------------------------------------
+// Import scanning. Used only to decide whether an orphan is still referenced,
+// so every miss here risks deleting something that is still used: the patterns
+// deliberately over-match rather than under-match. A hit inside a comment or a
+// template string only over-protects.
+// ---------------------------------------------------------------------------
 function relativeSpecifiers(source) {
   const specifiers = [];
-  const from = /(?:^|\n)\s*(?:import|export)[\s\S]*?from\s*['"](\.[^'"]+)['"]/g;
-  const bare = /(?:^|\n)\s*import\s*['"](\.[^'"]+)['"]/g;
-  for (const re of [from, bare]) {
+  const patterns = [
+    /(?:import|export)[\s\S]*?from\s*['"](\.[^'"]+)['"]/g, // static import/export
+    /\bimport\s*\(\s*['"](\.[^'"]+)['"]/g, // dynamic import()
+    /\brequire\s*\(\s*['"](\.[^'"]+)['"]/g, // require() and import x = require()
+    /\bimport\s+['"](\.[^'"]+)['"]/g, // side-effect import
+  ];
+  for (const re of patterns) {
     let match;
     while ((match = re.exec(source)) !== null) specifiers.push(match[1]);
   }
   return specifiers;
 }
 
-// './Foo' -> the .ts file it names, directory index included. Returns null for
-// anything that does not resolve to a real file (a node_modules import, or a
-// path already deleted).
+// './Foo', './Foo.js' (NodeNext style) and './Foo/index' all name a .ts file.
 function resolveSpecifier(fromFile, specifier) {
   const base = path.resolve(path.dirname(fromFile), specifier);
-  for (const candidate of [`${base}.ts`, path.join(base, 'index.ts')]) {
+  const candidates = [
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.mts`,
+    base.replace(/\.js$/, '.ts'),
+    base.replace(/\.js$/, '.tsx'),
+    base.replace(/\.mjs$/, '.mts'),
+    path.join(base, 'index.ts'),
+  ];
+  for (const candidate of candidates) {
     if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
   }
   return null;
 }
 
-// Files the walk starts from: the package entry point, the two barrels the
-// generator rewrites, and hand-written workflow helpers.
-function rootsFor(pkgDir) {
-  const roots = [];
-  for (const rel of ['src/index.ts', 'src/apis/index.ts', 'src/models/index.ts']) {
-    const file = path.join(pkgDir, rel);
-    if (existsSync(file)) roots.push(path.resolve(file));
-  }
-  const workflows = path.join(pkgDir, 'src/workflows');
-  if (existsSync(workflows)) {
-    for (const name of readdirSync(workflows)) {
-      if (name.endsWith('.ts')) roots.push(path.resolve(path.join(workflows, name)));
+// Every .ts file in the repo that could reference a generated file, including
+// the root test tree and cross-package harnesses that deep-import package
+// internals. Scanning everything removes any need to guess at entry points.
+function allSourceFiles() {
+  const files = [];
+  const walk = (dir) => {
+    if (!existsSync(dir)) return;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name === 'dist') continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) files.push(path.resolve(full));
     }
+  };
+  walk('src');
+  for (const name of existsSync('packages') ? readdirSync('packages') : []) {
+    walk(path.join('packages', name, 'src'));
   }
-  return roots;
+  return files;
 }
 
-function reachableFrom(roots) {
-  const seen = new Set();
-  const queue = [...roots];
-  while (queue.length > 0) {
-    const file = queue.pop();
-    if (seen.has(file)) continue;
-    seen.add(file);
+// file -> the set of files importing it, across the whole repo.
+function buildReferenceIndex() {
+  const importers = new Map();
+  for (const file of allSourceFiles()) {
     let source;
     try {
       source = readFileSync(file, 'utf8');
@@ -131,42 +165,54 @@ function reachableFrom(roots) {
     }
     for (const specifier of relativeSpecifiers(source)) {
       const target = resolveSpecifier(file, specifier);
-      if (target && !seen.has(target)) queue.push(target);
+      if (!target) continue;
+      if (!importers.has(target)) importers.set(target, new Set());
+      importers.get(target).add(file);
     }
   }
-  return seen;
+  return importers;
 }
 
-// Hand-maintained files inside generated directories, per the package's own
-// .openapi-generator-ignore. Only plain paths and simple *.ts globs appear
-// there today; both are handled, anything fancier is treated as protected.
+// ---------------------------------------------------------------------------
+// Hand-maintained files inside generated directories, per each package's own
+// .openapi-generator-ignore. A pattern whose non-wildcard prefix is empty
+// (`*.md`) would otherwise protect the entire package and silently disable
+// pruning there, so those are skipped with a warning instead.
+// ---------------------------------------------------------------------------
 function protectedPaths(pkgDir) {
   const ignoreFile = path.join(pkgDir, '.openapi-generator-ignore');
-  const protectedSet = new Set();
-  if (!existsSync(ignoreFile)) return protectedSet;
+  const guarded = new Set();
+  if (!existsSync(ignoreFile)) return guarded;
   for (const raw of readFileSync(ignoreFile, 'utf8').split('\n')) {
     const line = raw.trim();
     if (!line || line.startsWith('#') || line.startsWith('!')) continue;
-    if (line.includes('*')) {
-      const [prefix] = line.split('*');
-      protectedSet.add(path.resolve(path.join(pkgDir, prefix)));
-    } else {
-      protectedSet.add(path.resolve(path.join(pkgDir, line)));
+    const prefix = line.includes('*') ? line.split('*')[0] : line;
+    if (prefix === '') {
+      console.error(`[prune] ${pkgDir}/.openapi-generator-ignore: ignoring unsupported pattern '${line}'`);
+      continue;
     }
+    guarded.add(path.resolve(path.join(pkgDir, prefix)));
   }
-  return protectedSet;
+  return guarded;
 }
 
-function isProtected(file, protectedSet) {
-  if (protectedSet.has(file)) return true;
-  for (const entry of protectedSet) {
-    if (file.startsWith(entry)) return true;
+// Compare by path segment, so `src/workflows` does not also guard
+// `src/workflows-old.ts`.
+function isProtected(file, guarded) {
+  for (const entry of guarded) {
+    if (file === entry) return true;
+    const rel = path.relative(entry, file);
+    if (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) return true;
   }
   return false;
 }
 
+// ---------------------------------------------------------------------------
+
+const importers = buildReferenceIndex();
 let removed = 0;
-let reported = 0;
+let refused = 0;
+let stillReferenced = 0;
 
 for (const pkgDir of listPackages()) {
   if (!existsSync(pkgDir)) {
@@ -174,60 +220,106 @@ for (const pkgDir of listPackages()) {
     process.exit(2);
   }
 
-  const roots = rootsFor(pkgDir);
-  if (roots.length === 0) continue;
-
-  // A missing or empty barrel means generation did not finish for this package.
-  // Pruning against it would delete everything, so refuse instead.
-  for (const dir of GENERATED_DIRS) {
-    const barrel = path.join(pkgDir, dir, 'index.ts');
-    if (existsSync(path.join(pkgDir, dir)) && (!existsSync(barrel) || readFileSync(barrel, 'utf8').trim() === '')) {
-      console.error(`[prune] ${pkgDir}/${dir}/index.ts is missing or empty; refusing to prune this package.`);
-      process.exit(1);
-    }
+  // The generator's own manifest of what this run produced. Without it there is
+  // no way to know what should exist, and guessing is how the previous version
+  // of this script went wrong.
+  const manifestPath = path.join(pkgDir, '.openapi-generator/FILES');
+  if (!existsSync(manifestPath)) {
+    console.error(`[prune] ${pkgDir}: no .openapi-generator/FILES; skipping (run generation first).`);
+    continue;
   }
+  const emitted = new Set(
+    readFileSync(manifestPath, 'utf8')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean),
+  );
 
-  const reachable = reachableFrom(roots);
   const guarded = protectedPaths(pkgDir);
+  const candidates = [];
+  let generatedCount = 0;
 
   for (const dir of GENERATED_DIRS) {
     const full = path.join(pkgDir, dir);
     if (!existsSync(full)) continue;
     for (const name of readdirSync(full).sort()) {
-      if (!name.endsWith('.ts') || name === 'index.ts') continue;
+      if (!name.endsWith('.ts')) continue;
+      generatedCount += 1;
+      const rel = `${dir}/${name}`;
       const file = path.resolve(path.join(full, name));
-      if (reachable.has(file) || isProtected(file, guarded)) continue;
-      if (dryRun) {
-        console.log(`[prune] would remove ${path.relative(process.cwd(), file)}`);
-      } else {
-        unlinkSync(file);
-        console.log(`[prune] removed ${path.relative(process.cwd(), file)}`);
-      }
-      removed += 1;
+      if (emitted.has(rel) || isProtected(file, guarded)) continue;
+      candidates.push(file);
     }
   }
 
-  // Unreachable from the barrels but still named by hand-written code: deleting
-  // it would swap a dangling symbol for a dangling path, so say so instead.
-  const entry = path.resolve(path.join(pkgDir, 'src/index.ts'));
-  if (existsSync(entry)) {
-    for (const specifier of relativeSpecifiers(readFileSync(entry, 'utf8'))) {
-      const target = resolveSpecifier(entry, specifier);
-      if (!target) {
-        console.error(`[prune] ${pkgDir}/src/index.ts imports '${specifier}', which does not exist.`);
-        reported += 1;
+  if (candidates.length === 0) continue;
+
+  // A half-finished generation looks like a large fraction of the package
+  // suddenly being unemitted. Removed endpoints do not.
+  const ceiling = Math.max(CEILING_MIN_FILES, Math.floor(generatedCount * CEILING_FRACTION));
+  if (candidates.length > ceiling && !force) {
+    console.error(
+      `[prune] ${pkgDir}: ${candidates.length} of ${generatedCount} generated files are unaccounted for, ` +
+        `over the ceiling of ${ceiling}. This looks like an incomplete generation rather than removed ` +
+        `endpoints, so nothing was deleted. Re-run generation, or pass --force if this is genuinely correct.`,
+    );
+    refused += 1;
+    continue;
+  }
+
+  // A candidate is safe to delete only if every file importing it is itself
+  // being deleted. Treating all candidates as gone up front is wrong: if one is
+  // blocked because hand-written code still names it, whatever only it imports
+  // must be kept too, or the block leaves dangling imports behind. Demote until
+  // the set stops shrinking.
+  const deletable = new Set(candidates);
+  const blockedBy = new Map();
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const file of [...deletable]) {
+      const survivors = [...(importers.get(file) ?? [])].filter((f) => f !== file && !deletable.has(f));
+      if (survivors.length > 0) {
+        deletable.delete(file);
+        blockedBy.set(file, survivors);
+        changed = true;
       }
     }
+  }
+
+  for (const file of candidates) {
+    const shown = path.relative(process.cwd(), file);
+    if (!deletable.has(file)) {
+      // The TimeEntryAPIApi case: the generator stopped emitting it, but
+      // hand-written code still names it. Deleting would only swap a dangling
+      // symbol for a dangling path.
+      console.error(`[prune] ${shown} is no longer generated, but is still imported by:`);
+      for (const user of blockedBy.get(file) ?? []) {
+        console.error(`[prune]   ${path.relative(process.cwd(), user)}`);
+      }
+      stillReferenced += 1;
+      continue;
+    }
+    if (dryRun) {
+      console.log(`[prune] would remove ${shown}`);
+    } else {
+      unlinkSync(file);
+      console.log(`[prune] removed ${shown}`);
+    }
+    removed += 1;
   }
 }
 
 console.log(
-  dryRun
-    ? `[prune] dry run: ${removed} orphan(s) would be removed.`
-    : `[prune] ${removed} orphan(s) removed.`,
+  dryRun ? `[prune] dry run: ${removed} orphan(s) would be removed.` : `[prune] ${removed} orphan(s) removed.`,
 );
 
-if (reported > 0) {
-  console.error(`[prune] ${reported} unresolved import(s) in hand-written entry points; fix these by hand.`);
-  process.exit(1);
+if (stillReferenced > 0) {
+  console.error(
+    `[prune] ${stillReferenced} file(s) are no longer generated but are still imported. ` +
+      `Update the code that imports them, or restore the endpoint that produced them.`,
+  );
 }
+if (refused > 0) {
+  console.error(`[prune] ${refused} package(s) refused on the blast-radius ceiling.`);
+}
+if (stillReferenced > 0 || refused > 0) process.exit(1);

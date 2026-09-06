@@ -121,8 +121,15 @@ prune_orphans() {
 	# type-checks everything under src/ a file nothing imports can still break the
 	# build -- sdk-workorder's TimeEntryAPIApi.ts did exactly that and made
 	# `npm ci` fail for the whole repo. Prune per module, right after generation.
+	#
+	# Never let this abort the run under `set -e`. verify_protected below is the
+	# tripwire commit 33507b5 motivated, and a prune failure aborting first would
+	# mask a generator clobber of a hand-maintained file in the modules that did
+	# run. Record the failure, finish generating, report at the end.
 	local module="$1"
-	node scripts/prune-orphans.mjs --module "$module"
+	if ! node scripts/prune-orphans.mjs --module "$module"; then
+		PRUNE_FAILED=1
+	fi
 }
 
 # ---------------------------------------------------------------------------
@@ -146,6 +153,8 @@ PROTECTED_RELPATHS=(
 )
 
 PROTECTED_SNAPSHOT=""
+PRUNE_FAILED=0
+trap 'rm -f "${PROTECTED_SNAPSHOT:-}"' EXIT
 
 protected_paths() {
 	local m path
@@ -279,5 +288,12 @@ else
 fi
 
 verify_protected
+
+if [[ "$PRUNE_FAILED" -ne 0 ]]; then
+	echo "" >&2
+	echo "ERROR: prune-orphans reported files the generator no longer produces that are" >&2
+	echo "  still imported, or a package over the blast-radius ceiling. See above." >&2
+	exit 1
+fi
 
 echo "Generation complete."
