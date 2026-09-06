@@ -19,7 +19,6 @@ import { WorkexecTimeTrackingAPIApi } from './apis/WorkexecTimeTrackingAPIApi';
 import { ChangeRequestAPIApi } from './apis/ChangeRequestAPIApi';
 import { WorkorderDetailApi } from './apis/WorkorderDetailApi';
 import { OperationalContextApi } from './apis/OperationalContextApi';
-import { TimeEntryAPIApi } from './apis/TimeEntryAPIApi';
 import { WorkorderLaborAPIApi } from './apis/WorkorderLaborAPIApi';
 
 export function createWorkorderClient(config: DurionSdkConfig) {
@@ -51,11 +50,14 @@ export function createWorkorderClient(config: DurionSdkConfig) {
     changeRequestAPIApi: new ChangeRequestAPIApi(configuration),
     workorderDetailApi: new WorkorderDetailApi(configuration),
     operationalContextApi: new OperationalContextApi(configuration),
-    // Per-service labor entries and the decisions taken on submitted hours.
-    // Both are generated and exported by the apis barrel but were never
-    // surfaced here, so no consumer of this factory could start a labor
-    // session or approve the time it recorded.
+    // Per-service labor entries. Generated and exported by the apis barrel but
+    // never surfaced here, so no consumer of this factory could start a labor
+    // session.
+    //
+    // The decisions taken on submitted hours are not here: pos-workorder
+    // implements no approve/reject endpoint for time entries. That surface
+    // lives in pos-people, reachable through the people client's
+    // timeEntryApprovalAPIApi.
     workorderLaborAPIApi: new WorkorderLaborAPIApi(configuration),
-    timeEntryAPIApi: new TimeEntryAPIApi(configuration),
   };
 }
