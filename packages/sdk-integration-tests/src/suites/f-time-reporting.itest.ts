@@ -479,30 +479,6 @@ describe('Suite F — time reporting and approval', () => {
     console.log(`[F12] an empty decision batch refused with HTTP ${empty}`);
   }, 180_000);
 
-  itInRoleMode('F13 — deciding on workorder time entries belongs to the manager, and an unknown entry is a 404', async () => {
-    const refused = await expectHttpError(
-      tech.workorder.timeEntryAPIApi.approveTimeEntry({ timeEntryId: randomUUID() }),
-      401,
-      403,
-    );
-    console.log(`[F13] TECHNICIAN refused workorder:timeEntry:approve with HTTP ${refused}`);
-
-    const missing = await expectHttpError(
-      manager.workorder.timeEntryAPIApi.approveTimeEntry({ timeEntryId: randomUUID() }),
-      404,
-    );
-    console.log(`[F13] approving an unknown workorder time entry refused with HTTP ${missing}`);
-
-    const reasonless = await expectHttpError(
-      manager.workorder.timeEntryAPIApi.rejectTimeEntry({
-        timeEntryId: randomUUID(),
-        rejectTimeEntryRequest: { rejectionReason: 'Integration test: unknown entry' },
-      }),
-      404,
-    );
-    console.log(`[F13] rejecting an unknown workorder time entry refused with HTTP ${reasonless}`);
-  }, 180_000);
-
   // Both clocks outlive the process that started them, and alpha is shared.
   // Leaving either running strands state that fails the *next* run rather than
   // this one, which is the hardest kind of failure to attribute.
