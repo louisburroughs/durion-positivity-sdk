@@ -48,7 +48,21 @@ import process from 'node:process';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const moduleArg = args.includes('--module') ? args[args.indexOf('--module') + 1] : null;
+
+// `--module` with nothing after it must not silently widen the blast radius.
+// Taking args[i + 1] unchecked yields undefined when the flag is last, and a
+// falsy moduleArg reads downstream as "no module given" — so an operator who
+// believed they had scoped the run to one package would have pruned every one
+// of them. A destructive tool fails fast here instead.
+let moduleArg = null;
+const moduleIndex = args.indexOf('--module');
+if (moduleIndex !== -1) {
+  moduleArg = args[moduleIndex + 1];
+  if (!moduleArg || moduleArg.startsWith('-')) {
+    console.error('[prune] --module requires a package name, for example: --module order');
+    process.exit(2);
+  }
+}
 
 const GENERATED_DIRS = ['src/apis', 'src/models'];
 
