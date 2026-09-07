@@ -17,24 +17,41 @@ import * as runtime from '../runtime';
 import type {
   ApiError,
   Page,
+  TreadDesignCandidateDto,
   TreadDesignDto,
+  TreadDesignResolveRequest,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
     PageFromJSON,
     PageToJSON,
+    TreadDesignCandidateDtoFromJSON,
+    TreadDesignCandidateDtoToJSON,
     TreadDesignDtoFromJSON,
     TreadDesignDtoToJSON,
+    TreadDesignResolveRequestFromJSON,
+    TreadDesignResolveRequestToJSON,
 } from '../models/index';
 
 export interface GetTreadDesignForProductRequest {
     productId: string;
 }
 
+export interface ListTreadDesignCandidatesRequest {
+    treadDesignId: string;
+}
+
 export interface ListUnmatchedTreadDesignsRequest {
+    matchState?: Array<ListUnmatchedTreadDesignsMatchStateEnum>;
+    vendorProfileId?: string;
     page?: number;
     size?: number;
+}
+
+export interface ResolveTreadDesignRequest {
+    treadDesignId: string;
+    treadDesignResolveRequest: TreadDesignResolveRequest;
 }
 
 /**
@@ -86,11 +103,62 @@ export class TreadDesignEnrichmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns tread designs that fuzzy matching, scoped to each design\'s own vendor\'s priced products, could not resolve to any catalog product, newest applied first. Use this tool to review enrichment a person needs to connect manually; do not use it to look up one product\'s enrichment, which is getTreadDesignForProduct. A design matching nothing is an ordinary outcome here, not a failure of ingestion. Preconditions: none; an empty result means every applied design has matched at least one product. Required inputs: none; page and size are optional, with size defaulting to 50 and capped at 200. Emits a CATALOG_TREAD_DESIGN_UNMATCHED_LIST event; no state changes. Returns 200 with an empty items array when nothing is unmatched. 
-     * List Vendor Tread Designs Matched to No Product
+     * Returns every catalog product the matcher scored against one tread design, best score first, with the confidence tier each score fell in. Use this tool to show a reviewer what the matcher saw before they attach, reject or defer a design; do not use it as a product search, since the candidates are only ever products the design\'s own vendor has priced. Preconditions: the design must exist. An empty array is a real answer — nothing resembled it closely enough to be worth recording — and is not the same as an unknown design. Required inputs: treadDesignId path parameter; there is no request body. Emits a CATALOG_TREAD_DESIGN_CANDIDATES_LIST event; no state changes. Returns 404 when no such design exists. 
+     * List the Products Scored Against a Tread Design
+     */
+    async listTreadDesignCandidatesRaw(requestParameters: ListTreadDesignCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TreadDesignCandidateDto>>> {
+        if (requestParameters['treadDesignId'] == null) {
+            throw new runtime.RequiredError(
+                'treadDesignId',
+                'Required parameter "treadDesignId" was null or undefined when calling listTreadDesignCandidates().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:tread_design:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/catalog/tread-designs/{treadDesignId}/candidates`.replace(`{${"treadDesignId"}}`, encodeURIComponent(String(requestParameters['treadDesignId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TreadDesignCandidateDtoFromJSON));
+    }
+
+    /**
+     * Returns every catalog product the matcher scored against one tread design, best score first, with the confidence tier each score fell in. Use this tool to show a reviewer what the matcher saw before they attach, reject or defer a design; do not use it as a product search, since the candidates are only ever products the design\'s own vendor has priced. Preconditions: the design must exist. An empty array is a real answer — nothing resembled it closely enough to be worth recording — and is not the same as an unknown design. Required inputs: treadDesignId path parameter; there is no request body. Emits a CATALOG_TREAD_DESIGN_CANDIDATES_LIST event; no state changes. Returns 404 when no such design exists. 
+     * List the Products Scored Against a Tread Design
+     */
+    async listTreadDesignCandidates(requestParameters: ListTreadDesignCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TreadDesignCandidateDto>> {
+        const response = await this.listTreadDesignCandidatesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the enrichment review worklist: tread designs in the requested match states, most recently changed first, each with the products the matcher scored against it and how confident it was. Use this tool to work a queue of enrichment decisions a person has to make; do not use it to look up one product\'s enrichment, which is getTreadDesignForProduct. A design matching nothing is an ordinary outcome here, not a failure of ingestion. Preconditions: none; an empty result means nothing is waiting in the requested states. Required inputs: none. matchState defaults to UNMATCHED,REVIEW — the designs actually awaiting a decision — and accepts any of UNMATCHED, REVIEW, MATCHED, REJECTED, DEFERRED, repeated or comma separated. vendorProfileId narrows the worklist to one vendor profile. page and size are optional, with size defaulting to 50 and capped at 200. Emits a CATALOG_TREAD_DESIGN_UNMATCHED_LIST event; no state changes. Returns 200 with an empty items array when nothing is waiting, and 400 when a match state is not one of the five above or the page size is out of range. 
+     * List Tread Designs Awaiting Enrichment Review (review worklist)
      */
     async listUnmatchedTreadDesignsRaw(requestParameters: ListUnmatchedTreadDesignsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Page>> {
         const queryParameters: any = {};
+
+        if (requestParameters['matchState'] != null) {
+            queryParameters['matchState'] = requestParameters['matchState'];
+        }
+
+        if (requestParameters['vendorProfileId'] != null) {
+            queryParameters['vendorProfileId'] = requestParameters['vendorProfileId'];
+        }
 
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
@@ -121,12 +189,77 @@ export class TreadDesignEnrichmentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns tread designs that fuzzy matching, scoped to each design\'s own vendor\'s priced products, could not resolve to any catalog product, newest applied first. Use this tool to review enrichment a person needs to connect manually; do not use it to look up one product\'s enrichment, which is getTreadDesignForProduct. A design matching nothing is an ordinary outcome here, not a failure of ingestion. Preconditions: none; an empty result means every applied design has matched at least one product. Required inputs: none; page and size are optional, with size defaulting to 50 and capped at 200. Emits a CATALOG_TREAD_DESIGN_UNMATCHED_LIST event; no state changes. Returns 200 with an empty items array when nothing is unmatched. 
-     * List Vendor Tread Designs Matched to No Product
+     * Returns the enrichment review worklist: tread designs in the requested match states, most recently changed first, each with the products the matcher scored against it and how confident it was. Use this tool to work a queue of enrichment decisions a person has to make; do not use it to look up one product\'s enrichment, which is getTreadDesignForProduct. A design matching nothing is an ordinary outcome here, not a failure of ingestion. Preconditions: none; an empty result means nothing is waiting in the requested states. Required inputs: none. matchState defaults to UNMATCHED,REVIEW — the designs actually awaiting a decision — and accepts any of UNMATCHED, REVIEW, MATCHED, REJECTED, DEFERRED, repeated or comma separated. vendorProfileId narrows the worklist to one vendor profile. page and size are optional, with size defaulting to 50 and capped at 200. Emits a CATALOG_TREAD_DESIGN_UNMATCHED_LIST event; no state changes. Returns 200 with an empty items array when nothing is waiting, and 400 when a match state is not one of the five above or the page size is out of range. 
+     * List Tread Designs Awaiting Enrichment Review (review worklist)
      */
     async listUnmatchedTreadDesigns(requestParameters: ListUnmatchedTreadDesignsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Page> {
         const response = await this.listUnmatchedTreadDesignsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
+    /**
+     * Records a person\'s decision about a tread design: ATTACH it to named products, REJECT the matcher\'s suggestions, or DEFER the decision. Use this tool when a reviewer has judged a worklist row; do not use it to correct the vendor\'s marketing content, which this module never edits — only the association is decided here. An ATTACH marks each product as manually attached, and a manual attachment is never re-pointed by a later automatic pass, so this is how a human decision is made to stick. A REJECT detaches nothing that a person attached earlier — rejecting the machine\'s suggestions says nothing about a human decision. Preconditions: the design must exist; ATTACH requires at least one existing product and none of them may already be manually attached to a different design. Required inputs: treadDesignId path parameter and a body carrying action; productIds is required for ATTACH and rejected otherwise, deferUntil is accepted for DEFER only, note is always optional. Emits a CATALOG_TREAD_DESIGN_RESOLVE event and changes the design\'s match state. Returns 400 for an action and payload that cannot go together, 404 for an unknown design or product, and 409 when a named product is already manually attached to a different design. 
+     * Resolve a Tread Design Awaiting Review
+     */
+    async resolveTreadDesignRaw(requestParameters: ResolveTreadDesignRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TreadDesignDto>> {
+        if (requestParameters['treadDesignId'] == null) {
+            throw new runtime.RequiredError(
+                'treadDesignId',
+                'Required parameter "treadDesignId" was null or undefined when calling resolveTreadDesign().'
+            );
+        }
+
+        if (requestParameters['treadDesignResolveRequest'] == null) {
+            throw new runtime.RequiredError(
+                'treadDesignResolveRequest',
+                'Required parameter "treadDesignResolveRequest" was null or undefined when calling resolveTreadDesign().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:tread_design:resolve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/catalog/tread-designs/{treadDesignId}/resolve`.replace(`{${"treadDesignId"}}`, encodeURIComponent(String(requestParameters['treadDesignId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: TreadDesignResolveRequestToJSON(requestParameters['treadDesignResolveRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => TreadDesignDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Records a person\'s decision about a tread design: ATTACH it to named products, REJECT the matcher\'s suggestions, or DEFER the decision. Use this tool when a reviewer has judged a worklist row; do not use it to correct the vendor\'s marketing content, which this module never edits — only the association is decided here. An ATTACH marks each product as manually attached, and a manual attachment is never re-pointed by a later automatic pass, so this is how a human decision is made to stick. A REJECT detaches nothing that a person attached earlier — rejecting the machine\'s suggestions says nothing about a human decision. Preconditions: the design must exist; ATTACH requires at least one existing product and none of them may already be manually attached to a different design. Required inputs: treadDesignId path parameter and a body carrying action; productIds is required for ATTACH and rejected otherwise, deferUntil is accepted for DEFER only, note is always optional. Emits a CATALOG_TREAD_DESIGN_RESOLVE event and changes the design\'s match state. Returns 400 for an action and payload that cannot go together, 404 for an unknown design or product, and 409 when a named product is already manually attached to a different design. 
+     * Resolve a Tread Design Awaiting Review
+     */
+    async resolveTreadDesign(requestParameters: ResolveTreadDesignRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TreadDesignDto> {
+        const response = await this.resolveTreadDesignRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListUnmatchedTreadDesignsMatchStateEnum {
+    Unmatched = 'UNMATCHED',
+    Review = 'REVIEW',
+    Matched = 'MATCHED',
+    Rejected = 'REJECTED',
+    Deferred = 'DEFERRED'
 }

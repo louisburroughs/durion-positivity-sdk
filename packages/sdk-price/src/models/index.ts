@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './AddEligibilityRuleRequest';
 export * from './ApiError';
+export * from './AppliedLaborRateAdjustment';
 export * from './ApplyPromotionRequest';
 export * from './ApplyPromotionResponse';
 export * from './BasePriceBulkIngestRecord';
@@ -15,6 +16,12 @@ export * from './EligibilityDecisionResponse';
 export * from './EligibilityRuleResponse';
 export * from './EstimateContext';
 export * from './FieldError';
+export * from './LaborRateAdjustmentRequest';
+export * from './LaborRateAdjustmentResponse';
+export * from './LaborRateQuoteRequest';
+export * from './LaborRateQuoteResponse';
+export * from './LaborRateRequest';
+export * from './LaborRateResponse';
 export * from './LineItemContext';
 export * from './MoneyAmount';
 export * from './PriceQuoteRequest';

@@ -26,7 +26,7 @@ export interface BasePriceBulkIngestRecord {
      */
     currency: string;
     /**
-     * Date the base price becomes effective
+     * Instant the base price becomes effective, ISO-8601
      * @type {string}
      * @memberof BasePriceBulkIngestRecord
      */
