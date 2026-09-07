@@ -44,6 +44,12 @@ export interface AddEstimateItemRequest {
      */
     quantity?: number;
     /**
+     * Labor-matrix step codes the writer agreed apply to this line (e.g. CORROSION, AFTER_HOURS, FLEET_CONTRACT). LABOR items only; codes the shop has not priced are ignored rather than rejected.
+     * @type {Array<string>}
+     * @memberof AddEstimateItemRequest
+     */
+    rateAdjustmentCodes?: Array<string>;
+    /**
      * Referenced service identifier for LABOR items
      * @type {string}
      * @memberof AddEstimateItemRequest
@@ -56,11 +62,11 @@ export interface AddEstimateItemRequest {
      */
     taxCode?: string;
     /**
-     * Unit price for the line item
+     * Unit price for the line item (hourly labor rate for LABOR). Required, EXCEPT on a LABOR item that names a serviceId: omitting it there asks pos-price to prefill the shop's labor rate with its labor matrix applied (#1575 Tier 0); when no rate is available the request is rejected and an explicit unitPrice must be sent. A supplied unitPrice always wins over the resolved rate.
      * @type {number}
      * @memberof AddEstimateItemRequest
      */
-    unitPrice: number;
+    unitPrice?: number;
     /**
      * Unit quantity is expressed in, for PART items only (e.g. "QT", "CASE"). Omit for the product's base unit -- today's implicit behavior. LABOR items must omit this field; hours carry no catalog unit-of-measure conversion.
      * @type {string}
@@ -84,7 +90,6 @@ export enum AddEstimateItemRequestItemTypeEnum {
  */
 export function instanceOfAddEstimateItemRequest(value: object): boolean {
     if (!('itemType' in value)) return false;
-    if (!('unitPrice' in value)) return false;
     return true;
 }
 
@@ -102,9 +107,10 @@ export function AddEstimateItemRequestFromJSONTyped(json: any, ignoreDiscriminat
         'itemType': json['itemType'],
         'productId': json['productId'] == null ? undefined : json['productId'],
         'quantity': json['quantity'] == null ? undefined : json['quantity'],
+        'rateAdjustmentCodes': json['rateAdjustmentCodes'] == null ? undefined : json['rateAdjustmentCodes'],
         'serviceId': json['serviceId'] == null ? undefined : json['serviceId'],
         'taxCode': json['taxCode'] == null ? undefined : json['taxCode'],
-        'unitPrice': json['unitPrice'],
+        'unitPrice': json['unitPrice'] == null ? undefined : json['unitPrice'],
         'uomCode': json['uomCode'] == null ? undefined : json['uomCode'],
     };
 }
@@ -119,6 +125,7 @@ export function AddEstimateItemRequestToJSON(value?: AddEstimateItemRequest | nu
         'itemType': value['itemType'],
         'productId': value['productId'],
         'quantity': value['quantity'],
+        'rateAdjustmentCodes': value['rateAdjustmentCodes'],
         'serviceId': value['serviceId'],
         'taxCode': value['taxCode'],
         'unitPrice': value['unitPrice'],

@@ -68,6 +68,18 @@ export interface ServiceLaborStandardResponseDto {
      */
     overlapGroup?: string;
     /**
+     * Owning location when ownerScope is SHOP; null for PLATFORM
+     * @type {string}
+     * @memberof ServiceLaborStandardResponseDto
+     */
+    ownerLocationId?: string;
+    /**
+     * PLATFORM (every location resolves it) or SHOP (one location's own number)
+     * @type {string}
+     * @memberof ServiceLaborStandardResponseDto
+     */
+    ownerScope: string;
+    /**
      * Date the source published the time
      * @type {Date}
      * @memberof ServiceLaborStandardResponseDto
@@ -124,6 +136,7 @@ export function instanceOfServiceLaborStandardResponseDto(value: object): boolea
     if (!('createdAt' in value)) return false;
     if (!('id' in value)) return false;
     if (!('laborHours' in value)) return false;
+    if (!('ownerScope' in value)) return false;
     if (!('serviceId' in value)) return false;
     if (!('sourceCode' in value)) return false;
     if (!('sourceRevision' in value)) return false;
@@ -149,6 +162,8 @@ export function ServiceLaborStandardResponseDtoFromJSONTyped(json: any, ignoreDi
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
         'overlapGroup': json['overlapGroup'] == null ? undefined : json['overlapGroup'],
+        'ownerLocationId': json['ownerLocationId'] == null ? undefined : json['ownerLocationId'],
+        'ownerScope': json['ownerScope'],
         'publishedAt': json['publishedAt'] == null ? undefined : (new Date(json['publishedAt'])),
         'serviceId': json['serviceId'],
         'sourceCode': json['sourceCode'],
@@ -174,6 +189,8 @@ export function ServiceLaborStandardResponseDtoToJSON(value?: ServiceLaborStanda
         'make': value['make'],
         'model': value['model'],
         'overlapGroup': value['overlapGroup'],
+        'ownerLocationId': value['ownerLocationId'],
+        'ownerScope': value['ownerScope'],
         'publishedAt': value['publishedAt'] == null ? undefined : ((value['publishedAt']).toISOString().substring(0,10)),
         'serviceId': value['serviceId'],
         'sourceCode': value['sourceCode'],
