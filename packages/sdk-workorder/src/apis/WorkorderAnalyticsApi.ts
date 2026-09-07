@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  OpenWorkordersByCustomerResponse,
   ReopenedWorkorderAnalyticsResponse,
   TechnicianLaborAnalyticsResponse,
   WorkorderStatusTransitionsResponse,
@@ -23,6 +24,8 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    OpenWorkordersByCustomerResponseFromJSON,
+    OpenWorkordersByCustomerResponseToJSON,
     ReopenedWorkorderAnalyticsResponseFromJSON,
     ReopenedWorkorderAnalyticsResponseToJSON,
     TechnicianLaborAnalyticsResponseFromJSON,
@@ -30,6 +33,10 @@ import {
     WorkorderStatusTransitionsResponseFromJSON,
     WorkorderStatusTransitionsResponseToJSON,
 } from '../models/index';
+
+export interface GetOpenWorkordersByCustomerRequest {
+    limit?: number;
+}
 
 export interface GetReopenedWorkorderAnalyticsRequest {
     startDate: Date;
@@ -57,6 +64,46 @@ export interface GetWorkorderStatusTransitionsRequest {
  * 
  */
 export class WorkorderAnalyticsApi extends runtime.BaseAPI {
+
+    /**
+     * Returns one row per customer who currently holds at least one open work order, with the customer\'s display name and their open count, ordered by count descending, plus the totals before the limit was applied. Use this tool to answer questions about open work across the whole book — which customers have work in progress, how many customers have open jobs, or the work-order half of a cross-domain question such as customers with both an open job and an unpaid invoice; it returns COUNTS, so do not use it when the answer needs the individual work orders, which is searchWorkorders (status=OPEN, optionally customerId), or getWorkorder for one work order\'s detail. Open means the six non-terminal statuses APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, AWAITING_APPROVAL and READY_FOR_PICKUP — the same set searchWorkorders accepts under its OPEN alias — while DRAFT is deliberately excluded, because a draft has not been approved into work; the workorder count endpoint (GET /v1/workorders/count?openOnly=true) counts DRAFT as open, so the two deliberately disagree, and this one matches what a status=OPEN search returns. Preconditions: none; required inputs: none, and limit is optional (default 100, hard-capped at 500). Emits a WORKORDER_ANALYTICS_OPEN_BY_CUSTOMER_VIEW audit event; no state changes. Returns 200 with truncated=true and the true totalCustomers/totalOpenWorkorders when more customers had open work than the limit allowed. 
+     * Get Open Work Order Counts By Customer
+     */
+    async getOpenWorkordersByCustomerRaw(requestParameters: GetOpenWorkordersByCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpenWorkordersByCustomerResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:analytics:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/analytics/open-by-customer`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OpenWorkordersByCustomerResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns one row per customer who currently holds at least one open work order, with the customer\'s display name and their open count, ordered by count descending, plus the totals before the limit was applied. Use this tool to answer questions about open work across the whole book — which customers have work in progress, how many customers have open jobs, or the work-order half of a cross-domain question such as customers with both an open job and an unpaid invoice; it returns COUNTS, so do not use it when the answer needs the individual work orders, which is searchWorkorders (status=OPEN, optionally customerId), or getWorkorder for one work order\'s detail. Open means the six non-terminal statuses APPROVED, ASSIGNED, WORK_IN_PROGRESS, AWAITING_PARTS, AWAITING_APPROVAL and READY_FOR_PICKUP — the same set searchWorkorders accepts under its OPEN alias — while DRAFT is deliberately excluded, because a draft has not been approved into work; the workorder count endpoint (GET /v1/workorders/count?openOnly=true) counts DRAFT as open, so the two deliberately disagree, and this one matches what a status=OPEN search returns. Preconditions: none; required inputs: none, and limit is optional (default 100, hard-capped at 500). Emits a WORKORDER_ANALYTICS_OPEN_BY_CUSTOMER_VIEW audit event; no state changes. Returns 200 with truncated=true and the true totalCustomers/totalOpenWorkorders when more customers had open work than the limit allowed. 
+     * Get Open Work Order Counts By Customer
+     */
+    async getOpenWorkordersByCustomer(requestParameters: GetOpenWorkordersByCustomerRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpenWorkordersByCustomerResponse> {
+        const response = await this.getOpenWorkordersByCustomerRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Returns one row per reopen event for work orders completed in the window and reopened within withinDays of that completion, per event rather than pre-counted, so a workorder reopened twice inside the window produces two separate rows for the caller to group and count by technician. Use this tool for reopen and rework-quality questions; use getWorkorderStatusTransitions instead for the raw per-workorder transition history. The technicianId is the actor recorded on the completing state transition, not the actor who reopened the work order, resolved to a stable person id via the active user-link replica; a row is excluded, never guessed, when that actor is null, blank, or cannot be resolved to a technician. Rows are computed from the persisted work_order_state_transitions ledger rather than the workorder\'s current status or isReopened snapshot, so a work order completed, reopened, and completed again surfaces as distinct rows even though its current status never leaves COMPLETED. Preconditions: none beyond a valid date range. Required inputs: startDate and endDate, ISO dates with endDate on or after startDate, both anchored on the completion date rather than the reopen date; withinDays is optional, defaulting to 7 with a maximum of 90. Emits a WORKORDER_ANALYTICS_REOPENED_VIEW audit event; no state changes. Returns 400 when endDate precedes startDate or withinDays is out of range, and reports truncated=true in the response when more rows matched than the limit allowed. 

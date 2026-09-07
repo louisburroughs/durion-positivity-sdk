@@ -22,6 +22,7 @@ import type {
   PagePurchaseOrderTransmissionEvent,
   ProcurementAvailability,
   PurchaseOrderResponse,
+  PurchaseOrderSummaryResponse,
   RevisePurchaseOrderRequest,
 } from '../models/index';
 import {
@@ -39,6 +40,8 @@ import {
     ProcurementAvailabilityToJSON,
     PurchaseOrderResponseFromJSON,
     PurchaseOrderResponseToJSON,
+    PurchaseOrderSummaryResponseFromJSON,
+    PurchaseOrderSummaryResponseToJSON,
     RevisePurchaseOrderRequestFromJSON,
     RevisePurchaseOrderRequestToJSON,
 } from '../models/index';
@@ -86,6 +89,11 @@ export interface ListPurchaseOrdersRequest {
 export interface RevisePurchaseOrderOperationRequest {
     poId: string;
     revisePurchaseOrderRequest: RevisePurchaseOrderRequest;
+}
+
+export interface SummarizePurchaseOrdersRequest {
+    vendorId?: string;
+    status?: Array<SummarizePurchaseOrdersStatusEnum>;
 }
 
 export interface TransmitPurchaseOrderRequest {
@@ -520,6 +528,50 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns totals across every purchase order matching the optional filters: order and line counts, units ordered, units still open (ordered but not yet received), units received, and grand-total and open-balance money, with the same figures broken down by lifecycle status. Use this tool for any aggregate question — how many units are on order, how much is outstanding with a vendor, how many orders are open. Do not use listPurchaseOrders for a total: it returns one page and any sum over it is partial; call this endpoint instead, and use listPurchaseOrders only to see individual orders. Preconditions: none; vendorId and status are optional and independent. Required inputs: none; vendorId (UUID) restricts to one vendor and status (repeatable, or comma-separated) to the named lifecycle statuses. Without a status filter the population is the incoming-supply set, APPROVED and PARTIALLY_RECEIVED, so unitsOpen is what is genuinely outstanding with vendors; cancelled and draft lines keep an open quantity on the row and are only counted when named explicitly (for example status=CANCELLED). Emits an ORDER_PURCHASE_ORDER_SUMMARY audit event; read-only. Returns 200 with zero totals and an empty byStatus when nothing matches. 
+     * Summarize Purchase Orders
+     */
+    async summarizePurchaseOrdersRaw(requestParameters: SummarizePurchaseOrdersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PurchaseOrderSummaryResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['vendorId'] != null) {
+            queryParameters['vendorId'] = requestParameters['vendorId'];
+        }
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["order:purchase_order:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/orders/purchase-orders/summary`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PurchaseOrderSummaryResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns totals across every purchase order matching the optional filters: order and line counts, units ordered, units still open (ordered but not yet received), units received, and grand-total and open-balance money, with the same figures broken down by lifecycle status. Use this tool for any aggregate question — how many units are on order, how much is outstanding with a vendor, how many orders are open. Do not use listPurchaseOrders for a total: it returns one page and any sum over it is partial; call this endpoint instead, and use listPurchaseOrders only to see individual orders. Preconditions: none; vendorId and status are optional and independent. Required inputs: none; vendorId (UUID) restricts to one vendor and status (repeatable, or comma-separated) to the named lifecycle statuses. Without a status filter the population is the incoming-supply set, APPROVED and PARTIALLY_RECEIVED, so unitsOpen is what is genuinely outstanding with vendors; cancelled and draft lines keep an open quantity on the row and are only counted when named explicitly (for example status=CANCELLED). Emits an ORDER_PURCHASE_ORDER_SUMMARY audit event; read-only. Returns 200 with zero totals and an empty byStatus when nothing matches. 
+     * Summarize Purchase Orders
+     */
+    async summarizePurchaseOrders(requestParameters: SummarizePurchaseOrdersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PurchaseOrderSummaryResponse> {
+        const response = await this.summarizePurchaseOrdersRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Sends an approved purchase order to the supplier named on it, asking pos-supplier to transmit it and report back what the vendor says. Use this tool to actually place an order with a vendor; do not use approvePurchaseOrder for this, which commits the spend internally and sends nothing to anyone. Preconditions: the order must be APPROVED or PARTIALLY_RECEIVED, must name a supplierRef, must have no transmission already in flight or awaiting review, and every line must carry an article code the vendor would recognise. Required inputs: poId (UUIDv7) path parameter; there is no request body, because what is sent is the order as it stands. Emits an ORDER_PURCHASE_ORDER_TRANSMIT event and queues a supplier order command; the vendor\'s answer arrives later and appears on the order\'s transmission state and timeline. Returns 404 when the purchase order does not exist, and 422 with a code naming the obstacle when the order cannot be sent: SUPPLIER_REF_MISSING, PURCHASE_ORDER_NOT_APPROVED, TRANSMISSION_IN_FLIGHT, TRANSMISSION_AWAITING_REVIEW, ARTICLE_NOT_IDENTIFIABLE or FRACTIONAL_QUANTITY. 
      * Transmit Purchase Order To Vendor
      */
@@ -568,6 +620,18 @@ export class PurchaseOrdersApi extends runtime.BaseAPI {
   * @enum {string}
   */
 export enum ListPurchaseOrdersStatusEnum {
+    Draft = 'DRAFT',
+    Approved = 'APPROVED',
+    PartiallyReceived = 'PARTIALLY_RECEIVED',
+    FullyReceived = 'FULLY_RECEIVED',
+    Closed = 'CLOSED',
+    Cancelled = 'CANCELLED'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum SummarizePurchaseOrdersStatusEnum {
     Draft = 'DRAFT',
     Approved = 'APPROVED',
     PartiallyReceived = 'PARTIALLY_RECEIVED',

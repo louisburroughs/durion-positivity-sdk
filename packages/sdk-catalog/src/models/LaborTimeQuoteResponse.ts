@@ -44,6 +44,12 @@ export interface LaborTimeQuoteResponse {
      */
     overlapGroup?: string;
     /**
+     * SHOP when the quoting location's own authored time answered, else PLATFORM.
+     * @type {string}
+     * @memberof LaborTimeQuoteResponse
+     */
+    ownerScope?: string;
+    /**
      * Provenance source.
      * @type {string}
      * @memberof LaborTimeQuoteResponse
@@ -111,6 +117,7 @@ export function LaborTimeQuoteResponseFromJSONTyped(json: any, ignoreDiscriminat
         'laborHours': json['laborHours'] == null ? undefined : json['laborHours'],
         'matchGrade': json['matchGrade'] == null ? undefined : json['matchGrade'],
         'overlapGroup': json['overlapGroup'] == null ? undefined : json['overlapGroup'],
+        'ownerScope': json['ownerScope'] == null ? undefined : json['ownerScope'],
         'sourceCode': json['sourceCode'] == null ? undefined : json['sourceCode'],
         'sourceRevision': json['sourceRevision'] == null ? undefined : json['sourceRevision'],
         'status': json['status'] == null ? undefined : json['status'],
@@ -128,6 +135,7 @@ export function LaborTimeQuoteResponseToJSON(value?: LaborTimeQuoteResponse | nu
         'laborHours': value['laborHours'],
         'matchGrade': value['matchGrade'],
         'overlapGroup': value['overlapGroup'],
+        'ownerScope': value['ownerScope'],
         'sourceCode': value['sourceCode'],
         'sourceRevision': value['sourceRevision'],
         'status': value['status'],
