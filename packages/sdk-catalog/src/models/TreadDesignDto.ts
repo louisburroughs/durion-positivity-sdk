@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { TreadDesignCandidateDto } from './TreadDesignCandidateDto';
+import {
+    TreadDesignCandidateDtoFromJSON,
+    TreadDesignCandidateDtoFromJSONTyped,
+    TreadDesignCandidateDtoToJSON,
+} from './TreadDesignCandidateDto';
 import type { TreadDesignImageDto } from './TreadDesignImageDto';
 import {
     TreadDesignImageDtoFromJSON,
@@ -39,6 +45,18 @@ export interface TreadDesignDto {
      */
     brand?: string;
     /**
+     * Products the matcher scored against this design, best first. Empty on the product-scoped read, which is about one resolved match rather than about a pending decision.
+     * @type {Array<TreadDesignCandidateDto>}
+     * @memberof TreadDesignDto
+     */
+    candidates?: Array<TreadDesignCandidateDto>;
+    /**
+     * When a deferred design should return to the worklist, when set.
+     * @type {Date}
+     * @memberof TreadDesignDto
+     */
+    deferUntil?: Date;
+    /**
      * Whether any artwork on this design is still missing and awaiting retry.
      * @type {boolean}
      * @memberof TreadDesignDto
@@ -57,11 +75,35 @@ export interface TreadDesignDto {
      */
     images?: Array<TreadDesignImageDto>;
     /**
+     * Where this design stands in the enrichment review cycle.
+     * @type {string}
+     * @memberof TreadDesignDto
+     */
+    matchState?: TreadDesignDtoMatchStateEnum;
+    /**
+     * When the review state last changed.
+     * @type {Date}
+     * @memberof TreadDesignDto
+     */
+    matchStateAt?: Date;
+    /**
      * Vendor's product name, where given.
      * @type {string}
      * @memberof TreadDesignDto
      */
     productName?: string;
+    /**
+     * Note the reviewer left with that resolution.
+     * @type {string}
+     * @memberof TreadDesignDto
+     */
+    resolutionNote?: string;
+    /**
+     * Reviewer who last resolved this design, when one has.
+     * @type {string}
+     * @memberof TreadDesignDto
+     */
+    resolvedBy?: string;
     /**
      * Seasonality as the vendor states it, not mapped to a Durion vocabulary.
      * @type {string}
@@ -119,6 +161,19 @@ export interface TreadDesignDto {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum TreadDesignDtoMatchStateEnum {
+    Unmatched = 'UNMATCHED',
+    Review = 'REVIEW',
+    Matched = 'MATCHED',
+    Rejected = 'REJECTED',
+    Deferred = 'DEFERRED'
+}
+
+
+/**
  * Check if a given object implements the TreadDesignDto interface.
  */
 export function instanceOfTreadDesignDto(value: object): boolean {
@@ -136,10 +191,16 @@ export function TreadDesignDtoFromJSONTyped(json: any, ignoreDiscriminator: bool
     return {
         
         'brand': json['brand'] == null ? undefined : json['brand'],
+        'candidates': json['candidates'] == null ? undefined : ((json['candidates'] as Array<any>).map(TreadDesignCandidateDtoFromJSON)),
+        'deferUntil': json['deferUntil'] == null ? undefined : (new Date(json['deferUntil'])),
         'hasUnresolvedImages': json['hasUnresolvedImages'] == null ? undefined : json['hasUnresolvedImages'],
         'id': json['id'] == null ? undefined : json['id'],
         'images': json['images'] == null ? undefined : ((json['images'] as Array<any>).map(TreadDesignImageDtoFromJSON)),
+        'matchState': json['matchState'] == null ? undefined : json['matchState'],
+        'matchStateAt': json['matchStateAt'] == null ? undefined : (new Date(json['matchStateAt'])),
         'productName': json['productName'] == null ? undefined : json['productName'],
+        'resolutionNote': json['resolutionNote'] == null ? undefined : json['resolutionNote'],
+        'resolvedBy': json['resolvedBy'] == null ? undefined : json['resolvedBy'],
         'seasonality': json['seasonality'] == null ? undefined : json['seasonality'],
         'supplierRef': json['supplierRef'] == null ? undefined : json['supplierRef'],
         'texts': json['texts'] == null ? undefined : ((json['texts'] as Array<any>).map(TreadDesignTextDtoFromJSON)),
@@ -159,10 +220,16 @@ export function TreadDesignDtoToJSON(value?: TreadDesignDto | null): any {
     return {
         
         'brand': value['brand'],
+        'candidates': value['candidates'] == null ? undefined : ((value['candidates'] as Array<any>).map(TreadDesignCandidateDtoToJSON)),
+        'deferUntil': value['deferUntil'] == null ? undefined : ((value['deferUntil']).toISOString()),
         'hasUnresolvedImages': value['hasUnresolvedImages'],
         'id': value['id'],
         'images': value['images'] == null ? undefined : ((value['images'] as Array<any>).map(TreadDesignImageDtoToJSON)),
+        'matchState': value['matchState'],
+        'matchStateAt': value['matchStateAt'] == null ? undefined : ((value['matchStateAt']).toISOString()),
         'productName': value['productName'],
+        'resolutionNote': value['resolutionNote'],
+        'resolvedBy': value['resolvedBy'],
         'seasonality': value['seasonality'],
         'supplierRef': value['supplierRef'],
         'texts': value['texts'] == null ? undefined : ((value['texts'] as Array<any>).map(TreadDesignTextDtoToJSON)),

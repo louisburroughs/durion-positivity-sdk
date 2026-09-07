@@ -56,6 +56,18 @@ export interface ServiceLaborStandardRequestDto {
      */
     overlapGroup?: string;
     /**
+     * Owning location; required when ownerScope is SHOP, rejected otherwise
+     * @type {string}
+     * @memberof ServiceLaborStandardRequestDto
+     */
+    ownerLocationId?: string;
+    /**
+     * Who owns this time: PLATFORM (every location resolves it) or SHOP (one location's own number, which outranks platform rows for that location); defaults to PLATFORM
+     * @type {string}
+     * @memberof ServiceLaborStandardRequestDto
+     */
+    ownerScope?: ServiceLaborStandardRequestDtoOwnerScopeEnum;
+    /**
      * Date the time was published or decided; omitted means undated
      * @type {Date}
      * @memberof ServiceLaborStandardRequestDto
@@ -81,6 +93,14 @@ export interface ServiceLaborStandardRequestDto {
     vehicleYear?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum ServiceLaborStandardRequestDtoOwnerScopeEnum {
+    Platform = 'PLATFORM',
+    Shop = 'SHOP'
+}
 /**
 * @export
 * @enum {string}
@@ -117,6 +137,8 @@ export function ServiceLaborStandardRequestDtoFromJSONTyped(json: any, ignoreDis
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
         'overlapGroup': json['overlapGroup'] == null ? undefined : json['overlapGroup'],
+        'ownerLocationId': json['ownerLocationId'] == null ? undefined : json['ownerLocationId'],
+        'ownerScope': json['ownerScope'] == null ? undefined : json['ownerScope'],
         'publishedAt': json['publishedAt'] == null ? undefined : (new Date(json['publishedAt'])),
         'submodel': json['submodel'] == null ? undefined : json['submodel'],
         'timeType': json['timeType'] == null ? undefined : json['timeType'],
@@ -136,6 +158,8 @@ export function ServiceLaborStandardRequestDtoToJSON(value?: ServiceLaborStandar
         'make': value['make'],
         'model': value['model'],
         'overlapGroup': value['overlapGroup'],
+        'ownerLocationId': value['ownerLocationId'],
+        'ownerScope': value['ownerScope'],
         'publishedAt': value['publishedAt'] == null ? undefined : ((value['publishedAt']).toISOString().substring(0,10)),
         'submodel': value['submodel'],
         'timeType': value['timeType'],
