@@ -4,6 +4,7 @@ export * from './APPaymentsApi';
 export * from './AccountingAnalyticsApi';
 export * from './AccountingEventsApi';
 export * from './AccountingExportsApi';
+export * from './AccountingGLApi';
 export * from './AccountingPeriodsApi';
 export * from './AuditTrailApi';
 export * from './BankReconciliationApi';

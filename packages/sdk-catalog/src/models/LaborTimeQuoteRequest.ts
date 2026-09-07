@@ -26,6 +26,12 @@ export interface LaborTimeQuoteRequest {
      */
     engineCode?: string;
     /**
+     * Location quoting the work; its own authored times win. Null = platform only.
+     * @type {string}
+     * @memberof LaborTimeQuoteRequest
+     */
+    locationId?: string;
+    /**
      * Vehicle make; null = unknown.
      * @type {string}
      * @memberof LaborTimeQuoteRequest
@@ -94,6 +100,7 @@ export function LaborTimeQuoteRequestFromJSONTyped(json: any, ignoreDiscriminato
     return {
         
         'engineCode': json['engineCode'] == null ? undefined : json['engineCode'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'make': json['make'] == null ? undefined : json['make'],
         'model': json['model'] == null ? undefined : json['model'],
         'preferredTimeType': json['preferredTimeType'] == null ? undefined : json['preferredTimeType'],
@@ -110,6 +117,7 @@ export function LaborTimeQuoteRequestToJSON(value?: LaborTimeQuoteRequest | null
     return {
         
         'engineCode': value['engineCode'],
+        'locationId': value['locationId'],
         'make': value['make'],
         'model': value['model'],
         'preferredTimeType': value['preferredTimeType'],

@@ -1,5 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './LaborRateResolutionApi';
+export * from './LaborRatesApi';
 export * from './PriceBulkIngestAPIApi';
 export * from './PriceNormalizationApi';
 export * from './PriceQuotesApi';
