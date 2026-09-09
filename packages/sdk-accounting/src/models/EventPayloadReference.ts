@@ -64,7 +64,6 @@ export interface EventPayloadReference {
 export enum EventPayloadReferenceReferenceTypeEnum {
     Invoice = 'INVOICE',
     Customer = 'CUSTOMER',
-    Organization = 'ORGANIZATION',
     Location = 'LOCATION',
     JournalEntry = 'JOURNAL_ENTRY',
     Vendor = 'VENDOR',

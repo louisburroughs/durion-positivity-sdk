@@ -32,11 +32,12 @@ export interface AccountingEventSubmitRequest {
      */
     eventType: string;
     /**
-     * Organization UUID
+     * Deprecated and ignored. Vestigial multi-tenancy scope key retained only for producers that still send one: nothing resolves or displays it. Omit it.
      * @type {string}
      * @memberof AccountingEventSubmitRequest
+     * @deprecated
      */
-    organizationId: string;
+    organizationId?: string;
     /**
      * Event-specific payload content
      * @type {object}
@@ -62,7 +63,6 @@ export interface AccountingEventSubmitRequest {
  */
 export function instanceOfAccountingEventSubmitRequest(value: object): boolean {
     if (!('eventType' in value)) return false;
-    if (!('organizationId' in value)) return false;
     if (!('payload' in value)) return false;
     return true;
 }
@@ -79,7 +79,7 @@ export function AccountingEventSubmitRequestFromJSONTyped(json: any, ignoreDiscr
         
         'eventId': json['eventId'] == null ? undefined : json['eventId'],
         'eventType': json['eventType'],
-        'organizationId': json['organizationId'],
+        'organizationId': json['organizationId'] == null ? undefined : json['organizationId'],
         'payload': json['payload'],
         'sourceSystem': json['sourceSystem'] == null ? undefined : json['sourceSystem'],
         'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
