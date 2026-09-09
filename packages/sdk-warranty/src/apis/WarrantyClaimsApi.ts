@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CandidateLine,
   ClaimActionRequest,
   ClaimCreateRequest,
@@ -27,6 +28,8 @@ import type {
   PageClaimSummaryResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CandidateLineFromJSON,
     CandidateLineToJSON,
     ClaimActionRequestFromJSON,
@@ -733,7 +736,7 @@ export class WarrantyClaimsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches warranty claims and returns a page of claim summaries filtered by customer, vehicle, status, claim code, and location. Use this tool to locate claims by criteria or to browse a worklist; do not use getClaim, which requires a known claim id and returns the full detail including lines, settlements, and history. Preconditions: none — an empty page is returned when nothing matches. Required inputs: every filter is optional; claimCode must be exact (for example WC-2026-000123) and short-circuits the other filters to at most one match, and paging defaults to size 20 sorted by createdAt descending. Emits a WARRANTY_CLAIM_SEARCH audit event; no claim state changes, this is a read-only projection. Returns 200 with the page, which is empty rather than 404 when no claim matches. 
+     * Searches warranty claims and returns a page of claim summaries filtered by customer, vehicle, status, claim code, and location. Use this tool to locate claims by criteria or to browse a worklist; do not use getClaim, which requires a known claim id and returns the full detail including lines, settlements, and history. Preconditions: none — an empty page is returned when nothing matches. Required inputs: every filter is optional; claimCode must be exact (for example WC-2026-000123) and short-circuits the other filters to at most one match, and paging defaults to size 20 sorted by createdAt descending. Emits a WARRANTY_CLAIM_SEARCH audit event; no claim state changes, this is a read-only projection. A caller whose warranty:claim:view grant is location-scoped (ADR-0061) sees only claims at locations their assigned nodes cover: a supplied locationId outside that reach is 403 LOCATION_SCOPE_DENIED, and without one the page is narrowed rather than refused, so a caller who reaches no replicated location gets an empty page. Returns 200 with the page, which is empty rather than 404 when no claim matches. 
      * Search claims
      */
     async searchClaimsRaw(requestParameters: SearchClaimsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageClaimSummaryResponse>> {
@@ -792,7 +795,7 @@ export class WarrantyClaimsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches warranty claims and returns a page of claim summaries filtered by customer, vehicle, status, claim code, and location. Use this tool to locate claims by criteria or to browse a worklist; do not use getClaim, which requires a known claim id and returns the full detail including lines, settlements, and history. Preconditions: none — an empty page is returned when nothing matches. Required inputs: every filter is optional; claimCode must be exact (for example WC-2026-000123) and short-circuits the other filters to at most one match, and paging defaults to size 20 sorted by createdAt descending. Emits a WARRANTY_CLAIM_SEARCH audit event; no claim state changes, this is a read-only projection. Returns 200 with the page, which is empty rather than 404 when no claim matches. 
+     * Searches warranty claims and returns a page of claim summaries filtered by customer, vehicle, status, claim code, and location. Use this tool to locate claims by criteria or to browse a worklist; do not use getClaim, which requires a known claim id and returns the full detail including lines, settlements, and history. Preconditions: none — an empty page is returned when nothing matches. Required inputs: every filter is optional; claimCode must be exact (for example WC-2026-000123) and short-circuits the other filters to at most one match, and paging defaults to size 20 sorted by createdAt descending. Emits a WARRANTY_CLAIM_SEARCH audit event; no claim state changes, this is a read-only projection. A caller whose warranty:claim:view grant is location-scoped (ADR-0061) sees only claims at locations their assigned nodes cover: a supplied locationId outside that reach is 403 LOCATION_SCOPE_DENIED, and without one the page is narrowed rather than refused, so a caller who reaches no replicated location gets an empty page. Returns 200 with the page, which is empty rather than 404 when no claim matches. 
      * Search claims
      */
     async searchClaims(requestParameters: SearchClaimsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageClaimSummaryResponse> {

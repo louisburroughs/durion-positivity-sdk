@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ApiError';
 export * from './CandidateLine';
 export * from './ClaimActionRequest';
 export * from './ClaimCreateRequest';
@@ -11,6 +12,7 @@ export * from './ClaimPhotoRequest';
 export * from './ClaimResponse';
 export * from './ClaimSummaryResponse';
 export * from './ClaimUpdateRequest';
+export * from './FieldError';
 export * from './LineDecision';
 export * from './NoteView';
 export * from './PageClaimSummaryResponse';
