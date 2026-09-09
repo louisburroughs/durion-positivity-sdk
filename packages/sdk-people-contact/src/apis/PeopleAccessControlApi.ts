@@ -43,7 +43,6 @@ export interface ListAssignableRolesRequest {
 export interface ListRoleAssignmentsRequest {
     personUuid: string;
     includeHistory?: boolean;
-    endDate?: Date;
 }
 
 export interface RevokePersonRoleAssignmentRequest {
@@ -154,7 +153,7 @@ export class PeopleAccessControlApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the role assignments a person holds in pos-security, resolved through the person\'s active user-person link. Use this tool to inspect the access a person already has; do not use listAssignableRoles, which returns the catalog of roles available for assignment. Preconditions: the person must have an active user-person link, and the linked username must resolve to a pos-security user. Required inputs: personUuid (UUID) as a path parameter; includeHistory defaults to false and adds ended assignments when true, and endDate (ISO date-time) optionally evaluates assignments as of that moment. Emits a PEOPLE_CONTACT_ACCESS_ASSIGNMENTS_LIST audit event; no state changes. Returns 404 when the person has no user link or the linked username has no security user. 
+     * Lists the role assignments a person holds in pos-security, resolved through the person\'s active user-person link. Use this tool to inspect the access a person already has; do not use listAssignableRoles, which returns the catalog of roles available for assignment. Preconditions: the person must have an active user-person link, and the linked username must resolve to a pos-security user. Required inputs: personUuid (UUID) as a path parameter; includeHistory defaults to false and adds ended and revoked assignments when true. There is no as-of filter: the listing is always evaluated as of now, and each entry carries its own effective window plus an active flag. Each entry carries the role code, which is the value revokePersonRoleAssignment addresses an assignment by. Emits a PEOPLE_CONTACT_ACCESS_ASSIGNMENTS_LIST audit event; no state changes. Returns 404 when the person has no user link or the linked username has no security user. 
      * List a Person\'s Role Assignments
      */
     async listRoleAssignmentsRaw(requestParameters: ListRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<UserRoleDto>>> {
@@ -169,10 +168,6 @@ export class PeopleAccessControlApi extends runtime.BaseAPI {
 
         if (requestParameters['includeHistory'] != null) {
             queryParameters['includeHistory'] = requestParameters['includeHistory'];
-        }
-
-        if (requestParameters['endDate'] != null) {
-            queryParameters['endDate'] = (requestParameters['endDate'] as any).toISOString();
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -196,7 +191,7 @@ export class PeopleAccessControlApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the role assignments a person holds in pos-security, resolved through the person\'s active user-person link. Use this tool to inspect the access a person already has; do not use listAssignableRoles, which returns the catalog of roles available for assignment. Preconditions: the person must have an active user-person link, and the linked username must resolve to a pos-security user. Required inputs: personUuid (UUID) as a path parameter; includeHistory defaults to false and adds ended assignments when true, and endDate (ISO date-time) optionally evaluates assignments as of that moment. Emits a PEOPLE_CONTACT_ACCESS_ASSIGNMENTS_LIST audit event; no state changes. Returns 404 when the person has no user link or the linked username has no security user. 
+     * Lists the role assignments a person holds in pos-security, resolved through the person\'s active user-person link. Use this tool to inspect the access a person already has; do not use listAssignableRoles, which returns the catalog of roles available for assignment. Preconditions: the person must have an active user-person link, and the linked username must resolve to a pos-security user. Required inputs: personUuid (UUID) as a path parameter; includeHistory defaults to false and adds ended and revoked assignments when true. There is no as-of filter: the listing is always evaluated as of now, and each entry carries its own effective window plus an active flag. Each entry carries the role code, which is the value revokePersonRoleAssignment addresses an assignment by. Emits a PEOPLE_CONTACT_ACCESS_ASSIGNMENTS_LIST audit event; no state changes. Returns 404 when the person has no user link or the linked username has no security user. 
      * List a Person\'s Role Assignments
      */
     async listRoleAssignments(requestParameters: ListRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<UserRoleDto>> {

@@ -25,11 +25,6 @@ import {
     AuthorizationDecisionResponseToJSON,
 } from '../models/index';
 
-export interface GetAuthorizationDecisionRequest {
-    principalId: string;
-    permission: string;
-}
-
 export interface GetPersonAuthorizationDecisionRequest {
     personId: string;
     permission: string;
@@ -41,65 +36,7 @@ export interface GetPersonAuthorizationDecisionRequest {
 export class AuthorizationApi extends runtime.BaseAPI {
 
     /**
-     * Returns an allow or deny decision for a principal identifier and permission key, evaluated against the principal-role matrix populated by assignPrincipalRole. Use this tool for matrix-based checks keyed by principal string; use getPersonAuthorizationDecision instead when the caller has a personId; location reach is decided by the owning service from the token\'s scope claims (ADR-0061 §3), not by this endpoint. Preconditions: the caller must hold security:authorization:decide; the principal needs no prior registration. Required inputs: principalId and permission (domain:resource:action) as query parameters. No events are emitted and no state changes; this is a read-only evaluation. Returns 200 with decision allow or deny; an unknown principal or permission yields deny rather than an error. 
-     * Get Authorization Decision for a Principal
-     */
-    async getAuthorizationDecisionRaw(requestParameters: GetAuthorizationDecisionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizationDecisionResponse>> {
-        if (requestParameters['principalId'] == null) {
-            throw new runtime.RequiredError(
-                'principalId',
-                'Required parameter "principalId" was null or undefined when calling getAuthorizationDecision().'
-            );
-        }
-
-        if (requestParameters['permission'] == null) {
-            throw new runtime.RequiredError(
-                'permission',
-                'Required parameter "permission" was null or undefined when calling getAuthorizationDecision().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['principalId'] != null) {
-            queryParameters['principalId'] = requestParameters['principalId'];
-        }
-
-        if (requestParameters['permission'] != null) {
-            queryParameters['permission'] = requestParameters['permission'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:authorization:decide"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/users/authorization/decision`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationDecisionResponseFromJSON(jsonValue));
-    }
-
-    /**
-     * Returns an allow or deny decision for a principal identifier and permission key, evaluated against the principal-role matrix populated by assignPrincipalRole. Use this tool for matrix-based checks keyed by principal string; use getPersonAuthorizationDecision instead when the caller has a personId; location reach is decided by the owning service from the token\'s scope claims (ADR-0061 §3), not by this endpoint. Preconditions: the caller must hold security:authorization:decide; the principal needs no prior registration. Required inputs: principalId and permission (domain:resource:action) as query parameters. No events are emitted and no state changes; this is a read-only evaluation. Returns 200 with decision allow or deny; an unknown principal or permission yields deny rather than an error. 
-     * Get Authorization Decision for a Principal
-     */
-    async getAuthorizationDecision(requestParameters: GetAuthorizationDecisionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthorizationDecisionResponse> {
-        const response = await this.getAuthorizationDecisionRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * Returns an allow or deny decision for the user account linked to a personId, evaluated against that user\'s directly assigned roles. Use this tool to verify an off-session approver, such as a manager identified by employee number, holds a required permission; use getAuthorizationDecision instead for matrix principals. Preconditions: the caller must hold security:authorization:decide; a user should be linked to the person via the user-person link projection. Required inputs: personId (UUID) and permission (domain:resource:action) as query parameters. No events are emitted and no state changes; this is a read-only evaluation. Returns 200 with decision allow or deny; a person with no linked user or without the permission yields deny rather than an error. 
+     * Returns an allow or deny decision for the user account linked to a personId, evaluated against the user\'s currently effective roles (effective-dated assignments, honouring the window), the same set token issuance uses. Use this tool to verify an off-session approver, such as a manager identified by employee number, holds a required permission. Preconditions: the caller must hold security:authorization:decide; a user should be linked to the person via the user-person link projection. Required inputs: personId (UUID) and permission (domain:resource:action) as query parameters. No events are emitted and no state changes; this is a read-only evaluation. Returns 200 with decision allow or deny; a person with no linked user or without the permission yields deny rather than an error. 
      * Get Authorization Decision for a Person
      */
     async getPersonAuthorizationDecisionRaw(requestParameters: GetPersonAuthorizationDecisionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuthorizationDecisionResponse>> {
@@ -148,7 +85,7 @@ export class AuthorizationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns an allow or deny decision for the user account linked to a personId, evaluated against that user\'s directly assigned roles. Use this tool to verify an off-session approver, such as a manager identified by employee number, holds a required permission; use getAuthorizationDecision instead for matrix principals. Preconditions: the caller must hold security:authorization:decide; a user should be linked to the person via the user-person link projection. Required inputs: personId (UUID) and permission (domain:resource:action) as query parameters. No events are emitted and no state changes; this is a read-only evaluation. Returns 200 with decision allow or deny; a person with no linked user or without the permission yields deny rather than an error. 
+     * Returns an allow or deny decision for the user account linked to a personId, evaluated against the user\'s currently effective roles (effective-dated assignments, honouring the window), the same set token issuance uses. Use this tool to verify an off-session approver, such as a manager identified by employee number, holds a required permission. Preconditions: the caller must hold security:authorization:decide; a user should be linked to the person via the user-person link projection. Required inputs: personId (UUID) and permission (domain:resource:action) as query parameters. No events are emitted and no state changes; this is a read-only evaluation. Returns 200 with decision allow or deny; a person with no linked user or without the permission yields deny rather than an error. 
      * Get Authorization Decision for a Person
      */
     async getPersonAuthorizationDecision(requestParameters: GetPersonAuthorizationDecisionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuthorizationDecisionResponse> {

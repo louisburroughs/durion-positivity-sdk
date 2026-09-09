@@ -7,7 +7,6 @@ export * from './AuthAPIApi';
 export * from './AuthorizationApi';
 export * from './JWTAPIApi';
 export * from './PermissionRegistryApi';
-export * from './PrincipalRoleManagementApi';
 export * from './RoleBulkIngestAPIApi';
 export * from './RoleManagementApi';
 export * from './RolePermissionBulkIngestAPIApi';
