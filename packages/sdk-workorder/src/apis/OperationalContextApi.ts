@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   OperationalContextOverrideRequest,
   OperationalContextResponse,
   StartWorkorderRequest,
   WorkorderStartResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     OperationalContextOverrideRequestFromJSON,
     OperationalContextOverrideRequestToJSON,
     OperationalContextResponseFromJSON,
@@ -94,7 +97,7 @@ export class OperationalContextApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a manager-authorized override of the workorder\'s operational context, replacing the location, assigned mechanics, and assigned resources (the first assigned resource, typed by resourceType, becomes the workorder\'s resource) before work starts. Use this tool when a manager must re-slot a workorder to a different bay, crew, or location prior to execution; do not use getOperationalContext, which only reads the current context. Preconditions: the workorder must exist and work must not have started — once workStartedAt is set the context is locked and overrides are rejected. Required inputs: workorderId (UUID) as a path parameter and a body with locationId (UUID, required); resourceType, assignedMechanics, assignedResources, and constraints are optional, an absent resourceType is applied as BAY, and constraints are echoed back but not persisted. Emits a WORKORDER_OPERATIONAL_CONTEXT_OVERRIDE event and marks the workorder fact changed for downstream replication. Returns 404 when no workorder exists for the id, and 409 when work has already started and the context is locked. 
+     * Applies a manager-authorized override of the workorder\'s operational context, replacing the location, assigned mechanics, and assigned resources (the first assigned resource, typed by resourceType, becomes the workorder\'s resource) before work starts. Use this tool when a manager must re-slot a workorder to a different bay, crew, or location prior to execution; do not use getOperationalContext, which only reads the current context. Preconditions: the workorder must exist and work must not have started — once workStartedAt is set the context is locked and overrides are rejected. A caller whose workorder:operationalContext:override grant is location-scoped must have the body\'s locationId within reach (ADR-0061); that check runs after the existence check. Required inputs: workorderId (UUID) as a path parameter and a body with locationId (UUID, required); resourceType, assignedMechanics, assignedResources, and constraints are optional, an absent resourceType is applied as BAY, and constraints are echoed back but not persisted. Emits a WORKORDER_OPERATIONAL_CONTEXT_OVERRIDE event and marks the workorder fact changed for downstream replication. Returns 404 when no workorder exists for the id, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 409 when work has already started and the context is locked. 
      * Override Workorder Operational Context
      */
     async overrideOperationalContextRaw(requestParameters: OverrideOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OperationalContextResponse>> {
@@ -138,7 +141,7 @@ export class OperationalContextApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a manager-authorized override of the workorder\'s operational context, replacing the location, assigned mechanics, and assigned resources (the first assigned resource, typed by resourceType, becomes the workorder\'s resource) before work starts. Use this tool when a manager must re-slot a workorder to a different bay, crew, or location prior to execution; do not use getOperationalContext, which only reads the current context. Preconditions: the workorder must exist and work must not have started — once workStartedAt is set the context is locked and overrides are rejected. Required inputs: workorderId (UUID) as a path parameter and a body with locationId (UUID, required); resourceType, assignedMechanics, assignedResources, and constraints are optional, an absent resourceType is applied as BAY, and constraints are echoed back but not persisted. Emits a WORKORDER_OPERATIONAL_CONTEXT_OVERRIDE event and marks the workorder fact changed for downstream replication. Returns 404 when no workorder exists for the id, and 409 when work has already started and the context is locked. 
+     * Applies a manager-authorized override of the workorder\'s operational context, replacing the location, assigned mechanics, and assigned resources (the first assigned resource, typed by resourceType, becomes the workorder\'s resource) before work starts. Use this tool when a manager must re-slot a workorder to a different bay, crew, or location prior to execution; do not use getOperationalContext, which only reads the current context. Preconditions: the workorder must exist and work must not have started — once workStartedAt is set the context is locked and overrides are rejected. A caller whose workorder:operationalContext:override grant is location-scoped must have the body\'s locationId within reach (ADR-0061); that check runs after the existence check. Required inputs: workorderId (UUID) as a path parameter and a body with locationId (UUID, required); resourceType, assignedMechanics, assignedResources, and constraints are optional, an absent resourceType is applied as BAY, and constraints are echoed back but not persisted. Emits a WORKORDER_OPERATIONAL_CONTEXT_OVERRIDE event and marks the workorder fact changed for downstream replication. Returns 404 when no workorder exists for the id, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 409 when work has already started and the context is locked. 
      * Override Workorder Operational Context
      */
     async overrideOperationalContext(requestParameters: OverrideOperationalContextRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OperationalContextResponse> {

@@ -166,7 +166,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the full employee profile for a person id, merging identity fields from the pos-people-contact replica with local employment fields. Use this tool when the person id is already known; use getEmployeeByNumber instead to resolve a human-entered employee number. Preconditions: an employee row or identity-replica row must exist for the id; identity fields may briefly be null right after creation while the replica catches up. Required inputs: employeeId (UUID) path parameter, which is the person id; there is no request body. Emits a PEOPLE_EMPLOYEE_GET audit event but changes no state; this is a read-only projection. Returns 404 when neither an employee record nor a person replica row exists for the id. 
+     * Returns the full employee profile for a person id, merging identity fields from the pos-people-contact replica with local employment fields, including the contactInfo block: personal address, personal phone numbers, personal email and emergency contact. Use this tool when the person id is already known; use getEmployeeByNumber instead to resolve a human-entered employee number, and searchEmployees to list or pick an employee without their personal contact detail. Preconditions: the caller holds people:employee_pii:view, which is narrower than the people:employee:view held by the structural reads; an employee row or identity-replica row must exist for the id; identity fields may briefly be null right after creation while the replica catches up. Required inputs: employeeId (UUID) path parameter, which is the person id; there is no request body. Emits a PEOPLE_EMPLOYEE_GET audit event but changes no state; this is a read-only projection. Returns 403 when the caller does not hold people:employee_pii:view, and 404 when neither an employee record nor a person replica row exists for the id. 
      * Get Employee Profile By Person Id
      */
     async getEmployeeRaw(requestParameters: GetEmployeeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmployeeProfileDto>> {
@@ -183,7 +183,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+            const tokenString = await token("bearerAuth", ["people:employee_pii:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -200,7 +200,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the full employee profile for a person id, merging identity fields from the pos-people-contact replica with local employment fields. Use this tool when the person id is already known; use getEmployeeByNumber instead to resolve a human-entered employee number. Preconditions: an employee row or identity-replica row must exist for the id; identity fields may briefly be null right after creation while the replica catches up. Required inputs: employeeId (UUID) path parameter, which is the person id; there is no request body. Emits a PEOPLE_EMPLOYEE_GET audit event but changes no state; this is a read-only projection. Returns 404 when neither an employee record nor a person replica row exists for the id. 
+     * Returns the full employee profile for a person id, merging identity fields from the pos-people-contact replica with local employment fields, including the contactInfo block: personal address, personal phone numbers, personal email and emergency contact. Use this tool when the person id is already known; use getEmployeeByNumber instead to resolve a human-entered employee number, and searchEmployees to list or pick an employee without their personal contact detail. Preconditions: the caller holds people:employee_pii:view, which is narrower than the people:employee:view held by the structural reads; an employee row or identity-replica row must exist for the id; identity fields may briefly be null right after creation while the replica catches up. Required inputs: employeeId (UUID) path parameter, which is the person id; there is no request body. Emits a PEOPLE_EMPLOYEE_GET audit event but changes no state; this is a read-only projection. Returns 403 when the caller does not hold people:employee_pii:view, and 404 when neither an employee record nor a person replica row exists for the id. 
      * Get Employee Profile By Person Id
      */
     async getEmployee(requestParameters: GetEmployeeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeProfileDto> {
@@ -209,7 +209,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves an employee number to a slim identity projection containing the person id, employee number, employment status, and an active flag. Use this tool for service-to-service approver resolution such as manager-approval-by-employee-number; use getEmployee instead when the full profile with names and contact info is needed. Preconditions: an employee record with the given employee number must exist; matching is case-insensitive. Required inputs: employeeNumber (string) path parameter; there is no request body and no pagination. No events are emitted and no state changes; this is a read-only lookup. Returns 404 when no employee carries the supplied employee number. 
+     * Resolves an employee number to a slim identity projection containing the person id, employee number, employment status, and an active flag. Use this tool for service-to-service approver resolution such as manager-approval-by-employee-number; use getEmployee instead when the full profile with names and contact info is needed, which requires the narrower people:employee_pii:view. Preconditions: an employee record with the given employee number must exist; matching is case-insensitive. Required inputs: employeeNumber (string) path parameter; there is no request body and no pagination. No events are emitted and no state changes; this is a read-only lookup. Returns 404 when no employee carries the supplied employee number. 
      * Resolve Employee By Employee Number
      */
     async getEmployeeByNumberRaw(requestParameters: GetEmployeeByNumberRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmployeeIdentityDto>> {
@@ -243,7 +243,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves an employee number to a slim identity projection containing the person id, employee number, employment status, and an active flag. Use this tool for service-to-service approver resolution such as manager-approval-by-employee-number; use getEmployee instead when the full profile with names and contact info is needed. Preconditions: an employee record with the given employee number must exist; matching is case-insensitive. Required inputs: employeeNumber (string) path parameter; there is no request body and no pagination. No events are emitted and no state changes; this is a read-only lookup. Returns 404 when no employee carries the supplied employee number. 
+     * Resolves an employee number to a slim identity projection containing the person id, employee number, employment status, and an active flag. Use this tool for service-to-service approver resolution such as manager-approval-by-employee-number; use getEmployee instead when the full profile with names and contact info is needed, which requires the narrower people:employee_pii:view. Preconditions: an employee record with the given employee number must exist; matching is case-insensitive. Required inputs: employeeNumber (string) path parameter; there is no request body and no pagination. No events are emitted and no state changes; this is a read-only lookup. Returns 404 when no employee carries the supplied employee number. 
      * Resolve Employee By Employee Number
      */
     async getEmployeeByNumber(requestParameters: GetEmployeeByNumberRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeIdentityDto> {

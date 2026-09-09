@@ -32,6 +32,7 @@ export interface ImportMarketingCatalogRequest {
 export interface ListMarketingCatalogVariantsRequest {
     supplierRef: string;
     limit?: number;
+    hasUnresolvedImages?: boolean;
 }
 
 /**
@@ -83,7 +84,7 @@ export class SupplierMarketingCatalogApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the tread design variants a marketing catalogue last sent, most recently seen first, including which of them are still missing artwork. Use this tool when a product\'s marketing copy is not what was expected, to see what the catalogue actually published; do not read this as catalog content, because nothing here has been attached to a product and a variant may match no product at all. Preconditions: none. Required inputs: supplierRef path parameter; limit defaults to 100. Emits a SUPPLIER_MKTCAT_VARIANT_LIST event. Returns 200 with the staged variants, which is an empty list when the catalogue has never been imported, and 404 when the vendor profile is unknown. 
+     * Lists the tread design variants a marketing catalogue last sent, most recently seen first, including which of them are still missing artwork. Use this tool when a product\'s marketing copy is not what was expected, to see what the catalogue actually published; do not read this as catalog content, because nothing here has been attached to a product and a variant may match no product at all. This list is supplier-scoped staged enrichment — one vendor\'s own catalogue submission — and is NOT the unmatched-product queue: that worklist, matched by design against products, is pos-catalog\'s listUnmatchedTreadDesigns. Preconditions: none. Required inputs: supplierRef path parameter; limit defaults to 100. Optional hasUnresolvedImages filters to variants still missing artwork (true) or not (false); omitted, every staged row is returned regardless of image state. Emits a SUPPLIER_MKTCAT_VARIANT_LIST event. Returns 200 with the staged variants, which is an empty list when the catalogue has never been imported or nothing matches the filter, 400 when hasUnresolvedImages is not a boolean, and 404 when the vendor profile is unknown. 
      * List Staged Marketing Enrichment
      */
     async listMarketingCatalogVariantsRaw(requestParameters: ListMarketingCatalogVariantsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<MarketingEnrichmentView>>> {
@@ -98,6 +99,10 @@ export class SupplierMarketingCatalogApi extends runtime.BaseAPI {
 
         if (requestParameters['limit'] != null) {
             queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        if (requestParameters['hasUnresolvedImages'] != null) {
+            queryParameters['hasUnresolvedImages'] = requestParameters['hasUnresolvedImages'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -121,7 +126,7 @@ export class SupplierMarketingCatalogApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the tread design variants a marketing catalogue last sent, most recently seen first, including which of them are still missing artwork. Use this tool when a product\'s marketing copy is not what was expected, to see what the catalogue actually published; do not read this as catalog content, because nothing here has been attached to a product and a variant may match no product at all. Preconditions: none. Required inputs: supplierRef path parameter; limit defaults to 100. Emits a SUPPLIER_MKTCAT_VARIANT_LIST event. Returns 200 with the staged variants, which is an empty list when the catalogue has never been imported, and 404 when the vendor profile is unknown. 
+     * Lists the tread design variants a marketing catalogue last sent, most recently seen first, including which of them are still missing artwork. Use this tool when a product\'s marketing copy is not what was expected, to see what the catalogue actually published; do not read this as catalog content, because nothing here has been attached to a product and a variant may match no product at all. This list is supplier-scoped staged enrichment — one vendor\'s own catalogue submission — and is NOT the unmatched-product queue: that worklist, matched by design against products, is pos-catalog\'s listUnmatchedTreadDesigns. Preconditions: none. Required inputs: supplierRef path parameter; limit defaults to 100. Optional hasUnresolvedImages filters to variants still missing artwork (true) or not (false); omitted, every staged row is returned regardless of image state. Emits a SUPPLIER_MKTCAT_VARIANT_LIST event. Returns 200 with the staged variants, which is an empty list when the catalogue has never been imported or nothing matches the filter, 400 when hasUnresolvedImages is not a boolean, and 404 when the vendor profile is unknown. 
      * List Staged Marketing Enrichment
      */
     async listMarketingCatalogVariants(requestParameters: ListMarketingCatalogVariantsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<MarketingEnrichmentView>> {

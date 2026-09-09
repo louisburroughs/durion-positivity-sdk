@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './ApiError';
 export * from './BayBulkIngestRecord';
 export * from './BayCapacityRequest';
 export * from './BayPatchRequest';
@@ -14,6 +15,7 @@ export * from './BulkIngestResult';
 export * from './CoverageRuleRequest';
 export * from './CoverageRuleResponse';
 export * from './EligibleMobileUnitResponse';
+export * from './FieldError';
 export * from './HolidayClosureRequest';
 export * from './LocationBulkIngestRecord';
 export * from './LocationDescendantResponseDTO';
@@ -35,6 +37,7 @@ export * from './PageStorageLocationResponse';
 export * from './PageableObject';
 export * from './PersonDTO';
 export * from './PostalCodeEntry';
+export * from './ProblemDetail';
 export * from './ServiceAreaRequest';
 export * from './ServiceAreaResponse';
 export * from './SiteDefaultsRequest';

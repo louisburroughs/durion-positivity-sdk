@@ -29,6 +29,8 @@ export * from './ProcurementAvailabilityLine';
 export * from './PurchaseOrderLineRequest';
 export * from './PurchaseOrderLineResponse';
 export * from './PurchaseOrderResponse';
+export * from './PurchaseOrderStatusSummary';
+export * from './PurchaseOrderSummaryResponse';
 export * from './PurchaseOrderTransmissionEvent';
 export * from './RegisterSessionResponse';
 export * from './RejectPriceOverrideRequest';

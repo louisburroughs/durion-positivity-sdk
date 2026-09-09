@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to assign a role to a user within a scope
+ * Request to assign a role to a user for an effective window
  * @export
  * @interface RoleAssignmentRequest
  */
@@ -38,34 +38,12 @@ export interface RoleAssignmentRequest {
      */
     roleId: string;
     /**
-     * Location identifiers the assignment applies to when scopeType is LOCATION
-     * @type {Set<string>}
-     * @memberof RoleAssignmentRequest
-     */
-    scopeLocationIds?: Set<string>;
-    /**
-     * Scope type that constrains the assignment
-     * @type {string}
-     * @memberof RoleAssignmentRequest
-     */
-    scopeType?: RoleAssignmentRequestScopeTypeEnum;
-    /**
      * Identifier of the user to assign the role to
      * @type {string}
      * @memberof RoleAssignmentRequest
      */
     userId: string;
 }
-
-/**
-* @export
-* @enum {string}
-*/
-export enum RoleAssignmentRequestScopeTypeEnum {
-    Global = 'GLOBAL',
-    Location = 'LOCATION'
-}
-
 
 /**
  * Check if a given object implements the RoleAssignmentRequest interface.
@@ -89,8 +67,6 @@ export function RoleAssignmentRequestFromJSONTyped(json: any, ignoreDiscriminato
         'effectiveEndDate': json['effectiveEndDate'] == null ? undefined : (new Date(json['effectiveEndDate'])),
         'effectiveStartDate': json['effectiveStartDate'] == null ? undefined : (new Date(json['effectiveStartDate'])),
         'roleId': json['roleId'],
-        'scopeLocationIds': json['scopeLocationIds'] == null ? undefined : json['scopeLocationIds'],
-        'scopeType': json['scopeType'] == null ? undefined : json['scopeType'],
         'userId': json['userId'],
     };
 }
@@ -104,8 +80,6 @@ export function RoleAssignmentRequestToJSON(value?: RoleAssignmentRequest | null
         'effectiveEndDate': value['effectiveEndDate'] == null ? undefined : ((value['effectiveEndDate']).toISOString()),
         'effectiveStartDate': value['effectiveStartDate'] == null ? undefined : ((value['effectiveStartDate']).toISOString()),
         'roleId': value['roleId'],
-        'scopeLocationIds': value['scopeLocationIds'] == null ? undefined : Array.from(value['scopeLocationIds'] as Set<any>),
-        'scopeType': value['scopeType'],
         'userId': value['userId'],
     };
 }

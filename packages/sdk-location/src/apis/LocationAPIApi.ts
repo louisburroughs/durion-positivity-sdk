@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   LocationDescendantResponseDTO,
   LocationParentResponseDTO,
   LocationPatchRequest,
@@ -23,8 +24,11 @@ import type {
   LocationValidationResponseDTO,
   PageLocationRef,
   PersonDTO,
+  ProblemDetail,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     LocationDescendantResponseDTOFromJSON,
     LocationDescendantResponseDTOToJSON,
     LocationParentResponseDTOFromJSON,
@@ -41,6 +45,8 @@ import {
     PageLocationRefToJSON,
     PersonDTOFromJSON,
     PersonDTOToJSON,
+    ProblemDetailFromJSON,
+    ProblemDetailToJSON,
 } from '../models/index';
 
 export interface AddLocationParentRequest {
@@ -103,7 +109,7 @@ export interface ValidateLocationRequest {
 export class LocationAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a typed parent-child edge between two existing locations, giving the child at most one parent per relationship type. Use this tool when building the location hierarchy; do not use listLocationChildren or listLocationDescendants, which only read the hierarchy. Preconditions: both locations must exist, the child must not already have a parent of that type, the pair must not already be linked in either direction, and the parent must not be a descendant of the child because cycles are forbidden by ADR-0016. Required inputs: childId and parentId (UUIDs) as path parameters and a parentType query parameter, one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_ADD event and republishes the child\'s location fact, which carries the new edge to replica consumers. Returns 400 when parentType is not a recognized value; self-parenting, duplicate, inverse or circular relationships are rejected before the edge is written. 
+     * Creates a typed parent-child edge between two existing locations, giving the child at most one parent per relationship type. Use this tool when building the location hierarchy; do not use listLocationChildren or listLocationDescendants, which only read the hierarchy. Preconditions: both locations must exist, the child must not already have a parent of that type, the pair must not already be linked in either direction, and the parent must not be a descendant of the child on the requested parentType because cycles are forbidden by ADR-0016. Cycle detection is per parentType: only edges of the requested parentType are walked, so an edge that would close a cycle on PHYSICAL is rejected while the same edge on FINANCIAL or REGION is legal. Required inputs: childId and parentId (UUIDs) as path parameters and a parentType query parameter, one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_ADD event and republishes the child\'s location fact, which carries the new edge to replica consumers. Returns 400 when parentType is not a recognized value, and 409 CYCLE_DETECTED when childId equals parentId or when the edge would close a cycle on the requested parentType; duplicate and inverse relationships are rejected before the edge is written. Error responses carry an RFC 9457 ProblemDetail body (application/problem+json) whose detail holds the machine-readable code and whose correlationId matches the X-Correlation-Id response header. 
      * Add Typed Parent Relationship to Location
      */
     async addLocationParentRaw(requestParameters: AddLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationParentResponseDTO>> {
@@ -155,7 +161,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a typed parent-child edge between two existing locations, giving the child at most one parent per relationship type. Use this tool when building the location hierarchy; do not use listLocationChildren or listLocationDescendants, which only read the hierarchy. Preconditions: both locations must exist, the child must not already have a parent of that type, the pair must not already be linked in either direction, and the parent must not be a descendant of the child because cycles are forbidden by ADR-0016. Required inputs: childId and parentId (UUIDs) as path parameters and a parentType query parameter, one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_ADD event and republishes the child\'s location fact, which carries the new edge to replica consumers. Returns 400 when parentType is not a recognized value; self-parenting, duplicate, inverse or circular relationships are rejected before the edge is written. 
+     * Creates a typed parent-child edge between two existing locations, giving the child at most one parent per relationship type. Use this tool when building the location hierarchy; do not use listLocationChildren or listLocationDescendants, which only read the hierarchy. Preconditions: both locations must exist, the child must not already have a parent of that type, the pair must not already be linked in either direction, and the parent must not be a descendant of the child on the requested parentType because cycles are forbidden by ADR-0016. Cycle detection is per parentType: only edges of the requested parentType are walked, so an edge that would close a cycle on PHYSICAL is rejected while the same edge on FINANCIAL or REGION is legal. Required inputs: childId and parentId (UUIDs) as path parameters and a parentType query parameter, one of HOME_OFFICE, HEADQUARTERS, REGION, DISTRICT, PHYSICAL, ORGANIZATIONAL, FINANCIAL or SHIPPING. Emits a LOCATION_PARENT_ADD event and republishes the child\'s location fact, which carries the new edge to replica consumers. Returns 400 when parentType is not a recognized value, and 409 CYCLE_DETECTED when childId equals parentId or when the edge would close a cycle on the requested parentType; duplicate and inverse relationships are rejected before the edge is written. Error responses carry an RFC 9457 ProblemDetail body (application/problem+json) whose detail holds the machine-readable code and whose correlationId matches the X-Correlation-Id response header. 
      * Add Typed Parent Relationship to Location
      */
     async addLocationParent(requestParameters: AddLocationParentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationParentResponseDTO> {
@@ -210,7 +216,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location does not exist. 
+     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success, 404 when the location does not exist, and 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061). 
      * Delete a Location by Identifier
      */
     async deleteLocationRaw(requestParameters: DeleteLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -244,7 +250,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location does not exist. 
+     * Deletes a location permanently by id and publishes a deletion fact so replica consumers drop the row. Use this tool only when a location was created in error; use patchLocation with status INACTIVE instead to retire a real site while preserving history. Preconditions: the location must exist; there is no child-relationship or usage check, so callers must confirm the location is unreferenced first. Required inputs: locationId (UUID) as a path parameter; there is no request body. Emits a LOCATION_LOCATION_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success, 404 when the location does not exist, and 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061). 
      * Delete a Location by Identifier
      */
     async deleteLocation(requestParameters: DeleteLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -596,7 +602,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes and cleanupBufferMinutes. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, and reactivation is not supported through this operation. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid. 
+     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes and cleanupBufferMinutes. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, and reactivation is not supported through this operation. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid. 
      * Patch Selected Fields of a Location
      */
     async patchLocationRaw(requestParameters: PatchLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
@@ -640,7 +646,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes and cleanupBufferMinutes. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, and reactivation is not supported through this operation. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid. 
+     * Applies a partial update to a location, changing only the supplied fields: name, status, timezone, operatingHours, holidayClosures, checkInBufferMinutes and cleanupBufferMinutes. Use this tool for targeted edits such as deactivation or hours changes; do not use updateLocation, which overwrites every mutable field including address and type. Preconditions: the location must exist, and a new name must not be used by another location. Required inputs: locationId (UUID) as a path parameter and a body with at least one field; status only accepts the value INACTIVE to deactivate, and reactivation is not supported through this operation. Emits a LOCATION_PATCH event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the new name is taken, and 422 when a supplied timezone or operating-hours entry is invalid. 
      * Patch Selected Fields of a Location
      */
     async patchLocation(requestParameters: PatchLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {
@@ -649,7 +655,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the name or code collides with another location, and 422 when the timezone or operating hours are invalid. 
+     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the name or code collides with another location, and 422 when the timezone or operating hours are invalid. 
      * Update an Existing Location Fully
      */
     async updateLocationRaw(requestParameters: UpdateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<LocationResponseDTO>> {
@@ -693,7 +699,7 @@ export class LocationAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 409 when the name or code collides with another location, and 422 when the timezone or operating hours are invalid. 
+     * Replaces the mutable fields of an existing location with the supplied full payload, including address, timezone, operating hours and type. Use this tool when the complete corrected state of a location is known; use patchLocation instead to change selected fields and leave the rest untouched. Preconditions: the location must exist, and no other location may already use the new name. Required inputs: locationId (UUID) as a path parameter plus a full body with name, code and type; omitted optional fields are overwritten with the request values, not preserved. Emits a LOCATION_LOCATION_UPDATE event and publishes a location fact for replica consumers. Returns 404 when the location does not exist, 403 LOCATION_SCOPE_DENIED when it exists but a location-scoped location:write grant does not cover it (ADR-0061), 409 when the name or code collides with another location, and 422 when the timezone or operating hours are invalid. 
      * Update an Existing Location Fully
      */
     async updateLocation(requestParameters: UpdateLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<LocationResponseDTO> {

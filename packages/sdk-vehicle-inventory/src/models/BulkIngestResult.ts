@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface BulkIngestResult {
     /**
+     * Correlation id to quote when reporting a row that failed for a server-side reason. Present only alongside errorCode INTERNAL_ERROR, where it is the whole of what the caller can act on: the exception itself is logged at ERROR against this id and never returned (ADR-0056). Every failed row of one request carries the same id.
+     * @type {string}
+     * @memberof BulkIngestResult
+     */
+    correlationId?: string;
+    /**
      * Identifier of the entity created/updated for this record, when successful
      * @type {string}
      * @memberof BulkIngestResult
@@ -70,6 +76,7 @@ export function BulkIngestResultFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
+        'correlationId': json['correlationId'] == null ? undefined : json['correlationId'],
         'entityId': json['entityId'] == null ? undefined : json['entityId'],
         'errorCode': json['errorCode'] == null ? undefined : json['errorCode'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
@@ -84,6 +91,7 @@ export function BulkIngestResultToJSON(value?: BulkIngestResult | null): any {
     }
     return {
         
+        'correlationId': value['correlationId'],
         'entityId': value['entityId'],
         'errorCode': value['errorCode'],
         'errorMessage': value['errorMessage'],

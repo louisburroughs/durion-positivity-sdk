@@ -32,6 +32,12 @@ export interface VendorBillListRow {
      */
     billId: string;
     /**
+     * The vendor's own bill/invoice number, shown in place of the raw billId UUID (issue #1892).
+     * @type {string}
+     * @memberof VendorBillListRow
+     */
+    billNumber: string;
+    /**
      * Bill due date; bills matched by this endpoint always have a due date in the requested window
      * @type {Date}
      * @memberof VendorBillListRow
@@ -49,6 +55,12 @@ export interface VendorBillListRow {
      * @memberof VendorBillListRow
      */
     vendorId: string;
+    /**
+     * Vendor display name, so the list can name the vendor instead of showing the raw vendorId UUID (issue #1892). Null when the bill carries no vendor name; render nothing rather than falling back to the UUID.
+     * @type {string}
+     * @memberof VendorBillListRow
+     */
+    vendorName?: string;
 }
 
 /**
@@ -71,6 +83,7 @@ export enum VendorBillListRowStatusEnum {
 export function instanceOfVendorBillListRow(value: object): boolean {
     if (!('amount' in value)) return false;
     if (!('billId' in value)) return false;
+    if (!('billNumber' in value)) return false;
     if (!('status' in value)) return false;
     if (!('vendorId' in value)) return false;
     return true;
@@ -88,9 +101,11 @@ export function VendorBillListRowFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'amount': json['amount'],
         'billId': json['billId'],
+        'billNumber': json['billNumber'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'status': json['status'],
         'vendorId': json['vendorId'],
+        'vendorName': json['vendorName'] == null ? undefined : json['vendorName'],
     };
 }
 
@@ -102,9 +117,11 @@ export function VendorBillListRowToJSON(value?: VendorBillListRow | null): any {
         
         'amount': value['amount'],
         'billId': value['billId'],
+        'billNumber': value['billNumber'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'status': value['status'],
         'vendorId': value['vendorId'],
+        'vendorName': value['vendorName'],
     };
 }
 

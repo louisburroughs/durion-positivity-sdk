@@ -26,12 +26,6 @@ export interface PersonRoleAssignmentRequest {
      */
     endDate?: Date;
     /**
-     * Location identifier the role is scoped to
-     * @type {string}
-     * @memberof PersonRoleAssignmentRequest
-     */
-    locationId?: string;
-    /**
      * Stable role code to assign
      * @type {string}
      * @memberof PersonRoleAssignmentRequest
@@ -64,7 +58,6 @@ export function PersonRoleAssignmentRequestFromJSONTyped(json: any, ignoreDiscri
     return {
         
         'endDate': json['endDate'] == null ? undefined : (new Date(json['endDate'])),
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'roleCode': json['roleCode'],
         'startDate': json['startDate'] == null ? undefined : (new Date(json['startDate'])),
     };
@@ -77,7 +70,6 @@ export function PersonRoleAssignmentRequestToJSON(value?: PersonRoleAssignmentRe
     return {
         
         'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString()),
-        'locationId': value['locationId'],
         'roleCode': value['roleCode'],
         'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString()),
     };

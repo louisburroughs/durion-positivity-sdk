@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   DeactivateLocationRequest,
   DeactivateLocationResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     DeactivateLocationRequestFromJSON,
     DeactivateLocationRequestToJSON,
     DeactivateLocationResponseFromJSON,

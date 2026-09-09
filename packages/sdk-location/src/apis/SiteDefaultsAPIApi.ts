@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   SiteDefaultsRequest,
   SiteDefaultsResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     SiteDefaultsRequestFromJSON,
     SiteDefaultsRequestToJSON,
     SiteDefaultsResponseFromJSON,
@@ -40,7 +43,7 @@ export interface GetSiteDefaultsRequest {
 export class SiteDefaultsAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates or replaces the default staging and quarantine storage locations of a site in a single idempotent upsert. Use this tool when commissioning a site\'s receiving flow or moving its defaults; use getSiteDefaults instead to read the current assignment. Preconditions: the site must exist, and both referenced storage locations must belong to that site. Required inputs: locationId (UUID) as a path parameter and a body with both defaultStagingLocationId and defaultQuarantineLocationId; the two ids must differ. Emits a LOCATION_SITE_DEFAULTS_PUT event and republishes the location fact carrying the new defaults. Returns 404 when the site does not exist, 400 when either id is missing or both ids are the same, and 422 when a referenced storage location does not belong to the site. 
+     * Creates or replaces the default staging and quarantine storage locations of a site in a single idempotent upsert. Use this tool when commissioning a site\'s receiving flow or moving its defaults; use getSiteDefaults instead to read the current assignment. Preconditions: the site must exist, and both referenced storage locations must belong to that site. Required inputs: locationId (UUID) as a path parameter and a body with both defaultStagingLocationId and defaultQuarantineLocationId; the two ids must differ. Emits a LOCATION_SITE_DEFAULTS_PUT event and republishes the location fact carrying the new defaults. Returns 404 when the site does not exist, 403 LOCATION_SCOPE_DENIED when a location-scoped location:write grant does not cover locationId (ADR-0061), 400 when either id is missing or both ids are the same, and 422 when a referenced storage location does not belong to the site. 
      * Configure Default Storage Locations for Site
      */
     async configureSiteDefaultsRaw(requestParameters: ConfigureSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SiteDefaultsResponse>> {
@@ -84,7 +87,7 @@ export class SiteDefaultsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates or replaces the default staging and quarantine storage locations of a site in a single idempotent upsert. Use this tool when commissioning a site\'s receiving flow or moving its defaults; use getSiteDefaults instead to read the current assignment. Preconditions: the site must exist, and both referenced storage locations must belong to that site. Required inputs: locationId (UUID) as a path parameter and a body with both defaultStagingLocationId and defaultQuarantineLocationId; the two ids must differ. Emits a LOCATION_SITE_DEFAULTS_PUT event and republishes the location fact carrying the new defaults. Returns 404 when the site does not exist, 400 when either id is missing or both ids are the same, and 422 when a referenced storage location does not belong to the site. 
+     * Creates or replaces the default staging and quarantine storage locations of a site in a single idempotent upsert. Use this tool when commissioning a site\'s receiving flow or moving its defaults; use getSiteDefaults instead to read the current assignment. Preconditions: the site must exist, and both referenced storage locations must belong to that site. Required inputs: locationId (UUID) as a path parameter and a body with both defaultStagingLocationId and defaultQuarantineLocationId; the two ids must differ. Emits a LOCATION_SITE_DEFAULTS_PUT event and republishes the location fact carrying the new defaults. Returns 404 when the site does not exist, 403 LOCATION_SCOPE_DENIED when a location-scoped location:write grant does not cover locationId (ADR-0061), 400 when either id is missing or both ids are the same, and 422 when a referenced storage location does not belong to the site. 
      * Configure Default Storage Locations for Site
      */
     async configureSiteDefaults(requestParameters: ConfigureSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SiteDefaultsResponse> {
@@ -93,7 +96,7 @@ export class SiteDefaultsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the default staging and quarantine storage location ids configured for a site. Use this tool when routing received or quarantined inventory; do not use configureSiteDefaults, which overwrites the assignment. Preconditions: the site must exist; both ids are null when defaults were never configured. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_SITE_DEFAULTS_GET event; no state changes. Returns 404 when the site does not exist. 
+     * Returns the default staging and quarantine storage location ids configured for a site. Use this tool when routing received or quarantined inventory; do not use configureSiteDefaults, which overwrites the assignment. Preconditions: the site must exist; both ids are null when defaults were never configured. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_SITE_DEFAULTS_GET event; no state changes. Returns 404 when the site does not exist and 403 LOCATION_SCOPE_DENIED when a location-scoped location:read grant does not cover locationId (ADR-0061). 
      * Get Default Storage Locations for Site
      */
     async getSiteDefaultsRaw(requestParameters: GetSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SiteDefaultsResponse>> {
@@ -127,7 +130,7 @@ export class SiteDefaultsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the default staging and quarantine storage location ids configured for a site. Use this tool when routing received or quarantined inventory; do not use configureSiteDefaults, which overwrites the assignment. Preconditions: the site must exist; both ids are null when defaults were never configured. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_SITE_DEFAULTS_GET event; no state changes. Returns 404 when the site does not exist. 
+     * Returns the default staging and quarantine storage location ids configured for a site. Use this tool when routing received or quarantined inventory; do not use configureSiteDefaults, which overwrites the assignment. Preconditions: the site must exist; both ids are null when defaults were never configured. Required inputs: locationId (UUID) as a path parameter. Emits a LOCATION_SITE_DEFAULTS_GET event; no state changes. Returns 404 when the site does not exist and 403 LOCATION_SCOPE_DENIED when a location-scoped location:read grant does not cover locationId (ADR-0061). 
      * Get Default Storage Locations for Site
      */
     async getSiteDefaults(requestParameters: GetSiteDefaultsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SiteDefaultsResponse> {

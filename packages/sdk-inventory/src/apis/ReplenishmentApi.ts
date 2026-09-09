@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateReplenishmentPolicyRequest,
   ReplenishmentNeedResponse,
   ReplenishmentPolicyResponse,
@@ -24,6 +25,8 @@ import type {
   UpdateReplenishmentPolicyRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateReplenishmentPolicyRequestFromJSON,
     CreateReplenishmentPolicyRequestToJSON,
     ReplenishmentNeedResponseFromJSON,

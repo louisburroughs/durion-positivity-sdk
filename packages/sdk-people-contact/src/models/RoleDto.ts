@@ -20,17 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface RoleDto {
     /**
-     * Whether the role is active
-     * @type {boolean}
-     * @memberof RoleDto
-     */
-    active?: boolean;
-    /**
-     * Stable role code
+     * Stable role code, identical to the name
      * @type {string}
      * @memberof RoleDto
      */
-    code?: string;
+    code: string;
     /**
      * Description of the role
      * @type {string}
@@ -38,23 +32,26 @@ export interface RoleDto {
      */
     description?: string;
     /**
-     * Human-readable role name
+     * Role identifier
      * @type {string}
      * @memberof RoleDto
      */
-    name?: string;
+    id: string;
     /**
-     * Scope at which the role applies
+     * Role name, which is also its stable code
      * @type {string}
      * @memberof RoleDto
      */
-    scopeType?: string;
+    name: string;
 }
 
 /**
  * Check if a given object implements the RoleDto interface.
  */
 export function instanceOfRoleDto(value: object): boolean {
+    if (!('code' in value)) return false;
+    if (!('id' in value)) return false;
+    if (!('name' in value)) return false;
     return true;
 }
 
@@ -68,11 +65,10 @@ export function RoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): R
     }
     return {
         
-        'active': json['active'] == null ? undefined : json['active'],
-        'code': json['code'] == null ? undefined : json['code'],
+        'code': json['code'],
         'description': json['description'] == null ? undefined : json['description'],
-        'name': json['name'] == null ? undefined : json['name'],
-        'scopeType': json['scopeType'] == null ? undefined : json['scopeType'],
+        'id': json['id'],
+        'name': json['name'],
     };
 }
 
@@ -82,11 +78,10 @@ export function RoleDtoToJSON(value?: RoleDto | null): any {
     }
     return {
         
-        'active': value['active'],
         'code': value['code'],
         'description': value['description'],
+        'id': value['id'],
         'name': value['name'],
-        'scopeType': value['scopeType'],
     };
 }
 

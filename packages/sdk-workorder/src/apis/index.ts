@@ -6,6 +6,7 @@ export * from './DailyDispatchBoardDashboardApi';
 export * from './EstimateAPIApi';
 export * from './EstimateSearchApi';
 export * from './EstimatesFromAppointmentsApi';
+export * from './LaborIntelligenceApi';
 export * from './OperationalContextApi';
 export * from './SubstituteLinkAPIApi';
 export * from './TechnicianAssignmentAPIApi';

@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateCycleCountPlanRequest,
   CycleCountPlanResponse,
   CycleCountTaskGenerationResponse,
@@ -23,6 +24,8 @@ import type {
   UpdateCycleCountPlanStatusRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateCycleCountPlanRequestFromJSON,
     CreateCycleCountPlanRequestToJSON,
     CycleCountPlanResponseFromJSON,

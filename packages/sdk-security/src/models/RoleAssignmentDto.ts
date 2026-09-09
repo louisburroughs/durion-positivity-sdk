@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * A role assignment binding a user to a role within a scope
+ * An effective-dated role assignment binding a user to a role
  * @export
  * @interface RoleAssignmentDto
  */
@@ -74,18 +74,6 @@ export interface RoleAssignmentDto {
      */
     roleId: string;
     /**
-     * Location identifiers the assignment applies to when scopeType is LOCATION
-     * @type {Set<string>}
-     * @memberof RoleAssignmentDto
-     */
-    scopeLocationIds?: Set<string>;
-    /**
-     * Scope type that constrains the assignment
-     * @type {string}
-     * @memberof RoleAssignmentDto
-     */
-    scopeType: RoleAssignmentDtoScopeTypeEnum;
-    /**
      * Identifier of the user the role is assigned to
      * @type {string}
      * @memberof RoleAssignmentDto
@@ -94,22 +82,11 @@ export interface RoleAssignmentDto {
 }
 
 /**
-* @export
-* @enum {string}
-*/
-export enum RoleAssignmentDtoScopeTypeEnum {
-    Global = 'GLOBAL',
-    Location = 'LOCATION'
-}
-
-
-/**
  * Check if a given object implements the RoleAssignmentDto interface.
  */
 export function instanceOfRoleAssignmentDto(value: object): boolean {
     if (!('id' in value)) return false;
     if (!('roleId' in value)) return false;
-    if (!('scopeType' in value)) return false;
     if (!('userId' in value)) return false;
     return true;
 }
@@ -133,8 +110,6 @@ export function RoleAssignmentDtoFromJSONTyped(json: any, ignoreDiscriminator: b
         'lastModifiedBy': json['lastModifiedBy'] == null ? undefined : json['lastModifiedBy'],
         'revokedAt': json['revokedAt'] == null ? undefined : (new Date(json['revokedAt'])),
         'roleId': json['roleId'],
-        'scopeLocationIds': json['scopeLocationIds'] == null ? undefined : json['scopeLocationIds'],
-        'scopeType': json['scopeType'],
         'userId': json['userId'],
     };
 }
@@ -154,8 +129,6 @@ export function RoleAssignmentDtoToJSON(value?: RoleAssignmentDto | null): any {
         'lastModifiedBy': value['lastModifiedBy'],
         'revokedAt': value['revokedAt'] == null ? undefined : ((value['revokedAt']).toISOString()),
         'roleId': value['roleId'],
-        'scopeLocationIds': value['scopeLocationIds'] == null ? undefined : Array.from(value['scopeLocationIds'] as Set<any>),
-        'scopeType': value['scopeType'],
         'userId': value['userId'],
     };
 }
