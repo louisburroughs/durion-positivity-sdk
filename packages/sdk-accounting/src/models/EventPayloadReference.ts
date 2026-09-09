@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Display projection for one UUID-backed value found in the event's raw payload. Display values are null when unavailable and are never replaced by the UUID.
+ * Display projection for one reference found in the event's raw payload. Display values are null when unavailable and are never replaced by the identifier.
  * @export
  * @interface EventPayloadReference
  */
@@ -26,23 +26,29 @@ export interface EventPayloadReference {
      */
     displayName?: string;
     /**
-     * Stable business reference or number for the reference, e.g. an invoice number, customer number or journal-entry number. Null when accounting holds none.
+     * Stable business reference or number for the reference, e.g. an invoice number, customer number, journal-entry number or the canonical location code. Null when accounting holds none.
      * @type {string}
      * @memberof EventPayloadReference
      */
     displayReference?: string;
     /**
-     * The identifier as it appears in the raw payload. Always present — this is the value the display fields describe, and it stays available for routing and audit.
+     * rawValue parsed as a UUID, for routing and audit. Null when the raw value is not in canonical UUID form — the normal case for LOCATION, whose accounting dimension is a code rather than a UUID.
      * @type {string}
      * @memberof EventPayloadReference
      */
-    id: string;
+    id?: string;
     /**
      * Dot-separated path of the value inside the raw payload, e.g. "billDetails.vendorId". Array elements are indexed, e.g. "lines[0].locationId".
      * @type {string}
      * @memberof EventPayloadReference
      */
     path: string;
+    /**
+     * The identifier as it appears in the raw payload, trimmed. Always present — this is the value the display fields describe, and it correlates the entry back to the payload. A UUID string for UUID-backed types; an accounting location code such as "LOC-107" for LOCATION.
+     * @type {string}
+     * @memberof EventPayloadReference
+     */
+    rawValue: string;
     /**
      * Kind of entity the identifier refers to, as recognized from the payload key.
      * @type {string}
@@ -70,8 +76,8 @@ export enum EventPayloadReferenceReferenceTypeEnum {
  * Check if a given object implements the EventPayloadReference interface.
  */
 export function instanceOfEventPayloadReference(value: object): boolean {
-    if (!('id' in value)) return false;
     if (!('path' in value)) return false;
+    if (!('rawValue' in value)) return false;
     if (!('referenceType' in value)) return false;
     return true;
 }
@@ -88,8 +94,9 @@ export function EventPayloadReferenceFromJSONTyped(json: any, ignoreDiscriminato
         
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'displayReference': json['displayReference'] == null ? undefined : json['displayReference'],
-        'id': json['id'],
+        'id': json['id'] == null ? undefined : json['id'],
         'path': json['path'],
+        'rawValue': json['rawValue'],
         'referenceType': json['referenceType'],
     };
 }
@@ -104,6 +111,7 @@ export function EventPayloadReferenceToJSON(value?: EventPayloadReference | null
         'displayReference': value['displayReference'],
         'id': value['id'],
         'path': value['path'],
+        'rawValue': value['rawValue'],
         'referenceType': value['referenceType'],
     };
 }

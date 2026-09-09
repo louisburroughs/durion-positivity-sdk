@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   AddBreakSegmentRequest,
+  ApiError,
   BreakSegmentResponse,
   StartWorkSessionRequest,
   StopWorkSessionRequest,
@@ -24,6 +25,8 @@ import type {
 import {
     AddBreakSegmentRequestFromJSON,
     AddBreakSegmentRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BreakSegmentResponseFromJSON,
     BreakSegmentResponseToJSON,
     StartWorkSessionRequestFromJSON,
@@ -112,7 +115,7 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an IN_PROGRESS work session binding a mechanic to a workorder task, stamping the start time from the server clock. Use this tool when a technician clocks onto a task; do not use stopWorkexecWorkSession, which ends a running session, or addBreakSegment, which pauses one. Preconditions: the workorder must exist, and the mechanic must have no other IN_PROGRESS session unless overlapping sessions are enabled by configuration, the caller holds timekeeping:overlap_override, and an overlapOverrideReason is supplied. Required inputs: mechanicId, workOrderId, workOrderTaskId, and locationId (all UUIDs); resourceId and overlapOverrideReason are optional. Emits a WORKORDER_WORK_SESSION_START event; any overlap override is recorded with the overriding user and timestamp. Returns 201 with the new session, 404 when the workorder does not exist, and 409 when the mechanic already has an active session and no valid override applies. 
+     * Creates an IN_PROGRESS work session binding a mechanic to a workorder task, stamping the start time from the server clock. Use this tool when a technician clocks onto a task; do not use stopWorkexecWorkSession, which ends a running session, or addBreakSegment, which pauses one. Preconditions: the workorder must exist, and the mechanic must have no other IN_PROGRESS session unless overlapping sessions are enabled by configuration, the caller holds timekeeping:overlap_override, and an overlapOverrideReason is supplied. A caller whose timekeeping:work_session:create grant is location-scoped must have locationId within reach (ADR-0061). Required inputs: mechanicId, workOrderId, workOrderTaskId, and locationId (all UUIDs); resourceId and overlapOverrideReason are optional. Emits a WORKORDER_WORK_SESSION_START event; any overlap override is recorded with the overriding user and timestamp. Returns 201 with the new session, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, 404 when the workorder does not exist, and 409 when the mechanic already has an active session and no valid override applies. 
      * Start a Technician Work Session
      */
     async startWorkexecWorkSessionRaw(requestParameters: StartWorkexecWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkSessionResponse>> {
@@ -149,7 +152,7 @@ export class WorkSessionAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates an IN_PROGRESS work session binding a mechanic to a workorder task, stamping the start time from the server clock. Use this tool when a technician clocks onto a task; do not use stopWorkexecWorkSession, which ends a running session, or addBreakSegment, which pauses one. Preconditions: the workorder must exist, and the mechanic must have no other IN_PROGRESS session unless overlapping sessions are enabled by configuration, the caller holds timekeeping:overlap_override, and an overlapOverrideReason is supplied. Required inputs: mechanicId, workOrderId, workOrderTaskId, and locationId (all UUIDs); resourceId and overlapOverrideReason are optional. Emits a WORKORDER_WORK_SESSION_START event; any overlap override is recorded with the overriding user and timestamp. Returns 201 with the new session, 404 when the workorder does not exist, and 409 when the mechanic already has an active session and no valid override applies. 
+     * Creates an IN_PROGRESS work session binding a mechanic to a workorder task, stamping the start time from the server clock. Use this tool when a technician clocks onto a task; do not use stopWorkexecWorkSession, which ends a running session, or addBreakSegment, which pauses one. Preconditions: the workorder must exist, and the mechanic must have no other IN_PROGRESS session unless overlapping sessions are enabled by configuration, the caller holds timekeeping:overlap_override, and an overlapOverrideReason is supplied. A caller whose timekeeping:work_session:create grant is location-scoped must have locationId within reach (ADR-0061). Required inputs: mechanicId, workOrderId, workOrderTaskId, and locationId (all UUIDs); resourceId and overlapOverrideReason are optional. Emits a WORKORDER_WORK_SESSION_START event; any overlap override is recorded with the overriding user and timestamp. Returns 201 with the new session, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, 404 when the workorder does not exist, and 409 when the mechanic already has an active session and no valid override applies. 
      * Start a Technician Work Session
      */
     async startWorkexecWorkSession(requestParameters: StartWorkexecWorkSessionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkSessionResponse> {

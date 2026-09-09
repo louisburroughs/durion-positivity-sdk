@@ -57,12 +57,6 @@ export interface AssignRolePermissionByKeyRequest {
     permissionKey: string;
 }
 
-export interface CheckUserPermissionRequest {
-    userId: string;
-    permission: string;
-    locationId?: string;
-}
-
 export interface CreateRoleRequest {
     roleCreateRequest: RoleCreateRequest;
 }
@@ -175,72 +169,6 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Checks whether a user holds a specific permission through a currently effective role assignment whose scope covers the given location. Use this tool for a point authorization probe by user UUID; use getAuthorizationDecision instead when the caller has a principal identifier from the RBAC matrix rather than a user id. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) and permission (domain:resource:action) as query parameters; locationId is optional and defaults to GLOBAL. No events are emitted and no state changes; this is a read-only check. Returns 200 with a plain boolean body, and 404 when the user does not exist. 
-     * Check One User Permission at a Location
-     */
-    async checkUserPermissionRaw(requestParameters: CheckUserPermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<boolean>> {
-        if (requestParameters['userId'] == null) {
-            throw new runtime.RequiredError(
-                'userId',
-                'Required parameter "userId" was null or undefined when calling checkUserPermission().'
-            );
-        }
-
-        if (requestParameters['permission'] == null) {
-            throw new runtime.RequiredError(
-                'permission',
-                'Required parameter "permission" was null or undefined when calling checkUserPermission().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['userId'] != null) {
-            queryParameters['userId'] = requestParameters['userId'];
-        }
-
-        if (requestParameters['permission'] != null) {
-            queryParameters['permission'] = requestParameters['permission'];
-        }
-
-        if (requestParameters['locationId'] != null) {
-            queryParameters['locationId'] = requestParameters['locationId'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["security:permission:view"]);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/v1/roles/check-permission`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        if (this.isJsonMime(response.headers.get('content-type'))) {
-            return new runtime.JSONApiResponse<boolean>(response);
-        } else {
-            return new runtime.TextApiResponse(response) as any;
-        }
-    }
-
-    /**
-     * Checks whether a user holds a specific permission through a currently effective role assignment whose scope covers the given location. Use this tool for a point authorization probe by user UUID; use getAuthorizationDecision instead when the caller has a principal identifier from the RBAC matrix rather than a user id. Preconditions: the caller must hold security:permission:view and the user must exist. Required inputs: userId (UUID) and permission (domain:resource:action) as query parameters; locationId is optional and defaults to GLOBAL. No events are emitted and no state changes; this is a read-only check. Returns 200 with a plain boolean body, and 404 when the user does not exist. 
-     * Check One User Permission at a Location
-     */
-    async checkUserPermission(requestParameters: CheckUserPermissionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<boolean> {
-        const response = await this.checkUserPermissionRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * Creates a new role with the given name and optional description; the role starts with no permissions and no user assignments. Use this tool to define a new role; do not use createRoleAssignment, which links an existing role to a user, and do not use updateRolePermissions, which changes an existing role\'s grants. Preconditions: the caller must hold security:role:create and no role with the same name (compared case-insensitively) may already exist. Required inputs: name, non-blank; description is optional. Emits a SECURITY_ROLE_CREATE event and records the creating actor and timestamp. Returns 400 when name is missing or blank, and 409 with DUPLICATE_ROLE_NAME when the name is already taken regardless of case. 
      * Create a New Role
      */
@@ -287,8 +215,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a role to a user with a scope (GLOBAL or LOCATION) and an optional effective date window. Use this tool when the assignment needs scope or dates; do not use assignUserRole, the simple path-parameter variant that always creates a GLOBAL assignment starting now. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same role, scope, and (for LOCATION scope) location. Required inputs: userId and roleId (UUIDs); scopeType defaults to GLOBAL, scopeLocationIds is required for LOCATION scope and forbidden for GLOBAL, and effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 400 when the scope and location combination is invalid, 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
-     * Create a Scoped Role Assignment
+     * Assigns a role to a user with an optional effective date window. Use this tool when the assignment needs dates; do not use assignUserRole, the simple path-parameter variant that always creates an assignment starting now. Location reach is not set here: it is a property of the role (location_scope) resolved against the user\'s pos-people staffing assignment at token issuance. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same user and role. Required inputs: userId and roleId (UUIDs); effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
+     * Create an Effective-Dated Role Assignment
      */
     async createRoleAssignmentRaw(requestParameters: CreateRoleAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleAssignmentDto>> {
         if (requestParameters['roleAssignmentRequest'] == null) {
@@ -324,8 +252,8 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a role to a user with a scope (GLOBAL or LOCATION) and an optional effective date window. Use this tool when the assignment needs scope or dates; do not use assignUserRole, the simple path-parameter variant that always creates a GLOBAL assignment starting now. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same role, scope, and (for LOCATION scope) location. Required inputs: userId and roleId (UUIDs); scopeType defaults to GLOBAL, scopeLocationIds is required for LOCATION scope and forbidden for GLOBAL, and effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 400 when the scope and location combination is invalid, 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
-     * Create a Scoped Role Assignment
+     * Assigns a role to a user with an optional effective date window. Use this tool when the assignment needs dates; do not use assignUserRole, the simple path-parameter variant that always creates an assignment starting now. Location reach is not set here: it is a property of the role (location_scope) resolved against the user\'s pos-people staffing assignment at token issuance. Preconditions: the caller must hold security:role:assign, the user and role must exist, and no overlapping assignment may exist for the same user and role. Required inputs: userId and roleId (UUIDs); effectiveStartDate defaults to now with an open-ended effectiveEndDate. Emits a SECURITY_ROLE_ASSIGNMENT_CREATE event. Returns 404 when the user or role does not exist, and 409 with ROLE_ASSIGNMENT_CONFLICT when the date window overlaps an existing assignment. 
+     * Create an Effective-Dated Role Assignment
      */
     async createRoleAssignment(requestParameters: CreateRoleAssignmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleAssignmentDto> {
         const response = await this.createRoleAssignmentRaw(requestParameters, initOverrides);
@@ -461,7 +389,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s scoped role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s effective role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
      * Get a Role\'s Default Authority Expansion
      */
     async getRoleDefaultPermissionsRaw(requestParameters: GetRoleDefaultPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RoleDefaultPermissionsResponse>> {
@@ -495,7 +423,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s scoped role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
+     * Returns the authority codes a role name expands to: the ROLE_ prefixed authority plus every permission code granted to that role in role_permissions. Use this tool to prebuild per-role permission or tool caches, as pos-mcp-server does; do not use getUserPermissions, which reads one specific user\'s effective role assignments rather than the authority set a role carries. Preconditions: the caller must hold security:role:view; the role name does not need to exist in the database. Required inputs: role name as a path parameter, for example SHOP_MGR. No events are emitted and no state changes; this is a read-only lookup of the role\'s persisted permission grants. Returns 200 in all cases; an unrecognized role, or a role with no grants, yields only its ROLE_ authority with no domain codes rather than an error. 
      * Get a Role\'s Default Authority Expansion
      */
     async getRoleDefaultPermissions(requestParameters: GetRoleDefaultPermissionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RoleDefaultPermissionsResponse> {
@@ -672,7 +600,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a user\'s role assignments with their scope and effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and in what scope; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Returns a user\'s role assignments with their effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and for what window; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
      * List a User\'s Role Assignments
      */
     async listUserRoleAssignmentsRaw(requestParameters: ListUserRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<RoleAssignmentDto>>> {
@@ -710,7 +638,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a user\'s role assignments with their scope and effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and in what scope; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
+     * Returns a user\'s role assignments with their effective window, limited to currently effective assignments by default. Use this tool to inspect who holds which roles and for what window; use getUserPermissions instead when only the flattened permission set matters. Preconditions: the caller must hold security:role:view and the user must exist. Required inputs: userId (UUID) as a path parameter; includeHistory defaults to false and, when true, also returns expired and revoked assignments. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the user does not exist. 
      * List a User\'s Role Assignments
      */
     async listUserRoleAssignments(requestParameters: ListUserRoleAssignmentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<RoleAssignmentDto>> {

@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateCycleCountScheduleRequest,
   CycleCountScheduleResponse,
   UpdateCycleCountScheduleRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateCycleCountScheduleRequestFromJSON,
     CreateCycleCountScheduleRequestToJSON,
     CycleCountScheduleResponseFromJSON,

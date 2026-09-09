@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   WorkexecLaborPerformedRequest,
   WorkexecLaborPerformedResponse,
   WorkexecTimerEntryResponse,
@@ -22,6 +23,8 @@ import type {
   WorkexecTimerStopResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     WorkexecLaborPerformedRequestFromJSON,
     WorkexecLaborPerformedRequestToJSON,
     WorkexecLaborPerformedResponseFromJSON,
@@ -156,7 +159,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns tracked job minutes aggregated per technician, location, and local calendar day over an inclusive date range interpreted in the supplied timezone. Use this tool for payroll or utilization reporting across days; do not use getLaborHistory, which lists individual labor entries for one workorder. Preconditions: none beyond the caller holding workorder:labor:view; totals derive from recorded labor entries. Required inputs: startDate and endDate (ISO dates, endDate on or after startDate) and timezone (IANA name); locationId and technicianIds are optional filters. No events are emitted and no state changes; this is a read-only aggregation. Returns 400 when the timezone is invalid or endDate precedes startDate, and 200 with an empty list when no time was tracked in the range. 
+     * Returns tracked job minutes aggregated per technician, location, and local calendar day over an inclusive date range interpreted in the supplied timezone. Use this tool for payroll or utilization reporting across days; do not use getLaborHistory, which lists individual labor entries for one workorder. Preconditions: none beyond the caller holding workorder:labor:view; totals derive from recorded labor entries. A caller whose workorder:labor:view grant is location-scoped must have a supplied locationId within reach, and without one sees only the locations within reach (ADR-0061). Required inputs: startDate and endDate (ISO dates, endDate on or after startDate) and timezone (IANA name); locationId and technicianIds are optional filters. No events are emitted and no state changes; this is a read-only aggregation. Returns 400 when the timezone is invalid or endDate precedes startDate, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the supplied locationId, and 200 with an empty list when no time was tracked in the range. 
      * Get Aggregated Job Time Totals
      */
     async getJobTimeTotalsRaw(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
@@ -224,7 +227,7 @@ export class WorkexecTimeTrackingAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns tracked job minutes aggregated per technician, location, and local calendar day over an inclusive date range interpreted in the supplied timezone. Use this tool for payroll or utilization reporting across days; do not use getLaborHistory, which lists individual labor entries for one workorder. Preconditions: none beyond the caller holding workorder:labor:view; totals derive from recorded labor entries. Required inputs: startDate and endDate (ISO dates, endDate on or after startDate) and timezone (IANA name); locationId and technicianIds are optional filters. No events are emitted and no state changes; this is a read-only aggregation. Returns 400 when the timezone is invalid or endDate precedes startDate, and 200 with an empty list when no time was tracked in the range. 
+     * Returns tracked job minutes aggregated per technician, location, and local calendar day over an inclusive date range interpreted in the supplied timezone. Use this tool for payroll or utilization reporting across days; do not use getLaborHistory, which lists individual labor entries for one workorder. Preconditions: none beyond the caller holding workorder:labor:view; totals derive from recorded labor entries. A caller whose workorder:labor:view grant is location-scoped must have a supplied locationId within reach, and without one sees only the locations within reach (ADR-0061). Required inputs: startDate and endDate (ISO dates, endDate on or after startDate) and timezone (IANA name); locationId and technicianIds are optional filters. No events are emitted and no state changes; this is a read-only aggregation. Returns 400 when the timezone is invalid or endDate precedes startDate, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover the supplied locationId, and 200 with an empty list when no time was tracked in the range. 
      * Get Aggregated Job Time Totals
      */
     async getJobTimeTotals(requestParameters: GetJobTimeTotalsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {

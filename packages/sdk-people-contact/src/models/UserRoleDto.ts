@@ -26,17 +26,11 @@ export interface UserRoleDto {
      */
     active?: boolean;
     /**
-     * Date the assignment ends
+     * Exclusive end of the effective window
      * @type {Date}
      * @memberof UserRoleDto
      */
     endDate?: Date;
-    /**
-     * Location identifier the role is scoped to
-     * @type {string}
-     * @memberof UserRoleDto
-     */
-    locationId?: string;
     /**
      * Stable role code
      * @type {string}
@@ -44,7 +38,7 @@ export interface UserRoleDto {
      */
     roleCode?: string;
     /**
-     * Date the assignment becomes effective
+     * Inclusive start of the effective window
      * @type {Date}
      * @memberof UserRoleDto
      */
@@ -76,7 +70,6 @@ export function UserRoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean
         
         'active': json['active'] == null ? undefined : json['active'],
         'endDate': json['endDate'] == null ? undefined : (new Date(json['endDate'])),
-        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'roleCode': json['roleCode'] == null ? undefined : json['roleCode'],
         'startDate': json['startDate'] == null ? undefined : (new Date(json['startDate'])),
         'userId': json['userId'] == null ? undefined : json['userId'],
@@ -90,10 +83,9 @@ export function UserRoleDtoToJSON(value?: UserRoleDto | null): any {
     return {
         
         'active': value['active'],
-        'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString().substring(0,10)),
-        'locationId': value['locationId'],
+        'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString()),
         'roleCode': value['roleCode'],
-        'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString().substring(0,10)),
+        'startDate': value['startDate'] == null ? undefined : ((value['startDate']).toISOString()),
         'userId': value['userId'],
     };
 }

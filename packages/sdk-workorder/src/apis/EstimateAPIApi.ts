@@ -340,7 +340,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Captures an immutable snapshot of the estimate\'s complete state — the estimate plus all its line items — for audit trail and version history. Use this tool to preserve state before a significant change; submitEstimateForApproval already snapshots automatically, so do not duplicate it around submission. Preconditions: the estimate must exist; snapshots are additive and never modify the estimate itself. Required inputs: estimateId (UUID) as a path parameter; notes is an optional query parameter explaining why the snapshot was taken. Emits an ESTIMATE_SNAPSHOT_CREATE event. Returns 404 when the estimate does not exist, and 409 when the snapshot cannot be serialized. 
+     * Captures an immutable snapshot of the estimate\'s complete state — the estimate plus all its line items — for audit trail and version history. Use this tool to preserve state before a significant change; submitEstimateForApproval already snapshots automatically, so do not duplicate it around submission. Preconditions: the estimate must exist; snapshots are additive and never modify the estimate itself. Required inputs: estimateId (UUID) as a path parameter; notes is an optional query parameter explaining why the snapshot was taken. Emits an ESTIMATE_SNAPSHOT_CREATE event. Returns 404 when the estimate does not exist, and 500 when the snapshot cannot be serialized, which is a server fault rather than anything about the request. 
      * Create Estimate Historical Snapshot
      */
     async createEstimateSnapshotRaw(requestParameters: CreateEstimateSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateSnapshotResponse>> {
@@ -378,7 +378,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Captures an immutable snapshot of the estimate\'s complete state — the estimate plus all its line items — for audit trail and version history. Use this tool to preserve state before a significant change; submitEstimateForApproval already snapshots automatically, so do not duplicate it around submission. Preconditions: the estimate must exist; snapshots are additive and never modify the estimate itself. Required inputs: estimateId (UUID) as a path parameter; notes is an optional query parameter explaining why the snapshot was taken. Emits an ESTIMATE_SNAPSHOT_CREATE event. Returns 404 when the estimate does not exist, and 409 when the snapshot cannot be serialized. 
+     * Captures an immutable snapshot of the estimate\'s complete state — the estimate plus all its line items — for audit trail and version history. Use this tool to preserve state before a significant change; submitEstimateForApproval already snapshots automatically, so do not duplicate it around submission. Preconditions: the estimate must exist; snapshots are additive and never modify the estimate itself. Required inputs: estimateId (UUID) as a path parameter; notes is an optional query parameter explaining why the snapshot was taken. Emits an ESTIMATE_SNAPSHOT_CREATE event. Returns 404 when the estimate does not exist, and 500 when the snapshot cannot be serialized, which is a server fault rather than anything about the request. 
      * Create Estimate Historical Snapshot
      */
     async createEstimateSnapshot(requestParameters: CreateEstimateSnapshotRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateSnapshotResponse> {
@@ -525,7 +525,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Renders the estimate as a PDF via the pos-documents service, containing header details, line items grouped into parts and labor, and financial totals, returned as an attachment. Use this tool when a printable or emailable document is needed; use getEstimateSummary instead for the same content as JSON. Preconditions: the estimate must exist and the pos-documents service must be reachable. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_PDF_GENERATE audit event; no estimate state changes — the render is performed on demand and not stored. Returns 404 when the estimate does not exist, and 502 when the document service fails to render the PDF. 
+     * Renders the estimate as a PDF via the pos-documents service, containing header details, line items grouped into parts and labor, and financial totals, returned as an attachment. Use this tool when a printable or emailable document is needed; use getEstimateSummary instead for the same content as JSON. Preconditions: the estimate must exist and the pos-documents service must be reachable. A caller whose workorder:estimate:view grant is location-scoped must have the estimate\'s location within reach (ADR-0061). Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_PDF_GENERATE audit event; no estimate state changes — the render is performed on demand and not stored. Returns 404 when the estimate does not exist, 403 LOCATION_SCOPE_DENIED when it exists but its location is outside the caller\'s scope, and 502 when the document service fails to render the PDF. 
      * Generate Estimate PDF Document
      */
     async generateEstimatePdfRaw(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
@@ -559,7 +559,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Renders the estimate as a PDF via the pos-documents service, containing header details, line items grouped into parts and labor, and financial totals, returned as an attachment. Use this tool when a printable or emailable document is needed; use getEstimateSummary instead for the same content as JSON. Preconditions: the estimate must exist and the pos-documents service must be reachable. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_PDF_GENERATE audit event; no estimate state changes — the render is performed on demand and not stored. Returns 404 when the estimate does not exist, and 502 when the document service fails to render the PDF. 
+     * Renders the estimate as a PDF via the pos-documents service, containing header details, line items grouped into parts and labor, and financial totals, returned as an attachment. Use this tool when a printable or emailable document is needed; use getEstimateSummary instead for the same content as JSON. Preconditions: the estimate must exist and the pos-documents service must be reachable. A caller whose workorder:estimate:view grant is location-scoped must have the estimate\'s location within reach (ADR-0061). Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_PDF_GENERATE audit event; no estimate state changes — the render is performed on demand and not stored. Returns 404 when the estimate does not exist, 403 LOCATION_SCOPE_DENIED when it exists but its location is outside the caller\'s scope, and 502 when the document service fails to render the PDF. 
      * Generate Estimate PDF Document
      */
     async generateEstimatePdf(requestParameters: GenerateEstimatePdfRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
@@ -568,7 +568,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one estimate with its status, customer, vehicle, financial totals, and approval-related fields. Use this tool when the estimate id is known; use getEstimateSummary instead for the customer-facing grouped view, or searchEstimates to find estimates by text. Preconditions: the estimate must exist. Required inputs: estimateId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Returns one estimate with its status, customer, vehicle, financial totals, and approval-related fields. Use this tool when the estimate id is known; use getEstimateSummary instead for the customer-facing grouped view, or searchEstimates to find estimates by text. Preconditions: the estimate must exist. A caller whose workorder:estimate:view grant is location-scoped must have the estimate\'s location within reach (ADR-0061). Required inputs: estimateId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no estimate exists for the id, and 403 LOCATION_SCOPE_DENIED when the estimate exists but its location is outside the caller\'s scope. 
      * Get Estimate by Id
      */
     async getEstimateRaw(requestParameters: GetEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
@@ -602,7 +602,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one estimate with its status, customer, vehicle, financial totals, and approval-related fields. Use this tool when the estimate id is known; use getEstimateSummary instead for the customer-facing grouped view, or searchEstimates to find estimates by text. Preconditions: the estimate must exist. Required inputs: estimateId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Returns one estimate with its status, customer, vehicle, financial totals, and approval-related fields. Use this tool when the estimate id is known; use getEstimateSummary instead for the customer-facing grouped view, or searchEstimates to find estimates by text. Preconditions: the estimate must exist. A caller whose workorder:estimate:view grant is location-scoped must have the estimate\'s location within reach (ADR-0061). Required inputs: estimateId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no estimate exists for the id, and 403 LOCATION_SCOPE_DENIED when the estimate exists but its location is outside the caller\'s scope. 
      * Get Estimate by Id
      */
     async getEstimate(requestParameters: GetEstimateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {
@@ -611,7 +611,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the customer-facing summary of an estimate with line items grouped into parts and labor plus the financial breakdown. Use this tool for presentation to the customer; use getEstimate instead for the raw record, and generateEstimatePdf to render the same content as a PDF document. Preconditions: the estimate must exist; totals reflect the last calculateEstimateTotals run. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_SUMMARY_VIEW audit event; no estimate state changes — this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Returns the customer-facing summary of an estimate with line items grouped into parts and labor plus the financial breakdown. Use this tool for presentation to the customer; use getEstimate instead for the raw record, and generateEstimatePdf to render the same content as a PDF document. Preconditions: the estimate must exist; totals reflect the last calculateEstimateTotals run. A caller whose workorder:estimate:view grant is location-scoped must have the estimate\'s location within reach (ADR-0061). Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_SUMMARY_VIEW audit event; no estimate state changes — this is a read-only projection. Returns 404 when no estimate exists for the id, and 403 LOCATION_SCOPE_DENIED when the estimate exists but its location is outside the caller\'s scope. 
      * Get Customer-Facing Estimate Summary
      */
     async getEstimateSummaryRaw(requestParameters: GetEstimateSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateSummaryResponse>> {
@@ -645,7 +645,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the customer-facing summary of an estimate with line items grouped into parts and labor plus the financial breakdown. Use this tool for presentation to the customer; use getEstimate instead for the raw record, and generateEstimatePdf to render the same content as a PDF document. Preconditions: the estimate must exist; totals reflect the last calculateEstimateTotals run. Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_SUMMARY_VIEW audit event; no estimate state changes — this is a read-only projection. Returns 404 when no estimate exists for the id. 
+     * Returns the customer-facing summary of an estimate with line items grouped into parts and labor plus the financial breakdown. Use this tool for presentation to the customer; use getEstimate instead for the raw record, and generateEstimatePdf to render the same content as a PDF document. Preconditions: the estimate must exist; totals reflect the last calculateEstimateTotals run. A caller whose workorder:estimate:view grant is location-scoped must have the estimate\'s location within reach (ADR-0061). Required inputs: estimateId (UUID) as a path parameter. Emits an ESTIMATE_SUMMARY_VIEW audit event; no estimate state changes — this is a read-only projection. Returns 404 when no estimate exists for the id, and 403 LOCATION_SCOPE_DENIED when the estimate exists but its location is outside the caller\'s scope. 
      * Get Customer-Facing Estimate Summary
      */
     async getEstimateSummary(requestParameters: GetEstimateSummaryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateSummaryResponse> {
@@ -654,7 +654,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every estimate in the system as an unpaginated list, in all statuses from DRAFT through APPROVED, DECLINED, and EXPIRED. Use this tool only for small datasets or admin views; use searchEstimates instead for paginated, filtered lookup by query, customer, or vehicle. Preconditions: none beyond the caller holding workorder:estimate:view. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_ESTIMATE_LIST audit event; no estimate state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
+     * Returns every estimate in the system as an unpaginated list, in all statuses from DRAFT through APPROVED, DECLINED, and EXPIRED. Use this tool only for small datasets or admin views; use searchEstimates instead for paginated, filtered lookup by query, customer, or vehicle. Preconditions: none beyond the caller holding workorder:estimate:view; a caller whose grant is location-scoped sees only estimates at locations within reach (ADR-0061), and an empty reach is an empty list. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_ESTIMATE_LIST audit event; no estimate state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
      * List All Estimates
      */
     async listEstimatesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
@@ -681,7 +681,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every estimate in the system as an unpaginated list, in all statuses from DRAFT through APPROVED, DECLINED, and EXPIRED. Use this tool only for small datasets or admin views; use searchEstimates instead for paginated, filtered lookup by query, customer, or vehicle. Preconditions: none beyond the caller holding workorder:estimate:view. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_ESTIMATE_LIST audit event; no estimate state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
+     * Returns every estimate in the system as an unpaginated list, in all statuses from DRAFT through APPROVED, DECLINED, and EXPIRED. Use this tool only for small datasets or admin views; use searchEstimates instead for paginated, filtered lookup by query, customer, or vehicle. Preconditions: none beyond the caller holding workorder:estimate:view; a caller whose grant is location-scoped sees only estimates at locations within reach (ADR-0061), and an empty reach is an empty list. Required inputs: none — there are no filters or pagination parameters. Emits a WORKORDER_ESTIMATE_LIST audit event; no estimate state changes — this is a read-only projection. Returns 200 with the full list, possibly empty. 
      * List All Estimates
      */
     async listEstimates(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
@@ -733,7 +733,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all estimates recorded against one location, unpaginated and in every status. Use this tool for a location\'s estimate book; do not use listEstimatesByShop, which is the legacy alias of this same lookup. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_LOCATION audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * Returns all estimates recorded against one location, unpaginated and in every status. Use this tool for a location\'s estimate book; do not use listEstimatesByShop, which is the legacy alias of this same lookup. Preconditions: an unknown locationId simply yields an empty list; a caller whose workorder:estimate:view grant is location-scoped must have locationId within reach (ADR-0061). Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_LOCATION audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId. 
      * List Estimates for a Location
      */
     async listEstimatesByLocationRaw(requestParameters: ListEstimatesByLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
@@ -767,7 +767,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all estimates recorded against one location, unpaginated and in every status. Use this tool for a location\'s estimate book; do not use listEstimatesByShop, which is the legacy alias of this same lookup. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_LOCATION audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * Returns all estimates recorded against one location, unpaginated and in every status. Use this tool for a location\'s estimate book; do not use listEstimatesByShop, which is the legacy alias of this same lookup. Preconditions: an unknown locationId simply yields an empty list; a caller whose workorder:estimate:view grant is location-scoped must have locationId within reach (ADR-0061). Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_LOCATION audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId. 
      * List Estimates for a Location
      */
     async listEstimatesByLocation(requestParameters: ListEstimatesByLocationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
@@ -776,7 +776,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all estimates recorded against one shop location, unpaginated and in every status. Use this tool when the caller\'s route vocabulary says shop; it is a legacy alias of listEstimatesByLocation and returns identical results, so use listEstimatesByLocation instead in new integrations. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_SHOP audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * Returns all estimates recorded against one shop location, unpaginated and in every status. Use this tool when the caller\'s route vocabulary says shop; it is a legacy alias of listEstimatesByLocation and returns identical results, so use listEstimatesByLocation instead in new integrations. Preconditions: an unknown locationId simply yields an empty list; a caller whose workorder:estimate:view grant is location-scoped must have locationId within reach (ADR-0061). Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_SHOP audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId. 
      * List Estimates for a Shop
      */
     async listEstimatesByShopRaw(requestParameters: ListEstimatesByShopRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EstimateResponse>>> {
@@ -810,7 +810,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns all estimates recorded against one shop location, unpaginated and in every status. Use this tool when the caller\'s route vocabulary says shop; it is a legacy alias of listEstimatesByLocation and returns identical results, so use listEstimatesByLocation instead in new integrations. Preconditions: none — an unknown locationId simply yields an empty list. Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_SHOP audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty. 
+     * Returns all estimates recorded against one shop location, unpaginated and in every status. Use this tool when the caller\'s route vocabulary says shop; it is a legacy alias of listEstimatesByLocation and returns identical results, so use listEstimatesByLocation instead in new integrations. Preconditions: an unknown locationId simply yields an empty list; a caller whose workorder:estimate:view grant is location-scoped must have locationId within reach (ADR-0061). Required inputs: locationId (UUID) as a path parameter. Emits a WORKORDER_ESTIMATE_SEARCH_BY_SHOP audit event; no estimate state changes — this is a read-only projection. Returns 200 with the estimates, possibly empty, and 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId. 
      * List Estimates for a Shop
      */
     async listEstimatesByShop(requestParameters: ListEstimatesByShopRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EstimateResponse>> {
@@ -962,7 +962,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits a DRAFT estimate for customer approval, creating an immutable snapshot and transitioning it to PENDING_APPROVAL. Use this tool when the draft is ready to present; do not use approveEstimate before submission, since approval requires PENDING_APPROVAL status, and calculateEstimateTotals should already have produced totals. Preconditions: the estimate must be in DRAFT status and complete — a customer, a vehicle, at least one line item, and calculated totals are all required. Required inputs: estimateId (UUID) as a path parameter; there is no request body, and the submitting user comes from the security context. Emits a WORKORDER_ESTIMATE_SUBMIT event and persists a submission snapshot. Returns 404 when the estimate does not exist, and 400 when it is not DRAFT or fails a completeness check. 
+     * Submits a DRAFT estimate for customer approval, creating an immutable snapshot and transitioning it to PENDING_APPROVAL. Use this tool when the draft is ready to present; do not use approveEstimate before submission, since approval requires PENDING_APPROVAL status, and calculateEstimateTotals should already have produced totals. Preconditions: the estimate must be in DRAFT status and complete — a customer, a vehicle, at least one line item, and calculated totals are all required. Required inputs: estimateId (UUID) as a path parameter; there is no request body, and the submitting user comes from the security context. Emits a WORKORDER_ESTIMATE_SUBMIT event and persists a submission snapshot. Returns 404 when the estimate does not exist, 409 when it is not DRAFT, and 422 when it is DRAFT but fails a completeness check. 
      * Submit Estimate for Customer Approval
      */
     async submitEstimateForApprovalRaw(requestParameters: SubmitEstimateForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EstimateResponse>> {
@@ -996,7 +996,7 @@ export class EstimateAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits a DRAFT estimate for customer approval, creating an immutable snapshot and transitioning it to PENDING_APPROVAL. Use this tool when the draft is ready to present; do not use approveEstimate before submission, since approval requires PENDING_APPROVAL status, and calculateEstimateTotals should already have produced totals. Preconditions: the estimate must be in DRAFT status and complete — a customer, a vehicle, at least one line item, and calculated totals are all required. Required inputs: estimateId (UUID) as a path parameter; there is no request body, and the submitting user comes from the security context. Emits a WORKORDER_ESTIMATE_SUBMIT event and persists a submission snapshot. Returns 404 when the estimate does not exist, and 400 when it is not DRAFT or fails a completeness check. 
+     * Submits a DRAFT estimate for customer approval, creating an immutable snapshot and transitioning it to PENDING_APPROVAL. Use this tool when the draft is ready to present; do not use approveEstimate before submission, since approval requires PENDING_APPROVAL status, and calculateEstimateTotals should already have produced totals. Preconditions: the estimate must be in DRAFT status and complete — a customer, a vehicle, at least one line item, and calculated totals are all required. Required inputs: estimateId (UUID) as a path parameter; there is no request body, and the submitting user comes from the security context. Emits a WORKORDER_ESTIMATE_SUBMIT event and persists a submission snapshot. Returns 404 when the estimate does not exist, 409 when it is not DRAFT, and 422 when it is DRAFT but fails a completeness check. 
      * Submit Estimate for Customer Approval
      */
     async submitEstimateForApproval(requestParameters: SubmitEstimateForApprovalRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EstimateResponse> {

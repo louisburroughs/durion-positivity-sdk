@@ -50,7 +50,7 @@ export interface ListPersonLocationsRequest {
 export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
 
     /**
-     * Resolves the authenticated caller\'s primary active location from their staffing assignments as of today, defaulting to the platform\'s top-level location when none is assigned. Use this tool when a UI or service needs the current user\'s home location; use listMyLocations instead to see every active assignment, and getPersonPrimaryLocation for a different person. Preconditions: none beyond authentication; callers without a person link or a primary assignment receive the top-level default location with defaulted=true. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 only when the caller has no primary assignment AND no top-level default location could be resolved from the location replica. 
+     * Resolves the authenticated caller\'s primary active location from their staffing assignments as of today, defaulting to the platform\'s top-level location when none is assigned. Use this tool when a UI or service needs the current user\'s home location; use listMyLocations instead to see every active assignment, and getPersonPrimaryLocation for a different person. Preconditions: the people:self:view permission; callers without a person link or a primary assignment receive the top-level default location with defaulted=true. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 only when the caller has no primary assignment AND no top-level default location could be resolved from the location replica. 
      * Get Current User Primary Location
      */
     async getMyPrimaryLocationRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PrimaryLocationResponse>> {
@@ -60,7 +60,7 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:availability:view"]);
+            const tokenString = await token("bearerAuth", ["people:self:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -77,7 +77,7 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves the authenticated caller\'s primary active location from their staffing assignments as of today, defaulting to the platform\'s top-level location when none is assigned. Use this tool when a UI or service needs the current user\'s home location; use listMyLocations instead to see every active assignment, and getPersonPrimaryLocation for a different person. Preconditions: none beyond authentication; callers without a person link or a primary assignment receive the top-level default location with defaulted=true. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 only when the caller has no primary assignment AND no top-level default location could be resolved from the location replica. 
+     * Resolves the authenticated caller\'s primary active location from their staffing assignments as of today, defaulting to the platform\'s top-level location when none is assigned. Use this tool when a UI or service needs the current user\'s home location; use listMyLocations instead to see every active assignment, and getPersonPrimaryLocation for a different person. Preconditions: the people:self:view permission; callers without a person link or a primary assignment receive the top-level default location with defaulted=true. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_PRIMARY_LOCATION_GET audit event but changes no state; this is a read-only projection. Returns 404 only when the caller has no primary assignment AND no top-level default location could be resolved from the location replica. 
      * Get Current User Primary Location
      */
     async getMyPrimaryLocation(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PrimaryLocationResponse> {
@@ -129,7 +129,7 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the authenticated caller\'s staffing assignments that are active today, primary first. Use this tool to populate a location switcher for the current user; use getMyPrimaryLocation instead when only the single primary location is needed. Preconditions: the caller must be linked to a person in the user-link replica; the link data is event-fed and can lag the link authority. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_ME_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, 404 when no person is linked to the current user, and 401 when the security context carries no username. 
+     * Lists the authenticated caller\'s staffing assignments that are active today, primary first. Use this tool to populate a location switcher for the current user; use getMyPrimaryLocation instead when only the single primary location is needed. Preconditions: the people:self:view permission, and the caller must be linked to a person in the user-link replica to have any assignment to list; the link data is event-fed and can lag the link authority. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_ME_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, 404 when no person is linked to the current user, and 401 when the security context carries no username. 
      * List Current User Active Location Assignments
      */
     async listMyLocationsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<StaffingAssignmentResponse>>> {
@@ -139,7 +139,7 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:availability:view"]);
+            const tokenString = await token("bearerAuth", ["people:self:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -156,7 +156,7 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the authenticated caller\'s staffing assignments that are active today, primary first. Use this tool to populate a location switcher for the current user; use getMyPrimaryLocation instead when only the single primary location is needed. Preconditions: the caller must be linked to a person in the user-link replica; the link data is event-fed and can lag the link authority. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_ME_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, 404 when no person is linked to the current user, and 401 when the security context carries no username. 
+     * Lists the authenticated caller\'s staffing assignments that are active today, primary first. Use this tool to populate a location switcher for the current user; use getMyPrimaryLocation instead when only the single primary location is needed. Preconditions: the people:self:view permission, and the caller must be linked to a person in the user-link replica to have any assignment to list; the link data is event-fed and can lag the link authority. Required inputs: none; identity comes from the bearer token and there are no parameters. Emits a PEOPLE_ME_LOCATIONS_LIST audit event but changes no state; this is a read-only projection. Returns 200 with an empty list when the person has no assignment active today, 404 when no person is linked to the current user, and 401 when the security context carries no username. 
      * List Current User Active Location Assignments
      */
     async listMyLocations(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<StaffingAssignmentResponse>> {
@@ -165,7 +165,7 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists people with staffing assignments active on a given date, joined with identity fields from the person replica, one row per assignment. Use this tool to see who is available to work at a location on a date; use getPersonPrimaryLocation instead to resolve a single person\'s home location. Preconditions: when locationId is omitted the caller must be linked to a person with an active assignment, because the requester\'s own location becomes the filter. Required inputs: none are mandatory; locationId (UUID) defaults to the requester\'s location and date (yyyy-MM-dd) defaults to today. Emits a PEOPLE_AVAILABILITY_LIST audit event but changes no state; this is a read-only projection. Returns 404 when locationId is omitted and the requester has no active location assignment or no person link. 
+     * Lists people with staffing assignments active on a given date, joined with identity fields from the person replica, one row per assignment. Use this tool to see who is available to work at a location on a date; use getPersonPrimaryLocation instead to resolve a single person\'s home location. Preconditions: when locationId is omitted the caller must be linked to a person with an active assignment, because the requester\'s own location becomes the filter. Required inputs: none are mandatory; locationId (UUID) defaults to the requester\'s location and date (yyyy-MM-dd) defaults to today. Location scope: when locationId is given it must lie within the caller\'s location reach, or the request is refused with 403 LOCATION_SCOPE_DENIED. When locationId is omitted the filter is the requester\'s own location; if the caller\'s people:availability:view permission is location-scoped and that location lies outside their reach the list is empty rather than refused, and a caller whose permission is not location-scoped is unaffected. Emits a PEOPLE_AVAILABILITY_LIST audit event but changes no state; this is a read-only projection. Returns 404 when locationId is omitted and the requester has no active location assignment or no person link, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s location reach. 
      * List People Availability For A Location
      */
     async listPeopleAvailabilityRaw(requestParameters: ListPeopleAvailabilityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PeopleAvailabilityResponse>>> {
@@ -200,7 +200,7 @@ export class PeopleAvailabilityAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists people with staffing assignments active on a given date, joined with identity fields from the person replica, one row per assignment. Use this tool to see who is available to work at a location on a date; use getPersonPrimaryLocation instead to resolve a single person\'s home location. Preconditions: when locationId is omitted the caller must be linked to a person with an active assignment, because the requester\'s own location becomes the filter. Required inputs: none are mandatory; locationId (UUID) defaults to the requester\'s location and date (yyyy-MM-dd) defaults to today. Emits a PEOPLE_AVAILABILITY_LIST audit event but changes no state; this is a read-only projection. Returns 404 when locationId is omitted and the requester has no active location assignment or no person link. 
+     * Lists people with staffing assignments active on a given date, joined with identity fields from the person replica, one row per assignment. Use this tool to see who is available to work at a location on a date; use getPersonPrimaryLocation instead to resolve a single person\'s home location. Preconditions: when locationId is omitted the caller must be linked to a person with an active assignment, because the requester\'s own location becomes the filter. Required inputs: none are mandatory; locationId (UUID) defaults to the requester\'s location and date (yyyy-MM-dd) defaults to today. Location scope: when locationId is given it must lie within the caller\'s location reach, or the request is refused with 403 LOCATION_SCOPE_DENIED. When locationId is omitted the filter is the requester\'s own location; if the caller\'s people:availability:view permission is location-scoped and that location lies outside their reach the list is empty rather than refused, and a caller whose permission is not location-scoped is unaffected. Emits a PEOPLE_AVAILABILITY_LIST audit event but changes no state; this is a read-only projection. Returns 404 when locationId is omitted and the requester has no active location assignment or no person link, and 403 LOCATION_SCOPE_DENIED when locationId is outside the caller\'s location reach. 
      * List People Availability For A Location
      */
     async listPeopleAvailability(requestParameters: ListPeopleAvailabilityRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PeopleAvailabilityResponse>> {

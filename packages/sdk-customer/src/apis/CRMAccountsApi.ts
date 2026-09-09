@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BillingRuleRef,
   BillingTermsRef,
   CreateCommercialAccountRequest,
@@ -27,6 +28,7 @@ import type {
   GetPartyResponse,
   MergePartiesRequest,
   MergePartiesResponse,
+  PartyFactReplayResultDto,
   PartyNameRef,
   PartyNameResolveRequest,
   ResolveAccountTierRequest,
@@ -38,6 +40,8 @@ import type {
   UpsertCommunicationPreferencesResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BillingRuleRefFromJSON,
     BillingRuleRefToJSON,
     BillingTermsRefFromJSON,
@@ -62,6 +66,8 @@ import {
     MergePartiesRequestToJSON,
     MergePartiesResponseFromJSON,
     MergePartiesResponseToJSON,
+    PartyFactReplayResultDtoFromJSON,
+    PartyFactReplayResultDtoToJSON,
     PartyNameRefFromJSON,
     PartyNameRefToJSON,
     PartyNameResolveRequestFromJSON,
@@ -122,6 +128,12 @@ export interface GetPartyRequest {
 export interface MergePartiesOperationRequest {
     partyId: string;
     mergePartiesRequest: MergePartiesRequest;
+}
+
+export interface ReplayPartyFactsRequest {
+    afterPartyId?: string;
+    updatedSince?: Date;
+    limit?: number;
 }
 
 export interface ResolveAccountTierOperationRequest {
@@ -584,6 +596,54 @@ export class CRMAccountsApi extends runtime.BaseAPI {
      */
     async mergeParties(requestParameters: MergePartiesOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<MergePartiesResponse> {
         const response = await this.mergePartiesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Re-publishes customer.party.updated facts for one bounded page of parties so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one party, which republishes itself on its next ordinary update. Preconditions: fact publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterPartyId resumes a previous page, updatedSince restricts to parties changed at or after an instant, and limit bounds the page — it is clamped into 1..1000 rather than rejected, so a mistyped limit still replays a sane page. Emits a CUSTOMER_PARTY_FACT_REPLAY event and queues one party fact per party in the page; no CRM state changes. Returns 200 with complete=true and a null cursor once the customer base end is reached, 400 when a parameter is malformed, and 409 when fact publication is disabled. 
+     * Re-emit Party Facts for Replica Consumers
+     */
+    async replayPartyFactsRaw(requestParameters: ReplayPartyFactsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PartyFactReplayResultDto>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['afterPartyId'] != null) {
+            queryParameters['afterPartyId'] = requestParameters['afterPartyId'];
+        }
+
+        if (requestParameters['updatedSince'] != null) {
+            queryParameters['updatedSince'] = (requestParameters['updatedSince'] as any).toISOString();
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "crm:fact:replay"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/crm/accounts/facts/replay`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PartyFactReplayResultDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Re-publishes customer.party.updated facts for one bounded page of parties so that event-fed replicas in other modules can be seeded or repaired, returning what it emitted and a cursor for the next page. Use this tool to fill a consumer\'s replica after a first deployment or a consumer outage longer than broker retention; do not use it to fix one party, which republishes itself on its next ordinary update. Preconditions: fact publication must be enabled — a replay with it off is refused rather than reported as a successful no-op; replayed facts are indistinguishable from live ones, so consumers apply them through their normal path and their stale guard prevents an older fact regressing newer state. Required inputs: none; afterPartyId resumes a previous page, updatedSince restricts to parties changed at or after an instant, and limit bounds the page — it is clamped into 1..1000 rather than rejected, so a mistyped limit still replays a sane page. Emits a CUSTOMER_PARTY_FACT_REPLAY event and queues one party fact per party in the page; no CRM state changes. Returns 200 with complete=true and a null cursor once the customer base end is reached, 400 when a parameter is malformed, and 409 when fact publication is disabled. 
+     * Re-emit Party Facts for Replica Consumers
+     */
+    async replayPartyFacts(requestParameters: ReplayPartyFactsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PartyFactReplayResultDto> {
+        const response = await this.replayPartyFactsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

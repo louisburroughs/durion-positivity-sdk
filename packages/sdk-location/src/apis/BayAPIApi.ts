@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BayPatchRequest,
   BayRequest,
   BayResponse,
   PageBayResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BayPatchRequestFromJSON,
     BayPatchRequestToJSON,
     BayRequestFromJSON,
@@ -66,7 +69,7 @@ export interface PatchBayRequest {
 export class BayAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a service bay under a location with a type classification, concurrency capacity and optional capability and skill requirements. Use this tool when adding physical work capacity to a shop; do not use patchBay, which modifies a bay that already exists, and use createStorageLocation for inventory storage rather than vehicle bays. Preconditions: the location must exist, no bay of that location may already use the name (case-insensitive), and any serviceCapabilityIds must match registered service capability codes. Required inputs: name, bayType (one of GENERAL_SERVICE, ALIGNMENT, TIRE_SERVICE, HEAVY_DUTY, INSPECTION or WASH_DETAIL) and capacity.maxConcurrentVehicles of at least 1; status is optional, defaults to ACTIVE and only also accepts OUT_OF_SERVICE. Emits a LOCATION_BAY_CREATE event; no other records are touched. Returns 404 when the location does not exist and 409 when the bay name is already taken at that location. 
+     * Creates a service bay under a location with a type classification, concurrency capacity and optional capability and skill requirements. Use this tool when adding physical work capacity to a shop; do not use patchBay, which modifies a bay that already exists, and use createStorageLocation for inventory storage rather than vehicle bays. Preconditions: the location must exist, no bay of that location may already use the name (case-insensitive), and any serviceCapabilityIds must match registered service capability codes. Required inputs: name, bayType (one of GENERAL_SERVICE, ALIGNMENT, TIRE_SERVICE, HEAVY_DUTY, INSPECTION or WASH_DETAIL) and capacity.maxConcurrentVehicles of at least 1; status is optional, defaults to ACTIVE and only also accepts OUT_OF_SERVICE. Emits a LOCATION_BAY_CREATE event; no other records are touched. Returns 400 when locationId does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:manage grant does not cover locationId (ADR-0061), 404 when the location does not exist and 409 when the bay name is already taken at that location. 
      * Create a Service Bay for Location
      */
     async createBayRaw(requestParameters: CreateBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BayResponse>> {
@@ -110,7 +113,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a service bay under a location with a type classification, concurrency capacity and optional capability and skill requirements. Use this tool when adding physical work capacity to a shop; do not use patchBay, which modifies a bay that already exists, and use createStorageLocation for inventory storage rather than vehicle bays. Preconditions: the location must exist, no bay of that location may already use the name (case-insensitive), and any serviceCapabilityIds must match registered service capability codes. Required inputs: name, bayType (one of GENERAL_SERVICE, ALIGNMENT, TIRE_SERVICE, HEAVY_DUTY, INSPECTION or WASH_DETAIL) and capacity.maxConcurrentVehicles of at least 1; status is optional, defaults to ACTIVE and only also accepts OUT_OF_SERVICE. Emits a LOCATION_BAY_CREATE event; no other records are touched. Returns 404 when the location does not exist and 409 when the bay name is already taken at that location. 
+     * Creates a service bay under a location with a type classification, concurrency capacity and optional capability and skill requirements. Use this tool when adding physical work capacity to a shop; do not use patchBay, which modifies a bay that already exists, and use createStorageLocation for inventory storage rather than vehicle bays. Preconditions: the location must exist, no bay of that location may already use the name (case-insensitive), and any serviceCapabilityIds must match registered service capability codes. Required inputs: name, bayType (one of GENERAL_SERVICE, ALIGNMENT, TIRE_SERVICE, HEAVY_DUTY, INSPECTION or WASH_DETAIL) and capacity.maxConcurrentVehicles of at least 1; status is optional, defaults to ACTIVE and only also accepts OUT_OF_SERVICE. Emits a LOCATION_BAY_CREATE event; no other records are touched. Returns 400 when locationId does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:manage grant does not cover locationId (ADR-0061), 404 when the location does not exist and 409 when the bay name is already taken at that location. 
      * Create a Service Bay for Location
      */
     async createBay(requestParameters: CreateBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BayResponse> {
@@ -119,7 +122,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a bay permanently by id and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a bay was created in error; use patchBay with status OUT_OF_SERVICE instead to take a real bay out of service, which keeps it visible as inactive rather than removing it. Preconditions: the location must exist and the bay must belong to it; there is no usage check, so callers must confirm the bay is not referenced by scheduled work first. Required inputs: locationId and bayId (UUIDs) as path parameters; there is no request body. Emits a LOCATION_BAY_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location or bay does not exist. 
+     * Deletes a bay permanently by id and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a bay was created in error; use patchBay with status OUT_OF_SERVICE instead to take a real bay out of service, which keeps it visible as inactive rather than removing it. Preconditions: the location must exist and the bay must belong to it; there is no usage check, so callers must confirm the bay is not referenced by scheduled work first. Required inputs: locationId and bayId (UUIDs) as path parameters; there is no request body. Emits a LOCATION_BAY_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success, 400 when either id does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:manage grant does not cover locationId (ADR-0061), and 404 when the location or bay does not exist. 
      * Delete a Service Bay
      */
     async deleteBayRaw(requestParameters: DeleteBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -160,7 +163,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a bay permanently by id and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a bay was created in error; use patchBay with status OUT_OF_SERVICE instead to take a real bay out of service, which keeps it visible as inactive rather than removing it. Preconditions: the location must exist and the bay must belong to it; there is no usage check, so callers must confirm the bay is not referenced by scheduled work first. Required inputs: locationId and bayId (UUIDs) as path parameters; there is no request body. Emits a LOCATION_BAY_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success and 404 when the location or bay does not exist. 
+     * Deletes a bay permanently by id and publishes a deletion fact so replica consumers drop the row from their dispatch and roster views. Use this tool only when a bay was created in error; use patchBay with status OUT_OF_SERVICE instead to take a real bay out of service, which keeps it visible as inactive rather than removing it. Preconditions: the location must exist and the bay must belong to it; there is no usage check, so callers must confirm the bay is not referenced by scheduled work first. Required inputs: locationId and bayId (UUIDs) as path parameters; there is no request body. Emits a LOCATION_BAY_DELETE event; the row is hard-deleted, not soft-deleted. Returns 204 on success, 400 when either id does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:manage grant does not cover locationId (ADR-0061), and 404 when the location or bay does not exist. 
      * Delete a Service Bay
      */
     async deleteBay(requestParameters: DeleteBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -168,7 +171,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single service bay of a location, including its capacity, capability and skill requirement details. Use this tool when both the location id and bay id are known; use listBays instead to search or enumerate. Preconditions: the location must exist and the bay must belong to it. Required inputs: locationId and bayId (UUIDs) as path parameters. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the location does not exist or the bay is not found under that location. 
+     * Returns a single service bay of a location, including its capacity, capability and skill requirement details. Use this tool when both the location id and bay id are known; use listBays instead to search or enumerate. Preconditions: the location must exist and the bay must belong to it. Required inputs: locationId and bayId (UUIDs) as path parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when either id does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:read grant does not cover locationId (ADR-0061), and 404 when the location does not exist or the bay is not found under that location. 
      * Get a Service Bay by Identifier
      */
     async getBayRaw(requestParameters: GetBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BayResponse>> {
@@ -209,7 +212,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a single service bay of a location, including its capacity, capability and skill requirement details. Use this tool when both the location id and bay id are known; use listBays instead to search or enumerate. Preconditions: the location must exist and the bay must belong to it. Required inputs: locationId and bayId (UUIDs) as path parameters. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the location does not exist or the bay is not found under that location. 
+     * Returns a single service bay of a location, including its capacity, capability and skill requirement details. Use this tool when both the location id and bay id are known; use listBays instead to search or enumerate. Preconditions: the location must exist and the bay must belong to it. Required inputs: locationId and bayId (UUIDs) as path parameters. No events are emitted and no state changes; this is a read-only projection. Returns 400 when either id does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:read grant does not cover locationId (ADR-0061), and 404 when the location does not exist or the bay is not found under that location. 
      * Get a Service Bay by Identifier
      */
     async getBay(requestParameters: GetBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BayResponse> {
@@ -218,7 +221,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the service bays of a location as a page, optionally filtered by status and bayType. Use this tool to see bay capacity and status for a shop; use getBay instead when the bay id is already known. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; status (ACTIVE or OUT_OF_SERVICE) and bayType filters are optional, and page defaults to 0 with size 20. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the location does not exist; an unrecognized status or bayType filter value fails the request rather than returning an empty page. 
+     * Lists the service bays of a location as a page, optionally filtered by status and bayType. Use this tool to see bay capacity and status for a shop; use getBay instead when the bay id is already known. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; status (ACTIVE or OUT_OF_SERVICE) and bayType filters are optional, and page defaults to 0 with size 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when locationId does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:read grant does not cover locationId (ADR-0061), and 404 when the location does not exist; an unrecognized status or bayType filter value fails the request rather than returning an empty page. 
      * List Service Bays of a Location
      */
     async listBaysRaw(requestParameters: ListBaysRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PageBayResponse>> {
@@ -268,7 +271,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists the service bays of a location as a page, optionally filtered by status and bayType. Use this tool to see bay capacity and status for a shop; use getBay instead when the bay id is already known. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; status (ACTIVE or OUT_OF_SERVICE) and bayType filters are optional, and page defaults to 0 with size 20. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the location does not exist; an unrecognized status or bayType filter value fails the request rather than returning an empty page. 
+     * Lists the service bays of a location as a page, optionally filtered by status and bayType. Use this tool to see bay capacity and status for a shop; use getBay instead when the bay id is already known. Preconditions: the location must exist. Required inputs: locationId (UUID) as a path parameter; status (ACTIVE or OUT_OF_SERVICE) and bayType filters are optional, and page defaults to 0 with size 20. No events are emitted and no state changes; this is a read-only projection. Returns 400 when locationId does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:read grant does not cover locationId (ADR-0061), and 404 when the location does not exist; an unrecognized status or bayType filter value fails the request rather than returning an empty page. 
      * List Service Bays of a Location
      */
     async listBays(requestParameters: ListBaysRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PageBayResponse> {
@@ -277,7 +280,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a bay, changing only the supplied fields: name, bayType, status, capacity and the capability or skill requirement lists. Use this tool for status transitions between ACTIVE and OUT_OF_SERVICE and for capacity changes; do not use createBay, which adds a new bay. Preconditions: the location must exist, the bay must belong to it, and a new name must not collide with another bay at the same location. Required inputs: locationId and bayId (UUIDs) as path parameters and a body with at least one field; capacity.maxConcurrentVehicles, when supplied, must be at least 1. Emits a LOCATION_BAY_UPDATE event; no other records are touched. Returns 404 when the location or bay does not exist and 409 when the new name is already taken at that location. 
+     * Applies a partial update to a bay, changing only the supplied fields: name, bayType, status, capacity and the capability or skill requirement lists. Use this tool for status transitions between ACTIVE and OUT_OF_SERVICE and for capacity changes; do not use createBay, which adds a new bay. Preconditions: the location must exist, the bay must belong to it, and a new name must not collide with another bay at the same location. Required inputs: locationId and bayId (UUIDs) as path parameters and a body with at least one field; capacity.maxConcurrentVehicles, when supplied, must be at least 1. Emits a LOCATION_BAY_UPDATE event; no other records are touched. Returns 400 when either id does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:manage grant does not cover locationId (ADR-0061), 404 when the location or bay does not exist and 409 when the new name is already taken at that location. 
      * Patch Fields of a Service Bay
      */
     async patchBayRaw(requestParameters: PatchBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BayResponse>> {
@@ -328,7 +331,7 @@ export class BayAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a bay, changing only the supplied fields: name, bayType, status, capacity and the capability or skill requirement lists. Use this tool for status transitions between ACTIVE and OUT_OF_SERVICE and for capacity changes; do not use createBay, which adds a new bay. Preconditions: the location must exist, the bay must belong to it, and a new name must not collide with another bay at the same location. Required inputs: locationId and bayId (UUIDs) as path parameters and a body with at least one field; capacity.maxConcurrentVehicles, when supplied, must be at least 1. Emits a LOCATION_BAY_UPDATE event; no other records are touched. Returns 404 when the location or bay does not exist and 409 when the new name is already taken at that location. 
+     * Applies a partial update to a bay, changing only the supplied fields: name, bayType, status, capacity and the capability or skill requirement lists. Use this tool for status transitions between ACTIVE and OUT_OF_SERVICE and for capacity changes; do not use createBay, which adds a new bay. Preconditions: the location must exist, the bay must belong to it, and a new name must not collide with another bay at the same location. Required inputs: locationId and bayId (UUIDs) as path parameters and a body with at least one field; capacity.maxConcurrentVehicles, when supplied, must be at least 1. Emits a LOCATION_BAY_UPDATE event; no other records are touched. Returns 400 when either id does not parse as a UUID, 403 LOCATION_SCOPE_DENIED when a location-scoped location:bay:manage grant does not cover locationId (ADR-0061), 404 when the location or bay does not exist and 409 when the new name is already taken at that location. 
      * Patch Fields of a Service Bay
      */
     async patchBay(requestParameters: PatchBayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BayResponse> {

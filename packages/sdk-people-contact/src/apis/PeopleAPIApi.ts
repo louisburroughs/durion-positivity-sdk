@@ -162,7 +162,7 @@ export class PeopleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves the authenticated caller\'s username to its linked person record and returns the identity snapshot with emails, work phone numbers and username. Use this tool when the caller needs their own person record without knowing a person id; do not use getPersonById, which requires a known person UUID and can read any person. Preconditions: an active user-person link must exist for the authenticated username, and the linked person record must still exist. Required inputs: none; identity comes entirely from the authenticated security context. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the caller has no user-person link or the linked person no longer exists, and 401 when the authenticated context carries no username. 
+     * Resolves the authenticated caller\'s username to its linked person record and returns the identity snapshot with emails, work phone numbers and username. Use this tool when the caller needs their own person record without knowing a person id; do not use getPersonById, which requires a known person UUID and can read any person. Preconditions: the people:self:view permission, and an active user-person link must exist for the authenticated username with the linked person record still present. Required inputs: none; identity comes entirely from the authenticated security context. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the caller has no user-person link or the linked person no longer exists, and 401 when the authenticated context carries no username. 
      * Get Current User\'s Person Record
      */
     async getCurrentPersonRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Person>> {
@@ -172,7 +172,7 @@ export class PeopleAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people-contact:person:view"]);
+            const tokenString = await token("bearerAuth", ["people:self:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -189,7 +189,7 @@ export class PeopleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Resolves the authenticated caller\'s username to its linked person record and returns the identity snapshot with emails, work phone numbers and username. Use this tool when the caller needs their own person record without knowing a person id; do not use getPersonById, which requires a known person UUID and can read any person. Preconditions: an active user-person link must exist for the authenticated username, and the linked person record must still exist. Required inputs: none; identity comes entirely from the authenticated security context. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the caller has no user-person link or the linked person no longer exists, and 401 when the authenticated context carries no username. 
+     * Resolves the authenticated caller\'s username to its linked person record and returns the identity snapshot with emails, work phone numbers and username. Use this tool when the caller needs their own person record without knowing a person id; do not use getPersonById, which requires a known person UUID and can read any person. Preconditions: the people:self:view permission, and an active user-person link must exist for the authenticated username with the linked person record still present. Required inputs: none; identity comes entirely from the authenticated security context. No events are emitted and no state changes; this is a read-only projection. Returns 404 when the caller has no user-person link or the linked person no longer exists, and 401 when the authenticated context carries no username. 
      * Get Current User\'s Person Record
      */
     async getCurrentPerson(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Person> {
