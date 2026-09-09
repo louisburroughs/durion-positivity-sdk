@@ -45,7 +45,7 @@ export interface RevokeUserRoleRequest {
 export class UserRoleManagementApi extends runtime.BaseAPI {
 
     /**
-     * Creates a role assignment linking a user to a role, effective immediately with no end date. Use this tool for the common grant; do not use createRoleAssignment, which supports effective date windows, and do not use assignPrincipalRole, which targets the string-keyed RBAC principal matrix. Preconditions: the caller must hold security:role:assign and both the user and role must exist; no overlap check is performed here, so repeated calls create duplicate assignments. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_ASSIGN event and writes a RoleAssignedToUser audit record. Returns 404 when the user or role does not exist. 
+     * Creates a role assignment linking a user to a role, effective immediately with no end date. Use this tool for the common grant; do not use createRoleAssignment, which supports effective date windows. Preconditions: the caller must hold security:role:assign and both the user and role must exist. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Idempotent: a pair the user already effectively holds is a no-op, not a second, overlapping assignment. Every call, including a no-op one, emits a SECURITY_USER_ROLE_ASSIGN event and writes a RoleAssignedToUser audit record. Returns 404 when the user or role does not exist. 
      * Assign a Role to a User
      */
     async assignUserRoleRaw(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -86,7 +86,7 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a role assignment linking a user to a role, effective immediately with no end date. Use this tool for the common grant; do not use createRoleAssignment, which supports effective date windows, and do not use assignPrincipalRole, which targets the string-keyed RBAC principal matrix. Preconditions: the caller must hold security:role:assign and both the user and role must exist; no overlap check is performed here, so repeated calls create duplicate assignments. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_ASSIGN event and writes a RoleAssignedToUser audit record. Returns 404 when the user or role does not exist. 
+     * Creates a role assignment linking a user to a role, effective immediately with no end date. Use this tool for the common grant; do not use createRoleAssignment, which supports effective date windows. Preconditions: the caller must hold security:role:assign and both the user and role must exist. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Idempotent: a pair the user already effectively holds is a no-op, not a second, overlapping assignment. Every call, including a no-op one, emits a SECURITY_USER_ROLE_ASSIGN event and writes a RoleAssignedToUser audit record. Returns 404 when the user or role does not exist. 
      * Assign a Role to a User
      */
     async assignUserRole(requestParameters: AssignUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -137,7 +137,7 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Ends the first currently effective assignment of a role for a user by setting its end date to now, preserving the row for history. Use this tool for the common immediate revocation; do not use revokeRoleAssignment, which targets a specific assignment id and supports past or future end dates. Preconditions: the caller must hold security:role:assign, the user and role must exist, and at least one effective assignment must link them. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_REVOKE event and writes a RoleRevokedFromUser audit record. Returns 404 when the user or role does not exist, or when no active assignment links them. 
+     * Ends the first currently effective assignment of a role for a user by setting its end date to now, preserving the row for history. Use this tool for the common immediate revocation; do not use revokeRoleAssignment, which targets a specific assignment id and supports past or future end dates. Preconditions: the caller must hold security:role:assign, the user and role must exist, and at least one effective assignment must link them. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_REVOKE event and writes a RoleRevokedFromUser audit record. Ends the holder\'s live tokens immediately; the next token issued for them is clamped to the revoked assignment\'s end. Returns 404 when the user or role does not exist, or when no active assignment links them. 
      * Revoke a Role From a User
      */
     async revokeUserRoleRaw(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -178,7 +178,7 @@ export class UserRoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Ends the first currently effective assignment of a role for a user by setting its end date to now, preserving the row for history. Use this tool for the common immediate revocation; do not use revokeRoleAssignment, which targets a specific assignment id and supports past or future end dates. Preconditions: the caller must hold security:role:assign, the user and role must exist, and at least one effective assignment must link them. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_REVOKE event and writes a RoleRevokedFromUser audit record. Returns 404 when the user or role does not exist, or when no active assignment links them. 
+     * Ends the first currently effective assignment of a role for a user by setting its end date to now, preserving the row for history. Use this tool for the common immediate revocation; do not use revokeRoleAssignment, which targets a specific assignment id and supports past or future end dates. Preconditions: the caller must hold security:role:assign, the user and role must exist, and at least one effective assignment must link them. Required inputs: userId and roleId (UUIDs) as path parameters; there is no request body. Emits a SECURITY_USER_ROLE_REVOKE event and writes a RoleRevokedFromUser audit record. Ends the holder\'s live tokens immediately; the next token issued for them is clamped to the revoked assignment\'s end. Returns 404 when the user or role does not exist, or when no active assignment links them. 
      * Revoke a Role From a User
      */
     async revokeUserRole(requestParameters: RevokeUserRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
