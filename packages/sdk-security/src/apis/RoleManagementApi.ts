@@ -261,7 +261,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist. 
+     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist and 409 with code ROLE_TEMPLATE_IMMUTABLE when the role was provisioned from the platform role template (templateKey set): canonical roles keep their name for the life of the tenant; change their grants instead. 
      * Delete a Role and Its Associations
      */
     async deleteRoleRaw(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -295,7 +295,7 @@ export class RoleManagementApi extends runtime.BaseAPI {
     }
 
     /**
-     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist. 
+     * Deletes a role by UUID, clearing its permission grants and deleting all of its role assignments in the same transaction. Use this tool to retire a role entirely; do not use revokeRolePermission or revokeRoleAssignment, which remove a single grant or assignment and keep the role. Preconditions: the caller must hold security:role:delete and the role must exist; users holding the role lose it immediately. Required inputs: id (UUID) as a path parameter. Emits a SECURITY_ROLE_DELETE event. Returns 404 when the role does not exist and 409 with code ROLE_TEMPLATE_IMMUTABLE when the role was provisioned from the platform role template (templateKey set): canonical roles keep their name for the life of the tenant; change their grants instead. 
      * Delete a Role and Its Associations
      */
     async deleteRole(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {

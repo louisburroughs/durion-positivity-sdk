@@ -54,6 +54,7 @@ export * from './SelfRegistrationRequest';
 export * from './SelfRegistrationResponse';
 export * from './SelfRegistrationReviewCaseResponse';
 export * from './SortObject';
+export * from './TenantMeResponse';
 export * from './TokenPairRequest';
 export * from './TokenPairResponse';
 export * from './TokenResponse';
