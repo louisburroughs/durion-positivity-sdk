@@ -11,6 +11,7 @@ export * from './RoleBulkIngestAPIApi';
 export * from './RoleManagementApi';
 export * from './RolePermissionBulkIngestAPIApi';
 export * from './SelfRegistrationReviewAPIApi';
+export * from './TenantAPIApi';
 export * from './UserAPIApi';
 export * from './UserBulkIngestAPIApi';
 export * from './UserPersonLinkBulkIngestAPIApi';

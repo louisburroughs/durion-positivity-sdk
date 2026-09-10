@@ -104,6 +104,12 @@ export interface RoleDto {
      * @memberof RoleDto
      */
     personaTone?: string;
+    /**
+     * ADR-0062: key of the platform template role this role was provisioned from (its canonical name); null for a custom role. Template roles cannot be deleted.
+     * @type {string}
+     * @memberof RoleDto
+     */
+    templateKey?: string;
 }
 
 /**
@@ -138,6 +144,7 @@ export function RoleDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): R
         'personaFocus': json['personaFocus'] == null ? undefined : json['personaFocus'],
         'personaTitle': json['personaTitle'] == null ? undefined : json['personaTitle'],
         'personaTone': json['personaTone'] == null ? undefined : json['personaTone'],
+        'templateKey': json['templateKey'] == null ? undefined : json['templateKey'],
     };
 }
 
@@ -160,6 +167,7 @@ export function RoleDtoToJSON(value?: RoleDto | null): any {
         'personaFocus': value['personaFocus'],
         'personaTitle': value['personaTitle'],
         'personaTone': value['personaTone'],
+        'templateKey': value['templateKey'],
     };
 }
 

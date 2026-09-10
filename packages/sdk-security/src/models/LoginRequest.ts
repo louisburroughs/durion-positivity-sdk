@@ -26,6 +26,12 @@ export interface LoginRequest {
      */
     password: string;
     /**
+     * Slug of the tenant to sign in to; optional when the request host already names it
+     * @type {string}
+     * @memberof LoginRequest
+     */
+    tenantSlug?: string;
+    /**
      * The user's login username
      * @type {string}
      * @memberof LoginRequest
@@ -53,6 +59,7 @@ export function LoginRequestFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'password': json['password'],
+        'tenantSlug': json['tenantSlug'] == null ? undefined : json['tenantSlug'],
         'username': json['username'],
     };
 }
@@ -64,6 +71,7 @@ export function LoginRequestToJSON(value?: LoginRequest | null): any {
     return {
         
         'password': value['password'],
+        'tenantSlug': value['tenantSlug'],
         'username': value['username'],
     };
 }
