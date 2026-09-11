@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ActivateAccountRequest,
   ApiError,
   LoginRequest,
   SelfRegistrationRequest,
@@ -22,6 +23,8 @@ import type {
   TokenPairResponse,
 } from '../models/index';
 import {
+    ActivateAccountRequestFromJSON,
+    ActivateAccountRequestToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
     LoginRequestFromJSON,
@@ -33,6 +36,10 @@ import {
     TokenPairResponseFromJSON,
     TokenPairResponseToJSON,
 } from '../models/index';
+
+export interface ActivateAccountOperationRequest {
+    activateAccountRequest: ActivateAccountRequest;
+}
 
 export interface LoginUserRequest {
     loginRequest: LoginRequest;
@@ -46,6 +53,43 @@ export interface SelfRegisterUserRequest {
  * 
  */
 export class AuthAPIApi extends runtime.BaseAPI {
+
+    /**
+     * Exchanges a one-time activation token for the account\'s first password: sets the password, clears the credential expiry provisioning left on the account, and marks the token used, all in one transaction under the token\'s tenant. Use this tool when a tenant\'s first administrator has received an activation token from a platform operator (mintAdministratorActivationToken); do not use loginUser, which cannot succeed until the account is activated, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated and binds no tenant; the token must be unexpired (72 hours from minting) and unused. Required inputs: token and newPassword, both non-blank. Emits a SECURITY_AUTH_ACTIVATE event; no tokens are issued, so a follow-up loginUser call is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the token is unknown, expired or already used (one code on purpose, so nothing about the account or the token\'s history is revealed). 
+     * Activate an Account with a One-Time Token
+     */
+    async activateAccountRaw(requestParameters: ActivateAccountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['activateAccountRequest'] == null) {
+            throw new runtime.RequiredError(
+                'activateAccountRequest',
+                'Required parameter "activateAccountRequest" was null or undefined when calling activateAccount().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/v1/auth/activate`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ActivateAccountRequestToJSON(requestParameters['activateAccountRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Exchanges a one-time activation token for the account\'s first password: sets the password, clears the credential expiry provisioning left on the account, and marks the token used, all in one transaction under the token\'s tenant. Use this tool when a tenant\'s first administrator has received an activation token from a platform operator (mintAdministratorActivationToken); do not use loginUser, which cannot succeed until the account is activated, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated and binds no tenant; the token must be unexpired (72 hours from minting) and unused. Required inputs: token and newPassword, both non-blank. Emits a SECURITY_AUTH_ACTIVATE event; no tokens are issued, so a follow-up loginUser call is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the token is unknown, expired or already used (one code on purpose, so nothing about the account or the token\'s history is revealed). 
+     * Activate an Account with a One-Time Token
+     */
+    async activateAccount(requestParameters: ActivateAccountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.activateAccountRaw(requestParameters, initOverrides);
+    }
 
     /**
      * Authenticates a user with username and password and returns a JWT access token (1-hour) and refresh token (7-day) carrying uid, roles, perm_bits, and perm_ver claims. Use this tool when a person signs in with credentials; do not use refreshTokenPair, which exchanges an existing refresh token, and do not use issueInternalToken, which mints tokens for trusted internal callers without a password. Preconditions: the user account must exist, be enabled, non-expired, hold unexpired credentials, and not be inside an active failed-login lockout window. Required inputs: username and password, both non-blank. Emits a SECURITY_AUTH_LOGIN event, resets the failed-attempt counter on success, and persists the issued token pair for later validation and revocation. Returns 401 with code ACCOUNT_LOCKED while the lockout window is active, INVALID_CREDENTIALS on a bad password, and ACCOUNT_DISABLED, ACCOUNT_EXPIRED, or CREDENTIALS_EXPIRED for the matching account states; and 403 with USER_HAS_NO_ROLES when the credentials are valid but the account currently has no roles assigned. 

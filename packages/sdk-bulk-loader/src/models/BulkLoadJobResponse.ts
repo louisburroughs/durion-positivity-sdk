@@ -92,6 +92,12 @@ export interface BulkLoadJobResponse {
      */
     successCount?: number;
     /**
+     * Tenant the job loads into (ADR-0062): the tenant every row it writes and every sibling call it makes is bound to
+     * @type {string}
+     * @memberof BulkLoadJobResponse
+     */
+    tenantId: string;
+    /**
      * Total number of data rows detected in the source file
      * @type {number}
      * @memberof BulkLoadJobResponse
@@ -164,6 +170,7 @@ export function instanceOfBulkLoadJobResponse(value: object): boolean {
     if (!('fileName' in value)) return false;
     if (!('id' in value)) return false;
     if (!('status' in value)) return false;
+    if (!('tenantId' in value)) return false;
     return true;
 }
 
@@ -189,6 +196,7 @@ export function BulkLoadJobResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'startedAt': json['startedAt'] == null ? undefined : (new Date(json['startedAt'])),
         'status': json['status'],
         'successCount': json['successCount'] == null ? undefined : json['successCount'],
+        'tenantId': json['tenantId'],
         'totalRows': json['totalRows'] == null ? undefined : json['totalRows'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
@@ -212,6 +220,7 @@ export function BulkLoadJobResponseToJSON(value?: BulkLoadJobResponse | null): a
         'startedAt': value['startedAt'] == null ? undefined : ((value['startedAt']).toISOString()),
         'status': value['status'],
         'successCount': value['successCount'],
+        'tenantId': value['tenantId'],
         'totalRows': value['totalRows'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
     };

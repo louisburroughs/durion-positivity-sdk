@@ -1,6 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './AccountStateResponse';
+export * from './ActivateAccountRequest';
+export * from './ActivationTokenResponse';
 export * from './ApiError';
 export * from './AuditEventCreatedResponse';
 export * from './AuditEventSearchFilter';
@@ -19,6 +21,8 @@ export * from './CatalogVersionResponse';
 export * from './CreateUserRequest';
 export * from './CrmMatchSummaryDto';
 export * from './FieldError';
+export * from './GrantAdded';
+export * from './ImpersonationTokenResponse';
 export * from './InternalTokenRequest';
 export * from './LinkUserPersonRequest';
 export * from './LoginRequest';
@@ -49,6 +53,7 @@ export * from './RolePermissionGrantRequest';
 export * from './RolePermissionsRequest';
 export * from './RolePersonaDto';
 export * from './RolePersonasResponse';
+export * from './RoleTemplateReconcileResponse';
 export * from './RoleUpdateRequest';
 export * from './SelfRegistrationRequest';
 export * from './SelfRegistrationResponse';

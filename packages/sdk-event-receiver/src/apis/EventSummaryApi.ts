@@ -15,12 +15,27 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   EventSummaryResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     EventSummaryResponseFromJSON,
     EventSummaryResponseToJSON,
 } from '../models/index';
+
+export interface GetEventSummaryLastDayRequest {
+    tenantId?: string;
+}
+
+export interface GetEventSummaryLastHourRequest {
+    tenantId?: string;
+}
+
+export interface GetEventSummaryLastWeekRequest {
+    tenantId?: string;
+}
 
 /**
  * 
@@ -28,11 +43,15 @@ import {
 export class EventSummaryApi extends runtime.BaseAPI {
 
     /**
-     * Returns emitted-event counts grouped by event type code for the trailing 24 hours, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a daily view of platform event traffic; use getEventSummaryLastHour instead for a near-real-time pulse, or getEventSummaryLastWeek for the weekly trend. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 24 hours and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_DAY event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
+     * Returns emitted-event counts grouped by event type code for the trailing 24 hours, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a daily view of platform event traffic; use getEventSummaryLastHour instead for a near-real-time pulse, or getEventSummaryLastWeek for the weekly trend. Preconditions: a tenant binding, the X-Tenant-Id the gateway derives from the token (or the transitional default tenant where one is configured; an unbound request is refused with 401). GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none beyond the binding (tenantId is optional); the window is fixed at 24 hours and cannot be parameterized. Counts carry a tenant dimension (ADR-0062): a caller bound to an ordinary tenant sees its own tenant\'s counts; the platform tenant sees the global rollup summed across tenants, or one tenant when it names tenantId. tenantId from any other caller is refused with 403. Emits an EVENT_RECEIVER_SUMMARY_LAST_DAY event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window, and 403 when tenantId is named by a caller that is not the platform tenant. 
      * Get event summary for the last day
      */
-    async getEventSummaryLastDayRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventSummaryResponse>>> {
+    async getEventSummaryLastDayRaw(requestParameters: GetEventSummaryLastDayRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventSummaryResponse>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['tenantId'] != null) {
+            queryParameters['tenantId'] = requestParameters['tenantId'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -47,20 +66,24 @@ export class EventSummaryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns emitted-event counts grouped by event type code for the trailing 24 hours, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a daily view of platform event traffic; use getEventSummaryLastHour instead for a near-real-time pulse, or getEventSummaryLastWeek for the weekly trend. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 24 hours and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_DAY event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
+     * Returns emitted-event counts grouped by event type code for the trailing 24 hours, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a daily view of platform event traffic; use getEventSummaryLastHour instead for a near-real-time pulse, or getEventSummaryLastWeek for the weekly trend. Preconditions: a tenant binding, the X-Tenant-Id the gateway derives from the token (or the transitional default tenant where one is configured; an unbound request is refused with 401). GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none beyond the binding (tenantId is optional); the window is fixed at 24 hours and cannot be parameterized. Counts carry a tenant dimension (ADR-0062): a caller bound to an ordinary tenant sees its own tenant\'s counts; the platform tenant sees the global rollup summed across tenants, or one tenant when it names tenantId. tenantId from any other caller is refused with 403. Emits an EVENT_RECEIVER_SUMMARY_LAST_DAY event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window, and 403 when tenantId is named by a caller that is not the platform tenant. 
      * Get event summary for the last day
      */
-    async getEventSummaryLastDay(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventSummaryResponse>> {
-        const response = await this.getEventSummaryLastDayRaw(initOverrides);
+    async getEventSummaryLastDay(requestParameters: GetEventSummaryLastDayRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventSummaryResponse>> {
+        const response = await this.getEventSummaryLastDayRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns emitted-event counts grouped by event type code for the trailing 60 minutes, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a near-real-time pulse of platform event traffic; use getEventSummaryLastDay or getEventSummaryLastWeek instead for longer trend windows. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at one hour and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_HOUR event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
+     * Returns emitted-event counts grouped by event type code for the trailing 60 minutes, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a near-real-time pulse of platform event traffic; use getEventSummaryLastDay or getEventSummaryLastWeek instead for longer trend windows. Preconditions: a tenant binding, the X-Tenant-Id the gateway derives from the token (or the transitional default tenant where one is configured; an unbound request is refused with 401). GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none beyond the binding (tenantId is optional); the window is fixed at one hour and cannot be parameterized. Counts carry a tenant dimension (ADR-0062): a caller bound to an ordinary tenant sees its own tenant\'s counts; the platform tenant sees the global rollup summed across tenants, or one tenant when it names tenantId. tenantId from any other caller is refused with 403. Emits an EVENT_RECEIVER_SUMMARY_LAST_HOUR event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window, and 403 when tenantId is named by a caller that is not the platform tenant. 
      * Get event summary for the last hour
      */
-    async getEventSummaryLastHourRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventSummaryResponse>>> {
+    async getEventSummaryLastHourRaw(requestParameters: GetEventSummaryLastHourRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventSummaryResponse>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['tenantId'] != null) {
+            queryParameters['tenantId'] = requestParameters['tenantId'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -75,20 +98,24 @@ export class EventSummaryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns emitted-event counts grouped by event type code for the trailing 60 minutes, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a near-real-time pulse of platform event traffic; use getEventSummaryLastDay or getEventSummaryLastWeek instead for longer trend windows. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at one hour and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_HOUR event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
+     * Returns emitted-event counts grouped by event type code for the trailing 60 minutes, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a near-real-time pulse of platform event traffic; use getEventSummaryLastDay or getEventSummaryLastWeek instead for longer trend windows. Preconditions: a tenant binding, the X-Tenant-Id the gateway derives from the token (or the transitional default tenant where one is configured; an unbound request is refused with 401). GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none beyond the binding (tenantId is optional); the window is fixed at one hour and cannot be parameterized. Counts carry a tenant dimension (ADR-0062): a caller bound to an ordinary tenant sees its own tenant\'s counts; the platform tenant sees the global rollup summed across tenants, or one tenant when it names tenantId. tenantId from any other caller is refused with 403. Emits an EVENT_RECEIVER_SUMMARY_LAST_HOUR event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window, and 403 when tenantId is named by a caller that is not the platform tenant. 
      * Get event summary for the last hour
      */
-    async getEventSummaryLastHour(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventSummaryResponse>> {
-        const response = await this.getEventSummaryLastHourRaw(initOverrides);
+    async getEventSummaryLastHour(requestParameters: GetEventSummaryLastHourRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventSummaryResponse>> {
+        const response = await this.getEventSummaryLastHourRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns emitted-event counts grouped by event type code for the trailing 7 days, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a weekly trend of platform event traffic; use getEventSummaryLastHour or getEventSummaryLastDay instead when a shorter window is wanted. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 7 days and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_WEEK event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
+     * Returns emitted-event counts grouped by event type code for the trailing 7 days, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a weekly trend of platform event traffic; use getEventSummaryLastHour or getEventSummaryLastDay instead when a shorter window is wanted. Preconditions: a tenant binding, the X-Tenant-Id the gateway derives from the token (or the transitional default tenant where one is configured; an unbound request is refused with 401). GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none beyond the binding (tenantId is optional); the window is fixed at 7 days and cannot be parameterized. Counts carry a tenant dimension (ADR-0062): a caller bound to an ordinary tenant sees its own tenant\'s counts; the platform tenant sees the global rollup summed across tenants, or one tenant when it names tenantId. tenantId from any other caller is refused with 403. Emits an EVENT_RECEIVER_SUMMARY_LAST_WEEK event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window, and 403 when tenantId is named by a caller that is not the platform tenant. 
      * Get event summary for the last week
      */
-    async getEventSummaryLastWeekRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventSummaryResponse>>> {
+    async getEventSummaryLastWeekRaw(requestParameters: GetEventSummaryLastWeekRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EventSummaryResponse>>> {
         const queryParameters: any = {};
+
+        if (requestParameters['tenantId'] != null) {
+            queryParameters['tenantId'] = requestParameters['tenantId'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -103,11 +130,11 @@ export class EventSummaryApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns emitted-event counts grouped by event type code for the trailing 7 days, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a weekly trend of platform event traffic; use getEventSummaryLastHour or getEventSummaryLastDay instead when a shorter window is wanted. Preconditions: none beyond service availability; GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none; the window is fixed at 7 days and cannot be parameterized. Emits an EVENT_RECEIVER_SUMMARY_LAST_WEEK event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window. 
+     * Returns emitted-event counts grouped by event type code for the trailing 7 days, read from the emitted_event_hourly TimescaleDB continuous aggregate. Use this tool for a weekly trend of platform event traffic; use getEventSummaryLastHour or getEventSummaryLastDay instead when a shorter window is wanted. Preconditions: a tenant binding, the X-Tenant-Id the gateway derives from the token (or the transitional default tenant where one is configured; an unbound request is refused with 401). GET requests bypass the shared-secret filter, and the aggregate refreshes hourly with a one-hour end offset, so the newest counts can lag by up to an hour. Required inputs: none beyond the binding (tenantId is optional); the window is fixed at 7 days and cannot be parameterized. Counts carry a tenant dimension (ADR-0062): a caller bound to an ordinary tenant sees its own tenant\'s counts; the platform tenant sees the global rollup summed across tenants, or one tenant when it names tenantId. tenantId from any other caller is refused with 403. Emits an EVENT_RECEIVER_SUMMARY_LAST_WEEK event recording the query itself; the read changes no stored state. Returns 200 with a list of event-type and count pairs, which is empty when no events fall inside the window, and 403 when tenantId is named by a caller that is not the platform tenant. 
      * Get event summary for the last week
      */
-    async getEventSummaryLastWeek(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventSummaryResponse>> {
-        const response = await this.getEventSummaryLastWeekRaw(initOverrides);
+    async getEventSummaryLastWeek(requestParameters: GetEventSummaryLastWeekRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EventSummaryResponse>> {
+        const response = await this.getEventSummaryLastWeekRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
