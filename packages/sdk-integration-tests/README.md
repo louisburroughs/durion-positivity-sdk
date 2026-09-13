@@ -46,6 +46,8 @@ stops global setup before any suite starts.
    stops it re-applying — so this bites a *fresh* environment, where suite D
    fails at putaway with nothing to route to.
 3. **Credentials** — at minimum an admin login. See *Environment contract*.
+   On a tenant-aware backend a freshly provisioned login is not usable as
+   issued: see *Starter credentials must be activated before login*.
 4. **The accelerated profile must be off.** Global setup probes
    `GET /system/time`: a 404 means the normal clock and the run proceeds, a 200
    means the backend is mid-accelerated-run and the suite aborts before writing
@@ -121,6 +123,99 @@ are ever logged.
 
 Credentials are never committed, never printed, and never passed on a command
 line.
+
+### Starter credentials must be activated before login
+
+**Not yet implemented in the harness — this is the note for when we update the
+suites to match the tenant-aware system.**
+
+Accounts bulk-loaded from `users.csv` are provisioned with one shared *starter*
+password rather than a usable credential of their own. Such an account is
+awaiting activation and carries credential-expiry provisioning, so **login is
+refused until the starter password is traded through
+`POST /v1/auth/activate-starter`** for a password of its own. The refusal is a
+property of the account, not of the request: retrying the login, re-seeding, or
+fixing `.env.itest` will not clear it. `loginUser` reports it as 401
+`CREDENTIALS_EXPIRED`.
+
+The generated client is `AuthAPIApi.activateAccountWithStarterPassword`
+(`@durion-sdk/security`). Note the shape: it takes an
+`ActivateAccountWithStarterPasswordRequest` *wrapper*, with the payload nested
+under `activateWithStarterRequest` and the tenant header beside it, not the
+payload fields at the top level. Passing them flat throws `RequiredError`
+before any request leaves the process.
+
+```ts
+await securityClient.authAPIApi.activateAccountWithStarterPassword({
+  activateWithStarterRequest: {
+    username,
+    starterPassword,
+    newPassword,
+    tenantSlug,        // optional here...
+  },
+  xTenantSlug: tenantSlug, // ...or as the X-Tenant-Slug header, beside it
+});
+```
+
+The nested `ActivateWithStarterRequest`:
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `username` | Yes | The account to claim |
+| `starterPassword` | Yes | The shared password the operator handed out |
+| `newPassword` | Yes | What the account gets instead; hashed server-side |
+| `tenantSlug` | No | Needed only when the request host does not already name the tenant |
+
+`xTenantSlug` sits on the wrapper, not in the payload, and carries the same
+thing as `tenantSlug` via the `X-Tenant-Slug` header. The call is
+unauthenticated and binds no tenant of its own; it returns 204, 400 on a blank
+field, and 401 `ACTIVATION_TOKEN_INVALID` otherwise.
+
+Consequences for the suite, all of which the harness has to learn:
+
+- **It is per account, not per tenant.** Every persona in role mode
+  (`ITEST_ADVISOR_*`, `ITEST_TECH_*`, `ITEST_MANAGER_*`, `ITEST_PARTS_*`,
+  `ITEST_ACCT_*`, `ITEST_CONTROLLER_*`) has to be traded through activation
+  individually, and so does the admin login. One activated persona says nothing
+  about the other six.
+- **The tunnel host names no tenant.** The suite reaches the backend at
+  `localhost:18086`, so `tenantSlug` (or `X-Tenant-Slug`) is not optional here
+  the way it is for a tenant-hosted request. Expect a new environment variable
+  for it alongside the starter password.
+- **Activation issues no token, and revokes the ones already minted.** It sets
+  the password and returns; the login that follows is a separate call, and any
+  token the account already held dies with the exchange. So every activation has
+  to happen in `globalSetup` before any persona logs in — activating a persona
+  mid-run invalidates a session another step is holding — and ahead of
+  `PersonaBootstrap`'s preflight, which reads each persona's own token and so
+  cannot run until every persona can log in.
+- **The password in `.env.itest` is the post-activation password.** Whoever
+  activates the account chooses it; the file holds the result, not the starter
+  value.
+- **Activation is one-shot, and failure is deliberately uninformative.** An
+  account already claimed, an unknown username and a wrong starter password all
+  return the same 401 `ACTIVATION_TOKEN_INVALID`, so a failed exchange cannot
+  tell the harness which happened. Attempt the login first and fall back to
+  activation on `CREDENTIALS_EXPIRED`, rather than activating unconditionally
+  and trying to interpret the refusal — on a re-run against an already-activated
+  environment every account is in the claimed state.
+
+### The two activation flows are not interchangeable
+
+`@durion-sdk/security` carries both flows, plus the platform-side calls around
+them. They are not substitutes — each is for a different kind of account:
+
+| Operation | Endpoint | For |
+| --- | --- | --- |
+| `AuthAPIApi.activateAccountWithStarterPassword` | `POST /v1/auth/activate-starter` | Bulk-provisioned accounts sharing one starter password — the flow a persona in the awaiting-activation state needs |
+| `AuthAPIApi.activateAccount` | `POST /v1/auth/activate` | A tenant's first administrator, via a one-time token |
+| `PlatformAdministratorAPIApi.mintAdministratorActivationToken` | `POST /v1/platform/tenants/{tenantId}/administrators/{userId}/activation-token` | Minting that token, as a platform operator |
+| `PlatformSupportAPIApi.mintImpersonationToken` | `POST /v1/platform/tenants/{tenantId}/impersonation-token` | Platform support impersonation |
+| `TenantAPIApi.getMyTenant` | `GET /v1/tenants/me` | Which tenant the caller's token is bound to |
+
+`activateAccount` exchanges a one-time token minted by a platform operator
+(valid 72 hours, single use) and is the wrong call for a bulk-provisioned
+account, which is never given one.
 
 ---
 
