@@ -46,6 +46,8 @@ stops global setup before any suite starts.
    stops it re-applying — so this bites a *fresh* environment, where suite D
    fails at putaway with nothing to route to.
 3. **Credentials** — at minimum an admin login. See *Environment contract*.
+   On a tenant-aware backend a freshly provisioned login is not usable as
+   issued: see *Starter credentials must be activated before login*.
 4. **The accelerated profile must be off.** Global setup probes
    `GET /system/time`: a 404 means the normal clock and the run proceeds, a 200
    means the backend is mid-accelerated-run and the suite aborts before writing
@@ -121,6 +123,58 @@ are ever logged.
 
 Credentials are never committed, never printed, and never passed on a command
 line.
+
+### Starter credentials must be activated before login
+
+**Not yet implemented in the harness — this is the note for when we update the
+suites to match the tenant-aware system.**
+
+Under the tenant-aware model an account can be provisioned with a *starter*
+credential rather than a usable password. Such an account arrives in a
+password-reset-required state, and **login is refused until that credential is
+traded through `POST /v1/auth/activate-starter`** for a real password. The
+refusal is a property of the account, not of the request: retrying the login,
+re-seeding, or fixing `.env.itest` will not clear it.
+
+Consequences for the suite, all of which the harness has to learn:
+
+- **It is per account, not per tenant.** Every persona in role mode
+  (`ITEST_ADVISOR_*`, `ITEST_TECH_*`, `ITEST_MANAGER_*`, `ITEST_PARTS_*`,
+  `ITEST_ACCT_*`, `ITEST_CONTROLLER_*`) has to be traded through activation
+  individually, and so does the admin login. One activated persona says nothing
+  about the other six.
+- **Activation issues no tokens.** It sets the password and returns; the login
+  that follows is a separate call. Ordering in `globalSetup` is therefore
+  activate-then-login, ahead of `PersonaBootstrap`'s preflight — which reads
+  each persona's own token and so cannot run until every persona can log in.
+- **The password in `.env.itest` is the post-activation password.** Whoever
+  activates the account chooses it; the file holds the result, not the starter
+  value.
+- **Activation is one-shot.** A credential already traded cannot be traded
+  again, so a re-run of the suite against an already-activated environment must
+  tolerate the second attempt failing, rather than treating it as fatal.
+
+### What the generated clients expose today
+
+The clients regenerated for the tenant-aware backend carry the *activation
+token* flow, not the starter flow:
+
+| Operation | Endpoint | Package |
+| --- | --- | --- |
+| `AuthAPIApi.activateAccount` | `POST /v1/auth/activate` | `@durion-sdk/security` |
+| `PlatformAdministratorAPIApi.mintAdministratorActivationToken` | `POST /v1/platform/tenants/{tenantId}/administrators/{userId}/activation-token` | `@durion-sdk/security` |
+| `PlatformSupportAPIApi.mintImpersonationToken` | `POST /v1/platform/tenants/{tenantId}/impersonation-token` | `@durion-sdk/security` |
+| `TenantAPIApi.getMyTenant` | `GET /v1/tenants/me` | `@durion-sdk/security` |
+
+`activateAccount` exchanges a one-time token minted by a platform operator for
+the account's first password (204; 401 `ACTIVATION_TOKEN_INVALID` when the
+token is unknown, expired past its 72 hours, or already used). It is
+unauthenticated and binds no tenant.
+
+**`/v1/auth/activate-starter` has no generated client yet.** Nothing in
+`packages/sdk-security` calls it as of the tenant-aware regeneration
+(`427ec94`). Regenerate from the backend's OpenAPI spec (`npm run generate`)
+before writing harness code against it — do not hand-roll the call.
 
 ---
 
