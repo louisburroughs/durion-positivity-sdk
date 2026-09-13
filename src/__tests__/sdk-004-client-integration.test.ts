@@ -333,6 +333,14 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     expect(client['permissionRegistryApi']).toBeDefined();
     expect(client['roleManagementApi']).toBeDefined();
     expect(client['jwtAPIApi']).toBeDefined();
+    // The tenant-aware surface. Asserted because the factory is hand-maintained
+    // while the classes behind it are generated: regeneration adds a class
+    // without adding its accessor, so nothing but this catches the day one of
+    // these stops being reachable.
+    expect(client['tenantAPIApi']).toBeDefined();
+    expect(client['platformAdministratorAPIApi']).toBeDefined();
+    expect(client['platformSupportAPIApi']).toBeDefined();
+    expect(client['platformRoleTemplateAPIApi']).toBeDefined();
   });
 
   it('createOrderClient returns expected API namespaces', async () => {
