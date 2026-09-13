@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ActivateAccountRequest,
+  ActivateWithStarterRequest,
   ApiError,
   LoginRequest,
   SelfRegistrationRequest,
@@ -25,6 +26,8 @@ import type {
 import {
     ActivateAccountRequestFromJSON,
     ActivateAccountRequestToJSON,
+    ActivateWithStarterRequestFromJSON,
+    ActivateWithStarterRequestToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
     LoginRequestFromJSON,
@@ -39,6 +42,11 @@ import {
 
 export interface ActivateAccountOperationRequest {
     activateAccountRequest: ActivateAccountRequest;
+}
+
+export interface ActivateAccountWithStarterPasswordRequest {
+    activateWithStarterRequest: ActivateWithStarterRequest;
+    xTenantSlug?: string;
 }
 
 export interface LoginUserRequest {
@@ -89,6 +97,47 @@ export class AuthAPIApi extends runtime.BaseAPI {
      */
     async activateAccount(requestParameters: ActivateAccountOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.activateAccountRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
+     * Claim a Bulk-Provisioned Account with Its Starter Password
+     */
+    async activateAccountWithStarterPasswordRaw(requestParameters: ActivateAccountWithStarterPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['activateWithStarterRequest'] == null) {
+            throw new runtime.RequiredError(
+                'activateWithStarterRequest',
+                'Required parameter "activateWithStarterRequest" was null or undefined when calling activateAccountWithStarterPassword().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['xTenantSlug'] != null) {
+            headerParameters['X-Tenant-Slug'] = String(requestParameters['xTenantSlug']);
+        }
+
+        const response = await this.request({
+            path: `/v1/auth/activate-starter`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ActivateWithStarterRequestToJSON(requestParameters['activateWithStarterRequest']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
+     * Claim a Bulk-Provisioned Account with Its Starter Password
+     */
+    async activateAccountWithStarterPassword(requestParameters: ActivateAccountWithStarterPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.activateAccountWithStarterPasswordRaw(requestParameters, initOverrides);
     }
 
     /**
