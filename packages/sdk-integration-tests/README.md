@@ -139,7 +139,25 @@ fixing `.env.itest` will not clear it. `loginUser` reports it as 401
 `CREDENTIALS_EXPIRED`.
 
 The generated client is `AuthAPIApi.activateAccountWithStarterPassword`
-(`@durion-sdk/security`), taking an `ActivateWithStarterRequest`:
+(`@durion-sdk/security`). Note the shape: it takes an
+`ActivateAccountWithStarterPasswordRequest` *wrapper*, with the payload nested
+under `activateWithStarterRequest` and the tenant header beside it, not the
+payload fields at the top level. Passing them flat throws `RequiredError`
+before any request leaves the process.
+
+```ts
+await securityClient.authAPIApi.activateAccountWithStarterPassword({
+  activateWithStarterRequest: {
+    username,
+    starterPassword,
+    newPassword,
+    tenantSlug,        // optional here...
+  },
+  xTenantSlug: tenantSlug, // ...or as the X-Tenant-Slug header, beside it
+});
+```
+
+The nested `ActivateWithStarterRequest`:
 
 | Field | Required | Notes |
 | --- | --- | --- |
@@ -148,9 +166,10 @@ The generated client is `AuthAPIApi.activateAccountWithStarterPassword`
 | `newPassword` | Yes | What the account gets instead; hashed server-side |
 | `tenantSlug` | No | Needed only when the request host does not already name the tenant |
 
-An `X-Tenant-Slug` header (`xTenantSlug` on the request object) carries the
-same thing. The call is unauthenticated and binds no tenant of its own; it
-returns 204, 400 on a blank field, and 401 `ACTIVATION_TOKEN_INVALID` otherwise.
+`xTenantSlug` sits on the wrapper, not in the payload, and carries the same
+thing as `tenantSlug` via the `X-Tenant-Slug` header. The call is
+unauthenticated and binds no tenant of its own; it returns 204, 400 on a blank
+field, and 401 `ACTIVATION_TOKEN_INVALID` otherwise.
 
 Consequences for the suite, all of which the harness has to learn:
 

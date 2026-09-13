@@ -335,8 +335,8 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     expect(client['jwtAPIApi']).toBeDefined();
     // The tenant-aware surface. Asserted because the factory is hand-maintained
     // while the classes behind it are generated: regeneration adds a class
-    // without adding its accessor, so nothing but this catches the day one of
-    // these stops being reachable.
+    // without adding its accessor. If one of these accessors is dropped, no
+    // other test in the repo would fail.
     expect(client['tenantAPIApi']).toBeDefined();
     expect(client['platformAdministratorAPIApi']).toBeDefined();
     expect(client['platformSupportAPIApi']).toBeDefined();
