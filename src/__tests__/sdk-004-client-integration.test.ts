@@ -652,19 +652,32 @@ describe('SDK-004 AC-transport-single-source: no factory re-declares the transpo
   // land in, the other stays green.
   const PENDING_ELSEWHERE = ['sdk-tenant'];
 
-  const factoryPackages = fs
+  const packagesWithIndex = fs
     .readdirSync(PACKAGES_DIR)
-    .filter((name) => {
-      const indexPath = path.join(PACKAGES_DIR, name, 'src', 'index.ts');
-      if (!fs.existsSync(indexPath)) return false;
-      return /export function create\w+Client\(/.test(readText(indexPath));
-    })
+    .filter((name) => fs.existsSync(path.join(PACKAGES_DIR, name, 'src', 'index.ts')))
     .filter((name) => !PENDING_ELSEWHERE.includes(name));
 
-  it('finds every package that exposes a factory', () => {
-    // A guard on the guard: if the discovery above silently matched nothing,
-    // every assertion below would vacuously pass.
-    expect(factoryPackages.length).toBeGreaterThanOrEqual(20);
+  const indexOf = (name: string) => readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+
+  // Every export form the factory contract allows, not just the one every
+  // package happens to use today: AC-3 accepts the factory by name, so
+  // `export const createXClient = ...` or a named export of a function is as
+  // valid as `export function`. Missing one would drop that package out of the
+  // list below and quietly stop checking it.
+  const declaresFactory = (src: string) =>
+    /export\s+(?:function|const|let|var)\s+create\w+Client\b/.test(src) ||
+    /export\s*\{[^}]*\bcreate\w+Client\b[^}]*\}/.test(src);
+
+  const factoryPackages = packagesWithIndex.filter((name) => declaresFactory(indexOf(name)));
+
+  it('discovery finds every package that names a factory', () => {
+    // A guard on the guard, and not a vacuous one: an arbitrary floor cannot
+    // tell "discovery works" from "discovery silently missed two". Anything
+    // that so much as mentions a create*Client symbol has to have been picked
+    // up by the stricter pattern above, or the difference names what escaped.
+    const mentionsFactory = packagesWithIndex.filter((name) => /\bcreate\w+Client\b/.test(indexOf(name)));
+    expect(factoryPackages.slice().sort()).toEqual(mentionsFactory.slice().sort());
+    expect(factoryPackages.length).toBeGreaterThan(0);
   });
 
   it.each(factoryPackages)('%s imports SdkHttpClient from @durion-sdk/transport', (name) => {
@@ -674,7 +687,12 @@ describe('SDK-004 AC-transport-single-source: no factory re-declares the transpo
 
   it.each(factoryPackages)('%s does not re-declare DurionSdkConfig', (name) => {
     const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
-    expect(content).not.toMatch(/export interface DurionSdkConfig/);
+    // Any declaration form, exported or not, and an alias as much as an
+    // interface — a copied contract is a copied contract however it is spelled.
+    // `export type { DurionSdkConfig } from '@durion-sdk/transport'` is a
+    // re-export, not a declaration, and does not match: the brace follows the
+    // keyword where a name would be.
+    expect(content).not.toMatch(/\b(?:interface|type)\s+DurionSdkConfig\b/);
   });
 
   it.each(factoryPackages)('%s has no local buildRequestHeaders copy', (name) => {
