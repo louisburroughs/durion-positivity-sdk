@@ -532,6 +532,7 @@ durion-positivity-sdk/
 │   ├── sdk-vehicle-inventory/    # @durion-sdk/vehicle-inventory
 │   ├── sdk-documents/            # @durion-sdk/documents
 │   ├── sdk-inquiry/              # @durion-sdk/inquiry
+│   ├── sdk-tenant/               # @durion-sdk/tenant — platform-tenant callers only (ADR-0062)
 │   ├── sdk-bulk-loader/          # @durion-sdk/bulk-loader
 │   └── sdk-internal/             # private — internal tax service only
 ├── src/                          # Shared test utilities and fixtures

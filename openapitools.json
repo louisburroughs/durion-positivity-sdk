@@ -340,6 +340,22 @@
           "gitRepoId": "durion-positivity-sdk"
         }
       },
+      "sdk-tenant": {
+        "generatorName": "typescript-fetch",
+        "output": "packages/sdk-tenant",
+        "inputSpec": "../durion-positivity-backend/pos-tenant/openapi.yaml",
+        "additionalProperties": {
+          "npmName": "@durion-sdk/tenant",
+          "npmVersion": "0.1.0-alpha",
+          "supportsES6": true,
+          "stringEnums": true,
+          "withSeparateModelsAndApi": true,
+          "modelPackage": "src/models",
+          "apiPackage": "src/apis",
+          "gitUserId": "louisburroughs",
+          "gitRepoId": "durion-positivity-sdk"
+        }
+      },
       "sdk-vehicle-fitment": {
         "generatorName": "typescript-fetch",
         "output": "packages/sdk-vehicle-fitment",
