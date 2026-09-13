@@ -32,11 +32,11 @@ export interface TenantCreateRequest {
      */
     cell?: string;
     /**
-     * Human-readable name
+     * Human-readable name users pick this organization by when signing in; unique across the registry, case- and whitespace-insensitively. Omit it and the owning account's legal name is used, suffixed " #2", " #3" and so on only where that would collide — a fallback, not the intended outcome, so supply a name that distinguishes this tenant from the account's others.
      * @type {string}
      * @memberof TenantCreateRequest
      */
-    displayName: string;
+    displayName?: string;
     /**
      * Email of the initial administrator pos-security-service creates while provisioning
      * @type {string}
@@ -56,7 +56,6 @@ export interface TenantCreateRequest {
  */
 export function instanceOfTenantCreateRequest(value: object): boolean {
     if (!('accountId' in value)) return false;
-    if (!('displayName' in value)) return false;
     if (!('initialAdminEmail' in value)) return false;
     if (!('slug' in value)) return false;
     return true;
@@ -74,7 +73,7 @@ export function TenantCreateRequestFromJSONTyped(json: any, ignoreDiscriminator:
         
         'accountId': json['accountId'],
         'cell': json['cell'] == null ? undefined : json['cell'],
-        'displayName': json['displayName'],
+        'displayName': json['displayName'] == null ? undefined : json['displayName'],
         'initialAdminEmail': json['initialAdminEmail'],
         'slug': json['slug'],
     };

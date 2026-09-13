@@ -26,7 +26,7 @@ export interface TenantUpdateRequest {
      */
     cell?: string;
     /**
-     * New human-readable name; omitted or null leaves it unchanged
+     * New human-readable name, unique across the registry case- and whitespace-insensitively; omitted or null leaves it unchanged
      * @type {string}
      * @memberof TenantUpdateRequest
      */
