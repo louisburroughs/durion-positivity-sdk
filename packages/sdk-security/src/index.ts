@@ -20,8 +20,12 @@ export function createSecurityClient(config: DurionSdkConfig) {
     basePath: config.baseUrl,
     fetchApi: async (url: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       const method = (init?.method ?? 'GET').toUpperCase();
-      const sdkHeaders = await httpClient.buildRequestHeaders(method);
       const mergedHeaders = new Headers(init?.headers);
+      const urlStr = typeof url === 'string' ? url : url instanceof URL ? url.toString() : (url as Request).url;
+      const sdkHeaders = await httpClient.buildRequestHeaders(method, {
+        url: urlStr,
+        idempotencyKey: mergedHeaders.get('Idempotency-Key') ?? undefined,
+      });
       Object.entries(sdkHeaders).forEach(([key, value]) => {
         mergedHeaders.set(key, value);
       });

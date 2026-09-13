@@ -682,3 +682,91 @@ describe('SDK-004 AC-transport-single-source: no factory re-declares the transpo
     expect(content).not.toMatch(/function buildRequestHeaders\(/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// AC-idempotency-parity — every factory hands the url and any caller-supplied
+//         Idempotency-Key to buildRequestHeaders, so idempotencyKeyGenerator
+//         fires on mutating requests.
+//
+//         accounting, inventory, security and workorder used to call
+//         buildRequestHeaders(method) with neither, which meant a configured
+//         idempotencyKeyGenerator was never consulted for them at all — four
+//         packages silently opting out of replay safety on endpoints that
+//         support it. They now pass both, like the other nineteen.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-idempotency-parity: the generator fires on mutating requests', () => {
+  const LEVELLED_UP: ReadonlyArray<[string, string, string]> = [
+    ['security', '@durion-sdk/security', 'authAPIApi'],
+    ['accounting', '@durion-sdk/accounting', 'journalEntriesApi'],
+    ['inventory', '@durion-sdk/inventory', 'inventoryManagementApi'],
+    ['workorder', '@durion-sdk/workorder', 'workOrderAPIApi'],
+  ];
+
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  async function fetchApiFor(moduleName: string, accessor: string) {
+    const mod = (await import(moduleName)) as Record<string, unknown>;
+    const factory = Object.entries(mod).find(([k]) => k.startsWith('create') && k.endsWith('Client'));
+    expect(factory).toBeDefined();
+    const create = factory![1] as (c: unknown) => Record<string, { configuration?: { fetchApi?: unknown } }>;
+    const client = create({
+      baseUrl: 'http://localhost:8080',
+      token: () => 'tok',
+      idempotencyKeyGenerator: () => 'generated-key',
+    });
+    const fetchApi = client[accessor]?.configuration?.fetchApi as
+      ((url: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | undefined;
+    expect(fetchApi).toBeDefined();
+    return fetchApi!;
+  }
+
+  function sentHeaders(): Headers {
+    const [, init] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+    return new Headers(init.headers);
+  }
+
+  it.each(LEVELLED_UP)(
+    '%s: a mutating request gets a generated Idempotency-Key',
+    async (_name, moduleName, accessor) => {
+      const fetchApi = await fetchApiFor(moduleName, accessor);
+      await fetchApi('http://localhost:8080/v1/thing', { method: 'POST' });
+      expect(sentHeaders().get('Idempotency-Key')).toBe('generated-key');
+    },
+  );
+
+  it.each(LEVELLED_UP)(
+    '%s: a non-mutating request gets no Idempotency-Key',
+    async (_name, moduleName, accessor) => {
+      const fetchApi = await fetchApiFor(moduleName, accessor);
+      await fetchApi('http://localhost:8080/v1/thing', { method: 'GET' });
+      expect(sentHeaders().get('Idempotency-Key')).toBeNull();
+    },
+  );
+
+  it.each(LEVELLED_UP)(
+    '%s: a caller-supplied key survives even on a non-mutating request',
+    async (_name, moduleName, accessor) => {
+      // buildRequestHeaders declines to return a key for a GET, but the merge
+      // only ever sets headers — it never deletes — so a key the generated
+      // client already put on the request is carried through untouched.
+      const fetchApi = await fetchApiFor(moduleName, accessor);
+      await fetchApi('http://localhost:8080/v1/thing', {
+        method: 'GET',
+        headers: { 'Idempotency-Key': 'caller-key' },
+      });
+      expect(sentHeaders().get('Idempotency-Key')).toBe('caller-key');
+    },
+  );
+});
