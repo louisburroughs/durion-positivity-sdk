@@ -714,15 +714,9 @@ describe('AC-inv-path: inventory API path versioning (no /api/ regression guard)
 // ---------------------------------------------------------------------------
 
 describe('SDK-004 AC-transport-single-source: no factory re-declares the transport contract', () => {
-  // sdk-tenant is converted in PR #44, which landed the same change for that
-  // one package. Delete this entry once #44 merges -- whichever order the two
-  // land in, the other stays green.
-  const PENDING_ELSEWHERE = ['sdk-tenant'];
-
   const packagesWithIndex = fs
     .readdirSync(PACKAGES_DIR)
-    .filter((name) => fs.existsSync(path.join(PACKAGES_DIR, name, 'src', 'index.ts')))
-    .filter((name) => !PENDING_ELSEWHERE.includes(name));
+    .filter((name) => fs.existsSync(path.join(PACKAGES_DIR, name, 'src', 'index.ts')));
 
   const indexOf = (name: string) => readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
 
