@@ -16,18 +16,16 @@
 import * as runtime from '../runtime';
 import type {
   ActivateAccountRequest,
-  ActivateWithStarterRequest,
   ApiError,
   LoginRequest,
   SelfRegistrationRequest,
   SelfRegistrationResponse,
+  TenantSearchResponse,
   TokenPairResponse,
 } from '../models/index';
 import {
     ActivateAccountRequestFromJSON,
     ActivateAccountRequestToJSON,
-    ActivateWithStarterRequestFromJSON,
-    ActivateWithStarterRequestToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
     LoginRequestFromJSON,
@@ -36,6 +34,8 @@ import {
     SelfRegistrationRequestToJSON,
     SelfRegistrationResponseFromJSON,
     SelfRegistrationResponseToJSON,
+    TenantSearchResponseFromJSON,
+    TenantSearchResponseToJSON,
     TokenPairResponseFromJSON,
     TokenPairResponseToJSON,
 } from '../models/index';
@@ -44,13 +44,12 @@ export interface ActivateAccountOperationRequest {
     activateAccountRequest: ActivateAccountRequest;
 }
 
-export interface ActivateAccountWithStarterPasswordRequest {
-    activateWithStarterRequest: ActivateWithStarterRequest;
-    xTenantSlug?: string;
-}
-
 export interface LoginUserRequest {
     loginRequest: LoginRequest;
+}
+
+export interface SearchTenantsRequest {
+    q?: string;
 }
 
 export interface SelfRegisterUserRequest {
@@ -100,47 +99,6 @@ export class AuthAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
-     * Claim a Bulk-Provisioned Account with Its Starter Password
-     */
-    async activateAccountWithStarterPasswordRaw(requestParameters: ActivateAccountWithStarterPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['activateWithStarterRequest'] == null) {
-            throw new runtime.RequiredError(
-                'activateWithStarterRequest',
-                'Required parameter "activateWithStarterRequest" was null or undefined when calling activateAccountWithStarterPassword().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (requestParameters['xTenantSlug'] != null) {
-            headerParameters['X-Tenant-Slug'] = String(requestParameters['xTenantSlug']);
-        }
-
-        const response = await this.request({
-            path: `/v1/auth/activate-starter`,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: ActivateWithStarterRequestToJSON(requestParameters['activateWithStarterRequest']),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Trades the shared starter password an account was loaded with for a password of its own: sets the password, clears the starter hash and the credential expiry provisioning left on the account, and releases any lockout, all in one transaction under the account\'s tenant. Use this tool when an operator has bulk-loaded accounts from users.csv and handed their holders the one starter password those accounts share; do not use loginUser, which cannot succeed until the exchange has run, do not use activateAccount, which needs a one-time token no bulk-provisioned account is given, and do not use updateUser, which needs an authenticated caller. Preconditions: none on the caller — the endpoint is unauthenticated; the account must still be awaiting activation, and the starter password must match the hash it was loaded with. Required inputs: username, starterPassword and newPassword, all non-blank; tenantSlug only when the request host does not already name the tenant. Emits a SECURITY_AUTH_ACTIVATE_STARTER event and revokes every token already minted for the account; no token is issued, so a follow-up loginUser call with the new password is required. Returns 204 on success; 400 on a blank field; 401 with ACTIVATION_TOKEN_INVALID when the account is unknown, the starter password is wrong, or the account has already been claimed (one code on purpose, so an unauthenticated caller learns nothing about which accounts exist or are still unclaimed). 
-     * Claim a Bulk-Provisioned Account with Its Starter Password
-     */
-    async activateAccountWithStarterPassword(requestParameters: ActivateAccountWithStarterPasswordRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.activateAccountWithStarterPasswordRaw(requestParameters, initOverrides);
-    }
-
-    /**
      * Authenticates a user with username and password and returns a JWT access token (1-hour) and refresh token (7-day) carrying uid, roles, perm_bits, and perm_ver claims. Use this tool when a person signs in with credentials; do not use refreshTokenPair, which exchanges an existing refresh token, and do not use issueInternalToken, which mints tokens for trusted internal callers without a password. Preconditions: the user account must exist, be enabled, non-expired, hold unexpired credentials, and not be inside an active failed-login lockout window. Required inputs: username and password, both non-blank. Emits a SECURITY_AUTH_LOGIN event, resets the failed-attempt counter on success, and persists the issued token pair for later validation and revocation. Returns 401 with code ACCOUNT_LOCKED while the lockout window is active, INVALID_CREDENTIALS on a bad password, and ACCOUNT_DISABLED, ACCOUNT_EXPIRED, or CREDENTIALS_EXPIRED for the matching account states; and 403 with USER_HAS_NO_ROLES when the credentials are valid but the account currently has no roles assigned. 
      * Authenticate User and Issue Tokens
      */
@@ -175,6 +133,38 @@ export class AuthAPIApi extends runtime.BaseAPI {
      */
     async loginUser(requestParameters: LoginUserRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TokenPairResponse> {
         const response = await this.loginUserRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the organizations whose name starts with the query, or one of whose words does, so a user can pick theirs at sign-in instead of typing a tenant slug. Use this tool to populate the login form\'s organization field; do not use it to enumerate tenants, which the result cap, the minimum query length and the prefix-only matching all exist to limit, and do not use it to check whether an organization exists before logging in — loginUser answers the same 401 either way. Preconditions: none; the endpoint is anonymous. Required inputs: q, the text the user has typed so far. A q shorter than the configured minimum (3 characters by default) is not searched and answers an empty list, which is the normal state while someone is still typing. Emits a SECURITY_TENANT_SEARCH event. Returns 200 with at most 10 ACTIVE organizations, each carrying only its display name and the slug to submit, and 404 when the directory is switched off, in which case the form asks for the slug instead. 
+     * Search Organizations for the Login Form
+     */
+    async searchTenantsRaw(requestParameters: SearchTenantsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<TenantSearchResponse>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/v1/auth/tenants`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(TenantSearchResponseFromJSON));
+    }
+
+    /**
+     * Returns the organizations whose name starts with the query, or one of whose words does, so a user can pick theirs at sign-in instead of typing a tenant slug. Use this tool to populate the login form\'s organization field; do not use it to enumerate tenants, which the result cap, the minimum query length and the prefix-only matching all exist to limit, and do not use it to check whether an organization exists before logging in — loginUser answers the same 401 either way. Preconditions: none; the endpoint is anonymous. Required inputs: q, the text the user has typed so far. A q shorter than the configured minimum (3 characters by default) is not searched and answers an empty list, which is the normal state while someone is still typing. Emits a SECURITY_TENANT_SEARCH event. Returns 200 with at most 10 ACTIVE organizations, each carrying only its display name and the slug to submit, and 404 when the directory is switched off, in which case the form asks for the slug instead. 
+     * Search Organizations for the Login Form
+     */
+    async searchTenants(requestParameters: SearchTenantsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<TenantSearchResponse>> {
+        const response = await this.searchTenantsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

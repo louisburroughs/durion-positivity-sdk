@@ -2,7 +2,6 @@
 /* eslint-disable */
 export * from './AccountStateResponse';
 export * from './ActivateAccountRequest';
-export * from './ActivateWithStarterRequest';
 export * from './ActivationTokenResponse';
 export * from './ApiError';
 export * from './AuditEventCreatedResponse';
@@ -61,6 +60,7 @@ export * from './SelfRegistrationResponse';
 export * from './SelfRegistrationReviewCaseResponse';
 export * from './SortObject';
 export * from './TenantMeResponse';
+export * from './TenantSearchResponse';
 export * from './TokenPairRequest';
 export * from './TokenPairResponse';
 export * from './TokenResponse';
