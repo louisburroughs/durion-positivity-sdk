@@ -333,6 +333,14 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     expect(client['permissionRegistryApi']).toBeDefined();
     expect(client['roleManagementApi']).toBeDefined();
     expect(client['jwtAPIApi']).toBeDefined();
+    // The tenant-aware surface. Asserted because the factory is hand-maintained
+    // while the classes behind it are generated: regeneration adds a class
+    // without adding its accessor. If one of these accessors is dropped, no
+    // other test in the repo would fail.
+    expect(client['tenantAPIApi']).toBeDefined();
+    expect(client['platformAdministratorAPIApi']).toBeDefined();
+    expect(client['platformSupportAPIApi']).toBeDefined();
+    expect(client['platformRoleTemplateAPIApi']).toBeDefined();
   });
 
   it('createOrderClient returns expected API namespaces', async () => {
@@ -383,6 +391,65 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     expect(client['journalEntriesApi']).toBeDefined();
     expect(client['glAccountsApi']).toBeDefined();
     expect(client['financialReportingApi']).toBeDefined();
+  });
+
+  it('createTenantClient returns expected API namespaces', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createTenantClient } = await import('@durion-sdk/tenant');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const client = createTenantClient({ baseUrl: 'http://localhost:8090', token: () => 'tok' }) as Record<string, unknown>;
+    expect(client['platformAccountApi']).toBeDefined();
+    expect(client['platformTenantApi']).toBeDefined();
+  });
+
+  it('createTenantClient injects the transport headers on every request', async () => {
+    // pos-tenant's factory was scaffolded with its own copy of DurionSdkConfig
+    // and of the header builder, so nothing tied it to @durion-sdk/transport
+    // and nothing would have caught the two drifting apart. It now goes
+    // through SdkHttpClient like the other transport-aware factories, and this
+    // is what holds it there.
+    const fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+    try {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const { createTenantClient } = await import('@durion-sdk/tenant');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      const client = createTenantClient({
+        baseUrl: 'http://localhost:8090',
+        token: () => 'bearer-tok',
+        apiVersion: '1',
+        correlationIdProvider: () => 'corr-id',
+        idempotencyKeyGenerator: () => 'idem-key',
+      }) as any;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const fetchApi = client.platformTenantApi?.configuration?.fetchApi as
+        ((url: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | undefined;
+      expect(fetchApi).toBeDefined();
+
+      await fetchApi!('http://localhost:8090/v1/platform/tenants', { method: 'POST' });
+      const [, postInit] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+      const postHeaders = new Headers(postInit.headers);
+      expect(postHeaders.get('Authorization')).toBe('Bearer bearer-tok');
+      expect(postHeaders.get('X-API-Version')).toBe('1');
+      expect(postHeaders.get('X-Correlation-Id')).toBe('corr-id');
+      // The url is handed to the builder, so the generator fires on a mutating
+      // request. Dropping it would silently stop emitting this header.
+      expect(postHeaders.get('Idempotency-Key')).toBe('idem-key');
+
+      fetchMock.mockClear();
+      await fetchApi!('http://localhost:8090/v1/platform/tenants', {});
+      const [, getInit] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+      const getHeaders = new Headers(getInit.headers);
+      expect(getHeaders.get('Authorization')).toBe('Bearer bearer-tok');
+      // GET is not mutating, so no idempotency key regardless of the generator.
+      expect(getHeaders.get('Idempotency-Key')).toBeNull();
+    } finally {
+      jest.restoreAllMocks();
+    }
   });
 });
 

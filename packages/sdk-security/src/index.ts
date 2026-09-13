@@ -13,6 +13,10 @@ import { PermissionRegistryApi } from './apis/PermissionRegistryApi';
 import { RoleManagementApi } from './apis/RoleManagementApi';
 import { JWTAPIApi } from './apis/JWTAPIApi';
 import { UserRoleManagementApi } from './apis/UserRoleManagementApi';
+import { TenantAPIApi } from './apis/TenantAPIApi';
+import { PlatformAdministratorAPIApi } from './apis/PlatformAdministratorAPIApi';
+import { PlatformSupportAPIApi } from './apis/PlatformSupportAPIApi';
+import { PlatformRoleTemplateAPIApi } from './apis/PlatformRoleTemplateAPIApi';
 
 export function createSecurityClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -43,5 +47,15 @@ export function createSecurityClient(config: DurionSdkConfig) {
     // live here, not on roleManagementApi. Surfaced so the integration suite's
     // role-mode preflight can verify a persona before any suite runs.
     userRoleManagementApi: new UserRoleManagementApi(configuration),
+    // The tenant-aware surface. Generated and exported by the apis barrel, but
+    // never surfaced here, so no consumer of this factory could ask which
+    // tenant its own token is bound to, nor reach anything under
+    // /v1/platform/tenants. This file is hand-maintained and protected by
+    // .openapi-generator-ignore, so regeneration adds a class without ever
+    // adding its accessor -- the gap does not close on its own.
+    tenantAPIApi: new TenantAPIApi(configuration),
+    platformAdministratorAPIApi: new PlatformAdministratorAPIApi(configuration),
+    platformSupportAPIApi: new PlatformSupportAPIApi(configuration),
+    platformRoleTemplateAPIApi: new PlatformRoleTemplateAPIApi(configuration),
   };
 }
