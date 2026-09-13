@@ -14,7 +14,12 @@ export class SdkHttpClient {
       return undefined;
     }
 
-    if (explicitIdempotencyKey) {
+    // An explicit key is the caller's choice even when it is blank: Headers.get
+    // returns '' for a present-but-blank header, and the generated clients set
+    // the header whenever idempotencyKey != null. Treating '' as absent would
+    // generate a key over it and turn a request the backend owes a 400 into one
+    // it accepts.
+    if (explicitIdempotencyKey !== undefined) {
       return explicitIdempotencyKey;
     }
 

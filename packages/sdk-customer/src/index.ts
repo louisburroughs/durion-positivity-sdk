@@ -36,3 +36,9 @@ export function createCustomerClient(config: DurionSdkConfig) {
 export * from './runtime';
 export * from './apis/index';
 export * from './models/index';
+
+// Re-exported, not re-declared: this package used to export its own identical
+// copy of DurionSdkConfig, so `import type { DurionSdkConfig } from
+// '@durion-sdk/customer'` has to keep working. The canonical definition now lives
+// in one place.
+export type { DurionSdkConfig } from '@durion-sdk/transport';

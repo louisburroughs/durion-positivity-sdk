@@ -681,6 +681,51 @@ describe('SDK-004 AC-transport-single-source: no factory re-declares the transpo
     const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
     expect(content).not.toMatch(/function buildRequestHeaders\(/);
   });
+
+  // The three assertions above read source text, which a package could satisfy
+  // with an unused import while still building its headers by hand. This one
+  // drives each discovered factory for real: it stands up the client, calls the
+  // fetchApi the generated APIs were handed, and checks the headers that only
+  // SdkHttpClient puts on a request actually arrive.
+  it.each(factoryPackages)('%s builds its headers through the shared client', async (name) => {
+    const fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = fetchMock as typeof fetch;
+    try {
+      const mod = (await import(`@durion-sdk/${name.replace(/^sdk-/, '')}`)) as Record<string, unknown>;
+      const entry = Object.entries(mod).find(
+        ([k, v]) => /^create\w+Client$/.test(k) && typeof v === 'function',
+      );
+      expect(entry).toBeDefined();
+      const create = entry![1] as (c: unknown) => Record<string, unknown>;
+      const client = create({
+        baseUrl: 'http://localhost:8080',
+        token: () => 'tok',
+        apiVersion: '7',
+        correlationIdProvider: () => 'corr-id',
+        idempotencyKeyGenerator: () => 'generated-key',
+      });
+
+      const api = Object.values(client).find(
+        (v) => typeof (v as { configuration?: { fetchApi?: unknown } })?.configuration?.fetchApi === 'function',
+      ) as { configuration: { fetchApi: (u: RequestInfo | URL, i?: RequestInit) => Promise<Response> } } | undefined;
+      expect(api).toBeDefined();
+
+      await api!.configuration.fetchApi('http://localhost:8080/v1/thing', { method: 'POST' });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [, init] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+      const headers = new Headers(init.headers);
+      expect(headers.get('Authorization')).toBe('Bearer tok');
+      expect(headers.get('X-API-Version')).toBe('7');
+      expect(headers.get('X-Correlation-Id')).toBe('corr-id');
+      expect(headers.get('Idempotency-Key')).toBe('generated-key');
+    } finally {
+      globalThis.fetch = realFetch;
+      jest.restoreAllMocks();
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -769,4 +814,55 @@ describe('SDK-004 AC-idempotency-parity: the generator fires on mutating request
       expect(sentHeaders().get('Idempotency-Key')).toBe('caller-key');
     },
   );
+});
+
+// ---------------------------------------------------------------------------
+// AC-blank-idempotency — a blank Idempotency-Key is the caller's choice, not
+//         an absent one.
+//
+//         Headers.get returns '' for a present-but-blank header, and the
+//         generated clients set the header whenever idempotencyKey != null, so
+//         a caller passing '' puts a blank header on the request. Treating
+//         that as absent and generating a key over it would turn a request the
+//         order checkout contract answers with 400 into one the backend
+//         accepts.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-blank-idempotency: a blank caller key is not replaced', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('a blank Idempotency-Key on a mutating request stays blank', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createOrderClient } = await import('@durion-sdk/order');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createOrderClient({
+      baseUrl: 'http://localhost:8081',
+      token: () => 'tok',
+      idempotencyKeyGenerator: () => 'generated-key',
+    }) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const fetchApi = client.salesOrdersApi.configuration.fetchApi as
+      (url: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+    await fetchApi('http://localhost:8081/v1/orders/carts', {
+      method: 'POST',
+      headers: { 'Idempotency-Key': '' },
+    });
+    const [, init] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+    // The backend owes this request a 400. Generating a key over the blank one
+    // would hide that.
+    expect(new Headers(init.headers).get('Idempotency-Key')).toBe('');
+  });
 });
