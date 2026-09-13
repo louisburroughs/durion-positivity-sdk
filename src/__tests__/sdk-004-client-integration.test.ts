@@ -629,3 +629,56 @@ describe('AC-inv-path: inventory API path versioning (no /api/ regression guard)
     },
   );
 });
+
+// ---------------------------------------------------------------------------
+// AC-transport-single-source — every factory builds its headers with
+//         SdkHttpClient from @durion-sdk/transport.
+//
+//         Nineteen packages were scaffolded with their own copy of
+//         DurionSdkConfig and their own buildRequestHeaders, so the auth,
+//         version, correlation and idempotency logic existed in twenty places
+//         with nothing tying them together. Each local interface was
+//         field-for-field identical to the canonical one -- which is the state
+//         a type drifts out of silently, the first time transport gains a
+//         field and twenty copies do not.
+//
+//         This is what stops the next scaffolded package reintroducing it:
+//         copying an existing factory now copies the shared client.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-transport-single-source: no factory re-declares the transport contract', () => {
+  // sdk-tenant is converted in PR #44, which landed the same change for that
+  // one package. Delete this entry once #44 merges -- whichever order the two
+  // land in, the other stays green.
+  const PENDING_ELSEWHERE = ['sdk-tenant'];
+
+  const factoryPackages = fs
+    .readdirSync(PACKAGES_DIR)
+    .filter((name) => {
+      const indexPath = path.join(PACKAGES_DIR, name, 'src', 'index.ts');
+      if (!fs.existsSync(indexPath)) return false;
+      return /export function create\w+Client\(/.test(readText(indexPath));
+    })
+    .filter((name) => !PENDING_ELSEWHERE.includes(name));
+
+  it('finds every package that exposes a factory', () => {
+    // A guard on the guard: if the discovery above silently matched nothing,
+    // every assertion below would vacuously pass.
+    expect(factoryPackages.length).toBeGreaterThanOrEqual(20);
+  });
+
+  it.each(factoryPackages)('%s imports SdkHttpClient from @durion-sdk/transport', (name) => {
+    const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+    expect(content).toMatch(/import \{[^}]*SdkHttpClient[^}]*\} from '@durion-sdk\/transport'/);
+  });
+
+  it.each(factoryPackages)('%s does not re-declare DurionSdkConfig', (name) => {
+    const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+    expect(content).not.toMatch(/export interface DurionSdkConfig/);
+  });
+
+  it.each(factoryPackages)('%s has no local buildRequestHeaders copy', (name) => {
+    const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+    expect(content).not.toMatch(/function buildRequestHeaders\(/);
+  });
+});
