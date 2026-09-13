@@ -696,3 +696,252 @@ describe('AC-inv-path: inventory API path versioning (no /api/ regression guard)
     },
   );
 });
+
+// ---------------------------------------------------------------------------
+// AC-transport-single-source — every factory builds its headers with
+//         SdkHttpClient from @durion-sdk/transport.
+//
+//         Nineteen packages were scaffolded with their own copy of
+//         DurionSdkConfig and their own buildRequestHeaders, so the auth,
+//         version, correlation and idempotency logic existed in twenty places
+//         with nothing tying them together. Each local interface was
+//         field-for-field identical to the canonical one -- which is the state
+//         a type drifts out of silently, the first time transport gains a
+//         field and twenty copies do not.
+//
+//         This is what stops the next scaffolded package reintroducing it:
+//         copying an existing factory now copies the shared client.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-transport-single-source: no factory re-declares the transport contract', () => {
+  const packagesWithIndex = fs
+    .readdirSync(PACKAGES_DIR)
+    .filter((name) => fs.existsSync(path.join(PACKAGES_DIR, name, 'src', 'index.ts')));
+
+  const indexOf = (name: string) => readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+
+  // Every export form the factory contract allows, not just the one every
+  // package happens to use today: AC-3 accepts the factory by name, so
+  // `export const createXClient = ...` or a named export of a function is as
+  // valid as `export function`. Missing one would drop that package out of the
+  // list below and quietly stop checking it.
+  const declaresFactory = (src: string) =>
+    /export\s+(?:function|const|let|var)\s+create\w+Client\b/.test(src) ||
+    /export\s*\{[^}]*\bcreate\w+Client\b[^}]*\}/.test(src);
+
+  const factoryPackages = packagesWithIndex.filter((name) => declaresFactory(indexOf(name)));
+
+  it('discovery finds every package that names a factory', () => {
+    // A guard on the guard, and not a vacuous one: an arbitrary floor cannot
+    // tell "discovery works" from "discovery silently missed two". Anything
+    // that so much as mentions a create*Client symbol has to have been picked
+    // up by the stricter pattern above, or the difference names what escaped.
+    const mentionsFactory = packagesWithIndex.filter((name) => /\bcreate\w+Client\b/.test(indexOf(name)));
+    expect(factoryPackages.slice().sort()).toEqual(mentionsFactory.slice().sort());
+    expect(factoryPackages.length).toBeGreaterThan(0);
+  });
+
+  it.each(factoryPackages)('%s imports SdkHttpClient from @durion-sdk/transport', (name) => {
+    const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+    expect(content).toMatch(/import \{[^}]*SdkHttpClient[^}]*\} from '@durion-sdk\/transport'/);
+  });
+
+  it.each(factoryPackages)('%s does not re-declare DurionSdkConfig', (name) => {
+    const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+    // Any declaration form, exported or not, and an alias as much as an
+    // interface — a copied contract is a copied contract however it is spelled.
+    // `export type { DurionSdkConfig } from '@durion-sdk/transport'` is a
+    // re-export, not a declaration, and does not match: the brace follows the
+    // keyword where a name would be.
+    expect(content).not.toMatch(/\b(?:interface|type)\s+DurionSdkConfig\b/);
+  });
+
+  it.each(factoryPackages)('%s has no local buildRequestHeaders copy', (name) => {
+    const content = readText(path.join(PACKAGES_DIR, name, 'src', 'index.ts'));
+    expect(content).not.toMatch(/function buildRequestHeaders\(/);
+  });
+
+  // The three assertions above read source text, which a package could satisfy
+  // with an unused import while still building its headers by hand. This one
+  // drives each discovered factory for real: it stands up the client, calls the
+  // fetchApi the generated APIs were handed, and checks the headers that only
+  // SdkHttpClient puts on a request actually arrive.
+  it.each(factoryPackages)('%s builds its headers through the shared client', async (name) => {
+    const fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = fetchMock as typeof fetch;
+    try {
+      const mod = (await import(`@durion-sdk/${name.replace(/^sdk-/, '')}`)) as Record<string, unknown>;
+      const entry = Object.entries(mod).find(
+        ([k, v]) => /^create\w+Client$/.test(k) && typeof v === 'function',
+      );
+      expect(entry).toBeDefined();
+      const create = entry![1] as (c: unknown) => Record<string, unknown>;
+      const client = create({
+        baseUrl: 'http://localhost:8080',
+        token: () => 'tok',
+        apiVersion: '7',
+        correlationIdProvider: () => 'corr-id',
+        idempotencyKeyGenerator: () => 'generated-key',
+      });
+
+      const api = Object.values(client).find(
+        (v) => typeof (v as { configuration?: { fetchApi?: unknown } })?.configuration?.fetchApi === 'function',
+      ) as { configuration: { fetchApi: (u: RequestInfo | URL, i?: RequestInit) => Promise<Response> } } | undefined;
+      expect(api).toBeDefined();
+
+      await api!.configuration.fetchApi('http://localhost:8080/v1/thing', { method: 'POST' });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [, init] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+      const headers = new Headers(init.headers);
+      expect(headers.get('Authorization')).toBe('Bearer tok');
+      expect(headers.get('X-API-Version')).toBe('7');
+      expect(headers.get('X-Correlation-Id')).toBe('corr-id');
+      expect(headers.get('Idempotency-Key')).toBe('generated-key');
+    } finally {
+      globalThis.fetch = realFetch;
+      jest.restoreAllMocks();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC-idempotency-parity — every factory hands the url and any caller-supplied
+//         Idempotency-Key to buildRequestHeaders, so idempotencyKeyGenerator
+//         fires on mutating requests.
+//
+//         accounting, inventory, security and workorder used to call
+//         buildRequestHeaders(method) with neither, which meant a configured
+//         idempotencyKeyGenerator was never consulted for them at all — four
+//         packages silently opting out of replay safety on endpoints that
+//         support it. They now pass both, like the other nineteen.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-idempotency-parity: the generator fires on mutating requests', () => {
+  const LEVELLED_UP: ReadonlyArray<[string, string, string]> = [
+    ['security', '@durion-sdk/security', 'authAPIApi'],
+    ['accounting', '@durion-sdk/accounting', 'journalEntriesApi'],
+    ['inventory', '@durion-sdk/inventory', 'inventoryManagementApi'],
+    ['workorder', '@durion-sdk/workorder', 'workOrderAPIApi'],
+  ];
+
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  async function fetchApiFor(moduleName: string, accessor: string) {
+    const mod = (await import(moduleName)) as Record<string, unknown>;
+    const factory = Object.entries(mod).find(([k]) => k.startsWith('create') && k.endsWith('Client'));
+    expect(factory).toBeDefined();
+    const create = factory![1] as (c: unknown) => Record<string, { configuration?: { fetchApi?: unknown } }>;
+    const client = create({
+      baseUrl: 'http://localhost:8080',
+      token: () => 'tok',
+      idempotencyKeyGenerator: () => 'generated-key',
+    });
+    const fetchApi = client[accessor]?.configuration?.fetchApi as
+      ((url: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | undefined;
+    expect(fetchApi).toBeDefined();
+    return fetchApi!;
+  }
+
+  function sentHeaders(): Headers {
+    const [, init] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+    return new Headers(init.headers);
+  }
+
+  it.each(LEVELLED_UP)(
+    '%s: a mutating request gets a generated Idempotency-Key',
+    async (_name, moduleName, accessor) => {
+      const fetchApi = await fetchApiFor(moduleName, accessor);
+      await fetchApi('http://localhost:8080/v1/thing', { method: 'POST' });
+      expect(sentHeaders().get('Idempotency-Key')).toBe('generated-key');
+    },
+  );
+
+  it.each(LEVELLED_UP)(
+    '%s: a non-mutating request gets no Idempotency-Key',
+    async (_name, moduleName, accessor) => {
+      const fetchApi = await fetchApiFor(moduleName, accessor);
+      await fetchApi('http://localhost:8080/v1/thing', { method: 'GET' });
+      expect(sentHeaders().get('Idempotency-Key')).toBeNull();
+    },
+  );
+
+  it.each(LEVELLED_UP)(
+    '%s: a caller-supplied key survives even on a non-mutating request',
+    async (_name, moduleName, accessor) => {
+      // buildRequestHeaders declines to return a key for a GET, but the merge
+      // only ever sets headers — it never deletes — so a key the generated
+      // client already put on the request is carried through untouched.
+      const fetchApi = await fetchApiFor(moduleName, accessor);
+      await fetchApi('http://localhost:8080/v1/thing', {
+        method: 'GET',
+        headers: { 'Idempotency-Key': 'caller-key' },
+      });
+      expect(sentHeaders().get('Idempotency-Key')).toBe('caller-key');
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// AC-blank-idempotency — a blank Idempotency-Key is the caller's choice, not
+//         an absent one.
+//
+//         Headers.get returns '' for a present-but-blank header, and the
+//         generated clients set the header whenever idempotencyKey != null, so
+//         a caller passing '' puts a blank header on the request. Treating
+//         that as absent and generating a key over it would turn a request the
+//         order checkout contract answers with 400 into one the backend
+//         accepts.
+// ---------------------------------------------------------------------------
+
+describe('SDK-004 AC-blank-idempotency: a blank caller key is not replaced', () => {
+  let fetchMock: jest.Mock;
+
+  beforeEach(() => {
+    fetchMock = jest.fn().mockResolvedValue(
+      new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('a blank Idempotency-Key on a mutating request stays blank', async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const { createOrderClient } = await import('@durion-sdk/order');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    const client = createOrderClient({
+      baseUrl: 'http://localhost:8081',
+      token: () => 'tok',
+      idempotencyKeyGenerator: () => 'generated-key',
+    }) as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const fetchApi = client.salesOrdersApi.configuration.fetchApi as
+      (url: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+    await fetchApi('http://localhost:8081/v1/orders/carts', {
+      method: 'POST',
+      headers: { 'Idempotency-Key': '' },
+    });
+    const [, init] = fetchMock.mock.calls[0] as [unknown, RequestInit];
+    // The backend owes this request a 400. Generating a key over the blank one
+    // would hide that.
+    expect(new Headers(init.headers).get('Idempotency-Key')).toBe('');
+  });
+});
