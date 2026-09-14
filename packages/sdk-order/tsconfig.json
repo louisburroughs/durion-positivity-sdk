@@ -18,5 +18,10 @@
     "src/**/*.d.ts",
     "dist",
     "node_modules"
+  ],
+  "references": [
+    {
+      "path": "../sdk-transport"
+    }
   ]
 }
