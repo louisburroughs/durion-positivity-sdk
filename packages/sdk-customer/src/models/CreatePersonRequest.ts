@@ -33,6 +33,12 @@ import {
  */
 export interface CreatePersonRequest {
     /**
+     * Customer number to assign to this person, if the caller already has one. It is the person's business key: a second create quoting a number already in use is refused as a duplicate rather than making a second party for the same customer. Omit it and the service generates one.
+     * @type {string}
+     * @memberof CreatePersonRequest
+     */
+    customerNumber?: string;
+    /**
      * Email addresses for this person
      * @type {Array<EmailInput>}
      * @memberof CreatePersonRequest
@@ -96,6 +102,7 @@ export function CreatePersonRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'customerNumber': json['customerNumber'] == null ? undefined : json['customerNumber'],
         'emails': json['emails'] == null ? undefined : ((json['emails'] as Array<any>).map(EmailInputFromJSON)),
         'firstName': json['firstName'],
         'lastName': json['lastName'],
@@ -110,6 +117,7 @@ export function CreatePersonRequestToJSON(value?: CreatePersonRequest | null): a
     }
     return {
         
+        'customerNumber': value['customerNumber'],
         'emails': value['emails'] == null ? undefined : ((value['emails'] as Array<any>).map(EmailInputToJSON)),
         'firstName': value['firstName'],
         'lastName': value['lastName'],

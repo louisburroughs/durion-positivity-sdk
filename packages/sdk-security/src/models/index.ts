@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './AccountStateResponse';
 export * from './ActivateAccountRequest';
+export * from './ActivateWithStarterRequest';
 export * from './ActivationTokenResponse';
 export * from './ApiError';
 export * from './AuditEventCreatedResponse';
