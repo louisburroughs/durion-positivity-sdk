@@ -128,7 +128,8 @@ line.
 
 Global setup handles this when `ITEST_SEED_PASSWORD` is set (see
 `harness/StarterActivation.ts`): it attempts each account's login, activates
-only those refused with `CREDENTIALS_EXPIRED`, and sets them to the
+only those whose login is refused and that are still awaiting activation, and
+sets them to the
 `ITEST_*_PASSWORD` configured for them. `ALPHA_TENANT_SLUG` is passed to
 activation and to every login, and the tenant preflight then refuses any
 login bound to a tenant other than `ALPHA_TENANT_ID`.
@@ -140,7 +141,9 @@ refused until the starter password is traded through
 `POST /v1/auth/activate-starter`** for a password of its own. The refusal is a
 property of the account, not of the request: retrying the login, re-seeding, or
 fixing `.env.itest` will not clear it. `loginUser` reports it as 401
-`CREDENTIALS_EXPIRED`.
+`INVALID_CREDENTIALS`, the same answer as a wrong password: Spring checks
+credential expiry only after a password matches, and nothing matches an
+unclaimed account's password.
 
 The generated client is `AuthAPIApi.activateAccountWithStarterPassword`
 (`@durion-sdk/security`). Note the shape: it takes an
@@ -200,7 +203,8 @@ Consequences for the suite, all of which the harness has to learn:
   account already claimed, an unknown username and a wrong starter password all
   return the same 401 `ACTIVATION_TOKEN_INVALID`, so a failed exchange cannot
   tell the harness which happened. Attempt the login first and fall back to
-  activation on `CREDENTIALS_EXPIRED`, rather than activating unconditionally
+  activation only when login is refused (it answers `INVALID_CREDENTIALS`, not
+  `CREDENTIALS_EXPIRED`), rather than activating unconditionally
   and trying to interpret the refusal — on a re-run against an already-activated
   environment every account is in the claimed state.
 

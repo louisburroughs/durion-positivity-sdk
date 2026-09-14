@@ -94,7 +94,7 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | `ALPHA_TENANT_SLUG` / `ALPHA_TENANT_ID` | — | **Yes** | The tenant every suite runs in. Every login sends the slug; the direct-to-service security bootstrap sends the id as `X-Tenant-Id`; global setup refuses any login bound elsewhere |
 | `PLATFORM_TENANT_SLUG` / `PLATFORM_TENANT_ID` | — | With a platform login | The platform tenant (platform tables). Must differ from the alpha tenant; nothing is seeded into it |
 | `ITEST_PLATFORM_USERNAME` / `_PASSWORD` | — | No | Platform-tenant login, checked to bind to the platform tenant |
-| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. Accounts refused with `CREDENTIALS_EXPIRED` are activated to their configured `ITEST_*_PASSWORD` before anything logs in (one-shot per account) |
+| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. Accounts whose login is refused (`INVALID_CREDENTIALS`) and are still awaiting activation are activated to their configured `ITEST_*_PASSWORD` before anything logs in (one-shot per account) |
 
 Persona credentials are optional as a set: define **all or none** per persona
 (a username without its password fails config validation). See *Personas,

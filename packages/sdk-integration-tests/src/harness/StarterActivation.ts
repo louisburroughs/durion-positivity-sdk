@@ -10,25 +10,31 @@ import type { ItestConfig, PersonaCredentials } from './ItestConfig';
  * activated before login").
  *
  * A bulk-provisioned account is loaded with one shared starter password and
- * login refuses it (401 CREDENTIALS_EXPIRED) until that password is traded
- * through POST /v1/auth/activate-starter. This runs first in global setup and
- * gives every account the password .env.itest records for it.
+ * cannot log in until that password is traded through
+ * POST /v1/auth/activate-starter. This runs first in global setup and gives
+ * every account the password .env.itest records for it.
  *
- * Login is attempted before activation, never the other way round: activation
- * answers one uninformative 401 for an unknown account, a wrong starter
- * password and an account already claimed, so on a re-run against an activated
- * environment it could not tell success from misconfiguration. The login that
- * succeeds says so plainly.
+ * Such an account answers login with 401 INVALID_CREDENTIALS, not
+ * CREDENTIALS_EXPIRED: Spring checks credential expiry only after a password
+ * matches, and nothing matches an unclaimed account's password. A refused login
+ * therefore cannot tell "awaiting activation" from "wrong password"; the
+ * exchange is what tells them apart. It changes nothing unless the account is
+ * still awaiting activation and the starter password matches, so attempting it
+ * on a refused login is safe.
+ *
+ * Login is still attempted first: an account that already logs in is left
+ * alone, which is what makes a re-run against an activated environment safe.
  */
 
-export type LoginOutcome = 'ok' | 'credentials-expired';
+export type LoginOutcome = 'ok' | 'refused';
 
 /** The two auth calls activation needs, behind a port so it tests without HTTP. */
 export interface StarterActivationPort {
   /**
-   * Resolves 'credentials-expired' only for 401 CREDENTIALS_EXPIRED - the state
-   * activation clears. Every other refusal rejects: a wrong password or a
-   * locked account is not something activation should paper over.
+   * Resolves 'refused' for 401 INVALID_CREDENTIALS or CREDENTIALS_EXPIRED, the
+   * answers an account awaiting activation can give. Every other refusal
+   * rejects: a locked or disabled account is not something activation should
+   * paper over.
    */
   tryLogin(credentials: PersonaCredentials): Promise<LoginOutcome>;
   activate(username: string, starterPassword: string, newPassword: string): Promise<void>;
@@ -80,8 +86,10 @@ export class StarterActivation {
         await this.port.activate(username, starterPassword, credentials.password);
       } catch (error) {
         problems.push(
-          `${persona}: "${username}" awaits activation but the starter exchange was refused ` +
-            `(${await formatError(error)}) - check ITEST_SEED_PASSWORD and ALPHA_TENANT_SLUG`,
+          `${persona}: "${username}" refused login, and the starter exchange was refused too ` +
+            `(${await formatError(error)}). Either the account was already claimed with a password other than ` +
+            `the configured one, or ITEST_SEED_PASSWORD / ALPHA_TENANT_SLUG is wrong. Each run adds a failed ` +
+            `login, and 5 within 10 minutes locks the account`,
         );
         continue;
       }
@@ -94,7 +102,7 @@ export class StarterActivation {
         continue;
       }
       if (outcome !== 'ok') {
-        problems.push(`${persona}: "${username}" was activated but login still reports CREDENTIALS_EXPIRED`);
+        problems.push(`${persona}: "${username}" was activated but its configured password is still refused`);
         continue;
       }
       activated.push(`${persona}=${username}`);
@@ -121,8 +129,8 @@ export function createStarterActivationPort(config: ItestConfig): StarterActivat
         await authAPIApi.loginUser({ loginRequest: { username, password, tenantSlug } });
         return 'ok';
       } catch (error) {
-        if (await isCredentialsExpired(error)) {
-          return 'credentials-expired';
+        if (await isRefusedLogin(error)) {
+          return 'refused';
         }
         throw error;
       }
@@ -138,14 +146,14 @@ export function createStarterActivationPort(config: ItestConfig): StarterActivat
   };
 }
 
-async function isCredentialsExpired(error: unknown): Promise<boolean> {
+async function isRefusedLogin(error: unknown): Promise<boolean> {
   const response = (error as { response?: Response } | undefined)?.response;
   if (response?.status !== 401) {
     return false;
   }
   try {
     // Cloned so a rethrown error still carries an unread body for formatError.
-    return (await response.clone().text()).includes('CREDENTIALS_EXPIRED');
+    return /"code"\s*:\s*"(INVALID_CREDENTIALS|CREDENTIALS_EXPIRED)"/.test(await response.clone().text());
   } catch {
     return false;
   }
