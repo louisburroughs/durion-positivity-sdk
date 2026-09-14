@@ -370,6 +370,7 @@ src/
     00-harness.itest.ts   a-appointments.itest.ts   b-estimates.itest.ts
     c-workorder-execution.itest.ts                  d-receiving.itest.ts
     e-cycle-count.itest.ts                          f-time-reporting.itest.ts
+    h-service-position.itest.ts
 ```
 
 Suites receive the shared reference fixture through `ITEST_CONTEXT_FILE`,

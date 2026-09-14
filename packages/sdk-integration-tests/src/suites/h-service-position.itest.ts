@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { SeederRandom } from '@durion-sdk/seeder';
 import { AssignServicePositionRequestResourceTypeEnum as ResourceType } from '@durion-sdk/workorder';
 import {
@@ -37,7 +36,8 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
  * The bay and the mobile unit are created by this run. Every other position at
  * the site is shared with the seeder and earlier runs, and any of them may
  * already hold an open workorder, which would turn a contention test into a test
- * of someone else's data. Three workorders are built: W1 takes the bay first, W2
+ * of someone else's data. Both are kept afterwards, run-tagged, like every
+ * record a run creates. Three workorders are built: W1 takes the bay first, W2
  * contends for it, W3 parks.
  */
 describe('Suite H — service position and technician assignment', () => {
@@ -53,10 +53,10 @@ describe('Suite H — service position and technician assignment', () => {
 
   let siteId: string;
   let technicianId: string;
-  /** Created in beforeAll and deleted in afterAll. */
+  /** Created in beforeAll and kept, run-tagged. */
   let bayId: string | undefined;
   /**
-   * Created in beforeAll and deleted in afterAll. Left INACTIVE (the default):
+   * Created in beforeAll and kept, run-tagged. Left INACTIVE (the default):
    * an ACTIVE unit needs a travel buffer policy, capabilities and coverage rules,
    * none of which the one-open-workorder rule depends on.
    */
@@ -141,8 +141,9 @@ describe('Suite H — service position and technician assignment', () => {
     if (!manager) {
       return;
     }
-    // Leave nothing placed: an open workorder left on this run's bay would keep
-    // it occupied, and a bay still holding one may refuse deletion.
+    // Leave nothing placed, so none of this run's workorders is left holding a
+    // position. The bay and unit themselves are kept: alpha is append-only and a
+    // run's records are its trace (spec: persistence contract).
     for (const built of [w1, w2, w3]) {
       if (!built) continue;
       try {
@@ -152,20 +153,6 @@ describe('Suite H — service position and technician assignment', () => {
         });
       } catch (error) {
         console.log(`[H] cleanup: could not release ${built.workorderId}: ${await formatError(error)}`);
-      }
-    }
-    if (bayId) {
-      try {
-        await admin.location.bayApi.deleteBay({ locationId: siteId, bayId });
-      } catch (error) {
-        console.log(`[H] cleanup: could not delete bay ${bayId}: ${await formatError(error)}`);
-      }
-    }
-    if (mobileUnitId) {
-      try {
-        await admin.location.mobileUnitApi.deleteMobileUnit({ id: mobileUnitId });
-      } catch (error) {
-        console.log(`[H] cleanup: could not delete mobile unit ${mobileUnitId}: ${await formatError(error)}`);
       }
     }
   }, 120_000);
@@ -204,14 +191,25 @@ describe('Suite H — service position and technician assignment', () => {
     }
   }, 120_000);
 
-  it('H4 — a HOLD naming another site is refused as invalid', async () => {
+  it('H4 — a HOLD naming another real site is refused, and the workorder stays parked', async () => {
+    // A real location, not a random id: a backend that accepted any existing site
+    // as a HOLD would still pass against an id that exists nowhere.
+    const locations = await call('listLocations', () => admin.location.locationApi.listLocations());
+    const otherSite = locations.find((location) => location.id !== siteId);
+    if (!otherSite) {
+      throw new Error(`H4 needs a location other than the suite site ${siteId}; listLocations returned ${locations.length}`);
+    }
+
     const refused = await expectApiError(
-      assign(w3.workorderId, ResourceType.Hold, randomUUID()),
+      assign(w3.workorderId, ResourceType.Hold, otherSite.id),
       422,
       'SERVICE_POSITION_INVALID',
     );
-    console.log(`[H4] foreign HOLD refused: ${refused.message}`);
-    expect((await positionOf(w3.workorderId)).resourceType).toBe('HOLD');
+    console.log(`[H4] HOLD at ${otherSite.name} (${otherSite.id}) refused: ${refused.message}`);
+
+    const after = await positionOf(w3.workorderId);
+    expect(after.resourceType).toBe('HOLD');
+    expect(after.resourceId).toBe(siteId);
   }, 120_000);
 
   it('H5 — position and technician are independent: changing one leaves the other', async () => {

@@ -315,6 +315,9 @@ packages/sdk-integration-tests/
       b-estimates.itest.ts
       c-workorder-execution.itest.ts
       d-receiving.itest.ts
+      e-cycle-count.itest.ts
+      f-time-reporting.itest.ts
+      h-service-position.itest.ts
 ```
 
 Framework decisions:
@@ -1141,12 +1144,13 @@ ACTIVE unit needs a travel buffer policy, capabilities and coverage rules, and
 pos-workorder does not consult the unit's status when placing a workorder. Both
 reach pos-workorder through Kafka-fed replicas (`ext_bay`, `ext_mobile_unit`), so
 H1 and H8 retry while the refusal says `Unknown bay` / `Unknown mobile unit`.
-`afterAll` releases every position it set and deletes the bay and the unit.
+`afterAll` releases every position it set; the bay and unit are kept, run-tagged,
+like every record a run creates.
 
 - [ ] **H1** W1 placed on the run's bay; the read and the current history row name it.
 - [ ] **H2** W2 on the same bay → 409 `RESOURCE_OCCUPIED`, `referenceId` = W1.
 - [ ] **H3** W2 and W3 on `HOLD` with no id → both `HOLD`, `resourceId` = the site.
-- [ ] **H4** `HOLD` naming another site → 422 `SERVICE_POSITION_INVALID`.
+- [ ] **H4** `HOLD` naming another real location (from `listLocations`) → 422 `SERVICE_POSITION_INVALID`; the workorder stays on `HOLD` at its own site.
 - [ ] **H5** W1 approved and given a technician; moving W1 to `HOLD` keeps the technician, releasing the technician keeps `HOLD`.
 - [ ] **H6** W2 takes the bay W1 left.
 - [ ] **H7** Releasing W2 leaves no position; the bay claim stays in history.
