@@ -1,6 +1,7 @@
 import { SeederConfig } from '../SeederConfig';
 
 const SYSADMIN_ROLE_NAME = 'SYSTEM_ADMINISTRATOR';
+const PLATFORM_PERMISSION_PREFIX = 'platform:';
 
 interface PermissionPage {
   content: Array<{ name: string }>;
@@ -22,7 +23,12 @@ export class SecurityBootstrap {
   async run(): Promise<void> {
     const baseUrl = this.config.securityServiceUrl;
 
-    const permissionNames = await this.fetchAllPermissionNames(baseUrl);
+    // platform:* is reserved for PLATFORM_ADMIN in the platform tenant (ADR-0062
+    // section 7), and the service refuses the whole grant when any is included,
+    // so SYSTEM_ADMINISTRATOR is granted every permission except those.
+    const permissionNames = (await this.fetchAllPermissionNames(baseUrl)).filter(
+      (name) => !name.startsWith(PLATFORM_PERMISSION_PREFIX),
+    );
 
     if (permissionNames.length === 0) {
       console.log('[SecurityBootstrap] No permissions found — skipping role grant.');
