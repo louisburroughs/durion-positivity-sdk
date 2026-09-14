@@ -62,6 +62,8 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'inventory:asn:create',
     'inventory:goods_receipt:create',
     'inventory:receiving:create',
+    // Suite E plans the cycle count as the clerk (E1, pinned by E2).
+    'inventory:cycle_count:initiate',
   ],
   // Backend V25 (#1499/#1512) rescoped ACCOUNT_MANAGER to customer accounts
   // (AR) and moved accounting management - accounting:events:submit included -

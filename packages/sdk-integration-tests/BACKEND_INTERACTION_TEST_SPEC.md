@@ -786,10 +786,9 @@ backend's own seed driver: bulk ingest raises one adjustment *request* per row
 and approving that request writes the ledger entry. Ingest alone leaves
 availability at zero — the single most likely way to misread this flow.
 
-**Acting personas:** `admin` throughout the count itself.
-`inventory:cycle_count:initiate|view|complete` are granted to ADMIN and to no
-other role, so INVENTORY_LEAD — the clerk who counts stock in the building —
-cannot plan, generate, record or read a count. `parts` (INVENTORY_LEAD) raises
+**Acting personas:** `parts` (INVENTORY_LEAD) plans the count: the alpha data
+load grants it `inventory:cycle_count:initiate|view|complete`. `admin` generates
+and records the count itself. `parts` also raises
 the adjustment (`inventory:adjustment:create`) and reads it back
 (`:view`); `admin` approves it, because `inventory:adjustment:approve` goes to
 INVENTORY_CONTROLLER, INVENTORY_MANAGER and ADMIN and never to the raiser.
@@ -802,10 +801,10 @@ decision and nothing auto-approves. `createCycleCountPlan` requires a non-empty
 `zoneIds` and a `scheduledDate` strictly in the future, neither of which the
 generated model marks required.
 
-- [ ] **E1 — Plan.** `createCycleCountPlan` scoped to the run's own bin;
+- [ ] **E1 — Plan.** `createCycleCountPlan` as `parts`, scoped to the run's own bin;
   assert `PLANNED` and that `zoneIds` carries the bin.
-- [ ] **E2 — RBAC negative.** The parts clerk cannot plan a count; assert
-  401/403 and record the grant gap rather than working around it.
+- [ ] **E2 — RBAC positive.** In role mode the E1 plan was created by the
+  parts clerk, and the clerk can list its tasks (`inventory:cycle_count:view`).
 - [ ] **E3 — Generate.** `generateCycleCountTasks` for the clerk as auditor;
   assert exactly the two seeded SKUs, `binLocation` equal to the bin's UUID as
   text, `ASSIGNED`, expected quantity as seeded, and the plan moved to
