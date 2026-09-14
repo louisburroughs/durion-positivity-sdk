@@ -38,6 +38,7 @@ export * from './PageableObject';
 export * from './PersonDTO';
 export * from './PostalCodeEntry';
 export * from './ProblemDetail';
+export * from './ServiceAreaPostalCodesRequest';
 export * from './ServiceAreaRequest';
 export * from './ServiceAreaResponse';
 export * from './SiteDefaultsRequest';

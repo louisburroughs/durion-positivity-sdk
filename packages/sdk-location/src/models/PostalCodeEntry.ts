@@ -24,7 +24,7 @@ export interface PostalCodeEntry {
      * @type {string}
      * @memberof PostalCodeEntry
      */
-    countryCode?: string;
+    countryCode: string;
     /**
      * Postal or ZIP code
      * @type {string}
@@ -37,6 +37,7 @@ export interface PostalCodeEntry {
  * Check if a given object implements the PostalCodeEntry interface.
  */
 export function instanceOfPostalCodeEntry(value: object): boolean {
+    if (!('countryCode' in value)) return false;
     if (!('postalCode' in value)) return false;
     return true;
 }
@@ -51,7 +52,7 @@ export function PostalCodeEntryFromJSONTyped(json: any, ignoreDiscriminator: boo
     }
     return {
         
-        'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
+        'countryCode': json['countryCode'],
         'postalCode': json['postalCode'],
     };
 }

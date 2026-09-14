@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AssignTechnicianRequest,
   ReassignTechnicianRequest,
   TechnicianAssignmentResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AssignTechnicianRequestFromJSON,
     AssignTechnicianRequestToJSON,
     ReassignTechnicianRequestFromJSON,
@@ -44,13 +47,18 @@ export interface ReassignTechnicianOperationRequest {
     idempotencyKey?: string;
 }
 
+export interface ReleaseTechnicianRequest {
+    workorderId: string;
+    reason?: string;
+}
+
 /**
  * 
  */
 export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
 
     /**
-     * Assigns a technician to a workorder as the current assignment, retiring any previous assignment into history and transitioning the workorder from APPROVED to ASSIGNED when applicable. Use this tool for the first assignment on a workorder; do not use reassignTechnician, which requires an existing current assignment and records a reassignment reason. Preconditions: the workorder must exist and be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status. Required inputs: workorderId (UUID) as a path parameter and technicianId (UUID) in the body; notes are optional, the assignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used to deduplicate. Emits a WORKORDER_TECHNICIAN_ASSIGN event; an APPROVED workorder is transitioned to ASSIGNED with a recorded state transition. Returns 404 when the workorder does not exist, and 400 with the failure reason when the workorder status does not allow assignment. 
+     * Assigns a technician to a workorder that has none, transitioning the workorder from APPROVED to ASSIGNED when applicable. Use this tool for the first assignment on a workorder; do not use it to change technicians — reassignTechnician requires an existing current assignment and records a reassignment reason, and releaseTechnician takes the current one off without a replacement. Preconditions: the workorder must exist, be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status, and have no current technician. Required inputs: workorderId (UUID) as a path parameter and technicianId (UUID) in the body; notes are optional, the assignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used to deduplicate. Emits a WORKORDER_TECHNICIAN_ASSIGN event; an APPROVED workorder is transitioned to ASSIGNED with a recorded state transition. Returns 404 when the workorder does not exist, 400 with the failure reason when the workorder status does not allow assignment, and 409 TECHNICIAN_ALREADY_ASSIGNED when the workorder already has a current technician — use reassignTechnician to change it. 
      * Assign Technician to Workorder
      */
     async assignTechnicianRaw(requestParameters: AssignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TechnicianAssignmentResponse>> {
@@ -98,7 +106,7 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Assigns a technician to a workorder as the current assignment, retiring any previous assignment into history and transitioning the workorder from APPROVED to ASSIGNED when applicable. Use this tool for the first assignment on a workorder; do not use reassignTechnician, which requires an existing current assignment and records a reassignment reason. Preconditions: the workorder must exist and be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status. Required inputs: workorderId (UUID) as a path parameter and technicianId (UUID) in the body; notes are optional, the assignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used to deduplicate. Emits a WORKORDER_TECHNICIAN_ASSIGN event; an APPROVED workorder is transitioned to ASSIGNED with a recorded state transition. Returns 404 when the workorder does not exist, and 400 with the failure reason when the workorder status does not allow assignment. 
+     * Assigns a technician to a workorder that has none, transitioning the workorder from APPROVED to ASSIGNED when applicable. Use this tool for the first assignment on a workorder; do not use it to change technicians — reassignTechnician requires an existing current assignment and records a reassignment reason, and releaseTechnician takes the current one off without a replacement. Preconditions: the workorder must exist, be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status, and have no current technician. Required inputs: workorderId (UUID) as a path parameter and technicianId (UUID) in the body; notes are optional, the assignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used to deduplicate. Emits a WORKORDER_TECHNICIAN_ASSIGN event; an APPROVED workorder is transitioned to ASSIGNED with a recorded state transition. Returns 404 when the workorder does not exist, 400 with the failure reason when the workorder status does not allow assignment, and 409 TECHNICIAN_ALREADY_ASSIGNED when the workorder already has a current technician — use reassignTechnician to change it. 
      * Assign Technician to Workorder
      */
     async assignTechnician(requestParameters: AssignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TechnicianAssignmentResponse> {
@@ -150,7 +158,7 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reassigns a workorder to a different technician, retiring the current assignment with the given reason and creating a new current assignment that preserves the full history. Use this tool when a workorder already has a technician and must change hands; do not use assignTechnician, which is for the initial assignment and records no reassignment reason. Preconditions: the workorder must exist, be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status, and have a current technician assignment to reassign from. Required inputs: workorderId (UUID) as a path parameter and newTechnicianId (UUID) in the body; reason and notes are optional, the reassignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used. Emits a WORKORDER_TECHNICIAN_REASSIGN event. Returns 404 when the workorder does not exist, and 400 with the failure reason when there is no current assignment or the workorder status does not allow reassignment. 
+     * Reassigns a workorder to a different technician, retiring the current assignment with the given reason and creating a new current assignment that preserves the full history. Use this tool when a workorder already has a technician and must change hands; do not use assignTechnician, which is for the initial assignment and records no reassignment reason. Preconditions: the workorder must exist, be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status, and have a current technician assignment to reassign from. Required inputs: workorderId (UUID) as a path parameter and newTechnicianId (UUID) in the body; reason and notes are optional, the reassignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used. Emits a WORKORDER_TECHNICIAN_REASSIGN event. Returns 404 when the workorder does not exist, 400 with the failure reason when the workorder status does not allow reassignment, and 409 TECHNICIAN_NOT_ASSIGNED when the workorder has no current technician to reassign from — use assignTechnician for the first assignment. 
      * Reassign Workorder to Different Technician
      */
     async reassignTechnicianRaw(requestParameters: ReassignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TechnicianAssignmentResponse>> {
@@ -198,12 +206,58 @@ export class TechnicianAssignmentAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reassigns a workorder to a different technician, retiring the current assignment with the given reason and creating a new current assignment that preserves the full history. Use this tool when a workorder already has a technician and must change hands; do not use assignTechnician, which is for the initial assignment and records no reassignment reason. Preconditions: the workorder must exist, be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status, and have a current technician assignment to reassign from. Required inputs: workorderId (UUID) as a path parameter and newTechnicianId (UUID) in the body; reason and notes are optional, the reassignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used. Emits a WORKORDER_TECHNICIAN_REASSIGN event. Returns 404 when the workorder does not exist, and 400 with the failure reason when there is no current assignment or the workorder status does not allow reassignment. 
+     * Reassigns a workorder to a different technician, retiring the current assignment with the given reason and creating a new current assignment that preserves the full history. Use this tool when a workorder already has a technician and must change hands; do not use assignTechnician, which is for the initial assignment and records no reassignment reason. Preconditions: the workorder must exist, be in APPROVED, ASSIGNED, or WORK_IN_PROGRESS status, and have a current technician assignment to reassign from. Required inputs: workorderId (UUID) as a path parameter and newTechnicianId (UUID) in the body; reason and notes are optional, the reassignedByUserId body field is ignored in favor of the security context, and the Idempotency-Key header is accepted but not currently used. Emits a WORKORDER_TECHNICIAN_REASSIGN event. Returns 404 when the workorder does not exist, 400 with the failure reason when the workorder status does not allow reassignment, and 409 TECHNICIAN_NOT_ASSIGNED when the workorder has no current technician to reassign from — use assignTechnician for the first assignment. 
      * Reassign Workorder to Different Technician
      */
     async reassignTechnician(requestParameters: ReassignTechnicianOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TechnicianAssignmentResponse> {
         const response = await this.reassignTechnicianRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Releases the workorder\'s current technician, closing the assignment in history and leaving the workorder with nobody on it. Use this tool when a technician comes off a job without a replacement — capacity freed for a workorder that is blocked or parked; do not use reassignTechnician, which requires a replacement, and do not use it to change technicians. Preconditions: the workorder must exist and must not be COMPLETED or CANCELLED; releasing a workorder that has no current technician succeeds and writes nothing, so the call is idempotent. Required inputs: workorderId (UUID) as a path parameter; reason is an optional query parameter recorded on the closed assignment. Emits a WORKORDER_TECHNICIAN_RELEASE event. Returns 404 when the workorder does not exist, and 409 WORKORDER_CLOSED when it is COMPLETED or CANCELLED. 
+     * Release a Workorder\'s Current Technician
+     */
+    async releaseTechnicianRaw(requestParameters: ReleaseTechnicianRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling releaseTechnician().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['reason'] != null) {
+            queryParameters['reason'] = requestParameters['reason'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["workorder:workorder:assign-technician"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/workorders/{workorderId}/technician`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Releases the workorder\'s current technician, closing the assignment in history and leaving the workorder with nobody on it. Use this tool when a technician comes off a job without a replacement — capacity freed for a workorder that is blocked or parked; do not use reassignTechnician, which requires a replacement, and do not use it to change technicians. Preconditions: the workorder must exist and must not be COMPLETED or CANCELLED; releasing a workorder that has no current technician succeeds and writes nothing, so the call is idempotent. Required inputs: workorderId (UUID) as a path parameter; reason is an optional query parameter recorded on the closed assignment. Emits a WORKORDER_TECHNICIAN_RELEASE event. Returns 404 when the workorder does not exist, and 409 WORKORDER_CLOSED when it is COMPLETED or CANCELLED. 
+     * Release a Workorder\'s Current Technician
+     */
+    async releaseTechnician(requestParameters: ReleaseTechnicianRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.releaseTechnicianRaw(requestParameters, initOverrides);
     }
 
 }

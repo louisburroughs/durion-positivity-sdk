@@ -57,7 +57,8 @@ export interface OperationalContextOverrideRequest {
 */
 export enum OperationalContextOverrideRequestResourceTypeEnum {
     Bay = 'BAY',
-    MobileUnit = 'MOBILE_UNIT'
+    MobileUnit = 'MOBILE_UNIT',
+    Hold = 'HOLD'
 }
 
 

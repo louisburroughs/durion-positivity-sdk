@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ServiceAreaPostalCodesRequest,
   ServiceAreaRequest,
   ServiceAreaResponse,
 } from '../models/index';
 import {
+    ServiceAreaPostalCodesRequestFromJSON,
+    ServiceAreaPostalCodesRequestToJSON,
     ServiceAreaRequestFromJSON,
     ServiceAreaRequestToJSON,
     ServiceAreaResponseFromJSON,
@@ -32,6 +35,11 @@ export interface CreateServiceAreaRequest {
 export interface PatchServiceAreaRequest {
     id: string;
     body: object;
+}
+
+export interface ReplaceServiceAreaPostalCodesRequest {
+    id: string;
+    serviceAreaPostalCodesRequest: ServiceAreaPostalCodesRequest;
 }
 
 /**
@@ -122,7 +130,7 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a service area, accepting only the keys description and active. Use this tool to retire an area with active=false or amend its description; do not use it to rename an area or change its postal codes, which are immutable after createServiceArea. Preconditions: the service area must exist. Required inputs: id (UUID) as a path parameter and a JSON object; keys other than description and active are silently ignored. Emits a LOCATION_SERVICE_AREA_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no service area exists for it. 
+     * Applies a partial update to a service area, accepting only the keys description and active. Use this tool to retire an area with active=false or amend its description; do not use it to change which postal codes an area covers, use replaceServiceAreaPostalCodes instead. An area cannot be renamed. Preconditions: the service area must exist. Required inputs: id (UUID) as a path parameter and a JSON object; keys other than description and active are silently ignored. Emits a LOCATION_SERVICE_AREA_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no service area exists for it. 
      * Patch Fields of a Service Area
      */
     async patchServiceAreaRaw(requestParameters: PatchServiceAreaRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
@@ -166,11 +174,64 @@ export class ServiceAreaAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Applies a partial update to a service area, accepting only the keys description and active. Use this tool to retire an area with active=false or amend its description; do not use it to rename an area or change its postal codes, which are immutable after createServiceArea. Preconditions: the service area must exist. Required inputs: id (UUID) as a path parameter and a JSON object; keys other than description and active are silently ignored. Emits a LOCATION_SERVICE_AREA_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no service area exists for it. 
+     * Applies a partial update to a service area, accepting only the keys description and active. Use this tool to retire an area with active=false or amend its description; do not use it to change which postal codes an area covers, use replaceServiceAreaPostalCodes instead. An area cannot be renamed. Preconditions: the service area must exist. Required inputs: id (UUID) as a path parameter and a JSON object; keys other than description and active are silently ignored. Emits a LOCATION_SERVICE_AREA_PATCH event. Returns 400 when the id is not a valid UUID and 404 when no service area exists for it. 
      * Patch Fields of a Service Area
      */
     async patchServiceArea(requestParameters: PatchServiceAreaRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {
         const response = await this.patchServiceAreaRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces the whole postal code set of a service area, so the area afterwards covers exactly the codes supplied and nothing else. Use this tool whenever coverage changes — a market expands, a rural route is dropped, or an area was created with the wrong codes; patchServiceArea cannot touch postal codes and there is no way to delete an area and start again. Preconditions: the service area must exist; at least one postal code entry must be supplied and every entry must carry a countryCode. Sending an empty set is refused rather than treated as \"covers nothing\" — retire an area with patchServiceArea active=false instead. Required inputs: id (UUID) as a path parameter and a body of the form {\"postalCodes\": [...]}, each entry carrying postalCode and countryCode. Emits a LOCATION_SERVICE_AREA_POSTAL_CODES_REPLACE event. Returns 200 with the area as it stands afterwards, 400 when the id is not a valid UUID or the set is empty or missing a countryCode, and 404 when no service area exists for the id. Coverage resolution reads these rows directly: findEligibleMobileUnits matches an address through them, so removing a code stops every mobile unit covering that address. 
+     * Replace the Postal Codes a Service Area Covers
+     */
+    async replaceServiceAreaPostalCodesRaw(requestParameters: ReplaceServiceAreaPostalCodesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceAreaResponse>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling replaceServiceAreaPostalCodes().'
+            );
+        }
+
+        if (requestParameters['serviceAreaPostalCodesRequest'] == null) {
+            throw new runtime.RequiredError(
+                'serviceAreaPostalCodesRequest',
+                'Required parameter "serviceAreaPostalCodesRequest" was null or undefined when calling replaceServiceAreaPostalCodes().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["location:service-area:manage"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/service-areas/{id}/postal-codes`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ServiceAreaPostalCodesRequestToJSON(requestParameters['serviceAreaPostalCodesRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceAreaResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces the whole postal code set of a service area, so the area afterwards covers exactly the codes supplied and nothing else. Use this tool whenever coverage changes — a market expands, a rural route is dropped, or an area was created with the wrong codes; patchServiceArea cannot touch postal codes and there is no way to delete an area and start again. Preconditions: the service area must exist; at least one postal code entry must be supplied and every entry must carry a countryCode. Sending an empty set is refused rather than treated as \"covers nothing\" — retire an area with patchServiceArea active=false instead. Required inputs: id (UUID) as a path parameter and a body of the form {\"postalCodes\": [...]}, each entry carrying postalCode and countryCode. Emits a LOCATION_SERVICE_AREA_POSTAL_CODES_REPLACE event. Returns 200 with the area as it stands afterwards, 400 when the id is not a valid UUID or the set is empty or missing a countryCode, and 404 when no service area exists for the id. Coverage resolution reads these rows directly: findEligibleMobileUnits matches an address through them, so removing a code stops every mobile unit covering that address. 
+     * Replace the Postal Codes a Service Area Covers
+     */
+    async replaceServiceAreaPostalCodes(requestParameters: ReplaceServiceAreaPostalCodesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceAreaResponse> {
+        const response = await this.replaceServiceAreaPostalCodesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

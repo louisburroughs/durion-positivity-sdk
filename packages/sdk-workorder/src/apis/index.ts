@@ -8,6 +8,7 @@ export * from './EstimateSearchApi';
 export * from './EstimatesFromAppointmentsApi';
 export * from './LaborIntelligenceApi';
 export * from './OperationalContextApi';
+export * from './ServicePositionAPIApi';
 export * from './SubstituteLinkAPIApi';
 export * from './TechnicianAssignmentAPIApi';
 export * from './TravelSegmentAPIApi';
