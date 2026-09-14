@@ -8,6 +8,8 @@ export interface SeederConfigShape {
   minCustomersPerDay: number;
   maxCustomersPerDay: number;
   pollIntervalMs: number;
+  tenantSlug: string | undefined;
+  tenantId: string | undefined;
 }
 
 /**

@@ -110,6 +110,10 @@ usually just credentials are needed.
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` interval |
 | `ITEST_STAGING_LOCATION_ID` | _(resolved)_ | No | Forces suite D's staging bin. Unset, the suite asks the site for its declared staging default and falls back the way `StagingLocationResolver` does |
 | `ITEST_ENV_FILE` | `.env.itest` at the repo root | No | Alternate credentials file |
+| `ALPHA_TENANT_SLUG` / `ALPHA_TENANT_ID` | — | **Yes** | The tenant every suite runs in. Every login sends the slug, the security bootstrap sends the id as `X-Tenant-Id`, and global setup refuses a login bound anywhere else |
+| `PLATFORM_TENANT_SLUG` / `PLATFORM_TENANT_ID` | — | With a platform login | The platform tenant (platform tables). Must differ from the alpha tenant |
+| `ITEST_PLATFORM_USERNAME` / `_PASSWORD` | — | No | Platform-tenant login, activated and checked in the platform tenant |
+| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. An account that cannot log in yet is activated to its configured password before anything else logs in (one-shot per account) |
 
 Persona credentials are **all-or-none per persona**: a username without its
 password fails configuration validation rather than silently falling back.
