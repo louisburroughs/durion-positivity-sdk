@@ -16,6 +16,13 @@ import { seedOnHand, type SeededStock } from '../harness/stock';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
 const itInRoleMode = ROLE_MODE ? it : it.skip;
+/**
+ * E2 is about the parts clerk's own grant. Role mode only needs one persona to
+ * be configured, and an unconfigured parts persona falls back to the admin, so
+ * E2 runs only when the parts persona itself is set.
+ */
+const PARTS_CONFIGURED = ItestConfig.fromEnv().personaCredentials.parts !== undefined;
+const itWithPartsPersona = PARTS_CONFIGURED ? it : it.skip;
 
 /**
  * Suite E — planning a cycle count and executing it, from an empty bin to a
@@ -135,7 +142,7 @@ describe('Suite E — cycle counting', () => {
   // it, rather than the admin fallback a single-credential run would use. A
   // second plan is deliberately not created: another plan over the same bin
   // would be scanned by E3's task generation too.
-  itInRoleMode('E2 — the parts clerk plans the count', async () => {
+  itWithPartsPersona('E2 — the parts clerk plans the count', async () => {
     expect(parts.username).not.toBe(admin.username);
     expect(planCreatedBy).toBe(parts.username);
 

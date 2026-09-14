@@ -36,8 +36,8 @@ export interface StarterActivationPort {
    * rejects: a locked or disabled account is not something activation should
    * paper over.
    */
-  tryLogin(credentials: PersonaCredentials): Promise<LoginOutcome>;
-  activate(username: string, starterPassword: string, newPassword: string): Promise<void>;
+  tryLogin(credentials: PersonaCredentials, tenantSlug: string): Promise<LoginOutcome>;
+  activate(username: string, starterPassword: string, newPassword: string, tenantSlug: string): Promise<void>;
 }
 
 export interface StarterActivationResult {
@@ -67,12 +67,26 @@ export class StarterActivation {
     const problems: string[] = [];
     // In single-credential mode, and for any persona left unconfigured, every
     // persona resolves to the admin login. It is one account, so one exchange.
-    for (const { persona, credentials } of this.config.distinctAccounts()) {
+    const accounts = this.config.distinctAccounts().map(({ persona, credentials }) => ({
+      persona: persona as string,
+      credentials,
+      tenantSlug: this.config.tenant.slug,
+    }));
+    // The platform login lives in the platform tenant, so it is activated there.
+    if (this.config.platformCredentials && this.config.platformTenant) {
+      accounts.push({
+        persona: 'platform',
+        credentials: this.config.platformCredentials,
+        tenantSlug: this.config.platformTenant.slug,
+      });
+    }
+
+    for (const { persona, credentials, tenantSlug } of accounts) {
       const { username } = credentials;
 
       let outcome: LoginOutcome;
       try {
-        outcome = await this.port.tryLogin(credentials);
+        outcome = await this.port.tryLogin(credentials, tenantSlug);
       } catch (error) {
         problems.push(`${persona}: "${username}" cannot log in (${await formatError(error)})`);
         continue;
@@ -83,7 +97,7 @@ export class StarterActivation {
       }
 
       try {
-        await this.port.activate(username, starterPassword, credentials.password);
+        await this.port.activate(username, starterPassword, credentials.password, tenantSlug);
       } catch (error) {
         problems.push(
           `${persona}: "${username}" refused login, and the starter exchange was refused too ` +
@@ -96,7 +110,7 @@ export class StarterActivation {
 
       // Activation issues no token, so only a login proves the new password took.
       try {
-        outcome = await this.port.tryLogin(credentials);
+        outcome = await this.port.tryLogin(credentials, tenantSlug);
       } catch (error) {
         problems.push(`${persona}: "${username}" was activated but cannot log in (${await formatError(error)})`);
         continue;
@@ -121,10 +135,9 @@ export class StarterActivation {
  */
 export function createStarterActivationPort(config: ItestConfig): StarterActivationPort {
   const { authAPIApi } = createSecurityClient({ baseUrl: `${config.baseUrl}/security-service` });
-  const tenantSlug = config.tenant.slug;
 
   return {
-    async tryLogin({ username, password }: PersonaCredentials): Promise<LoginOutcome> {
+    async tryLogin({ username, password }: PersonaCredentials, tenantSlug: string): Promise<LoginOutcome> {
       try {
         await authAPIApi.loginUser({ loginRequest: { username, password, tenantSlug } });
         return 'ok';
@@ -135,7 +148,7 @@ export function createStarterActivationPort(config: ItestConfig): StarterActivat
         throw error;
       }
     },
-    async activate(username: string, starterPassword: string, newPassword: string): Promise<void> {
+    async activate(username: string, starterPassword: string, newPassword: string, tenantSlug: string): Promise<void> {
       // The payload nests under activateWithStarterRequest; passing it flat
       // throws RequiredError before any request is sent.
       await authAPIApi.activateAccountWithStarterPassword({
