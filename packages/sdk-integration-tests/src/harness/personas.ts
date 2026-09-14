@@ -6,6 +6,7 @@ import { createLocationClient } from '@durion-sdk/location';
 import { createInvoiceClient } from '@durion-sdk/invoice';
 import { createOrderClient } from '@durion-sdk/order';
 import { createPeopleClient } from '@durion-sdk/people';
+import { createSecurityClient } from '@durion-sdk/security';
 import { SeederAuth, SeederConfig } from '@durion-sdk/seeder';
 import { createVehicleInventoryClient } from '@durion-sdk/vehicle-inventory';
 import { createWorkorderClient } from '@durion-sdk/workorder';
@@ -38,6 +39,8 @@ export interface DomainClients {
    * service's per-service labor tracking: this is the payroll clock.
    */
   people: ReturnType<typeof createPeopleClient>;
+  /** Identity questions about this persona's own token, e.g. which tenant it is bound to. */
+  security: ReturnType<typeof createSecurityClient>;
   shopManager: ShopManagerClient;
   /** The identity behind these clients — for labor-attribution assertions. */
   username: string;
@@ -100,6 +103,8 @@ export class Personas {
           username: credentials.username,
           password: credentials.password,
           seed: this.config.seed,
+          tenantSlug: this.config.tenant.slug,
+          tenantId: this.config.tenant.id,
         }),
       );
       this.authsByUsername.set(credentials.username, auth);
@@ -125,6 +130,7 @@ export class Personas {
         catalog: createCatalogClient(auth.buildSdkConfig('catalog')),
         location: createLocationClient(auth.buildSdkConfig('location')),
         people: createPeopleClient(auth.buildSdkConfig('people')),
+        security: createSecurityClient(auth.buildSdkConfig('security-service')),
         shopManager: createShopManagerClient({
           baseUrl: this.config.baseUrl,
           token: () => auth.getToken(),

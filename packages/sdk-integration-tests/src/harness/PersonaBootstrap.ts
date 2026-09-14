@@ -335,7 +335,7 @@ function describe(error: unknown): string {
  * authenticated admin rather than the security service's header-auth bypass,
  * so the preflight exercises the same path the suites do.
  */
-export function createPersonaPorts(adminAuth: SeederAuth): {
+export function createPersonaPorts(adminAuth: SeederAuth, tenantSlug?: string): {
   security: PersonaSecurityPort;
   people: PersonaPeoplePort;
 } {
@@ -357,7 +357,7 @@ export function createPersonaPorts(adminAuth: SeederAuth): {
       },
       async getEnforcedAuthorities(credentials: PersonaCredentials): Promise<string[]> {
         const { accessToken } = await securityClient.authAPIApi.loginUser({
-          loginRequest: { username: credentials.username, password: credentials.password },
+          loginRequest: { username: credentials.username, password: credentials.password, tenantSlug },
         });
         if (!accessToken) {
           throw new Error('login returned no access token');

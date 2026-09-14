@@ -11,6 +11,8 @@ import {
 const BASE_ENV = {
   ITEST_USERNAME: 'admin.alpha',
   ITEST_PASSWORD: 'admin-pw',
+  ALPHA_TENANT_SLUG: 'alpha',
+  ALPHA_TENANT_ID: '01900000-0000-7000-8000-000000000001',
 };
 
 const ROLE_ENV = {

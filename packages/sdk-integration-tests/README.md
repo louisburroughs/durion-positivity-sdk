@@ -126,8 +126,12 @@ line.
 
 ### Starter credentials must be activated before login
 
-**Not yet implemented in the harness — this is the note for when we update the
-suites to match the tenant-aware system.**
+Global setup handles this when `ITEST_SEED_PASSWORD` is set (see
+`harness/StarterActivation.ts`): it attempts each account's login, activates
+only those refused with `CREDENTIALS_EXPIRED`, and sets them to the
+`ITEST_*_PASSWORD` configured for them. `ALPHA_TENANT_SLUG` is passed to
+activation and to every login, and the tenant preflight then refuses any
+login bound to a tenant other than `ALPHA_TENANT_ID`.
 
 Accounts bulk-loaded from `users.csv` are provisioned with one shared *starter*
 password rather than a usable credential of their own. Such an account is
@@ -180,8 +184,8 @@ Consequences for the suite, all of which the harness has to learn:
   about the other six.
 - **The tunnel host names no tenant.** The suite reaches the backend at
   `localhost:18086`, so `tenantSlug` (or `X-Tenant-Slug`) is not optional here
-  the way it is for a tenant-hosted request. Expect a new environment variable
-  for it alongside the starter password.
+  the way it is for a tenant-hosted request. The harness sends
+  `ALPHA_TENANT_SLUG`.
 - **Activation issues no token, and revokes the ones already minted.** It sets
   the password and returns; the login that follows is a separate call, and any
   token the account already held dies with the exchange. So every activation has

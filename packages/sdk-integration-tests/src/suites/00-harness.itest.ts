@@ -14,10 +14,12 @@ import { Personas } from '../harness/personas';
 describe('integration harness', () => {
   let context: ItestContext;
   let personas: Personas;
+  let config: ItestConfig;
 
   beforeAll(async () => {
     context = loadContext();
-    personas = new Personas(ItestConfig.fromEnv());
+    config = ItestConfig.fromEnv();
+    personas = new Personas(config);
     await personas.login();
   });
 
@@ -47,6 +49,9 @@ describe('integration harness', () => {
       // in beforeAll; this asserts the registry hands out per-persona clients.
       expect(clients.username).not.toHaveLength(0);
       expect(clients.auth.getToken()).not.toHaveLength(0);
+      // A token is not proof of the right tenant: ask what this one is bound to.
+      const tenant = await clients.security.tenantAPIApi.getMyTenant();
+      expect({ slug: tenant.slug, id: tenant.id.toLowerCase() }).toEqual(config.tenant);
     }
   });
 

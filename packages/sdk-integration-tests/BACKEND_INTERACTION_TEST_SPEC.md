@@ -91,6 +91,10 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` polling timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` polling interval |
 | `ITEST_STAGING_LOCATION_ID` | `00000000-0000-0000-0000-000000000002` | No | pos-inventory's staging location, mirroring `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID`. Suite D books a goods receipt there because putaway generation refuses a receipt held anywhere else |
+| `ALPHA_TENANT_SLUG` / `ALPHA_TENANT_ID` | — | **Yes** | The tenant every suite runs in. Every login sends the slug; the direct-to-service security bootstrap sends the id as `X-Tenant-Id`; global setup refuses any login bound elsewhere |
+| `PLATFORM_TENANT_SLUG` / `PLATFORM_TENANT_ID` | — | With a platform login | The platform tenant (platform tables). Must differ from the alpha tenant; nothing is seeded into it |
+| `ITEST_PLATFORM_USERNAME` / `_PASSWORD` | — | No | Platform-tenant login, checked to bind to the platform tenant |
+| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. Accounts refused with `CREDENTIALS_EXPIRED` are activated to their configured `ITEST_*_PASSWORD` before anything logs in (one-shot per account) |
 
 Persona credentials are optional as a set: define **all or none** per persona
 (a username without its password fails config validation). See *Personas,

@@ -1,9 +1,6 @@
 import { SeederConfig } from '../SeederConfig';
 
-/**
- * UUID of the SYSTEM_ADMINISTRATOR role as seeded in R__seed_reference_security.sql.
- */
-const SYSADMIN_ROLE_ID = 'e9b3e6ba-af10-08ff-0376-1f2fa60d5093';
+const SYSADMIN_ROLE_NAME = 'SYSTEM_ADMINISTRATOR';
 
 interface PermissionPage {
   content: Array<{ name: string }>;
@@ -32,17 +29,57 @@ export class SecurityBootstrap {
       return;
     }
 
-    await this.grantPermissionsToSysAdmin(baseUrl, permissionNames);
+    const roleId = await this.resolveSysAdminRoleId(baseUrl);
+    await this.grantPermissionsToSysAdmin(baseUrl, roleId, permissionNames);
 
     console.log(
       `[SecurityBootstrap] Granted ${permissionNames.length} permissions to SYSTEM_ADMINISTRATOR.`,
     );
 
-    await this.ensureSysAdminRole(baseUrl);
+    await this.ensureSysAdminRole(baseUrl, roleId);
 
     console.log(
       `[SecurityBootstrap] Confirmed SYSTEM_ADMINISTRATOR role is assigned to "${this.config.username}".`,
     );
+  }
+
+  /**
+   * Header-auth identity for the security service, plus the tenant when one is
+   * configured. The service binds the tenant from X-Tenant-Id; without it an
+   * unbound request falls to the deploy's transitional default (or 401
+   * TENANT_REQUIRED when there is none), which need not be the tenant the
+   * seeder logs in to. These calls bypass the gateway, so the header arrives.
+   */
+  private headers(authority: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      'X-Authorities': authority,
+      'X-User': 'seeder-bootstrap',
+      'Content-Type': 'application/json',
+    };
+    if (this.config.tenantId) {
+      headers['X-Tenant-Id'] = this.config.tenantId;
+    }
+    return headers;
+  }
+
+  /**
+   * Roles are tenant-scoped (row-level security) and each tenant's copy of a
+   * template role has its own id, so the role is found by name in the bound
+   * tenant rather than by a constant that only ever matched alpha.
+   */
+  private async resolveSysAdminRoleId(baseUrl: string): Promise<string> {
+    const url = `${baseUrl}/v1/roles/by-name/${encodeURIComponent(SYSADMIN_ROLE_NAME)}`;
+    const response = await fetch(url, { method: 'GET', headers: this.headers('security:role:view') });
+    if (!response.ok) {
+      throw new Error(
+        `[SecurityBootstrap] Failed to resolve ${SYSADMIN_ROLE_NAME}: ${response.status} ${response.statusText} at ${url}`,
+      );
+    }
+    const role = (await response.json()) as { id?: string };
+    if (!role.id) {
+      throw new Error(`[SecurityBootstrap] ${SYSADMIN_ROLE_NAME} resolved without an id`);
+    }
+    return role.id;
   }
 
   private async fetchAllPermissionNames(baseUrl: string): Promise<string[]> {
@@ -54,11 +91,7 @@ export class SecurityBootstrap {
       const url = `${baseUrl}/v1/permissions?page=${page}&size=500`;
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'X-Authorities': 'security:permission:view',
-          'X-User': 'seeder-bootstrap',
-          'Content-Type': 'application/json',
-        },
+        headers: this.headers('security:permission:view'),
       });
 
       if (!response.ok) {
@@ -79,17 +112,13 @@ export class SecurityBootstrap {
     return names;
   }
 
-  private async grantPermissionsToSysAdmin(baseUrl: string, permissionNames: string[]): Promise<void> {
+  private async grantPermissionsToSysAdmin(baseUrl: string, roleId: string, permissionNames: string[]): Promise<void> {
     const url = `${baseUrl}/v1/roles/permissions`;
     const response = await fetch(url, {
       method: 'PUT',
-      headers: {
-        'X-Authorities': 'security:role:edit',
-        'X-User': 'seeder-bootstrap',
-        'Content-Type': 'application/json',
-      },
+      headers: this.headers('security:role:edit'),
       body: JSON.stringify({
-        roleId: SYSADMIN_ROLE_ID,
+        roleId,
         permissionNames,
       }),
     });
@@ -102,15 +131,11 @@ export class SecurityBootstrap {
     }
   }
 
-  private async ensureSysAdminRole(baseUrl: string): Promise<void> {
+  private async ensureSysAdminRole(baseUrl: string, roleId: string): Promise<void> {
     const usersUrl = `${baseUrl}/v1/users`;
     const usersResponse = await fetch(usersUrl, {
       method: 'GET',
-      headers: {
-        'X-Authorities': 'security:user:view',
-        'X-User': 'seeder-bootstrap',
-        'Content-Type': 'application/json',
-      },
+      headers: this.headers('security:user:view'),
     });
 
     if (!usersResponse.ok) {
@@ -128,14 +153,10 @@ export class SecurityBootstrap {
       );
     }
 
-    const assignUrl = `${baseUrl}/v1/users/${encodeURIComponent(user.id)}/roles/${SYSADMIN_ROLE_ID}`;
+    const assignUrl = `${baseUrl}/v1/users/${encodeURIComponent(user.id)}/roles/${encodeURIComponent(roleId)}`;
     const assignResponse = await fetch(assignUrl, {
       method: 'PUT',
-      headers: {
-        'X-Authorities': 'security:role:assign',
-        'X-User': 'seeder-bootstrap',
-        'Content-Type': 'application/json',
-      },
+      headers: this.headers('security:role:assign'),
     });
 
     if (!assignResponse.ok) {
