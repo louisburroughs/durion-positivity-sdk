@@ -24,7 +24,11 @@ function stubFetch(options: { roleStatus?: number } = {}): RecordedCall[] {
       body: init?.body as string | undefined,
     });
     if (url.includes('/v1/permissions')) {
-      return json({ content: [{ name: 'security:role:view' }], totalPages: 1, number: 0 });
+      return json({
+        content: [{ name: 'security:role:view' }, { name: 'platform:tenant:provision' }],
+        totalPages: 1,
+        number: 0,
+      });
     }
     if (url.includes('/v1/roles/by-name/')) {
       return options.roleStatus ? json({ code: 'ROLE_NOT_FOUND' }, options.roleStatus) : json({ id: 'role-in-tenant' });
@@ -68,7 +72,7 @@ describe('SecurityBootstrap', () => {
     }
   });
 
-  it('grants to and assigns the SYSTEM_ADMINISTRATOR role resolved by name in that tenant', async () => {
+  it('grants every non-platform permission to, and assigns, the role resolved by name in that tenant', async () => {
     const calls = stubFetch();
 
     await new SecurityBootstrap(config(TENANT_ID)).run();
