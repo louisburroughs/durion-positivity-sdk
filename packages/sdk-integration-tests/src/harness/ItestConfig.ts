@@ -16,6 +16,14 @@ export interface PersonaCredentials {
   password: string;
 }
 
+/** A tenant as login names it (slug) and as tokens and headers carry it (id). */
+export interface TenantRef {
+  slug: string;
+  id: string;
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const PERSONA_ENV_PREFIX: Record<CredentialedPersona, string> = {
   advisor: 'ITEST_ADVISOR',
   tech: 'ITEST_TECH',
@@ -24,6 +32,8 @@ const PERSONA_ENV_PREFIX: Record<CredentialedPersona, string> = {
   acct: 'ITEST_ACCT',
   controller: 'ITEST_CONTROLLER',
 };
+
+const ALL_PERSONAS: readonly PersonaName[] = ['admin', 'advisor', 'tech', 'manager', 'parts', 'acct', 'controller'];
 
 type EnvShape = Record<string, string | undefined>;
 
@@ -52,6 +62,27 @@ export class ItestConfig {
      * Set it to force a specific bin.
      */
     readonly stagingLocationIdOverride: string | undefined,
+    /**
+     * The shared starter password bulk-provisioned accounts were loaded with
+     * (ITEST_SEED_PASSWORD). When set, global setup trades it through
+     * activate-starter for every account still awaiting activation, giving each
+     * the password configured for it here. See StarterActivation.
+     */
+    readonly starterPassword: string | undefined,
+    /**
+     * The tenant every suite runs in (ALPHA_TENANT_SLUG / ALPHA_TENANT_ID). The
+     * tunnel host names no tenant, so every login sends the slug, and the
+     * direct-to-service bootstrap sends the id as X-Tenant-Id.
+     */
+    readonly tenant: TenantRef,
+    /**
+     * The platform tenant (PLATFORM_TENANT_SLUG / PLATFORM_TENANT_ID), which owns
+     * the platform tables. Nothing is seeded into it; it is known so the
+     * platform login can be checked against it.
+     */
+    readonly platformTenant: TenantRef | undefined,
+    /** Optional platform-tenant login (ITEST_PLATFORM_USERNAME / _PASSWORD). */
+    readonly platformCredentials: PersonaCredentials | undefined,
   ) {}
 
   get mode(): ItestMode {
@@ -66,6 +97,23 @@ export class ItestConfig {
       }
     }
     return this.admin;
+  }
+
+  /**
+   * Every distinct login the run uses, each with the first persona that names
+   * it: unconfigured personas fall back to admin, which is one account.
+   */
+  distinctAccounts(): Array<{ persona: PersonaName; credentials: PersonaCredentials }> {
+    const seen = new Set<string>();
+    const accounts: Array<{ persona: PersonaName; credentials: PersonaCredentials }> = [];
+    for (const persona of ALL_PERSONAS) {
+      const credentials = this.credentialsFor(persona);
+      if (!seen.has(credentials.username)) {
+        seen.add(credentials.username);
+        accounts.push({ persona, credentials });
+      }
+    }
+    return accounts;
   }
 
   static fromEnv(env: EnvShape = process.env): ItestConfig {
@@ -121,6 +169,49 @@ export class ItestConfig {
       personaCredentials[persona] = { username: personaUser, password: personaPass };
     }
 
+    const tenantPair = (prefix: string, required: boolean): TenantRef | undefined => {
+      const slug = env[`${prefix}_TENANT_SLUG`] || undefined;
+      const id = env[`${prefix}_TENANT_ID`] || undefined;
+      if (slug === undefined && id === undefined) {
+        if (required) {
+          problems.push(`${prefix}_TENANT_SLUG and ${prefix}_TENANT_ID are required`);
+        }
+        return undefined;
+      }
+      if (slug === undefined) {
+        problems.push(`${prefix}_TENANT_SLUG is required when ${prefix}_TENANT_ID is set`);
+        return undefined;
+      }
+      if (id === undefined) {
+        problems.push(`${prefix}_TENANT_ID is required when ${prefix}_TENANT_SLUG is set`);
+        return undefined;
+      }
+      if (!UUID_PATTERN.test(id)) {
+        problems.push(`${prefix}_TENANT_ID must be a UUID (got "${id}")`);
+        return undefined;
+      }
+      return { slug, id: id.toLowerCase() };
+    };
+
+    const tenant = tenantPair('ALPHA', true);
+    const platformTenant = tenantPair('PLATFORM', false);
+    if (tenant && platformTenant && (tenant.id === platformTenant.id || tenant.slug === platformTenant.slug)) {
+      problems.push('ALPHA_TENANT_* and PLATFORM_TENANT_* must name different tenants: suites never run in the platform tenant');
+    }
+
+    const platformUser = env['ITEST_PLATFORM_USERNAME'] || undefined;
+    const platformPass = env['ITEST_PLATFORM_PASSWORD'] || undefined;
+    let platformCredentials: PersonaCredentials | undefined;
+    if (platformUser !== undefined || platformPass !== undefined) {
+      if (platformUser === undefined || platformPass === undefined) {
+        problems.push('ITEST_PLATFORM_USERNAME and ITEST_PLATFORM_PASSWORD must be set together');
+      } else if (!platformTenant) {
+        problems.push('PLATFORM_TENANT_SLUG and PLATFORM_TENANT_ID are required when a platform login is set');
+      } else {
+        platformCredentials = { username: platformUser, password: platformPass };
+      }
+    }
+
     if (problems.length > 0) {
       throw new Error(
         `Integration test configuration is invalid:\n  - ${problems.join('\n  - ')}\n` +
@@ -137,6 +228,10 @@ export class ItestConfig {
       waitTimeoutMs ?? 30000,
       waitIntervalMs ?? 500,
       env['ITEST_STAGING_LOCATION_ID'] || undefined,
+      env['ITEST_SEED_PASSWORD'] || undefined,
+      tenant as TenantRef,
+      platformTenant,
+      platformCredentials,
     );
   }
 }

@@ -18,6 +18,8 @@ import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
+/** Pay periods are per tenant; scoping the list keeps F10 off any other tenant's periods. */
+const TENANT_ID = ItestConfig.fromEnv().tenant.id;
 const itInRoleMode = ROLE_MODE ? it : it.skip;
 
 /**
@@ -397,7 +399,7 @@ describe('Suite F — time reporting and approval', () => {
 
   itInRoleMode('F10 — timekeeping is the manager\'s to see, not the technician\'s', async () => {
     const periods = await call('listTimePeriods', () =>
-      manager.people.timekeepingApprovalAPIApi.listTimePeriods({}),
+      manager.people.timekeepingApprovalAPIApi.listTimePeriods({ tenantId: TENANT_ID }),
     );
     console.log(`[F10] ${periods.length} pay period(s) visible to LOCATION_MANAGER`);
     expect(Array.isArray(periods)).toBe(true);
@@ -427,7 +429,7 @@ describe('Suite F — time reporting and approval', () => {
     }
 
     const status = await expectHttpError(
-      tech.people.timekeepingApprovalAPIApi.listTimePeriods({}),
+      tech.people.timekeepingApprovalAPIApi.listTimePeriods({ tenantId: TENANT_ID }),
       401,
       403,
     );

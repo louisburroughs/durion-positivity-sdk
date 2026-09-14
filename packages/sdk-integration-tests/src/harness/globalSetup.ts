@@ -13,6 +13,8 @@ import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
 import { createPersonaPorts, PersonaBootstrap } from './PersonaBootstrap';
+import { createStarterActivationPort, StarterActivation } from './StarterActivation';
+import { createTenantPort, TenantPreflight } from './TenantPreflight';
 
 /**
  * Runs once, before any suite: validates configuration, refuses to touch a
@@ -35,15 +37,36 @@ export default async function globalSetup(): Promise<void> {
 
   await assertNonAcceleratedBackend(config.baseUrl);
 
+  // Tenant-aware backends load accounts with a shared starter password that
+  // login refuses until it is exchanged. Runs before anything logs in, because
+  // activation revokes every token the account already holds.
+  const activation = new StarterActivation(config, createStarterActivationPort(config));
+  if (activation.applies) {
+    const { activated, alreadyActive } = await stage('starter activation', () => activation.run());
+    console.log(
+      `[itest] starter activation: activated ${activated.join(', ') || 'none'}; ` +
+        `already active ${alreadyActive.join(', ') || 'none'}`,
+    );
+  }
+
+  // Every login must land in the suite tenant before anything is written: a
+  // token bound elsewhere would seed and assert against another tenant's rows
+  // while every call still succeeds.
+  const tenantPreflight = new TenantPreflight(config, createTenantPort(config));
+  const bound = await stage('tenant preflight', () => tenantPreflight.run());
+  console.log(`[itest] tenant binding verified: ${bound.join(', ')}`);
+
   const adminConfig = SeederConfig.fromValues({
     baseUrl: config.baseUrl,
     securityServiceUrl: config.securityServiceUrl,
     username: config.admin.username,
     password: config.admin.password,
     seed: config.seed,
+    tenantSlug: config.tenant.slug,
+    tenantId: config.tenant.id,
   });
 
-  console.log(`[itest] mode=${config.mode} baseUrl=${config.baseUrl}`);
+  console.log(`[itest] mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
   await stage('security bootstrap', () => new SecurityBootstrap(adminConfig).run());
 
   const auth = new SeederAuth(adminConfig);
@@ -52,7 +75,7 @@ export default async function globalSetup(): Promise<void> {
   // Role mode only: prove every persona login resolves to an account with the
   // authorities its suite steps need, before the reference bootstrap spends
   // minutes seeding for a run that would 403 halfway through (spec: Task 8).
-  const personaBootstrap = new PersonaBootstrap(config, ...personaPortsFor(auth));
+  const personaBootstrap = new PersonaBootstrap(config, ...personaPortsFor(auth, config.tenant.slug));
   if (personaBootstrap.applies) {
     const { verified, assignments } = await stage('persona preflight', () =>
       personaBootstrap.verifyAndProvision(),
@@ -87,11 +110,11 @@ export default async function globalSetup(): Promise<void> {
 }
 
 /** Spreads into the PersonaBootstrap constructor's (security, people) pair. */
-function personaPortsFor(auth: SeederAuth): [
+function personaPortsFor(auth: SeederAuth, tenantSlug: string | undefined): [
   ReturnType<typeof createPersonaPorts>['security'],
   ReturnType<typeof createPersonaPorts>['people'],
 ] {
-  const ports = createPersonaPorts(auth);
+  const ports = createPersonaPorts(auth, tenantSlug);
   return [ports.security, ports.people];
 }
 

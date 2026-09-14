@@ -40,6 +40,7 @@ export class SeederAuth {
       loginRequest: {
         username: this.config.username,
         password: this.config.password,
+        tenantSlug: this.config.tenantSlug,
       },
     });
 

@@ -3,6 +3,8 @@ import { ItestConfig } from './ItestConfig';
 const baseEnv = {
   ITEST_USERNAME: 'admin-user',
   ITEST_PASSWORD: 'admin-pass',
+  ALPHA_TENANT_SLUG: 'alpha',
+  ALPHA_TENANT_ID: '01900000-0000-7000-8000-000000000001',
 };
 
 describe('ItestConfig', () => {
@@ -113,5 +115,68 @@ describe('ItestConfig', () => {
     for (const persona of ['advisor', 'tech', 'manager', 'parts', 'acct'] as const) {
       expect(config.credentialsFor(persona).username).not.toBe('admin-user');
     }
+  });
+
+  describe('tenants', () => {
+    const platform = {
+      PLATFORM_TENANT_SLUG: 'platform',
+      PLATFORM_TENANT_ID: '01900000-0000-7000-8000-000000000000',
+    };
+
+    it('reads the suite tenant, and leaves the platform tenant and login unset by default', () => {
+      const config = ItestConfig.fromEnv({ ...baseEnv });
+
+      expect(config.tenant).toEqual({ slug: 'alpha', id: '01900000-0000-7000-8000-000000000001' });
+      expect(config.platformTenant).toBeUndefined();
+      expect(config.platformCredentials).toBeUndefined();
+    });
+
+    it('requires the suite tenant, naming both variables', () => {
+      expect(() => ItestConfig.fromEnv({ ITEST_USERNAME: 'u', ITEST_PASSWORD: 'p' })).toThrow(
+        /ALPHA_TENANT_SLUG and ALPHA_TENANT_ID are required/,
+      );
+    });
+
+    it('rejects a half-set pair and a non-UUID id', () => {
+      expect(() => ItestConfig.fromEnv({ ...baseEnv, ALPHA_TENANT_ID: undefined })).toThrow(
+        /ALPHA_TENANT_ID is required when ALPHA_TENANT_SLUG is set/,
+      );
+      expect(() => ItestConfig.fromEnv({ ...baseEnv, ALPHA_TENANT_ID: 'alpha' })).toThrow(
+        /ALPHA_TENANT_ID must be a UUID/,
+      );
+      expect(() => ItestConfig.fromEnv({ ...baseEnv, PLATFORM_TENANT_SLUG: 'platform' })).toThrow(
+        /PLATFORM_TENANT_ID is required when PLATFORM_TENANT_SLUG is set/,
+      );
+    });
+
+    it('refuses a platform tenant that is the suite tenant', () => {
+      expect(() =>
+        ItestConfig.fromEnv({ ...baseEnv, ...platform, PLATFORM_TENANT_ID: '01900000-0000-7000-8000-000000000001' }),
+      ).toThrow(/must name different tenants/);
+    });
+
+    it('accepts a platform login only with its pair and the platform tenant', () => {
+      expect(() => ItestConfig.fromEnv({ ...baseEnv, ...platform, ITEST_PLATFORM_USERNAME: 'admin.platform' })).toThrow(
+        /ITEST_PLATFORM_USERNAME and ITEST_PLATFORM_PASSWORD must be set together/,
+      );
+      expect(() =>
+        ItestConfig.fromEnv({ ...baseEnv, ITEST_PLATFORM_USERNAME: 'admin.platform', ITEST_PLATFORM_PASSWORD: 'pw' }),
+      ).toThrow(/PLATFORM_TENANT_SLUG and PLATFORM_TENANT_ID are required when a platform login is set/);
+
+      const config = ItestConfig.fromEnv({
+        ...baseEnv,
+        ...platform,
+        ITEST_PLATFORM_USERNAME: 'admin.platform',
+        ITEST_PLATFORM_PASSWORD: 'pw',
+      });
+      expect(config.platformTenant).toEqual({ slug: 'platform', id: '01900000-0000-7000-8000-000000000000' });
+      expect(config.platformCredentials).toEqual({ username: 'admin.platform', password: 'pw' });
+    });
+
+    it('lists each distinct account once, admin first', () => {
+      const config = ItestConfig.fromEnv({ ...baseEnv, ITEST_TECH_USERNAME: 't', ITEST_TECH_PASSWORD: 't' });
+
+      expect(config.distinctAccounts().map((account) => account.persona)).toEqual(['admin', 'tech']);
+    });
   });
 });
