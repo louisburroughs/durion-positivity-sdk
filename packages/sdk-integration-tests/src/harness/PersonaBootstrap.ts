@@ -52,6 +52,8 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'workorder:workorder:approve',
     'workorder:workorder:complete',
     'workorder:workorder:assign-technician',
+    // Suites C and H place workorders on a bay, mobile unit or HOLD.
+    'workorder:operationalContext:override',
     'order:purchase_order:approve',
     // C6 raises the pick list as the manager precisely because TECHNICIAN
     // cannot; checking it here is what stops that regressing silently.

@@ -26,6 +26,7 @@ file is the operator's guide.
 | `d-receiving` | PO → ASN → receipt → availability → putaway, and workorder-directed receiving |
 | `e-cycle-count` | Plan → generate tasks → count → recount → adjustment → approve → post, in an isolated bin |
 | `f-time-reporting` | Labor sessions and timers, the payroll clock, and who decides on reported time |
+| `h-service-position` | A workorder's bay / mobile unit / HOLD position and its technician: one open workorder per bay or unit, HOLD unbounded, the two assignments independent |
 
 Current state on alpha: **46 passing, 0 skipped, 0 failing**, in role mode, for
 suites 00-D. Suites E and F have not yet had a green run recorded here: the
