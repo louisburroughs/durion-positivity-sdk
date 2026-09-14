@@ -37,6 +37,25 @@ export default async function globalSetup(): Promise<void> {
 
   await assertNonAcceleratedBackend(config.baseUrl);
 
+  const adminConfig = SeederConfig.fromValues({
+    baseUrl: config.baseUrl,
+    securityServiceUrl: config.securityServiceUrl,
+    username: config.admin.username,
+    password: config.admin.password,
+    seed: config.seed,
+    tenantSlug: config.tenant.slug,
+    tenantId: config.tenant.id,
+  });
+
+  console.log(`[itest] mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
+  // The security bootstrap runs before anything logs in. It uses header auth
+  // against the security service, pinned to the suite tenant by X-Tenant-Id, so
+  // it needs no token and cannot write into another tenant. Running it first is
+  // what lets setup repair an admin with no role: such an account answers login
+  // with 403 USER_HAS_NO_ROLES, which the activation and tenant probes below
+  // would otherwise stop on before ensureSysAdminRole could assign one.
+  await stage('security bootstrap', () => new SecurityBootstrap(adminConfig).run());
+
   // Tenant-aware backends load accounts with a shared starter password that
   // login refuses until it is exchanged. Runs before anything logs in, because
   // activation revokes every token the account already holds.
@@ -55,19 +74,6 @@ export default async function globalSetup(): Promise<void> {
   const tenantPreflight = new TenantPreflight(config, createTenantPort(config));
   const bound = await stage('tenant preflight', () => tenantPreflight.run());
   console.log(`[itest] tenant binding verified: ${bound.join(', ')}`);
-
-  const adminConfig = SeederConfig.fromValues({
-    baseUrl: config.baseUrl,
-    securityServiceUrl: config.securityServiceUrl,
-    username: config.admin.username,
-    password: config.admin.password,
-    seed: config.seed,
-    tenantSlug: config.tenant.slug,
-    tenantId: config.tenant.id,
-  });
-
-  console.log(`[itest] mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
-  await stage('security bootstrap', () => new SecurityBootstrap(adminConfig).run());
 
   const auth = new SeederAuth(adminConfig);
   await stage('admin login', () => auth.login());

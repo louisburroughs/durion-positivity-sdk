@@ -32,13 +32,16 @@ function fakePort(options: {
 }): StarterActivationPort & {
   logins: string[];
   activations: Array<{ username: string; starterPassword: string; newPassword: string }>;
+  activationSlugs: string[];
 } {
   const awaiting = new Set(options.awaiting ?? []);
   const logins: string[] = [];
   const activations: Array<{ username: string; starterPassword: string; newPassword: string }> = [];
+  const activationSlugs: string[] = [];
   return {
     logins,
     activations,
+    activationSlugs,
     tryLogin: ({ username }) => {
       logins.push(username);
       const failure = options.failLogin?.[username];
@@ -48,8 +51,9 @@ function fakePort(options: {
       const refused = awaiting.has(username) || options.claimed?.includes(username);
       return Promise.resolve<LoginOutcome>(refused ? 'refused' : 'ok');
     },
-    activate: (username, starterPassword, newPassword) => {
+    activate: (username, starterPassword, newPassword, tenantSlug) => {
       activations.push({ username, starterPassword, newPassword });
+      activationSlugs.push(tenantSlug);
       if (options.claimed?.includes(username) || starterPassword !== (options.starterPassword ?? 'starter-pw')) {
         return Promise.reject(new Error('401 ACTIVATION_TOKEN_INVALID'));
       }
@@ -123,5 +127,26 @@ describe('StarterActivation', () => {
     await expect(activation.run()).rejects.toThrow(/already claimed with a password other than the configured one/);
     expect(port.activations.map((a) => a.username)).toEqual(['gloria.mendez']);
     expect(port.logins.filter((username) => username === 'gloria.mendez')).toHaveLength(1);
+  });
+
+  it('activates the platform login in the platform tenant when one is configured', async () => {
+    const port = fakePort({ awaiting: ['kyle.brennan', 'admin.platform'] });
+    const config = ItestConfig.fromEnv({
+      ...ROLE_ENV,
+      PLATFORM_TENANT_SLUG: 'platform',
+      PLATFORM_TENANT_ID: '01900000-0000-7000-8000-000000000000',
+      ITEST_PLATFORM_USERNAME: 'admin.platform',
+      ITEST_PLATFORM_PASSWORD: 'platform-pw',
+    });
+
+    const result = await new StarterActivation(config, port).run();
+
+    expect(result.activated).toEqual(['tech=kyle.brennan', 'platform=admin.platform']);
+    expect(port.activationSlugs).toEqual(['alpha', 'platform']);
+    expect(port.activations.at(-1)).toEqual({
+      username: 'admin.platform',
+      starterPassword: 'starter-pw',
+      newPassword: 'platform-pw',
+    });
   });
 });
