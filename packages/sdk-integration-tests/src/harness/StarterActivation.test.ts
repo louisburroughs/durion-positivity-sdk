@@ -19,7 +19,7 @@ const ROLE_ENV = {
 
 /**
  * A fake auth service: accounts listed in `awaiting` refuse login with
- * CREDENTIALS_EXPIRED until activated with the right starter password.
+ * INVALID_CREDENTIALS until activated with the right starter password.
  */
 function fakePort(options: {
   awaiting?: string[];
@@ -27,6 +27,8 @@ function fakePort(options: {
   failLogin?: Record<string, Error>;
   /** Accounts whose activation "succeeds" without clearing the expiry. */
   stuck?: string[];
+  /** Accounts already claimed with a different password: login is refused and so is the exchange. */
+  claimed?: string[];
 }): StarterActivationPort & {
   logins: string[];
   activations: Array<{ username: string; starterPassword: string; newPassword: string }>;
@@ -43,11 +45,12 @@ function fakePort(options: {
       if (failure) {
         return Promise.reject(failure);
       }
-      return Promise.resolve<LoginOutcome>(awaiting.has(username) ? 'credentials-expired' : 'ok');
+      const refused = awaiting.has(username) || options.claimed?.includes(username);
+      return Promise.resolve<LoginOutcome>(refused ? 'refused' : 'ok');
     },
     activate: (username, starterPassword, newPassword) => {
       activations.push({ username, starterPassword, newPassword });
-      if (starterPassword !== (options.starterPassword ?? 'starter-pw')) {
+      if (options.claimed?.includes(username) || starterPassword !== (options.starterPassword ?? 'starter-pw')) {
         return Promise.reject(new Error('401 ACTIVATION_TOKEN_INVALID'));
       }
       if (!options.stuck?.includes(username)) {
@@ -95,21 +98,30 @@ describe('StarterActivation', () => {
     const port = fakePort({
       awaiting: ['gloria.mendez'],
       starterPassword: 'a-different-starter',
-      failLogin: { 'kyle.brennan': new Error('401 INVALID_CREDENTIALS') },
+      failLogin: { 'kyle.brennan': new Error('401 ACCOUNT_LOCKED') },
     });
     const activation = new StarterActivation(ItestConfig.fromEnv({ ...ROLE_ENV }), port);
 
     const failure = activation.run();
 
-    await expect(failure).rejects.toThrow(/tech: "kyle.brennan" cannot log in \(401 INVALID_CREDENTIALS\)/);
-    await expect(failure).rejects.toThrow(/parts: "gloria.mendez" awaits activation but the starter exchange was refused/);
+    await expect(failure).rejects.toThrow(/tech: "kyle.brennan" cannot log in \(401 ACCOUNT_LOCKED\)/);
+    await expect(failure).rejects.toThrow(/parts: "gloria.mendez" refused login, and the starter exchange was refused too/);
     expect(port.activations.map((a) => a.username)).toEqual(['gloria.mendez']);
   });
 
-  it('fails when login still reports CREDENTIALS_EXPIRED after activation', async () => {
+  it('fails when the configured password is still refused after activation', async () => {
     const port = fakePort({ awaiting: ['kyle.brennan'], stuck: ['kyle.brennan'] });
     const activation = new StarterActivation(ItestConfig.fromEnv({ ...ROLE_ENV }), port);
 
-    await expect(activation.run()).rejects.toThrow(/"kyle.brennan" was activated but login still reports CREDENTIALS_EXPIRED/);
+    await expect(activation.run()).rejects.toThrow(/"kyle.brennan" was activated but its configured password is still refused/);
+  });
+
+  it('reports an account already claimed with another password, without changing it', async () => {
+    const port = fakePort({ claimed: ['gloria.mendez'] });
+    const activation = new StarterActivation(ItestConfig.fromEnv({ ...ROLE_ENV }), port);
+
+    await expect(activation.run()).rejects.toThrow(/already claimed with a password other than the configured one/);
+    expect(port.activations.map((a) => a.username)).toEqual(['gloria.mendez']);
+    expect(port.logins.filter((username) => username === 'gloria.mendez')).toHaveLength(1);
   });
 });
