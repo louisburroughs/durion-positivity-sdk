@@ -393,13 +393,13 @@ personas in itself.
   files a VIN against the party and returns no id; vehicles are registered
   through pos-vehicle-inventory.
 - Purchase orders live in pos-order, not pos-inventory.
-- **Cycle counting is ADMIN-only.** `inventory:cycle_count:initiate`, `:view` and
-  `:complete` are granted to ADMIN and to no other role in
-  `R__seed_role_permissions.sql`. INVENTORY_LEAD — the parts clerk who counts
-  stock in the building — holds `inventory:adjustment:create` and `:view` but
-  cannot plan a count, generate its tasks, record one, or read a task. Suite E
-  therefore counts as the admin and raises the adjustment as the clerk, and E2
-  asserts the refusal so the split is visible rather than absorbed.
+- **The parts clerk plans cycle counts.** The alpha data load
+  (`scripts/fixtures/seed/alpha/security/role-permissions.csv`) grants
+  INVENTORY_LEAD — the parts clerk who counts stock in the building —
+  `inventory:cycle_count:initiate`, `:view` and `:complete` alongside
+  `inventory:adjustment:create` and `:view`. Suite E creates the plan as the
+  clerk and E2 asserts it; generating and recording the count still run as the
+  admin, and the clerk raises the adjustment.
   `inventory:adjustment:approve` is separate again: INVENTORY_CONTROLLER,
   INVENTORY_MANAGER and ADMIN, not the clerk who raised it.
 - **Putting stock on hand takes two calls, not one.** Bulk ingest
