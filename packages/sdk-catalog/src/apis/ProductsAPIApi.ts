@@ -163,6 +163,7 @@ export interface SearchCatalogProductsRequest {
     q?: string;
     brand?: string;
     category?: string;
+    subcategory?: string;
     sku?: string;
     cursor?: string;
     limit?: number;
@@ -1047,7 +1048,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches products with an optional free-text query over name and description plus exact case-insensitive filters for brand, category and SKU, paged by an opaque cursor. Use this tool to find products by partial text or filters; use getProductById instead when the id is known, and listProductsByName only for exact whole-name matches. Preconditions: none; a malformed or missing cursor silently restarts at the first page rather than failing. Required inputs: all parameters are optional; limit defaults to 20 and is clamped to 1-100, and detailed defaults to false — pass detailed=true to enrich each row with lifecycle state, its effective instant and the active MSRP, with null price fields for products lacking an active MSRP. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty items array when nothing matches, so an empty result is not an error condition. 
+     * Searches products with an optional free-text query over name and description plus exact case-insensitive filters for brand, category, subcategory and SKU, paged by an opaque cursor. Use this tool to find products by partial text or filters; use getProductById instead when the id is known, and listProductsByName only for exact whole-name matches. Preconditions: none; a malformed or missing cursor silently restarts at the first page rather than failing. Required inputs: all parameters are optional; limit defaults to 20 and is clamped to 1-100, and detailed defaults to false — pass detailed=true to enrich each row with lifecycle state, its effective instant and the active MSRP, with null price fields for products lacking an active MSRP. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty items array when nothing matches, so an empty result is not an error condition. 
      * Search Catalog Products
      */
     async searchCatalogProductsRaw(requestParameters: SearchCatalogProductsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CatalogSearchResultDto>> {
@@ -1063,6 +1064,10 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 
         if (requestParameters['category'] != null) {
             queryParameters['category'] = requestParameters['category'];
+        }
+
+        if (requestParameters['subcategory'] != null) {
+            queryParameters['subcategory'] = requestParameters['subcategory'];
         }
 
         if (requestParameters['sku'] != null) {
@@ -1102,7 +1107,7 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Searches products with an optional free-text query over name and description plus exact case-insensitive filters for brand, category and SKU, paged by an opaque cursor. Use this tool to find products by partial text or filters; use getProductById instead when the id is known, and listProductsByName only for exact whole-name matches. Preconditions: none; a malformed or missing cursor silently restarts at the first page rather than failing. Required inputs: all parameters are optional; limit defaults to 20 and is clamped to 1-100, and detailed defaults to false — pass detailed=true to enrich each row with lifecycle state, its effective instant and the active MSRP, with null price fields for products lacking an active MSRP. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty items array when nothing matches, so an empty result is not an error condition. 
+     * Searches products with an optional free-text query over name and description plus exact case-insensitive filters for brand, category, subcategory and SKU, paged by an opaque cursor. Use this tool to find products by partial text or filters; use getProductById instead when the id is known, and listProductsByName only for exact whole-name matches. Preconditions: none; a malformed or missing cursor silently restarts at the first page rather than failing. Required inputs: all parameters are optional; limit defaults to 20 and is clamped to 1-100, and detailed defaults to false — pass detailed=true to enrich each row with lifecycle state, its effective instant and the active MSRP, with null price fields for products lacking an active MSRP. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty items array when nothing matches, so an empty result is not an error condition. 
      * Search Catalog Products
      */
     async searchCatalogProducts(requestParameters: SearchCatalogProductsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CatalogSearchResultDto> {
