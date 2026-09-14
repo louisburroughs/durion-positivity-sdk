@@ -93,6 +93,63 @@ export async function expectHttpError(promise: Promise<unknown>, ...statuses: nu
   return status;
 }
 
+/** The backend's ApiError body, as far as an assertion needs it. */
+export interface ApiErrorBody {
+  status: number;
+  code?: string;
+  message?: string;
+  /** What the refusal names, e.g. the workorder occupying a bay or the current technician. */
+  referenceId?: string;
+}
+
+/**
+ * Like {@link expectHttpError}, but pins the stable ApiError code as well as the
+ * status, and returns the parsed body so a test can assert what the refusal
+ * names. A status alone cannot tell RESOURCE_OCCUPIED from WORKORDER_CLOSED:
+ * both are 409.
+ */
+export async function expectApiError(promise: Promise<unknown>, status: number, code: string): Promise<ApiErrorBody> {
+  let resolved: unknown;
+  let errored = false;
+  let caught: unknown;
+  try {
+    resolved = await promise;
+  } catch (error) {
+    errored = true;
+    caught = error;
+  }
+
+  if (!errored) {
+    throw new Error(
+      `Expected the call to be rejected with HTTP ${status} ${code} but it succeeded` +
+        (resolved === undefined ? '' : ` with ${JSON.stringify(resolved).slice(0, 200)}`),
+    );
+  }
+
+  const response = asRecord(caught)?.['response'] as Response | undefined;
+  let body: Record<string, unknown> = {};
+  if (response && typeof response.clone === 'function') {
+    try {
+      // Cloned so formatError below can still read the original body.
+      body = (asRecord(await response.clone().json()) ?? {}) as Record<string, unknown>;
+    } catch {
+      body = {};
+    }
+  }
+  const text = (key: string): string | undefined => (typeof body[key] === 'string' ? (body[key] as string) : undefined);
+  const parsed: ApiErrorBody = {
+    status: httpStatusOf(caught) ?? -1,
+    code: text('code'),
+    message: text('message'),
+    referenceId: text('referenceId'),
+  };
+
+  if (parsed.status !== status || parsed.code !== code) {
+    throw new Error(`Expected HTTP ${status} ${code} but got: ${await formatError(caught)}`);
+  }
+  return parsed;
+}
+
 /**
  * Awaits a call that may be racing a cross-service replica.
  *

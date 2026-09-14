@@ -1,4 +1,5 @@
 import { SeederRandom } from '@durion-sdk/seeder';
+import { AssignServicePositionRequestResourceTypeEnum } from '@durion-sdk/workorder';
 import {
   addLaborLine,
   addPartLine,
@@ -15,7 +16,7 @@ import {
   type PromotedWorkorder,
 } from '../harness/builders';
 import { findStockedProduct, readOnHand } from '../harness/availability';
-import { call, expectHttpError, isHttpStatus } from '../harness/http';
+import { call, expectApiError, expectHttpError, isHttpStatus } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -281,6 +282,68 @@ describe('Suite C — workorder execution', () => {
     expect(assigned ?? (await detail()).assignedTechnicianId).toBe(technicianId);
   }, 120_000);
 
+  it('C5b — one technician per workorder: a second assign is refused, a reassign changes it', async () => {
+    const otherTechnicianId = context.referenceCache.employees.technicians.find((id) => id !== technicianId);
+
+    // Assign means "none yet". It used to retire the incumbent silently; it now
+    // refuses and names who is assigned (backend #1985).
+    const refused = await expectApiError(
+      manager.workorder.technicianAssignmentAPIApi.assignTechnician({
+        workorderId,
+        assignTechnicianRequest: {
+          technicianId: otherTechnicianId ?? technicianId,
+          notes: `Second assign [${context.runId}]`,
+        },
+      }),
+      409,
+      'TECHNICIAN_ALREADY_ASSIGNED',
+    );
+    console.log(`[C5b] second assign refused, naming current technician ${refused.referenceId}`);
+    expect(refused.referenceId).toBe(technicianId);
+
+    if (!otherTechnicianId) {
+      console.log('[C5b] only one seeded technician; skipped the reassign round trip');
+      return;
+    }
+    // Away and back: the steps after this attribute labor to technicianId.
+    for (const [to, label] of [
+      [otherTechnicianId, 'away'],
+      [technicianId, 'back'],
+    ] as const) {
+      await call(`reassignTechnician ${label}`, () =>
+        manager.workorder.technicianAssignmentAPIApi.reassignTechnician({
+          workorderId,
+          reassignTechnicianRequest: {
+            newTechnicianId: to,
+            reason: `Integration test reassign ${label} [${context.runId}]`,
+          },
+        }),
+      );
+      const current = await call('getTechnicianAssignment', () =>
+        manager.workorder.technicianAssignmentAPIApi.getTechnicianAssignment({ workorderId }),
+      );
+      expect(readString(current, 'technicianId', 'assignedTechnicianId')).toBe(to);
+    }
+  }, 120_000);
+
+  it('C5c — the manager parks the workorder on HOLD at its own site', async () => {
+    const parked = await call('assignServicePosition HOLD', () =>
+      manager.workorder.servicePositionAPIApi.assignServicePosition({
+        workorderId,
+        assignServicePositionRequest: {
+          resourceType: AssignServicePositionRequestResourceTypeEnum.Hold,
+          reason: `Integration test park [${context.runId}]`,
+        },
+      }),
+    );
+    console.log(`[C5c] position ${parked.resourceType} ${parked.resourceId}`);
+    // HOLD is the workorder's own site, whatever id is sent, so none is.
+    expect(parked.resourceType).toBe('HOLD');
+    expect(parked.resourceId).toBe(context.referenceCache.locationId);
+    // The position read answers the technician too, and parking left it alone.
+    expect(parked.technicianId).toBe(technicianId);
+  }, 120_000);
+
   it('C6 — promotion generates a pick list whose tasks reach the workorder facade', async () => {
     const onHandBefore = await readOnHand(parts, productId, context.referenceCache.locationId);
 
@@ -426,6 +489,15 @@ describe('Suite C — workorder execution', () => {
     const completed = await detail();
     console.log(`[C8] completed: status=${completed.status} isCompleted=${completed.isCompleted}`);
     expect(String(completed.status).toUpperCase()).toContain('COMPLET');
+
+    // Closing a workorder frees its position (C5c parked it): the read names none
+    // any more, and the release stays in history.
+    const position = await call('getServicePosition', () =>
+      manager.workorder.servicePositionAPIApi.getServicePosition({ workorderId }),
+    );
+    console.log(`[C8] position after completion: ${position.resourceType ?? 'none'}`);
+    expect(position.resourceType).toBeUndefined();
+    expect(position.history?.some((row) => row.resourceType === 'HOLD' && row.releasedAt !== undefined)).toBe(true);
   }, 300_000);
 
   it('C9 — the invoice is generated, finalized and paid', async () => {

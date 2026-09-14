@@ -315,6 +315,9 @@ packages/sdk-integration-tests/
       b-estimates.itest.ts
       c-workorder-execution.itest.ts
       d-receiving.itest.ts
+      e-cycle-count.itest.ts
+      f-time-reporting.itest.ts
+      h-service-position.itest.ts
 ```
 
 Framework decisions:
@@ -1118,6 +1121,45 @@ Note also that #1538 bumped the permission catalog to v64, which invalidates
 every previously issued JWT - the suite re-authenticates after that deploy.
 
 ---
+
+### Task 12: Suite H — Service Position and Technician Assignment
+
+Backend #1983-#1985 made a workorder's service position and its technician two
+first-class, independent assignments (`PUT/DELETE/GET /v1/workorders/{id}/position`,
+`DELETE /v1/workorders/{id}/technician`). A `BAY` or `MOBILE_UNIT` holds at most
+one open workorder (`409 RESOURCE_OCCUPIED`, `referenceId` = the occupant);
+`HOLD` is the workorder's own site and holds any number; a workorder has at most
+one current technician (`409 TECHNICIAN_ALREADY_ASSIGNED` on a second assign,
+`TECHNICIAN_NOT_ASSIGNED` on a reassign with none); closing a workorder frees its
+position.
+
+**Acting personas:** `manager` (LOCATION_MANAGER holds
+`workorder:operationalContext:override` and `:assign-technician`) places and
+releases; `admin` creates and deletes the run's bay and lists mobile units;
+`advisor` builds the workorders; `tech` is the role-mode negative.
+
+**Isolation.** The suite creates its own bay and mobile unit: any shared position
+may already hold an open workorder. The unit is left INACTIVE, the default — an
+ACTIVE unit needs a travel buffer policy, capabilities and coverage rules, and
+pos-workorder does not consult the unit's status when placing a workorder. Both
+reach pos-workorder through Kafka-fed replicas (`ext_bay`, `ext_mobile_unit`), so
+H1 and H8 retry while the refusal says `Unknown bay` / `Unknown mobile unit`.
+`afterAll` releases every position it set; the bay and unit are kept, run-tagged,
+like every record a run creates.
+
+- [ ] **H1** W1 placed on the run's bay; the read and the current history row name it.
+- [ ] **H2** W2 on the same bay → 409 `RESOURCE_OCCUPIED`, `referenceId` = W1.
+- [ ] **H3** W2 and W3 on `HOLD` with no id → both `HOLD`, `resourceId` = the site.
+- [ ] **H4** `HOLD` naming another real location (from `listLocations`) → 422 `SERVICE_POSITION_INVALID`; the workorder stays on `HOLD` at its own site.
+- [ ] **H5** W1 approved and given a technician; moving W1 to `HOLD` keeps the technician, releasing the technician keeps `HOLD`.
+- [ ] **H6** W2 takes the bay W1 left.
+- [ ] **H7** Releasing W2 leaves no position; the bay claim stays in history.
+- [ ] **H8** On a mobile unit the run creates (INACTIVE, based at the site): W3 takes it, W1 is refused naming W3.
+- [ ] **H9** (role mode) A technician cannot place a workorder (401/403).
+
+Suite C adds the lifecycle half: **C5b** (second assign refused naming the
+current technician; reassign away and back), **C5c** (park on `HOLD`) and a
+check after **C8** that completion freed the position.
 
 ### Suites A-D: what alpha actually does (2026-08-23)
 
