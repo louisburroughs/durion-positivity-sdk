@@ -91,6 +91,10 @@ Configuration is environment-variable driven, mirroring `SeederConfig`:
 | `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` polling timeout |
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` polling interval |
 | `ITEST_STAGING_LOCATION_ID` | `00000000-0000-0000-0000-000000000002` | No | pos-inventory's staging location, mirroring `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID`. Suite D books a goods receipt there because putaway generation refuses a receipt held anywhere else |
+| `ALPHA_TENANT_SLUG` / `ALPHA_TENANT_ID` | — | **Yes** | The tenant every suite runs in. Every login sends the slug; the direct-to-service security bootstrap sends the id as `X-Tenant-Id`; global setup refuses any login bound elsewhere |
+| `PLATFORM_TENANT_SLUG` / `PLATFORM_TENANT_ID` | — | With a platform login | The platform tenant (platform tables). Must differ from the alpha tenant; nothing is seeded into it |
+| `ITEST_PLATFORM_USERNAME` / `_PASSWORD` | — | No | Platform-tenant login, checked to bind to the platform tenant |
+| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. Accounts whose login is refused (`INVALID_CREDENTIALS`) and are still awaiting activation are activated to their configured `ITEST_*_PASSWORD` before anything logs in (one-shot per account) |
 
 Persona credentials are optional as a set: define **all or none** per persona
 (a username without its password fails config validation). See *Personas,
@@ -311,6 +315,9 @@ packages/sdk-integration-tests/
       b-estimates.itest.ts
       c-workorder-execution.itest.ts
       d-receiving.itest.ts
+      e-cycle-count.itest.ts
+      f-time-reporting.itest.ts
+      h-service-position.itest.ts
 ```
 
 Framework decisions:
@@ -782,10 +789,9 @@ backend's own seed driver: bulk ingest raises one adjustment *request* per row
 and approving that request writes the ledger entry. Ingest alone leaves
 availability at zero — the single most likely way to misread this flow.
 
-**Acting personas:** `admin` throughout the count itself.
-`inventory:cycle_count:initiate|view|complete` are granted to ADMIN and to no
-other role, so INVENTORY_LEAD — the clerk who counts stock in the building —
-cannot plan, generate, record or read a count. `parts` (INVENTORY_LEAD) raises
+**Acting personas:** `parts` (INVENTORY_LEAD) plans the count: the alpha data
+load grants it `inventory:cycle_count:initiate|view|complete`. `admin` generates
+and records the count itself. `parts` also raises
 the adjustment (`inventory:adjustment:create`) and reads it back
 (`:view`); `admin` approves it, because `inventory:adjustment:approve` goes to
 INVENTORY_CONTROLLER, INVENTORY_MANAGER and ADMIN and never to the raiser.
@@ -798,10 +804,10 @@ decision and nothing auto-approves. `createCycleCountPlan` requires a non-empty
 `zoneIds` and a `scheduledDate` strictly in the future, neither of which the
 generated model marks required.
 
-- [ ] **E1 — Plan.** `createCycleCountPlan` scoped to the run's own bin;
+- [ ] **E1 — Plan.** `createCycleCountPlan` as `parts`, scoped to the run's own bin;
   assert `PLANNED` and that `zoneIds` carries the bin.
-- [ ] **E2 — RBAC negative.** The parts clerk cannot plan a count; assert
-  401/403 and record the grant gap rather than working around it.
+- [ ] **E2 — RBAC positive.** In role mode the E1 plan was created by the
+  parts clerk, and the clerk can list its tasks (`inventory:cycle_count:view`).
 - [ ] **E3 — Generate.** `generateCycleCountTasks` for the clerk as auditor;
   assert exactly the two seeded SKUs, `binLocation` equal to the bin's UUID as
   text, `ASSIGNED`, expected quantity as seeded, and the plan moved to
@@ -1115,6 +1121,45 @@ Note also that #1538 bumped the permission catalog to v64, which invalidates
 every previously issued JWT - the suite re-authenticates after that deploy.
 
 ---
+
+### Task 12: Suite H — Service Position and Technician Assignment
+
+Backend #1983-#1985 made a workorder's service position and its technician two
+first-class, independent assignments (`PUT/DELETE/GET /v1/workorders/{id}/position`,
+`DELETE /v1/workorders/{id}/technician`). A `BAY` or `MOBILE_UNIT` holds at most
+one open workorder (`409 RESOURCE_OCCUPIED`, `referenceId` = the occupant);
+`HOLD` is the workorder's own site and holds any number; a workorder has at most
+one current technician (`409 TECHNICIAN_ALREADY_ASSIGNED` on a second assign,
+`TECHNICIAN_NOT_ASSIGNED` on a reassign with none); closing a workorder frees its
+position.
+
+**Acting personas:** `manager` (LOCATION_MANAGER holds
+`workorder:operationalContext:override` and `:assign-technician`) places and
+releases; `admin` creates and deletes the run's bay and lists mobile units;
+`advisor` builds the workorders; `tech` is the role-mode negative.
+
+**Isolation.** The suite creates its own bay and mobile unit: any shared position
+may already hold an open workorder. The unit is left INACTIVE, the default — an
+ACTIVE unit needs a travel buffer policy, capabilities and coverage rules, and
+pos-workorder does not consult the unit's status when placing a workorder. Both
+reach pos-workorder through Kafka-fed replicas (`ext_bay`, `ext_mobile_unit`), so
+H1 and H8 retry while the refusal says `Unknown bay` / `Unknown mobile unit`.
+`afterAll` releases every position it set; the bay and unit are kept, run-tagged,
+like every record a run creates.
+
+- [ ] **H1** W1 placed on the run's bay; the read and the current history row name it.
+- [ ] **H2** W2 on the same bay → 409 `RESOURCE_OCCUPIED`, `referenceId` = W1.
+- [ ] **H3** W2 and W3 on `HOLD` with no id → both `HOLD`, `resourceId` = the site.
+- [ ] **H4** `HOLD` naming another real location (from `listLocations`) → 422 `SERVICE_POSITION_INVALID`; the workorder stays on `HOLD` at its own site.
+- [ ] **H5** W1 approved and given a technician; moving W1 to `HOLD` keeps the technician, releasing the technician keeps `HOLD`.
+- [ ] **H6** W2 takes the bay W1 left.
+- [ ] **H7** Releasing W2 leaves no position; the bay claim stays in history.
+- [ ] **H8** On a mobile unit the run creates (INACTIVE, based at the site): W3 takes it, W1 is refused naming W3.
+- [ ] **H9** (role mode) A technician cannot place a workorder (401/403).
+
+Suite C adds the lifecycle half: **C5b** (second assign refused naming the
+current technician; reassign away and back), **C5c** (park on `HOLD`) and a
+check after **C8** that completion freed the position.
 
 ### Suites A-D: what alpha actually does (2026-08-23)
 

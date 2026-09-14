@@ -52,6 +52,8 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'workorder:workorder:approve',
     'workorder:workorder:complete',
     'workorder:workorder:assign-technician',
+    // Suites C and H place workorders on a bay, mobile unit or HOLD.
+    'workorder:operationalContext:override',
     'order:purchase_order:approve',
     // C6 raises the pick list as the manager precisely because TECHNICIAN
     // cannot; checking it here is what stops that regressing silently.
@@ -62,6 +64,10 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'inventory:asn:create',
     'inventory:goods_receipt:create',
     'inventory:receiving:create',
+    // Suite E plans the cycle count as the clerk (E1, pinned by E2) and reads
+    // the plan's tasks back as the clerk (E2).
+    'inventory:cycle_count:initiate',
+    'inventory:cycle_count:view',
   ],
   // Backend V25 (#1499/#1512) rescoped ACCOUNT_MANAGER to customer accounts
   // (AR) and moved accounting management - accounting:events:submit included -
@@ -335,7 +341,7 @@ function describe(error: unknown): string {
  * authenticated admin rather than the security service's header-auth bypass,
  * so the preflight exercises the same path the suites do.
  */
-export function createPersonaPorts(adminAuth: SeederAuth): {
+export function createPersonaPorts(adminAuth: SeederAuth, tenantSlug?: string): {
   security: PersonaSecurityPort;
   people: PersonaPeoplePort;
 } {
@@ -357,7 +363,7 @@ export function createPersonaPorts(adminAuth: SeederAuth): {
       },
       async getEnforcedAuthorities(credentials: PersonaCredentials): Promise<string[]> {
         const { accessToken } = await securityClient.authAPIApi.loginUser({
-          loginRequest: { username: credentials.username, password: credentials.password },
+          loginRequest: { username: credentials.username, password: credentials.password, tenantSlug },
         });
         if (!accessToken) {
           throw new Error('login returned no access token');

@@ -8,6 +8,8 @@ export interface SeederConfigShape {
   minCustomersPerDay: number;
   maxCustomersPerDay: number;
   pollIntervalMs: number;
+  tenantSlug: string | undefined;
+  tenantId: string | undefined;
 }
 
 /**
@@ -26,6 +28,10 @@ export interface SeederConfigValues {
   minCustomersPerDay?: number;
   maxCustomersPerDay?: number;
   pollIntervalMs?: number;
+  /** Tenant to sign in to; needed when the request host does not name one. */
+  tenantSlug?: string;
+  /** Tenant id sent as X-Tenant-Id on the direct-to-service security bootstrap. */
+  tenantId?: string;
 }
 
 function parseInteger(value: string, key: string): number {
@@ -46,6 +52,8 @@ export class SeederConfig implements SeederConfigShape {
   readonly minCustomersPerDay: number;
   readonly maxCustomersPerDay: number;
   readonly pollIntervalMs: number;
+  readonly tenantSlug: string | undefined;
+  readonly tenantId: string | undefined;
 
   private constructor(values: SeederConfigValues) {
     this.baseUrl = values.baseUrl ?? 'http://localhost:8080';
@@ -57,6 +65,8 @@ export class SeederConfig implements SeederConfigShape {
     this.minCustomersPerDay = values.minCustomersPerDay ?? 4;
     this.maxCustomersPerDay = values.maxCustomersPerDay ?? 12;
     this.pollIntervalMs = values.pollIntervalMs ?? 1000;
+    this.tenantSlug = values.tenantSlug || undefined;
+    this.tenantId = values.tenantId || undefined;
 
     if (!this.username) {
       throw new Error('username must be a non-empty string (SEEDER_USERNAME)');
@@ -116,6 +126,8 @@ export class SeederConfig implements SeederConfigShape {
       minCustomersPerDay: optInt('SEEDER_MIN_CUSTOMERS_PER_DAY'),
       maxCustomersPerDay: optInt('SEEDER_MAX_CUSTOMERS_PER_DAY'),
       pollIntervalMs: optInt('SEEDER_POLL_INTERVAL_MS'),
+      tenantSlug: env['SEEDER_TENANT_SLUG'],
+      tenantId: env['SEEDER_TENANT_ID'],
     });
   }
 }

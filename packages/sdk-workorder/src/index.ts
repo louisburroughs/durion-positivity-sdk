@@ -20,6 +20,7 @@ import { ChangeRequestAPIApi } from './apis/ChangeRequestAPIApi';
 import { WorkorderDetailApi } from './apis/WorkorderDetailApi';
 import { OperationalContextApi } from './apis/OperationalContextApi';
 import { WorkorderLaborAPIApi } from './apis/WorkorderLaborAPIApi';
+import { ServicePositionAPIApi } from './apis/ServicePositionAPIApi';
 
 export function createWorkorderClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -54,6 +55,12 @@ export function createWorkorderClient(config: DurionSdkConfig) {
     changeRequestAPIApi: new ChangeRequestAPIApi(configuration),
     workorderDetailApi: new WorkorderDetailApi(configuration),
     operationalContextApi: new OperationalContextApi(configuration),
+    // Where a workorder is worked: assign, read and release its bay, mobile unit
+    // or HOLD position (backend #1983-#1985). GET .../position also answers the
+    // current technician, and succeeds getOperationalContext. Generated and
+    // exported by the apis barrel, but this file is protected from regeneration,
+    // so the accessor had to be added by hand.
+    servicePositionAPIApi: new ServicePositionAPIApi(configuration),
     // Per-service labor entries. Generated and exported by the apis barrel but
     // never surfaced here, so no consumer of this factory could start a labor
     // session.

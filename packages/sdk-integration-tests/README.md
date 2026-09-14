@@ -26,6 +26,7 @@ file is the operator's guide.
 | `d-receiving` | PO → ASN → receipt → availability → putaway, and workorder-directed receiving |
 | `e-cycle-count` | Plan → generate tasks → count → recount → adjustment → approve → post, in an isolated bin |
 | `f-time-reporting` | Labor sessions and timers, the payroll clock, and who decides on reported time |
+| `h-service-position` | A workorder's bay / mobile unit / HOLD position and its technician: one open workorder per bay or unit, HOLD unbounded, the two assignments independent |
 
 Current state on alpha: **46 passing, 0 skipped, 0 failing**, in role mode, for
 suites 00-D. Suites E and F have not yet had a green run recorded here: the
@@ -109,6 +110,10 @@ usually just credentials are needed.
 | `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` interval |
 | `ITEST_STAGING_LOCATION_ID` | _(resolved)_ | No | Forces suite D's staging bin. Unset, the suite asks the site for its declared staging default and falls back the way `StagingLocationResolver` does |
 | `ITEST_ENV_FILE` | `.env.itest` at the repo root | No | Alternate credentials file |
+| `ALPHA_TENANT_SLUG` / `ALPHA_TENANT_ID` | — | **Yes** | The tenant every suite runs in. Every login sends the slug, the security bootstrap sends the id as `X-Tenant-Id`, and global setup refuses a login bound anywhere else |
+| `PLATFORM_TENANT_SLUG` / `PLATFORM_TENANT_ID` | — | With a platform login | The platform tenant (platform tables). Must differ from the alpha tenant |
+| `ITEST_PLATFORM_USERNAME` / `_PASSWORD` | — | No | Platform-tenant login, activated and checked in the platform tenant |
+| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. An account that cannot log in yet is activated to its configured password before anything else logs in (one-shot per account) |
 
 Persona credentials are **all-or-none per persona**: a username without its
 password fails configuration validation rather than silently falling back.
@@ -126,8 +131,13 @@ line.
 
 ### Starter credentials must be activated before login
 
-**Not yet implemented in the harness — this is the note for when we update the
-suites to match the tenant-aware system.**
+Global setup handles this when `ITEST_SEED_PASSWORD` is set (see
+`harness/StarterActivation.ts`): it attempts each account's login, activates
+only those whose login is refused and that are still awaiting activation, and
+sets them to the
+`ITEST_*_PASSWORD` configured for them. `ALPHA_TENANT_SLUG` is passed to
+activation and to every login, and the tenant preflight then refuses any
+login bound to a tenant other than `ALPHA_TENANT_ID`.
 
 Accounts bulk-loaded from `users.csv` are provisioned with one shared *starter*
 password rather than a usable credential of their own. Such an account is
@@ -136,7 +146,9 @@ refused until the starter password is traded through
 `POST /v1/auth/activate-starter`** for a password of its own. The refusal is a
 property of the account, not of the request: retrying the login, re-seeding, or
 fixing `.env.itest` will not clear it. `loginUser` reports it as 401
-`CREDENTIALS_EXPIRED`.
+`INVALID_CREDENTIALS`, the same answer as a wrong password: Spring checks
+credential expiry only after a password matches, and nothing matches an
+unclaimed account's password.
 
 The generated client is `AuthAPIApi.activateAccountWithStarterPassword`
 (`@durion-sdk/security`). Note the shape: it takes an
@@ -180,8 +192,8 @@ Consequences for the suite, all of which the harness has to learn:
   about the other six.
 - **The tunnel host names no tenant.** The suite reaches the backend at
   `localhost:18086`, so `tenantSlug` (or `X-Tenant-Slug`) is not optional here
-  the way it is for a tenant-hosted request. Expect a new environment variable
-  for it alongside the starter password.
+  the way it is for a tenant-hosted request. The harness sends
+  `ALPHA_TENANT_SLUG`.
 - **Activation issues no token, and revokes the ones already minted.** It sets
   the password and returns; the login that follows is a separate call, and any
   token the account already held dies with the exchange. So every activation has
@@ -196,7 +208,8 @@ Consequences for the suite, all of which the harness has to learn:
   account already claimed, an unknown username and a wrong starter password all
   return the same 401 `ACTIVATION_TOKEN_INVALID`, so a failed exchange cannot
   tell the harness which happened. Attempt the login first and fall back to
-  activation on `CREDENTIALS_EXPIRED`, rather than activating unconditionally
+  activation only when login is refused (it answers `INVALID_CREDENTIALS`, not
+  `CREDENTIALS_EXPIRED`), rather than activating unconditionally
   and trying to interpret the refusal — on a re-run against an already-activated
   environment every account is in the claimed state.
 
@@ -357,6 +370,7 @@ src/
     00-harness.itest.ts   a-appointments.itest.ts   b-estimates.itest.ts
     c-workorder-execution.itest.ts                  d-receiving.itest.ts
     e-cycle-count.itest.ts                          f-time-reporting.itest.ts
+    h-service-position.itest.ts
 ```
 
 Suites receive the shared reference fixture through `ITEST_CONTEXT_FILE`,
@@ -385,13 +399,13 @@ personas in itself.
   files a VIN against the party and returns no id; vehicles are registered
   through pos-vehicle-inventory.
 - Purchase orders live in pos-order, not pos-inventory.
-- **Cycle counting is ADMIN-only.** `inventory:cycle_count:initiate`, `:view` and
-  `:complete` are granted to ADMIN and to no other role in
-  `R__seed_role_permissions.sql`. INVENTORY_LEAD — the parts clerk who counts
-  stock in the building — holds `inventory:adjustment:create` and `:view` but
-  cannot plan a count, generate its tasks, record one, or read a task. Suite E
-  therefore counts as the admin and raises the adjustment as the clerk, and E2
-  asserts the refusal so the split is visible rather than absorbed.
+- **The parts clerk plans cycle counts.** The alpha data load
+  (`scripts/fixtures/seed/alpha/security/role-permissions.csv`) grants
+  INVENTORY_LEAD — the parts clerk who counts stock in the building —
+  `inventory:cycle_count:initiate`, `:view` and `:complete` alongside
+  `inventory:adjustment:create` and `:view`. Suite E creates the plan as the
+  clerk and E2 asserts it; generating and recording the count still run as the
+  admin, and the clerk raises the adjustment.
   `inventory:adjustment:approve` is separate again: INVENTORY_CONTROLLER,
   INVENTORY_MANAGER and ADMIN, not the clerk who raised it.
 - **Putting stock on hand takes two calls, not one.** Bulk ingest

@@ -16,6 +16,13 @@ import { seedOnHand, type SeededStock } from '../harness/stock';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
 const itInRoleMode = ROLE_MODE ? it : it.skip;
+/**
+ * E2 is about the parts clerk's own grant. Role mode only needs one persona to
+ * be configured, and an unconfigured parts persona falls back to the admin, so
+ * E2 runs only when the parts persona itself is set.
+ */
+const PARTS_CONFIGURED = ItestConfig.fromEnv().personaCredentials.parts !== undefined;
+const itWithPartsPersona = PARTS_CONFIGURED ? it : it.skip;
 
 /**
  * Suite E — planning a cycle count and executing it, from an empty bin to a
@@ -34,11 +41,10 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
  * what posts the ledger entry. Nothing here writes to a database or depends on
  * a Flyway-seeded row.
  *
- * The personas follow the seeded grants exactly, and those grants are narrower
- * than they look: `inventory:cycle_count:initiate|view|complete` are granted to
- * ADMIN alone, so the parts clerk who does the physical counting in real life
- * cannot plan or record one. E2 and E12 pin that down rather than papering over
- * it — see the RBAC note in the README.
+ * The personas follow the seeded grants. The alpha data load grants
+ * `inventory:cycle_count:initiate|view|complete` to INVENTORY_LEAD, so the parts
+ * clerk who does the physical counting plans the count (E1, pinned by E2); the
+ * rest of the count still runs as the admin. See the RBAC note in the README.
  */
 describe('Suite E — cycle counting', () => {
   /** Seeded into the run's own bin, and the expected quantity every task starts from. */
@@ -62,6 +68,8 @@ describe('Suite E — cycle counting', () => {
   let auditorId: string;
 
   let planId: string;
+  /** Who E1's plan was created by, for E2. */
+  let planCreatedBy: string | undefined;
   let exactTaskId: string;
   let varianceTaskId: string;
   let adjustmentId: string;
@@ -109,7 +117,7 @@ describe('Suite E — cycle counting', () => {
 
   it('E1 — the plan is created against the run\'s own bin', async () => {
     const plan = await call('createCycleCountPlan', () =>
-      admin.inventory.cycleCountPlansApi.createCycleCountPlan({
+      parts.inventory.cycleCountPlansApi.createCycleCountPlan({
         createCycleCountPlanRequest: {
           locationId: siteId,
           planName: `Itest cycle count ${context.runId}`,
@@ -119,6 +127,7 @@ describe('Suite E — cycle counting', () => {
       }),
     );
     planId = plan.planId;
+    planCreatedBy = plan.createdBy;
     console.log(`[E1] plan ${planId} status = ${plan.status}`);
 
     expect(plan.status).toBe('PLANNED');
@@ -126,25 +135,22 @@ describe('Suite E — cycle counting', () => {
     expect(plan.locationId).toBe(siteId);
   }, 120_000);
 
-  // The parts clerk is the one who counts stock in the building, and
-  // INVENTORY_LEAD holds none of inventory:cycle_count:*. This asserts the
-  // seeded grants as they stand, not as they arguably should be: if the role
-  // gains the permission, this test is the one that says so, and the plan
-  // creation above should move to the clerk at the same time.
-  itInRoleMode('E2 — the parts clerk cannot plan a count', async () => {
-    const status = await expectHttpError(
-      parts.inventory.cycleCountPlansApi.createCycleCountPlan({
-        createCycleCountPlanRequest: {
-          locationId: siteId,
-          planName: `Itest refused ${context.runId}`,
-          scheduledDate: tomorrow(),
-          zoneIds: [zoneId],
-        },
-      }),
-      401,
-      403,
+  // The alpha data load (scripts/fixtures/seed/alpha/security/role-permissions.csv)
+  // grants INVENTORY_LEAD inventory:cycle_count:initiate, :view and :complete, so
+  // the parts clerk who counts stock in the building plans the count: E1 creates
+  // the plan as the clerk. This pins down that the clerk's own grant is what let
+  // it, rather than the admin fallback a single-credential run would use. A
+  // second plan is deliberately not created: another plan over the same bin
+  // would be scanned by E3's task generation too.
+  itWithPartsPersona('E2 — the parts clerk plans the count', async () => {
+    expect(parts.username).not.toBe(admin.username);
+    expect(planCreatedBy).toBe(parts.username);
+
+    const tasks = await call('listCycleCountPlanTasks', () =>
+      parts.inventory.cycleCountPlansApi.listCycleCountPlanTasks({ planId }),
     );
-    console.log(`[E2] INVENTORY_LEAD refused cycle_count:initiate with HTTP ${status}`);
+    console.log(`[E2] INVENTORY_LEAD planned ${planId} and reads its ${tasks.length} task(s)`);
+    expect(Array.isArray(tasks)).toBe(true);
   }, 120_000);
 
   it('E3 — generating tasks finds exactly the two stocked SKUs and starts the plan', async () => {
@@ -411,10 +417,8 @@ describe('Suite E — cycle counting', () => {
     );
     console.log(`[E13] TECHNICIAN refused cycle_count:view with ${read} and :complete with ${write}`);
 
-    // The clerk who raised the adjustment can still read it back: INVENTORY_LEAD
-    // holds inventory:adjustment:view even though it holds no cycle_count
-    // permission at all. That split is the RBAC gap E2 pins down, seen from the
-    // other side.
+    // The clerk who raised the adjustment can read it back: INVENTORY_LEAD holds
+    // inventory:adjustment:view alongside its cycle_count grants.
     const seen = await call('getCycleCountAdjustment', () =>
       parts.inventory.cycleCountAdjustmentsApi.getCycleCountAdjustment({ adjustmentId }),
     );
