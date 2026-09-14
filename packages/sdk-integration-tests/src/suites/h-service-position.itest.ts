@@ -16,7 +16,6 @@ import {
   expectApiError,
   expectHttpError,
   formatError,
-  isHttpStatus,
   retryWhileReplicating,
 } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
@@ -35,10 +34,11 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
  * current technician. Suite C covers the technician rule and "closing frees the
  * position" on its own lifecycle; this suite covers contention for a position.
  *
- * The bay is created by this run. Every other bay at the site is shared with the
- * seeder and earlier runs, and any of them may already hold an open workorder,
- * which would turn H1 into a test of someone else's data. Three workorders are
- * built: W1 takes the bay first, W2 contends for it, W3 parks.
+ * The bay and the mobile unit are created by this run. Every other position at
+ * the site is shared with the seeder and earlier runs, and any of them may
+ * already hold an open workorder, which would turn a contention test into a test
+ * of someone else's data. Three workorders are built: W1 takes the bay first, W2
+ * contends for it, W3 parks.
  */
 describe('Suite H — service position and technician assignment', () => {
   const LABOR_PRICE = 95;
@@ -55,6 +55,12 @@ describe('Suite H — service position and technician assignment', () => {
   let technicianId: string;
   /** Created in beforeAll and deleted in afterAll. */
   let bayId: string | undefined;
+  /**
+   * Created in beforeAll and deleted in afterAll. Left INACTIVE (the default):
+   * an ACTIVE unit needs a travel buffer policy, capabilities and coverage rules,
+   * none of which the one-open-workorder rule depends on.
+   */
+  let mobileUnitId: string | undefined;
 
   interface Built {
     workorderId: string;
@@ -114,6 +120,14 @@ describe('Suite H — service position and technician assignment', () => {
     bayId = bay.id;
     console.log(`[H] created bay ${bayId} at site ${siteId}`);
 
+    const unit = await call('createMobileUnit', () =>
+      admin.location.mobileUnitApi.createMobileUnit({
+        mobileUnitRequest: { name: `Itest unit ${context.runId}`, baseLocationId: siteId },
+      }),
+    );
+    mobileUnitId = unit.id;
+    console.log(`[H] created mobile unit ${mobileUnitId} (${unit.status}) based at site ${siteId}`);
+
     w1 = await buildWorkorder('W1');
     w2 = await buildWorkorder('W2');
     w3 = await buildWorkorder('W3');
@@ -145,6 +159,13 @@ describe('Suite H — service position and technician assignment', () => {
         await admin.location.bayApi.deleteBay({ locationId: siteId, bayId });
       } catch (error) {
         console.log(`[H] cleanup: could not delete bay ${bayId}: ${await formatError(error)}`);
+      }
+    }
+    if (mobileUnitId) {
+      try {
+        await admin.location.mobileUnitApi.deleteMobileUnit({ id: mobileUnitId });
+      } catch (error) {
+        console.log(`[H] cleanup: could not delete mobile unit ${mobileUnitId}: ${await formatError(error)}`);
       }
     }
   }, 120_000);
@@ -253,43 +274,26 @@ describe('Suite H — service position and technician assignment', () => {
   }, 120_000);
 
   it('H8 — a mobile unit holds one open workorder too', async () => {
-    const page = await call('listMobileUnits', () => admin.location.mobileUnitApi.listMobileUnits({ size: 200 }));
-    const candidates = (page.content ?? []).filter(
-      (unit) => unit.baseLocationId === siteId && String(unit.status).toUpperCase() === 'ACTIVE',
+    // Like the bay, the unit reaches pos-workorder through a Kafka-fed replica.
+    const placed = await retryWhileReplicating(
+      () => assign(w3.workorderId, ResourceType.MobileUnit, mobileUnitId),
+      {
+        markers: ['Unknown mobile unit'],
+        description: 'assignServicePosition W3 -> mobile unit',
+        timeoutMs: 60_000,
+        pollMs: 1_000,
+      },
     );
-    if (candidates.length === 0) {
-      console.log(`[H8] no ACTIVE mobile unit is based at site ${siteId}; nothing to contend for`);
-      return;
-    }
-
-    // Mobile units are shared with the seeder, so one may already hold an open
-    // workorder; take the first that is free.
-    let unitId: string | undefined;
-    for (const unit of candidates) {
-      try {
-        await retryWhileReplicating(() => assign(w3.workorderId, ResourceType.MobileUnit, unit.id), {
-          markers: ['Unknown mobile unit'],
-          description: `assignServicePosition W3 -> mobile unit ${unit.id}`,
-          timeoutMs: 30_000,
-          pollMs: 1_000,
-        });
-        unitId = unit.id;
-        break;
-      } catch (error) {
-        if (!isHttpStatus(error, 409)) throw error;
-      }
-    }
-    if (!unitId) {
-      console.log(`[H8] all ${candidates.length} mobile unit(s) at the site already hold an open workorder`);
-      return;
-    }
+    console.log(`[H8] W3 placed on ${placed.resourceType} ${placed.resourceId}`);
+    expect(placed.resourceType).toBe('MOBILE_UNIT');
+    expect(placed.resourceId).toBe(mobileUnitId);
 
     const refused = await expectApiError(
-      assign(w1.workorderId, ResourceType.MobileUnit, unitId),
+      assign(w1.workorderId, ResourceType.MobileUnit, mobileUnitId),
       409,
       'RESOURCE_OCCUPIED',
     );
-    console.log(`[H8] mobile unit ${unitId} refused for W1, occupied by ${refused.referenceId}`);
+    console.log(`[H8] mobile unit refused for W1, occupied by ${refused.referenceId}`);
     expect(refused.referenceId).toBe(w3.workorderId);
 
     await call('releaseServicePosition W3', () =>

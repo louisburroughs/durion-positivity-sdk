@@ -1135,10 +1135,13 @@ position.
 releases; `admin` creates and deletes the run's bay and lists mobile units;
 `advisor` builds the workorders; `tech` is the role-mode negative.
 
-**Isolation.** The suite creates its own bay: any shared bay may already hold an
-open workorder. The bay reaches pos-workorder through the `ext_bay` replica, so
-H1 retries while the refusal says `Unknown bay`. `afterAll` releases every
-position it set and deletes the bay.
+**Isolation.** The suite creates its own bay and mobile unit: any shared position
+may already hold an open workorder. The unit is left INACTIVE, the default — an
+ACTIVE unit needs a travel buffer policy, capabilities and coverage rules, and
+pos-workorder does not consult the unit's status when placing a workorder. Both
+reach pos-workorder through Kafka-fed replicas (`ext_bay`, `ext_mobile_unit`), so
+H1 and H8 retry while the refusal says `Unknown bay` / `Unknown mobile unit`.
+`afterAll` releases every position it set and deletes the bay and the unit.
 
 - [ ] **H1** W1 placed on the run's bay; the read and the current history row name it.
 - [ ] **H2** W2 on the same bay → 409 `RESOURCE_OCCUPIED`, `referenceId` = W1.
@@ -1147,7 +1150,7 @@ position it set and deletes the bay.
 - [ ] **H5** W1 approved and given a technician; moving W1 to `HOLD` keeps the technician, releasing the technician keeps `HOLD`.
 - [ ] **H6** W2 takes the bay W1 left.
 - [ ] **H7** Releasing W2 leaves no position; the bay claim stays in history.
-- [ ] **H8** A free ACTIVE mobile unit at the site: W3 takes it, W1 is refused naming W3. Logged and skipped when the site has none free.
+- [ ] **H8** On a mobile unit the run creates (INACTIVE, based at the site): W3 takes it, W1 is refused naming W3.
 - [ ] **H9** (role mode) A technician cannot place a workorder (401/403).
 
 Suite C adds the lifecycle half: **C5b** (second assign refused naming the
