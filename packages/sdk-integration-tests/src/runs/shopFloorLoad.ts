@@ -143,7 +143,8 @@ async function main(): Promise<void> {
 
 /**
  * Builds the one job: a customer, their vehicle, an approved estimate promoted
- * to a workorder, then the technician, then the position, then the start.
+ * to a workorder, the manager's approval of that workorder, then the
+ * technician, then the position, then the start.
  *
  * The order is the backend's: a workorder needs both a technician and a
  * position before it will start (backend #2011), and placing it is what makes
@@ -175,6 +176,22 @@ async function loadPosition(
     await addLaborLine(as.advisor, ctx, estimateId, serviceEntityId, LABOR_PRICE);
     const promoted = await approveAndPromote(as.advisor, ctx, estimateId, customer);
     workorderId = promoted.workorderId;
+
+    // Promotion leaves the workorder DRAFT, and a technician can only be
+    // assigned to an APPROVED one: the manager approves it first, as suites C, F
+    // and H do.
+    await call('approveWorkorder', () =>
+      as.manager.workorder.workOrderAPIApi.approveWorkorder({
+        workorderId: promoted.workorderId,
+        approveWorkorderRequest: {
+          customerId: customer.partyId,
+          signatureData: ctx.random.base64(32),
+          signerName: customer.fullName,
+          signatureMimeType: 'image/png',
+          notes: `Shop floor load approval [${ctx.runId}]`,
+        },
+      }),
+    );
 
     await call('assignTechnician', () =>
       as.manager.workorder.technicianAssignmentAPIApi.assignTechnician({
