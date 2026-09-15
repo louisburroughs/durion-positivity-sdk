@@ -45,7 +45,7 @@ packages/sdk-seeder/
 2. `SeederConfig.fromEnv()` parses all env vars
 3. `SecurityBootstrap.run()` — ensures auth works (pre-login step)
 4. `SeederAuth.login()` — authenticates as admin; stores token with 10-hour TTL
-5. `BootstrapOrchestrator.run()` — resolves location `MAIN-01`, bootstraps people/catalog/inventory, returns `ReferenceCache`
+5. `BootstrapOrchestrator.run()` — resolves location `ATX-RIV-001`, bootstraps people/catalog/inventory, returns `ReferenceCache`
 6. `DailyLoopRunner.run()` — simulates `config.days` virtual days, calling `auth.refreshIfNeeded()` each day
 
 ## Gateway URL Routing

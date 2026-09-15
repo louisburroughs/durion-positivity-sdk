@@ -46,7 +46,7 @@ packages/sdk-seeder/src/
 1. `SeederConfig.fromEnv()` — fail-fast if env vars missing
 2. `SecurityBootstrap.run()` — pre-login; no token required
 3. `SeederAuth.login()` — authenticates as `admin.alpha` via `security-service`
-4. `BootstrapOrchestrator.run()` — resolves `MAIN-01` location, bootstraps people/catalog/inventory
+4. `BootstrapOrchestrator.run()` — resolves `ATX-RIV-001` location, bootstraps people/catalog/inventory
 5. `DailyLoopRunner.run()` — loops over virtual days, calls `auth.refreshIfNeeded()` each day
 
 ## Gateway URL Pattern

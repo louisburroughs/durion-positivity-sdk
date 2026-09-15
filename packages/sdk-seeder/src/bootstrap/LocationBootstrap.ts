@@ -14,11 +14,16 @@ interface BaySeedDefinition {
   maxConcurrentVehicles: number;
 }
 
-const LOCATION_CODE = 'MAIN-01';
-const LOCATION_NAME = 'Main Street Auto Service';
-const LOCATION_TIMEZONE = 'America/New_York';
-const LOCATION_TYPE_NAME = 'SHOP';
-const LOCATION_ADDRESS_LINE_1 = '100 Main Street';
+// Kept in step with the ATX-RIV-001 row of the backend's alpha fixture packs
+// (scripts/fixtures/seed/alpha/location/locations.csv, with its bays,
+// storage locations and site defaults). A CSV load creates this site; the
+// lookup below then finds it by code and reuses it, so these values only
+// matter when the seeder runs against a database the packs never loaded.
+const LOCATION_CODE = 'ATX-RIV-001';
+const LOCATION_NAME = 'Riverside Auto Service';
+const LOCATION_TIMEZONE = 'America/Chicago';
+const LOCATION_TYPE_NAME = 'Service Center';
+const LOCATION_ADDRESS_LINE_1 = '100 Riverside Drive';
 const LOCATION_CITY = 'Austin';
 const LOCATION_STATE = 'TX';
 const LOCATION_POSTAL_CODE = '78701';
