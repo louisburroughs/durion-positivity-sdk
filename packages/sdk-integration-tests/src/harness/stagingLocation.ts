@@ -32,6 +32,12 @@ export const BACKEND_DEFAULT_STAGING_LOCATION_ID = '00000000-0000-0000-0000-0000
  * database loaded from those packs this resolves to the site's declared
  * "Staging Floor". A site loaded without defaults still falls through to the
  * backend constant, exactly as `StagingLocationResolver` does.
+ *
+ * One condition this cannot mirror by itself: pos-inventory consults the site's
+ * declared default only for a site-scoped request (`X-Site-Id`, or `{siteId}` in
+ * the path). A call to an endpoint that is not site-scoped by path must send
+ * `withSiteScope(siteId)` from `http.ts`, or the backend compares against its
+ * constant while this resolver returned the declared bin.
  */
 export const resolveStagingLocation = async (
   clients: DomainClients,

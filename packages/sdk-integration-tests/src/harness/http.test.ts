@@ -1,4 +1,4 @@
-import { expectApiError } from './http';
+import { expectApiError, withSiteScope } from './http';
 
 /** The shape the generated clients throw: a ResponseError carrying the Response. */
 const rejection = (status: number, body: unknown): Promise<never> =>
@@ -46,5 +46,24 @@ describe('expectApiError', () => {
     const bare = Promise.reject(Object.assign(new Error('x'), { response: new Response('not json', { status: 409 }) }));
 
     await expect(expectApiError(bare, 409, 'RESOURCE_OCCUPIED')).rejects.toThrow(/Expected HTTP 409 RESOURCE_OCCUPIED/);
+  });
+});
+
+describe('withSiteScope', () => {
+  it('adds X-Site-Id and keeps the headers the generated client already set', async () => {
+    const override = await withSiteScope('site-1')({
+      init: { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-Version': '1' } },
+    });
+
+    const headers = new Headers(override.headers);
+    expect(headers.get('X-Site-Id')).toBe('site-1');
+    expect(headers.get('Content-Type')).toBe('application/json');
+    expect(headers.get('X-API-Version')).toBe('1');
+  });
+
+  it('returns only headers, so the spread over the request init leaves method and body alone', async () => {
+    const override = await withSiteScope('site-1')({ init: { method: 'POST', body: '{}' } });
+
+    expect(Object.keys(override)).toEqual(['headers']);
   });
 });

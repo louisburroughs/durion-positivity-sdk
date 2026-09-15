@@ -93,6 +93,30 @@ export async function expectHttpError(promise: Promise<unknown>, ...statuses: nu
   return status;
 }
 
+/**
+ * A per-request override that scopes a generated client call to one site by
+ * adding `X-Site-Id`.
+ *
+ * pos-inventory applies a site's declared default staging location only to
+ * site-scoped requests (`StagingLocationResolver`): without the header an
+ * endpoint that has no `{siteId}` in its path - putaway generation among them -
+ * falls back to the backend's constant staging location, whatever the site
+ * declares. Passed as a function, not an object: the generated runtime spreads
+ * an object override over the request init, so `{ headers }` would replace the
+ * generated headers (Content-Type included) instead of adding to them.
+ */
+export const withSiteScope =
+  (siteId: string) =>
+  async ({ init }: { init: RequestInit }): Promise<RequestInit> => {
+    const headers = new Headers(init.headers);
+    headers.set('X-Site-Id', siteId);
+    const merged: Record<string, string> = {};
+    headers.forEach((value, name) => {
+      merged[name] = value;
+    });
+    return { headers: merged };
+  };
+
 /** The backend's ApiError body, as far as an assertion needs it. */
 export interface ApiErrorBody {
   status: number;

@@ -17,7 +17,7 @@ import {
   type CreatedProduct,
 } from '../harness/builders';
 import { readAvailability, readOnHand } from '../harness/availability';
-import { call, expectHttpError, formatError, isHttpStatus } from '../harness/http';
+import { call, expectHttpError, formatError, isHttpStatus, withSiteScope } from '../harness/http';
 import { resolveStagingLocation } from '../harness/stagingLocation';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
@@ -201,14 +201,24 @@ describe('Suite D — receiving', () => {
       // emit a task rooted at staging that could never be executed - from the
       // staging source because nothing was there, and from the receiving
       // location because the destination it had suggested was itself rejected.
+      //
+      // Both generation calls are site-scoped with X-Site-Id: pos-inventory only
+      // applies the site's declared staging location to a site-scoped request,
+      // and this endpoint has no {siteId} in its path, so without the header it
+      // compares the receipt against the backend's constant staging location
+      // instead of the one STAGING_LOCATION_ID was resolved to. Backend #2009
+      // tracks resolving the site from the receipt so the header is not needed.
       const refusal = await formatError(
         await parts.inventory.putawayApi
-          .generatePutawayTasks({
-            generatePutawayTasksRequest: {
-              sourceReceiptId: receiptId,
-              lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
+          .generatePutawayTasks(
+            {
+              generatePutawayTasksRequest: {
+                sourceReceiptId: receiptId,
+                lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
+              },
             },
-          })
+            withSiteScope(locationId),
+          )
           .then(
             (generated) => {
               throw new Error(
@@ -279,12 +289,15 @@ describe('Suite D — receiving', () => {
       // a seeded ANY rule is the terminal fallback so a brand-new SKU never
       // dead-ends.
       const generated = await call('generatePutawayTasks(staged)', () =>
-        parts.inventory.putawayApi.generatePutawayTasks({
-          generatePutawayTasksRequest: {
-            sourceReceiptId: stagedReceiptId,
-            lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
+        parts.inventory.putawayApi.generatePutawayTasks(
+          {
+            generatePutawayTasksRequest: {
+              sourceReceiptId: stagedReceiptId,
+              lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
+            },
           },
-        }),
+          withSiteScope(locationId),
+        ),
       );
       console.log(`[D5] generated ${generated.length} task(s) for the staged receipt`);
       expect(generated).toHaveLength(1);
