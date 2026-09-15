@@ -38,7 +38,8 @@ const itInRoleMode = ROLE_MODE ? it : it.skip;
  * already hold an open workorder, which would turn a contention test into a test
  * of someone else's data. Both are kept afterwards, run-tagged, like every
  * record a run creates. Three workorders are built: W1 takes the bay first, W2
- * contends for it, W3 parks.
+ * contends for it, W3 parks. W1 ends the run open, with a technician and the bay,
+ * the way an assigned job looks on the dispatch board.
  */
 describe('Suite H — service position and technician assignment', () => {
   const LABOR_PRICE = 95;
@@ -91,6 +92,9 @@ describe('Suite H — service position and technician assignment', () => {
   const positionOf = (workorderId: string) =>
     call('getServicePosition', () => manager.workorder.servicePositionAPIApi.getServicePosition({ workorderId }));
 
+  const workorderDetail = (workorderId: string) =>
+    call('getWorkorderDetail', () => advisor.workorder.workorderDetailApi.getWorkorderDetail({ workorderId }));
+
   beforeAll(async () => {
     context = loadContext();
     personas = new Personas(ItestConfig.fromEnv());
@@ -141,10 +145,11 @@ describe('Suite H — service position and technician assignment', () => {
     if (!manager) {
       return;
     }
-    // Leave nothing placed, so none of this run's workorders is left holding a
-    // position. The bay and unit themselves are kept: alpha is append-only and a
-    // run's records are its trace (spec: persistence contract).
-    for (const built of [w1, w2, w3]) {
+    // W2 and W3 are left unplaced. W1 is not released: H10 leaves it on the run's
+    // own bay, which nothing else contends for. The bay and unit themselves are
+    // kept: alpha is append-only and a run's records are its trace (spec:
+    // persistence contract).
+    for (const built of [w2, w3]) {
       if (!built) continue;
       try {
         await manager.workorder.servicePositionAPIApi.releaseServicePosition({
@@ -246,7 +251,12 @@ describe('Suite H — service position and technician assignment', () => {
       }),
     );
     const after = await positionOf(w1.workorderId);
-    console.log(`[H5] W1 after technician release: ${after.resourceType}, technician ${after.technicianId ?? 'none'}`);
+    // Status is logged, not asserted: releasing the last technician leaves W1
+    // ASSIGNED today, and the backend is to revert it to APPROVED.
+    const status = (await workorderDetail(w1.workorderId)).status;
+    console.log(
+      `[H5] W1 after technician release: ${after.resourceType}, technician ${after.technicianId ?? 'none'}, status ${status}`,
+    );
     expect(after.resourceType).toBe('HOLD');
     expect(after.technicianId).toBeUndefined();
   }, 120_000);
@@ -312,5 +322,25 @@ describe('Suite H — service position and technician assignment', () => {
       403,
     );
     console.log(`[H9] TECHNICIAN refused workorder:operationalContext:override with HTTP ${status}`);
+  }, 120_000);
+
+  it('H10 — W1 is left open with a technician and the run\'s bay', async () => {
+    // H7 freed the bay. Technician first, then the bay: ASSIGNED is to mean both,
+    // so the order works whether the status follows the technician (today) or the
+    // pair. Nothing releases W1 afterwards.
+    await call('assignTechnician W1', () =>
+      manager.workorder.technicianAssignmentAPIApi.assignTechnician({
+        workorderId: w1.workorderId,
+        assignTechnicianRequest: { technicianId, notes: reason('final assignment') },
+      }),
+    );
+    const placed = await call('assignServicePosition W1 -> bay', () => assign(w1.workorderId, ResourceType.Bay, bayId));
+    expect(placed.resourceType).toBe('BAY');
+    expect(placed.resourceId).toBe(bayId);
+    expect(placed.technicianId).toBe(technicianId);
+
+    const status = String((await workorderDetail(w1.workorderId)).status).toUpperCase();
+    console.log(`[H10] W1 left on bay ${bayId} with technician ${technicianId}, status ${status}`);
+    expect(status).toBe('ASSIGNED');
   }, 120_000);
 });

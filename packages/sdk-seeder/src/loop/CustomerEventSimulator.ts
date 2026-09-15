@@ -5,6 +5,7 @@ import { createInvoiceClient } from '@durion-sdk/invoice';
 import { createAccountingClient } from '@durion-sdk/accounting';
 import {
   AddEstimateItemRequestItemTypeEnum,
+  AssignServicePositionRequestResourceTypeEnum,
   createWorkorderClient,
 } from '@durion-sdk/workorder';
 import { SeederAuth } from '../SeederAuth';
@@ -184,6 +185,37 @@ export class CustomerEventSimulator {
     }
 
     throw new Error(`Item completion request failed with HTTP ${response.status}: ${responseBody}`);
+  }
+
+  /**
+   * Puts the workorder on the first bay that takes it, trying the site's bays in random order.
+   * A bay holds one open workorder (backend #1984) and closing a workorder frees its bay, so a
+   * bay is refused (409) only while another job on it is still open. Returns undefined when no
+   * bay takes it: the workorder stays unplaced and cannot start (backend #2011).
+   */
+  private async placeOnFreeBay(dayNumber: number, workorderId: string): Promise<string | undefined> {
+    for (const bayId of this.random.pickN(this.refs.bayIds, this.refs.bayIds.length)) {
+      try {
+        await this.workorderClient.servicePositionAPIApi.assignServicePosition({
+          workorderId,
+          assignServicePositionRequest: {
+            resourceType: AssignServicePositionRequestResourceTypeEnum.Bay,
+            resourceId: bayId,
+            reason: 'Seeder placement',
+          },
+        });
+        return bayId;
+      } catch (error) {
+        if (isHttpStatus(error, 409)) {
+          continue;
+        }
+        const message = await formatError(error);
+        console.log(`[Day ${dayNumber}] WARNING: could not place workorder ${workorderId} on bay ${bayId}: ${message}`);
+        return undefined;
+      }
+    }
+    console.log(`[Day ${dayNumber}] WARNING: every bay is occupied; workorder ${workorderId} stays unplaced`);
+    return undefined;
   }
 
   async simulate(dayNumber: number, customerIndex: number): Promise<CustomerStatus> {
@@ -404,6 +436,26 @@ export class CustomerEventSimulator {
         return 'error';
       }
 
+      // Work is assigned before it starts: a technician and a bay (backend #2011).
+      // The timers below then track the assigned technician, with admin.alpha recorded as the
+      // initiating actor. stopTimers stops timers the caller tracks or initiated, so start and
+      // stop still meet.
+      try {
+        const technicianId = this.random.pickOne(this.refs.employees.technicians);
+        const technicianName = this.refs.employeeNameById.get(technicianId) ?? technicianId;
+        await this.workorderClient.technicianAssignmentAPIApi.assignTechnician({
+          workorderId,
+          assignTechnicianRequest: {
+            technicianId,
+            notes: `Assigned by seeder to ${technicianName}`,
+          },
+        });
+      } catch (error) {
+        await logStepError('assignTechnician', error);
+      }
+
+      const placedBayId = await this.placeOnFreeBay(dayNumber, workorderId);
+
       try {
         await this.workorderClient.operationalContextApi.startWorkorder({
           workorderId,
@@ -411,13 +463,6 @@ export class CustomerEventSimulator {
       } catch (error) {
         await logStepError('startWorkorderWorkSession', error);
       }
-
-      // assignTechnician is called AFTER the timer loop intentionally.
-      // stopTimers always targets the authenticated user (admin.alpha) from the JWT.
-      // startTimer, when no technicianId is in the request, attributes labor to the currently
-      // assigned technician — creating a mismatch where stop can never reach that timer.
-      // With no assignment present during the loop, the backend falls back to the actor
-      // (admin.alpha), keeping start and stop on the same identity.
 
       for (let index = 0; index < selectedServiceIds.length; index += 1) {
         const serviceId = selectedServiceIds[index];
@@ -484,20 +529,6 @@ export class CustomerEventSimulator {
           const postStopMsg = await formatError(postStopError);
           console.log(`[Day ${dayNumber}] WARNING: post-stop failed after service ${serviceName} timer (workorder ${workorderId}): ${postStopMsg}`);
         }
-      }
-
-      try {
-        const technicianId = this.random.pickOne(this.refs.employees.technicians);
-        const technicianName = this.refs.employeeNameById.get(technicianId) ?? technicianId;
-        await this.workorderClient.technicianAssignmentAPIApi.assignTechnician({
-          workorderId,
-          assignTechnicianRequest: {
-            technicianId,
-            notes: `Assigned by seeder to ${technicianName}`,
-          },
-        });
-      } catch (error) {
-        await logStepError('assignTechnician', error);
       }
 
       try {
@@ -579,6 +610,18 @@ export class CustomerEventSimulator {
         });
       } catch (error) {
         await logStepError('completeWorkorder', error);
+        // Closing would have freed the bay. An open workorder abandoned here would hold it for
+        // good, and the site has few bays, so give it back.
+        if (placedBayId) {
+          try {
+            await this.workorderClient.servicePositionAPIApi.releaseServicePosition({
+              workorderId,
+              reason: 'Seeder release after failed completion',
+            });
+          } catch (releaseError) {
+            await logStepError('releaseServicePosition', releaseError);
+          }
+        }
         return 'error';
       }
 

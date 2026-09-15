@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { SeederRandom } from '@durion-sdk/seeder';
+import { AssignServicePositionRequestResourceTypeEnum } from '@durion-sdk/workorder';
 import {
   addLaborLine,
   approveAndPromote,
@@ -7,12 +8,13 @@ import {
   createPersonAccount,
   createVehicle,
   readString,
+  requireField,
   seedFromRunId,
   type BuilderContext,
   type CreatedCustomer,
   type PromotedWorkorder,
 } from '../harness/builders';
-import { call, expectHttpError, isHttpStatus } from '../harness/http';
+import { call, expectHttpError, isHttpStatus, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -167,12 +169,42 @@ describe('Suite F — time reporting and approval', () => {
         },
       }),
     );
+    // Work is assigned before it starts: the technician above and a bay (backend
+    // #2011). The run's own bay, since a shared one may hold another open
+    // workorder. F never completes its workorder, so it stays on the bay.
+    const bay = await call('createBay', () =>
+      admin.location.bayApi.createBay({
+        locationId,
+        bayRequest: {
+          name: `Itest bay ${context.runId} F`,
+          bayType: 'GENERAL_SERVICE',
+          capacity: { maxConcurrentVehicles: 1 },
+        },
+      }),
+    );
+    const bayId = requireField(bay.id, 'createBay.id');
+    // pos-workorder validates the bay against its Kafka-fed ext_bay replica, so
+    // a bay created seconds ago can still be unknown there.
+    await retryWhileReplicating(
+      () =>
+        manager.workorder.servicePositionAPIApi.assignServicePosition({
+          workorderId,
+          assignServicePositionRequest: {
+            resourceType: AssignServicePositionRequestResourceTypeEnum.Bay,
+            resourceId: bayId,
+            reason: `Integration test placement [${context.runId}]`,
+          },
+        }),
+      { markers: ['Unknown bay'], description: 'assignServicePosition -> bay', timeoutMs: 60_000, pollMs: 1_000 },
+    );
     // Labor entries need the workorder past approval; starting it is what the
     // technician does before touching the car.
     await call('startWorkorder', () =>
       tech.workorder.operationalContextApi.startWorkorder({ workorderId }),
     );
-    console.log(`[F] workorder ${workorderId}, service item ${serviceItemId}, technician ${technicianId}`);
+    console.log(
+      `[F] workorder ${workorderId}, service item ${serviceItemId}, technician ${technicianId}, bay ${bayId}`,
+    );
   }, 300_000);
 
   it('F1 — the technician opens a labor session on the service line', async () => {

@@ -217,13 +217,12 @@ Design rules:
   never constructs an SDK client from raw credentials. Every builder takes
   the acting persona as its first argument so the declaration is visible at
   the call site and greppable.
-- **Timer identity:** the workexec timer API attributes `startTimer` /
-  `stopTimers` to the *authenticated user*. In role mode the `tech` persona
-  must be the same identity for start and stop, and technician assignment
-  still happens only after the timer loop (suite C rule). Running timers as a
-  real technician login removes the seeder's admin-fallback workaround — a
-  correctness gain worth asserting: the resulting labor entry must belong to
-  the tech persona's user.
+- **Timer identity:** `startTimer` tracks the request's technician, else the
+  workorder's assigned technician, else the authenticated user, and records the
+  authenticated user as the initiating actor when those differ; `stopTimers`
+  stops timers the caller tracks *or* initiated. Work is assigned — technician
+  and bay — before it starts (backend #2011), so suite C and F timers track the
+  assigned technician and the `tech` persona that started them can stop them.
 - **Role-enforcement negatives** (role mode only), using
   `expectHttpError(…, 403)` and recording the actual status the backend
   returns. Each is guaranteed meaningful by the seeded grants — the acting
@@ -637,21 +636,27 @@ be attributed to the `tech` user. Role-mode negatives: `tech` attempts
 
 - [x] **C1 — Approve the workorder.** Signature payload as in the seeder.
   Assert approved status via `getWorkorderDetail`.
-- [x] **C2 — Start execution.** `operationalContextApi.startWorkorder`. Assert
-  the detail status reflects execution start.
-- [x] **C3 — Timer lifecycle.** Honor the seeder's hard-won ordering
-  constraint: **do not assign a technician before the timer loop** (stop
-  targets the authenticated user; an assigned technician would strand the
-  timer). For the first service item: `stopTimers` (tolerate no-active-timer),
+- [x] **C1b — Assign technician.** Before any work, `assignTechnician` with a
+  bootstrap technician id. Assert the assignment is visible.
+- [x] **C1c — Place on a bay.** On a bay the run creates (retrying while the
+  `ext_bay` replica answers `Unknown bay`); it stays there until C8. Assert the
+  position names the bay and the technician, and the status is `ASSIGNED`.
+  Work is assigned — technician and bay — before it starts (backend #2011).
+- [x] **C2 — Start execution.** `operationalContextApi.startWorkorder` from
+  `ASSIGNED`. Assert the detail status reflects execution start.
+- [x] **C3 — Timer lifecycle.** The technician is already assigned, so the
+  timer tracks that technician with the tech persona as initiating actor, and
+  `stopTimers` (tracked technician or initiating actor) still reaches it. For
+  the first service item: `stopTimers` (tolerate no-active-timer),
   `startTimer` with `{workorderId, workorderItemId, laborCode}`, wait ≥1s of
   real time, `stopTimers`. Assert via the workorder labor/time-entry API that
   a labor entry exists for that item with duration > 0.
 - [x] **C4 — Timer conflict.** Start a timer, then `startTimer` again for the
   second item without stopping: assert 409. Recover exactly as the seeder
   does (stop, restart), then stop. Assert both items have labor entries.
-- [x] **C5 — Assign technician.** After the timer work, `assignTechnician`
-  with a bootstrap technician id. Assert assignment visible on the detail or
-  assignment endpoint.
+- [x] **C5 — One technician per workorder.** A second `assignTechnician` → 409
+  `TECHNICIAN_ALREADY_ASSIGNED` naming the current technician; reassign away
+  and back.
 - [x] **C6 — Request a pick list; tasks need a reservation.** Written to expect
   promotion to produce pickable tasks; alpha does not. `getPickTasks` answers
   404 until a pick list is requested from inventory
@@ -1144,8 +1149,9 @@ ACTIVE unit needs a travel buffer policy, capabilities and coverage rules, and
 pos-workorder does not consult the unit's status when placing a workorder. Both
 reach pos-workorder through Kafka-fed replicas (`ext_bay`, `ext_mobile_unit`), so
 H1 and H8 retry while the refusal says `Unknown bay` / `Unknown mobile unit`.
-`afterAll` releases every position it set; the bay and unit are kept, run-tagged,
-like every record a run creates.
+`afterAll` releases W2's and W3's positions; W1 is left open on the run's bay with
+a technician (H10). The bay and unit are kept, run-tagged, like every record a run
+creates.
 
 - [ ] **H1** W1 placed on the run's bay; the read and the current history row name it.
 - [ ] **H2** W2 on the same bay → 409 `RESOURCE_OCCUPIED`, `referenceId` = W1.
@@ -1156,10 +1162,13 @@ like every record a run creates.
 - [ ] **H7** Releasing W2 leaves no position; the bay claim stays in history.
 - [ ] **H8** On a mobile unit the run creates (INACTIVE, based at the site): W3 takes it, W1 is refused naming W3.
 - [ ] **H9** (role mode) A technician cannot place a workorder (401/403).
+- [ ] **H10** W1 given a technician again and placed on the freed bay → `BAY`, the technician, status `ASSIGNED`; left that way. H5 logs W1's status after its technician release (ASSIGNED today; to revert to APPROVED).
 
-Suite C adds the lifecycle half: **C5b** (second assign refused naming the
-current technician; reassign away and back), **C5c** (park on `HOLD`) and a
-check after **C8** that completion freed the position.
+Suite C adds the lifecycle half: **C1b/C1c** (a technician, then a bay the run
+creates, before work starts; status `ASSIGNED`), **C5** (second assign refused
+naming the current technician; reassign away and back) and a check after **C8**
+that completion freed that bay. Suite F puts its workorder on its own run bay
+before starting it and leaves it there (F never completes its workorder).
 
 ### Suites A-D: what alpha actually does (2026-08-23)
 
