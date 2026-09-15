@@ -100,8 +100,11 @@ export async function expectHttpError(promise: Promise<unknown>, ...statuses: nu
  * pos-inventory applies a site's declared default staging location only to
  * site-scoped requests (`StagingLocationResolver`): without the header an
  * endpoint that has no `{siteId}` in its path - putaway generation among them -
- * falls back to the backend's constant staging location, whatever the site
- * declares. Passed as a function, not an object: the generated runtime spreads
+ * falls back to the configured staging-location property, or the backend's
+ * constant, whatever the site declares. The header therefore also *suppresses*
+ * that configured property, so send it only when the declared default is the
+ * bin you mean - see `resolveStagingLocation`. Passed as a function, not an
+ * object: the generated runtime spreads
  * an object override over the request init, so `{ headers }` would replace the
  * generated headers (Content-Type included) instead of adding to them.
  */

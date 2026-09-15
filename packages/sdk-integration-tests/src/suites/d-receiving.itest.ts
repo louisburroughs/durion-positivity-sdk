@@ -18,7 +18,7 @@ import {
 } from '../harness/builders';
 import { readAvailability, readOnHand } from '../harness/availability';
 import { call, expectHttpError, formatError, isHttpStatus, withSiteScope } from '../harness/http';
-import { resolveStagingLocation } from '../harness/stagingLocation';
+import { resolveStagingLocation, siteScopeForStaging } from '../harness/stagingLocation';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -47,6 +47,13 @@ describe('Suite D — receiving', () => {
    * site default, instead of matching only the backend's fallback constant.
    */
   let STAGING_LOCATION_ID: string;
+
+  /**
+   * The per-request override that scopes a putaway call to this site, or
+   * undefined when STAGING_LOCATION_ID did not come from the site's declared
+   * default. See `siteScopeForStaging` for why that distinction decides it.
+   */
+  let stagingSiteScope: ReturnType<typeof withSiteScope> | undefined;
 
   /**
    * True only for the purchase-order line projection still catching up. Any
@@ -114,6 +121,7 @@ describe('Suite D — receiving', () => {
       ItestConfig.fromEnv().stagingLocationIdOverride,
     );
     STAGING_LOCATION_ID = staging.stagingLocationId;
+    stagingSiteScope = siteScopeForStaging(staging, locationId);
     console.log(`[D] staging location ${STAGING_LOCATION_ID} (${staging.source})`);
   }, 180_000);
 
@@ -202,12 +210,13 @@ describe('Suite D — receiving', () => {
       // staging source because nothing was there, and from the receiving
       // location because the destination it had suggested was itself rejected.
       //
-      // Both generation calls are site-scoped with X-Site-Id: pos-inventory only
-      // applies the site's declared staging location to a site-scoped request,
-      // and this endpoint has no {siteId} in its path, so without the header it
-      // compares the receipt against the backend's constant staging location
-      // instead of the one STAGING_LOCATION_ID was resolved to. Backend #2009
-      // tracks resolving the site from the receipt so the header is not needed.
+      // Both generation calls carry stagingSiteScope: pos-inventory applies the
+      // site's declared staging location only to a site-scoped request, and this
+      // endpoint has no {siteId} in its path, so on a site that declares one the
+      // header is what makes the backend compare against the same bin
+      // STAGING_LOCATION_ID was resolved to. See its declaration for why it is
+      // undefined when the bin was forced instead. Backend #2009 tracks
+      // resolving the site from the receipt so no header is needed.
       const refusal = await formatError(
         await parts.inventory.putawayApi
           .generatePutawayTasks(
@@ -217,7 +226,7 @@ describe('Suite D — receiving', () => {
                 lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
               },
             },
-            withSiteScope(locationId),
+            stagingSiteScope,
           )
           .then(
             (generated) => {
@@ -296,7 +305,7 @@ describe('Suite D — receiving', () => {
               lineItems: [{ productId: product.productEntityId, quantity: RECEIVE_QUANTITY }],
             },
           },
-          withSiteScope(locationId),
+          stagingSiteScope,
         ),
       );
       console.log(`[D5] generated ${generated.length} task(s) for the staged receipt`);
