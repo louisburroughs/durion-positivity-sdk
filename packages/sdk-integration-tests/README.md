@@ -319,12 +319,14 @@ arrived by that instant**. Observed round trips on alpha:
 Three test runs agreeing that something is absent is one measurement repeated,
 not three observations.
 
-### Do not assign a technician before the timer loop
+### Assign technician and bay before work starts
 
-`stopTimers` targets the authenticated user. Assigning a technician first
-strands the timer where the acting persona cannot stop it. Suite C therefore
-runs the timer work (C3, C4) *before* the assignment (C5). This ordering was
-learned the hard way in the seeder; it is not stylistic.
+Work is assigned — a technician and a bay — before it starts (backend #2011):
+suite C does it in C1b/C1c before C2, suite F in its `beforeAll`, and the
+seeder before `startWorkorder`. This used to be the other way round:
+`stopTimers` once reached only timers tracking the authenticated user, so an
+assigned technician stranded the timer. It now also stops timers the caller
+started for someone else, which is what makes assigning first safe.
 
 ### Records are append-only
 

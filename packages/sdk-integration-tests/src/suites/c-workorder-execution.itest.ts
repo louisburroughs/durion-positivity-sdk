@@ -16,7 +16,7 @@ import {
   type PromotedWorkorder,
 } from '../harness/builders';
 import { findStockedProduct, readOnHand } from '../harness/availability';
-import { call, expectApiError, expectHttpError, isHttpStatus } from '../harness/http';
+import { call, expectApiError, expectHttpError, isHttpStatus, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -74,6 +74,8 @@ describe('Suite C — workorder execution', () => {
   let serviceIds: string[];
   let productId: string;
   let technicianId: string;
+  /** Created in beforeAll and kept, run-tagged: C1c puts the workorder on it. */
+  let bayId: string;
 
   const detail = async (as: DomainClients = advisor) =>
     call('getWorkorderDetail', () =>
@@ -136,6 +138,21 @@ describe('Suite C — workorder execution', () => {
     );
     technicianId = context.referenceCache.employees.technicians[0];
 
+    // The run's own bay: every shared bay at the site may already hold an open
+    // workorder, and a bay holds one (backend #1984).
+    const bay = await call('createBay', () =>
+      admin.location.bayApi.createBay({
+        locationId: context.referenceCache.locationId,
+        bayRequest: {
+          name: `Itest bay ${context.runId} C`,
+          bayType: 'GENERAL_SERVICE',
+          capacity: { maxConcurrentVehicles: 1 },
+        },
+      }),
+    );
+    bayId = requireField(bay.id, 'createBay.id');
+    console.log(`[setup] created bay ${bayId}`);
+
     const built = await buildPromotedWorkorder();
     promoted = built.promoted;
     customer = built.customer;
@@ -165,7 +182,56 @@ describe('Suite C — workorder execution', () => {
     expect(String(approved.status).toUpperCase()).toContain('APPROV');
   }, 120_000);
 
+  it('C1b — the manager assigns a technician before any work starts', async () => {
+    // Work is assigned before it starts: a technician (here) and a bay (C1c),
+    // backend #2011.
+    await call('assignTechnician', () =>
+      manager.workorder.technicianAssignmentAPIApi.assignTechnician({
+        workorderId,
+        assignTechnicianRequest: {
+          technicianId,
+          notes: `Integration test assignment [${context.runId}]`,
+        },
+      }),
+    );
+
+    const assignment = await call('getTechnicianAssignment', () =>
+      manager.workorder.technicianAssignmentAPIApi.getTechnicianAssignment({ workorderId }),
+    );
+    const assigned = readString(assignment, 'technicianId', 'assignedTechnicianId');
+    console.log(`[C1b] assigned technician = ${assigned}`);
+    expect(assigned ?? (await detail()).assignedTechnicianId).toBe(technicianId);
+  }, 120_000);
+
+  it('C1c — the manager puts the workorder on the run\'s bay, where it stays until completion', async () => {
+    // pos-workorder validates the bay against its Kafka-fed ext_bay replica, so
+    // the bay beforeAll created can still be unknown there. HOLD is suite H's.
+    const placed = await retryWhileReplicating(
+      () =>
+        manager.workorder.servicePositionAPIApi.assignServicePosition({
+          workorderId,
+          assignServicePositionRequest: {
+            resourceType: AssignServicePositionRequestResourceTypeEnum.Bay,
+            resourceId: bayId,
+            reason: `Integration test placement [${context.runId}]`,
+          },
+        }),
+      { markers: ['Unknown bay'], description: 'assignServicePosition -> bay', timeoutMs: 60_000, pollMs: 1_000 },
+    );
+    console.log(`[C1c] position ${placed.resourceType} ${placed.resourceId}`);
+    expect(placed.resourceType).toBe('BAY');
+    expect(placed.resourceId).toBe(bayId);
+    // The position read answers the technician too, and placing left it alone.
+    expect(placed.technicianId).toBe(technicianId);
+
+    // A technician and a bay together are what ASSIGNED means.
+    const status = String((await detail()).status).toUpperCase();
+    console.log(`[C1c] status=${status}`);
+    expect(status).toBe('ASSIGNED');
+  }, 120_000);
+
   it('C2 — the technician starts execution', async () => {
+    // From ASSIGNED: C1b and C1c gave the workorder a technician and a bay first.
     await call('startWorkorder', () =>
       tech.workorder.operationalContextApi.startWorkorder({ workorderId }),
     );
@@ -183,9 +249,10 @@ describe('Suite C — workorder execution', () => {
     const serviceItemId = promoted.serviceItemMap.get(serviceIds[0]);
     expect(serviceItemId).toBeTruthy();
 
-    // stopTimers targets the authenticated user, so no technician may be
-    // assigned yet (C5 does that afterwards): an assignment would strand this
-    // timer on someone else. Tolerate "nothing running" on the first stop.
+    // The timer tracks the technician C1b assigned, with the tech persona recorded
+    // as the actor that started it. stopTimers stops timers the caller tracks or
+    // started, so the same persona still reaches it. Tolerate "nothing running"
+    // on the first stop.
     await stopTimersIfRunning(tech);
 
     await call('startTimer', () =>
@@ -263,26 +330,7 @@ describe('Suite C — workorder execution', () => {
     expect(touched).toHaveLength(2);
   }, 180_000);
 
-  it('C5 — the manager assigns a technician, after the timer work', async () => {
-    await call('assignTechnician', () =>
-      manager.workorder.technicianAssignmentAPIApi.assignTechnician({
-        workorderId,
-        assignTechnicianRequest: {
-          technicianId,
-          notes: `Integration test assignment [${context.runId}]`,
-        },
-      }),
-    );
-
-    const assignment = await call('getTechnicianAssignment', () =>
-      manager.workorder.technicianAssignmentAPIApi.getTechnicianAssignment({ workorderId }),
-    );
-    const assigned = readString(assignment, 'technicianId', 'assignedTechnicianId');
-    console.log(`[C5] assigned technician = ${assigned}`);
-    expect(assigned ?? (await detail()).assignedTechnicianId).toBe(technicianId);
-  }, 120_000);
-
-  it('C5b — one technician per workorder: a second assign is refused, a reassign changes it', async () => {
+  it('C5 — one technician per workorder: a second assign is refused, a reassign changes it', async () => {
     const otherTechnicianId = context.referenceCache.employees.technicians.find((id) => id !== technicianId);
 
     // Assign means "none yet". It used to retire the incumbent silently; it now
@@ -298,11 +346,11 @@ describe('Suite C — workorder execution', () => {
       409,
       'TECHNICIAN_ALREADY_ASSIGNED',
     );
-    console.log(`[C5b] second assign refused, naming current technician ${refused.referenceId}`);
+    console.log(`[C5] second assign refused, naming current technician ${refused.referenceId}`);
     expect(refused.referenceId).toBe(technicianId);
 
     if (!otherTechnicianId) {
-      console.log('[C5b] only one seeded technician; skipped the reassign round trip');
+      console.log('[C5] only one seeded technician; skipped the reassign round trip');
       return;
     }
     // Away and back: the steps after this attribute labor to technicianId.
@@ -324,24 +372,6 @@ describe('Suite C — workorder execution', () => {
       );
       expect(readString(current, 'technicianId', 'assignedTechnicianId')).toBe(to);
     }
-  }, 120_000);
-
-  it('C5c — the manager parks the workorder on HOLD at its own site', async () => {
-    const parked = await call('assignServicePosition HOLD', () =>
-      manager.workorder.servicePositionAPIApi.assignServicePosition({
-        workorderId,
-        assignServicePositionRequest: {
-          resourceType: AssignServicePositionRequestResourceTypeEnum.Hold,
-          reason: `Integration test park [${context.runId}]`,
-        },
-      }),
-    );
-    console.log(`[C5c] position ${parked.resourceType} ${parked.resourceId}`);
-    // HOLD is the workorder's own site, whatever id is sent, so none is.
-    expect(parked.resourceType).toBe('HOLD');
-    expect(parked.resourceId).toBe(context.referenceCache.locationId);
-    // The position read answers the technician too, and parking left it alone.
-    expect(parked.technicianId).toBe(technicianId);
   }, 120_000);
 
   it('C6 — promotion generates a pick list whose tasks reach the workorder facade', async () => {
@@ -490,14 +520,18 @@ describe('Suite C — workorder execution', () => {
     console.log(`[C8] completed: status=${completed.status} isCompleted=${completed.isCompleted}`);
     expect(String(completed.status).toUpperCase()).toContain('COMPLET');
 
-    // Closing a workorder frees its position (C5c parked it): the read names none
-    // any more, and the release stays in history.
+    // Closing a workorder frees its position (C1c put it on the bay): the read
+    // names none any more, and the release stays in history.
     const position = await call('getServicePosition', () =>
       manager.workorder.servicePositionAPIApi.getServicePosition({ workorderId }),
     );
     console.log(`[C8] position after completion: ${position.resourceType ?? 'none'}`);
     expect(position.resourceType).toBeUndefined();
-    expect(position.history?.some((row) => row.resourceType === 'HOLD' && row.releasedAt !== undefined)).toBe(true);
+    expect(
+      position.history?.some(
+        (row) => row.resourceType === 'BAY' && row.resourceId === bayId && row.releasedAt !== undefined,
+      ),
+    ).toBe(true);
   }, 300_000);
 
   it('C9 — the invoice is generated, finalized and paid', async () => {
