@@ -485,6 +485,30 @@ See **[`packages/sdk-integration-tests/README.md`](./packages/sdk-integration-te
 for the environment contract, the persona matrix, and the rules a new suite has
 to follow.
 
+### Populate runs
+
+`packages/sdk-integration-tests/src/runs` holds runs that *load* a backend
+rather than assert against one. They take the same `ITEST_*` environment, but
+are not `*.itest.ts` files, so the integration run never collects them and they
+share no fixture or run id with the suites.
+
+```bash
+npm run build --workspaces   # runs resolve @durion-sdk/* through node_modules
+npm run populate:shop-floor  # an active workorder on every free bay and mobile unit
+```
+
+The workspace build is the one that matters here: the root `npm run build`
+type-checks with `noEmit` and writes no package `dist`, so on its own it would
+leave a run importing whatever was built last.
+
+`populate:shop-floor` discovers existing sites, bays, mobile units and
+technicians — it creates none of them — and puts one active workorder on each
+free position it can staff, one technician per position. Where a site has more
+positions than idle technicians it fills what it can and names every position
+it left empty; bays and mobile units are staffed alternately so a shortfall
+never falls on one kind alone. Its records carry a `floor-*` run id, distinct
+from the suites' `itest-*`.
+
 ---
 
 ## Scripts Reference
@@ -495,6 +519,7 @@ to follow.
 | `test`     | `npm test`         | Run Jest suite (392 tests)                        |
 | `lint`     | `npm run lint`     | ESLint + TypeScript linting                       |
 | `generate` | `npm run generate` | Regenerate all clients from backend OpenAPI specs |
+| `populate:shop-floor` | `npm run populate:shop-floor` | Load every free bay and mobile unit with an active workorder |
 
 ---
 

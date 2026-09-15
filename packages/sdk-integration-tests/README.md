@@ -33,6 +33,54 @@ suites 00-D. Suites E and F have not yet had a green run recorded here: the
 alpha `pos-location` service was returning 503 when they were written, which
 stops global setup before any suite starts.
 
+### Populate runs (`src/runs`)
+
+Separate from the suites: these *load* a backend instead of asserting against
+it. They take the same environment contract below, but they are not
+`*.itest.ts`, so `jest.integration.config.js` never collects them, they do not
+execute `globalSetup`, and they share no fixture or run id with a suite run.
+
+| Run | Does |
+| --- | --- |
+| `shopFloorLoad` (`npm run populate:shop-floor`) | Puts one active workorder on every free bay and mobile unit it can staff, at every site that has them |
+
+`shopFloorLoad` **uses what is there**: sites, bays, mobile units and
+technicians are discovered, never created. It does not run the seeder's
+`BootstrapOrchestrator` or the security bootstrap — both write reference and
+role data a populate run has no business changing. It does create the work
+itself (a customer, a vehicle and an approved estimate per job), because a
+workorder cannot be placed on a bay without one.
+
+How it decides:
+
+- **Positions** come from the dispatch board (`getDispatchDashboard`), which
+  lists every ACTIVE bay and mobile unit at a location with the open workorder
+  holding it — so "free" is read from the same place the shop's own board reads
+  it, and an INACTIVE unit is absent by that endpoint's contract.
+- **Technicians** come from people availability filtered to an ACTIVE
+  `TECHNICIAN` staffing assignment; the board then says which are already on a
+  job. Only idle ones are used.
+- **One technician per position, never two.** Where a site has more free
+  positions than idle technicians, it fills what it can and names every
+  position it left empty. A spare technician at one site cannot cover a gap at
+  another, so the floor's shortfall is the sum of the per-site gaps.
+- **Bays and mobile units are staffed alternately**, so a short-staffed site
+  still ends with both kinds working rather than every mobile unit idle.
+- **Starting is best-effort.** `startWorkorder` acts as the calling persona, and
+  in role mode that is the one configured technician login rather than whichever
+  technician the job was assigned to, so workexec can refuse it. Such a job is
+  reported as placed-but-not-started (`ASSIGNED`, not `WORK_IN_PROGRESS`); it
+  still occupies the position, and it is not counted as a failure.
+
+Build the workspace packages first — `npm run build --workspaces`, not the root
+`npm run build`, which type-checks with `noEmit` and emits no `dist` for a run
+to import.
+
+Records carry a `floor-*` run id, distinct from the suites' `itest-*`. The
+pairing and shortfall arithmetic lives in `shopFloorPlan.ts`, which is pure and
+unit-tested — the only part of a populate run that can be checked without a
+backend.
+
 ---
 
 ## Prerequisites

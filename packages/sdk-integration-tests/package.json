@@ -4,7 +4,8 @@
   "private": true,
   "description": "Non-accelerated backend interaction tests (see BACKEND_INTERACTION_TEST_SPEC.md)",
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.json --noEmit",
+    "populate:shop-floor": "ts-node src/runs/shopFloorLoad.ts"
   },
   "dependencies": {
     "@durion-sdk/accounting": "*",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "ts-node": "^10.9.0",
     "typescript": "~5.9.3"
   }
 }
