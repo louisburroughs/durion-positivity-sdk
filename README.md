@@ -493,9 +493,13 @@ are not `*.itest.ts` files, so the integration run never collects them and they
 share no fixture or run id with the suites.
 
 ```bash
-npm run build                # runs resolve @durion-sdk/* through node_modules
+npm run build --workspaces   # runs resolve @durion-sdk/* through node_modules
 npm run populate:shop-floor  # an active workorder on every free bay and mobile unit
 ```
+
+The workspace build is the one that matters here: the root `npm run build`
+type-checks with `noEmit` and writes no package `dist`, so on its own it would
+leave a run importing whatever was built last.
 
 `populate:shop-floor` discovers existing sites, bays, mobile units and
 technicians — it creates none of them — and puts one active workorder on each

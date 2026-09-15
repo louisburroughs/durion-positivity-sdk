@@ -18,8 +18,10 @@
  *   npm run populate:shop-floor
  *
  * Needs the same ITEST_* environment as the suites (see
- * BACKEND_INTERACTION_TEST_SPEC.md) and the packages built (`npm run build`),
- * since it resolves `@durion-sdk/*` through node_modules like the seeder does.
+ * BACKEND_INTERACTION_TEST_SPEC.md) and the workspace packages built with
+ * `npm run build --workspaces`, since it resolves `@durion-sdk/*` through
+ * node_modules like the seeder does. The root `npm run build` is not enough:
+ * it type-checks with `noEmit` and writes no package `dist` at all.
  */
 import { SeederRandom, type ReferenceCache } from '@durion-sdk/seeder';
 import { AssignServicePositionRequestResourceTypeEnum as ResourceType } from '@durion-sdk/workorder';
@@ -34,7 +36,7 @@ import {
   seedFromRunId,
   type BuilderContext,
 } from '../harness/builders';
-import { call, formatError, retryWhileReplicating } from '../harness/http';
+import { call, formatError, httpStatusOf, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadEnvFile } from '../harness/loadEnvFile';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -47,6 +49,7 @@ import {
   type ShopPosition,
   type SiteRoster,
 } from './shopFloorPlan';
+import { buildRoster, type StaffingView } from './shopFloorRoster';
 
 const TAG = '[floor]';
 const LABOR_PRICE = 95;
@@ -161,8 +164,10 @@ async function loadPosition(
   };
 
   // Carried outside the try so a job that fails *after* promotion still reports
-  // the workorder it left behind unplaced.
+  // the workorder it left behind, and so the catch knows how far it got.
   let workorderId: string | undefined;
+  let technicianAssigned = false;
+  let positionAssigned = false;
   try {
     const customer = await createPersonAccount(as.advisor, ctx);
     const vehicleId = await createVehicle(as.admin, ctx, customer.partyId);
@@ -180,6 +185,7 @@ async function loadPosition(
         },
       }),
     );
+    technicianAssigned = true;
 
     // pos-workorder validates the resource against its Kafka-fed replicas of
     // the location domain, so a bay or unit can still be unknown there.
@@ -200,13 +206,19 @@ async function loadPosition(
         pollMs: 1_000,
       },
     );
+    positionAssigned = true;
 
-    // Starting is the last step and the only optional one. `startWorkorder`
-    // acts as the calling persona, and in role mode that is the single
-    // configured technician login rather than whichever technician this job was
-    // assigned to, so workexec can refuse it. A refusal is not a failed job:
-    // the workorder is built, staffed and on the position, which is what
-    // occupies the board — it reads ASSIGNED instead of WORK_IN_PROGRESS.
+    // Starting is the last step and the only one allowed to be refused.
+    // `startWorkorder` acts as the calling persona, and in role mode that is
+    // the single configured technician login rather than whichever technician
+    // this job was assigned to, so workexec answers 401/403. That refusal is
+    // not a failed job: the workorder is built, staffed and on the position,
+    // which is what occupies the board — it reads ASSIGNED instead of
+    // WORK_IN_PROGRESS.
+    //
+    // Only that refusal. A 5xx, a transport error or an unexpected 400/409 is a
+    // real failure, and swallowing it would report a success whose start
+    // outcome nobody checked.
     try {
       await as.tech.workorder.operationalContextApi.startWorkorder({
         workorderId: promoted.workorderId,
@@ -214,14 +226,54 @@ async function loadPosition(
       log(`working  ${label} — workorder ${promoted.workorderId}, technician ${job.technicianId}`);
       return { ...base, state: 'working', workorderId: promoted.workorderId };
     } catch (error) {
+      const status = httpStatusOf(error);
       const detail = await formatError(error);
-      log(`assigned ${label} — workorder ${promoted.workorderId} placed but not started: ${detail}`);
+      if (status !== 401 && status !== 403) {
+        log(`FAILED ${label}: startWorkorder failed with ${status ?? 'no HTTP status'}: ${detail}`);
+        return { ...base, state: 'failed', workorderId: promoted.workorderId, detail };
+      }
+      log(`assigned ${label} — workorder ${promoted.workorderId} placed, start refused (${status}): ${detail}`);
       return { ...base, state: 'assigned', workorderId: promoted.workorderId, detail };
     }
   } catch (error) {
     const detail = await formatError(error);
     log(`FAILED ${label}: ${detail}`);
+    if (workorderId !== undefined && technicianAssigned && !positionAssigned) {
+      await releaseOrphanedTechnician(as.manager, workorderId, job.technicianId, label, ctx.runId);
+    }
     return { ...base, state: 'failed', workorderId, detail };
+  }
+}
+
+/**
+ * Gives a technician back after the position they were assigned for could not
+ * be taken.
+ *
+ * Without this the workorder holds the technician with nowhere to work, and the
+ * next run's discovery reads their `assignedWorkorderId` and counts them busy —
+ * so one transient placement failure permanently costs the roster a technician
+ * until someone reconciles it by hand. Best-effort: if the release itself
+ * fails, say so with both ids, because that is the state a human has to unpick.
+ */
+async function releaseOrphanedTechnician(
+  manager: DomainClients,
+  workorderId: string,
+  technicianId: string,
+  label: string,
+  runId: string,
+): Promise<void> {
+  try {
+    await manager.workorder.technicianAssignmentAPIApi.releaseTechnician({
+      workorderId,
+      reason: `Shop floor load: position could not be taken [${runId}]`,
+    });
+    log(`  released technician ${technicianId} from unplaced workorder ${workorderId} (${label})`);
+  } catch (error) {
+    log(
+      `  WARNING: technician ${technicianId} is still assigned to unplaced workorder ${workorderId} ` +
+        `(${label}) and could not be released: ${await formatError(error)}. ` +
+        'The next run will count them busy until this is reconciled.',
+    );
   }
 }
 
@@ -239,7 +291,10 @@ async function discoverFloor(admin: DomainClients, manager: DomainClients): Prom
   const locations = await call('listLocations', () => admin.location.locationApi.listLocations());
   log(`${locations.length} location(s) found`);
 
+  // The board is aggregated for one date; the same one decides which PTO counts.
+  const on = new Date();
   const rosters: SiteRoster[] = [];
+
   for (const location of locations) {
     const locationId = location.id;
     const code = location.code ?? locationId ?? '(unknown)';
@@ -255,59 +310,29 @@ async function discoverFloor(admin: DomainClients, manager: DomainClients): Prom
       continue;
     }
 
-    const positions: Array<{ position: ShopPosition; occupied: boolean }> = [
-      ...(board.bays ?? []).map((bay) => ({
-        position: { kind: 'BAY' as const, id: bay.bayId, name: bay.bayName ?? bay.bayId },
-        occupied: bay.assignedWorkorderId != null || !bay.available,
-      })),
-      ...(board.mobileUnits ?? []).map((unit) => ({
-        position: { kind: 'MOBILE_UNIT' as const, id: unit.unitId, name: unit.unitName ?? unit.unitId },
-        occupied: unit.assignedWorkorderId != null || !unit.available,
-      })),
-    ];
-
-    if (positions.length === 0) {
-      log(`${code}: skipped — no bay or mobile unit`);
-      continue;
-    }
-
-    const busyOnBoard = new Set(
-      (board.mechanics ?? [])
-        .filter((mechanic) => mechanic.assignedWorkorderId != null || mechanic.onBreak === true)
-        .map((mechanic) => mechanic.personId),
-    );
-
-    let technicianIds: string[];
+    let staffing: StaffingView[];
     try {
-      const availability = await admin.people.peopleAvailabilityApi.listPeopleAvailability({ locationId });
-      technicianIds = availability
-        .filter((person) => person.assignmentStatus === 'ACTIVE' && person.role === 'TECHNICIAN')
-        .map((person) => person.personId);
+      staffing = await admin.people.peopleAvailabilityApi.listPeopleAvailability({ locationId });
     } catch (error) {
       log(`${code}: skipped — staffing unavailable: ${await formatError(error)}`);
       continue;
     }
 
-    const roster: SiteRoster = {
-      locationId,
-      code,
-      name: location.name ?? code,
-      freePositions: positions.filter((entry) => !entry.occupied).map((entry) => entry.position),
-      occupiedPositions: positions.filter((entry) => entry.occupied).map((entry) => entry.position),
-      idleTechnicianIds: technicianIds.filter((id) => !busyOnBoard.has(id)),
-      busyTechnicianIds: technicianIds.filter((id) => busyOnBoard.has(id)),
-    };
+    const outcome = buildRoster({ locationId, code, name: location.name ?? code }, board, staffing, on);
+    if (outcome.kind === 'skipped') {
+      log(`${code}: skipped — ${outcome.reason}`);
+      continue;
+    }
 
-    if (roster.freePositions.length === 0) {
+    // A site with free positions but no idle technician is kept on purpose: it
+    // plans no jobs, and its positions are exactly the ones the coverage report
+    // has to name. Dropping it here would understate the shortfall.
+    if (outcome.roster.freePositions.length === 0) {
       log(`${code}: skipped — every position is already working`);
       continue;
     }
-    if (roster.idleTechnicianIds.length === 0) {
-      log(`${code}: skipped — no idle technician (${technicianIds.length} technician(s), all on a job)`);
-      continue;
-    }
 
-    rosters.push(roster);
+    rosters.push(outcome.roster);
   }
 
   return rosters;
@@ -316,23 +341,35 @@ async function discoverFloor(admin: DomainClients, manager: DomainClients): Prom
 /**
  * A catalog service to hang the estimate's labor line on. Existing, like
  * everything else this run consumes — it seeds no catalog of its own.
+ *
+ * There is no "list all services" endpoint: `searchCatalogServices` is a
+ * case-insensitive substring match whose contract returns an **empty list for a
+ * blank or missing `q`**, not every service, and `listServicesByName` wants an
+ * exact whole name (and deserializes its array into a single DTO, which is why
+ * CatalogBootstrap avoids it). So the substring is probed: any service name is
+ * near-certain to contain one of these letters, and the first probe normally
+ * answers.
  */
+const SERVICE_NAME_PROBES = ['e', 'a', 'i', 'o', 'r', 's'] as const;
+
 async function resolveService(as: DomainClients): Promise<{ id: string; name: string }> {
-  const matches = await call('searchCatalogServices', () =>
-    as.catalog.productsApi.searchCatalogServices({ limit: 50 }),
-  );
-  const list = Array.isArray(matches) ? matches : [];
-  for (const service of list) {
-    const id = readString(service, 'id', 'serviceId', 'entityId');
-    if (id) {
-      const name = readString(service, 'name') ?? id;
-      log(`labor line will use service ${name} (${id})`);
-      return { id, name };
+  for (const q of SERVICE_NAME_PROBES) {
+    const matches = await call(`searchCatalogServices(q=${q})`, () =>
+      as.catalog.productsApi.searchCatalogServices({ q, limit: 50 }),
+    );
+    for (const service of Array.isArray(matches) ? matches : []) {
+      const id = readString(service, 'id', 'serviceId', 'entityId');
+      if (id) {
+        const name = readString(service, 'name') ?? id;
+        log(`labor line will use service ${name} (${id})`);
+        return { id, name };
+      }
     }
   }
+
   throw new Error(
-    `${TAG} no catalog service found — this run places work on existing services and seeds none. ` +
-      'Load the catalog fixtures first.',
+    `${TAG} no catalog service matched any of "${SERVICE_NAME_PROBES.join('", "')}" — this run places ` +
+      'work on existing services and seeds none. Load the catalog fixtures first.',
   );
 }
 
@@ -379,7 +416,10 @@ function report(unstaffed: number, outcomes: JobOutcome[]): void {
   }
 }
 
-main().catch((error: unknown) => {
-  console.error(`${TAG} FATAL`, error);
-  process.exit(1);
-});
+// Guarded so the module can be imported by a test without executing a run.
+if (require.main === module) {
+  main().catch((error: unknown) => {
+    console.error(`${TAG} FATAL`, error);
+    process.exit(1);
+  });
+}

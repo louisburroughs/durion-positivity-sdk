@@ -97,10 +97,11 @@ describe('planSite', () => {
 
 describe('planFloor', () => {
   /**
-   * The alpha fixture packs, as of scripts/fixtures/seed/alpha: bays.csv,
-   * mobile-units.csv (ACTIVE only — MU-CLT-MAIN-03 is INACTIVE) and
-   * staffing-assignments.csv. The three Charlotte service centers are each two
-   * technicians short; the hub and Riverside cover exactly.
+   * The backend's alpha fixture packs — bays.csv, mobile-units.csv (ACTIVE only,
+   * so MU-CLT-MAIN-03 is excluded) and staffing-assignments.csv, which live in
+   * durion-positivity-backend rather than this repository, so these counts are
+   * pinned here and cannot be re-derived locally. The three Charlotte service
+   * centers are each two technicians short; the hub and Riverside cover exactly.
    */
   const alphaPacks: SiteRoster[] = [
     roster({

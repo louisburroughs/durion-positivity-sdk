@@ -72,6 +72,10 @@ How it decides:
   reported as placed-but-not-started (`ASSIGNED`, not `WORK_IN_PROGRESS`); it
   still occupies the position, and it is not counted as a failure.
 
+Build the workspace packages first — `npm run build --workspaces`, not the root
+`npm run build`, which type-checks with `noEmit` and emits no `dist` for a run
+to import.
+
 Records carry a `floor-*` run id, distinct from the suites' `itest-*`. The
 pairing and shortfall arithmetic lives in `shopFloorPlan.ts`, which is pure and
 unit-tested — the only part of a populate run that can be checked without a
