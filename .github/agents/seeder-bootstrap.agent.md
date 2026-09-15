@@ -47,7 +47,7 @@ This agent is a Wave 2 implementation subagent. A parent orchestrator must only 
 
 # Domain Requirements
 
-- `LocationBootstrap` must create one location with code `MAIN-01` and three bays with the exact names and bay types in the plan.
+- `LocationBootstrap` must create one location with code `ATX-RIV-001` and three bays with the exact names and bay types in the plan.
 - `PeopleBootstrap` must create seven employees with the exact role distribution in the plan and create the required location assignments.
 - `CatalogBootstrap` must create twelve service entries and thirty product entries with plan-defined categories and pricing intent.
 - `InventoryBootstrap` must seed initial stock through ASN and receiving flows rather than direct stock mutation.

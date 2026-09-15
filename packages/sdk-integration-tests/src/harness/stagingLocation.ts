@@ -27,11 +27,11 @@ export const BACKEND_DEFAULT_STAGING_LOCATION_ID = '00000000-0000-0000-0000-0000
  * service is what keeps this suite off a hardcoded id that only happens to
  * match the backend's fallback.
  *
- * The site default is unset on every environment today: `scripts/seed-alpha.py`
- * seeds storage locations but never calls `PUT /v1/locations/{id}/defaults`, so
- * `location_ref.default_staging_location_id` stays null and the backend falls
- * through to its constant. That is a seed-data gap, not a defect here -- when it
- * is closed this resolver starts returning the declared bin with no change.
+ * The backend's alpha packs declare site defaults for every site they load
+ * (`site-defaults.csv`), including the SDK seeder's site ATX-RIV-001, so on a
+ * database loaded from those packs this resolves to the site's declared
+ * "Staging Floor". A site loaded without defaults still falls through to the
+ * backend constant, exactly as `StagingLocationResolver` does.
  */
 export const resolveStagingLocation = async (
   clients: DomainClients,
