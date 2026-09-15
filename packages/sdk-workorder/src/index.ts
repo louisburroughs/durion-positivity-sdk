@@ -21,6 +21,7 @@ import { WorkorderDetailApi } from './apis/WorkorderDetailApi';
 import { OperationalContextApi } from './apis/OperationalContextApi';
 import { WorkorderLaborAPIApi } from './apis/WorkorderLaborAPIApi';
 import { ServicePositionAPIApi } from './apis/ServicePositionAPIApi';
+import { DailyDispatchBoardDashboardApi } from './apis/DailyDispatchBoardDashboardApi';
 
 export function createWorkorderClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -61,6 +62,12 @@ export function createWorkorderClient(config: DurionSdkConfig) {
     // exported by the apis barrel, but this file is protected from regeneration,
     // so the accessor had to be added by hand.
     servicePositionAPIApi: new ServicePositionAPIApi(configuration),
+    // The shop's daily board for one location: every active bay and mobile unit
+    // with the open workorder holding it (or null when free), the mechanics and
+    // what each is on. The one read that answers "what is free here" without
+    // walking bays, mobile units and staffing separately. Generated and exported
+    // by the apis barrel; surfaced here by hand like the two accessors above.
+    dailyDispatchBoardDashboardApi: new DailyDispatchBoardDashboardApi(configuration),
     // Per-service labor entries. Generated and exported by the apis barrel but
     // never surfaced here, so no consumer of this factory could start a labor
     // session.
