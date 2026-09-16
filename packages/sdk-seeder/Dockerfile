@@ -24,8 +24,11 @@ ENV npm_config_update_notifier=false \
 
 WORKDIR /app
 
-# Manifests first so a source-only change reuses the install layer.
+# Manifests first so a source-only change reuses the install layer. The build
+# script rides with them: it is what `npm run build` runs, and .dockerignore
+# admits nothing else from the repository root.
 COPY package.json package-lock.json tsconfig.json ./
+COPY scripts/build-workspaces.mjs ./scripts/
 COPY packages ./packages
 
 # Install, then compile. Nothing builds during `npm ci` (no package carries a
