@@ -39,23 +39,15 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        # --ignore-scripts on purpose. Every generated client carries
-        # `"prepare": "npm run build"`, and its tsc run resolves
-        # @durion-sdk/transport through that package's *built* dist/. The
-        # workspace prepare hooks do not run transport first, so a plain
-        # `npm ci` on a clean checkout dies with
-        #   packages/sdk-catalog src/index.ts: TS2307: Cannot find module
-        #   '@durion-sdk/transport'
-        # which is exactly what fails the "Generate durion-positivity-sdk"
-        # stage of api-artifacts-sync. Nothing below needs the built output:
-        # tsconfig.json `paths` and jest's moduleNameMapper both resolve
-        # @durion-sdk/* to packages/sdk-*/src.
-        run: npm ci --ignore-scripts
+        run: npm ci
 
       - name: Lint
         run: npm run lint
 
-      - name: Typecheck
+      - name: Build
+        # `npm run build` compiles the client packages in dependency order
+        # (transport first) and then typechecks src/** against their build
+        # output — which is what proves a regenerated client compiles at all.
         run: npm run build
 
       - name: Unit tests

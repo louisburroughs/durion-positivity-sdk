@@ -30,17 +30,15 @@ COPY packages ./packages
 
 # Install, then compile in dependency order.
 #
-# Every domain package's prepare step compiles sources that import
-# @durion-sdk/transport, so transport's dist must exist before any of them runs.
-# npm does not order workspace prepare steps that way, and it runs them during
-# `npm ci` even under --ignore-scripts, so the install fails before anything can
-# be built. Dropping prepare for the duration of the install and compiling
-# explicitly afterwards makes the order deterministic. Only the copy of the
-# manifests inside this image is touched.
-RUN node -e "const fs=require('fs');for(const dir of fs.readdirSync('packages')){const file='packages/'+dir+'/package.json';if(!fs.existsSync(file))continue;const pkg=JSON.parse(fs.readFileSync(file,'utf8'));if(pkg.scripts&&pkg.scripts.prepare){delete pkg.scripts.prepare;fs.writeFileSync(file,JSON.stringify(pkg,null,2)+'\n');}}" \
-    && npm ci \
-    && npm run build -w packages/sdk-transport \
-    && npm run build --workspaces --if-present
+# Every domain package's build compiles sources that import
+# @durion-sdk/transport, so transport's dist must exist before any of them
+# runs. The packages used to carry a `prepare` hook, which npm runs during
+# `npm ci` in an order that does not respect that dependency, so the install
+# failed before anything could be built; this image worked around it by
+# stripping `prepare` from its copy of the manifests first. The hook is gone
+# from the manifests themselves now, and `npm run build:packages` is the
+# ordered build, so the workaround is no longer needed here.
+RUN npm ci && npm run build:packages
 
 # node (uid 1000) ships with the base image. Ownership of /app stays with root:
 # the seeder only reads its own sources, and a read-only application directory

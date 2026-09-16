@@ -7,7 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "npm run build:packages && npm run typecheck",
+    "build:packages": "npm run build -w packages/sdk-transport && npm run build --workspaces --if-present",
+    "typecheck": "tsc --project tsconfig.json",
     "test": "jest",
     "test:integration": "jest --config packages/sdk-integration-tests/jest.integration.config.js --runInBand",
     "populate:shop-floor": "npm run populate:shop-floor -w @durion-sdk/integration-tests",
