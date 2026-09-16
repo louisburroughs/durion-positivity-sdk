@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  OpeningSearchResponse,
   ScheduleCapacityResponse,
   ScheduleViewResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    OpeningSearchResponseFromJSON,
+    OpeningSearchResponseToJSON,
     ScheduleCapacityResponseFromJSON,
     ScheduleCapacityResponseToJSON,
     ScheduleViewResponseFromJSON,
@@ -32,6 +35,18 @@ export interface GetScheduleCapacityRequest {
     locationId: string;
     from: Date;
     to: Date;
+    xCorrelationId?: string;
+}
+
+export interface SearchOpeningsRequest {
+    locationId: string;
+    serviceIds: Array<string>;
+    durationMinutes: number;
+    earliestStart: Date;
+    vehicleId?: string;
+    technicianId?: string;
+    horizonDays?: number;
+    limit?: number;
     xCorrelationId?: string;
 }
 
@@ -120,6 +135,106 @@ export class ScheduleAPIApi extends runtime.BaseAPI {
      */
     async getScheduleCapacity(requestParameters: GetScheduleCapacityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ScheduleCapacityResponse> {
         const response = await this.getScheduleCapacityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Finds the windows at one location in which a whole job fits, unbroken, in one eligible bay, with a technician rostered that day and free in the window, honouring the location\'s check-in and cleanup buffers, and ranks them earliest start first with CERTIFIED openings before AWAITING ones at equal starts. Use this tool when a service advisor asks when the next slot for a job of a given length is; use getScheduleCapacity instead for per-day, per-bay occupancy of a calendar range rather than bookable windows. Preconditions: the location must be known to shop management with a recognised timezone and published operating hours, and every serviceId must be a catalog service known to shop management. Required inputs: locationId (UUID), serviceIds (one to ten catalog service UUIDs), durationMinutes (1 to 1440) and earliestStart (ISO-8601 instant); vehicleId and technicianId are optional, horizonDays defaults to 30 (the maximum) and limit defaults to 10 (maximum 50). Emits a SHOPMGR_SCHEDULE_OPENING_SEARCH audit event and changes no state; the search is advisory and the submit-time conflict evaluation on appointment creation remains authoritative, which is why every opening lists constraintsEvaluated. Skill never withholds an opening: a technician lacking a required skill makes the opening AWAITING, and nobody competent rostered in the horizon is reported once as staffingAdvisory alongside the openings rather than as a noOpeningReason, which names only NO_ELIGIBLE_BAY_AT_LOCATION or ALL_ELIGIBLE_BAYS_BOOKED. Returns 400 for a malformed or out-of-range value, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, 404 when the location or a service is unknown, and 422 OPENING_HORIZON_EXCEEDED, OPENING_LIMIT_EXCEEDED, OPENING_TOO_MANY_SERVICES or LOCATION_HOURS_UNKNOWN when a policy bound or a facility fact is not met. 
+     * Search duration-aware eligible openings for a job
+     */
+    async searchOpeningsRaw(requestParameters: SearchOpeningsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OpeningSearchResponse>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling searchOpenings().'
+            );
+        }
+
+        if (requestParameters['serviceIds'] == null) {
+            throw new runtime.RequiredError(
+                'serviceIds',
+                'Required parameter "serviceIds" was null or undefined when calling searchOpenings().'
+            );
+        }
+
+        if (requestParameters['durationMinutes'] == null) {
+            throw new runtime.RequiredError(
+                'durationMinutes',
+                'Required parameter "durationMinutes" was null or undefined when calling searchOpenings().'
+            );
+        }
+
+        if (requestParameters['earliestStart'] == null) {
+            throw new runtime.RequiredError(
+                'earliestStart',
+                'Required parameter "earliestStart" was null or undefined when calling searchOpenings().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['serviceIds'] != null) {
+            queryParameters['serviceIds'] = requestParameters['serviceIds'];
+        }
+
+        if (requestParameters['durationMinutes'] != null) {
+            queryParameters['durationMinutes'] = requestParameters['durationMinutes'];
+        }
+
+        if (requestParameters['earliestStart'] != null) {
+            queryParameters['earliestStart'] = (requestParameters['earliestStart'] as any).toISOString();
+        }
+
+        if (requestParameters['vehicleId'] != null) {
+            queryParameters['vehicleId'] = requestParameters['vehicleId'];
+        }
+
+        if (requestParameters['technicianId'] != null) {
+            queryParameters['technicianId'] = requestParameters['technicianId'];
+        }
+
+        if (requestParameters['horizonDays'] != null) {
+            queryParameters['horizonDays'] = requestParameters['horizonDays'];
+        }
+
+        if (requestParameters['limit'] != null) {
+            queryParameters['limit'] = requestParameters['limit'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xCorrelationId'] != null) {
+            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:schedule:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/schedules/openings`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OpeningSearchResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Finds the windows at one location in which a whole job fits, unbroken, in one eligible bay, with a technician rostered that day and free in the window, honouring the location\'s check-in and cleanup buffers, and ranks them earliest start first with CERTIFIED openings before AWAITING ones at equal starts. Use this tool when a service advisor asks when the next slot for a job of a given length is; use getScheduleCapacity instead for per-day, per-bay occupancy of a calendar range rather than bookable windows. Preconditions: the location must be known to shop management with a recognised timezone and published operating hours, and every serviceId must be a catalog service known to shop management. Required inputs: locationId (UUID), serviceIds (one to ten catalog service UUIDs), durationMinutes (1 to 1440) and earliestStart (ISO-8601 instant); vehicleId and technicianId are optional, horizonDays defaults to 30 (the maximum) and limit defaults to 10 (maximum 50). Emits a SHOPMGR_SCHEDULE_OPENING_SEARCH audit event and changes no state; the search is advisory and the submit-time conflict evaluation on appointment creation remains authoritative, which is why every opening lists constraintsEvaluated. Skill never withholds an opening: a technician lacking a required skill makes the opening AWAITING, and nobody competent rostered in the horizon is reported once as staffingAdvisory alongside the openings rather than as a noOpeningReason, which names only NO_ELIGIBLE_BAY_AT_LOCATION or ALL_ELIGIBLE_BAYS_BOOKED. Returns 400 for a malformed or out-of-range value, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, 404 when the location or a service is unknown, and 422 OPENING_HORIZON_EXCEEDED, OPENING_LIMIT_EXCEEDED, OPENING_TOO_MANY_SERVICES or LOCATION_HOURS_UNKNOWN when a policy bound or a facility fact is not met. 
+     * Search duration-aware eligible openings for a job
+     */
+    async searchOpenings(requestParameters: SearchOpeningsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OpeningSearchResponse> {
+        const response = await this.searchOpeningsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

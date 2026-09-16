@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { RequiredSkillDto } from './RequiredSkillDto';
+import {
+    RequiredSkillDtoFromJSON,
+    RequiredSkillDtoFromJSONTyped,
+    RequiredSkillDtoToJSON,
+} from './RequiredSkillDto';
+
 /**
  * Catalog service item
  * @export
@@ -56,6 +63,18 @@ export interface ServiceDto {
      */
     operationCode?: string;
     /**
+     * Skills the service requires per GVWR class range; empty with a non-null requirementsConfiguredAt declares the service unconstrained, null means not configured
+     * @type {Array<RequiredSkillDto>}
+     * @memberof ServiceDto
+     */
+    requiredSkills?: Array<RequiredSkillDto>;
+    /**
+     * When the skill requirements were last declared (CAP-329); null means never configured, which consumers warn about rather than deny on
+     * @type {Date}
+     * @memberof ServiceDto
+     */
+    requirementsConfiguredAt?: Date;
+    /**
      * Short service description
      * @type {string}
      * @memberof ServiceDto
@@ -98,6 +117,8 @@ export function ServiceDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'name': json['name'] == null ? undefined : json['name'],
         'operationCategory': json['operationCategory'] == null ? undefined : json['operationCategory'],
         'operationCode': json['operationCode'] == null ? undefined : json['operationCode'],
+        'requiredSkills': json['requiredSkills'] == null ? undefined : ((json['requiredSkills'] as Array<any>).map(RequiredSkillDtoFromJSON)),
+        'requirementsConfiguredAt': json['requirementsConfiguredAt'] == null ? undefined : (new Date(json['requirementsConfiguredAt'])),
         'shortDescription': json['shortDescription'] == null ? undefined : json['shortDescription'],
     };
 }
@@ -114,6 +135,8 @@ export function ServiceDtoToJSON(value?: ServiceDto | null): any {
         'name': value['name'],
         'operationCategory': value['operationCategory'],
         'operationCode': value['operationCode'],
+        'requiredSkills': value['requiredSkills'] == null ? undefined : ((value['requiredSkills'] as Array<any>).map(RequiredSkillDtoToJSON)),
+        'requirementsConfiguredAt': value['requirementsConfiguredAt'] == null ? undefined : ((value['requirementsConfiguredAt']).toISOString()),
         'shortDescription': value['shortDescription'],
     };
 }
