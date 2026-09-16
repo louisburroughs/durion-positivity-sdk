@@ -16,14 +16,24 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  ScheduleCapacityResponse,
   ScheduleViewResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    ScheduleCapacityResponseFromJSON,
+    ScheduleCapacityResponseToJSON,
     ScheduleViewResponseFromJSON,
     ScheduleViewResponseToJSON,
 } from '../models/index';
+
+export interface GetScheduleCapacityRequest {
+    locationId: string;
+    from: Date;
+    to: Date;
+    xCorrelationId?: string;
+}
 
 export interface ViewScheduleRequest {
     locationId: string;
@@ -39,6 +49,79 @@ export interface ViewScheduleRequest {
  * 
  */
 export class ScheduleAPIApi extends runtime.BaseAPI {
+
+    /**
+     * Returns, for every date in [from, to], the location\'s day status (OK, CLOSED, HOLIDAY or UNAVAILABLE) and, on an OK date, every active bay with its occupied-minutes total and an hourly occupancy count array — never appointment identifiers, customer snapshots, titles or conflict details. Use this tool to render a week or month capacity calendar in one call; use viewSchedule instead when a single day\'s full appointment board, including conflicts, is needed. Preconditions: the day window and hours come from the location\'s replicated timezone and weekly operating hours (fed by pos-location facts), not from this module\'s Shop.timezone column; a location this module has not yet replicated, or whose timezone is unknown or blank, reports every requested date UNAVAILABLE rather than assuming UTC. Required inputs: locationId (UUID), and from and to (YYYY-MM-DD, inclusive, to on or after from) spanning at most 42 days — a longer span, including a full year, is rejected. Emits exactly one SHOPMGR_SCHEDULE_CAPACITY_VIEW audit event per call, never one per day; no state changes occur. A bay with zero appointments on a date is still listed with occupiedMinutes 0 — free capacity is the reason this endpoint exists — and a date is never omitted from the response, even when it cannot be assembled. A caller whose shop:schedule:view grant is location-scoped must have locationId within reach (ADR-0061). Returns 400 when locationId, from or to is malformed or to is before from, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 422 CAPACITY_RANGE_EXCEEDED when the span exceeds 42 days. 
+     * Get per-day, per-bay occupancy for a location across a date range
+     */
+    async getScheduleCapacityRaw(requestParameters: GetScheduleCapacityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ScheduleCapacityResponse>> {
+        if (requestParameters['locationId'] == null) {
+            throw new runtime.RequiredError(
+                'locationId',
+                'Required parameter "locationId" was null or undefined when calling getScheduleCapacity().'
+            );
+        }
+
+        if (requestParameters['from'] == null) {
+            throw new runtime.RequiredError(
+                'from',
+                'Required parameter "from" was null or undefined when calling getScheduleCapacity().'
+            );
+        }
+
+        if (requestParameters['to'] == null) {
+            throw new runtime.RequiredError(
+                'to',
+                'Required parameter "to" was null or undefined when calling getScheduleCapacity().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['locationId'] != null) {
+            queryParameters['locationId'] = requestParameters['locationId'];
+        }
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString().substring(0,10);
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (requestParameters['xCorrelationId'] != null) {
+            headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["shop:schedule:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/schedules/capacity`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ScheduleCapacityResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns, for every date in [from, to], the location\'s day status (OK, CLOSED, HOLIDAY or UNAVAILABLE) and, on an OK date, every active bay with its occupied-minutes total and an hourly occupancy count array — never appointment identifiers, customer snapshots, titles or conflict details. Use this tool to render a week or month capacity calendar in one call; use viewSchedule instead when a single day\'s full appointment board, including conflicts, is needed. Preconditions: the day window and hours come from the location\'s replicated timezone and weekly operating hours (fed by pos-location facts), not from this module\'s Shop.timezone column; a location this module has not yet replicated, or whose timezone is unknown or blank, reports every requested date UNAVAILABLE rather than assuming UTC. Required inputs: locationId (UUID), and from and to (YYYY-MM-DD, inclusive, to on or after from) spanning at most 42 days — a longer span, including a full year, is rejected. Emits exactly one SHOPMGR_SCHEDULE_CAPACITY_VIEW audit event per call, never one per day; no state changes occur. A bay with zero appointments on a date is still listed with occupiedMinutes 0 — free capacity is the reason this endpoint exists — and a date is never omitted from the response, even when it cannot be assembled. A caller whose shop:schedule:view grant is location-scoped must have locationId within reach (ADR-0061). Returns 400 when locationId, from or to is malformed or to is before from, 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 422 CAPACITY_RANGE_EXCEEDED when the span exceeds 42 days. 
+     * Get per-day, per-bay occupancy for a location across a date range
+     */
+    async getScheduleCapacity(requestParameters: GetScheduleCapacityRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ScheduleCapacityResponse> {
+        const response = await this.getScheduleCapacityRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Builds the read-only schedule board for one location and date, grouping appointments into resource lanes (bay, mobile unit, technician or UNASSIGNED) and marking overlaps of one minute or more within the same lane as BLOCKING conflicts. Use this tool when rendering or inspecting a day\'s shop schedule; use getAppointmentById instead when a single appointment id is already known. Preconditions: the location must exist as a shop; the day window is computed in the shop\'s configured timezone, falling back to UTC when none is configured. Required inputs: locationId (UUID) and date (YYYY-MM-DD); resourceType and resourceId are optional filters, includeAvailabilityOverlay defaults to false, and range defaults to LOCATION_HOURS (06:00-18:00 local) with FULL_DAY covering midnight to midnight. Emits a SHOPMGR_SCHEDULE_VIEW audit event; no state changes occur, and when the overlay is requested availabilityOverlayStatus reports AVAILABLE or UNAVAILABLE with an HR_SYSTEM_UNAVAILABLE warning when the staffing replica has no data for the location. A caller whose shop:schedule:view grant is location-scoped must have locationId within reach (ADR-0061). Returns 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 404 when the location is unknown or the resourceId filter matches no lane on that date. 

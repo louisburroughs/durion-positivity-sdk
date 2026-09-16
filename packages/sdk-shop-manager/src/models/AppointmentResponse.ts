@@ -20,6 +20,18 @@ import { mapValues } from '../runtime';
  */
 export interface AppointmentResponse {
     /**
+     * When work actually finished, resolved the same way as actualStartAt (#2021). Null while the linked workorder is still open, or when there is no link. endAt above stays the planned window regardless.
+     * @type {Date}
+     * @memberof AppointmentResponse
+     */
+    actualEndAt?: Date;
+    /**
+     * When work actually began, resolved from the linked workorder's actual-time block through WorkOrderAppointmentMapping (issue #2021). Null when the appointment has no linked workorder, the link has not replicated yet, or work has not started. startAt above stays the planned window regardless.
+     * @type {Date}
+     * @memberof AppointmentResponse
+     */
+    actualStartAt?: Date;
+    /**
      * Unique appointment identifier
      * @type {string}
      * @memberof AppointmentResponse
@@ -67,6 +79,12 @@ export interface AppointmentResponse {
      * @memberof AppointmentResponse
      */
     endAt: Date;
+    /**
+     * The workorder owner's projection of when a still-running job will finish (#2021). Null in every response today by design: a projected finish needs estimated remaining labour (ADR-0058/ADR-0059, both PROPOSED, not accepted) and this field is never synthesised from the current time. A caller states "N minutes over planned" from actualStartAt, endAt and status instead of waiting on this field.
+     * @type {Date}
+     * @memberof AppointmentResponse
+     */
+    expectedEndAt?: Date;
     /**
      * Facility/location identifier of the appointment
      * @type {string}
@@ -130,6 +148,8 @@ export function AppointmentResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'actualEndAt': json['actualEndAt'] == null ? undefined : (new Date(json['actualEndAt'])),
+        'actualStartAt': json['actualStartAt'] == null ? undefined : (new Date(json['actualStartAt'])),
         'appointmentId': json['appointmentId'],
         'cancellationNotes': json['cancellationNotes'] == null ? undefined : json['cancellationNotes'],
         'cancellationReason': json['cancellationReason'] == null ? undefined : json['cancellationReason'],
@@ -138,6 +158,7 @@ export function AppointmentResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'crmVehicleId': json['crmVehicleId'],
         'customerSnapshot': json['customerSnapshot'] == null ? undefined : json['customerSnapshot'],
         'endAt': (new Date(json['endAt'])),
+        'expectedEndAt': json['expectedEndAt'] == null ? undefined : (new Date(json['expectedEndAt'])),
         'locationId': json['locationId'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
         'serviceRequestIds': json['serviceRequestIds'] == null ? undefined : json['serviceRequestIds'],
@@ -153,6 +174,8 @@ export function AppointmentResponseToJSON(value?: AppointmentResponse | null): a
     }
     return {
         
+        'actualEndAt': value['actualEndAt'] == null ? undefined : ((value['actualEndAt']).toISOString()),
+        'actualStartAt': value['actualStartAt'] == null ? undefined : ((value['actualStartAt']).toISOString()),
         'appointmentId': value['appointmentId'],
         'cancellationNotes': value['cancellationNotes'],
         'cancellationReason': value['cancellationReason'],
@@ -161,6 +184,7 @@ export function AppointmentResponseToJSON(value?: AppointmentResponse | null): a
         'crmVehicleId': value['crmVehicleId'],
         'customerSnapshot': value['customerSnapshot'],
         'endAt': ((value['endAt']).toISOString()),
+        'expectedEndAt': value['expectedEndAt'] == null ? undefined : ((value['expectedEndAt']).toISOString()),
         'locationId': value['locationId'],
         'resourceId': value['resourceId'],
         'serviceRequestIds': value['serviceRequestIds'],
