@@ -18,10 +18,9 @@
  *   npm run populate:shop-floor
  *
  * Needs the same ITEST_* environment as the suites (see
- * BACKEND_INTERACTION_TEST_SPEC.md) and the workspace packages built with
- * `npm run build --workspaces`, since it resolves `@durion-sdk/*` through
- * node_modules like the seeder does. The root `npm run build` is not enough:
- * it type-checks with `noEmit` and writes no package `dist` at all.
+ * BACKEND_INTERACTION_TEST_SPEC.md) and the workspace packages built with the
+ * root `npm run build`, which compiles them in dependency order, since it
+ * resolves `@durion-sdk/*` through node_modules like the seeder does.
  */
 import { SeederRandom, type ReferenceCache } from '@durion-sdk/seeder';
 import { AssignServicePositionRequestResourceTypeEnum as ResourceType } from '@durion-sdk/workorder';

@@ -433,11 +433,13 @@ npm run build
 ```
 
 The root build compiles the workspace in dependency order
-(`scripts/build-workspaces.mjs`): `@durion-sdk/transport` first, then every
-package that imports it, then the seeder and integration-tests packages that
-import those. Nothing is compiled during `npm ci` or `npm install` — no package
+(`scripts/build-workspaces.mjs`): every package is compiled after each package
+it depends on, so `@durion-sdk/transport` precedes everything that imports it,
+and the seeder and integration-tests packages come after the domain packages
+they import. (Packages with no workspace dependencies may sort ahead of
+transport; only the dependency edges are guaranteed.) Nothing is compiled during `npm ci` or `npm install` — no package
 carries a `prepare` hook — because npm runs workspace lifecycle scripts in no
-particular order, and a dependant's `tsc` starting before transport's `dist`
+particular order, and a dependent's `tsc` starting before transport's `dist`
 exists fails with `TS2307: Cannot find module '@durion-sdk/transport'`.
 `npm run build -- --dry-run` prints the order without building.
 

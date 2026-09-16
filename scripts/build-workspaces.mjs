@@ -6,7 +6,7 @@
 // package that imports it — and the seeder and integration-tests packages
 // depend on most of the domain packages in turn. npm runs workspace lifecycle
 // scripts in no dependency order, which is why a `prepare` hook that built on
-// install failed on whichever dependant's tsc happened to start first (API
+// install failed on whichever dependent's tsc happened to start first (API
 // Artifacts Sync run 35088746691 died on @durion-sdk/catalog that way). No
 // package builds on install any more; this script is the one build, and it
 // orders the packages itself from their manifests.

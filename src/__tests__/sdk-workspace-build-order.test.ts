@@ -5,7 +5,7 @@
  * resolve through its dist/index.d.ts, so transport must be compiled before any
  * package that imports it. npm runs workspace lifecycle scripts in no dependency
  * order, so a `prepare` hook that built on install failed on whichever
- * dependant's tsc started first — API Artifacts Sync run 35088746691 died on
+ * dependent's tsc started first — API Artifacts Sync run 35088746691 died on
  * @durion-sdk/catalog with TS2307 that way, and the seeder Dockerfile had been
  * carrying a private workaround for the same thing. The rules these tests pin:
  * no package builds on install, and the one build orders itself.
@@ -25,6 +25,7 @@ interface Manifest {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
 }
 
 function manifests(): Manifest[] {
@@ -40,6 +41,7 @@ function workspaceDeps(manifest: Manifest, names: Set<string>): string[] {
     ...manifest.dependencies,
     ...manifest.devDependencies,
     ...manifest.peerDependencies,
+    ...manifest.optionalDependencies,
   }).filter((name) => names.has(name));
 }
 
