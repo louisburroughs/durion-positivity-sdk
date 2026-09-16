@@ -75,7 +75,7 @@ export interface WorkorderDetailResponse {
      */
     customerId: string;
     /**
-     * Customer name
+     * Display name of the customer; null when the customer is not replicated or has no name
      * @type {string}
      * @memberof WorkorderDetailResponse
      */
@@ -165,7 +165,7 @@ export interface WorkorderDetailResponse {
      */
     taxTotal?: number;
     /**
-     * Vehicle description
+     * Human-readable vehicle description (unit number, plate, VIN); null when the vehicle is not replicated or none of those fields is known
      * @type {string}
      * @memberof WorkorderDetailResponse
      */
