@@ -13,12 +13,25 @@
  */
 
 import { mapValues } from '../runtime';
+import type { TechnicianCredentialResponse } from './TechnicianCredentialResponse';
+import {
+    TechnicianCredentialResponseFromJSON,
+    TechnicianCredentialResponseFromJSONTyped,
+    TechnicianCredentialResponseToJSON,
+} from './TechnicianCredentialResponse';
+
 /**
  * HR-synchronized mechanic roster entry
  * @export
  * @interface MechanicRosterEntryResponse
  */
 export interface MechanicRosterEntryResponse {
+    /**
+     * 
+     * @type {Array<TechnicianCredentialResponse>}
+     * @memberof MechanicRosterEntryResponse
+     */
+    credentials?: Array<TechnicianCredentialResponse>;
     /**
      * 
      * @type {string}
@@ -55,12 +68,6 @@ export interface MechanicRosterEntryResponse {
      * @memberof MechanicRosterEntryResponse
      */
     personId?: string;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof MechanicRosterEntryResponse
-     */
-    skills?: Array<string>;
     /**
      * 
      * @type {string}
@@ -103,13 +110,13 @@ export function MechanicRosterEntryResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
+        'credentials': json['credentials'] == null ? undefined : ((json['credentials'] as Array<any>).map(TechnicianCredentialResponseFromJSON)),
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
         'hireDate': json['hireDate'] == null ? undefined : (new Date(json['hireDate'])),
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
         'lastSyncedAt': json['lastSyncedAt'] == null ? undefined : (new Date(json['lastSyncedAt'])),
         'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
         'personId': json['personId'] == null ? undefined : json['personId'],
-        'skills': json['skills'] == null ? undefined : json['skills'],
         'status': json['status'] == null ? undefined : json['status'],
         'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
     };
@@ -121,13 +128,13 @@ export function MechanicRosterEntryResponseToJSON(value?: MechanicRosterEntryRes
     }
     return {
         
+        'credentials': value['credentials'] == null ? undefined : ((value['credentials'] as Array<any>).map(TechnicianCredentialResponseToJSON)),
         'firstName': value['firstName'],
         'hireDate': value['hireDate'] == null ? undefined : ((value['hireDate']).toISOString().substring(0,10)),
         'lastName': value['lastName'],
         'lastSyncedAt': value['lastSyncedAt'] == null ? undefined : ((value['lastSyncedAt']).toISOString()),
         'mechanicId': value['mechanicId'],
         'personId': value['personId'],
-        'skills': value['skills'],
         'status': value['status'],
         'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
     };

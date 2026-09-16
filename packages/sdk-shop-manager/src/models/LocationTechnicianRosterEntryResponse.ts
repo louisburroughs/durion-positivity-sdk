@@ -13,12 +13,25 @@
  */
 
 import { mapValues } from '../runtime';
+import type { TechnicianCredentialResponse } from './TechnicianCredentialResponse';
+import {
+    TechnicianCredentialResponseFromJSON,
+    TechnicianCredentialResponseFromJSONTyped,
+    TechnicianCredentialResponseToJSON,
+} from './TechnicianCredentialResponse';
+
 /**
- * Location-scoped technician assignment enriched from the HR-synchronized mechanic roster
+ * A technician with an ACTIVE staffing assignment at the location, from the HR-synchronized mechanic roster
  * @export
  * @interface LocationTechnicianRosterEntryResponse
  */
 export interface LocationTechnicianRosterEntryResponse {
+    /**
+     * 
+     * @type {Array<TechnicianCredentialResponse>}
+     * @memberof LocationTechnicianRosterEntryResponse
+     */
+    credentials?: Array<TechnicianCredentialResponse>;
     /**
      * 
      * @type {string}
@@ -63,22 +76,10 @@ export interface LocationTechnicianRosterEntryResponse {
     personId?: string;
     /**
      * 
-     * @type {Array<string>}
-     * @memberof LocationTechnicianRosterEntryResponse
-     */
-    skills?: Array<string>;
-    /**
-     * 
      * @type {string}
      * @memberof LocationTechnicianRosterEntryResponse
      */
     status?: LocationTechnicianRosterEntryResponseStatusEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof LocationTechnicianRosterEntryResponse
-     */
-    technicianId?: string;
     /**
      * 
      * @type {Date}
@@ -115,6 +116,7 @@ export function LocationTechnicianRosterEntryResponseFromJSONTyped(json: any, ig
     }
     return {
         
+        'credentials': json['credentials'] == null ? undefined : ((json['credentials'] as Array<any>).map(TechnicianCredentialResponseFromJSON)),
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
         'hireDate': json['hireDate'] == null ? undefined : (new Date(json['hireDate'])),
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
@@ -122,9 +124,7 @@ export function LocationTechnicianRosterEntryResponseFromJSONTyped(json: any, ig
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
         'personId': json['personId'] == null ? undefined : json['personId'],
-        'skills': json['skills'] == null ? undefined : json['skills'],
         'status': json['status'] == null ? undefined : json['status'],
-        'technicianId': json['technicianId'] == null ? undefined : json['technicianId'],
         'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
     };
 }
@@ -135,6 +135,7 @@ export function LocationTechnicianRosterEntryResponseToJSON(value?: LocationTech
     }
     return {
         
+        'credentials': value['credentials'] == null ? undefined : ((value['credentials'] as Array<any>).map(TechnicianCredentialResponseToJSON)),
         'firstName': value['firstName'],
         'hireDate': value['hireDate'] == null ? undefined : ((value['hireDate']).toISOString().substring(0,10)),
         'lastName': value['lastName'],
@@ -142,9 +143,7 @@ export function LocationTechnicianRosterEntryResponseToJSON(value?: LocationTech
         'locationId': value['locationId'],
         'mechanicId': value['mechanicId'],
         'personId': value['personId'],
-        'skills': value['skills'],
         'status': value['status'],
-        'technicianId': value['technicianId'],
         'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
     };
 }

@@ -39,11 +39,17 @@ export interface BayPatchRequest {
      */
     capacity?: BayCapacityRequest;
     /**
-     * Maximum number of vehicles that can be serviced concurrently in the bay
+     * Number of vehicles the bay physically accommodates at once. A bay is a single bookable resource regardless of this value; register separate bays for independently bookable stalls.
      * @type {number}
      * @memberof BayPatchRequest
      */
     maxConcurrentVehicles?: number;
+    /**
+     * Heaviest GVWR class (1–8) the bay accepts (CAP-325 D13). Null leaves unchanged.
+     * @type {number}
+     * @memberof BayPatchRequest
+     */
+    maxDutyClass?: number;
     /**
      * Display name of the bay
      * @type {string}
@@ -51,17 +57,11 @@ export interface BayPatchRequest {
      */
     name?: string;
     /**
-     * Identifiers of service capabilities supported by the bay
+     * Catalog operation codes this bay type is the only one able to perform (CAP-325 D14). Null leaves unchanged; an empty list clears to general. Each value must be an active catalog operationCode; unknown codes are rejected 422.
      * @type {Array<string>}
      * @memberof BayPatchRequest
      */
-    serviceCapabilityIds?: Array<string>;
-    /**
-     * Identifiers of skills required to operate the bay
-     * @type {Array<string>}
-     * @memberof BayPatchRequest
-     */
-    skillRequirementIds?: Array<string>;
+    serviceCapabilityCodes?: Array<string>;
     /**
      * Operational status of the bay
      * @type {string}
@@ -90,9 +90,9 @@ export function BayPatchRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
         'bayType': json['bayType'] == null ? undefined : json['bayType'],
         'capacity': json['capacity'] == null ? undefined : BayCapacityRequestFromJSON(json['capacity']),
         'maxConcurrentVehicles': json['maxConcurrentVehicles'] == null ? undefined : json['maxConcurrentVehicles'],
+        'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'] == null ? undefined : json['name'],
-        'serviceCapabilityIds': json['serviceCapabilityIds'] == null ? undefined : json['serviceCapabilityIds'],
-        'skillRequirementIds': json['skillRequirementIds'] == null ? undefined : json['skillRequirementIds'],
+        'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
     };
 }
@@ -106,9 +106,9 @@ export function BayPatchRequestToJSON(value?: BayPatchRequest | null): any {
         'bayType': value['bayType'],
         'capacity': BayCapacityRequestToJSON(value['capacity']),
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
+        'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
-        'serviceCapabilityIds': value['serviceCapabilityIds'],
-        'skillRequirementIds': value['skillRequirementIds'],
+        'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
     };
 }

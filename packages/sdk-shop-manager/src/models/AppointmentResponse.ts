@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AppointmentConflictView } from './AppointmentConflictView';
+import {
+    AppointmentConflictViewFromJSON,
+    AppointmentConflictViewFromJSONTyped,
+    AppointmentConflictViewToJSON,
+} from './AppointmentConflictView';
+
 /**
  * Response describing a created or retrieved appointment
  * @export
@@ -49,6 +56,12 @@ export interface AppointmentResponse {
      * @memberof AppointmentResponse
      */
     cancellationReason?: string;
+    /**
+     * SOFT scheduling conflicts recorded against this appointment (DECISION-SHOPMGMT-002), each overridable via POST /v1/appointments/{id}/conflict-override until overridden. Empty when the booking raised none. A HARD conflict never reaches here: it refuses the booking with 409.
+     * @type {Array<AppointmentConflictView>}
+     * @memberof AppointmentResponse
+     */
+    conflicts?: Array<AppointmentConflictView>;
     /**
      * Timestamp the appointment was created in UTC (ISO-8601)
      * @type {Date}
@@ -153,6 +166,7 @@ export function AppointmentResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'appointmentId': json['appointmentId'],
         'cancellationNotes': json['cancellationNotes'] == null ? undefined : json['cancellationNotes'],
         'cancellationReason': json['cancellationReason'] == null ? undefined : json['cancellationReason'],
+        'conflicts': json['conflicts'] == null ? undefined : ((json['conflicts'] as Array<any>).map(AppointmentConflictViewFromJSON)),
         'createdAt': (new Date(json['createdAt'])),
         'crmCustomerId': json['crmCustomerId'],
         'crmVehicleId': json['crmVehicleId'],
@@ -179,6 +193,7 @@ export function AppointmentResponseToJSON(value?: AppointmentResponse | null): a
         'appointmentId': value['appointmentId'],
         'cancellationNotes': value['cancellationNotes'],
         'cancellationReason': value['cancellationReason'],
+        'conflicts': value['conflicts'] == null ? undefined : ((value['conflicts'] as Array<any>).map(AppointmentConflictViewToJSON)),
         'createdAt': ((value['createdAt']).toISOString()),
         'crmCustomerId': value['crmCustomerId'],
         'crmVehicleId': value['crmVehicleId'],

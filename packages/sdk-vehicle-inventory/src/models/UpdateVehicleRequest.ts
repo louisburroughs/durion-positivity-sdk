@@ -32,6 +32,12 @@ export interface UpdateVehicleRequest {
      */
     description?: string;
     /**
+     * FHWA GVWR class 1-8 (CAP-327). Null leaves the current class unchanged; a value replaces it and records the source as OPERATOR_SET, which a later decode never overrides.
+     * @type {number}
+     * @memberof UpdateVehicleRequest
+     */
+    gvwrClass?: number;
+    /**
      * License plate value.
      * @type {string}
      * @memberof UpdateVehicleRequest
@@ -94,6 +100,7 @@ export function UpdateVehicleRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'accountId': json['accountId'] == null ? undefined : json['accountId'],
         'description': json['description'] == null ? undefined : json['description'],
+        'gvwrClass': json['gvwrClass'] == null ? undefined : json['gvwrClass'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
         'make': json['make'] == null ? undefined : json['make'],
@@ -112,6 +119,7 @@ export function UpdateVehicleRequestToJSON(value?: UpdateVehicleRequest | null):
         
         'accountId': value['accountId'],
         'description': value['description'],
+        'gvwrClass': value['gvwrClass'],
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],
         'make': value['make'],

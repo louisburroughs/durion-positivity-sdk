@@ -93,7 +93,9 @@ export interface AssignmentResponse {
 * @enum {string}
 */
 export enum AssignmentResponseStatusEnum {
-    Confirmed = 'CONFIRMED',
+    Unassigned = 'UNASSIGNED',
+    Assigned = 'ASSIGNED',
+    AwaitingSkillFulfillment = 'AWAITING_SKILL_FULFILLMENT',
     InProgress = 'IN_PROGRESS',
     Completed = 'COMPLETED',
     Cancelled = 'CANCELLED'
