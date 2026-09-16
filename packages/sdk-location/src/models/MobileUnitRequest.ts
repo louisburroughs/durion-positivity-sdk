@@ -33,12 +33,6 @@ export interface MobileUnitRequest {
      */
     baseLocationId?: string;
     /**
-     * Identifiers of capabilities the mobile unit can perform
-     * @type {Array<string>}
-     * @memberof MobileUnitRequest
-     */
-    capabilityIds?: Array<string>;
-    /**
      * Coverage rules defining where the mobile unit can operate
      * @type {Array<CoverageRuleRequest>}
      * @memberof MobileUnitRequest
@@ -56,6 +50,12 @@ export interface MobileUnitRequest {
      * @memberof MobileUnitRequest
      */
     notes?: string;
+    /**
+     * Catalog operation codes this unit can perform off-site (CAP-325 D14): each must be an active catalog operationCode (UPPER-DASH, ADR-0059 §3), matched case-insensitively; unknown or retired codes are rejected 422. Required, non-empty, for an ACTIVE unit.
+     * @type {Array<string>}
+     * @memberof MobileUnitRequest
+     */
+    serviceCapabilityCodes?: Array<string>;
     /**
      * Operational status of the mobile unit
      * @type {string}
@@ -89,10 +89,10 @@ export function MobileUnitRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     return {
         
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
-        'capabilityIds': json['capabilityIds'] == null ? undefined : json['capabilityIds'],
         'coverageRules': json['coverageRules'] == null ? undefined : ((json['coverageRules'] as Array<any>).map(CoverageRuleRequestFromJSON)),
         'name': json['name'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
         'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
     };
@@ -105,10 +105,10 @@ export function MobileUnitRequestToJSON(value?: MobileUnitRequest | null): any {
     return {
         
         'baseLocationId': value['baseLocationId'],
-        'capabilityIds': value['capabilityIds'],
         'coverageRules': value['coverageRules'] == null ? undefined : ((value['coverageRules'] as Array<any>).map(CoverageRuleRequestToJSON)),
         'name': value['name'],
         'notes': value['notes'],
+        'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
         'travelBufferPolicyId': value['travelBufferPolicyId'],
     };
