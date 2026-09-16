@@ -432,6 +432,17 @@ The `"exports"` map in each `package.json` wires up the correct entry per resolv
 npm run build
 ```
 
+The root build compiles the workspace in dependency order
+(`scripts/build-workspaces.mjs`): every package is compiled after each package
+it depends on, so `@durion-sdk/transport` precedes everything that imports it,
+and the seeder and integration-tests packages come after the domain packages
+they import. (Packages with no workspace dependencies may sort ahead of
+transport; only the dependency edges are guaranteed.) Nothing is compiled during `npm ci` or `npm install` — no package
+carries a `prepare` hook — because npm runs workspace lifecycle scripts in no
+particular order, and a dependent's `tsc` starting before transport's `dist`
+exists fails with `TS2307: Cannot find module '@durion-sdk/transport'`.
+`npm run build -- --dry-run` prints the order without building.
+
 **Build a single package:**
 
 ```bash
@@ -493,13 +504,14 @@ are not `*.itest.ts` files, so the integration run never collects them and they
 share no fixture or run id with the suites.
 
 ```bash
-npm run build --workspaces   # runs resolve @durion-sdk/* through node_modules
+npm run build                # compiles every package, in dependency order
 npm run populate:shop-floor  # an active workorder on every free bay and mobile unit
 ```
 
-The workspace build is the one that matters here: the root `npm run build`
-type-checks with `noEmit` and writes no package `dist`, so on its own it would
-leave a run importing whatever was built last.
+The build matters here: runs resolve `@durion-sdk/*` through `node_modules`,
+i.e. each package's `dist`, so a stale or missing build leaves a run importing
+whatever was compiled last. (`npm run typecheck` is the root `noEmit` pass over
+the repository's own tests; it writes nothing.)
 
 `populate:shop-floor` discovers existing sites, bays, mobile units and
 technicians — it creates none of them — and puts one active workorder on each
@@ -515,7 +527,8 @@ from the suites' `itest-*`.
 
 | Script     | Command            | Description                                       |
 | ---------- | ------------------ | ------------------------------------------------- |
-| `build`    | `npm run build`    | Compile all packages (CJS + ESM + types)          |
+| `build`    | `npm run build`    | Compile all packages in dependency order (CJS + ESM + types) |
+| `typecheck` | `npm run typecheck` | Type-check the repository's own tests (`noEmit`) |
 | `test`     | `npm test`         | Run Jest suite (392 tests)                        |
 | `lint`     | `npm run lint`     | ESLint + TypeScript linting                       |
 | `generate` | `npm run generate` | Regenerate all clients from backend OpenAPI specs |

@@ -24,21 +24,18 @@ ENV npm_config_update_notifier=false \
 
 WORKDIR /app
 
-# Manifests first so a source-only change reuses the install layer.
+# Manifests first so a source-only change reuses the install layer. The build
+# script rides with them: it is what `npm run build` runs, and .dockerignore
+# admits nothing else from the repository root.
 COPY package.json package-lock.json tsconfig.json ./
+COPY scripts/build-workspaces.mjs ./scripts/
 COPY packages ./packages
 
-# Install, then compile in dependency order.
-#
-# Every domain package's build compiles sources that import
-# @durion-sdk/transport, so transport's dist must exist before any of them
-# runs. The packages used to carry a `prepare` hook, which npm runs during
-# `npm ci` in an order that does not respect that dependency, so the install
-# failed before anything could be built; this image worked around it by
-# stripping `prepare` from its copy of the manifests first. The hook is gone
-# from the manifests themselves now, and `npm run build:packages` is the
-# ordered build, so the workaround is no longer needed here.
-RUN npm ci && npm run build:packages
+# Install, then compile. Nothing builds during `npm ci` (no package carries a
+# prepare hook), and the root build compiles the workspace in dependency order
+# (scripts/build-workspaces.mjs), so transport's dist exists before anything
+# that imports it is compiled.
+RUN npm ci && npm run build
 
 # node (uid 1000) ships with the base image. Ownership of /app stays with root:
 # the seeder only reads its own sources, and a read-only application directory

@@ -37,25 +37,8 @@ patch_package_tsconfig() {
 	local pkg_json="packages/sdk-${pkg}/package.json"
 	# The generator pins typescript ^4.0, which predates the moduleResolution
 	# "bundler" setting used by the esm build; align with the workspace pin.
-	#
-	# It also emits "prepare": "npm run build", which must not survive here.
-	# Every client's build resolves @durion-sdk/transport through that
-	# package's built dist/, and npm does not run the workspace prepare hooks
-	# in dependency order, so transport can be compiled after a package that
-	# needs it and `npm ci` dies on a clean checkout with
-	# "TS2307: Cannot find module '@durion-sdk/transport'". Packages are built
-	# explicitly and in order by `npm run build:packages` instead.
 	if [[ -f "$pkg_json" ]]; then
 		sed -i 's/"typescript": "\^4[^"]*"/"typescript": "~5.9.3"/' "$pkg_json"
-		node -e '
-			const fs = require("fs");
-			const file = process.argv[1];
-			const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
-			if (pkg.scripts && pkg.scripts.prepare) {
-				delete pkg.scripts.prepare;
-				fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
-			}
-		' "$pkg_json"
 	fi
 	# The generator emits legacy settings (target es6, module commonjs,
 	# moduleResolution node) and its esm variant inherits moduleResolution,

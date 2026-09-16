@@ -1,12 +1,15 @@
 # .github/workflows/pr-checks.yml
 #
-# The check every pull request into main has to pass: lint, typecheck, unit
-# tests. It exists so that a pull request has something to be green about —
-# without it the only workflow here is build-push-seeder.yml, which fires
-# solely on packages/sdk-seeder/** and so never reports on a regenerated
-# client. The api-artifacts-sync PRs from durion-positivity-backend rewrite
-# packages/sdk-*/src wholesale and were landing with no check at all, and
-# GitHub auto-merge cannot "merge when green" against an empty check set.
+# The check every pull request into main has to pass: lint, an ordered
+# workspace build, a typecheck and the unit suites.
+#
+# It exists so that a pull request has something to be green about. The only
+# other workflow here, build-push-seeder.yml, fires solely on
+# packages/sdk-seeder/**, so it never reports on a regenerated client — and
+# the api-artifacts-sync pull requests opened from durion-positivity-backend
+# rewrite packages/sdk-*/src wholesale. Those were landing with no check at
+# all, and GitHub auto-merge cannot "merge when green" against an empty check
+# set.
 name: PR Checks
 
 on:
@@ -39,16 +42,23 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        # No package carries a prepare hook, so this installs and builds
+        # nothing — the build below is where compilation happens.
         run: npm ci
 
       - name: Lint
         run: npm run lint
 
       - name: Build
-        # `npm run build` compiles the client packages in dependency order
-        # (transport first) and then typechecks src/** against their build
-        # output — which is what proves a regenerated client compiles at all.
+        # scripts/build-workspaces.mjs, in dependency order: transport before
+        # anything that imports it. This is what proves a regenerated client
+        # compiles at all.
         run: npm run build
+
+      - name: Typecheck
+        # src/** against the packages' build output, so it has to follow the
+        # build rather than replace it.
+        run: npm run typecheck
 
       - name: Unit tests
         # Integration tests (*.itest.ts) need a live backend and are excluded
