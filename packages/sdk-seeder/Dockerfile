@@ -28,19 +28,11 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 COPY packages ./packages
 
-# Install, then compile in dependency order.
-#
-# Every domain package's prepare step compiles sources that import
-# @durion-sdk/transport, so transport's dist must exist before any of them runs.
-# npm does not order workspace prepare steps that way, and it runs them during
-# `npm ci` even under --ignore-scripts, so the install fails before anything can
-# be built. Dropping prepare for the duration of the install and compiling
-# explicitly afterwards makes the order deterministic. Only the copy of the
-# manifests inside this image is touched.
-RUN node -e "const fs=require('fs');for(const dir of fs.readdirSync('packages')){const file='packages/'+dir+'/package.json';if(!fs.existsSync(file))continue;const pkg=JSON.parse(fs.readFileSync(file,'utf8'));if(pkg.scripts&&pkg.scripts.prepare){delete pkg.scripts.prepare;fs.writeFileSync(file,JSON.stringify(pkg,null,2)+'\n');}}" \
-    && npm ci \
-    && npm run build -w packages/sdk-transport \
-    && npm run build --workspaces --if-present
+# Install, then compile. Nothing builds during `npm ci` (no package carries a
+# prepare hook), and the root build compiles the workspace in dependency order
+# (scripts/build-workspaces.mjs), so transport's dist exists before anything
+# that imports it is compiled.
+RUN npm ci && npm run build
 
 # node (uid 1000) ships with the base image. Ownership of /app stays with root:
 # the seeder only reads its own sources, and a read-only application directory

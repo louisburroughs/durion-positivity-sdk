@@ -6,7 +6,6 @@
   "types": "dist/index.d.ts",
   "private": false,
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build"
+    "build": "tsc"
   }
 }
