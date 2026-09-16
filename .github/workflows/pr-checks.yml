@@ -1,0 +1,70 @@
+# .github/workflows/pr-checks.yml
+#
+# The check every pull request into main has to pass: lint, an ordered
+# workspace build, a typecheck and the unit suites.
+#
+# It exists so that a pull request has something to be green about. The only
+# other workflow here, build-push-seeder.yml, fires solely on
+# packages/sdk-seeder/**, so it never reports on a regenerated client — and
+# the api-artifacts-sync pull requests opened from durion-positivity-backend
+# rewrite packages/sdk-*/src wholesale. Those were landing with no check at
+# all, and GitHub auto-merge cannot "merge when green" against an empty check
+# set.
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+# Read the repository and nothing else. `permissions: {}` would be tighter
+# still, but it drops the `contents` scope actions/checkout fetches with —
+# which survives here only because the repository is public. Nothing in this
+# job writes through the API.
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        # No package carries a prepare hook, so this installs and builds
+        # nothing — the build below is where compilation happens.
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        # scripts/build-workspaces.mjs, in dependency order: transport before
+        # anything that imports it. This is what proves a regenerated client
+        # compiles at all.
+        run: npm run build
+
+      - name: Typecheck
+        # src/** against the packages' build output, so it has to follow the
+        # build rather than replace it.
+        run: npm run typecheck
+
+      - name: Unit tests
+        # Integration tests (*.itest.ts) need a live backend and are excluded
+        # by jest.config.js; they run from jest.integration.config.js instead.
+        run: npm test
