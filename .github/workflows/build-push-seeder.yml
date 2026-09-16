@@ -11,6 +11,11 @@ on:
     paths:
       - "packages/sdk-seeder/**"
       - "packages/sdk-*/src/**"
+      # The image compiles every workspace package through the root build, so
+      # its ordering logic and each package's build/dependency declarations
+      # are image inputs too.
+      - "packages/sdk-*/package.json"
+      - "scripts/build-workspaces.mjs"
       - "package.json"
       - "package-lock.json"
       - "tsconfig.json"
@@ -19,6 +24,11 @@ on:
   pull_request:
     paths:
       - "packages/sdk-seeder/**"
+      - "packages/sdk-*/package.json"
+      - "scripts/build-workspaces.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
       - ".dockerignore"
       - ".github/workflows/build-push-seeder.yml"
   workflow_dispatch:
