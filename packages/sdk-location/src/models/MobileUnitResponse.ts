@@ -26,12 +26,6 @@ export interface MobileUnitResponse {
      */
     baseLocationId?: string;
     /**
-     * Identifiers of capabilities the mobile unit can perform
-     * @type {Array<string>}
-     * @memberof MobileUnitResponse
-     */
-    capabilityIds?: Array<string>;
-    /**
      * Timestamp when the mobile unit was created (ISO 8601)
      * @type {Date}
      * @memberof MobileUnitResponse
@@ -55,6 +49,12 @@ export interface MobileUnitResponse {
      * @memberof MobileUnitResponse
      */
     notes?: string;
+    /**
+     * Catalog operation codes this unit can perform off-site (CAP-325 D14), UPPER-DASH per ADR-0059 §3; empty for a unit that has not declared any.
+     * @type {Array<string>}
+     * @memberof MobileUnitResponse
+     */
+    serviceCapabilityCodes?: Array<string>;
     /**
      * Operational status of the mobile unit
      * @type {string}
@@ -94,11 +94,11 @@ export function MobileUnitResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
-        'capabilityIds': json['capabilityIds'] == null ? undefined : json['capabilityIds'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
         'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
@@ -112,11 +112,11 @@ export function MobileUnitResponseToJSON(value?: MobileUnitResponse | null): any
     return {
         
         'baseLocationId': value['baseLocationId'],
-        'capabilityIds': value['capabilityIds'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'id': value['id'],
         'name': value['name'],
         'notes': value['notes'],
+        'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
         'travelBufferPolicyId': value['travelBufferPolicyId'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
