@@ -1,0 +1,64 @@
+# .github/workflows/pr-checks.yml
+#
+# The check every pull request into main has to pass: lint, typecheck, unit
+# tests. It exists so that a pull request has something to be green about —
+# without it the only workflow here is build-push-seeder.yml, which fires
+# solely on packages/sdk-seeder/** and so never reports on a regenerated
+# client. The api-artifacts-sync PRs from durion-positivity-backend rewrite
+# packages/sdk-*/src wholesale and were landing with no check at all, and
+# GitHub auto-merge cannot "merge when green" against an empty check set.
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+# No token scopes: nothing here reads or writes the API.
+permissions: {}
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        # --ignore-scripts on purpose. Every generated client carries
+        # `"prepare": "npm run build"`, and its tsc run resolves
+        # @durion-sdk/transport through that package's *built* dist/. The
+        # workspace prepare hooks do not run transport first, so a plain
+        # `npm ci` on a clean checkout dies with
+        #   packages/sdk-catalog src/index.ts: TS2307: Cannot find module
+        #   '@durion-sdk/transport'
+        # which is exactly what fails the "Generate durion-positivity-sdk"
+        # stage of api-artifacts-sync. Nothing below needs the built output:
+        # tsconfig.json `paths` and jest's moduleNameMapper both resolve
+        # @durion-sdk/* to packages/sdk-*/src.
+        run: npm ci --ignore-scripts
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run build
+
+      - name: Unit tests
+        # Integration tests (*.itest.ts) need a live backend and are excluded
+        # by jest.config.js; they run from jest.integration.config.js instead.
+        run: npm test
