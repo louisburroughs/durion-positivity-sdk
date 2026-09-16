@@ -14,25 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to bypass a scheduling conflict with manager permission
+ * Manager override of SOFT scheduling conflicts recorded against an appointment
  * @export
  * @interface ConflictOverrideRequest
  */
 export interface ConflictOverrideRequest {
     /**
-     * Appointment identifier whose conflict is being overridden
-     * @type {string}
+     * Ids of the scheduling conflicts being accepted. Each must be recorded against the appointment in the path (400 otherwise), be SOFT (409 with the conflict envelope otherwise) and not already overridden (409 CONFLICT_ALREADY_OVERRIDDEN).
+     * @type {Array<string>}
      * @memberof ConflictOverrideRequest
      */
-    appointmentId: string;
+    conflictIds: Array<string>;
     /**
-     * Optional JSON string describing the conflict being overridden
-     * @type {string}
-     * @memberof ConflictOverrideRequest
-     */
-    conflictDetails?: string;
-    /**
-     * Non-blank reason justifying the override
+     * Non-blank justification, recorded immutably with the acting manager
      * @type {string}
      * @memberof ConflictOverrideRequest
      */
@@ -43,7 +37,7 @@ export interface ConflictOverrideRequest {
  * Check if a given object implements the ConflictOverrideRequest interface.
  */
 export function instanceOfConflictOverrideRequest(value: object): boolean {
-    if (!('appointmentId' in value)) return false;
+    if (!('conflictIds' in value)) return false;
     if (!('overrideReason' in value)) return false;
     return true;
 }
@@ -58,8 +52,7 @@ export function ConflictOverrideRequestFromJSONTyped(json: any, ignoreDiscrimina
     }
     return {
         
-        'appointmentId': json['appointmentId'],
-        'conflictDetails': json['conflictDetails'] == null ? undefined : json['conflictDetails'],
+        'conflictIds': json['conflictIds'],
         'overrideReason': json['overrideReason'],
     };
 }
@@ -70,8 +63,7 @@ export function ConflictOverrideRequestToJSON(value?: ConflictOverrideRequest | 
     }
     return {
         
-        'appointmentId': value['appointmentId'],
-        'conflictDetails': value['conflictDetails'],
+        'conflictIds': value['conflictIds'],
         'overrideReason': value['overrideReason'],
     };
 }

@@ -32,6 +32,12 @@ export interface CreateVehicleRequest {
      */
     description?: string;
     /**
+     * FHWA GVWR class 1-8 (CAP-327). Omit when undetermined. Setting it records the source as OPERATOR_SET; the duty category (LIGHT 1-3, MEDIUM 4-6, HEAVY 7-8) is derived from it on the response.
+     * @type {number}
+     * @memberof CreateVehicleRequest
+     */
+    gvwrClass?: number;
+    /**
      * License plate value.
      * @type {string}
      * @memberof CreateVehicleRequest
@@ -102,6 +108,7 @@ export function CreateVehicleRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'accountId': json['accountId'],
         'description': json['description'] == null ? undefined : json['description'],
+        'gvwrClass': json['gvwrClass'] == null ? undefined : json['gvwrClass'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
         'make': json['make'] == null ? undefined : json['make'],
@@ -121,6 +128,7 @@ export function CreateVehicleRequestToJSON(value?: CreateVehicleRequest | null):
         
         'accountId': value['accountId'],
         'description': value['description'],
+        'gvwrClass': value['gvwrClass'],
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],
         'make': value['make'],

@@ -50,11 +50,17 @@ export interface BayResponse {
      */
     locationId: string;
     /**
-     * Maximum number of vehicles that can be serviced concurrently in the bay
+     * Number of vehicles the bay physically accommodates at once. A bay is a single bookable resource regardless of this value; register separate bays for independently bookable stalls.
      * @type {number}
      * @memberof BayResponse
      */
     maxConcurrentVehicles?: number;
+    /**
+     * Heaviest GVWR class (1–8) the bay accepts; null when unconstrained (CAP-325 D13). Light = 1–3, Medium = 4–6, Heavy = 7–8.
+     * @type {number}
+     * @memberof BayResponse
+     */
+    maxDutyClass?: number;
     /**
      * Display name of the bay
      * @type {string}
@@ -62,17 +68,11 @@ export interface BayResponse {
      */
     name: string;
     /**
-     * Identifiers of service capabilities supported by the bay
+     * Catalog operation codes this bay type is the only one able to perform (CAP-325 D14). Empty for a general bay, which is eligible for every operation no specialty bay claims. Values are catalog operationCodes, UPPER-DASH per ADR-0059 §3.
      * @type {Array<string>}
      * @memberof BayResponse
      */
-    serviceCapabilityIds?: Array<string>;
-    /**
-     * Identifiers of skills required to operate the bay
-     * @type {Array<string>}
-     * @memberof BayResponse
-     */
-    skillRequirementIds?: Array<string>;
+    serviceCapabilityCodes?: Array<string>;
     /**
      * Operational status of the bay
      * @type {string}
@@ -107,9 +107,9 @@ export function BayResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'locationId': json['locationId'],
         'maxConcurrentVehicles': json['maxConcurrentVehicles'] == null ? undefined : json['maxConcurrentVehicles'],
+        'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'],
-        'serviceCapabilityIds': json['serviceCapabilityIds'] == null ? undefined : json['serviceCapabilityIds'],
-        'skillRequirementIds': json['skillRequirementIds'] == null ? undefined : json['skillRequirementIds'],
+        'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
     };
 }
@@ -126,9 +126,9 @@ export function BayResponseToJSON(value?: BayResponse | null): any {
         'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'locationId': value['locationId'],
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
+        'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
-        'serviceCapabilityIds': value['serviceCapabilityIds'],
-        'skillRequirementIds': value['skillRequirementIds'],
+        'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
     };
 }

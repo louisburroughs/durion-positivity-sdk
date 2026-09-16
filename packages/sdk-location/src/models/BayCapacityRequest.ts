@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface BayCapacityRequest {
     /**
-     * Maximum number of vehicles that can be serviced concurrently in the bay
+     * Number of vehicles the bay physically accommodates at once. A bay is a single bookable resource regardless of this value; register separate bays for independently bookable stalls.
      * @type {number}
      * @memberof BayCapacityRequest
      */
