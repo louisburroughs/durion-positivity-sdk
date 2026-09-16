@@ -17,6 +17,7 @@ export * from './ServiceLaborStandardsApi';
 export * from './ServicePackageBulkIngestAPIApi';
 export * from './ServicePackageMemberBulkIngestAPIApi';
 export * from './ServicePackagesApi';
+export * from './ServiceRequirementsApi';
 export * from './SubstitutionGroupAPIApi';
 export * from './SupplierArticleCodesApi';
 export * from './SupplierPricesApi';
