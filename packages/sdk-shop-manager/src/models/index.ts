@@ -38,6 +38,8 @@ export * from './ShopDashboardResponse';
 export * from './ShopDashboardUnit';
 export * from './ShopDashboardVehicle';
 export * from './ShopDashboardWorkorder';
+export * from './ShopResponse';
+export * from './ShopUpsertRequest';
 export * from './StaffingAdvisory';
 export * from './SuggestedAlternative';
 export * from './TechnicianCredentialResponse';
