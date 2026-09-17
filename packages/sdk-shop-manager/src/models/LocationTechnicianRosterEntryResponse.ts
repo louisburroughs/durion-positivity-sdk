@@ -75,6 +75,36 @@ export interface LocationTechnicianRosterEntryResponse {
      */
     personId?: string;
     /**
+     * PLACEHOLDER: end of the technician's shift window on the roster date, as a UTC instant. Derived from the shop location's operating hours (its close time in the location's timezone), not from the person's own schedule, so every technician at the location carries the same value. Null when shiftStatus is CLOSED or UNKNOWN.
+     * @type {Date}
+     * @memberof LocationTechnicianRosterEntryResponse
+     */
+    shiftEnd?: Date;
+    /**
+     * PLACEHOLDER: minutes between shiftStart and shiftEnd, for the board to subtract committed time from. Derived from the shop location's operating hours, not from the person's own schedule. Null whenever either bound is null; never negative.
+     * @type {number}
+     * @memberof LocationTechnicianRosterEntryResponse
+     */
+    shiftMinutes?: number;
+    /**
+     * PLACEHOLDER: where the shift window came from. LOCATION_HOURS means the window is the shop location's operating hours, the same for every technician there, and not the person's roster. A consumer must read this to tell a placeholder window from a real per-person one; PERSON_SCHEDULE is reserved for that (#71).
+     * @type {string}
+     * @memberof LocationTechnicianRosterEntryResponse
+     */
+    shiftSource: LocationTechnicianRosterEntryResponseShiftSourceEnum;
+    /**
+     * PLACEHOLDER: start of the technician's shift window on the roster date, as a UTC instant. Derived from the shop location's operating hours (its open time in the location's timezone), not from the person's own schedule, so every technician at the location carries the same value. Null when shiftStatus is CLOSED or UNKNOWN.
+     * @type {Date}
+     * @memberof LocationTechnicianRosterEntryResponse
+     */
+    shiftStart?: Date;
+    /**
+     * PLACEHOLDER: whether a shift window could be derived from the shop location's operating hours (not from the person's own schedule). DERIVED carries a window; CLOSED means a dated holiday closure covers the day; UNKNOWN means the location's timezone or hours are missing or unreadable, or the weekday has no entry — no default window is ever substituted.
+     * @type {string}
+     * @memberof LocationTechnicianRosterEntryResponse
+     */
+    shiftStatus: LocationTechnicianRosterEntryResponseShiftStatusEnum;
+    /**
      * 
      * @type {string}
      * @memberof LocationTechnicianRosterEntryResponse
@@ -92,6 +122,22 @@ export interface LocationTechnicianRosterEntryResponse {
 * @export
 * @enum {string}
 */
+export enum LocationTechnicianRosterEntryResponseShiftSourceEnum {
+    LocationHours = 'LOCATION_HOURS'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum LocationTechnicianRosterEntryResponseShiftStatusEnum {
+    Derived = 'DERIVED',
+    Closed = 'CLOSED',
+    Unknown = 'UNKNOWN'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum LocationTechnicianRosterEntryResponseStatusEnum {
     Active = 'ACTIVE',
     Inactive = 'INACTIVE',
@@ -103,6 +149,8 @@ export enum LocationTechnicianRosterEntryResponseStatusEnum {
  * Check if a given object implements the LocationTechnicianRosterEntryResponse interface.
  */
 export function instanceOfLocationTechnicianRosterEntryResponse(value: object): boolean {
+    if (!('shiftSource' in value)) return false;
+    if (!('shiftStatus' in value)) return false;
     return true;
 }
 
@@ -124,6 +172,11 @@ export function LocationTechnicianRosterEntryResponseFromJSONTyped(json: any, ig
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
         'personId': json['personId'] == null ? undefined : json['personId'],
+        'shiftEnd': json['shiftEnd'] == null ? undefined : (new Date(json['shiftEnd'])),
+        'shiftMinutes': json['shiftMinutes'] == null ? undefined : json['shiftMinutes'],
+        'shiftSource': json['shiftSource'],
+        'shiftStart': json['shiftStart'] == null ? undefined : (new Date(json['shiftStart'])),
+        'shiftStatus': json['shiftStatus'],
         'status': json['status'] == null ? undefined : json['status'],
         'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
     };
@@ -143,6 +196,11 @@ export function LocationTechnicianRosterEntryResponseToJSON(value?: LocationTech
         'locationId': value['locationId'],
         'mechanicId': value['mechanicId'],
         'personId': value['personId'],
+        'shiftEnd': value['shiftEnd'] == null ? undefined : ((value['shiftEnd']).toISOString()),
+        'shiftMinutes': value['shiftMinutes'],
+        'shiftSource': value['shiftSource'],
+        'shiftStart': value['shiftStart'] == null ? undefined : ((value['shiftStart']).toISOString()),
+        'shiftStatus': value['shiftStatus'],
         'status': value['status'],
         'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
     };
