@@ -331,23 +331,58 @@ describe('AcceleratedDayRunner — closing time', () => {
     );
   });
 
-  it('lets a started bay job finish inside the grace, but starts nothing new there', async () => {
+  it('lets a started bay job finish inside the grace, and starts no new BAY work after close', async () => {
     const { runner, jobs } = harness({
       startIso: '2025-11-03T17:45:00Z',
       stepMinutes: 15,
       jobSteps: 3,
       jobsToday: 5,
       concurrency: 1,
+      // Bays only: with a mobile unit free the runner would rightly keep taking
+      // mobile work after close, which is a different rule (asserted below).
+      rosters: [roster({ freePositions: [{ kind: 'BAY', id: 'bay-1', name: 'Bay 01' }], idleTechnicianIds: ['tech-a'] })],
     });
 
     const report = await runner.runDay(1);
 
     // One job was taken inside the window and finished at 18:15, inside the grace.
+    // Nothing else started, because the window had closed.
     expect(jobs).toHaveLength(1);
     expect(report.workordersCompleted).toBe(1);
     const lastRun = jobs[0].ranAt[jobs[0].ranAt.length - 1];
     expect(lastRun.getTime()).toBeGreaterThan(Date.parse('2025-11-03T18:00:00Z'));
     expect(lastRun.getTime()).toBeLessThan(Date.parse('2025-11-03T19:30:00Z'));
+    for (const at of jobs[0].ranAt) {
+      expect(at.getTime()).toBeGreaterThanOrEqual(Date.parse('2025-11-03T17:45:00Z'));
+    }
+  });
+
+  it('keeps taking NEW mobile work after the bays close', async () => {
+    // The rule the docs promise: a mobile unit takes work at any hour. Before this
+    // was fixed, only carried mobile jobs advanced out of hours and a closed window
+    // meant an idle mobile unit.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T17:50:00Z',
+      stepMinutes: 15,
+      jobSteps: 2,
+      jobsToday: 4,
+      concurrency: 1,
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    await runner.runDay(1);
+
+    const afterClose = jobs.filter((job) =>
+      job.ranAt.some((at) => at.getTime() >= Date.parse('2025-11-03T18:00:00Z')),
+    );
+    expect(jobs.length).toBeGreaterThan(1);
+    expect(afterClose.length).toBeGreaterThan(0);
+    expect(jobs.every((job) => job.gatedByHours === false)).toBe(true);
   });
 
   it('will not advance a bay job past the grace period', async () => {
@@ -368,14 +403,83 @@ describe('AcceleratedDayRunner — closing time', () => {
 });
 
 describe('AcceleratedDayRunner — a closed day', () => {
-  it('skips a Sunday without opening the shop', async () => {
+  it('opens no shift and runs no maintenance on a Sunday, whatever the mobile units do', async () => {
     const { runner, calls } = harness({ startIso: '2025-11-09T09:00:00Z', stepMinutes: 30 });
 
     const report = await runner.runDay(7);
 
     expect(report.skipped).toBe('closed');
+    // No payroll on a closed day: a mobile crew turning out on a Sunday is on call,
+    // and a shift recorded here would be a time entry outside the shop's hours —
+    // exactly what the end-of-run audit asserts against.
+    expect(calls).not.toContain('clockIn');
+    expect(calls).not.toContain('clockOut');
+    expect(calls).not.toContain('approveTime');
+    // Nor floor work.
+    expect(calls).not.toContain('cycleCount');
+    expect(calls).not.toContain('restock');
+    expect(report.clockedIn).toBe(0);
+  });
+
+  it('starts NEW mobile work on a closed day — a weekend is not two days of dead air', async () => {
+    const { runner, jobs } = harness({
+      startIso: '2025-11-09T09:00:00Z', // Sunday
+      stepMinutes: 60,
+      jobSteps: 2,
+      jobsToday: 3,
+      concurrency: 1,
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    const report = await runner.runDay(7);
+
+    expect(report.skipped).toBe('closed');
+    expect(jobs.length).toBeGreaterThan(0);
+    expect(report.workordersCompleted).toBeGreaterThan(0);
+  });
+
+  it('starts no BAY work on a closed day, however many bays are free', async () => {
+    const { runner, jobs } = harness({
+      startIso: '2025-11-09T09:00:00Z',
+      stepMinutes: 60,
+      jobSteps: 2,
+      jobsToday: 3,
+      concurrency: 2,
+      rosters: [
+        roster({
+          freePositions: [
+            { kind: 'BAY', id: 'bay-1', name: 'Bay 01' },
+            { kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' },
+          ],
+          idleTechnicianIds: ['tech-a', 'tech-b'],
+        }),
+      ],
+    });
+
+    await runner.runDay(7);
+
+    expect(jobs.every((job) => job.label.includes('mu-1'))).toBe(true);
+  });
+
+  it('does nothing at all on a closed day when mobile units are gated too', async () => {
+    const { runner, jobs, calls } = harness({
+      startIso: '2025-11-09T09:00:00Z',
+      stepMinutes: 60,
+      jobsToday: 3,
+      calendar: spec({ mobileAfterHours: false }),
+    });
+
+    const report = await runner.runDay(7);
+
+    expect(report.skipped).toBe('closed');
+    expect(jobs).toHaveLength(0);
+    // Not even a board read: nothing could be claimed, so nothing is spent finding out.
     expect(calls).toEqual([]);
-    expect(report.workordersCompleted).toBe(0);
   });
 
   it('skips a holiday that would otherwise be a working day', async () => {

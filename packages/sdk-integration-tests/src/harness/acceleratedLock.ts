@@ -58,6 +58,15 @@ function holderIsAlive(holder: LockHolder): boolean {
   }
 }
 
+/** Same holder, for the compare-before-unlink in the stale-takeover path. */
+function sameHolder(a: LockHolder | undefined, b: LockHolder | undefined): boolean {
+  if (a === undefined || b === undefined) {
+    // An unreadable file on either read: treat it as changed rather than assume.
+    return a === b;
+  }
+  return a.runId === b.runId && a.pid === b.pid && a.host === b.host && a.acquiredAt === b.acquiredAt;
+}
+
 export class AcceleratedLock {
   private held = false;
   private releaseHandlers: Array<() => void> = [];
@@ -95,6 +104,34 @@ export class AcceleratedLock {
       if ((error as { code?: string }).code !== 'EEXIST') {
         throw error;
       }
+      this.takeOverStale(holder);
+    }
+
+    this.held = true;
+    this.installReleaseHandlers();
+  }
+
+  /**
+   * Takes a lock whose holder is gone.
+   *
+   * `wx` above is the airtight part: of two *live* runs, exactly one create
+   * succeeds. This is the softer case — a run killed with SIGKILL, or a laptop that
+   * slept and rebooted, leaves the file behind, and refusing forever on that basis
+   * would mean editing a file by hand before every retry.
+   *
+   * The holder is therefore re-read immediately before the file is removed, and the
+   * replacement is another create-or-fail rather than an overwrite. Either check
+   * failing means somebody else got there first, and this run refuses rather than
+   * sharing the lock. An earlier version wrote unconditionally, and then removed
+   * unconditionally, both of which let two runs believe they held it.
+   *
+   * The residual window — a winner appearing between the re-read and the unlink — is
+   * microseconds wide and cannot be closed with plain file operations. It is
+   * tolerated deliberately: the guarantee that matters, two live runs, does not
+   * depend on this path at all.
+   */
+  private takeOverStale(holder: LockHolder): void {
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
       const existing = this.readHolder();
       if (existing && holderIsAlive(existing)) {
         throw new Error(
@@ -105,15 +142,41 @@ export class AcceleratedLock {
             `delete ${this.path}.`,
         );
       }
+
       console.log(
         `[accel] taking over a stale lock at ${this.path}` +
           (existing ? ` (run ${existing.runId}, pid ${existing.pid}, no longer running)` : ' (unreadable holder)'),
       );
-      writeFileSync(this.path, JSON.stringify(holder, null, 2), 'utf8');
+
+      // Re-read and compare before unlinking: the file must still be the same dead
+      // holder we just judged. Removing whatever happens to be there is how a fresh
+      // winner's lock gets deleted.
+      const current = this.readHolder();
+      if (!sameHolder(existing, current)) {
+        // It changed under us — go round again and let the liveness check above
+        // decide about the new holder.
+        continue;
+      }
+      rmSync(this.path, { force: true });
+
+      try {
+        writeFileSync(this.path, JSON.stringify(holder, null, 2), { encoding: 'utf8', flag: 'wx' });
+        return;
+      } catch (retryError) {
+        if ((retryError as { code?: string }).code !== 'EEXIST') {
+          throw retryError;
+        }
+        // Somebody created it between our unlink and our create.
+        continue;
+      }
     }
 
-    this.held = true;
-    this.installReleaseHandlers();
+    const winner = this.readHolder();
+    throw new Error(
+      `[accel] lost the race to take over the stale lock at ${this.path}: it is now held by ` +
+        `${winner ? `run ${winner.runId} (pid ${winner.pid}, ${winner.user}@${winner.host})` : 'another run'}. ` +
+        'Only one accelerated run may write to a backend at a time — wait for it, or stop it and delete the file.',
+    );
   }
 
   /** Gives the lock back. Safe to call twice, and safe to call when never acquired. */

@@ -228,6 +228,64 @@ describe('ResourceLedger — overlap audit', () => {
     expect(violations[0].second.workorderId).toBe('wo-2');
   });
 
+  it('finds a hold nested inside a longer one, not just the neighbouring pair', () => {
+    // The case a previous-only comparison missed: sorted by start, [0,100] then
+    // [1,2] then [50,60]. Comparing each interval with its predecessor reports
+    // [1,2] and then clears [50,60], because 50 is past 2 — even though [50,60]
+    // sits squarely inside [0,100]. Under-reporting is the dangerous direction for
+    // a compliance check, so this is the regression guard.
+    const ledger = new ResourceLedger();
+    const long = new Date('2025-11-03T08:00:00Z');
+    const longEnd = new Date('2025-11-03T18:00:00Z');
+    const shortStart = new Date('2025-11-03T08:05:00Z');
+    const shortEnd = new Date('2025-11-03T08:10:00Z');
+    const lateStart = new Date('2025-11-03T13:00:00Z');
+    const lateEnd = new Date('2025-11-03T14:00:00Z');
+
+    ledger.reconcile(roster({ freePositions: [bay(1)], idleTechnicianIds: ['tech-a'] }));
+    const first = ledger.claim('site-1', long)!;
+    ledger.attach(first, 'wo-long');
+    ledger.release(first, longEnd);
+
+    ledger.reconcile(roster({ freePositions: [bay(1)], idleTechnicianIds: ['tech-a'] }));
+    const nested = ledger.claim('site-1', shortStart)!;
+    ledger.attach(nested, 'wo-nested');
+    ledger.release(nested, shortEnd);
+
+    ledger.reconcile(roster({ freePositions: [bay(1)], idleTechnicianIds: ['tech-a'] }));
+    const late = ledger.claim('site-1', lateStart)!;
+    ledger.attach(late, 'wo-late');
+    ledger.release(late, lateEnd);
+
+    const violations = ledger.overlaps();
+    const reported = violations.map((v) => v.second.workorderId);
+    expect(reported).toContain('wo-nested');
+    // The one a previous-only sweep loses.
+    expect(reported).toContain('wo-late');
+  });
+
+  it('reports a hold that is still open against an earlier long one', () => {
+    // The last hold is left open (no release), so its interval has no end. It must
+    // still be compared against the long hold it starts inside.
+    const ledger = new ResourceLedger();
+    const openAt = new Date('2025-11-03T08:00:00Z');
+    const closeAt = new Date('2025-11-03T18:00:00Z');
+
+    ledger.reconcile(roster({ freePositions: [bay(1)], idleTechnicianIds: ['tech-a'] }));
+    const long = ledger.claim('site-1', openAt)!;
+    ledger.attach(long, 'wo-long');
+    ledger.release(long, closeAt);
+
+    // Claimed at an instant inside the hold just closed: the ledger sequenced these,
+    // but their recorded intervals overlap, which is what the audit has to catch.
+    ledger.reconcile(roster({ freePositions: [bay(1)], idleTechnicianIds: ['tech-a'] }));
+    const stillRunning = ledger.claim('site-1', new Date('2025-11-03T12:00:00Z'))!;
+    ledger.attach(stillRunning, 'wo-open');
+
+    const reported = ledger.overlaps().map((v) => v.second.workorderId);
+    expect(reported).toContain('wo-open');
+  });
+
   it('treats a bay turned around at the same instant as sequential, not overlapping', () => {
     const ledger = new ResourceLedger();
     ledger.reconcile(roster({ freePositions: [bay(1)], idleTechnicianIds: ['tech-a'] }));

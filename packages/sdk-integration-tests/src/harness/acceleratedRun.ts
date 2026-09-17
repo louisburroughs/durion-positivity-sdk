@@ -20,6 +20,7 @@ import {
   createShiftPort,
 } from './acceleratedPorts';
 import { createPersonAccount, createVehicle, seedFromRunId, type BuilderContext } from './builders';
+import { formatError } from './http';
 import { ItestConfig } from './ItestConfig';
 import { loadContext, type ItestContext } from './ItestContext';
 import { Mutex } from './mutex';
@@ -166,9 +167,63 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     log,
   });
 
+  const failures: string[] = [];
+
+  // Claims the interrupted run left behind. Reconciliation would see these bays as
+  // occupied and keep them out of service for the rest of the year, with no job
+  // object left to finish or release them — so the workorders are released here and
+  // named, rather than silently stranding a bay and a mechanic.
+  const stranded = journal.snapshot().openClaims;
+  if (stranded.length > 0) {
+    log(`${stranded.length} claim(s) were left open by the interrupted run; releasing them`);
+    for (const claim of stranded) {
+      if (!claim.workorderId) {
+        log(`  ${claim.positionId}/${claim.technicianId}: no workorder recorded, nothing to release`);
+        continue;
+      }
+      // Best effort, in the order that frees the board: the position first, then the
+      // technician. A failure here is reported rather than fatal — the run can work
+      // the remaining bays, and a human needs to know which one it could not reclaim.
+      for (const [what, attempt] of [
+        [
+          'service position',
+          () =>
+            as.manager.workorder.servicePositionAPIApi.releaseServicePosition({
+              workorderId: claim.workorderId as string,
+              reason: `Released on resume: left open by an interrupted run [${context.runId}]`,
+            }),
+        ],
+        [
+          'technician',
+          () =>
+            as.manager.workorder.technicianAssignmentAPIApi.releaseTechnician({
+              workorderId: claim.workorderId as string,
+              reason: `Released on resume: left open by an interrupted run [${context.runId}]`,
+            }),
+        ],
+      ] as Array<[string, () => Promise<unknown>]>) {
+        try {
+          await attempt();
+        } catch (error) {
+          log(
+            `  WARNING: could not release the ${what} on workorder ${claim.workorderId} ` +
+              `(${claim.positionId}/${claim.technicianId}): ${await formatError(error)}. ` +
+              'The next reconciliation will count it busy until this is unpicked by hand.',
+          );
+        }
+      }
+      log(`  released ${claim.positionId}/${claim.technicianId} from workorder ${claim.workorderId}`);
+      failures.push(
+        `workorder ${claim.workorderId} was left open by an interrupted run and was released rather than ` +
+          'completed — it is not part of this run\'s completed work',
+      );
+    }
+    journal.recordOpenClaims([]);
+    journal.flush();
+  }
+
   const totalDays = options.days ?? accel.days;
   const reports: DayReport[] = [];
-  const failures: string[] = [];
   const deadline = Date.now() + accel.runBudgetMs;
   const startedFrom = journal.lastDayNumber();
   let stoppedBecause: StopReason = 'days-complete';

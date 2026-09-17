@@ -81,6 +81,38 @@ describe('AcceleratedLock', () => {
     lock.release();
   });
 
+  it('refuses when it loses the race to take over a stale lock', () => {
+    // The takeover must be create-or-fail, not an unconditional overwrite: two
+    // processes that both read the same dead holder would otherwise both believe
+    // they hold the lock, which is the one guarantee this file provides. Simulated
+    // by having the "other" process win between the read and the create.
+    const path = freshPath();
+    holderFile(path, { runId: 'accel-dead', pid: 4_194_303 });
+
+    const lock = new AcceleratedLock(path, identity);
+    const readHolder = lock.readHolder.bind(lock);
+    const deadHolder = readHolder();
+    // The winner lands after this run has read the dead holder and before it can
+    // replace the file — the window the compare-before-unlink exists to catch.
+    jest.spyOn(lock, 'readHolder').mockImplementation(() => {
+      const current = readHolder();
+      if (current?.runId === 'accel-dead') {
+        holderFile(path, { runId: 'accel-winner', pid: process.pid, user: 'someone-else' });
+        return deadHolder;
+      }
+      return current;
+    });
+
+    // Refused, naming the winner — the compare-before-unlink noticed the file had
+    // changed, went round again, and found a live holder. Which of the two refusal
+    // messages it is does not matter; not sharing the lock does.
+    expect(() => lock.acquire()).toThrow(/accel-winner/);
+    expect(() => lock.acquire()).toThrow(/Only one accelerated run may write/);
+    // And the winner's lock is intact: an unconditional unlink here is what used to
+    // delete it.
+    expect(JSON.parse(readFileSync(path, 'utf8')).runId).toBe('accel-winner');
+  });
+
   it('is safe to release twice, and to release one never acquired', () => {
     const path = freshPath();
     const lock = new AcceleratedLock(path, identity);

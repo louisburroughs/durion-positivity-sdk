@@ -206,19 +206,19 @@ describe('The accelerated year', () => {
 
     const personas = new Personas(ItestConfig.fromEnv());
     await personas.login();
-    // Sampled rather than exhaustive when the year is long: one read per worked
-    // day would add hundreds of calls to the end of an already long run, and a
-    // violation of an always-on rule shows up in any sample of it.
-    const sample = workedDates.length > 40 ? everyNth(workedDates, Math.ceil(workedDates.length / 40)) : workedDates;
 
+    // Every worked date, not a sample. An earlier version read at most 40 of them,
+    // which meant a violation on an unsampled date passed silently — unacceptable
+    // for the assertion that *is* the compliance claim. One extra read per worked
+    // day is a few hundred calls at the end of a run that already took hours.
     const { checked, violations } = await auditTimeEntries(
       personas.as('manager'),
       calendar,
-      sample,
+      workedDates,
       context.referenceCache.locationId,
     );
 
-    console.log(`[Z13] ${checked} time entr(ies) checked across ${sample.length} worked day(s)`);
+    console.log(`[Z13] ${checked} time entr(ies) checked across ${workedDates.length} worked day(s)`);
     for (const violation of violations.slice(0, 10)) {
       console.log(`[Z13] violation: ${violation.reason} at ${violation.at} (entry ${violation.timeEntryId})`);
     }
@@ -239,13 +239,3 @@ describe('The accelerated year', () => {
     expect(snapshot.realStart).toBe(accelContext.clock.realStart);
   });
 });
-
-/** Every nth element, always including the first and the last. */
-function everyNth<T>(values: readonly T[], step: number): T[] {
-  const picked = values.filter((_, index) => index % step === 0);
-  const last = values[values.length - 1];
-  if (last !== undefined && !picked.includes(last)) {
-    picked.push(last);
-  }
-  return picked;
-}

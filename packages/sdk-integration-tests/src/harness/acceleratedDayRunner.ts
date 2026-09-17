@@ -15,7 +15,7 @@
 import type { ShopCalendar } from './shopCalendar';
 import { nextUtcMidnight } from './virtualTimer';
 import type { Claim, ResourceLedger } from './resourceLedger';
-import type { SiteRoster } from '../runs/shopFloorPlan';
+import type { PositionKind, SiteRoster } from '../runs/shopFloorPlan';
 import type { JobOutcome } from './acceleratedJob';
 
 /** What the runner needs of a job — the real AcceleratedJob satisfies it. */
@@ -164,13 +164,28 @@ export class AcceleratedDayRunner {
     // the next day's intake before that day began.
     const dayEnd = nextUtcMidnight(now);
 
-    // A closed day is not skipped silently: mobile work and carried jobs still
-    // run, and the day is recorded so a gap in the journal always means a gap in
-    // the run rather than a closed Sunday.
+    // A closed day is not skipped silently. The bays are shut, but mobile units
+    // take work at any hour, so a closed day still *starts* mobile jobs as well as
+    // advancing carried ones — otherwise "mobile units work any time" would mean
+    // nothing more than "carried mobile work finishes", and a virtual weekend would
+    // be two days of dead air.
+    //
+    // No shift is opened on a closed day: a mobile crew turning out on a Sunday is
+    // on call, not on the shop's clock, and clocking anyone in here would put a
+    // payroll entry outside the shop's hours — the very thing the end-of-run audit
+    // asserts against. Maintenance does not run either; it is floor work.
     if (!this.deps.calendar.isWorkingDay(now)) {
       report.skipped = 'closed';
-      this.log(`day ${dayNumber} (${report.virtualDate}) — shop closed; advancing ${this.carried.length} carried job(s)`);
-      await this.advanceCarriedOnly(report, dayEnd);
+      const mobileAvailable = this.deps.calendar.isOpen(now, 'MOBILE_UNIT');
+      this.log(
+        `day ${dayNumber} (${report.virtualDate}) — shop closed; ${this.carried.length} carried job(s)` +
+          `${mobileAvailable ? ', mobile units still working' : ''}`,
+      );
+      if (mobileAvailable && sampled) {
+        await this.workUntil(report, dayEnd, { kindLimit: 'MOBILE_UNIT' });
+      } else {
+        await this.advanceCarriedOnly(report, dayEnd);
+      }
       report.carriedOut = this.carried.length;
       return report;
     }
@@ -223,25 +238,113 @@ export class AcceleratedDayRunner {
     report.appointmentsBooked = await this.deps.appointments.book(now, rosters.length);
 
     // WORK. Carried jobs first: they are already holding a bay, and finishing them
-    // is what frees capacity for today's intake. Their holds come back into the
-    // working set so this day can carry them on again if it also runs out of time.
+    // is what frees capacity for today's intake.
+    await this.workUntil(report, dayEnd, { rosters, target: this.deps.jobsToday(now) });
+
+    // SHIFT-OUT.
+    await this.deps.shift.clockOut(now);
+    await this.deps.shift.approveTime(now);
+
+    // MAINTENANCE, on the due virtual day of the run.
+    if (dayNumber % 7 === 0) {
+      await this.deps.maintenance.cycleCount(now);
+      report.cycleCount = true;
+    }
+    if (dayNumber % 30 === 0) {
+      await this.deps.maintenance.restock(now);
+      report.restock = true;
+    }
+
+    return report;
+  }
+
+  /**
+   * May this job take a step at this instant?
+   *
+   * A mobile-unit job always may. A bay job may inside the window, and inside the
+   * grace *only to finish* — which is the same thing here, because a job in the
+   * grace has already started and the intake loop above refuses to open new work
+   * once the window has closed.
+   */
+  private mayWorkNow(job: RunnableJob, now: Date): boolean {
+    if (!job.gatedByHours) {
+      return true;
+    }
+    return this.deps.calendar.isOpen(now, 'BAY') || this.deps.calendar.withinGrace(now, 'BAY');
+  }
+
+  /**
+   * What kind of position may take *new* work at this instant.
+   *
+   * `'ANY'` while the bays are open. Once they close — after hours, at a weekend, on
+   * a holiday — only a mobile unit may, which is what "mobile units take work at any
+   * time" has to mean if it is to mean anything: not merely that carried mobile work
+   * finishes, but that new mobile work starts. `null` when nothing may, which is a
+   * closed day with mobile after-hours switched off.
+   */
+  private claimableKind(now: Date, limit?: PositionKind): PositionKind | 'ANY' | null {
+    if (limit !== undefined) {
+      return this.deps.calendar.isOpen(now, limit) ? limit : null;
+    }
+    if (this.deps.calendar.isOpen(now, 'BAY')) {
+      return 'ANY';
+    }
+    if (this.deps.calendar.isOpen(now, 'MOBILE_UNIT')) {
+      return 'MOBILE_UNIT';
+    }
+    return null;
+  }
+
+  /**
+   * The work loop: take on new jobs while something may take them, advance every
+   * runnable job a step per tick, and carry whatever is still open at `until`.
+   *
+   * Shared by the open-day path and the closed-day one. They differ only in what
+   * they pass: an open day supplies the rosters it already reconciled and the day's
+   * intake target; a closed day supplies neither and limits the kind to
+   * `MOBILE_UNIT`, so it discovers lazily and only if a mobile unit could work.
+   */
+  private async workUntil(
+    report: DayReport,
+    until: Date,
+    options: { rosters?: SiteRoster[]; target?: number; kindLimit?: PositionKind } = {},
+  ): Promise<void> {
+    let now = await this.deps.now();
+
+    // Carried holds come back into the working set so this stretch can carry them
+    // on again if it also runs out of time.
     const active: ActiveJob[] = [...this.carried];
     for (const entry of active) {
       this.deps.ledger.resume(entry.claim);
     }
     this.carried = [];
-    const target = this.deps.jobsToday(now);
+
+    let rosters = options.rosters;
+    const target = options.target ?? this.deps.jobsToday(now);
     let started = 0;
 
     for (;;) {
-      if (now.getTime() >= dayEnd.getTime()) {
+      if (now.getTime() >= until.getTime()) {
         break;
       }
 
-      // Top up to the concurrency limit while the shop is open and the day still
-      // wants work. New work never starts inside the overrun grace.
-      while (active.length < this.deps.concurrency && started < target && this.deps.calendar.isOpen(now, 'BAY')) {
-        const claim = this.nextClaim(rosters, now);
+      // Top up to the concurrency limit while something may take new work. New work
+      // never starts inside the overrun grace: `claimableKind` reads `isOpen`, which
+      // the grace is deliberately not part of.
+      const kind = this.claimableKind(now, options.kindLimit);
+      while (kind !== null && active.length < this.deps.concurrency && started < target) {
+        if (rosters === undefined) {
+          // Lazily, and only once something could actually be claimed — a closed day
+          // with no mobile unit free should not spend a board read to find out.
+          rosters = await this.deps.discovery.rosters(now);
+          for (const roster of rosters) {
+            this.deps.ledger.reconcile(roster);
+          }
+        }
+        if (rosters.length === 0) {
+          break;
+        }
+        const claim = this.nextClaim(rosters, now, kind === 'ANY' ? undefined : kind);
         if (!claim) {
           break;
         }
@@ -279,45 +382,14 @@ export class AcceleratedDayRunner {
       }
     }
 
-    // Whatever is still open at close keeps its bay and its mechanic and is
-    // carried: the car is still in the shop.
+    // Whatever is still open keeps its position and its mechanic and is carried: the
+    // car is still in the shop.
     for (const entry of active) {
       this.deps.ledger.carry(entry.claim);
       this.carried.push(entry);
       this.log(`  carried ${entry.job.label} to the next open day at step '${entry.job.nextStep}'`);
     }
     report.carriedOut = this.carried.length;
-
-    // SHIFT-OUT.
-    await this.deps.shift.clockOut(now);
-    await this.deps.shift.approveTime(now);
-
-    // MAINTENANCE, on the due virtual day of the run.
-    if (dayNumber % 7 === 0) {
-      await this.deps.maintenance.cycleCount(now);
-      report.cycleCount = true;
-    }
-    if (dayNumber % 30 === 0) {
-      await this.deps.maintenance.restock(now);
-      report.restock = true;
-    }
-
-    return report;
-  }
-
-  /**
-   * May this job take a step at this instant?
-   *
-   * A mobile-unit job always may. A bay job may inside the window, and inside the
-   * grace *only to finish* — which is the same thing here, because a job in the
-   * grace has already started and the intake loop above refuses to open new work
-   * once the window has closed.
-   */
-  private mayWorkNow(job: RunnableJob, now: Date): boolean {
-    if (!job.gatedByHours) {
-      return true;
-    }
-    return this.deps.calendar.isOpen(now, 'BAY') || this.deps.calendar.withinGrace(now, 'BAY');
   }
 
   /**
@@ -382,9 +454,9 @@ export class AcceleratedDayRunner {
    * is per-site by construction — a spare technician at one site cannot cover a
    * gap at another (the same rule planFloor keeps).
    */
-  private nextClaim(rosters: SiteRoster[], now: Date): Claim | null {
+  private nextClaim(rosters: SiteRoster[], now: Date, kind?: PositionKind): Claim | null {
     for (const roster of rosters) {
-      const claim = this.deps.ledger.claim(roster.locationId, now);
+      const claim = this.deps.ledger.claim(roster.locationId, now, kind);
       if (claim) {
         return claim;
       }

@@ -16,7 +16,7 @@
     "generate": "bash scripts/generate-openapi.sh",
     "prune": "node scripts/prune-orphans.mjs",
     "test:accelerated": "jest --config packages/sdk-integration-tests/jest.accelerated.config.js --runInBand",
-    "test:accelerated:parity": "jest --config packages/sdk-integration-tests/jest.accelerated.config.js --runInBand --testPathIgnorePatterns /node_modules/ z-year-volume",
+    "test:accelerated:parity": "jest --config packages/sdk-integration-tests/jest.accelerated.config.js --runInBand --testPathIgnorePatterns=/node_modules/ --testPathIgnorePatterns=z-year-volume",
     "populate:accelerated-year": "npm run populate:accelerated-year -w @durion-sdk/integration-tests"
   },
   "devDependencies": {

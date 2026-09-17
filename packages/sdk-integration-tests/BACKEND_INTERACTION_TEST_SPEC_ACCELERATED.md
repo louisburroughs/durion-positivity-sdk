@@ -263,6 +263,11 @@ Gating rules, stated once so every suite copy can cite them:
 - **A mobile-unit job is ungated end to end**, paperwork included: the crew
   carries its own. This is what keeps a closed window productive instead of
   idle, and it is why `ITEST_ACCEL_MOBILE_AFTER_HOURS` defaults to `true`.
+  Out of hours and on closed days the runner **starts** new mobile jobs, not merely
+  advances carried ones. No shift is opened on a closed day: a payroll entry there
+  would sit outside the shop's hours and fail the end-of-run audit, so a weekend
+  mobile crew is on call rather than on the clock.
+- **Maintenance is floor work** and runs only on worked open days.
 - **A job that started inside the window may finish across the close
   boundary**, up to `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` of virtual time
   (default 90) — a mechanic finishes the car they are on. No *new* labor starts
@@ -694,6 +699,8 @@ open rather than assumed:
 - [ ] **Calendar compliance, checked against persisted backend timestamps:** no
       labor session, timer, or bay-job invoice falls outside an open window plus
       grace; mobile-unit work outside it is present and is the only such work.
+      Checked over **every** worked virtual date, not a sample — a violation on an
+      unsampled date would pass, and this is the assertion that carries the claim.
 - [ ] **Resource compliance:** no bay, mobile unit, or technician ever held two
       open workorders at the same virtual instant.
 - [ ] Volume floor met: at least `ITEST_ACCEL_MIN_WORKORDERS` workorders written.

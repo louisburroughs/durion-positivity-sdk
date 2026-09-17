@@ -348,19 +348,29 @@ export class ResourceLedger {
 
     for (const bucket of byResource.values()) {
       const sorted = [...bucket].sort((a, b) => a.from.getTime() - b.from.getTime());
+
+      // Compared against the hold that reaches furthest, not merely the previous
+      // one. Sorting by start does not order by end, so a long hold can enclose
+      // later short ones: [0,100], [1,2], [50,60] against its predecessor alone
+      // reports [1,2] and then misses [50,60], which also sits inside [0,100].
+      // Under-reporting is the dangerous direction for a compliance check, so the
+      // running maximum is what each start is tested against.
+      let furthest = sorted[0];
       for (let index = 1; index < sorted.length; index += 1) {
-        const previous = sorted[index - 1];
         const current = sorted[index];
-        const previousEnd = previous.to?.getTime() ?? Number.POSITIVE_INFINITY;
+        const furthestEnd = furthest.to?.getTime() ?? Number.POSITIVE_INFINITY;
         // Touching ends do not overlap: one job closing at the instant the next
         // opens is a bay turned around, not a double-booking.
-        if (current.from.getTime() < previousEnd) {
+        if (current.from.getTime() < furthestEnd) {
           violations.push({
-            resourceKind: previous.resourceKind,
-            resourceId: previous.resourceId,
-            first: { workorderId: previous.workorderId, from: previous.from, to: previous.to },
+            resourceKind: furthest.resourceKind,
+            resourceId: furthest.resourceId,
+            first: { workorderId: furthest.workorderId, from: furthest.from, to: furthest.to },
             second: { workorderId: current.workorderId, from: current.from, to: current.to },
           });
+        }
+        if ((current.to?.getTime() ?? Number.POSITIVE_INFINITY) > furthestEnd) {
+          furthest = current;
         }
       }
     }

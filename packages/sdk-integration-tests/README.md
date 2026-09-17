@@ -304,6 +304,12 @@ Two rules the run never breaks:
   Each open day starts by reconciling against the dispatch board, so records left
   open by a previous day or run count as occupied.
 
+Out of hours, a closed day still **starts** new mobile jobs as well as finishing
+carried ones — otherwise "any hour" would only mean "carried mobile work finishes".
+No shift is opened on a closed day, though: a mobile crew turning out on a Sunday is
+on call, not on the shop's clock, and a payroll entry there would fail the very audit
+that proves the hours rule.
+
 Hours cannot be read back from the API — `LocationResponseDTO` returns no
 `operatingHours`, `holidayClosures` or `timezone`, they are write-only on
 `patchLocation`. So the suite owns its calendar and, with
