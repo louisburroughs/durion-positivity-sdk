@@ -1,0 +1,458 @@
+/**
+ * The day runner's collaborators, backed by real SDK clients.
+ *
+ * The runner itself is pure-ish and unit-tested against fakes; this file is the
+ * part that talks to a backend. Everything here is *assertive*: a shift that
+ * cannot clock anybody in, a cycle count the manager cannot approve, or an
+ * appointment the bridge will not convert fails the day rather than logging and
+ * carrying on. That is the whole difference between this and the seeder's
+ * simulators, which these are otherwise modelled on.
+ */
+import { SEED_VENDOR_ID } from '@durion-sdk/seeder';
+import type { ReferenceCache } from '@durion-sdk/seeder';
+import { readString, requireField, type BuilderContext } from './builders';
+import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
+import type { DomainClients } from './personas';
+import type { ShopCalendar } from './shopCalendar';
+import type {
+  AppointmentPort,
+  DiscoveryPort,
+  MaintenancePort,
+  ShiftPort,
+} from './acceleratedDayRunner';
+import { buildRoster, type StaffingView } from '../runs/shopFloorRoster';
+import type { SiteRoster } from '../runs/shopFloorPlan';
+
+const log = (message: string): void => console.log(`[accel] ${message}`);
+
+/**
+ * Sites with a usable dispatch board, as `shopFloorLoad` discovers them.
+ *
+ * Deliberately the same two reads and the same pure mapping: the board is the
+ * source for positions because it lists every ACTIVE bay and mobile unit with the
+ * open workorder holding it, and people availability is the side that knows a
+ * person's role. A site whose board reports `dataQualityWarning` is dropped for
+ * the day — placing work on a board that may be incomplete is how a double
+ * booking happens, and `buildRoster` already refuses it.
+ */
+export function createDiscoveryPort(admin: DomainClients, manager: DomainClients): DiscoveryPort {
+  return {
+    async rosters(at: Date): Promise<SiteRoster[]> {
+      const locations = await call('listLocations', () => admin.location.locationApi.listLocations());
+      const rosters: SiteRoster[] = [];
+
+      for (const location of locations) {
+        const locationId = location.id;
+        if (!locationId) {
+          continue;
+        }
+        const code = location.code ?? locationId;
+
+        let board;
+        try {
+          board = await manager.workorder.dailyDispatchBoardDashboardApi.getDispatchDashboard({ locationId });
+        } catch (error) {
+          log(`${code}: no dispatch board today — ${await formatError(error)}`);
+          continue;
+        }
+
+        let staffing: StaffingView[];
+        try {
+          staffing = await admin.people.peopleAvailabilityApi.listPeopleAvailability({ locationId });
+        } catch (error) {
+          log(`${code}: no staffing today — ${await formatError(error)}`);
+          continue;
+        }
+
+        // The board is aggregated for one date, and `at` is virtual time: the same
+        // instant decides which PTO counts, so a technician on leave on the
+        // *virtual* date is the one excluded.
+        const outcome = buildRoster({ locationId, code, name: location.name ?? code }, board, staffing, at);
+        if (outcome.kind === 'skipped') {
+          log(`${code}: skipped — ${outcome.reason}`);
+          continue;
+        }
+        if (outcome.roster.freePositions.length === 0 && outcome.roster.occupiedPositions.length === 0) {
+          continue;
+        }
+        rosters.push(outcome.roster);
+      }
+      return rosters;
+    },
+  };
+}
+
+/**
+ * The payroll clock: who is in the building, and for how long.
+ *
+ * Distinct from the workorder service's per-service labor timers — this is the
+ * shift, and it is what makes a virtual day look like a worked day rather than a
+ * burst of API traffic.
+ */
+export function createShiftPort(
+  admin: DomainClients,
+  manager: DomainClients,
+  refs: ReferenceCache,
+): ShiftPort {
+  // Everyone the day might need. Drawn once: the roster the reference bootstrap
+  // produced is stable for the run.
+  const everyone = [
+    ...new Set(
+      [
+        ...refs.employees.technicians,
+        ...refs.employees.serviceWriters,
+        refs.employees.manager,
+        refs.employees.partsClerk,
+      ].filter((id) => typeof id === 'string' && id.length > 0),
+    ),
+  ];
+  let onTheClock: string[] = [];
+
+  /** A stale session from an interrupted run is closed before a fresh one opens. */
+  const closeStale = async (personId: string): Promise<void> => {
+    try {
+      await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+    } catch (error) {
+      // 404 is the happy path: no session was open.
+      if (!isHttpStatus(error, 404)) {
+        throw new Error(`could not close a stale work session for ${personId}: ${await formatError(error)}`);
+      }
+    }
+  };
+
+  return {
+    async clockIn(at: Date): Promise<string[]> {
+      if (everyone.length === 0) {
+        throw new Error(
+          '[accel] the reference bootstrap produced no employees, so nobody can clock in. ' +
+            'A virtual day with no staff writes no labor and no payroll.',
+        );
+      }
+      onTheClock = [];
+      for (const personId of everyone) {
+        await closeStale(personId);
+        const started = await call(`startWorkSession ${personId}`, () =>
+          admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
+        );
+        if (!readString(started, 'sessionId')) {
+          throw new Error(`startWorkSession for ${personId} returned no sessionId — the shift was not opened`);
+        }
+        onTheClock.push(personId);
+      }
+      log(`${at.toISOString().slice(0, 16)} — ${onTheClock.length} on the clock`);
+      return onTheClock;
+    },
+
+    async clockOut(): Promise<string[]> {
+      const clockedOut: string[] = [];
+      for (const personId of onTheClock) {
+        await call(`stopWorkSession ${personId}`, () =>
+          admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } }),
+        );
+        clockedOut.push(personId);
+      }
+      onTheClock = [];
+      return clockedOut;
+    },
+
+    /**
+     * The day's reported time goes to the manager.
+     *
+     * An empty decision batch is what the seeder sends and what the backend
+     * accepts; the assertion here is that the endpoint accepts the batch at all,
+     * because a refusal means the day's labor is sitting unapproved and the payroll
+     * side of the year is a fiction.
+     */
+    async approveTime(): Promise<void> {
+      await call('approveTimeEntriesBatch', () =>
+        manager.people.timeEntryApprovalAPIApi.approveTimeEntriesBatch({
+          timeEntryDecisionBatchRequest: { decisions: [] },
+        }),
+      );
+    },
+  };
+}
+
+/**
+ * Weekly cycle counts and monthly restocks, on their due virtual days.
+ *
+ * Same calls as the seeder's InventoryMaintenanceSimulator, with the failures
+ * raised instead of logged, and dated from virtual time rather than `Date.now()`
+ * so a purchase order raised in the virtual November is not stamped with today.
+ */
+export function createMaintenancePort(
+  parts: DomainClients,
+  manager: DomainClients,
+  ctx: BuilderContext,
+): MaintenancePort {
+  const refs = ctx.refs;
+  const RESTOCK_QUANTITY = 50;
+  const RESTOCK_UNIT_COST_MINOR = 1_000;
+
+  return {
+    async cycleCount(at: Date): Promise<void> {
+      const candidates = ctx.random.pickN(refs.productEntityIds, Math.min(3, refs.productEntityIds.length));
+      if (candidates.length === 0) {
+        throw new Error('[accel] the cycle count has no products to count — the catalog bootstrap produced none');
+      }
+
+      for (const productId of candidates) {
+        const productName = refs.productNameById.get(productId) ?? productId;
+        // Stock items are keyed by SKU, which equals the productEntityId.
+        const quantityOnHandBefore = 50;
+        const variance = ctx.random.int(1, 5) * (ctx.random.chance(0.5) ? 1 : -1);
+
+        const adjustment = await call(`createCycleCountAdjustment ${productName}`, () =>
+          parts.inventory.cycleCountAdjustmentsApi.createCycleCountAdjustment({
+            createAdjustmentRequest: {
+              stockItemId: productId,
+              reasonCode: 'CYCLE_COUNT',
+              countedQuantity: Math.max(0, quantityOnHandBefore + variance),
+              quantityOnHandBefore,
+              costAtTimeOfAdjustment: 100,
+              createdByUserId: refs.employees.partsClerk || refs.employees.manager,
+            },
+          }),
+        );
+        const adjustmentId = requireField(adjustment.adjustmentId, 'adjustmentId');
+
+        // Counting and approving are different people: the count is the parts
+        // clerk's, the write-off is the manager's.
+        await call(`approveCycleCountAdjustment ${adjustmentId}`, () =>
+          manager.inventory.cycleCountAdjustmentsApi.approveCycleCountAdjustment({
+            adjustmentId,
+            approveAdjustmentRequest: {
+              approverUserId: refs.employees.manager,
+              notes: `Weekly cycle count on ${at.toISOString().slice(0, 10)} [${ctx.runId}]`,
+            },
+          }),
+        );
+      }
+      log(`cycle count approved for ${candidates.length} item(s) on ${at.toISOString().slice(0, 10)}`);
+    },
+
+    async restock(at: Date): Promise<void> {
+      const products = ctx.random.pickN(refs.productEntityIds, Math.min(5, refs.productEntityIds.length));
+      if (products.length === 0) {
+        throw new Error('[accel] the monthly restock has no products to order');
+      }
+
+      const po = await call('createPurchaseOrder', () =>
+        parts.order.purchaseOrdersApi.createPurchaseOrder({
+          createPurchaseOrderRequest: {
+            vendorId: SEED_VENDOR_ID,
+            // Virtual time, not today: a year of purchase orders all stamped with
+            // the real date would make the financial history unreadable.
+            poDate: new Date(at),
+            currency: 'USD',
+            shipToLocationId: refs.locationId,
+            requestedBy: refs.employees.partsClerk,
+            comment: `Monthly restock ${at.toISOString().slice(0, 10)} [${ctx.runId}]`,
+            lines: products.map((productId, index) => ({
+              lineNumber: index + 1,
+              skuId: productId,
+              description: `Restock ${refs.productNameById.get(productId) ?? productId} [${ctx.runId}]`,
+              quantity: RESTOCK_QUANTITY,
+              unitCostMinor: RESTOCK_UNIT_COST_MINOR,
+            })),
+          },
+        }),
+      );
+      const purchaseOrderId = requireField(po.purchaseOrderId, 'purchaseOrderId');
+
+      await call('approvePurchaseOrder', () =>
+        manager.order.purchaseOrdersApi.approvePurchaseOrder({
+          poId: purchaseOrderId,
+          approvePurchaseOrderRequest: { approvalNotes: `Monthly restock approval [${ctx.runId}]` },
+        }),
+      );
+
+      const poLines = po.lines ?? [];
+      const lineRef = (index: number) => readString(poLines[index], 'poLineId', 'lineId', 'id');
+
+      // pos-order owns the purchase order and publishes it on order.events.v1;
+      // pos-inventory folds it into ext_purchase_order on its next poll, so an ASN
+      // issued straight after approval loses that race.
+      const asn = await retryWhileReplicating(
+        () =>
+          parts.inventory.asnApi.createAsn({
+            createAsnRequest: {
+              vendorId: SEED_VENDOR_ID,
+              // The id's tail, not its head: purchase order ids are UUIDv7 and
+              // share their leading characters within the same time window.
+              asnReferenceNumber: `ASN-${ctx.runId}-${purchaseOrderId.slice(-12)}`,
+              relatedPoIds: [purchaseOrderId],
+              shipDate: new Date(at),
+              expectedArrivalDate: new Date(at.getTime() + 3 * 86_400_000),
+              lineItems: products.map((productId, index) => ({
+                poId: purchaseOrderId,
+                poLineId: lineRef(index),
+                sku: productId,
+                quantityShipped: RESTOCK_QUANTITY,
+                unitCostMinor: RESTOCK_UNIT_COST_MINOR,
+              })),
+            },
+          }),
+        {
+          markers: ['INVALID_PO_REFERENCE'],
+          description: `creating a restock ASN for purchase order ${purchaseOrderId}`,
+          timeoutMs: 60_000,
+        },
+      );
+      const asnId = requireField(asn.asnId, 'asnId');
+
+      await call('createGoodsReceipt', () =>
+        parts.inventory.asnApi.createGoodsReceipt({
+          createGoodsReceiptRequest: {
+            poId: purchaseOrderId,
+            asnId,
+            locationId: refs.locationId,
+            lines: products.map((productId, index) => ({
+              poLineId: lineRef(index),
+              sku: productId,
+              quantityReceived: RESTOCK_QUANTITY,
+              unitCostMinor: RESTOCK_UNIT_COST_MINOR,
+            })),
+          },
+        }),
+      );
+      log(`monthly restock received on ${at.toISOString().slice(0, 10)}: PO ${purchaseOrderId}`);
+    },
+  };
+}
+
+interface PendingAppointment {
+  appointmentId: string;
+  startAt: Date;
+  partyId: string;
+  vehicleId: string;
+  converted: boolean;
+}
+
+/**
+ * Appointments, booked ahead in virtual time and converted when the clock reaches
+ * them.
+ *
+ * The seeder never books an appointment, and the non-accelerated suite books one
+ * for a real future date it can never reach inside a test run. Only an
+ * accelerated clock makes the whole path — book, wait for the slot to arrive,
+ * convert to an estimate — observable, which is why this is the one part of the
+ * accelerated suite with no non-accelerated twin.
+ */
+export function createAppointmentPort(options: {
+  advisor: DomainClients;
+  admin: DomainClients;
+  ctx: BuilderContext;
+  calendar: ShopCalendar;
+  leadDaysMin: number;
+  leadDaysMax: number;
+  /** Books for a customer the caller supplies, so the port creates no CRM data of its own. */
+  customerFor: () => Promise<{ partyId: string; vehicleId: string }>;
+}): AppointmentPort & { pending(): number } {
+  const pending: PendingAppointment[] = [];
+  const SLOT_CONFLICT = 'already booked';
+
+  /** A one-hour slot inside an open window `leadDays` virtual days ahead. */
+  const slotFor = (now: Date, leadDays: number, jitterMinutes: number): { startAt: Date; endAt: Date } => {
+    const target = new Date(now.getTime() + leadDays * 86_400_000);
+    const open = options.calendar.nextOpen(target, 'BAY');
+    const startAt = new Date(open.getTime() + jitterMinutes * 60_000);
+    // Jitter can push past close on a short Saturday; fall back to the window's
+    // own opening instant rather than booking into the evening.
+    if (!options.calendar.isOpen(startAt, 'BAY')) {
+      return { startAt: open, endAt: new Date(open.getTime() + 3_600_000) };
+    }
+    return { startAt, endAt: new Date(startAt.getTime() + 3_600_000) };
+  };
+
+  return {
+    pending: () => pending.filter((appointment) => !appointment.converted).length,
+
+    async book(at: Date, count: number): Promise<number> {
+      let booked = 0;
+      for (let index = 0; index < count; index += 1) {
+        const customer = await options.customerFor();
+        const leadDays = options.ctx.random.int(options.leadDaysMin, options.leadDaysMax);
+
+        // A slot already taken is a refusal about the *slot*, not the request:
+        // every appointment any previous run booked is still on this environment.
+        // Answered by trying elsewhere, as Suite A does.
+        for (let attempt = 1; attempt <= 6; attempt += 1) {
+          const { startAt, endAt } = slotFor(at, leadDays, options.ctx.random.int(0, 8) * 30);
+          try {
+            const created = await retryWhileReplicating(
+              () =>
+                options.advisor.shopManager.appointmentsApi.createAppointment({
+                  appointmentCreateRequest: {
+                    crmCustomerId: customer.partyId,
+                    crmVehicleId: customer.vehicleId,
+                    locationId: options.ctx.refs.locationId,
+                    startAt,
+                    endAt,
+                    serviceRequestIds: options.ctx.refs.serviceEntityIds.slice(0, 2),
+                  },
+                }),
+              {
+                markers: ['CUSTOMER_NOT_FOUND', 'VEHICLE_NOT_FOUND'],
+                description: `booking an appointment for party ${customer.partyId}`,
+                timeoutMs: 60_000,
+              },
+            );
+            pending.push({
+              appointmentId: requireField(readString(created, 'appointmentId', 'id'), 'appointmentId'),
+              startAt,
+              partyId: customer.partyId,
+              vehicleId: customer.vehicleId,
+              converted: false,
+            });
+            booked += 1;
+            break;
+          } catch (error) {
+            const detail = error instanceof Error ? error.message : await formatError(error);
+            if (!detail.includes(SLOT_CONFLICT) || attempt === 6) {
+              throw error;
+            }
+          }
+        }
+      }
+      return booked;
+    },
+
+    /**
+     * Every appointment whose start the clock has passed becomes an estimate.
+     *
+     * The bridge is idempotent on the appointment, keyed by `idempotencyKey`, so a
+     * retried day cannot produce two estimates for one arrival.
+     */
+    async convertDue(at: Date): Promise<number> {
+      let converted = 0;
+      for (const appointment of pending) {
+        if (appointment.converted || appointment.startAt.getTime() > at.getTime()) {
+          continue;
+        }
+        const created = await call(`createEstimateFromAppointment ${appointment.appointmentId}`, () =>
+          options.advisor.workorder.estimatesFromAppointmentsApi.createEstimateFromAppointment({
+            createEstimateFromAppointmentRequest: {
+              idempotencyKey: crypto.randomUUID(),
+              appointmentId: appointment.appointmentId,
+              customerId: appointment.partyId,
+              vehicleId: appointment.vehicleId,
+              locationId: options.ctx.refs.locationId,
+              requestedServices: options.ctx.refs.serviceEntityIds
+                .slice(0, 2)
+                .map((id) => options.ctx.refs.serviceNameById.get(id) ?? id),
+            },
+          }),
+        );
+        if (!readString(created, 'estimateId', 'id')) {
+          throw new Error(
+            `the appointment bridge returned no estimate for appointment ${appointment.appointmentId}`,
+          );
+        }
+        appointment.converted = true;
+        converted += 1;
+      }
+      return converted;
+    },
+  };
+}

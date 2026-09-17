@@ -44,3 +44,10 @@ packages/*/dist/
 
 # TypeScript project-reference build metadata
 *.tsbuildinfo
+
+# Accelerated run journal and its lock (per-run state, never committed).
+# Narrow on purpose: a bare *.lock would swallow yarn.lock and friends.
+.itest-accel-journal.json
+.itest-accel-journal.json.lock
+*itest-accel-journal.json
+*itest-accel-journal.json.lock
