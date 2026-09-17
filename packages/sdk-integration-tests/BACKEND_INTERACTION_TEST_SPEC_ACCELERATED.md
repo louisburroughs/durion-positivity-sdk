@@ -1,31 +1,32 @@
-# Backend Interaction Test Specification (Non-Accelerated)
+# Backend Interaction Test Specification (Accelerated)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > `superpowers:subagent-driven-development` (recommended) or
 > `superpowers:executing-plans` to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Provide a deterministic, real-time (non-accelerated) integration test
-suite that exercises the Durion Positivity backend through the published SDK
-packages. The suite covers four interaction areas end to end: **appointments**,
-**estimates**, **workorder execution**, and **receiving** (new products into
-stock, and products destined for a specific workorder). It reuses the
-interaction sequences proven out by the accelerated-clock seeder
-(`packages/sdk-seeder`), but runs them as verifiable Jest test cases against a
-backend on an ordinary system clock.
+**Goal:** Provide a deterministic accelerated-clock integration test suite that
+exercises the Durion Positivity backend through the published SDK packages.
+The suite must reach behavioral parity with the non-accelerated interaction
+specification while also covering virtual-day behavior: appointments,
+estimates, workorder execution, receiving, cycle counting, time reporting,
+service positions, shift boundaries, weekly maintenance, and monthly restock.
+The existing accelerated-clock seeder (`packages/sdk-seeder`) is the primary
+behavioral reference, but these tests must assert responses and state instead
+of tolerating and logging failures.
 
-**Target environment:** the **alpha** stack on EC2, on its normal (converged,
-non-accelerated) clock, against the persistent alpha PostgreSQL — test runs
-write real records that remain in the alpha database afterward.
+**Target environment:** the **alpha** stack on EC2 with the `accelerated`
+profile enabled, against the persistent alpha PostgreSQL. Test runs write real
+records that remain in the alpha database afterward. The accelerated profile
+must be isolated by an execution lock and only one accelerated run may write
+to alpha at a time.
 
-**Execution model:** the suite runs **from the developer's laptop** with plain
-`npm run test:integration`. Alpha has no public API ingress, so laptop access
-goes through an AWS SSM port-forwarding tunnel to the alpha EC2 host (no new
-security-group ingress, no VPN): local ports are forwarded to the gateway and
-security service, and the tests simply point `ITEST_BASE_URL` at
-`http://localhost:<port>`. A helper script (Task 7) opens the tunnel. A local
-Compose backend also works for developing the tests themselves — the harness
-is identical either way, only the URLs change.
+**Execution model:** the suite runs from the developer's laptop or from the
+guarded alpha workflow. Laptop access uses the existing AWS SSM port-forwarding
+tunnel; no public ingress or VPN is added. The test harness points
+`ITEST_BASE_URL` at the forwarded gateway and reads authoritative virtual time
+from `GET /system/time`. Local Compose development is supported only when the
+accelerated override is enabled with explicit clock anchors and scale.
 
 **Component:** A new private workspace package, `packages/sdk-integration-tests`.
 Keeping it separate from `src/__tests__` (unit tests) and `sdk-seeder`
@@ -41,6 +42,14 @@ fixtures re-exported as a library.
 
 ## Relationship to the Accelerated Seeder
 
+This file is the accelerated companion to
+`BACKEND_INTERACTION_TEST_SPEC.md`. The latter is the coverage baseline. The
+accelerated suites are the next implementation step: copy each non-accelerated
+scenario's assertions, then add virtual-time and scheduled-work assertions.
+The copied task checkboxes below describe the baseline decisions and observed
+backend behavior; new accelerated parity work is tracked in the checklist
+immediately below.
+
 The seeder is a *generator*: it drives the same endpoints but tolerates and
 logs most failures so a year-long run survives. This suite is a *verifier*:
 each step asserts its response, and a failed step fails the test. The mapping:
@@ -50,19 +59,20 @@ each step asserts its response, and a failed step fails the test. The mapping:
 | `loop/CustomerEventSimulator.ts` | Suites B (estimates) and C (workorder execution) as asserted tests |
 | `loop/InventoryMaintenanceSimulator.ts` (`runMonthlyRestock`) | Suite D (receiving) as asserted tests |
 | `bootstrap/*` (security, location, people, catalog, inventory) | Reused verbatim as global test fixtures |
-| `support/VirtualClock.ts`, `/system/time` polling | **Not used.** Real wall clock; `/system/time` only exists under the `accelerated` profile |
-| Day loop, shift clock-in/out, day-boundary waits | **Not used.** Tests are single-pass; shift/time-entry flows are out of scope |
+| `support/VirtualClock.ts`, `/system/time` polling | Authoritative clock source; tests must not derive virtual time from local wall clock |
+| Day loop, shift clock-in/out, day-boundary waits | Accelerated suites must exercise these boundaries with bounded virtual-time polling |
 | Appointments | **New here.** The seeder never books appointments; Suite A adds shop-manager appointment coverage and the appointment→estimate bridge |
 
-Non-accelerated consequences to design around:
+Accelerated consequences to design around:
 
-- No virtual-day boundaries: nothing in these tests may wait for a calendar
-  day to pass. Any date math (appointment windows, ASN
-  `expectedArrivalDate`) uses real future dates and never requires the clock
-  to reach them.
-- Cross-service propagation (CRM party/vehicle → workorder replicas via
-  Kafka) happens at real event-latency. Tests must poll with a bounded
-  `waitFor` helper, never fixed `sleep`s, and never assume immediacy.
+- Virtual-day boundaries are test inputs. Date math and scheduled work must use
+  the virtual time returned by `/system/time`, not `Date.now()`.
+- Cross-service propagation still happens at real event-latency. Tests must
+  poll with a bounded `waitFor` helper and must not confuse wall-clock polling
+  with virtual-day advancement.
+- A day boundary can arrive while a request is in flight. Each scenario must
+  record the virtual date at setup and assert the date used by the backend,
+  rather than assuming the date at test start remains current.
 - Alpha is a shared, persistent environment and keeping the records is the
   point: tests append data and never truncate, delete, or clean up. Every
   created entity carries a per-run marker for traceability, so a run's
@@ -71,6 +81,55 @@ Non-accelerated consequences to design around:
   seeder history (and prior test runs), so every assertion is scoped to
   entities the run itself created, and every quantity assertion compares
   deltas against a snapshot taken by the same run.
+
+## Accelerated Contract and Parity Work
+
+The accelerated harness must use the seeder's `VirtualClock` semantics:
+
+- `GET /system/time` is mandatory and must return a valid `virtualTime`,
+  `scale`, and UTC `zone`; a 404 means the wrong backend profile and fails
+  setup.
+- Clock configuration is explicit: `POS_TIME_ACCELERATED_REAL_START`,
+  `POS_TIME_ACCELERATED_VIRTUAL_START`, `POS_TIME_ACCELERATED_SCALE`, and
+  `POS_TIME_ACCELERATED_ZONE`. Tests record the returned anchors and reject a
+  response that is non-accelerated, malformed, behind the configured start,
+  or ahead of the local wall clock beyond the allowed convergence behavior.
+- `waitForNextDay` is the only permitted virtual-day wait. It polls the
+  authoritative endpoint and returns the observed virtual time after midnight;
+  fixed sleeps are not valid substitutes.
+- Each accelerated run has a bounded day count and a unique `runId`. It must
+  stop when the endpoint reports convergence or when the configured final
+  virtual day is reached; it must never continue writing after the timeline's
+  terminal point.
+- The same persona, tenant, append-only, replication, and traceability rules
+  from the non-accelerated spec apply. Single-credential and role-mode runs
+  both remain supported, including all negative authorization assertions.
+
+### Accelerated parity checklist
+
+- [ ] Add an accelerated Jest entry point and global setup that require and
+  validate `/system/time`, configure the clock anchors, acquire an execution
+  lock, and release it on success or failure.
+- [ ] Extract the clock adapter used by tests from `sdk-seeder` or expose a
+  test-safe equivalent; unit-test valid responses, 404, 5xx, malformed JSON,
+  invalid scale/zone, convergence, and day-boundary behavior.
+- [ ] Port Suites A-D with the same assertions and role negatives, replacing
+  real-date calculations with virtual-date calculations and recording the
+  virtual timestamp for every state transition.
+- [ ] Add accelerated coverage for Suite E cycle-count scheduling and for
+  Suite F payroll/workorder time reporting across clock-in, break, clock-out,
+  submission, and approval boundaries.
+- [ ] Port Suite H service-position and technician-assignment assertions while
+  exercising position occupancy across at least one virtual day boundary.
+- [ ] Add weekly and monthly scheduler assertions: cycle count runs on day 7
+  and each subsequent multiple of 7; restock runs on day 30 and each
+  subsequent multiple of 30; neither runs on adjacent non-due days.
+- [ ] Add restart/resume coverage: a test process restart must re-read the
+  server clock, preserve run traceability, and avoid duplicating idempotent
+  bootstrap data or silently skipping a virtual day.
+- [ ] Run the accelerated suites in a disposable or explicitly approved alpha
+  window, then verify records and virtual dates by `runId`; do not present the
+  non-accelerated 46/46 result as accelerated evidence.
 
 ## Environment Contract
 
