@@ -5,6 +5,7 @@ export * from './AppointmentsAPIApi';
 export * from './ConflictOverrideAPIApi';
 export * from './MechanicRosterAPIApi';
 export * from './ScheduleAPIApi';
+export * from './ShopAPIApi';
 export * from './ShopAuditApi';
 export * from './ShopDashboardAPIApi';
 export * from './TechnicianAPIApi';
