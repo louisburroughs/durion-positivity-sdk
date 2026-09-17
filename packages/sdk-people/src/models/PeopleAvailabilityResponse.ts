@@ -32,6 +32,24 @@ export interface PeopleAvailabilityResponse {
      */
     availableOn?: Date;
     /**
+     * When the open break started; non-null exactly when clockState is ON_BREAK
+     * @type {Date}
+     * @memberof PeopleAvailabilityResponse
+     */
+    breakStartedAt?: Date;
+    /**
+     * The person's current clock state: CLOCKED_IN (open work session, no open break), ON_BREAK (open session with an open break) or CLOCKED_OUT (no open session). Null when the caller may not see this person's clock state: it is shown for the caller's own row, and for every row when the caller holds people:timekeeping:view covering the location.
+     * @type {string}
+     * @memberof PeopleAvailabilityResponse
+     */
+    clockState?: PeopleAvailabilityResponseClockStateEnum;
+    /**
+     * When the open work session started; non-null exactly when workSessionId is
+     * @type {Date}
+     * @memberof PeopleAvailabilityResponse
+     */
+    clockedInAt?: Date;
+    /**
      * Date the assignment becomes effective
      * @type {Date}
      * @memberof PeopleAvailabilityResponse
@@ -79,6 +97,12 @@ export interface PeopleAvailabilityResponse {
      * @memberof PeopleAvailabilityResponse
      */
     role?: string;
+    /**
+     * The open work session; non-null exactly when clockState is CLOCKED_IN or ON_BREAK. The break endpoints are keyed by this id.
+     * @type {string}
+     * @memberof PeopleAvailabilityResponse
+     */
+    workSessionId?: string;
 }
 
 /**
@@ -88,6 +112,15 @@ export interface PeopleAvailabilityResponse {
 export enum PeopleAvailabilityResponseAssignmentStatusEnum {
     Active = 'ACTIVE',
     Ended = 'ENDED'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum PeopleAvailabilityResponseClockStateEnum {
+    ClockedIn = 'CLOCKED_IN',
+    OnBreak = 'ON_BREAK',
+    ClockedOut = 'CLOCKED_OUT'
 }
 
 
@@ -114,6 +147,9 @@ export function PeopleAvailabilityResponseFromJSONTyped(json: any, ignoreDiscrim
         
         'assignmentStatus': json['assignmentStatus'],
         'availableOn': json['availableOn'] == null ? undefined : (new Date(json['availableOn'])),
+        'breakStartedAt': json['breakStartedAt'] == null ? undefined : (new Date(json['breakStartedAt'])),
+        'clockState': json['clockState'] == null ? undefined : json['clockState'],
+        'clockedInAt': json['clockedInAt'] == null ? undefined : (new Date(json['clockedInAt'])),
         'effectiveFrom': json['effectiveFrom'] == null ? undefined : (new Date(json['effectiveFrom'])),
         'effectiveTo': json['effectiveTo'] == null ? undefined : (new Date(json['effectiveTo'])),
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
@@ -122,6 +158,7 @@ export function PeopleAvailabilityResponseFromJSONTyped(json: any, ignoreDiscrim
         'personId': json['personId'],
         'primary': json['primary'],
         'role': json['role'] == null ? undefined : json['role'],
+        'workSessionId': json['workSessionId'] == null ? undefined : json['workSessionId'],
     };
 }
 
@@ -133,6 +170,9 @@ export function PeopleAvailabilityResponseToJSON(value?: PeopleAvailabilityRespo
         
         'assignmentStatus': value['assignmentStatus'],
         'availableOn': value['availableOn'] == null ? undefined : ((value['availableOn']).toISOString().substring(0,10)),
+        'breakStartedAt': value['breakStartedAt'] == null ? undefined : ((value['breakStartedAt']).toISOString()),
+        'clockState': value['clockState'],
+        'clockedInAt': value['clockedInAt'] == null ? undefined : ((value['clockedInAt']).toISOString()),
         'effectiveFrom': value['effectiveFrom'] == null ? undefined : ((value['effectiveFrom']).toISOString().substring(0,10)),
         'effectiveTo': value['effectiveTo'] == null ? undefined : ((value['effectiveTo']).toISOString().substring(0,10)),
         'firstName': value['firstName'],
@@ -141,6 +181,7 @@ export function PeopleAvailabilityResponseToJSON(value?: PeopleAvailabilityRespo
         'personId': value['personId'],
         'primary': value['primary'],
         'role': value['role'],
+        'workSessionId': value['workSessionId'],
     };
 }
 
