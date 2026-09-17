@@ -405,7 +405,7 @@ backend (`pos-events` `AcceleratedTimeProperties` / `ScaledClock`, `pos-api-gate
 `SystemTimeController`). What is missing is a *deploy path*: no compose override sets
 the profile or the anchors, `deploy-backend.sh` composes and checksum-verifies only
 two files, and no workflow input can request it. The local Compose path works today
-and is verified; alpha is blocked on the backend issue filed for it.
+and is verified; alpha is blocked on [durion-positivity-backend#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065).
 
 - [ ] Generate the anchors immediately before deployment, `virtual-start` =
   `real-start` minus one year, UTC, and pass them to every backend JVM

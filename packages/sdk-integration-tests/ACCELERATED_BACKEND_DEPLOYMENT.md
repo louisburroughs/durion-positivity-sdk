@@ -57,9 +57,8 @@ What does **not** exist is a way to *deploy* it:
 | `deploy-backend.sh` has no accelerated path | It composes exactly `docker-compose.yml` + `docker-compose.prod.yml` and **verifies the sha256 of both**, so a third override cannot simply be dropped on the box. |
 | No CI input | `build-push-ecr.yml` passes `SECURITY_SEED_ADMIN_PASSWORD_HASH`, `SUPPLIER_AUDIT_ENC_KEY`, `RESET_DATABASES` and the two checksums over SSM. There is no way to ask for the accelerated profile or to supply anchors. |
 
-Tracked as a backend issue — see *Launching on alpha* below. Until it lands, the
-**local Compose path works today** and is the supported way to run the accelerated
-suite.
+Tracked as [durion-positivity-backend#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065). Until it lands, the **local Compose path works
+today** and is the supported way to run the accelerated suite.
 
 ---
 
@@ -295,10 +294,11 @@ What is needed is a deploy path that:
 3. gives the workflow an input so an operator can request it and supply the scale,
    with the anchors generated in CI at dispatch time.
 
-That is a backend change, filed against `durion-positivity-backend`. Until it
-lands, an alpha accelerated run means a deliberate, announced manual deployment by
-someone with SSM access, following the same steps as the local path on the box — and
-then a normal redeploy to restore the profile.
+That is a backend change, filed as [durion-positivity-backend#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065) with the proposed override,
+the `deploy-backend.sh` changes and the workflow inputs. Until it lands, an alpha
+accelerated run means a deliberate, announced manual deployment by someone with SSM
+access, following the same steps as the local path on the box — and then a normal
+redeploy to restore the profile.
 
 ### Holding the environment
 
