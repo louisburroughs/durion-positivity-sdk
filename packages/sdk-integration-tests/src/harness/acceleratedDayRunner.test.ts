@@ -95,9 +95,9 @@ const fakeClock = (startIso: string) => {
       current = new Date(current.getTime() + minutes * 60_000);
     },
     now: async () => new Date(current),
-    waitUntil: async (target: Date) => {
+    waitUntil: async (target: Date, overshootMinutes = 0) => {
       if (target.getTime() > current.getTime()) {
-        current = new Date(target);
+        current = new Date(target.getTime() + overshootMinutes * 60_000);
       }
     },
     set: (iso: string) => {
@@ -126,6 +126,8 @@ const harness = (options: {
   jobsToday?: number;
   concurrency?: number;
   jobKind?: 'BAY' | 'MOBILE_UNIT';
+  /** Virtual minutes the WAIT-OPEN overshoots its target by. */
+  waitOvershootMinutes?: number;
   finish?: JobOutcome;
   jobLimit?: number;
 }): Harness => {
@@ -183,7 +185,7 @@ const harness = (options: {
       },
     },
     now: clock.now,
-    waitUntil: clock.waitUntil,
+    waitUntil: async (target: Date) => clock.waitUntil(target, options.waitOvershootMinutes ?? 0),
     createJob: (claim, index) => {
       if (options.jobLimit !== undefined && jobs.length >= options.jobLimit) {
         return null;
@@ -438,8 +440,10 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
 
     const clockOut = at.clockOut as Date;
     expect(clockOut).toBeDefined();
-    // Inside the window plus the 90-minute grace, and on the same calendar day.
-    expect(clockOut.getTime()).toBeLessThanOrEqual(Date.parse('2025-11-03T19:30:00Z'));
+    // Asserted through the calendar, not against a hand-computed instant. `<= 19:30`
+    // passed on exactly close+grace, which `withinGrace` rejects (it is strict) — so the
+    // test green-lit the one value the end-of-run audit fails on.
+    expect(new ShopCalendar(spec()).withinGrace(clockOut, 'BAY')).toBe(true);
     expect(clockOut.toISOString().slice(0, 10)).toBe('2025-11-03');
   });
 
@@ -680,6 +684,73 @@ describe('AcceleratedDayRunner — a closed day', () => {
     // Still holding its bay: a car left in the shop over the weekend is nobody
     // else's bay on Monday morning.
     expect(runner.carriedCount).toBe(1);
+  });
+});
+
+describe('AcceleratedDayRunner — a wait that crosses or overshoots the window', () => {
+  it('works the day it actually woke up on, when the wait crossed midnight', async () => {
+    // Friday 20:00, after close: the next bay window is Saturday 09:00. The day's own
+    // boundary has to move with the wait — taken from before it, it was already in the
+    // past, so the work loop broke on its first check and the day clocked everyone in
+    // and out, spent its intake and worked nothing, while reporting success.
+    const { runner, calls } = harness({
+      startIso: '2025-11-07T20:00:00Z',
+      stepMinutes: 15,
+      jobSteps: 2,
+      jobsToday: 2,
+      concurrency: 1,
+      rosters: [roster({ freePositions: [{ kind: 'BAY', id: 'bay-1', name: 'Bay 01' }], idleTechnicianIds: ['tech-a'] })],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.virtualDate).toBe('2025-11-08'); // Saturday
+    expect(report.skipped).toBeUndefined();
+    expect(calls).toContain('clockIn');
+    expect(report.workordersCompleted).toBeGreaterThan(0);
+  });
+
+  it('opens no shift when the wait overshot the window entirely', async () => {
+    // A real wait can land past the window it was waiting for. Clocking anyone in then
+    // stamps a payroll entry outside the open window, which is the violation the
+    // end-of-run audit raises.
+    const { runner, calls } = harness({
+      startIso: '2025-11-03T05:00:00Z',
+      stepMinutes: 15,
+      jobsToday: 2,
+      concurrency: 1,
+      // Waits to 08:00, lands at 19:00 — past the 18:00 close.
+      waitOvershootMinutes: 11 * 60,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.skipped).toBe('window-missed');
+    expect(calls).not.toContain('clockIn');
+    expect(calls).not.toContain('clockOut');
+    expect(report.clockedIn).toBe(0);
+  });
+
+  it('still lets mobile units work a day whose window was missed', async () => {
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T05:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 2,
+      jobsToday: 2,
+      concurrency: 1,
+      waitOvershootMinutes: 11 * 60,
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.skipped).toBe('window-missed');
+    expect(jobs.length).toBeGreaterThan(0);
   });
 });
 

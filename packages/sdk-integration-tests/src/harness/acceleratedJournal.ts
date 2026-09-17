@@ -19,8 +19,11 @@ export interface JournalDay {
   virtualDate: string;
   /** Sequential virtual day number within the run, 1-based. */
   dayNumber: number;
-  /** Why nothing was worked, when nothing was: 'closed', 'sampled-out', or absent. */
-  skipped?: 'closed' | 'sampled-out';
+  /**
+   * Why nothing was worked, when nothing was: the shop was shut, the run is thinning
+   * its intake, or the open window had already passed by the time the clock got here.
+   */
+  skipped?: 'closed' | 'sampled-out' | 'window-missed';
   workordersCompleted: number;
   invoicesFinalized: number;
   invoicesPaid: number;

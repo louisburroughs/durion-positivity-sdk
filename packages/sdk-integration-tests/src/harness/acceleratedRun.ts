@@ -184,6 +184,14 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
   // named, rather than silently stranding a bay and a mechanic.
   const stranded = journal.snapshot().openClaims;
   const reclaimed: string[] = [];
+  /**
+   * Claims an interrupted run left that this one could not release.
+   *
+   * Carried into *every* later journal write, not just the first: `recordOpenClaims`
+   * replaces the whole list at the end of each day, and these are not ledger claims
+   * (reconciliation marks the position held but mints no `Claim`), so writing only the
+   * ledger's view would erase the record of the bay nobody can unpick after day one.
+   */
   const stillStuck: typeof stranded = [];
   if (stranded.length > 0) {
     log(`${stranded.length} claim(s) were left open by the interrupted run; releasing them`);
@@ -319,13 +327,14 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     for (const invoiceId of report.invoiceIds) {
       journal.recordInvoice(invoiceId);
     }
-    journal.recordOpenClaims(
-      ledger.activeClaims().map((claim) => ({
+    journal.recordOpenClaims([
+      ...stillStuck,
+      ...ledger.activeClaims().map((claim) => ({
         positionId: claim.position.id,
         technicianId: claim.technicianId,
         workorderId: claim.workorderId,
       })),
-    );
+    ]);
     journal.flush();
 
     if (report.skipped === undefined) {

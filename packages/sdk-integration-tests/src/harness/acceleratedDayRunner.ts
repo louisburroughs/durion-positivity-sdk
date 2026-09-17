@@ -86,7 +86,7 @@ export interface DayReport {
   dayNumber: number;
   virtualDate: string;
   /** Set when nothing was worked, and why. */
-  skipped?: 'closed' | 'sampled-out';
+  skipped?: 'closed' | 'sampled-out' | 'window-missed';
   workordersCompleted: number;
   workordersFailed: number;
   invoicesFinalized: number;
@@ -162,7 +162,12 @@ export class AcceleratedDayRunner {
     // Every loop below stops here. Mobile work is never gated by the shop's hours,
     // so without a day boundary it would run straight through the night and spend
     // the next day's intake before that day began.
-    const dayEnd = nextUtcMidnight(now);
+    //
+    // Recomputed after the WAIT-OPEN below: that wait can cross midnight (a run whose
+    // setup finished on Friday evening waits until Monday morning), and a bound taken
+    // from before it would already be in the past — leaving a day that clocks everyone
+    // in and out, spends its intake budget and works nothing, while reporting success.
+    let dayEnd = nextUtcMidnight(now);
 
     // A closed day is not skipped silently. The bays are shut, but mobile units
     // take work at any hour, so a closed day still *starts* mobile jobs as well as
@@ -200,8 +205,29 @@ export class AcceleratedDayRunner {
       now = await this.deps.now();
       // The wait can land on the next calendar day when the window was already
       // past — the date the backend used is the one that counts, not the one this
-      // day started with.
+      // day started with. The day's own boundary moves with it.
       report.virtualDate = now.toISOString().slice(0, 10);
+      dayEnd = nextUtcMidnight(now);
+    }
+
+    // The wait can also overshoot the window it was waiting for, if enough real time
+    // passed inside it. Clocking anyone in now would stamp a payroll entry outside the
+    // open window — the violation the end-of-run audit raises — so this is not a day
+    // the shop can work. Mobile units still can.
+    if (!this.deps.calendar.isOpen(now, 'BAY')) {
+      report.skipped = 'window-missed';
+      this.log(
+        `day ${dayNumber} (${report.virtualDate}) — the open window was missed at ` +
+          `${now.toISOString()}; no shift opened` +
+          `${this.deps.calendar.isOpen(now, 'MOBILE_UNIT') ? ', mobile units still working' : ''}`,
+      );
+      if (this.deps.calendar.isOpen(now, 'MOBILE_UNIT') && sampled) {
+        await this.workUntil(report, dayEnd, { kindLimit: 'MOBILE_UNIT' });
+      } else {
+        await this.advanceCarriedOnly(report, dayEnd);
+      }
+      report.carriedOut = this.carried.length;
+      return report;
     }
 
     if (!sampled) {
@@ -237,16 +263,25 @@ export class AcceleratedDayRunner {
     report.appointmentsConverted = await this.deps.appointments.convertDue(now);
     report.appointmentsBooked = await this.deps.appointments.book(now, rosters.length);
 
-    // WORK, inside the hours. Bounded at close plus the overrun grace, NOT at
-    // midnight: the shift is still open here, and a work loop that ran to midnight
-    // would have `clockOut` below stamp a payroll entry hours past close — the exact
-    // violation the end-of-run audit raises, and the same reason no shift is opened on
-    // a closed day. After-hours mobile work happens further down, once nobody is on
-    // the clock.
+    // WORK, inside the hours — bounded at bay CLOSE, and the grace is what absorbs the
+    // overshoot rather than being extra working time.
+    //
+    // The loop can only check its bound between ticks, so it exits one tick *past*
+    // whatever it is given. Bounding it at close + grace therefore ends the shift at or
+    // beyond the grace end, and `withinGrace` is strict — the grace end itself is
+    // illegal. Nor can that be papered over at the call site: `clockOut` takes no
+    // instant at all, and the backend stamps `endAtUtc` from its own clock when
+    // `stopWorkSession` runs. So the only thing that actually keeps the payroll entry
+    // legal is exiting this loop early enough, and close is that point: the real
+    // clock-out then lands within one tick of close, against a 90-minute default grace.
+    //
+    // A job unfinished at close is carried to the next open day. That is the modelled
+    // behaviour anyway — the car stays in the shop overnight.
     const closesAt = this.deps.calendar.closesAt(now, 'BAY');
     const graceMs = this.deps.calendar.graceMinutes * 60_000;
-    const shiftEnd = closesAt === null ? now : new Date(closesAt.getTime() + graceMs);
-    const workBound = shiftEnd.getTime() < dayEnd.getTime() ? shiftEnd : dayEnd;
+    // The last legal instant for the shift to end, for the clamp below.
+    const graceLimit = closesAt === null ? now : new Date(closesAt.getTime() + graceMs - 1);
+    const workBound = closesAt !== null && closesAt.getTime() < dayEnd.getTime() ? closesAt : dayEnd;
 
     const target = this.deps.jobsToday(now);
     const worked = await this.workUntil(report, workBound, { rosters, target });
@@ -254,16 +289,11 @@ export class AcceleratedDayRunner {
 
     // SHIFT-OUT, at the end of the worked window rather than at midnight.
     //
-    // Clamped to the grace end. The loop can only check its bound between ticks, and a
-    // tick advances the clock by however long its jobs' steps took, so the last tick
-    // can land past the bound. The instant this run *reports* clocking out must still
-    // be a legal one.
-    //
-    // The backend stamps the entry with its own clock, so the residual risk is a tick
-    // that overshoots the grace end in real life. A tick is a handful of gateway calls
-    // — minutes of virtual time — against a 90-minute default grace, so the margin is
-    // wide; and Z13 is exactly the assertion that would catch it if it ever were not.
-    const shiftClosedAt = now.getTime() > shiftEnd.getTime() ? shiftEnd : now;
+    // Clamped to the last legal instant, for the phases that do take one (maintenance
+    // dates its purchase orders from it). Belt and braces only: the protection that
+    // matters is the bound above, because `clockOut` ignores this and the backend
+    // stamps its own clock.
+    const shiftClosedAt = now.getTime() > graceLimit.getTime() ? graceLimit : now;
     await this.deps.shift.clockOut(shiftClosedAt);
     await this.deps.shift.approveTime(shiftClosedAt);
 

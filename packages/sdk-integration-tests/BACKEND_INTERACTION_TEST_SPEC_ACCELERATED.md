@@ -268,18 +268,22 @@ Gating rules, stated once so every suite copy can cite them:
   would sit outside the shop's hours and fail the end-of-run audit, so a weekend
   mobile crew is on call rather than on the clock.
 - **Maintenance is floor work** and runs only on worked open days.
-- **A job that started inside the window may finish across the close
-  boundary**, up to `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` of virtual time
-  (default 90) — a mechanic finishes the car they are on. No *new* bay work starts
-  after close. A job still open past the grace period is carried to the next
-  open day as work in progress, which is realistic and exercises the day
-  boundary on purpose.
-- **The shift closes at the grace end at the latest**, and the in-hours work loop is
-  bounded there rather than at midnight. A loop that ran to midnight would have
-  `clockOut` stamp a payroll entry hours past close — the violation the end-of-run
-  audit raises — which is the same reason no shift is opened on a closed day. The
-  after-hours mobile stretch runs *after* the shift is closed, so nobody is on the
-  clock for it.
+- **The in-hours work loop is bounded at bay close**, and
+  `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` (default 90) is what **absorbs the overshoot**
+  rather than being extra working time. The loop can only check its bound between
+  ticks, so it exits one tick past close; the grace is the margin that keeps that tick
+  and the clock-out legal. A job unfinished at close is carried to the next open day —
+  the car stays in the shop overnight, which is the modelled behaviour anyway.
+- **The shift must end strictly inside the grace.** `withinGrace` is strict, so the
+  grace end itself is illegal, and this cannot be fixed at the call site: the shift
+  port's `clockOut` takes no instant, and the backend stamps `endAtUtc` from its own
+  clock when `stopWorkSession` runs. Exiting the loop at close is therefore the only
+  thing that actually keeps the payroll entry legal.
+- **The after-hours mobile stretch runs after the shift is closed**, so nobody is on
+  the clock for it — the same reason no shift is opened on a closed day.
+- **A day whose open window was already missed** when the clock reached it (a wait that
+  overshot) opens no shift at all and is reported as `window-missed`. Clocking in there
+  would stamp a start outside the window.
 - **A day boundary may arrive mid-request.** Every scenario records the virtual
   instant it observed before a transition and asserts the date the *backend*
   used, never the date the test started with.

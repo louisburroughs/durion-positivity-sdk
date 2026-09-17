@@ -112,14 +112,39 @@ closed day.
 All seven answered directly. Thread resolution is not available to this tooling for
 bot-authored review threads, so the replies stand as the explicit status.
 
+## Cycle 2 — adversarial pass over `d680cb1`
+
+An independent reviewer was run over the remediation commit itself (the runbook's
+`CODE_REVIEW_AGENT` step, served by an available agent). Verdict: **FAIL** — 2
+BLOCKER, 6 MAJOR/MINOR. Three fixes confirmed correct as claimed (`resourceLedger`,
+`z-year-volume`, `package.json`). Fixed in `86367bc`.
+
+| # | Severity | Where | Finding |
+| --- | --- | --- | --- |
+| 1 | 🔴 BLOCKER | `acceleratedDayRunner.ts` | Mobile intake after bay close let the in-hours loop run to midnight, so `clockOut` stamped a payroll entry hours past close — the exact violation the now-exhaustive Z13 raises. Fixes 2 and 5 of cycle 1 were in direct conflict. |
+| 2 | 🔴 BLOCKER | `acceleratedDayRunner.ts` / `acceleratedRun.ts` | The loop exited at midnight and `waitForNextDay` adds a day, so one virtual day was skipped per day worked; a 365-day run would span two calendar years and converge halfway. Verified against `nextUtcMidnight` directly. |
+| 3 | 🟡 MAJOR | `acceleratedDayRunner.ts` | `now` stale after the `workUntil` extraction — shift-out and maintenance got the shop-*opening* instant. |
+| 4 | 🟡 MAJOR | `acceleratedLock.ts` | `rmSync` had run when a non-EEXIST write failure propagated, leaving no lock file at all: mutual exclusion silently off. |
+| 5 | 🟡 MAJOR | `acceleratedRun.ts` | Reclaimed workorders went into `failures`, so every resumed run was guaranteed to fail Z2 — the scenario the journal exists for. |
+| 6 | 🟡 MAJOR | `acceleratedRun.ts` | "released ..." logged unconditionally, directly after the warnings saying it could not be released. |
+| 7 | 🟡 MAJOR | `acceleratedRun.ts` | `recordOpenClaims([])` cleared stranded claims even when every release failed, destroying the record of which bay was stuck. |
+| 8 | 🟡 MINOR | `acceleratedDayRunner.ts` | A closed day with an unreadable board reported success with no work and no failure. |
+
+Also corrected: `d680cb1`'s message claimed "a run that loses either check refuses"
+of the stale-lock takeover. The compare-before-unlink narrows that window but does
+not close it, as the code comment already said. Acknowledged in `86367bc`'s message
+and in a PR comment rather than by rewriting history.
+
 ## Final verification
 
 | Check | Result |
 | --- | --- |
-| `npx jest` (repo) | **864 passing**, 0 failing (857 before the fixes) |
+| `npx jest` (repo) | **871 passing**, 0 failing (857 before cycle 1, 864 after) |
 | `tsc --noEmit` (package) | No errors |
 | `eslint . --ext .ts,.tsx` | No issues |
 | Collection isolation | unit 0 `*.itest.ts`, integration 8 non-accelerated, accelerated 9, parity 8 |
+| Regression tests added | 14 across both cycles, including both blockers |
+| Remediation cycles | 2 (`d680cb1`, `86367bc`); reviewer verdict on cycle 1 was FAIL, cycle 2 addresses every finding |
 
 ## Unresolved blockers and owner
 
