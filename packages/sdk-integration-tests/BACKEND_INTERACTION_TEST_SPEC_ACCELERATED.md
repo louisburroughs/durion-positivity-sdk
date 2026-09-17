@@ -268,13 +268,27 @@ Gating rules, stated once so every suite copy can cite them:
   would sit outside the shop's hours and fail the end-of-run audit, so a weekend
   mobile crew is on call rather than on the clock.
 - **Maintenance is floor work** and runs only on worked open days.
+- **Every time bound comes from one clock reading**, derived together by
+  `harness/daySchedule.ts` — `dayEnd`, `opensAt`, `closesAt`, `workBound`,
+  `graceWorkBound`, `graceLimit` — and re-derived after anything that costs virtual
+  time (the wait for opening, the shift and appointment phases). This is structural
+  rather than stylistic: four remediation cycles each fixed a bound computed at the
+  wrong instant and each produced the next instance, because bounds computed one at a
+  time where they are used can disagree with each other. A whole set derived at once
+  cannot. The schedule also says up front whether the day is workable, so "the window
+  had already closed by the time work started" is a reported failure rather than a
+  successful day with nothing in it.
 - **The in-hours work loop is bounded at bay close**, and
   `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` (default 90) is the margin that keeps the
   overshoot legal rather than a second working window. The loop can only check its
-  bound between ticks, so it exits one tick past close; the grace covers that tick and
-  the clock-out. **A job already started does finish inside the grace** — no *new* bay
-  work starts after close — and one still open at the grace end is carried to the next
-  open day, because the car stays in the shop overnight.
+  bound between ticks, so it exits one tick past close.
+- **A job already started finishes inside the grace, on the clock.** That stretch gets
+  *half* the grace and runs before clock-out, so the labor and the payroll entry agree
+  about who was working, and the remaining half covers the overshooting tick and the
+  clock-out fan-out. It runs whatever `ITEST_ACCEL_MOBILE_AFTER_HOURS` says — the grace
+  belongs to the mechanic finishing a car, not to the mobile flag. No *new* bay work
+  starts after close, and a job still open at the grace end is carried to the next open
+  day, because the car stays in the shop overnight.
 - **The shift fan-out is parallel, and that is load-bearing.** The backend stamps each
   `endAtUtc` when its own `stopWorkSession` runs, so clocking people out one at a time
   puts the last entry N gateway calls past the first. At scale 4,380 that is ~15 virtual

@@ -13,7 +13,7 @@
  * are free is in ResourceLedger.
  */
 import type { ShopCalendar } from './shopCalendar';
-import { nextUtcMidnight } from './virtualTimer';
+import { clampToGrace, daySchedule, type DaySchedule } from './daySchedule';
 import type { Claim, ResourceLedger } from './resourceLedger';
 import type { PositionKind, SiteRoster } from '../runs/shopFloorPlan';
 import type { JobOutcome } from './acceleratedJob';
@@ -156,94 +156,62 @@ export class AcceleratedDayRunner {
    */
   async runDay(dayNumber: number, options: { sampled?: boolean } = {}): Promise<DayReport> {
     const sampled = options.sampled ?? true;
-    let now = await this.deps.now();
-    const report = EMPTY_REPORT(dayNumber, now.toISOString().slice(0, 10));
+    // One reading, one consistent set of bounds derived from it. Re-derived after
+    // anything that costs virtual time — see daySchedule.ts for why the bounds are no
+    // longer computed one at a time where they are used.
+    let schedule = daySchedule(await this.deps.now(), this.deps.calendar);
+    const report = EMPTY_REPORT(dayNumber, schedule.observedAt.toISOString().slice(0, 10));
     report.carriedIn = this.carried.length;
-    // Every loop below stops here. Mobile work is never gated by the shop's hours,
-    // so without a day boundary it would run straight through the night and spend
-    // the next day's intake before that day began.
-    //
-    // Recomputed after the WAIT-OPEN below: that wait can cross midnight (a run whose
-    // setup finished on Friday evening waits until Monday morning), and a bound taken
-    // from before it would already be in the past — leaving a day that clocks everyone
-    // in and out, spends its intake budget and works nothing, while reporting success.
-    let dayEnd = nextUtcMidnight(now);
 
-    // A closed day is not skipped silently. The bays are shut, but mobile units
-    // take work at any hour, so a closed day still *starts* mobile jobs as well as
-    // advancing carried ones — otherwise "mobile units work any time" would mean
-    // nothing more than "carried mobile work finishes", and a virtual weekend would
-    // be two days of dead air.
+    // A day with no bay window is not skipped silently. The bays are shut, but mobile
+    // units take work at any hour, so such a day still *starts* mobile jobs as well as
+    // advancing carried ones — otherwise "mobile units work any time" would mean nothing
+    // more than "carried mobile work finishes", and a virtual weekend would be two days
+    // of dead air.
     //
-    // No shift is opened on a closed day: a mobile crew turning out on a Sunday is
-    // on call, not on the shop's clock, and clocking anyone in here would put a
-    // payroll entry outside the shop's hours — the very thing the end-of-run audit
-    // asserts against. Maintenance does not run either; it is floor work.
-    if (!this.deps.calendar.isWorkingDay(now)) {
-      report.skipped = 'closed';
-      const mobileAvailable = this.deps.calendar.isOpen(now, 'MOBILE_UNIT');
-      this.log(
-        `day ${dayNumber} (${report.virtualDate}) — shop closed; ${this.carried.length} carried job(s)` +
-          `${mobileAvailable ? ', mobile units still working' : ''}`,
-      );
-      if (mobileAvailable && sampled) {
-        await this.workUntil(report, dayEnd, { kindLimit: 'MOBILE_UNIT' });
-      } else {
-        await this.advanceCarriedOnly(report, dayEnd);
-      }
-      report.carriedOut = this.carried.length;
-      return report;
+    // No shift is opened: a mobile crew turning out on a Sunday is on call, not on the
+    // shop's clock, and clocking anyone in would put a payroll entry outside the shop's
+    // hours — the very thing the end-of-run audit asserts against. Maintenance does not
+    // run either; it is floor work.
+    if (schedule.blocker === 'closed') {
+      return this.runWithoutShift(dayNumber, report, schedule, sampled, 'closed');
     }
 
-    // WAIT-OPEN. Before the window, wait for it; inside it, start now. Carried
-    // mobile work is advanced while waiting, which is what makes an out-of-hours
-    // stretch productive instead of dead air.
-    const open = this.deps.calendar.nextOpen(now, 'BAY');
-    if (open.getTime() > now.getTime()) {
-      await this.advanceCarriedOnly(report, open);
-      await this.deps.waitUntil(open, `the shop to open on ${report.virtualDate}`);
-      now = await this.deps.now();
-      // The wait can land on the next calendar day when the window was already
-      // past — the date the backend used is the one that counts, not the one this
-      // day started with. The day's own boundary moves with it.
-      report.virtualDate = now.toISOString().slice(0, 10);
-      dayEnd = nextUtcMidnight(now);
-    }
-
-    // The wait can also overshoot the window it was waiting for, if enough real time
-    // passed inside it. Clocking anyone in now would stamp a payroll entry outside the
-    // open window — the violation the end-of-run audit raises — so this is not a day
-    // the shop can work. Mobile units still can.
-    if (!this.deps.calendar.isOpen(now, 'BAY')) {
-      // A wait can land on a day the shop does not open at all (across a weekend), and
-      // that is a closed day, not a missed window. The closed-day branch above judged
-      // the *pre-wait* instant, so this is where it gets decided for the post-wait one.
-      report.skipped = this.deps.calendar.isWorkingDay(now) ? 'window-missed' : 'closed';
-      this.log(
-        `day ${dayNumber} (${report.virtualDate}) — ${report.skipped === 'closed' ? 'shop closed' : 'open window missed'}` +
-          ` at ${now.toISOString()}; no shift opened` +
-          `${this.deps.calendar.isOpen(now, 'MOBILE_UNIT') ? ', mobile units still working' : ''}`,
-      );
-      if (this.deps.calendar.isOpen(now, 'MOBILE_UNIT') && sampled) {
-        await this.workUntil(report, dayEnd, { kindLimit: 'MOBILE_UNIT' });
-      } else {
-        await this.advanceCarriedOnly(report, dayEnd);
+    // WAIT-OPEN. Carried mobile work is advanced while waiting, which is what makes an
+    // out-of-hours stretch productive instead of dead air.
+    if (!schedule.openNow && schedule.opensAt !== null) {
+      const opensAt = schedule.opensAt;
+      await this.advanceCarriedOnly(report, opensAt);
+      await this.deps.waitUntil(opensAt, `the shop to open on ${report.virtualDate}`);
+      // The wait can cross midnight, and can overshoot the window it waited for, so the
+      // whole set is taken again rather than patched.
+      schedule = daySchedule(await this.deps.now(), this.deps.calendar);
+      report.virtualDate = schedule.observedAt.toISOString().slice(0, 10);
+      if (!schedule.openNow) {
+        // Waited, and still not open: the wait overshot its window, or landed on a date
+        // the shop does not open at all. Only this caller knows a wait happened, which is
+        // why the distinction is drawn here and not in the schedule.
+        return this.runWithoutShift(
+          dayNumber,
+          report,
+          schedule,
+          sampled,
+          schedule.blocker === 'closed' ? 'closed' : 'window-missed',
+        );
       }
-      report.carriedOut = this.carried.length;
-      return report;
     }
 
     if (!sampled) {
       report.skipped = 'sampled-out';
       this.log(`day ${dayNumber} (${report.virtualDate}) — sampled out; advancing ${this.carried.length} carried job(s)`);
-      await this.advanceCarriedOnly(report, dayEnd);
+      await this.advanceCarriedOnly(report, schedule.dayEnd);
       report.carriedOut = this.carried.length;
       return report;
     }
 
-    // RECONCILE. Anything the board reports as occupied starts the day held,
-    // including records left open by a previous day, a previous run or the seeder.
-    const rosters = await this.deps.discovery.rosters(now);
+    // RECONCILE. Anything the board reports as occupied starts the day held, including
+    // records left open by a previous day, a previous run or the seeder.
+    const rosters = await this.deps.discovery.rosters(schedule.observedAt);
     for (const roster of rosters) {
       this.deps.ledger.reconcile(roster);
     }
@@ -258,76 +226,44 @@ export class AcceleratedDayRunner {
     );
 
     // SHIFT-IN.
-    const clockedIn = await this.deps.shift.clockIn(now);
+    const clockedIn = await this.deps.shift.clockIn(schedule.observedAt);
     report.clockedIn = clockedIn.length;
 
-    // APPOINTMENTS. Booked ahead, and converted when the clock reaches them —
-    // which only an accelerated clock makes possible inside one run.
-    report.appointmentsConverted = await this.deps.appointments.convertDue(now);
-    report.appointmentsBooked = await this.deps.appointments.book(now, rosters.length);
+    // APPOINTMENTS. Booked ahead, and converted when the clock reaches them — which only
+    // an accelerated clock makes possible inside one run.
+    report.appointmentsConverted = await this.deps.appointments.convertDue(schedule.observedAt);
+    report.appointmentsBooked = await this.deps.appointments.book(schedule.observedAt, rosters.length);
 
-    // WORK, inside the hours — bounded at bay CLOSE, and the grace is what absorbs the
-    // overshoot rather than being extra working time.
-    //
-    // The loop can only check its bound between ticks, so it exits one tick *past*
-    // whatever it is given. Bounding it at close + grace therefore ends the shift at or
-    // beyond the grace end, and `withinGrace` is strict — the grace end itself is
-    // illegal. Nor can that be papered over at the call site: `clockOut` takes no
-    // instant at all, and the backend stamps `endAtUtc` from its own clock when
-    // `stopWorkSession` runs. So the only thing that actually keeps the payroll entry
-    // legal is exiting this loop early enough, and close is that point: the real
-    // clock-out then lands within one tick of close, against a 90-minute default grace.
-    //
-    // A job unfinished at close is carried to the next open day. That is the modelled
-    // behaviour anyway — the car stays in the shop overnight.
-    // Re-read before anything is derived from it. SHIFT-IN and the appointment phases
-    // are gateway calls, and at a thousandfold scale a handful of those is virtual
-    // hours — bounds taken from the pre-shift instant are the same stale-instant defect
-    // that `dayEnd` had, and would silently put the work bound in the past.
-    now = await this.deps.now();
-
-    // The shift opened, so the window was open then. If getting here has cost so much
-    // virtual time that the window has since closed, the day can no longer work — and
-    // must say so rather than report a successful day with nothing in it.
-    //
-    // `closesAt` answers null outside the window, so it is the test: falling back to the
-    // day's end here is what the bound-at-close fix exists to prevent, and adding the
-    // re-read above is what made this case reachable again.
-    const closesAt = this.deps.calendar.closesAt(now, 'BAY');
-    if (closesAt === null) {
+    // The shift and the appointment phases are gateway calls, and at a thousandfold scale
+    // a handful of those is virtual hours. The bounds work runs against come from *after*
+    // them.
+    schedule = daySchedule(await this.deps.now(), this.deps.calendar);
+    if (schedule.workBound === null) {
       report.failures.push(
-        `the open window had already closed by ${now.toISOString()} when work was due to start — ` +
-          'opening the shift and booking appointments cost more virtual time than the window had left. ' +
-          'Lower pos.time.accelerated.scale, or widen ITEST_ACCEL_OPEN_TIME / _CLOSE_TIME.',
+        `the open window had already closed by ${schedule.observedAt.toISOString()} when work was due to ` +
+          'start — opening the shift and booking appointments cost more virtual time than the window had ' +
+          'left. Lower pos.time.accelerated.scale, or widen ITEST_ACCEL_OPEN_TIME / _CLOSE_TIME.',
       );
-      await this.deps.shift.clockOut(now);
-      await this.deps.shift.approveTime(now);
+      await this.closeShift(report, schedule);
       report.carriedOut = this.carried.length;
       return report;
     }
 
-    const graceMs = this.deps.calendar.graceMinutes * 60_000;
-    // The last legal instant for the shift to end. Held below midnight as well as inside
-    // the grace: the grace goes up to 1440 minutes, and an instant past midnight belongs
-    // to a day whose window this comparison knows nothing about.
-    const graceLimit = new Date(
-      Math.min(closesAt.getTime() + graceMs - 1, nextUtcMidnight(closesAt).getTime() - 1),
-    );
-    const workBound = closesAt.getTime() < dayEnd.getTime() ? closesAt : dayEnd;
+    // WORK, inside the hours, bounded at bay close.
+    const target = this.deps.jobsToday(schedule.observedAt);
+    const worked = await this.workUntil(report, schedule.workBound, { rosters, target });
 
-    const target = this.deps.jobsToday(now);
-    const worked = await this.workUntil(report, workBound, { rosters, target });
-    now = worked.now;
+    // FINISH THE CAR. A job already started may finish past close, on the clock, up to
+    // half the grace — the remainder covers the overshooting tick and the clock-out
+    // fan-out, so the shift still ends inside the grace. No *new* bay work starts here,
+    // and this stretch runs whatever ITEST_ACCEL_MOBILE_AFTER_HOURS says: the grace
+    // belongs to the mechanic finishing a car, not to the mobile flag.
+    if (schedule.graceWorkBound !== null && this.carried.length > 0) {
+      await this.advanceCarriedOnly(report, schedule.graceWorkBound);
+    }
 
     // SHIFT-OUT, at the end of the worked window rather than at midnight.
-    //
-    // Clamped to the last legal instant, for the phases that do take one (maintenance
-    // dates its purchase orders from it). Belt and braces only: the protection that
-    // matters is the bound above, because `clockOut` ignores this and the backend
-    // stamps its own clock.
-    const shiftClosedAt = now.getTime() > graceLimit.getTime() ? graceLimit : now;
-    await this.deps.shift.clockOut(shiftClosedAt);
-    await this.deps.shift.approveTime(shiftClosedAt);
+    const shiftClosedAt = await this.closeShift(report, schedule);
 
     // MAINTENANCE, on the due virtual day of the run.
     if (dayNumber % 7 === 0) {
@@ -340,18 +276,18 @@ export class AcceleratedDayRunner {
     }
 
     // AFTER HOURS. Mobile units keep working once the bays have shut, and only now —
-    // with the shift closed and nobody on the clock — can that happen without writing
-    // a payroll entry outside the shop's hours. Bounded by the day's end so the stretch
+    // with the shift closed and nobody on the clock — can that happen without writing a
+    // payroll entry outside the shop's hours. Bounded by the day's end so the stretch
     // cannot spend tomorrow's intake; the day's own target carries over rather than
     // restarting, so "12 customers a day" stays 12.
-    if (this.deps.calendar.isOpen(now, 'MOBILE_UNIT') && now.getTime() < dayEnd.getTime()) {
-      const afterHours = await this.workUntil(report, dayEnd, {
+    const afterHours = daySchedule(await this.deps.now(), this.deps.calendar);
+    if (afterHours.mobileOpenNow && afterHours.observedAt.getTime() < schedule.dayEnd.getTime()) {
+      await this.workUntil(report, schedule.dayEnd, {
         rosters,
         target,
         startedAlready: worked.started,
         kindLimit: 'MOBILE_UNIT',
       });
-      now = afterHours.now;
     }
 
     report.carriedOut = this.carried.length;
@@ -359,12 +295,57 @@ export class AcceleratedDayRunner {
   }
 
   /**
+   * A day the bays cannot work: shut, or its window already gone by.
+   *
+   * Mobile units still work it, and nobody clocks in — the two reasons this is a
+   * separate path rather than an early return with flags.
+   */
+  private async runWithoutShift(
+    dayNumber: number,
+    report: DayReport,
+    schedule: DaySchedule,
+    sampled: boolean,
+    reason: 'closed' | 'window-missed',
+  ): Promise<DayReport> {
+    report.skipped = reason;
+    this.log(
+      `day ${dayNumber} (${report.virtualDate}) — ` +
+        `${report.skipped === 'closed' ? 'shop closed' : `open window missed at ${schedule.observedAt.toISOString()}`}; ` +
+        `no shift opened, ${this.carried.length} carried job(s)` +
+        `${schedule.mobileOpenNow ? ', mobile units still working' : ''}`,
+    );
+
+    if (schedule.mobileOpenNow && sampled) {
+      await this.workUntil(report, schedule.dayEnd, { kindLimit: 'MOBILE_UNIT' });
+    } else {
+      await this.advanceCarriedOnly(report, schedule.dayEnd);
+    }
+    report.carriedOut = this.carried.length;
+    return report;
+  }
+
+  /**
+   * Closes the shift and returns the instant it was recorded at.
+   *
+   * Clamped to the last legal instant for the phases that take one — maintenance dates
+   * its purchase orders from it. Belt and braces: the protection that matters is the
+   * work bound, because the shift port's `clockOut` takes no instant and the backend
+   * stamps `endAtUtc` from its own clock.
+   */
+  private async closeShift(report: DayReport, schedule: DaySchedule): Promise<Date> {
+    void report;
+    const closedAt = clampToGrace(await this.deps.now(), schedule);
+    await this.deps.shift.clockOut(closedAt);
+    await this.deps.shift.approveTime(closedAt);
+    return closedAt;
+  }
+
+  /**
    * May this job take a step at this instant?
    *
-   * A mobile-unit job always may. A bay job may inside the window, and inside the
-   * grace *only to finish* — which is the same thing here, because a job in the
-   * grace has already started and the intake loop above refuses to open new work
-   * once the window has closed.
+   * A mobile-unit job always may. A bay job may inside the window, and inside the grace
+   * only to *finish* — the intake loop refuses to open new bay work once the window has
+   * closed, so anything still running in the grace is a car already on a lift.
    */
   private mayWorkNow(job: RunnableJob, now: Date): boolean {
     if (!job.gatedByHours) {

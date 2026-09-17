@@ -461,6 +461,54 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
     expect(observed.toISOString().slice(0, 10)).toBe('2025-11-03');
   });
 
+  it('finishes a started bay job in the grace even with after-hours mobile work switched off', async () => {
+    // The grace belongs to the mechanic finishing a car, not to the mobile flag. Before
+    // this, bay jobs only advanced past close because the after-hours mobile stretch
+    // pulled them along, so with the flag off nothing ever used the grace and
+    // `mayWorkNow`'s grace branch was dead code.
+    const { runner, jobs, calls } = harness({
+      startIso: '2025-11-03T17:45:00Z',
+      stepMinutes: 15,
+      jobSteps: 3,
+      jobsToday: 1,
+      concurrency: 1,
+      calendar: spec({ mobileAfterHours: false }),
+      rosters: [roster({ freePositions: [{ kind: 'BAY', id: 'bay-1', name: 'Bay 01' }], idleTechnicianIds: ['tech-a'] })],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.workordersCompleted).toBe(1);
+    const lastStep = jobs[0].ranAt[jobs[0].ranAt.length - 1];
+    // Past close, and inside the grace.
+    expect(lastStep.getTime()).toBeGreaterThanOrEqual(Date.parse('2025-11-03T18:00:00Z'));
+    expect(new ShopCalendar(spec()).withinGrace(lastStep, 'BAY')).toBe(true);
+    expect(calls).toContain('clockOut');
+  });
+
+  it('keeps the mechanic on the clock while the car is finished', async () => {
+    // The grace stretch runs BEFORE clock-out, so the labor and the payroll entry agree
+    // about who was working. Half the grace is the stretch; the rest is margin for the
+    // overshooting tick and the clock-out fan-out.
+    const { runner, jobs, at } = harness({
+      startIso: '2025-11-03T17:45:00Z',
+      stepMinutes: 15,
+      jobSteps: 3,
+      jobsToday: 1,
+      concurrency: 1,
+      rosters: [roster({ freePositions: [{ kind: 'BAY', id: 'bay-1', name: 'Bay 01' }], idleTechnicianIds: ['tech-a'] })],
+    });
+
+    await runner.runDay(1);
+
+    const lastStep = jobs[0].ranAt[jobs[0].ranAt.length - 1];
+    const observed = at.clockOutObserved as Date;
+    // Work finished first, then the shift closed — and the close is still legal.
+    expect(observed.getTime()).toBeGreaterThanOrEqual(lastStep.getTime());
+    expect(new ShopCalendar(spec()).withinGrace(observed, 'BAY')).toBe(true);
+    expect(observed.getTime()).toBe((at.clockOut as Date).getTime());
+  });
+
   it('reports a day whose window closed before work could start, rather than a quiet success', async () => {
     // SHIFT-IN and the appointment phases are gateway calls, and at a high scale a
     // handful of them is virtual hours. If the window has gone by the time work is due
