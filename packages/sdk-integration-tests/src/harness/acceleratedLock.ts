@@ -178,19 +178,21 @@ export class AcceleratedLock {
             try {
               this.writeLock(previous, 'wx');
             } catch {
-              // EEXIST here is benign — someone else took the lock, so one exists and is
-              // held. Anything else (the same EROFS/ENOSPC/EACCES that failed the
-              // replacement will fail this too) means the file is gone and mutual
-              // exclusion is off, which the thrown error has to say rather than imply.
-              if (!existsSync(this.path)) {
-                throw new Error(
-                  `[accel] ${this.path} could not be written (${(retryError as Error).message}) and the stale ` +
-                    'lock it replaced could not be put back, so there is now NO lock file: the next accelerated ' +
-                    'run will acquire freely and two runs could write to the same backend. Restore or recreate ' +
-                    'the file, or point ITEST_ACCEL_LOCK_FILE somewhere writable, before running again.',
-                );
-              }
+              // EEXIST here is benign: someone else took the lock, so one exists and is
+              // held. Any other failure is checked below, with the no-`previous` case.
             }
+          }
+          // Checked whatever the restore did, and whether there was anything to restore
+          // at all: `previous` is undefined exactly when the read failed (EACCES, an
+          // unreadable mount), and `rmSync(force)` has still deleted the file by then —
+          // the arm most in need of this message was the one arm not covered by it.
+          if (!existsSync(this.path)) {
+            throw new Error(
+              `[accel] ${this.path} could not be written (${(retryError as Error).message}) and the stale ` +
+                'lock it replaced could not be put back, so there is now NO lock file: the next accelerated ' +
+                'run will acquire freely and two runs could write to the same backend. Restore or recreate ' +
+                'the file, or point ITEST_ACCEL_LOCK_FILE somewhere writable, before running again.',
+            );
           }
           throw retryError;
         }

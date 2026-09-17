@@ -215,10 +215,13 @@ export class AcceleratedDayRunner {
     // open window — the violation the end-of-run audit raises — so this is not a day
     // the shop can work. Mobile units still can.
     if (!this.deps.calendar.isOpen(now, 'BAY')) {
-      report.skipped = 'window-missed';
+      // A wait can land on a day the shop does not open at all (across a weekend), and
+      // that is a closed day, not a missed window. The closed-day branch above judged
+      // the *pre-wait* instant, so this is where it gets decided for the post-wait one.
+      report.skipped = this.deps.calendar.isWorkingDay(now) ? 'window-missed' : 'closed';
       this.log(
-        `day ${dayNumber} (${report.virtualDate}) — the open window was missed at ` +
-          `${now.toISOString()}; no shift opened` +
+        `day ${dayNumber} (${report.virtualDate}) — ${report.skipped === 'closed' ? 'shop closed' : 'open window missed'}` +
+          ` at ${now.toISOString()}; no shift opened` +
           `${this.deps.calendar.isOpen(now, 'MOBILE_UNIT') ? ', mobile units still working' : ''}`,
       );
       if (this.deps.calendar.isOpen(now, 'MOBILE_UNIT') && sampled) {
@@ -277,11 +280,40 @@ export class AcceleratedDayRunner {
     //
     // A job unfinished at close is carried to the next open day. That is the modelled
     // behaviour anyway — the car stays in the shop overnight.
+    // Re-read before anything is derived from it. SHIFT-IN and the appointment phases
+    // are gateway calls, and at a thousandfold scale a handful of those is virtual
+    // hours — bounds taken from the pre-shift instant are the same stale-instant defect
+    // that `dayEnd` had, and would silently put the work bound in the past.
+    now = await this.deps.now();
+
+    // The shift opened, so the window was open then. If getting here has cost so much
+    // virtual time that the window has since closed, the day can no longer work — and
+    // must say so rather than report a successful day with nothing in it.
+    //
+    // `closesAt` answers null outside the window, so it is the test: falling back to the
+    // day's end here is what the bound-at-close fix exists to prevent, and adding the
+    // re-read above is what made this case reachable again.
     const closesAt = this.deps.calendar.closesAt(now, 'BAY');
+    if (closesAt === null) {
+      report.failures.push(
+        `the open window had already closed by ${now.toISOString()} when work was due to start — ` +
+          'opening the shift and booking appointments cost more virtual time than the window had left. ' +
+          'Lower pos.time.accelerated.scale, or widen ITEST_ACCEL_OPEN_TIME / _CLOSE_TIME.',
+      );
+      await this.deps.shift.clockOut(now);
+      await this.deps.shift.approveTime(now);
+      report.carriedOut = this.carried.length;
+      return report;
+    }
+
     const graceMs = this.deps.calendar.graceMinutes * 60_000;
-    // The last legal instant for the shift to end, for the clamp below.
-    const graceLimit = closesAt === null ? now : new Date(closesAt.getTime() + graceMs - 1);
-    const workBound = closesAt !== null && closesAt.getTime() < dayEnd.getTime() ? closesAt : dayEnd;
+    // The last legal instant for the shift to end. Held below midnight as well as inside
+    // the grace: the grace goes up to 1440 minutes, and an instant past midnight belongs
+    // to a day whose window this comparison knows nothing about.
+    const graceLimit = new Date(
+      Math.min(closesAt.getTime() + graceMs - 1, nextUtcMidnight(closesAt).getTime() - 1),
+    );
+    const workBound = closesAt.getTime() < dayEnd.getTime() ? closesAt : dayEnd;
 
     const target = this.deps.jobsToday(now);
     const worked = await this.workUntil(report, workBound, { rosters, target });

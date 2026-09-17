@@ -269,11 +269,23 @@ Gating rules, stated once so every suite copy can cite them:
   mobile crew is on call rather than on the clock.
 - **Maintenance is floor work** and runs only on worked open days.
 - **The in-hours work loop is bounded at bay close**, and
-  `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` (default 90) is what **absorbs the overshoot**
-  rather than being extra working time. The loop can only check its bound between
-  ticks, so it exits one tick past close; the grace is the margin that keeps that tick
-  and the clock-out legal. A job unfinished at close is carried to the next open day —
-  the car stays in the shop overnight, which is the modelled behaviour anyway.
+  `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` (default 90) is the margin that keeps the
+  overshoot legal rather than a second working window. The loop can only check its
+  bound between ticks, so it exits one tick past close; the grace covers that tick and
+  the clock-out. **A job already started does finish inside the grace** — no *new* bay
+  work starts after close — and one still open at the grace end is carried to the next
+  open day, because the car stays in the shop overnight.
+- **The shift fan-out is parallel, and that is load-bearing.** The backend stamps each
+  `endAtUtc` when its own `stopWorkSession` runs, so clocking people out one at a time
+  puts the last entry N gateway calls past the first. At scale 4,380 that is ~15 virtual
+  minutes per call: ten people sequentially is 146 minutes, past the grace, and the
+  payroll audit fails on the tail for a run that did nothing wrong. In parallel the whole
+  fan-out costs about one call.
+- **Bounds are derived from a clock read taken after the shift and appointment
+  phases.** Those are gateway calls, and at a thousandfold scale a handful of them is
+  virtual hours; a bound taken before them can already be in the past. A day whose
+  window has closed by the time work is due to start reports a failure rather than a
+  successful day with nothing in it.
 - **The shift must end strictly inside the grace.** `withinGrace` is strict, so the
   grace end itself is illegal, and this cannot be fixed at the call site: the shift
   port's `clockOut` takes no instant, and the backend stamps `endAtUtc` from its own

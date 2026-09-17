@@ -128,6 +128,8 @@ const harness = (options: {
   jobKind?: 'BAY' | 'MOBILE_UNIT';
   /** Virtual minutes the WAIT-OPEN overshoots its target by. */
   waitOvershootMinutes?: number;
+  /** Virtual minutes each non-work phase (shift, appointments) consumes. */
+  phaseCostMinutes?: number;
   finish?: JobOutcome;
   jobLimit?: number;
 }): Harness => {
@@ -152,11 +154,16 @@ const harness = (options: {
       clockIn: async (at: Date) => {
         calls.push('clockIn');
         at_.clockIn = at;
+        clock.advance(options.phaseCostMinutes ?? 0);
         return ['tech-a', 'tech-b'];
       },
       clockOut: async (at: Date) => {
         calls.push('clockOut');
         at_.clockOut = at;
+        // What the clock actually said. `at` is clamped to the grace limit, so asserting
+        // on it alone is vacuous — any overshoot is clamped back into legality before a
+        // test can see it, which is how the cycle-2 assertion passed on an illegal value.
+        at_.clockOutObserved = clock.peek();
         return ['tech-a', 'tech-b'];
       },
       approveTime: async (at: Date) => {
@@ -177,10 +184,12 @@ const harness = (options: {
     appointments: {
       book: async () => {
         calls.push('bookAppointments');
+        clock.advance(options.phaseCostMinutes ?? 0);
         return 2;
       },
       convertDue: async () => {
         calls.push('convertAppointments');
+        clock.advance(options.phaseCostMinutes ?? 0);
         return 1;
       },
     },
@@ -414,7 +423,7 @@ describe('AcceleratedDayRunner — closing time', () => {
 });
 
 describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
-  it('clocks out at close plus grace, not at midnight, even with mobile work still to do', async () => {
+  it('clocks out inside the grace, not at midnight, even with mobile work still to do', async () => {
     // The regression: with a mobile unit free, the work loop used to run to midnight
     // and clockOut was then handed a next-day instant. The payroll entry that produces
     // ends hours past close, which is precisely what the end-of-run audit raises — the
@@ -439,12 +448,40 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
     await runner.runDay(1);
 
     const clockOut = at.clockOut as Date;
+    const observed = at.clockOutObserved as Date;
     expect(clockOut).toBeDefined();
-    // Asserted through the calendar, not against a hand-computed instant. `<= 19:30`
-    // passed on exactly close+grace, which `withinGrace` rejects (it is strict) — so the
-    // test green-lit the one value the end-of-run audit fails on.
-    expect(new ShopCalendar(spec()).withinGrace(clockOut, 'BAY')).toBe(true);
-    expect(clockOut.toISOString().slice(0, 10)).toBe('2025-11-03');
+    const calendar = new ShopCalendar(spec());
+
+    // The instant the clock really stood at, not the clamped argument: the backend stamps
+    // the entry from its own clock, so this is the value the end-of-run audit will judge.
+    expect(calendar.withinGrace(observed, 'BAY')).toBe(true);
+    // And the clamp did not have to fire — if it did, the real clock-out was already
+    // illegal and only the reported instant was legal.
+    expect(observed.getTime()).toBe(clockOut.getTime());
+    expect(observed.toISOString().slice(0, 10)).toBe('2025-11-03');
+  });
+
+  it('reports a day whose window closed before work could start, rather than a quiet success', async () => {
+    // SHIFT-IN and the appointment phases are gateway calls, and at a high scale a
+    // handful of them is virtual hours. If the window has gone by the time work is due
+    // to start, the day must say so — previously it reported a successful day with
+    // `clockedIn > 0` and nothing done, which Z3 and Z4 both pass.
+    const { runner, calls } = harness({
+      startIso: '2025-11-03T17:55:00Z',
+      stepMinutes: 15,
+      jobsToday: 2,
+      concurrency: 1,
+      // The shift phases themselves consume the rest of the window.
+      phaseCostMinutes: 10,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.failures[0]).toMatch(/open window had already closed/);
+    expect(report.workordersCompleted).toBe(0);
+    // The people who were clocked in are still clocked out.
+    expect(calls).toContain('clockIn');
+    expect(calls).toContain('clockOut');
   });
 
   it('leaves the clock before midnight so the caller does not skip a virtual day', async () => {

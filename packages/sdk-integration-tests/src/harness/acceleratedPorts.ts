@@ -121,6 +121,16 @@ export function createShiftPort(
   };
 
   return {
+    /**
+     * Opens the shift for everyone, in parallel.
+     *
+     * Parallel because the virtual clock makes a sequential fan-out expensive in a way
+     * it never is on a normal clock: at scale 8,760 one 200ms gateway call is about 29
+     * *virtual* minutes, so clocking ten people in one at a time — two calls each —
+     * would spend most of a working day before any work started, and would push every
+     * bound derived afterwards past the window. Per person the two calls stay ordered,
+     * because the stale session has to be closed before a fresh one opens.
+     */
     async clockIn(at: Date): Promise<string[]> {
       if (everyone.length === 0) {
         throw new Error(
@@ -128,29 +138,42 @@ export function createShiftPort(
             'A virtual day with no staff writes no labor and no payroll.',
         );
       }
-      onTheClock = [];
-      for (const personId of everyone) {
-        await closeStale(personId);
-        const started = await call(`startWorkSession ${personId}`, () =>
-          admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
-        );
-        if (!readString(started, 'sessionId')) {
-          throw new Error(`startWorkSession for ${personId} returned no sessionId — the shift was not opened`);
-        }
-        onTheClock.push(personId);
-      }
+      const opened = await Promise.all(
+        everyone.map(async (personId) => {
+          await closeStale(personId);
+          const started = await call(`startWorkSession ${personId}`, () =>
+            admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
+          );
+          if (!readString(started, 'sessionId')) {
+            throw new Error(`startWorkSession for ${personId} returned no sessionId — the shift was not opened`);
+          }
+          return personId;
+        }),
+      );
+      onTheClock = opened;
       log(`${at.toISOString().slice(0, 16)} — ${onTheClock.length} on the clock`);
       return onTheClock;
     },
 
+    /**
+     * Closes the shift for everyone, in parallel — and this one is load-bearing.
+     *
+     * The backend stamps each `endAtUtc` from its own accelerated clock at the moment
+     * its `stopWorkSession` runs, so a sequential fan-out puts the last person's entry
+     * N calls past the first. At scale 4,380 that is about 15 virtual minutes per call:
+     * ten people sequentially is 146 virtual minutes, past the 90-minute grace, and the
+     * end-of-run payroll audit fails on the tail — for a run that did nothing wrong.
+     * In parallel the whole fan-out costs about one call.
+     */
     async clockOut(): Promise<string[]> {
-      const clockedOut: string[] = [];
-      for (const personId of onTheClock) {
-        await call(`stopWorkSession ${personId}`, () =>
-          admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } }),
-        );
-        clockedOut.push(personId);
-      }
+      const clockedOut = await Promise.all(
+        onTheClock.map(async (personId) => {
+          await call(`stopWorkSession ${personId}`, () =>
+            admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } }),
+          );
+          return personId;
+        }),
+      );
       onTheClock = [];
       return clockedOut;
     },
