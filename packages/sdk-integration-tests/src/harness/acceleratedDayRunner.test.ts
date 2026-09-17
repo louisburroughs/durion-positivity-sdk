@@ -112,6 +112,8 @@ interface Harness {
   jobs: FakeJob[];
   clock: ReturnType<typeof fakeClock>;
   calls: string[];
+  /** The virtual instant each phase was handed. */
+  at: Record<string, Date | undefined>;
 }
 
 const harness = (options: {
@@ -131,6 +133,8 @@ const harness = (options: {
   const ledger = new ResourceLedger();
   const jobs: FakeJob[] = [];
   const calls: string[] = [];
+  /** The virtual instant each phase was handed, so the tests can pin when it ran. */
+  const at_: Record<string, Date | undefined> = {};
   const rosters = options.rosters ?? [roster()];
 
   const deps: DayRunnerDeps = {
@@ -143,24 +147,29 @@ const harness = (options: {
       },
     },
     shift: {
-      clockIn: async () => {
+      clockIn: async (at: Date) => {
         calls.push('clockIn');
+        at_.clockIn = at;
         return ['tech-a', 'tech-b'];
       },
-      clockOut: async () => {
+      clockOut: async (at: Date) => {
         calls.push('clockOut');
+        at_.clockOut = at;
         return ['tech-a', 'tech-b'];
       },
-      approveTime: async () => {
+      approveTime: async (at: Date) => {
         calls.push('approveTime');
+        at_.approveTime = at;
       },
     },
     maintenance: {
-      cycleCount: async () => {
+      cycleCount: async (at: Date) => {
         calls.push('cycleCount');
+        at_.cycleCount = at;
       },
-      restock: async () => {
+      restock: async (at: Date) => {
         calls.push('restock');
+        at_.restock = at;
       },
     },
     appointments: {
@@ -194,7 +203,7 @@ const harness = (options: {
     jobsToday: () => options.jobsToday ?? 2,
   };
 
-  return { runner: new AcceleratedDayRunner(deps), ledger, jobs, clock, calls };
+  return { runner: new AcceleratedDayRunner(deps), ledger, jobs, clock, calls, at: at_ };
 };
 
 describe('AcceleratedDayRunner — an open day', () => {
@@ -402,6 +411,125 @@ describe('AcceleratedDayRunner — closing time', () => {
   });
 });
 
+describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
+  it('clocks out at close plus grace, not at midnight, even with mobile work still to do', async () => {
+    // The regression: with a mobile unit free, the work loop used to run to midnight
+    // and clockOut was then handed a next-day instant. The payroll entry that produces
+    // ends hours past close, which is precisely what the end-of-run audit raises — the
+    // same reason no shift is opened on a closed day.
+    const { runner, at } = harness({
+      startIso: '2025-11-03T17:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40, // never finishes; keeps the loop fed
+      jobsToday: 6,
+      concurrency: 2,
+      rosters: [
+        roster({
+          freePositions: [
+            { kind: 'BAY', id: 'bay-1', name: 'Bay 01' },
+            { kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' },
+          ],
+          idleTechnicianIds: ['tech-a', 'tech-b'],
+        }),
+      ],
+    });
+
+    await runner.runDay(1);
+
+    const clockOut = at.clockOut as Date;
+    expect(clockOut).toBeDefined();
+    // Inside the window plus the 90-minute grace, and on the same calendar day.
+    expect(clockOut.getTime()).toBeLessThanOrEqual(Date.parse('2025-11-03T19:30:00Z'));
+    expect(clockOut.toISOString().slice(0, 10)).toBe('2025-11-03');
+  });
+
+  it('leaves the clock before midnight so the caller does not skip a virtual day', async () => {
+    // nextUtcMidnight() adds a day to whatever it is given, so a day that ended at
+    // exactly 00:00 made the run wait for the day *after* the next one — losing one
+    // virtual day per day worked, and converging halfway through a 365-day run.
+    const { runner, clock } = harness({
+      startIso: '2025-11-03T17:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 6,
+      concurrency: 2,
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    await runner.runDay(1);
+
+    expect(clock.peek().getTime()).toBeLessThanOrEqual(Date.parse('2025-11-04T00:00:00Z'));
+  });
+
+  it('hands maintenance the end of the worked window, not the opening instant', async () => {
+    const { runner, at } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 60,
+      jobSteps: 2,
+      jobsToday: 2,
+      concurrency: 1,
+    });
+
+    await runner.runDay(7);
+
+    const cycleCount = at.cycleCount as Date;
+    expect(cycleCount).toBeDefined();
+    // Work happened first, so the count cannot be stamped at 08:00.
+    expect(cycleCount.getTime()).toBeGreaterThan(Date.parse('2025-11-03T08:00:00Z'));
+  });
+
+  it('still works mobile units after the bays close, once the shift is shut', async () => {
+    const { runner, jobs, calls } = harness({
+      startIso: '2025-11-03T17:30:00Z',
+      stepMinutes: 15,
+      jobSteps: 2,
+      jobsToday: 6,
+      concurrency: 1,
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    await runner.runDay(1);
+
+    // Some mobile work landed after 18:00, and it happened after clockOut.
+    const afterClose = jobs.filter((job) =>
+      job.ranAt.some((ranAt) => ranAt.getTime() >= Date.parse('2025-11-03T18:00:00Z')),
+    );
+    expect(afterClose.length).toBeGreaterThan(0);
+    expect(calls.indexOf('clockOut')).toBeGreaterThan(-1);
+  });
+
+  it('does not restart the day\'s intake budget for the after-hours stretch', async () => {
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T17:40:00Z',
+      stepMinutes: 10,
+      jobSteps: 1,
+      jobsToday: 3,
+      concurrency: 1,
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    await runner.runDay(1);
+
+    // Three customers for the day means three, not three before close and three after.
+    expect(jobs).toHaveLength(3);
+  });
+});
+
 describe('AcceleratedDayRunner — a closed day', () => {
   it('opens no shift and runs no maintenance on a Sunday, whatever the mobile units do', async () => {
     const { runner, calls } = harness({ startIso: '2025-11-09T09:00:00Z', stepMinutes: 30 });
@@ -464,6 +592,19 @@ describe('AcceleratedDayRunner — a closed day', () => {
     await runner.runDay(7);
 
     expect(jobs.every((job) => job.label.includes('mu-1'))).toBe(true);
+  });
+
+  it('reports a closed day whose board could not be read, rather than passing quietly', async () => {
+    const { runner } = harness({
+      startIso: '2025-11-09T09:00:00Z',
+      stepMinutes: 60,
+      jobsToday: 2,
+      rosters: [],
+    });
+
+    const report = await runner.runDay(7);
+
+    expect(report.failures[0]).toMatch(/no site reported a usable dispatch board/);
   });
 
   it('does nothing at all on a closed day when mobile units are gated too', async () => {

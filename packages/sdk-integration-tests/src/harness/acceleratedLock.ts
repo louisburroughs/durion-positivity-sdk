@@ -99,7 +99,7 @@ export class AcceleratedLock {
     }
 
     try {
-      writeFileSync(this.path, JSON.stringify(holder, null, 2), { encoding: 'utf8', flag: 'wx' });
+      this.writeLock(JSON.stringify(holder, null, 2), 'wx');
     } catch (error) {
       if ((error as { code?: string }).code !== 'EEXIST') {
         throw error;
@@ -157,13 +157,31 @@ export class AcceleratedLock {
         // decide about the new holder.
         continue;
       }
+      // Kept so the unlink can be undone. Without this, a replacement that fails for
+      // any reason other than EEXIST — EACCES, ENOSPC, a read-only mount — propagates
+      // with the lock file *gone*, and the next run finds nothing and acquires freely.
+      // Mutual exclusion would be silently off, which is worse than failing to take it.
+      let previous: string | undefined;
+      try {
+        previous = readFileSync(this.path, 'utf8');
+      } catch {
+        previous = undefined;
+      }
       rmSync(this.path, { force: true });
 
       try {
-        writeFileSync(this.path, JSON.stringify(holder, null, 2), { encoding: 'utf8', flag: 'wx' });
+        this.writeLock(JSON.stringify(holder, null, 2), 'wx');
         return;
       } catch (retryError) {
         if ((retryError as { code?: string }).code !== 'EEXIST') {
+          if (previous !== undefined) {
+            try {
+              this.writeLock(previous, 'wx');
+            } catch {
+              // Someone else took it in the meantime, which is a correct outcome: the
+              // lock exists and is held by a live run.
+            }
+          }
           throw retryError;
         }
         // Somebody created it between our unlink and our create.
@@ -199,6 +217,17 @@ export class AcceleratedLock {
       remove();
     }
     this.releaseHandlers = [];
+  }
+
+  /**
+   * The only place this class writes the lock file.
+   *
+   * Extracted so a test can make a single write fail — the restore-after-unlink path
+   * cannot be reached otherwise, and what it guards (the lock file vanishing, leaving
+   * mutual exclusion silently off) is too consequential to ship unexercised.
+   */
+  private writeLock(body: string, flag: 'wx' | 'w'): void {
+    writeFileSync(this.path, body, { encoding: 'utf8', flag });
   }
 
   readHolder(): LockHolder | undefined {

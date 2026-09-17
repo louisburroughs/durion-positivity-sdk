@@ -113,6 +113,37 @@ describe('AcceleratedLock', () => {
     expect(JSON.parse(readFileSync(path, 'utf8')).runId).toBe('accel-winner');
   });
 
+  it('puts a stale lock back when the replacement cannot be written', () => {
+    // The unlink must be undoable. Without the restore, a replacement that fails for
+    // any reason other than EEXIST — a read-only mount, no space — propagated with the
+    // lock file *gone*, and the next run found nothing and acquired freely: mutual
+    // exclusion silently off, which is worse than failing to take the lock.
+    const path = freshPath();
+    holderFile(path, { runId: 'accel-dead', pid: 4_194_303 });
+    const before = readFileSync(path, 'utf8');
+
+    const lock = new AcceleratedLock(path, identity);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const writeLock = (lock as any).writeLock.bind(lock) as (body: string, flag: string) => void;
+    let failedOnce = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    jest.spyOn(lock as any, 'writeLock').mockImplementation(((body: string, flag: string) => {
+      if (!failedOnce && body.includes('accel-1')) {
+        failedOnce = true;
+        const failure = new Error('EROFS: read-only file system') as Error & { code?: string };
+        failure.code = 'EROFS';
+        throw failure;
+      }
+      writeLock(body, flag);
+    }) as never);
+
+    expect(() => lock.acquire()).toThrow(/EROFS/);
+    // The stale lock is back, byte for byte: the next run sees a lock and decides about
+    // it, rather than finding nothing.
+    expect(existsSync(path)).toBe(true);
+    expect(readFileSync(path, 'utf8')).toBe(before);
+  });
+
   it('is safe to release twice, and to release one never acquired', () => {
     const path = freshPath();
     const lock = new AcceleratedLock(path, identity);

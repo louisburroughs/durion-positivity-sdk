@@ -270,10 +270,16 @@ Gating rules, stated once so every suite copy can cite them:
 - **Maintenance is floor work** and runs only on worked open days.
 - **A job that started inside the window may finish across the close
   boundary**, up to `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` of virtual time
-  (default 90) — a mechanic finishes the car they are on. No *new* labor starts
+  (default 90) — a mechanic finishes the car they are on. No *new* bay work starts
   after close. A job still open past the grace period is carried to the next
   open day as work in progress, which is realistic and exercises the day
   boundary on purpose.
+- **The shift closes at the grace end at the latest**, and the in-hours work loop is
+  bounded there rather than at midnight. A loop that ran to midnight would have
+  `clockOut` stamp a payroll entry hours past close — the violation the end-of-run
+  audit raises — which is the same reason no shift is opened on a closed day. The
+  after-hours mobile stretch runs *after* the shift is closed, so nobody is on the
+  clock for it.
 - **A day boundary may arrive mid-request.** Every scenario records the virtual
   instant it observed before a transition and asserts the date the *backend*
   used, never the date the test started with.

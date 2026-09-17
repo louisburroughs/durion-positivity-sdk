@@ -57,6 +57,15 @@ export interface YearRunResult {
   ledger: ResourceLedger;
   journal: AcceleratedJournal;
   failures: string[];
+  /**
+   * Workorders an interrupted run left holding a bay, which this run released rather
+   * than completed.
+   *
+   * Deliberately NOT in `failures`: the suite asserts `failures` is empty, and a
+   * resume that cleanly reclaims its predecessor's bays is the journal working as
+   * designed, not a failed day. They are reported so the open workorders are visible.
+   */
+  reclaimed: string[];
 }
 
 export interface YearRunOptions {
@@ -174,6 +183,8 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
   // object left to finish or release them — so the workorders are released here and
   // named, rather than silently stranding a bay and a mechanic.
   const stranded = journal.snapshot().openClaims;
+  const reclaimed: string[] = [];
+  const stillStuck: typeof stranded = [];
   if (stranded.length > 0) {
     log(`${stranded.length} claim(s) were left open by the interrupted run; releasing them`);
     for (const claim of stranded) {
@@ -181,6 +192,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
         log(`  ${claim.positionId}/${claim.technicianId}: no workorder recorded, nothing to release`);
         continue;
       }
+      let releasedBoth = true;
       // Best effort, in the order that frees the board: the position first, then the
       // technician. A failure here is reported rather than fatal — the run can work
       // the remaining bays, and a human needs to know which one it could not reclaim.
@@ -205,6 +217,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
         try {
           await attempt();
         } catch (error) {
+          releasedBoth = false;
           log(
             `  WARNING: could not release the ${what} on workorder ${claim.workorderId} ` +
               `(${claim.positionId}/${claim.technicianId}): ${await formatError(error)}. ` +
@@ -212,13 +225,24 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
           );
         }
       }
-      log(`  released ${claim.positionId}/${claim.technicianId} from workorder ${claim.workorderId}`);
-      failures.push(
-        `workorder ${claim.workorderId} was left open by an interrupted run and was released rather than ` +
-          'completed — it is not part of this run\'s completed work',
-      );
+
+      if (releasedBoth) {
+        log(`  released ${claim.positionId}/${claim.technicianId} from workorder ${claim.workorderId}`);
+        reclaimed.push(
+          `workorder ${claim.workorderId} was left open by an interrupted run and was released rather than ` +
+            'completed — it is not part of this run\'s completed work',
+        );
+      } else {
+        // Kept in the journal: it is the only record of which bay is still stuck, and
+        // clearing it would leave nothing for a later resume to retry or a human to find.
+        stillStuck.push(claim);
+        failures.push(
+          `workorder ${claim.workorderId} is still holding ${claim.positionId}/${claim.technicianId} — ` +
+            'the release failed and the bay stays out of service until it is unpicked by hand',
+        );
+      }
     }
-    journal.recordOpenClaims([]);
+    journal.recordOpenClaims(stillStuck);
     journal.flush();
   }
 
@@ -246,6 +270,12 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     // Sampling thins the intake on a fast clock: only every Nth open day takes new
     // work. Carried jobs are still advanced on the days in between.
     const sampled = accel.sampleEvery === 1 || dayNumber % accel.sampleEvery === 1 % accel.sampleEvery;
+
+    // Recorded before the day runs. After-hours mobile work can leave the clock on the
+    // next calendar day, and `waitForNextDay` adds a day to whatever it is given — so
+    // passing the *end* instant would skip a virtual day every time, and a 365-day run
+    // would span two calendar years and converge halfway through.
+    const dayStart = await clock.now();
 
     let report: DayReport;
     try {
@@ -306,10 +336,11 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       );
     }
 
-    // The next day begins when the virtual calendar says so.
+    // The next day begins when the virtual calendar says so — measured from this day's
+    // start. Already past it (the work ran through midnight) returns at once.
     if (dayNumber < totalDays) {
       try {
-        await timer.waitForNextDay(await clock.now());
+        await timer.waitForNextDay(dayStart);
       } catch (error) {
         if (error instanceof ClockConvergedError) {
           stoppedBecause = 'converged';
@@ -351,6 +382,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     ledger,
     journal,
     failures,
+    reclaimed,
   };
 
   log(

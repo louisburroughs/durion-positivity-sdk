@@ -237,24 +237,62 @@ export class AcceleratedDayRunner {
     report.appointmentsConverted = await this.deps.appointments.convertDue(now);
     report.appointmentsBooked = await this.deps.appointments.book(now, rosters.length);
 
-    // WORK. Carried jobs first: they are already holding a bay, and finishing them
-    // is what frees capacity for today's intake.
-    await this.workUntil(report, dayEnd, { rosters, target: this.deps.jobsToday(now) });
+    // WORK, inside the hours. Bounded at close plus the overrun grace, NOT at
+    // midnight: the shift is still open here, and a work loop that ran to midnight
+    // would have `clockOut` below stamp a payroll entry hours past close — the exact
+    // violation the end-of-run audit raises, and the same reason no shift is opened on
+    // a closed day. After-hours mobile work happens further down, once nobody is on
+    // the clock.
+    const closesAt = this.deps.calendar.closesAt(now, 'BAY');
+    const graceMs = this.deps.calendar.graceMinutes * 60_000;
+    const shiftEnd = closesAt === null ? now : new Date(closesAt.getTime() + graceMs);
+    const workBound = shiftEnd.getTime() < dayEnd.getTime() ? shiftEnd : dayEnd;
 
-    // SHIFT-OUT.
-    await this.deps.shift.clockOut(now);
-    await this.deps.shift.approveTime(now);
+    const target = this.deps.jobsToday(now);
+    const worked = await this.workUntil(report, workBound, { rosters, target });
+    now = worked.now;
+
+    // SHIFT-OUT, at the end of the worked window rather than at midnight.
+    //
+    // Clamped to the grace end. The loop can only check its bound between ticks, and a
+    // tick advances the clock by however long its jobs' steps took, so the last tick
+    // can land past the bound. The instant this run *reports* clocking out must still
+    // be a legal one.
+    //
+    // The backend stamps the entry with its own clock, so the residual risk is a tick
+    // that overshoots the grace end in real life. A tick is a handful of gateway calls
+    // — minutes of virtual time — against a 90-minute default grace, so the margin is
+    // wide; and Z13 is exactly the assertion that would catch it if it ever were not.
+    const shiftClosedAt = now.getTime() > shiftEnd.getTime() ? shiftEnd : now;
+    await this.deps.shift.clockOut(shiftClosedAt);
+    await this.deps.shift.approveTime(shiftClosedAt);
 
     // MAINTENANCE, on the due virtual day of the run.
     if (dayNumber % 7 === 0) {
-      await this.deps.maintenance.cycleCount(now);
+      await this.deps.maintenance.cycleCount(shiftClosedAt);
       report.cycleCount = true;
     }
     if (dayNumber % 30 === 0) {
-      await this.deps.maintenance.restock(now);
+      await this.deps.maintenance.restock(shiftClosedAt);
       report.restock = true;
     }
 
+    // AFTER HOURS. Mobile units keep working once the bays have shut, and only now —
+    // with the shift closed and nobody on the clock — can that happen without writing
+    // a payroll entry outside the shop's hours. Bounded by the day's end so the stretch
+    // cannot spend tomorrow's intake; the day's own target carries over rather than
+    // restarting, so "12 customers a day" stays 12.
+    if (this.deps.calendar.isOpen(now, 'MOBILE_UNIT') && now.getTime() < dayEnd.getTime()) {
+      const afterHours = await this.workUntil(report, dayEnd, {
+        rosters,
+        target,
+        startedAlready: worked.started,
+        kindLimit: 'MOBILE_UNIT',
+      });
+      now = afterHours.now;
+    }
+
+    report.carriedOut = this.carried.length;
     return report;
   }
 
@@ -307,8 +345,14 @@ export class AcceleratedDayRunner {
   private async workUntil(
     report: DayReport,
     until: Date,
-    options: { rosters?: SiteRoster[]; target?: number; kindLimit?: PositionKind } = {},
-  ): Promise<void> {
+    options: {
+      rosters?: SiteRoster[];
+      target?: number;
+      kindLimit?: PositionKind;
+      /** Intake already spent earlier in the same virtual day. */
+      startedAlready?: number;
+    } = {},
+  ): Promise<{ now: Date; started: number }> {
     let now = await this.deps.now();
 
     // Carried holds come back into the working set so this stretch can carry them
@@ -321,7 +365,7 @@ export class AcceleratedDayRunner {
 
     let rosters = options.rosters;
     const target = options.target ?? this.deps.jobsToday(now);
-    let started = 0;
+    let started = options.startedAlready ?? 0;
 
     for (;;) {
       if (now.getTime() >= until.getTime()) {
@@ -342,6 +386,12 @@ export class AcceleratedDayRunner {
           }
         }
         if (rosters.length === 0) {
+          // Same treatment as the open-day path: a stretch that could have worked but
+          // found no usable board is a reportable gap, not a quiet success.
+          const reason = 'no site reported a usable dispatch board — nothing could be worked';
+          if (!report.failures.includes(reason)) {
+            report.failures.push(reason);
+          }
           break;
         }
         const claim = this.nextClaim(rosters, now, kind === 'ANY' ? undefined : kind);
@@ -382,14 +432,15 @@ export class AcceleratedDayRunner {
       }
     }
 
-    // Whatever is still open keeps its position and its mechanic and is carried: the
-    // car is still in the shop.
+    // Whatever is still open keeps its position and its mechanic and is held: the car
+    // is still in the shop. `runDay` owns `report.carriedOut`, because a single day can
+    // call this twice — once inside the hours and once for after-hours mobile work.
     for (const entry of active) {
       this.deps.ledger.carry(entry.claim);
       this.carried.push(entry);
-      this.log(`  carried ${entry.job.label} to the next open day at step '${entry.job.nextStep}'`);
+      this.log(`  holding ${entry.job.label} at step '${entry.job.nextStep}' (${now.toISOString()})`);
     }
-    report.carriedOut = this.carried.length;
+    return { now, started };
   }
 
   /**

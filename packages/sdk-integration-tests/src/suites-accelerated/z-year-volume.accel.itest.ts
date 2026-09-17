@@ -60,6 +60,12 @@ describe('The accelerated year', () => {
     for (const failure of result.failures) {
       console.log(`[Z2] failure: ${failure}`);
     }
+    // Work an interrupted run left behind and this one released is reported separately:
+    // a resume that cleanly reclaims its predecessor's bays is the journal working as
+    // designed, not a failed day. A release that *failed* is a failure, and lands above.
+    for (const note of result.reclaimed) {
+      console.log(`[Z2] reclaimed on resume: ${note}`);
+    }
     expect(result.failures).toEqual([]);
     expect(result.totals.workordersFailed).toBe(0);
   });
