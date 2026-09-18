@@ -28,6 +28,11 @@ file is the operator's guide.
 | `f-time-reporting` | Labor sessions and timers, the payroll clock, and who decides on reported time |
 | `h-service-position` | A workorder's bay / mobile unit / HOLD position and its technician: one open workorder per bay or unit, HOLD unbounded, the two assignments independent |
 
+Each of these has an accelerated copy under `src/suites-accelerated`
+(`*.accel.itest.ts`) that runs against a backend whose clock starts a year in the
+past, plus `z-year-volume`, which drives 365 virtual days of shop activity. They
+are a separate run with a separate entry point — see *Accelerated year run*.
+
 Current state on alpha: **46 passing, 0 skipped, 0 failing**, in role mode, for
 suites 00-D. Suites E and F have not yet had a green run recorded here: the
 alpha `pos-location` service was returning 503 when they were written, which
@@ -102,7 +107,9 @@ backend.
    `GET /system/time`: a 404 means the normal clock and the run proceeds, a 200
    means the backend is mid-accelerated-run and the suite aborts before writing
    anything. Never run these tests against an accelerated backend — the virtual
-   clock will move underneath assertions that depend on real elapsed time.
+   clock will move underneath assertions that depend on real elapsed time. For a
+   backend that *is* accelerated, use the separate entry point in *Accelerated
+   year run* below.
 
 ---
 
@@ -137,6 +144,225 @@ global setup says so directly: *"cannot reach the backend at … Is the tunnel u
 Same commands, no tunnel, with `ITEST_BASE_URL=http://localhost:8080` and
 `ITEST_SECURITY_SERVICE_URL=http://localhost:8086` — which are the defaults, so
 usually just credentials are needed.
+---
+
+## Accelerated year run
+
+A second, separate entry point that builds **a year of financial transactions in
+1-6 hours** against a backend whose clock starts one year in the past.
+
+- How to stand that backend up:
+  [`ACCELERATED_BACKEND_DEPLOYMENT.md`](./ACCELERATED_BACKEND_DEPLOYMENT.md)
+- What the suite asserts and why:
+  [`BACKEND_INTERACTION_TEST_SPEC_ACCELERATED.md`](./BACKEND_INTERACTION_TEST_SPEC_ACCELERATED.md)
+
+It is not the same run as `npm run test:integration`, and the two cannot share a
+backend: the normal suite aborts when `GET /system/time` answers 200, and the
+accelerated suite aborts when it answers 404. That is deliberate — a normal test
+that measures real elapsed time is meaningless while the clock is moving 1,460×.
+
+| Command | Collects | Takes |
+| --- | --- | --- |
+| `npm run test:accelerated:parity` | the harness and A-H suite copies (`src/suites-accelerated/*.accel.itest.ts`, minus the year run) | minutes |
+| `npm run test:accelerated` | the parity copies, then `z-year-volume.accel.itest.ts` | 1-6 h |
+| `npm run populate:accelerated-year` | the same day runner as a populate run, asserting nothing | 1-6 h |
+
+Run the parity copies first. They fail in minutes on a broken contract instead of
+at hour five.
+
+### 1. Get an accelerated backend
+
+The clock lives in the backend, not in the tests, and standing one up is its own
+job: the anchors have to be generated once and shared by all 25 JVMs, and the alpha
+deploy path does not yet know the profile exists.
+
+**→ [`ACCELERATED_BACKEND_DEPLOYMENT.md`](./ACCELERATED_BACKEND_DEPLOYMENT.md)** —
+the local Compose recipe (works today, with a verified override), what is missing
+for alpha, how to verify every service really is on the accelerated clock, and how
+to put the environment back afterwards.
+
+The short version, for a local stack:
+
+```bash
+cd ~/IdeaProjects/durion-positivity-backend
+export POS_TIME_ACCELERATED_REAL_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+export POS_TIME_ACCELERATED_VIRTUAL_START=$(date -u -d '1 year ago' +%Y-%m-%dT%H:%M:%SZ)
+export POS_TIME_ACCELERATED_SCALE=1460
+# ...write docker-compose.accelerated.yml (see the deployment doc), then:
+docker compose -f docker-compose.yml -f docker-compose.accelerated.yml up -d
+```
+
+Verify before running anything:
+
+```bash
+curl -s http://localhost:18080/system/time | jq
+# {"virtualTime":"2025-09-18T...","scale":1460,"zone":"UTC",
+#  "accelerated":true,"converged":false,
+#  "realStart":"2026-09-17T...","virtualStart":"2025-09-17T..."}
+```
+
+`accelerated` must be `true` and `virtualStart` must be at least 360 days before
+`realStart`, or setup refuses to start. A 404 means the profile did not apply.
+
+### 2. Pick the scale from the time you have
+
+Virtual time is `min(virtualStart + scale × (now − realStart), now)`, so a
+one-year gap closes in `G / (scale − 1)` real time:
+
+| scale | real time for the year | real seconds inside a 10 h open window | verdict |
+| --- | --- | --- | --- |
+| 1,460 | ≈ 6 h | 24.7 | **default** — a job fits in one window; ~2,000 workorders |
+| 2,920 | ≈ 3 h | 12.3 | ~2 windows per job |
+| 4,380 | ≈ 2 h | 8.2 | ~3 windows per job |
+| 8,760 | ≈ 1 h | 4.1 | ~5 windows per job; a few hundred workorders |
+| 26,280 | ≈ 20 m | 1.4 | refused — not even two steps fit |
+
+The right-hand column is what matters: throughput is bounded by real event
+latency, not by the clock. One full workorder lifecycle is 20-25 gateway calls
+plus Kafka replication waits — 15-45 real seconds against alpha through the
+tunnel, which is more than a 6-hour run's open window at the faster scales.
+
+So a job is **not** required to finish in one window. It is advanced a step at a
+time, keeps its bay and its mechanic overnight, and spans as many open windows as
+it needs — a multi-day repair, which is also what keeps every labor call inside
+working hours no matter how fast the clock is. A job takes about
+`ceil(lifecycle / window)` open days, and with `C` in parallel the run completes
+roughly `C / that` jobs per open day.
+
+Global setup checks this before writing anything: it times `/system/time` round
+trips, works out whether at least a couple of steps fit in the tightest window,
+and **refuses to start** when they do not — printing the measured numbers and the
+highest scale that would have worked. It does not spend six hours writing two
+invoices, and it does not book a warm-up job to find out, because that would
+write a record before the decision was made.
+
+`ITEST_ACCEL_SAMPLE_EVERY=N` works every Nth open day and lets the clock race
+through the rest. It is a way to cut API load on a shared alpha, **not** a way to
+make a fast scale feasible — working fewer days does not make a day's window any
+wider. Carried jobs still advance on the days in between, and the weekly and
+monthly scheduled work is still asserted on its due virtual day.
+
+### 3. Hold the lock
+
+Only one accelerated run may write to alpha at a time, and while the accelerated
+profile is on **every non-accelerated run is blocked** (their guard aborts on a
+200). Take the advisory lock, and put the profile back afterwards.
+
+Global setup takes a **lock file** — `<journal>.lock` by default — before it
+writes anything, and releases it on success, on failure, and on Ctrl-C. A second
+run on the same machine fails immediately, naming the holder's run id, user, pid
+and timeline. A lock whose process is gone is taken over automatically, so a
+killed run does not need a hand edit; a lock held by another host never is,
+because a pid number there means nothing here.
+
+```bash
+# Optional: move the lock off the default path next to the journal.
+export ITEST_ACCEL_LOCK_FILE=/tmp/durion-accelerated.lock
+
+# The CI workflow's advisory object. Logged into the run record, NOT enforced by
+# this process — a lock file cannot see another machine.
+export ITEST_ACCEL_LOCK_URI=s3://durion-alpha-deploy/locks/accelerated.json
+```
+
+Cross-machine exclusion is the alpha workflow's `concurrency` group plus whoever
+holds that advisory object. Two operators on two laptops are not stopped by a
+lock file, so agree the window.
+
+### 4. Run it
+
+```bash
+# terminal 1 — the tunnel, left running
+./scripts/alpha-itest-tunnel.sh            # PowerShell twin: .\scripts\alpha-itest-tunnel.ps1
+
+# terminal 2 — from the repo root
+npm run test:accelerated:parity            # first: minutes
+npm run test:accelerated                   # then: the year
+```
+
+Same commands against a local Compose stack started with the accelerated
+override, with `ITEST_BASE_URL=http://localhost:8080`.
+
+### What a virtual day does
+
+Mechanics clock in when the shop opens and out when it closes. Appointments are
+booked a few virtual days ahead and converted when the clock reaches them.
+Estimates are lined, totalled and approved or declined; approved ones are
+promoted, given a mechanic and a bay or mobile unit, started, worked, completed,
+invoiced, and the invoice is paid. Cycle counts land on every 7th virtual day and
+restocks on every 30th.
+
+Two rules the run never breaks:
+
+- **No work outside working hours.** Default Mon-Fri 08:00-18:00, Sat
+  09:00-13:00, Sun and holidays closed. A job already started may finish up to
+  90 virtual minutes past close; nothing new starts after it. **Mobile units are
+  exempt** — they take work at any hour, which is what keeps a weekend
+  productive instead of idle.
+- **No double-booking.** A mechanic, bay, or mobile unit holds at most one open
+  workorder. The run claims the pair before it calls `assignTechnician` and
+  `assignServicePosition`, so it never asks for a resource it knows is held.
+  Each open day starts by reconciling against the dispatch board, so records left
+  open by a previous day or run count as occupied.
+
+Out of hours, a closed day still **starts** new mobile jobs as well as finishing
+carried ones — otherwise "any hour" would only mean "carried mobile work finishes".
+No shift is opened on a closed day, though: a mobile crew turning out on a Sunday is
+on call, not on the shop's clock, and a payroll entry there would fail the very audit
+that proves the hours rule.
+
+Hours cannot be read back from the API — `LocationResponseDTO` returns no
+`operatingHours`, `holidayClosures` or `timezone`, they are write-only on
+`patchLocation`. So the suite owns its calendar and, with
+`ITEST_ACCEL_PUBLISH_CALENDAR=true` (the default), patches the same hours and
+closures onto every site it touches so the backend's own refusals agree with the
+gate the tests apply.
+
+### Accelerated environment variables
+
+Every `ITEST_*` variable in *Environment contract* below applies unchanged. The
+accelerated entry point adds:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `ITEST_ACCEL_DAYS` | `365` | Virtual days to drive |
+| `ITEST_ACCEL_RUN_BUDGET_MS` | `23400000` (6 h 30 m) | Wall-clock ceiling; an overrun aborts with the virtual date and counts reached |
+| `ITEST_ACCEL_SAMPLE_EVERY` | `1` | Work every Nth open day; how a faster scale stays feasible |
+| `ITEST_ACCEL_CONCURRENCY` | `8` | Parallel jobs, capped by `min(free positions, idle technicians)` per site |
+| `ITEST_ACCEL_JOBS_PER_DAY_MIN` / `_MAX` | `4` / `12` | Customers per open day, before the feasibility cap |
+| `ITEST_ACCEL_OPEN_TIME` / `_CLOSE_TIME` | `08:00` / `18:00` | Weekday window |
+| `ITEST_ACCEL_SATURDAY` | `09:00-13:00` | Saturday window; `closed` to close it |
+| `ITEST_ACCEL_SUNDAY` | `closed` | Sunday window |
+| `ITEST_ACCEL_HOLIDAYS` | _(US federal set for the covered year)_ | Comma-separated ISO dates the shop is closed |
+| `ITEST_ACCEL_PUBLISH_CALENDAR` | `true` | Patch the same hours and closures onto every site touched |
+| `ITEST_ACCEL_MOBILE_AFTER_HOURS` | `true` | Mobile units take work at any hour |
+| `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` | `90` | Virtual minutes a started job may run past close |
+| `ITEST_ACCEL_UNPAID_RATIO` | `0` | Fraction of finalized invoices left unpaid, for AR aging |
+| `ITEST_ACCEL_MIN_WORKORDERS` | _(derived)_ | Volume floor; default `0.6 × jobsPerDay × sampledOpenDays` |
+| `ITEST_ACCEL_APPOINTMENT_LEAD_DAYS_MIN` / `_MAX` | `1` / `5` | How far ahead appointments are booked, in virtual days |
+| `ITEST_ACCEL_POLL_MS` | `500` | `/system/time` poll interval |
+| `ITEST_ACCEL_MAX_SKEW_MS` | `60000` | How far `virtualTime` may exceed the local wall clock before the run stops trusting it |
+| `ITEST_ACCEL_JOURNAL` | `.itest-accel-journal.json` | Run journal path (git-ignored) |
+| `ITEST_ACCEL_LOCK_FILE` | _(`<journal>.lock`)_ | Lock file that stops a second run on this machine |
+| `ITEST_ACCEL_LOCK_URI` | — | The CI workflow's advisory lock object; logged, not enforced in-process |
+
+### Stopping, resuming, and finding the records
+
+- **Stopping** is safe at any point: records are append-only and the journal
+  holds what was written. Ctrl-C releases the lock.
+- **Resuming** re-reads `/system/time`, refuses a journal whose `realStart`
+  differs (that is a different timeline), picks up at the current virtual day,
+  and reconciles open claims from the dispatch board rather than from the journal
+  alone.
+- **The run ends** on `converged: true` — the clock has caught up to wall time
+  and any further write would be dated today. Finishing the configured day count
+  at convergence is a pass; hitting it early fails and names the day.
+- **Finding the records** afterwards: every entity carries the run's `runId`
+  marker, so `GET /v1/workorders/search?q=<runId>` returns the run's workorders,
+  and their virtual dates are on them.
+- **Afterwards, put the profile back.** Redeploy without `accelerated` and
+  confirm with `npm run test:integration` — its guard passing is the proof the
+  profile is off.
+
 
 ---
 

@@ -5,199 +5,770 @@
 > `superpowers:executing-plans` to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Provide a deterministic accelerated-clock integration test suite that
-exercises the Durion Positivity backend through the published SDK packages.
-The suite must reach behavioral parity with the non-accelerated interaction
-specification while also covering virtual-day behavior: appointments,
-estimates, workorder execution, receiving, cycle counting, time reporting,
-service positions, shift boundaries, weekly maintenance, and monthly restock.
-The existing accelerated-clock seeder (`packages/sdk-seeder`) is the primary
-behavioral reference, but these tests must assert responses and state instead
-of tolerating and logging failures.
+**Goal:** produce **a year of real financial transactions in one sitting**.
+The backend is deployed with an injected clock whose virtual start is one year
+in the past; the suite then drives 365 virtual days of shop activity in **1-6
+hours of real time** and asserts each step, so the result is both a populated
+year of history and a passing test run.
+
+A virtual day is a shop day, not a script:
+
+- mechanics clock in when the shop opens and clock out when it closes;
+- appointments are booked, arrive, and become estimates;
+- estimates are lined, totalled, approved or declined, and promoted;
+- workorders get a mechanic and a bay or mobile unit, start, run their labor
+  and parts, and are completed;
+- completed workorders are invoiced, the invoice is finalized, and the invoice
+  is paid;
+- weekly cycle counts and monthly restocks land on their due virtual days.
+
+Two rules constrain all of it, and they are the reason this suite needs a clock
+and a timer rather than a loop:
+
+1. **Nobody works outside working hours.** No labor-bearing call is made
+   outside the site's open window, on a weekend, or on a holiday — *except*
+   mobile units, which take work at any hour.
+2. **No resource is double-booked.** A mechanic, a bay, or a mobile unit holds
+   at most one open workorder at a time. The backend should refuse a
+   double-booking; this suite does not test that refusal, it declines to ask.
+
+**Behavioral parity:** the accelerated suites are **copies** of the
+non-accelerated suites in `src/suites`, with real-date arithmetic replaced by
+virtual-date arithmetic and every labor-bearing step passed through the
+calendar gate. Parity is a copy-and-substitute exercise with an enumerated
+substitution list (Task A6), not a rewrite.
 
 **Target environment:** the **alpha** stack on EC2 with the `accelerated`
 profile enabled, against the persistent alpha PostgreSQL. Test runs write real
-records that remain in the alpha database afterward. The accelerated profile
-must be isolated by an execution lock and only one accelerated run may write
-to alpha at a time.
+records that remain in the alpha database afterward — that persistence is the
+deliverable. Only one accelerated run may write to alpha at a time, enforced by
+an execution lock (Task A11).
 
-**Execution model:** the suite runs from the developer's laptop or from the
-guarded alpha workflow. Laptop access uses the existing AWS SSM port-forwarding
-tunnel; no public ingress or VPN is added. The test harness points
-`ITEST_BASE_URL` at the forwarded gateway and reads authoritative virtual time
-from `GET /system/time`. Local Compose development is supported only when the
-accelerated override is enabled with explicit clock anchors and scale.
+**Execution model:** the suite runs from the developer's laptop over the
+existing AWS SSM port-forwarding tunnel, or from the guarded alpha workflow. No
+public ingress is added. `ITEST_BASE_URL` points at the forwarded gateway and
+authoritative virtual time is read from `GET /system/time` — never derived from
+`Date.now()`.
 
-**Component:** A new private workspace package, `packages/sdk-integration-tests`.
-Keeping it separate from `src/__tests__` (unit tests) and `sdk-seeder`
-(data generation) means: no coverage-threshold coupling, no accidental runs in
-the default `npm test`, and a dependency surface that mirrors a real SDK
-consumer.
+**Component:** the existing private workspace package,
+`packages/sdk-integration-tests`. The accelerated work adds a second Jest entry
+point, a `src/suites-accelerated/` tree, and four harness modules. It **forks no
+shared code**: builders, `http`, `personas`, `waitFor`, `ItestConfig`,
+`StarterActivation`, `TenantPreflight`, and `PersonaBootstrap` are imported as
+they are.
 
-**Tech stack:** Jest 29 + ts-jest (already the repo standard), TypeScript,
-Node 22, the `@durion-sdk/*` workspace packages, and the seeder's bootstrap
-fixtures re-exported as a library.
+**Tech stack:** Jest 29 + ts-jest, TypeScript, Node 22, the `@durion-sdk/*`
+workspace packages, and the seeder's bootstrap fixtures as a library.
 
 ---
 
 ## Relationship to the Accelerated Seeder
 
-This file is the accelerated companion to
-`BACKEND_INTERACTION_TEST_SPEC.md`. The latter is the coverage baseline. The
-accelerated suites are the next implementation step: copy each non-accelerated
-scenario's assertions, then add virtual-time and scheduled-work assertions.
-The copied task checkboxes below describe the baseline decisions and observed
-backend behavior; new accelerated parity work is tracked in the checklist
-immediately below.
+`BACKEND_INTERACTION_TEST_SPEC.md` is the coverage baseline and the copy source.
+`packages/sdk-seeder` is the behavioral reference for the year loop, and
+`packages/sdk-seeder/ACCELERATED_CLOCK_ALPHA_PLAN.md` is the reference for the
+clock itself.
 
-The seeder is a *generator*: it drives the same endpoints but tolerates and
-logs most failures so a year-long run survives. This suite is a *verifier*:
-each step asserts its response, and a failed step fails the test. The mapping:
+The seeder is a *generator*: it drives the same endpoints but tolerates and logs
+most failures so a year-long run survives. This suite is a *verifier*: each step
+asserts its response, and a failed step fails the test. The mapping:
 
-| Seeder source (accelerated) | This suite (non-accelerated) |
+| Seeder source | This suite |
 | --- | --- |
-| `loop/CustomerEventSimulator.ts` | Suites B (estimates) and C (workorder execution) as asserted tests |
-| `loop/InventoryMaintenanceSimulator.ts` (`runMonthlyRestock`) | Suite D (receiving) as asserted tests |
-| `bootstrap/*` (security, location, people, catalog, inventory) | Reused verbatim as global test fixtures |
-| `support/VirtualClock.ts`, `/system/time` polling | Authoritative clock source; tests must not derive virtual time from local wall clock |
-| Day loop, shift clock-in/out, day-boundary waits | Accelerated suites must exercise these boundaries with bounded virtual-time polling |
-| Appointments | **New here.** The seeder never books appointments; Suite A adds shop-manager appointment coverage and the appointment→estimate bridge |
+| `loop/DailyLoopRunner.ts` | `AcceleratedDayRunner` (Task A5), with calendar gating, a resource ledger, and per-day assertions the seeder has none of |
+| `loop/ShiftSimulator.ts` | Clock-in at open / clock-out at close as asserted steps, driven by the calendar rather than by loop position |
+| `loop/CustomerEventSimulator.ts` | Suites B, C and the year run: estimate → workorder → assignment → completion → invoice → payment |
+| `loop/InventoryMaintenanceSimulator.ts` | Suites D and E on their due virtual days |
+| `support/VirtualClock.ts` | Ported to `harness/virtualClock.ts` (Task A2) and given the validation, convergence and skew rules the seeder's copy has no need for |
+| `bootstrap/*` | Reused verbatim as global test fixtures |
+| Appointments | **Not in the seeder at all.** Suite A adds them, and the accelerated copy is the only place the full book → arrive → convert path is exercised, because only a virtual clock makes an appointment's own start time arrive inside a test run |
 
-Accelerated consequences to design around:
+What the seeder does *not* answer, and this spec must:
 
-- Virtual-day boundaries are test inputs. Date math and scheduled work must use
-  the virtual time returned by `/system/time`, not `Date.now()`.
-- Cross-service propagation still happens at real event-latency. Tests must
-  poll with a bounded `waitFor` helper and must not confuse wall-clock polling
-  with virtual-day advancement.
-- A day boundary can arrive while a request is in flight. Each scenario must
-  record the virtual date at setup and assert the date used by the backend,
-  rather than assuming the date at test start remains current.
-- Alpha is a shared, persistent environment and keeping the records is the
-  point: tests append data and never truncate, delete, or clean up. Every
-  created entity carries a per-run marker for traceability, so a run's
-  records can be found in the alpha database afterward.
-- Tests must not assume an empty database. Alpha already holds a year of
-  seeder history (and prior test runs), so every assertion is scoped to
-  entities the run itself created, and every quantity assertion compares
-  deltas against a snapshot taken by the same run.
+- The seeder works every virtual day at whatever hour the loop reaches. This
+  suite works only inside the open window, so the day loop is driven by the
+  clock, not by iteration count.
+- The seeder takes whatever bay answers first and logs a 409. This suite claims
+  resources up front and never issues a call it knows would conflict.
+- The seeder's per-day work is unbounded, so a fast scale silently drops work
+  past midnight. This suite computes a per-day budget from the observed scale
+  and refuses to start when the budget is below one job (Task A3).
 
-## Accelerated Contract and Parity Work
+---
 
-The accelerated harness must use the seeder's `VirtualClock` semantics:
+## The Accelerated Clock Contract
 
-- `GET /system/time` is mandatory and must return a valid `virtualTime`,
-  `scale`, and UTC `zone`; a 404 means the wrong backend profile and fails
-  setup.
-- Clock configuration is explicit: `POS_TIME_ACCELERATED_REAL_START`,
-  `POS_TIME_ACCELERATED_VIRTUAL_START`, `POS_TIME_ACCELERATED_SCALE`, and
-  `POS_TIME_ACCELERATED_ZONE`. Tests record the returned anchors and reject a
-  response that is non-accelerated, malformed, behind the configured start,
-  or ahead of the local wall clock beyond the allowed convergence behavior.
-- `waitForNextDay` is the only permitted virtual-day wait. It polls the
-  authoritative endpoint and returns the observed virtual time after midnight;
-  fixed sleeps are not valid substitutes.
-- Each accelerated run has a bounded day count and a unique `runId`. It must
-  stop when the endpoint reports convergence or when the configured final
-  virtual day is reached; it must never continue writing after the timeline's
-  terminal point.
-- The same persona, tenant, append-only, replication, and traceability rules
-  from the non-accelerated spec apply. Single-credential and role-mode runs
-  both remain supported, including all negative authorization assertions.
+The clock is injected **into the backend**, not into the tests. Every
+accelerated backend JVM gets the same anchors, generated once immediately
+before deployment, with `virtual-start` exactly one year before `real-start`:
 
-### Accelerated parity checklist
+```properties
+spring.profiles.include=accelerated
+pos.time.accelerated.scale=1460
+pos.time.accelerated.zone=UTC
+pos.time.accelerated.real-start=2026-09-17T12:00:00Z
+pos.time.accelerated.virtual-start=2025-09-17T12:00:00Z
+pos.time.accelerated.converge=true
+```
 
-- [ ] Add an accelerated Jest entry point and global setup that require and
-  validate `/system/time`, configure the clock anchors, acquire an execution
-  lock, and release it on success or failure.
-- [ ] Extract the clock adapter used by tests from `sdk-seeder` or expose a
-  test-safe equivalent; unit-test valid responses, 404, 5xx, malformed JSON,
-  invalid scale/zone, convergence, and day-boundary behavior.
-- [ ] Port Suites A-D with the same assertions and role negatives, replacing
-  real-date calculations with virtual-date calculations and recording the
-  virtual timestamp for every state transition.
-- [ ] Add accelerated coverage for Suite E cycle-count scheduling and for
-  Suite F payroll/workorder time reporting across clock-in, break, clock-out,
-  submission, and approval boundaries.
-- [ ] Port Suite H service-position and technician-assignment assertions while
-  exercising position occupancy across at least one virtual day boundary.
-- [ ] Add weekly and monthly scheduler assertions: cycle count runs on day 7
-  and each subsequent multiple of 7; restock runs on day 30 and each
-  subsequent multiple of 30; neither runs on adjacent non-due days.
-- [ ] Add restart/resume coverage: a test process restart must re-read the
-  server clock, preserve run traceability, and avoid duplicating idempotent
-  bootstrap data or silently skipping a virtual day.
-- [ ] Run the accelerated suites in a disposable or explicitly approved alpha
-  window, then verify records and virtual dates by `runId`; do not present the
-  non-accelerated 46/46 result as accelerated evidence.
+Virtual time is `virtual(t) = min(virtualStart + scale * (now - realStart), now)`
+— it converges on wall time and then ticks at scale 1 forever.
 
-## Environment Contract
+`GET /system/time` is the only source of virtual time the suite may read:
 
-Configuration is environment-variable driven, mirroring `SeederConfig`:
+```json
+{
+  "virtualTime": "2025-11-03T08:30:00Z",
+  "scale": 1460.0,
+  "zone": "UTC",
+  "accelerated": true,
+  "converged": false,
+  "realStart": "2026-09-17T12:00:00Z",
+  "virtualStart": "2025-09-17T12:00:00Z"
+}
+```
+
+Rules the harness enforces:
+
+- A 404 or a non-200 from `/system/time` fails global setup: the backend is on
+  the normal clock and this is the wrong entry point. **This is the exact
+  inverse of the non-accelerated guard** in `harness/acceleratedClock.ts`, which
+  aborts on a 200.
+- `accelerated` must be `true`, `scale` must be finite and `> 1`, `zone` must
+  parse as an IANA zone, and `realStart`/`virtualStart` must both parse.
+- `virtualStart` must be at least 360 days before `realStart`. A shorter gap
+  means the deployment was not anchored a year back and the run cannot produce a
+  year of history.
+- `virtualTime` must be `>= virtualStart` and must never exceed the local wall
+  clock by more than `ITEST_ACCEL_MAX_SKEW_MS`. Beyond that the JVMs disagree
+  with each other or with the laptop, and virtual dates on records would be
+  untrustworthy.
+- `converged: true` **ends the run**: the year is spent, the clock is wall time,
+  and any further writes would be dated today. The run reports the virtual date
+  it reached and stops writing. Reaching convergence with the configured day
+  count complete is a pass; reaching it early is a failure that names the day.
+- Virtual-time waits go through `VirtualTimer` (Task A2) only. A fixed sleep is
+  never a substitute for a clock read.
+
+---
+
+## Run Budget, Scale, and Feasibility
+
+This is the part the seeder never had to answer, and getting it wrong is how an
+accelerated run silently produces a tenth of the history it claims.
+
+A one-year gap `G` closes in `G / (scale - 1)` real time, because wall time
+advances during catch-up:
+
+| scale  | real time for the year | real seconds per virtual day | real seconds inside a 10 h open window |
+| ------ | ---------------------- | ---------------------------- | -------------------------------------- |
+| 1,460  | ≈ 6 h 0 m              | 59.2                         | 24.7                                   |
+| 2,920  | ≈ 3 h 0 m              | 29.6                         | 12.3                                   |
+| 4,380  | ≈ 2 h 0 m              | 19.7                         | 8.2                                    |
+| 8,760  | ≈ 1 h 0 m              | 9.9                          | 4.1                                    |
+| 26,280 | ≈ 20 m                 | 3.3                          | 1.4                                    |
+
+The right-hand column is the constraint. **Throughput is bounded by real event
+latency, not by the virtual clock.** One full lifecycle — customer, vehicle,
+estimate, lines, totals, submit, approve, promote, approve workorder, assign
+technician, assign position, start, timers, item completion, complete, invoice,
+finalize, pay — is roughly 20-25 gateway calls plus Kafka replication waits:
+call it `L` real seconds, measured, typically 15-45 s against alpha through the
+tunnel.
+
+The naive response — insist a job finish inside one open window — does not
+survive contact with the numbers: at scale 8,760 no lifecycle fits in 4.1
+seconds, and sampling does not help, because working fewer days does not make a
+day's window any wider. **Sampling is not a feasibility lever.** It only thins
+intake.
+
+What does work is **slicing**. A job is advanced one step at a time and spans as
+many open windows as it needs, keeping its bay and its mechanic overnight. That
+is what a multi-day repair looks like, it is why the resource ledger has to carry
+holds across day boundaries, and it is what keeps every labor call inside working
+hours at any scale. So:
+
+- **Concurrency is mandatory.** `C` jobs run in parallel, one per claimed
+  position. A job occupies its slot for `openWindowsPerJob = ceil(L /
+  openRealSeconds)` open days, so the per-day completion rate is
+  `jobsPerDay = floor(C / openWindowsPerJob)`.
+- **A feasibility guard runs before day 1** (Task A3), and what it requires is
+  only that a *few steps* fit in a window: `openRealSeconds >= stepLatency ×
+  MIN_STEPS_PER_WINDOW` (2). Below that a job advances less than once per virtual
+  day and the run is a very slow way of writing nothing.
+- **The guard measures rather than assumes, and measures without writing.** It
+  times five `/system/time` round trips, takes the slowest, and multiplies it up
+  to a step and a lifecycle estimate. Deliberately *not* a warm-up workorder: a
+  warm-up job would write a record before the guard had decided whether the run
+  should write anything, which is the outcome the guard exists to prevent. The
+  multiplier is what stands in for the cross-service replication waits a clock
+  read cannot see.
+- **Scale 1,460 (≈6 h) is the supported default** for a full-density year. At
+  `L = 20 s` and `C = 8` a job fits in one window: about 2,000 workorders across
+  ~250 open days, which is a plausible year for a multi-bay site.
+- **Scale 8,760 (≈1 h) works by slicing**: a job takes about 5 open windows, so
+  `C = 8` completes roughly one job per open day — a few hundred workorders
+  spanning the same year. Thinner, still a year.
+- **The run is refused** when the guard fails, with the measured numbers and the
+  highest scale that would have passed. `ADVISORY_SCALE_CEILING` (8,760) is the
+  documented comfortable maximum; past it the guard, not the constant, decides.
+- **Sampling** (`ITEST_ACCEL_SAMPLE_EVERY=N`) works every Nth open day and lets
+  the clock race through the rest, to cut API load on a shared alpha. Carried
+  jobs are still advanced on the days in between, and weekly and monthly
+  scheduled work is still asserted on its due virtual day.
+
+`ITEST_ACCEL_RUN_BUDGET_MS` (default 6 h 30 m) is a wall-clock ceiling. Passing
+it aborts the run with the virtual date reached and the counts written so far —
+a budget overrun is a failure with evidence, not a hang.
+
+---
+
+## The Shop Calendar: When Work May Happen
+
+`GET /v1/locations/{id}` does **not** return `operatingHours`, `holidayClosures`
+or `timezone` — `LocationResponseDTO` carries neither. The hours are write-only
+on the API surface (`createLocation` and `patchLocation` accept them). So the
+calendar cannot be discovered; the suite **owns** it and **publishes** it.
+
+`harness/shopCalendar.ts` (Task A4) is pure: no SDK, no clients, no clock. It
+takes a configured calendar and answers questions about an instant.
+
+- `openWindow(dayOfWeek)` → `{ openTime, closeTime }` or closed.
+  Default Mon-Fri 08:00-18:00, Sat 09:00-13:00, Sun closed.
+- `holidays` — a set of virtual dates. Default: the US federal set for the
+  covered year, resolved from `virtualStart`. `ITEST_ACCEL_HOLIDAYS` overrides
+  it with a comma-separated ISO list.
+- `isOpen(instant, kind)` → `true` for `MOBILE_UNIT` **always**, and for `BAY`
+  only inside the window on a non-holiday working day.
+- `nextOpen(instant, kind)` → the next instant work may start; for a mobile unit
+  that is `instant` itself.
+- `closesAt(instant)` → the close boundary of the window `instant` falls in, or
+  `null` when the position kind is unbounded.
+
+Publishing (`ITEST_ACCEL_PUBLISH_CALENDAR`, default `true`): global setup
+`patchLocation`s the same `operatingHours` and `holidayClosures` onto every site
+the run will touch, so the backend's own scheduling refusals agree with the gate
+the tests apply. With publishing off the suite still gates itself but records in
+its log that the backend was not told.
+
+Gating rules, stated once so every suite copy can cite them:
+
+- **Labor-bearing steps are gated**: `startWorkSession` / `stopWorkSession`
+  (payroll), `startWorkorder`, timer start/stop, item completion, and
+  `completeWorkorder`.
+- **Advisor and back-office steps on a bay job are gated too** — estimate
+  creation and approval, promotion, invoice generation, finalization, payment —
+  because a service advisor is not at the desk at 03:00 on a Sunday. This is an
+  assumption the spec makes deliberately, not a backend constraint.
+- **A mobile-unit job is ungated end to end**, paperwork included: the crew
+  carries its own. This is what keeps a closed window productive instead of
+  idle, and it is why `ITEST_ACCEL_MOBILE_AFTER_HOURS` defaults to `true`.
+  Out of hours and on closed days the runner **starts** new mobile jobs, not merely
+  advances carried ones. No shift is opened on a closed day: a payroll entry there
+  would sit outside the shop's hours and fail the end-of-run audit, so a weekend
+  mobile crew is on call rather than on the clock.
+- **Maintenance is floor work** and runs only on worked open days.
+- **Every time bound comes from one clock reading**, derived together by
+  `harness/daySchedule.ts` — `dayEnd`, `opensAt`, `closesAt`, `workBound`,
+  `graceWorkBound`, `graceLimit` — and re-derived after anything that costs virtual
+  time (the wait for opening, the shift and appointment phases). This is structural
+  rather than stylistic: four remediation cycles each fixed a bound computed at the
+  wrong instant and each produced the next instance, because bounds computed one at a
+  time where they are used can disagree with each other. A whole set derived at once
+  cannot. The schedule also says up front whether the day is workable, so "the window
+  had already closed by the time work started" is a reported failure rather than a
+  successful day with nothing in it.
+- **The in-hours work loop is bounded at bay close**, and
+  `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` (default 90) is the margin that keeps the
+  overshoot legal rather than a second working window.
+- **A loop refuses a step it predicts would cross its bound.** A bound checked only
+  *between* steps is a bound exceeded *by* a step, and at a thousandfold scale one step
+  can be virtual hours — the feasibility guard admits steps larger than the whole grace.
+  Each loop therefore records what steps actually cost and stops before starting one that
+  would not fit, rather than after overshooting.
+- **A job already started finishes inside the grace, on the clock.** That stretch gets
+  *half* the grace and runs before clock-out, so the labor and the payroll entry agree
+  about who was working, and the remaining half covers the overshooting tick and the
+  clock-out fan-out. It runs whatever `ITEST_ACCEL_MOBILE_AFTER_HOURS` says — the grace
+  belongs to the mechanic finishing a car, not to the mobile flag. No *new* bay work
+  starts after close, and a job still open at the grace end is carried to the next open
+  day, because the car stays in the shop overnight.
+- **The shift fan-out is parallel, and that is load-bearing.** The backend stamps each
+  `endAtUtc` when its own `stopWorkSession` runs, so clocking people out one at a time
+  puts the last entry N gateway calls past the first. At scale 4,380 that is ~15 virtual
+  minutes per call: ten people sequentially is 146 minutes, past the grace, and the
+  payroll audit fails on the tail for a run that did nothing wrong. In parallel the whole
+  fan-out costs about one call.
+- **Bounds are derived from a clock read taken after the shift and appointment
+  phases.** Those are gateway calls, and at a thousandfold scale a handful of them is
+  virtual hours; a bound taken before them can already be in the past. A day whose
+  window has closed by the time work is due to start reports a failure rather than a
+  successful day with nothing in it.
+- **The shift must end strictly inside the grace.** `withinGrace` is strict, so the
+  grace end itself is illegal, and this cannot be fixed at the call site: the shift
+  port's `clockOut` takes no instant, and the backend stamps `endAtUtc` from its own
+  clock when `stopWorkSession` runs. Exiting the loop at close is therefore the only
+  thing that actually keeps the payroll entry legal.
+- **The after-hours mobile stretch runs after the shift is closed**, so nobody is on
+  the clock for it — the same reason no shift is opened on a closed day.
+- **A day whose open window was already missed** when the clock reached it (a wait that
+  overshot) opens no shift at all and is reported as `window-missed`. Clocking in there
+  would stamp a start outside the window.
+- **A day boundary may arrive mid-request.** Every scenario records the virtual
+  instant it observed before a transition and asserts the date the *backend*
+  used, never the date the test started with.
+
+---
+
+## Resource Discipline: No Double-Booking
+
+`harness/resourceLedger.ts` (Task A4) is pure, and it is the only thing allowed
+to hand out a resource.
+
+- A **claim** covers one `{ technicianId, positionId }` pair and is taken
+  *before* the first assign call. A claim on a held resource is not issued —
+  the job waits for a free slot instead of asking the backend and taking a 409.
+- A claim is **released** when the workorder closes, and on any failure path.
+  The orphaned-technician release that `runs/shopFloorLoad.ts` already performs
+  is the model: a technician assigned to a workorder that never got a position
+  reads as busy to the next day's discovery until someone unpicks it by hand.
+- **Day-start reconciliation**: every open day begins by reading each site's
+  dispatch board (`getDispatchDashboard`) and people availability, through the
+  existing pure `buildRoster` / `busyTechnicianIds` in `runs/shopFloorRoster.ts`.
+  Anything the board reports as occupied — including records left open by a
+  previous day, a previous run, or the seeder — starts the day claimed.
+  `dataQualityWarning` skips the site for that day, for the reason `buildRoster`
+  already gives: placing work on a board that may be incomplete is how a double
+  booking happens.
+- **Interleaving by kind** is reused from `runs/shopFloorPlan.ts`
+  (`interleaveByKind`): a technician shortfall is shared between bays and mobile
+  units instead of leaving every mobile unit idle at exactly the short sites.
+- **Concurrency** is `min(free positions, idle technicians)` per site, capped by
+  `ITEST_ACCEL_CONCURRENCY` (default 8). One worker holds exactly one claim.
+- **Per-day assertions**: no resource appears in two concurrent claims; every
+  claim taken is released by end of day or explicitly carried as work in
+  progress; and the day-end board reports at most one open workorder per bay or
+  unit.
+
+---
+
+## The Virtual Day: Activity Script
+
+One open virtual day, in order. Each phase is asserted; a failed assertion fails
+the run and names the virtual date.
+
+| Phase | Actions | Persona |
+| --- | --- | --- |
+| **WAIT-OPEN** | `VirtualTimer.waitUntil(calendar.nextOpen(now, 'BAY'))`. Weekends and holidays pass here; mobile work may run meanwhile. | — |
+| **RECONCILE** | Read dispatch board + people availability per site; seed the ledger from what is already occupied. | manager, admin |
+| **SHIFT-IN** | `startWorkSession` for every mechanic the day will use, plus advisor / manager / parts. Assert a session id per person and that the session's recorded start falls inside the open window. | admin |
+| **APPOINTMENTS** | Book 1-3 appointments per site for 1-5 virtual days ahead, inside a future open window. Convert every appointment whose start the clock has now reached into an estimate through the A-suite bridge, and assert the bridge is idempotent. | advisor |
+| **ESTIMATES** | Per job: customer (new or repeat from the pool), vehicle, draft estimate, 2-4 labor lines, 0-2 part lines, totals, submit. Then the customer decision — approve ~78 %, decline ~14 %, ignore the rest, matching the seeder's distribution. | advisor |
+| **PROMOTE** | Promote approved estimates; manager approves the resulting workorder. | advisor, manager |
+| **ASSIGN** | Claim a `{ technician, position }` pair from the ledger, then `assignTechnician` and `assignServicePosition` in that order — the backend needs both before a start (backend #2011, #2010). Mobile-unit claims may be made in a closed window. | manager |
+| **EXECUTE** | `startWorkorder`, per-service timer start/stop, item completion, `completeWorkorder`. Labor durations are asserted in **virtual** minutes. | tech |
+| **INVOICE** | `generateWorkorderInvoice`, then `finalizeInvoice`; assert a total greater than zero and an invoice dated inside the virtual day. | advisor |
+| **PAYMENT** | `submitAccountingEvent` with `INVOICE_PAYMENT` for the finalized total; assert the invoice reaches a paid state. `ITEST_ACCEL_UNPAID_RATIO` (default `0`) leaves a fraction unpaid when AR aging is wanted. | controller, acct |
+| **RELEASE** | Release every claim; carry anything still open as work in progress. | manager |
+| **SHIFT-OUT** | `stopWorkSession` for everyone clocked in, then submit and approve the day's time entries. Assert the recorded span sits inside the open window plus grace. | admin, manager |
+| **MAINTENANCE** | Virtual day-of-year `% 7 == 0`: cycle count (Suite E path). `% 30 == 0`: monthly restock (Suite D path). Assert neither fires on an adjacent non-due day. | parts |
+| **CLOSE** | Journal the day: virtual date, counts, claims, ids. Then `waitUntil(next open day)`. | — |
+
+Mobile-unit jobs run on the same script with the calendar gate disabled, and are
+the only work permitted in a WAIT-OPEN stretch.
+
+---
+
+## Financial Volume Targets
+
+The run's purpose is a ledger, so the ledger is asserted. At the end of the run,
+scoped by `runId`:
+
+- **Invoices**: one finalized invoice per completed workorder, none with a zero
+  or negative total.
+- **Payments**: `(1 - ITEST_ACCEL_UNPAID_RATIO)` of finalized invoices reach a
+  paid state; each payment amount equals its invoice total.
+- **Spread**: invoices exist in at least 11 of the 12 virtual months the run
+  covers, and none is dated outside `[virtualStart, virtualTime at run end]`.
+- **Calendar compliance**: no labor session, timer, or bay-job invoice carries a
+  backend timestamp outside an open window plus grace — this is the assertion
+  that proves rule 1 held, and it is checked against persisted timestamps rather
+  than against what the test intended.
+- **Resource compliance**: no bay or mobile unit ever held two open workorders
+  at the same virtual instant, and no technician did either.
+- **Minimum volume**: the run fails if it wrote fewer than
+  `ITEST_ACCEL_MIN_WORKORDERS` (default: `0.6 × jobsPerDay × sampledOpenDays`).
+  A run that technically passed every step while producing almost nothing is the
+  failure mode this catches.
+
+---
+
+## Test Framework Layout
+
+```
+packages/sdk-integration-tests/
+  jest.integration.config.js        # existing: *.itest.ts, normal clock
+  jest.accelerated.config.js        # NEW: *.accel.itest.ts, accelerated clock
+  src/harness/                      # shared, unforked
+    virtualClock.ts                 # NEW  /system/time adapter + validation
+    virtualTimer.ts                 # NEW  waitUntil / waitForNextDay, bounded
+    shopCalendar.ts                 # NEW  pure: hours, holidays, gate
+    resourceLedger.ts               # NEW  pure: claims, no double-booking
+    acceleratedConfig.ts            # NEW  ITEST_ACCEL_* parsing + validation
+    acceleratedGlobalSetup.ts       # NEW  inverse clock guard, lock, calendar publish, feasibility
+    acceleratedJournal.ts           # NEW  run journal for restart/resume
+    acceleratedClock.ts             # existing: the non-accelerated guard, unchanged
+    ... everything else unchanged and reused ...
+  src/suites-accelerated/
+    00-harness.accel.itest.ts       # copy + clock/calendar/ledger fixtures
+    a-appointments.accel.itest.ts   # copy + virtual windows + arrival
+    b-estimates.accel.itest.ts      # copy
+    c-workorder-execution.accel.itest.ts  # copy + virtual durations
+    d-receiving.accel.itest.ts      # copy
+    e-cycle-count.accel.itest.ts    # copy + day-7 scheduling
+    f-time-reporting.accel.itest.ts # copy + shift boundaries
+    h-service-position.accel.itest.ts     # copy + occupancy across a boundary
+    z-year-volume.accel.itest.ts    # NEW: the 365-day run and its ledger assertions
+  src/runs/
+    acceleratedYear.ts              # NEW: the same day runner as a populate run
+```
+
+`src/suites-accelerated/*.accel.itest.ts` run **before** `z-year-volume` (Jest
+collects alphabetically and `maxWorkers: 1`), so a broken contract fails in
+minutes instead of at hour five. `z-year-volume` carries its own `testTimeout`
+of `ITEST_ACCEL_RUN_BUDGET_MS`.
+
+---
+
+## Build Plan
+
+### Task A1: Deploy an accelerated backend anchored one year back
+
+**Procedure: [`ACCELERATED_BACKEND_DEPLOYMENT.md`](./ACCELERATED_BACKEND_DEPLOYMENT.md).**
+The clock, its validation and `GET /system/time` are already implemented in the
+backend (`pos-events` `AcceleratedTimeProperties` / `ScaledClock`, `pos-api-gateway`
+`SystemTimeController`). What is missing is a *deploy path*: no compose override sets
+the profile or the anchors, `deploy-backend.sh` composes and checksum-verifies only
+two files, and no workflow input can request it. The local Compose path works today
+and is verified; alpha is blocked on [durion-positivity-backend#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065).
+
+- [ ] Generate the anchors immediately before deployment, `virtual-start` =
+  `real-start` minus one year, UTC, and pass them to every backend JVM
+  (`POS_TIME_ACCELERATED_REAL_START`, `_VIRTUAL_START`, `_SCALE`, `_ZONE`,
+  `_CONVERGE=true`). Reference: `sdk-seeder/ACCELERATED_CLOCK_ALPHA_PLAN.md`
+  Tasks 1-7.
+- [ ] Verify `GET /system/time` returns `accelerated: true`, the expected
+  anchors, and a `virtualTime` advancing at `scale` virtual seconds per real
+  second across at least two representative services.
+- [ ] Record the anchors and the scale in the run log. They are the run's
+  identity: two runs against the same `realStart` are the same timeline.
+
+### Task A2: Virtual clock and virtual timer
+
+- [x] `harness/virtualClock.ts`: port `sdk-seeder/src/support/VirtualClock.ts`
+  and add the validation from *The Accelerated Clock Contract* — 404 is a
+  failure here, `accelerated`/`scale`/`zone`/anchors are checked, the one-year
+  gap is checked, skew against the local wall clock is checked, `converged` is
+  surfaced.
+- [x] `harness/virtualTimer.ts`: `waitUntil(virtualInstant)`,
+  `waitForNextDay(from)`, `remainingRealMs(untilVirtualInstant, scale)`. All
+  bounded, all polling `/system/time` at `ITEST_ACCEL_POLL_MS`; a deadline
+  overrun throws with both the target and the observed virtual time.
+- [x] Unit tests with a faked `fetch`: valid response, 404, 5xx, malformed JSON,
+  `accelerated: false`, `scale <= 1`, invalid zone, sub-year anchor gap,
+  excessive skew, convergence mid-wait, and a day boundary crossed while
+  waiting.
+
+### Task A3: Accelerated config and feasibility guard
+
+- [x] `harness/acceleratedConfig.ts`: parse and validate every `ITEST_ACCEL_*`
+  variable in *Environment Contract (Accelerated)*, with the same fail-fast,
+  single-message style as `ItestConfig`.
+- [x] Compute `openRealSeconds` from the observed `scale` and the calendar's
+  *tightest* window, measure step latency from `/system/time` round trips without
+  writing anything, derive `openWindowsPerJob` and `jobsPerDay`, and refuse to
+  start when fewer than `MIN_STEPS_PER_WINDOW` steps fit — with the measured
+  numbers and the highest workable scale in the message.
+- [x] Unit-test the arithmetic and every refusal.
+
+  **Corrected during implementation.** The first draft of this task said to
+  measure with a warm-up job and to let sampling rescue a fast scale. Both were
+  wrong: a warm-up job writes before the guard has decided anything, and working
+  fewer days does not widen a day's window. See *Run Budget, Scale, and
+  Feasibility* above for the slicing model that replaced it.
+
+### Task A4: Shop calendar and resource ledger (both pure)
+
+- [x] `harness/shopCalendar.ts` per *The Shop Calendar*. Unit tests: weekday
+  inside/outside the window, Saturday's short window, Sunday, a holiday, a
+  `MOBILE_UNIT` at every one of those instants, `nextOpen` across a weekend and
+  across a holiday-adjacent weekend, DST-free UTC arithmetic, and `closesAt`.
+- [x] `harness/resourceLedger.ts` per *Resource Discipline*. Unit tests: claim,
+  double-claim refused, release, release of an unheld resource, reconciliation
+  from a board that reports occupancy, a claim while every resource is held,
+  carry-over across a day boundary, and the interaction with
+  `interleaveByKind`.
+- [x] Neither module imports an SDK client, a clock, or `Date.now()`.
+
+### Task A5: Accelerated global setup and day runner
+
+- [x] `harness/acceleratedGlobalSetup.ts`: load env file → `ItestConfig` +
+  `acceleratedConfig` → assert the accelerated clock → acquire the execution
+  lock (Task A11) → security bootstrap, starter activation, tenant preflight,
+  persona preflight, reference bootstrap (all reused verbatim from
+  `globalSetup.ts`) → publish the calendar → warm-up job and feasibility guard →
+  save context including the observed clock anchors → release the lock on both
+  success and failure.
+- [x] `AcceleratedDayRunner`: one open virtual day per *The Virtual Day*, with
+  the concurrency pool, the ledger, and the calendar gate. Injectable clock,
+  calendar and ledger so the phase ordering is unit-testable without a backend.
+- [x] Unit-test: a closed day is skipped without work, a weekend is waited
+  through, mobile work proceeds in a closed window, the grace period bounds an
+  overrunning job, a job past grace is carried, and a mid-request day boundary
+  is recorded rather than assumed.
+
+### Task A6: Copy suites A-H, with the substitution list
+
+Copy each `src/suites/X.itest.ts` to `src/suites-accelerated/X.accel.itest.ts`
+and apply exactly these substitutions. Anything else is a rewrite and is out of
+scope for this task.
+
+| In the copy | Replace with |
+| --- | --- |
+| `new Date()` / `Date.now()` for a business instant | `await clock.now()` |
+| Suite A's `window(offsetMinutes, …)` built on tomorrow 09:00 real | a virtual window inside a future open day, from `calendar.nextOpen(virtualNow + lead)` |
+| the fixed real slot spread (`randomOffsetMinutes` over ~140 real days) | a spread over future **open** virtual days |
+| Suite C's three 1.5 s real sleeps for a non-zero duration | a virtual-minute duration assertion — one real second is `scale` virtual seconds, so the duration is already non-zero; assert it in virtual minutes and assert it against the backend's own timestamps |
+| bare `assignTechnician` / `assignServicePosition` | a ledger claim first, then the same two calls in the same order |
+| any labor-bearing step | the same step behind `calendar.isOpen(virtualNow, kind)` |
+| `assertNonAcceleratedBackend` | `assertAcceleratedBackend` |
+| real-date assertions on persisted timestamps | virtual-date assertions, tolerant of a boundary crossed mid-request |
+
+- [x] Copy and substitute all eight suites.
+- [x] Keep every role negative and every authorization assertion unchanged: both
+  single-credential and role mode remain supported.
+- [x] Each copy exercises at least one virtual-day boundary, and
+  `h-service-position` holds a position across one.
+- [x] No shared harness module is forked to make a copy pass. If a copy needs a
+  change in shared code, change the shared code and keep the non-accelerated
+  suite green.
+
+### Task A7: The year run — `z-year-volume.accel.itest.ts`
+
+- [x] Drive `ITEST_ACCEL_DAYS` (default 365) virtual days through
+  `AcceleratedDayRunner`, respecting `ITEST_ACCEL_SAMPLE_EVERY`.
+- [x] Assert per day: mechanics clocked in and out, every claim released or
+  carried, no double-booking, at least one workorder completed on a sampled open
+  day, and every completed workorder invoiced and paid.
+- [x] Assert the weekly cycle count on each virtual day-of-year multiple of 7
+  and the monthly restock on each multiple of 30 — and that neither fires on the
+  adjacent days.
+- [x] Assert the end-of-run ledger per *Financial Volume Targets*, including the
+  minimum-volume floor and the calendar-compliance check against persisted
+  timestamps.
+- [x] Stop cleanly on `converged: true` or on `ITEST_ACCEL_RUN_BUDGET_MS`,
+  reporting the virtual date reached and the counts written.
+
+### Task A8: Restart and resume
+
+- [x] `harness/acceleratedJournal.ts`: append-only JSON journal of `runId`,
+  observed anchors, per-day counts, open claims, and created ids. Path from
+  `ITEST_ACCEL_JOURNAL`; git-ignored.
+- [x] A restart re-reads `/system/time`, refuses a journal whose `realStart`
+  differs (a different timeline), resumes at the current virtual day, and
+  reconciles open claims from the dispatch board rather than from the journal
+  alone.
+- [x] Idempotent bootstrap data is not duplicated and no virtual day is silently
+  skipped: the journal records skipped days with the reason.
+- [x] Unit-test resume, timeline mismatch, a journal ahead of the clock, and a
+  corrupt journal.
+
+### Task A9: Jest entry point and scripts
+
+- [x] `jest.accelerated.config.js`: `testMatch: ['**/*.accel.itest.ts']`,
+  `maxWorkers: 1`, `globalSetup: acceleratedGlobalSetup.ts`, the same
+  `moduleNameMapper` and `moduleFileExtensions` as the integration config,
+  `passWithNoTests: false`.
+- [x] Root scripts: `test:accelerated` (whole accelerated suite),
+  `test:accelerated:parity` (the A-H copies only, `--testPathIgnorePatterns
+  z-year-volume`), and `populate:accelerated-year` for `src/runs/acceleratedYear.ts`.
+- [x] `npm test` still collects zero `*.accel.itest.ts`, and
+  `npm run test:integration` still collects zero of them either — verified by
+  `jest --listTests`.
+
+### Task A10: The non-accelerated guard stays correct
+
+- [x] `assertNonAcceleratedBackend` keeps aborting the normal suite on a 200,
+  unchanged. The two guards are inverses and both are unit-tested.
+- [x] `runs/shopFloorLoad.ts` keeps its non-accelerated guard: a floor load on
+  an accelerated backend would place work at a virtual instant it never checked.
+
+### Task A11: Execution lock — one accelerated run at a time
+
+- [x] `harness/acceleratedLock.ts`: a lock file, taken by global setup as soon as
+  the timeline is known and before anything is written. It records the holder's
+  run id, pid, host, user and `realStart`; fails naming them when held; releases
+  on success, on failure, on the feasibility refusal, and on exit / SIGINT /
+  SIGTERM. A lock whose process is gone is taken over; one held by another host
+  never is, because a pid number there means nothing here. Unit-tested, including
+  the takeover and the release races.
+- [x] Documented that the accelerated profile is not the normal alpha state and
+  that leaving it on blocks every non-accelerated run (their guard aborts on a
+  200), and that the profile must be put back afterwards.
+- [ ] **Not built here — deployment-side.** The alpha workflow's `concurrency`
+  group, and the SSM run script's advisory S3 object holding the anchors, the
+  `runId` and the operator. `ITEST_ACCEL_LOCK_URI` names that object and is
+  logged into the run record, but **this process does not enforce it**: a lock
+  file cannot see another machine, and claiming otherwise would be worse than
+  saying so. Two operators on two laptops are stopped by the workflow and by
+  agreement, not by this code.
+
+### Task A12: Documentation
+
+- [ ] `README.md` gains an *Accelerated year run* section: prerequisites, how
+  the clock is injected, the scale/budget table, the commands, what the run
+  writes, how to find its records afterwards, and how to stop it.
+- [x] `.env.itest.example` gains every `ITEST_ACCEL_*` variable with its
+  default.
+- [x] `ACCELERATED_BACKEND_DEPLOYMENT.md` covers standing the backend up: the
+  clock contract, the scale table, the verified local Compose override, what is
+  missing for alpha, verification, teardown and troubleshooting. Its own document
+  rather than a README section, because the answer is not one command.
+- [ ] This spec's completion criteria are checked off against a real run, with
+  the observed scale, the virtual date range reached, and the counts.
+
+---
+
+## Environment Contract (Accelerated)
+
+Every `ITEST_*` variable from the non-accelerated contract applies unchanged
+(see *Environment Contract* in `BACKEND_INTERACTION_TEST_SPEC.md`, reproduced in
+the appendix below). The accelerated entry point adds:
 
 | Variable | Default | Required | Description |
 | --- | --- | --- | --- |
-| `ITEST_BASE_URL` | `http://localhost:8080` | No | API gateway base URL |
-| `ITEST_SECURITY_SERVICE_URL` | `http://localhost:8086` | No | Direct security service URL (bootstrap + login) |
-| `ITEST_USERNAME` | — | **Yes** | Admin login (SYSTEM_ADMINISTRATOR) — bootstrap and persona fallback |
-| `ITEST_PASSWORD` | — | **Yes** | Admin password |
-| `ITEST_ADVISOR_USERNAME` / `_PASSWORD` | *(admin fallback)* | No | SERVICE_ADVISOR persona login |
-| `ITEST_TECH_USERNAME` / `_PASSWORD` | *(admin fallback)* | No | TECHNICIAN persona login |
-| `ITEST_MANAGER_USERNAME` / `_PASSWORD` | *(admin fallback)* | No | LOCATION_MANAGER persona login |
-| `ITEST_PARTS_USERNAME` / `_PASSWORD` | *(admin fallback)* | No | INVENTORY_LEAD persona login |
-| `ITEST_ACCT_USERNAME` / `_PASSWORD` | *(admin fallback)* | No | ACCOUNT_MANAGER persona login |
-| `ITEST_SEED` | *(random)* | No | Integer RNG seed for reproducible data values |
-| `ITEST_WAIT_TIMEOUT_MS` | `30000` | No | Default `waitFor` polling timeout |
-| `ITEST_WAIT_INTERVAL_MS` | `500` | No | Default `waitFor` polling interval |
-| `ITEST_STAGING_LOCATION_ID` | `00000000-0000-0000-0000-000000000002` | No | pos-inventory's staging location, mirroring `POS_INVENTORY_RECEIVING_STAGING_LOCATION_ID`. Suite D books a goods receipt there because putaway generation refuses a receipt held anywhere else |
-| `ALPHA_TENANT_SLUG` / `ALPHA_TENANT_ID` | — | **Yes** | The tenant every suite runs in. Every login sends the slug; the direct-to-service security bootstrap sends the id as `X-Tenant-Id`; global setup refuses any login bound elsewhere |
-| `PLATFORM_TENANT_SLUG` / `PLATFORM_TENANT_ID` | — | With a platform login | The platform tenant (platform tables). Must differ from the alpha tenant; nothing is seeded into it |
-| `ITEST_PLATFORM_USERNAME` / `_PASSWORD` | — | No | Platform-tenant login, checked to bind to the platform tenant |
-| `ITEST_SEED_PASSWORD` | — | No | Shared starter password. Accounts whose login is refused (`INVALID_CREDENTIALS`) and are still awaiting activation are activated to their configured `ITEST_*_PASSWORD` before anything logs in (one-shot per account) |
+| `ITEST_ACCEL_DAYS` | `365` | No | Virtual days to drive |
+| `ITEST_ACCEL_RUN_BUDGET_MS` | `23400000` (6 h 30 m) | No | Wall-clock ceiling; an overrun aborts with the virtual date and counts reached |
+| `ITEST_ACCEL_SAMPLE_EVERY` | `1` | No | Work every Nth open day; `>1` is how a faster scale stays feasible |
+| `ITEST_ACCEL_CONCURRENCY` | `8` | No | Parallel jobs, capped by `min(free positions, idle technicians)` per site |
+| `ITEST_ACCEL_JOBS_PER_DAY_MIN` / `_MAX` | `4` / `12` | No | Customer count per open day, before the feasibility cap |
+| `ITEST_ACCEL_OPEN_TIME` / `_CLOSE_TIME` | `08:00` / `18:00` | No | Weekday window, site-local |
+| `ITEST_ACCEL_SATURDAY` | `09:00-13:00` | No | Saturday window; `closed` to close it |
+| `ITEST_ACCEL_SUNDAY` | `closed` | No | Sunday window |
+| `ITEST_ACCEL_HOLIDAYS` | *(US federal set for the covered year)* | No | Comma-separated ISO dates the shop is closed |
+| `ITEST_ACCEL_PUBLISH_CALENDAR` | `true` | No | `patchLocation` the same hours and closures onto every site the run touches |
+| `ITEST_ACCEL_MOBILE_AFTER_HOURS` | `true` | No | Mobile units take work at any hour |
+| `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` | `90` | No | Virtual minutes a started job may run past close |
+| `ITEST_ACCEL_UNPAID_RATIO` | `0` | No | Fraction of finalized invoices left unpaid, for AR aging |
+| `ITEST_ACCEL_MIN_WORKORDERS` | *(derived)* | No | Volume floor; default `0.6 × jobsPerDay × sampledOpenDays` |
+| `ITEST_ACCEL_APPOINTMENT_LEAD_DAYS_MIN` / `_MAX` | `1` / `5` | No | How far ahead appointments are booked, in virtual days |
+| `ITEST_ACCEL_POLL_MS` | `500` | No | `/system/time` poll interval |
+| `ITEST_ACCEL_MAX_SKEW_MS` | `60000` | No | How far `virtualTime` may exceed the local wall clock before the run refuses to trust it |
+| `ITEST_ACCEL_JOURNAL` | `.itest-accel-journal.json` | No | Run journal path (git-ignored) |
+| `ITEST_ACCEL_LOCK_URI` | — | With the alpha workflow | Advisory lock object, e.g. `s3://durion-alpha-deploy/locks/accelerated.json` |
 
-Persona credentials are optional as a set: define **all or none** per persona
-(a username without its password fails config validation). See *Personas,
-Roles, and Credentials* below for how the suite behaves in each mode.
-
-For an alpha run from the laptop, the tunnel (Task 7) maps local ports onto
-the alpha gateway and security service, and the shell exports:
-
-```properties
-ITEST_BASE_URL=http://localhost:18080          # tunneled pos-api-gateway
-ITEST_SECURITY_SERVICE_URL=http://localhost:18086  # tunneled pos-security-service
-ITEST_USERNAME=<alpha seeder/admin username>
-ITEST_PASSWORD=<alpha password>
-```
-
-Credentials live in the developer's shell or a git-ignored `.env.itest` file —
-never printed, never committed. The file half is implemented by
-`src/harness/loadEnvFile.ts` (dependency-free; `.env.itest` is read from the
-repo root, or from `ITEST_ENV_FILE` when set). Real environment variables
-always win over the file, so CI and one-off `VAR=x npm run ...` overrides are
-unaffected; only the names of applied keys are logged, never the values.
-`.env.itest.example` at the repo root is the template. When `ITEST_USERNAME`/`ITEST_PASSWORD` are
-absent, the suite must fail fast in global setup with a single clear message —
-not skip silently and not error once per test file.
+The accelerated entry point **requires** `GET /system/time` to answer 200 with
+`accelerated: true`. A 404 fails setup with the message that this is the
+non-accelerated backend and `npm run test:integration` is the right command.
 
 Run commands (repo root):
 
-```powershell
+```bash
 # terminal 1: open the tunnel to alpha (stays running)
-.\scripts\alpha-itest-tunnel.ps1
+./scripts/alpha-itest-tunnel.sh            # PowerShell twin: .\scripts\alpha-itest-tunnel.ps1
 
-# terminal 2: run the suite
-npm run test:integration                 # whole suite
-npm run test:integration -- appointments # one suite by filename substring
+# terminal 2
+npm run test:accelerated:parity            # suites A-H copies, minutes
+npm run test:accelerated                   # parity copies, then the year run (1-6 h)
 ```
 
-The same commands with `ITEST_BASE_URL=http://localhost:8080` (and no tunnel)
-run against a local Compose backend during test development.
+The same commands with `ITEST_BASE_URL=http://localhost:8080` run against a
+local Compose stack started with the accelerated override and explicit anchors.
 
-Alpha runs require the accelerated profile to be **off** (the normal alpha
-deployment state). Global setup asserts this by probing `GET /system/time`:
-a 404/absent endpoint means the normal clock and the run proceeds; a 200
-response means alpha is mid-accelerated-run and the suite aborts before
-writing anything.
+---
+
+## Completion Criteria (Accelerated)
+
+**Status as built.** The four criteria below that can be checked without an
+accelerated backend are checked, with what they showed. Everything else needs a
+deployment anchored a year back and a run against it, and is deliberately left
+open rather than assumed:
+
+- `jest --listTests` on all three configs: the unit run collects **0**
+  `*.itest.ts`, the integration run collects the **8** non-accelerated suites and
+  **0** accelerated ones, the accelerated run collects the **9**
+  `*.accel.itest.ts`. The integration config needed an explicit
+  `testPathIgnorePatterns` for this — `*.accel.itest.ts` also ends in
+  `.itest.ts`, so `testMatch` alone had it collecting the accelerated suites.
+- Unit coverage of the new harness: **255 tests** in the package, all passing,
+  covering the clock, the timer, the calendar, the ledger, the config and its
+  feasibility arithmetic, the journal, the lock, the mutex, the audit predicates
+  and the day runner's phase ordering and gating.
+- No accelerated *business* instant comes from the real clock. The real clock is
+  still used where the quantity genuinely is real time: the wall-clock run
+  budget, wait durations, the skew comparison, lock and journal bookkeeping
+  timestamps, and the one harness test that deliberately measures the virtual
+  rate against the real one.
+- `npm test` (846 tests), `tsc --noEmit` on the package, and `eslint` across the
+  repo are green.
+
+- [ ] `GET /system/time` on the target reports `accelerated: true`, `scale`
+      matching the deployment, and a `virtualStart` at least 360 days before
+      `realStart`. The anchors are recorded in the run log.
+- [x] `npm test` collects zero `*.accel.itest.ts`; `npm run test:integration`
+      collects zero of them; `npm run test:accelerated` collects only them.
+      Verified by `jest --listTests`.
+- [x] `virtualClock`, `virtualTimer`, `shopCalendar`, `resourceLedger`,
+      `acceleratedConfig` and `acceleratedJournal` are unit-tested, including
+      every refusal. `shopCalendar` and `resourceLedger` import no SDK client
+      and no clock.
+- [x] No accelerated test derives a business instant from `Date.now()`. Every
+      virtual-time wait goes through `VirtualTimer`; no fixed sleep stands in
+      for a clock read.
+- [ ] Suites A-H accelerated copies pass against an accelerated backend, with
+      the same assertions and role negatives as their non-accelerated twins,
+      each crossing at least one virtual-day boundary.
+- [ ] A year run completes within its budget: `ITEST_ACCEL_DAYS` virtual days
+      driven, or a clean stop on `converged: true` with the virtual date
+      reported.
+- [ ] Every completed workorder has a finalized invoice, and
+      `(1 - ITEST_ACCEL_UNPAID_RATIO)` of those invoices are paid, with payment
+      amounts equal to invoice totals.
+- [ ] Invoices span at least 11 of the 12 virtual months covered, and none is
+      dated outside the run's virtual range.
+- [ ] **Calendar compliance, checked against persisted backend timestamps:** no
+      labor session, timer, or bay-job invoice falls outside an open window plus
+      grace; mobile-unit work outside it is present and is the only such work.
+      Checked over **every** worked virtual date, not a sample — a violation on an
+      unsampled date would pass, and this is the assertion that carries the claim.
+- [ ] **Resource compliance:** no bay, mobile unit, or technician ever held two
+      open workorders at the same virtual instant.
+- [ ] Volume floor met: at least `ITEST_ACCEL_MIN_WORKORDERS` workorders written.
+- [ ] Weekly cycle count fired on every virtual day-of-year multiple of 7 and
+      monthly restock on every multiple of 30, and neither fired on an adjacent
+      day.
+- [ ] A mid-run process restart resumed on the same timeline without duplicating
+      bootstrap data or silently skipping a virtual day.
+- [ ] The execution lock prevented a second concurrent accelerated run, and was
+      released on success and on failure.
+- [ ] Records are retrievable afterwards by `runId` through the API, and the
+      run's virtual date range is visible on them.
+- [ ] The alpha backend is returned to the non-accelerated profile afterwards,
+      and `npm run test:integration` passes again (its guard proves the profile
+      is off).
+- [x] Root Jest unit run, TypeScript build, and lint remain green.
+
+---
+
+# Appendix: Non-Accelerated Baseline (copy source)
+
+Everything below is the non-accelerated specification, carried here verbatim as
+the copy source for Task A6 and as the authority on personas, credentials,
+fixtures and per-suite assertions. Where it and the accelerated sections above
+disagree — the `/system/time` guard direction, real versus virtual date
+arithmetic, resource claiming, calendar gating — **the accelerated sections
+win**. Its `[x]` marks and its "RAN" notes record the non-accelerated run and
+are not accelerated evidence.
 
 ## Personas, Roles, and Credentials
 

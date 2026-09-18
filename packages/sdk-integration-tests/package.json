@@ -2,10 +2,11 @@
   "name": "@durion-sdk/integration-tests",
   "version": "0.1.0-alpha",
   "private": true,
-  "description": "Non-accelerated backend interaction tests (see BACKEND_INTERACTION_TEST_SPEC.md)",
+  "description": "Backend interaction tests: normal clock (BACKEND_INTERACTION_TEST_SPEC.md) and accelerated clock (BACKEND_INTERACTION_TEST_SPEC_ACCELERATED.md)",
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "populate:shop-floor": "ts-node src/runs/shopFloorLoad.ts"
+    "populate:shop-floor": "ts-node src/runs/shopFloorLoad.ts",
+    "populate:accelerated-year": "ts-node src/runs/acceleratedYear.ts"
   },
   "dependencies": {
     "@durion-sdk/accounting": "*",

@@ -15,6 +15,11 @@ const config = {
   rootDir: path.join(__dirname, '..', '..'),
   roots: ['<rootDir>/packages/sdk-integration-tests/src'],
   testMatch: ['**/*.itest.ts'],
+  // `*.accel.itest.ts` also ends in `.itest.ts`, so testMatch alone would collect
+  // the accelerated suites here — against a normal-clock backend, whose global
+  // setup gives them no clock context at all. The two runs are mutually exclusive
+  // by design (see jest.accelerated.config.js); this is what keeps them so.
+  testPathIgnorePatterns: ['/node_modules/', '\\.accel\\.itest\\.ts$'],
   maxWorkers: 1,
   testTimeout: 120000,
   // Suites arrive in Tasks 3-6; until then a run still executes globalSetup,
