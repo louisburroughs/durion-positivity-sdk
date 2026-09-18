@@ -140,6 +140,13 @@ const harness = (options: {
   phaseCostMinutes?: number;
   /** Overrides the step cost per call, for probing one pathological tick. */
   stepMinutesFor?: () => number;
+  /** Makes the shift port's clockOut throw, as it does when a stopWorkSession fails. */
+  clockOutFails?: boolean;
+  /**
+   * Virtual minutes each clock read costs. Free reads hide a whole class of defect: a
+   * loop that re-reads at entry can then never find the bound already past.
+   */
+  readCostMinutes?: number;
   finish?: JobOutcome;
   jobLimit?: number;
 }): Harness => {
@@ -171,6 +178,9 @@ const harness = (options: {
       },
       clockOut: async (at: Date) => {
         calls.push('clockOut');
+        if (options.clockOutFails) {
+          throw new Error('[accel] 1 of 2 session(s) could not be closed (stopWorkSession tech-b failed: HTTP 500)');
+        }
         shiftOpen.value = false;
         at_.clockOut = at;
         // What the clock actually said. `at` is clamped to the grace limit, so asserting
@@ -212,7 +222,11 @@ const harness = (options: {
         return 1;
       },
     },
-    now: clock.now,
+    now: async () => {
+      const value = await clock.now();
+      clock.advance(options.readCostMinutes ?? 0);
+      return value;
+    },
     waitUntil: async (target: Date) => clock.waitUntil(target, options.waitOvershootMinutes ?? 0),
     createJob: (claim, index) => {
       if (options.jobLimit !== undefined && jobs.length >= options.jobLimit) {
@@ -642,6 +656,60 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
     for (const job of bayJobs) {
       expect(job.ranOnTheClock.every((onClock) => onClock)).toBe(true);
     }
+  });
+
+  it('reports a clock-out that left someone on the clock as a failed day', async () => {
+    // A swallowed clock-out failure is silent at the level that matters: the open entry
+    // has no endAtUtc, the audit skips it, and the day passes. This was a regression —
+    // before the parallel fan-out, the failure threw and the day failed loudly.
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 2,
+      jobsToday: 1,
+      concurrency: 1,
+      clockOutFails: true,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.failures.some((failure) => /could not be closed/.test(failure))).toBe(true);
+  });
+
+  it('refuses the grace stretch an unpredicted first tick', async () => {
+    // The reachable path: a bay job carried in from yesterday, and today's in-hours loop
+    // exits with zero ticks because its entry read lands past the work bound (clock reads
+    // cost virtual time at scale). The estimate is then zero at the grace stretch, which
+    // has carried bay work and nothing to predict from. `allowFirst` was meant to make the
+    // in-hours loop the only place that takes an unpredicted tick, but the arithmetic
+    // already answered false for a zero estimate, so the parameter was a no-op and the
+    // grace stretch took a 120-minute tick — past the limit.
+    //
+    // Day 2 starts at 17:52 with 5-minute reads: schedule read 17:52, post-phase read
+    // 17:57 (work bound 18:00 still ahead), in-hours entry read 18:02 — past it, zero
+    // ticks. Grace entry read 18:07: inside the grace, estimate zero.
+    const { runner, clock, jobs, at } = harness({
+      startIso: '2025-11-03T17:00:00Z',
+      stepMinutes: 120,
+      jobSteps: 6,
+      jobsToday: 1,
+      concurrency: 1,
+      readCostMinutes: 5,
+      rosters: [roster({ freePositions: [{ kind: 'BAY', id: 'bay-1', name: 'Bay 01' }], idleTechnicianIds: ['tech-a'] })],
+    });
+
+    const first = await runner.runDay(1);
+    expect(first.carriedOut).toBe(1);
+
+    clock.set('2025-11-04T17:52:00Z');
+    const stepsBefore = jobs[0].ranAt.length;
+    await runner.runDay(2);
+
+    const calendar = new ShopCalendar(spec());
+    // No step was taken today: the in-hours loop had no room and the grace stretch had no
+    // estimate. Pre-fix, one landed at 18:07 and the shift ended at 20:12.
+    expect(jobs[0].ranAt.length).toBe(stepsBefore);
+    expect(calendar.withinGrace(at.clockOutFinished as Date, 'BAY')).toBe(true);
   });
 
   it('reports a day whose window closed before work could start, rather than a quiet success', async () => {

@@ -163,8 +163,14 @@ export class AcceleratedDayRunner {
    * because refusing there is the correct answer — the job simply carries to tomorrow.
    */
   private tickWouldOvershoot(now: Date, until: Date, allowFirst = false): boolean {
-    if (allowFirst && this.maxTickVirtualMs === 0) {
-      return false;
+    if (this.maxTickVirtualMs === 0) {
+      // Nothing to predict from yet. The in-hours loop takes the tick regardless — the
+      // day must do something — but the grace stretch refuses: an unbounded first tick
+      // there can cross the grace limit, which is the one thing that stretch must never
+      // do. Written as an explicit branch because the arithmetic below already answered
+      // false for a zero estimate, which made the asymmetry this parameter documents a
+      // no-op and gave the grace stretch a free tick whenever nothing had ticked today.
+      return !allowFirst;
     }
     return now.getTime() + this.maxTickVirtualMs > until.getTime();
   }
@@ -305,7 +311,9 @@ export class AcceleratedDayRunner {
     // own stretch below, after clock-out — running it here would spend the shift's
     // remaining payroll margin on work that did not need it.
     if (schedule.graceWorkBound !== null && this.carried.some((entry) => entry.job.gatedByHours)) {
-      await this.advanceCarriedOnly(report, schedule.graceWorkBound);
+      // 'BAY' for advancement as well: a carried mobile job stepped here spends the
+      // shift's payroll margin on work that has its own stretch after clock-out.
+      await this.advanceCarriedOnly(report, schedule.graceWorkBound, 'BAY');
     }
 
     // SHIFT-OUT, at the end of the worked window rather than at midnight.
@@ -383,9 +391,15 @@ export class AcceleratedDayRunner {
    * stamps `endAtUtc` from its own clock.
    */
   private async closeShift(report: DayReport, schedule: DaySchedule): Promise<Date> {
-    void report;
     const closedAt = clampToGrace(await this.deps.now(), schedule);
-    await this.deps.shift.clockOut(closedAt);
+    // A clock-out that leaves anyone on the clock is a failed day, loudly. Left as a
+    // warning, the open session had no `endAtUtc`, the audit skipped it, and the day
+    // reported clean — a run that lost a payroll entry and passed.
+    try {
+      await this.deps.shift.clockOut(closedAt);
+    } catch (error) {
+      report.failures.push(error instanceof Error ? error.message : String(error));
+    }
     await this.deps.shift.approveTime(closedAt);
     return closedAt;
   }
@@ -466,6 +480,7 @@ export class AcceleratedDayRunner {
     let rosters = options.rosters;
     const target = options.target ?? this.deps.jobsToday(now);
     let started = options.startedAlready ?? 0;
+    let ticks = 0;
 
     for (;;) {
       if (now.getTime() >= until.getTime()) {
@@ -488,6 +503,9 @@ export class AcceleratedDayRunner {
           for (const roster of rosters) {
             this.deps.ledger.reconcile(roster);
           }
+          // The discovery cost virtual time that is not a tick's. Re-read here, once, so
+          // neither the gate nor the tick measurement charges it to the estimate.
+          now = await this.deps.now();
         }
         if (rosters.length === 0) {
           // Same treatment as the open-day path: a stretch that could have worked but
@@ -526,13 +544,24 @@ export class AcceleratedDayRunner {
       // shift ends outside the window the payroll audit accepts.
       // The in-hours loop must take at least one tick or the day does nothing at all.
       if (this.tickWouldOvershoot(now, until, true)) {
+        if (ticks === 0 && active.length > 0) {
+          report.failures.push(
+            `no step fit inside the window ending ${until.toISOString()} — the tick estimate ` +
+              `(${Math.round(this.maxTickVirtualMs / 60_000)} virtual min) exceeds what is left. ` +
+              'Lower pos.time.accelerated.scale, or widen ITEST_ACCEL_OPEN_TIME / _CLOSE_TIME.',
+          );
+        }
         break;
       }
-      // Measured from after the intake above: a lazy roster discovery inside it is not
-      // part of what a *tick* costs, and charging it to the estimate inflated the
-      // prediction for every tick that followed.
-      const tickStart = await this.deps.now();
+      // `now` is reused as the tick's start, NOT re-read: a second /system/time read per
+      // tick doubles the run's clock traffic and, worse, its own virtual cost falls
+      // outside the measured window, so the estimate under-counts every tick by one
+      // gateway round trip — systematically optimistic in the one place its margin is
+      // spent. Only a lazy discovery inside intake makes `now` stale, and that path
+      // re-reads for itself above.
+      const tickStart = now;
       await Promise.all(runnable.map((entry) => entry.job.advance()));
+      ticks += 1;
 
       // One clock read per tick, reused by the next iteration's gate check. Reading
       // it twice would double the run's /system/time traffic, and at a thousandfold

@@ -268,6 +268,13 @@ export interface FeasibilityInput {
   scale: number;
   /** The tightest open window the calendar has, in virtual minutes. */
   shortestOpenMinutes: number;
+  /**
+   * The overrun grace, in virtual minutes. A single step must fit inside it: the day
+   * runner guarantees the in-hours loop one tick with nothing to predict from, and a
+   * tick larger than the grace pushes the shift out of the window the payroll audit
+   * accepts, however the rest of the day is bounded.
+   */
+  graceMinutes: number;
   latency: LatencyMeasurement;
   concurrency: number;
   /** Open virtual days the run will actually work. */
@@ -310,8 +317,15 @@ export function assessFeasibility(input: FeasibilityInput): Feasibility {
   const stepSeconds = input.latency.stepLatencyMs / 1000;
   const jobSeconds = input.latency.jobLatencyMs / 1000;
 
+  // One step, in virtual minutes, at this scale.
+  const stepVirtualMinutes = (input.latency.stepLatencyMs * input.scale) / 60_000;
+
   const suggestedScaleCeiling = Math.floor(
-    (input.shortestOpenMinutes * 60) / Math.max(stepSeconds * MIN_STEPS_PER_WINDOW, 0.001),
+    Math.min(
+      (input.shortestOpenMinutes * 60) / Math.max(stepSeconds * MIN_STEPS_PER_WINDOW, 0.001),
+      // ...and the scale at which one step still fits inside the grace.
+      input.graceMinutes > 0 ? (input.graceMinutes * 60_000) / Math.max(input.latency.stepLatencyMs, 1) : Infinity,
+    ),
   );
 
   const openWindowsPerJob = Math.max(1, Math.ceil(jobSeconds / Math.max(openRealSeconds, 0.001)));
@@ -329,6 +343,18 @@ export function assessFeasibility(input: FeasibilityInput): Feasibility {
     suggestedScaleCeiling,
   };
 
+  if (input.graceMinutes > 0 && stepVirtualMinutes >= input.graceMinutes) {
+    return {
+      ...base,
+      ok: false,
+      reason:
+        `one gateway call is ${stepVirtualMinutes.toFixed(0)} virtual minutes at scale ${input.scale}, which does not ` +
+        `fit inside the ${input.graceMinutes}-minute overrun grace. The day's first step runs with nothing to ` +
+        'predict from, and a step larger than the grace pushes every shift end outside the window the payroll ' +
+        `audit accepts. Deploy with pos.time.accelerated.scale=${suggestedScaleCeiling} or lower, or raise ` +
+        'ITEST_ACCEL_OVERRUN_GRACE_MINUTES.',
+    };
+  }
   if (openRealSeconds < stepSeconds * MIN_STEPS_PER_WINDOW) {
     return {
       ...base,

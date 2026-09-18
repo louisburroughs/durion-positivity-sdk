@@ -115,7 +115,9 @@ export function createShiftPort(
    * `endAtUtc` when its own call runs — and tolerant of the 404 that means the session was
    * already closed, so a retry after a partial failure is safe.
    */
-  const closeSessions = async (personIds: readonly string[]): Promise<string[]> => {
+  const closeSessions = async (
+    personIds: readonly string[],
+  ): Promise<{ closed: string[]; failures: string[] }> => {
     const outcomes = await Promise.allSettled(
       personIds.map(async (personId) => {
         try {
@@ -128,9 +130,16 @@ export function createShiftPort(
         return personId;
       }),
     );
-    return outcomes
-      .filter((outcome): outcome is PromiseFulfilledResult<string> => outcome.status === 'fulfilled')
-      .map((outcome) => outcome.value);
+    return {
+      closed: outcomes
+        .filter((outcome): outcome is PromiseFulfilledResult<string> => outcome.status === 'fulfilled')
+        .map((outcome) => outcome.value),
+      // Kept, not discarded: a swallowed rejection here was how a 500 from the backend
+      // became a clean day.
+      failures: outcomes
+        .filter((outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected')
+        .map((outcome) => (outcome.reason as Error).message),
+    };
   };
 
   /** A stale session from an interrupted run is closed before a fresh one opens. */
@@ -191,7 +200,7 @@ export function createShiftPort(
         // stops the run, so nothing downstream would ever clock these people out. They
         // would stay open until some later run's `closeStale` found them.
         const opened = [...onTheClock];
-        const closed = await closeSessions(opened);
+        const { closed } = await closeSessions(opened);
         onTheClock = [];
         throw new Error(
           `[accel] ${failures.length} of ${everyone.length} could not be clocked in (` +
@@ -216,16 +225,17 @@ export function createShiftPort(
      * In parallel the whole fan-out costs about one call.
      */
     async clockOut(): Promise<string[]> {
-      const closed = await closeSessions(onTheClock);
-      // Pruned rather than cleared: whoever could not be stopped is still on the clock, so
-      // a later attempt — or the next run's `closeStale` — still knows about them. Clearing
-      // the list unconditionally meant a retry re-stopped people already stopped, and
-      // `call` does not tolerate the 404 that answers.
+      const { closed, failures } = await closeSessions(onTheClock);
+      // Pruned rather than cleared, so a retry does not re-stop people already stopped.
       onTheClock = onTheClock.filter((personId) => !closed.includes(personId));
-      if (onTheClock.length > 0) {
-        log(
-          `WARNING: ${onTheClock.length} session(s) could not be closed (${onTheClock.join(', ')}); ` +
-            'their time entries stay open until a later run reclaims them',
+      if (failures.length > 0) {
+        // Thrown, after closing everyone who could be closed. A warning here was silent
+        // at the level that matters: the open entry has no endAtUtc, the audit skips
+        // it, and the day passes — and the next morning's closeStale stamps it shut at
+        // opening time, recording a bogus overnight shift the audit also accepts.
+        throw new Error(
+          `[accel] ${failures.length} of ${closed.length + failures.length} session(s) could not be ` +
+            `closed (${failures.join('; ')}). ${onTheClock.length} still on the clock: ${onTheClock.join(', ')}.`,
         );
       }
       return closed;

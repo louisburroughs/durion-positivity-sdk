@@ -157,6 +157,7 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   const feasibility = assessFeasibility({
     scale: clock.scale,
     shortestOpenMinutes: calendar.shortestOpenMinutes(),
+    graceMinutes: accel.graceMinutes,
     latency,
     concurrency: accel.concurrency,
     sampledOpenDays,

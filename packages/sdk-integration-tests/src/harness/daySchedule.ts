@@ -163,8 +163,12 @@ export function daySchedule(observedAt: Date, calendar: ShopCalendar): DaySchedu
 
 /** Clamps an instant to the last legal shift end, for the phases that take one. */
 export function clampToGrace(instant: Date, schedule: DaySchedule): Date {
-  if (schedule.graceLimit === null) {
+  // With no grace configured there is still a last legal instant — the work bound
+  // itself. Returning the instant unclamped there dated maintenance from wherever the
+  // clock had drifted to, which is the regression the null grace bounds introduced.
+  const limit = schedule.graceLimit ?? schedule.workBound;
+  if (limit === null) {
     return instant;
   }
-  return instant.getTime() > schedule.graceLimit.getTime() ? schedule.graceLimit : instant;
+  return instant.getTime() > limit.getTime() ? limit : instant;
 }

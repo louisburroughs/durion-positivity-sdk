@@ -123,6 +123,7 @@ describe('assessFeasibility', () => {
     const verdict = assessFeasibility({
       scale: 1460,
       shortestOpenMinutes: 600,
+      graceMinutes: 90,
       latency,
       concurrency: 8,
       sampledOpenDays: 250,
@@ -141,6 +142,7 @@ describe('assessFeasibility', () => {
     const verdict = assessFeasibility({
       scale: 8760,
       shortestOpenMinutes: 600,
+      graceMinutes: 90,
       latency: { stepLatencyMs: 300, jobLatencyMs: 20_000, steps: 22 },
       concurrency: 8,
       sampledOpenDays: 250,
@@ -154,9 +156,13 @@ describe('assessFeasibility', () => {
   });
 
   it('refuses a window too tight for even a couple of steps, and names a workable scale', () => {
+    // A grace wide enough that the step-fits-the-grace check is not the binding one here:
+    // this case is about the window, and at scale 26,280 a 1s call is 438 virtual minutes,
+    // which the default 90-minute grace refuses first.
     const verdict = assessFeasibility({
       scale: 26_280,
       shortestOpenMinutes: 600,
+      graceMinutes: 1_440,
       latency,
       concurrency: 8,
       sampledOpenDays: 250,
@@ -173,6 +179,7 @@ describe('assessFeasibility', () => {
     const verdict = assessFeasibility({
       scale: 4380,
       shortestOpenMinutes: 240,
+      graceMinutes: 90,
       latency: { stepLatencyMs: 500, jobLatencyMs: 60_000, steps: 22 },
       concurrency: 2,
       sampledOpenDays: 250,
@@ -187,6 +194,7 @@ describe('assessFeasibility', () => {
     const verdict = assessFeasibility({
       scale: 1460,
       shortestOpenMinutes: 600,
+      graceMinutes: 90,
       latency,
       concurrency: 8,
       sampledOpenDays: 0,
@@ -196,10 +204,31 @@ describe('assessFeasibility', () => {
     expect(verdict.reason).toMatch(/nothing to assert/);
   });
 
+  it('refuses a scale at which one step does not fit inside the grace', () => {
+    // The day's first step runs with nothing to predict from, so a step larger than the
+    // grace pushes the shift end outside the window the payroll audit accepts — and no
+    // bound on the rest of the day can help. A 1s call at scale 8,760 is 146 virtual
+    // minutes against a 90-minute grace.
+    const verdict = assessFeasibility({
+      scale: 8760,
+      shortestOpenMinutes: 600,
+      graceMinutes: 90,
+      latency: { stepLatencyMs: 1_000, jobLatencyMs: 20_000, steps: 22 },
+      concurrency: 8,
+      sampledOpenDays: 250,
+    });
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.reason).toMatch(/146 virtual minutes .* does not fit inside the 90-minute overrun grace/);
+    // The ceiling named is the one at which the step fits: 90 min / 1 s = 5,400.
+    expect(verdict.suggestedScaleCeiling).toBe(5_400);
+  });
+
   it('measures against the tightest window, so a Saturday half-day is what must fit', () => {
     const saturday = assessFeasibility({
       scale: 1460,
       shortestOpenMinutes: 240,
+      graceMinutes: 90,
       latency,
       concurrency: 8,
       sampledOpenDays: 250,
