@@ -220,8 +220,20 @@ describe('assessFeasibility', () => {
 
     expect(verdict.ok).toBe(false);
     expect(verdict.reason).toMatch(/146 virtual minutes .* does not fit inside the 90-minute overrun grace/);
-    // The ceiling named is the one at which the step fits: 90 min / 1 s = 5,400.
-    expect(verdict.suggestedScaleCeiling).toBe(5_400);
+    // The ceiling named must itself pass the guard. 90 min / 1 s is exactly 5,400, and
+    // at 5,400 a step is exactly 90 minutes, which the guard refuses — so the largest
+    // scale that fits is 5,399. The first cut of this test codified 5,400.
+    expect(verdict.suggestedScaleCeiling).toBe(5_399);
+    expect(
+      assessFeasibility({
+        scale: verdict.suggestedScaleCeiling,
+        shortestOpenMinutes: 600,
+        graceMinutes: 90,
+        latency: { stepLatencyMs: 1_000, jobLatencyMs: 20_000, steps: 22 },
+        concurrency: 8,
+        sampledOpenDays: 250,
+      }).ok,
+    ).toBe(true);
   });
 
   it('measures against the tightest window, so a Saturday half-day is what must fit', () => {

@@ -135,21 +135,51 @@ of the stale-lock takeover. The compare-before-unlink narrows that window but do
 not close it, as the code comment already said. Acknowledged in `86367bc`'s message
 and in a PR comment rather than by rewriting history.
 
+## Cycles 3-7 — the close→midnight path, and a structural fix
+
+Each cycle ran an adversarial pass over the previous cycle's commit. Every one returned
+**FAIL**, and in cycles 2-4 each blocker had been introduced by the preceding fix — all in
+`acceleratedDayRunner.ts`'s time bounds. That pattern was put to the user, who chose to
+restructure rather than patch a fifth instance.
+
+| Cycle | Commit | Findings | Verdict | What changed |
+| --- | --- | --- | --- | --- |
+| 3 | `0c1c056` | 1🔴 3🟡 4 MINOR | FAIL | Loop bounded at close, not close+grace (`withinGrace` is strict; `clockOut` takes no instant — the cycle-2 clamp was cosmetic). `dayEnd` recomputed after the wait. New `window-missed` skip reason. |
+| 4 | `fe4ca9f` | 1🔴 3🟡 4 MINOR | FAIL | **Sequential clock-out fan-out exceeded the grace on its own** at documented scales (10 people × 15 virtual min at 4,380 = 146 min vs 90). Both fan-outs parallel. Bounds re-derived after the shift phases. Test assertions moved off the clamped value. |
+| — | user decision | — | — | Grace model: finish **on the clock**, then clock out. Next step: **restructure** bounds into one value. |
+| 5 | `7047aef` | 2🔴 4 MINOR | FAIL | **`daySchedule.ts` extracted** — every bound from one clock reading, re-derived after anything costing virtual time. Pass confirmed the mixed-reading defect class **gone** (areas 1,2,4,6 OK). Findings were in the new grace stretch: bound checked only between ticks. |
+| 6 | `c232fea` | 1🔴 1🟡 7 MINOR | FAIL | Tick-cost prediction; but estimate was run-lifetime and starved later days (reproduced by probe: days 2-4 zero completions, work off the clock). Per-day reset; `kindLimit` gates advancement. **Verified by probe**: 42 steps, 0 off the clock. |
+| 7 | `632e167` | 3🔴 4 MINOR | FAIL | `allowFirst` was a no-op; tick measurement re-read the clock (contradicting its own comment); **clock-out failures swallowed** (a regression — the audit skips entries with no `endAtUtc`, so a 500 produced a clean day). Feasibility now requires a step to fit the grace. |
+
+Cycle 7's pass was the one the user set as the merge condition ("merge it if that pass
+comes back clean"). It was not clean. **The PR is not merged.**
+
+### Test discipline, recorded because it recurred
+
+Five times a test of mine passed while the defect it existed to catch was live. The
+mechanism was the same each time: asserting on a value the code had already sanitised
+(a clamped instant, a free clock read, a scenario that never reached the code under
+test). From cycle 6 on, each fix was verified by **probe** or by **stashing the fix and
+running the new test against the pre-fix source**. Cycle 7's grace test passed pre-fix on
+its first attempt for exactly this reason and was rewritten until it discriminated.
+
 ## Final verification
 
 | Check | Result |
 | --- | --- |
-| `npx jest` (repo) | **871 passing**, 0 failing (857 before cycle 1, 864 after) |
+| `npx jest` (repo) | **908 passing**, 0 failing (857 before cycle 1) |
 | `tsc --noEmit` (package) | No errors |
 | `eslint . --ext .ts,.tsx` | No issues |
 | Collection isolation | unit 0 `*.itest.ts`, integration 8 non-accelerated, accelerated 9, parity 8 |
-| Regression tests added | 14 across both cycles, including both blockers |
-| Remediation cycles | 2 (`d680cb1`, `86367bc`); reviewer verdict on cycle 1 was FAIL, cycle 2 addresses every finding |
+| Regression tests added | 51 across seven cycles (19 on `daySchedule` alone) |
+| Remediation cycles | 7; every reported finding fixed; **no pass returned PASS** |
+| CI | green on every push, 9 consecutive |
 
 ## Unresolved blockers and owner
 
 | Blocker | Owner | Note |
 | --- | --- | --- |
+| **No verification pass has returned PASS** | user | Seven cycles; findings narrowed from a recurring structural class (2-4) to one new feature settling (5-7). Cycle 7's fixes are test-verified in both directions, but not independently re-reviewed. The merge condition was a clean pass and was not met. |
 | No accelerated backend deployed, so the suite has not been run end to end | reporter | Local Compose path is documented and verified; the completion criteria needing a real run are left unticked rather than assumed |
 | Alpha accelerated deploy path | backend — `durion-positivity-backend#2065` | Does not block this PR |
 | Cross-machine run exclusion | operations | Lock file covers one machine; the advisory URI is logged, not enforced |

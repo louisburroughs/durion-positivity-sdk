@@ -323,8 +323,13 @@ export function assessFeasibility(input: FeasibilityInput): Feasibility {
   const suggestedScaleCeiling = Math.floor(
     Math.min(
       (input.shortestOpenMinutes * 60) / Math.max(stepSeconds * MIN_STEPS_PER_WINDOW, 0.001),
-      // ...and the scale at which one step still fits inside the grace.
-      input.graceMinutes > 0 ? (input.graceMinutes * 60_000) / Math.max(input.latency.stepLatencyMs, 1) : Infinity,
+      // ...and the highest scale at which one step still fits inside the grace. The
+      // guard below refuses equality (a tick starting at close ends a millisecond past
+      // the limit), so the exact quotient is itself refused: `ceil - 1` is the largest
+      // integer strictly below it. Floor named a scale the same message then refused.
+      input.graceMinutes > 0
+        ? Math.ceil((input.graceMinutes * 60_000) / Math.max(input.latency.stepLatencyMs, 1)) - 1
+        : Infinity,
     ),
   );
 
