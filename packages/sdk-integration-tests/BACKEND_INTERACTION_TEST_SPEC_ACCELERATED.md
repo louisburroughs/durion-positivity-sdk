@@ -280,8 +280,12 @@ Gating rules, stated once so every suite copy can cite them:
   successful day with nothing in it.
 - **The in-hours work loop is bounded at bay close**, and
   `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` (default 90) is the margin that keeps the
-  overshoot legal rather than a second working window. The loop can only check its
-  bound between ticks, so it exits one tick past close.
+  overshoot legal rather than a second working window.
+- **A loop refuses a step it predicts would cross its bound.** A bound checked only
+  *between* steps is a bound exceeded *by* a step, and at a thousandfold scale one step
+  can be virtual hours — the feasibility guard admits steps larger than the whole grace.
+  Each loop therefore records what steps actually cost and stops before starting one that
+  would not fit, rather than after overshooting.
 - **A job already started finishes inside the grace, on the clock.** That stretch gets
   *half* the grace and runs before clock-out, so the labor and the payroll entry agree
   about who was working, and the remaining half covers the overshooting tick and the

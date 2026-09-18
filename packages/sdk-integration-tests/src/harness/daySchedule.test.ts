@@ -114,6 +114,40 @@ describe('daySchedule — the day boundary', () => {
     const allDay = new ShopCalendar(spec({ weekday: { openMinutes: 0, closeMinutes: 24 * 60 } }));
     const schedule = on('2025-11-03T10:00:00Z', allDay);
     expect(schedule.workBound?.toISOString()).toBe('2025-11-04T00:00:00.000Z');
+    // And the grace bounds stay on this date too. Clamped against the midnight *after
+    // close* — which for an all-day window is a day too far — they landed at 01:29 on the
+    // 4th, past both the day end and the work bound, in the very branch added to prevent
+    // exactly that.
+    expect((schedule.graceLimit as Date).getTime()).toBeLessThan(schedule.dayEnd.getTime());
+    expect((schedule.graceWorkBound as Date).getTime()).toBeLessThanOrEqual(
+      (schedule.graceLimit as Date).getTime(),
+    );
+  });
+
+  it('has no finish-the-car bound when there is no grace to spend', () => {
+    // graceMinutes is allowed to be 0. Half of nothing was an instant a millisecond
+    // *before* the work bound — a set contradicting itself, which is the one thing
+    // deriving it together is supposed to make impossible.
+    const noGrace = new ShopCalendar(spec({ graceMinutes: 0 }));
+    const schedule = on('2025-11-03T10:00:00Z', noGrace);
+
+    expect(schedule.graceWorkBound).toBeNull();
+    expect((schedule.graceLimit as Date).getTime()).toBeLessThan((schedule.workBound as Date).getTime());
+  });
+
+  it('is open at the instant the window opens, and shut at the instant it closes', () => {
+    const atOpen = on('2025-11-03T08:00:00Z');
+    expect(atOpen.openNow).toBe(true);
+    expect(atOpen.closesAt?.toISOString()).toBe('2025-11-03T18:00:00.000Z');
+    expect(atOpen.workBound?.toISOString()).toBe('2025-11-03T18:00:00.000Z');
+
+    // Close is exclusive, so this instant is outside the window and the schedule points
+    // at the next opening rather than offering a bound to work against.
+    const atClose = on('2025-11-03T18:00:00Z');
+    expect(atClose.openNow).toBe(false);
+    expect(atClose.workBound).toBeNull();
+    expect(atClose.opensAt?.toISOString()).toBe('2025-11-04T08:00:00.000Z');
+    expect(atClose.blocker).toBeUndefined();
   });
 });
 

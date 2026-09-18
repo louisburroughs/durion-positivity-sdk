@@ -138,7 +138,11 @@ export function createShiftPort(
             'A virtual day with no staff writes no labor and no payroll.',
         );
       }
-      const opened = await Promise.all(
+      // allSettled, not all: `Promise.all` rejects on the first failure while the other
+      // calls are still in flight, so `onTheClock` would never be assigned and people the
+      // backend really did clock in would be recorded nowhere — left open for the audit to
+      // find with nothing to close them.
+      const outcomes = await Promise.allSettled(
         everyone.map(async (personId) => {
           await closeStale(personId);
           const started = await call(`startWorkSession ${personId}`, () =>
@@ -150,7 +154,22 @@ export function createShiftPort(
           return personId;
         }),
       );
-      onTheClock = opened;
+
+      // Recorded before anything is thrown, so whoever is on the clock can be clocked out.
+      onTheClock = outcomes
+        .filter((outcome): outcome is PromiseFulfilledResult<string> => outcome.status === 'fulfilled')
+        .map((outcome) => outcome.value);
+
+      const failures = outcomes.filter((outcome) => outcome.status === 'rejected');
+      if (failures.length > 0) {
+        throw new Error(
+          `[accel] ${failures.length} of ${everyone.length} could not be clocked in (` +
+            failures
+              .map((outcome) => ((outcome as PromiseRejectedResult).reason as Error).message)
+              .join('; ') +
+            `). ${onTheClock.length} are on the clock and will be clocked out.`,
+        );
+      }
       log(`${at.toISOString().slice(0, 16)} — ${onTheClock.length} on the clock`);
       return onTheClock;
     },

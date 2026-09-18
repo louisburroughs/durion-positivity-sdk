@@ -52,11 +52,14 @@ export interface DaySchedule {
    */
   workBound: Date | null;
   /**
-   * Where the finish-the-car stretch stops — close plus half the grace.
+   * Where the finish-the-car stretch stops — close plus half the grace, or null when
+   * there is no grace configured.
    *
-   * Half, so the remainder covers the overshooting tick and the clock-out fan-out. A
-   * mechanic finishes the car they are on while still on the clock, and the shift then
-   * ends inside the grace, which is what the end-of-run payroll audit requires.
+   * Half, so the remainder covers the clock-out fan-out. A mechanic finishes the car
+   * they are on while still on the clock, and the shift then ends inside the grace,
+   * which is what the end-of-run payroll audit requires. The stretch also refuses to
+   * begin a step it predicts would cross the limit — see AcceleratedDayRunner — because
+   * a bound checked only between steps is a bound exceeded by one step.
    */
   graceWorkBound: Date | null;
   /**
@@ -121,12 +124,18 @@ export function daySchedule(observedAt: Date, calendar: ShopCalendar): DaySchedu
   const graceMs = calendar.graceMinutes * 60_000;
   // Non-null by construction: `isOpen` is true, so the instant is inside a window.
   const close = closesAt as Date;
-  const graceLimit = new Date(
-    Math.min(close.getTime() + graceMs - 1, nextUtcMidnight(close).getTime() - 1),
-  );
-  const graceWorkBound = new Date(
-    Math.min(close.getTime() + Math.floor(graceMs / 2), graceLimit.getTime()),
-  );
+  // Clamped against this day's own end, not against the midnight after `close`. Those
+  // differ for an all-day window, where `close` *is* midnight: the latter is a day too
+  // far and puts the limit on the next date, which is the very thing this clamp exists
+  // to prevent.
+  const graceLimit = new Date(Math.min(close.getTime() + graceMs - 1, dayEnd.getTime() - 1));
+  // Null when there is no grace to spend, rather than an instant a millisecond *before*
+  // the work bound: the whole point of deriving these together is that the set cannot
+  // contradict itself.
+  const graceWorkBound =
+    graceMs === 0
+      ? null
+      : new Date(Math.min(close.getTime() + Math.floor(graceMs / 2), graceLimit.getTime()));
 
   return {
     observedAt,

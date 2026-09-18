@@ -164,6 +164,12 @@ const harness = (options: {
         // on it alone is vacuous — any overshoot is clamped back into legality before a
         // test can see it, which is how the cycle-2 assertion passed on an illegal value.
         at_.clockOutObserved = clock.peek();
+        // The fan-out itself costs virtual time, and the backend stamps each entry as its
+        // own `stopWorkSession` runs — so the last person's stamp is this, not the instant
+        // the fan-out began. Asserting on the pre-cost instant leaves the margin claim
+        // untested.
+        clock.advance(options.phaseCostMinutes ?? 0);
+        at_.clockOutFinished = clock.peek();
         return ['tech-a', 'tech-b'];
       },
       approveTime: async (at: Date) => {
@@ -507,6 +513,57 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
     expect(observed.getTime()).toBeGreaterThanOrEqual(lastStep.getTime());
     expect(new ShopCalendar(spec()).withinGrace(observed, 'BAY')).toBe(true);
     expect(observed.getTime()).toBe((at.clockOut as Date).getTime());
+  });
+
+  it('refuses a step it predicts would push the shift past the grace', async () => {
+    // A bound checked only BETWEEN steps is a bound exceeded BY a step. With 90-minute
+    // steps, the first tick ends at 18:01 and the grace stretch would take one more —
+    // landing 19:31, past the 19:30 limit — unless the loop predicts the cost and stops.
+    // The feasibility guard admits steps larger than the whole grace, so this is not a
+    // contrived size.
+    const { runner, at } = harness({
+      startIso: '2025-11-03T16:31:00Z',
+      stepMinutes: 90,
+      jobSteps: 6,
+      jobsToday: 1,
+      concurrency: 1,
+      phaseCostMinutes: 5,
+      rosters: [roster({ freePositions: [{ kind: 'BAY', id: 'bay-1', name: 'Bay 01' }], idleTechnicianIds: ['tech-a'] })],
+    });
+
+    await runner.runDay(1);
+
+    const calendar = new ShopCalendar(spec());
+    const finished = at.clockOutFinished as Date;
+    expect(finished).toBeDefined();
+    // The worst-case stamp — the fan-out's last call — is still inside the grace.
+    expect(calendar.withinGrace(finished, 'BAY')).toBe(true);
+    expect(finished.getTime()).toBeLessThan(Date.parse('2025-11-03T19:30:00Z'));
+  });
+
+  it('does not spend the shift\'s payroll margin on carried mobile work', async () => {
+    // Mobile work has its own stretch, after clock-out and off the clock. Running it in
+    // the grace delays the clock-out for work that never needed the margin.
+    const { runner, at } = harness({
+      startIso: '2025-11-03T17:50:00Z',
+      stepMinutes: 20,
+      jobSteps: 12, // will not finish, so it is carried at close
+      jobsToday: 1,
+      concurrency: 1,
+      phaseCostMinutes: 0,
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    await runner.runDay(1);
+
+    // Clocked out close to the window's end, not at the end of the finish-the-car bound.
+    const observed = at.clockOutObserved as Date;
+    expect(observed.getTime()).toBeLessThan(Date.parse('2025-11-03T18:45:00Z'));
   });
 
   it('reports a day whose window closed before work could start, rather than a quiet success', async () => {

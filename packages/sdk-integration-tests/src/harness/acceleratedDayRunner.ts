@@ -136,6 +136,32 @@ export class AcceleratedDayRunner {
   /** Jobs that outlived a previous day, still holding their position. */
   private carried: ActiveJob[] = [];
 
+  /**
+   * The most virtual time a single tick has cost so far, used to refuse a tick that
+   * would cross a bound.
+   *
+   * A bound checked only *between* ticks is a bound exceeded *by* a tick, and at a
+   * thousandfold scale one tick can be virtual hours: the feasibility guard admits steps
+   * up to half the shortest open window, which is more than the whole grace. Measuring
+   * what ticks actually cost and predicting the next one is what turns "stop after
+   * overshooting" into "stop before". Seeded at zero so the first tick of a run always
+   * runs — there is nothing to predict from yet — and it only ever grows.
+   */
+  private maxTickVirtualMs = 0;
+
+  /** Would another tick cross `until`, judged by the most expensive one seen so far? */
+  private tickWouldOvershoot(now: Date, until: Date): boolean {
+    return now.getTime() + this.maxTickVirtualMs > until.getTime();
+  }
+
+  /** Records what a tick cost, for the prediction above. */
+  private recordTickCost(before: Date, after: Date): void {
+    const cost = after.getTime() - before.getTime();
+    if (cost > this.maxTickVirtualMs) {
+      this.maxTickVirtualMs = cost;
+    }
+  }
+
   constructor(private readonly deps: DayRunnerDeps) {}
 
   get carriedCount(): number {
@@ -258,7 +284,10 @@ export class AcceleratedDayRunner {
     // fan-out, so the shift still ends inside the grace. No *new* bay work starts here,
     // and this stretch runs whatever ITEST_ACCEL_MOBILE_AFTER_HOURS says: the grace
     // belongs to the mechanic finishing a car, not to the mobile flag.
-    if (schedule.graceWorkBound !== null && this.carried.length > 0) {
+    // Gated on carried *bay* work. A mobile job is never gated by the hours and has its
+    // own stretch below, after clock-out — running it here would spend the shift's
+    // remaining payroll margin on work that did not need it.
+    if (schedule.graceWorkBound !== null && this.carried.some((entry) => entry.job.gatedByHours)) {
       await this.advanceCarriedOnly(report, schedule.graceWorkBound);
     }
 
@@ -460,12 +489,20 @@ export class AcceleratedDayRunner {
       if (runnable.length === 0) {
         break;
       }
+      // Refuse a tick that the observed cost says would cross the bound. Without this
+      // the loop stops one tick *past* `until`, which for the grace stretch means the
+      // shift ends outside the window the payroll audit accepts.
+      if (this.tickWouldOvershoot(now, until)) {
+        break;
+      }
+      const tickStart = now;
       await Promise.all(runnable.map((entry) => entry.job.advance()));
 
       // One clock read per tick, reused by the next iteration's gate check. Reading
       // it twice would double the run's /system/time traffic, and at a thousandfold
       // scale those round trips are themselves virtual minutes off the window.
       now = await this.deps.now();
+      this.recordTickCost(tickStart, now);
       for (const entry of [...active]) {
         if (entry.job.outcome === 'in-progress') {
           continue;
@@ -506,9 +543,14 @@ export class AcceleratedDayRunner {
       if (runnable.length === 0) {
         return;
       }
+      if (this.tickWouldOvershoot(now, until)) {
+        return;
+      }
+      const tickStart = now;
       await Promise.all(runnable.map((entry) => entry.job.advance()));
 
       now = await this.deps.now();
+      this.recordTickCost(tickStart, now);
       for (const entry of [...this.carried]) {
         if (entry.job.outcome === 'in-progress') {
           continue;
