@@ -124,25 +124,36 @@ export function daySchedule(observedAt: Date, calendar: ShopCalendar): DaySchedu
   const graceMs = calendar.graceMinutes * 60_000;
   // Non-null by construction: `isOpen` is true, so the instant is inside a window.
   const close = closesAt as Date;
-  // Clamped against this day's own end, not against the midnight after `close`. Those
-  // differ for an all-day window, where `close` *is* midnight: the latter is a day too
-  // far and puts the limit on the next date, which is the very thing this clamp exists
-  // to prevent.
-  const graceLimit = new Date(Math.min(close.getTime() + graceMs - 1, dayEnd.getTime() - 1));
-  // Null when there is no grace to spend, rather than an instant a millisecond *before*
-  // the work bound: the whole point of deriving these together is that the set cannot
-  // contradict itself.
+  const workBound = close.getTime() < dayEnd.getTime() ? close : dayEnd;
+
+  // The whole set has to be monotonic —
+  //   opensAt <= workBound <= graceWorkBound <= graceLimit < dayEnd
+  // — because that is the one property deriving it together is meant to guarantee, and
+  // two earlier cuts of this function broke it in opposite directions: a zero grace put
+  // `graceLimit` a millisecond *before* `workBound` (so the clock-out was stamped before
+  // the last work tick), and an all-day window put `graceWorkBound` before it too (so the
+  // finish-the-car stretch was a guaranteed no-op).
+  //
+  // No grace, or a window that runs to midnight, means there is no grace to spend: both
+  // bounds are null rather than instants that contradict the work bound.
+  const graceRoom = Math.min(graceMs, dayEnd.getTime() - close.getTime());
+  const hasGrace = graceMs > 0 && graceRoom > 0 && workBound.getTime() === close.getTime();
+
+  const graceLimit = hasGrace ? new Date(close.getTime() + graceRoom - 1) : null;
+  // Half of what the *limit* leaves, not half of the configured grace: when the grace is
+  // clamped by midnight, halving the unclamped figure collapses this onto the limit and
+  // the margin the clock-out fan-out needs disappears.
   const graceWorkBound =
-    graceMs === 0
+    graceLimit === null
       ? null
-      : new Date(Math.min(close.getTime() + Math.floor(graceMs / 2), graceLimit.getTime()));
+      : new Date(close.getTime() + Math.floor((graceLimit.getTime() - close.getTime()) / 2));
 
   return {
     observedAt,
     dayEnd,
     opensAt: observedAt,
     closesAt: close,
-    workBound: close.getTime() < dayEnd.getTime() ? close : dayEnd,
+    workBound,
     graceWorkBound,
     graceLimit,
     openNow: true,

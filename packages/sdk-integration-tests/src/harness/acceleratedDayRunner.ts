@@ -21,6 +21,8 @@ import type { JobOutcome } from './acceleratedJob';
 /** What the runner needs of a job — the real AcceleratedJob satisfies it. */
 export interface RunnableJob {
   readonly label: string;
+  /** Which kind of position the job is working — a stretch can be limited to one. */
+  readonly kind: PositionKind;
   readonly gatedByHours: boolean;
   readonly outcome: JobOutcome;
   readonly failure: string | undefined;
@@ -137,20 +139,33 @@ export class AcceleratedDayRunner {
   private carried: ActiveJob[] = [];
 
   /**
-   * The most virtual time a single tick has cost so far, used to refuse a tick that
+   * The most virtual time a single tick has cost **today**, used to refuse a tick that
    * would cross a bound.
    *
    * A bound checked only *between* ticks is a bound exceeded *by* a tick, and at a
    * thousandfold scale one tick can be virtual hours: the feasibility guard admits steps
-   * up to half the shortest open window, which is more than the whole grace. Measuring
-   * what ticks actually cost and predicting the next one is what turns "stop after
-   * overshooting" into "stop before". Seeded at zero so the first tick of a run always
-   * runs — there is nothing to predict from yet — and it only ever grows.
+   * up to half the shortest open window, which is more than the whole grace.
+   *
+   * Reset every virtual day, and that is the important part. Kept for the lifetime of the
+   * run it only grew, so a single pathological tick — one slow replication wait on day 1 —
+   * permanently refused every later short stretch: the shop clocked in, refused every
+   * tick, clocked out three minutes later, and did the day's work off the clock in the
+   * after-hours stretch instead. Zero completions, no failure reported. Starving is not a
+   * better failure than overshooting.
    */
   private maxTickVirtualMs = 0;
 
-  /** Would another tick cross `until`, judged by the most expensive one seen so far? */
-  private tickWouldOvershoot(now: Date, until: Date): boolean {
+  /**
+   * Would another tick cross `until`, judged by the most expensive one seen today?
+   *
+   * `allowFirst` guarantees progress where progress is mandatory: the in-hours loop must
+   * take at least one tick or the day does nothing at all. The grace stretch passes false,
+   * because refusing there is the correct answer — the job simply carries to tomorrow.
+   */
+  private tickWouldOvershoot(now: Date, until: Date, allowFirst = false): boolean {
+    if (allowFirst && this.maxTickVirtualMs === 0) {
+      return false;
+    }
     return now.getTime() + this.maxTickVirtualMs > until.getTime();
   }
 
@@ -182,6 +197,8 @@ export class AcceleratedDayRunner {
    */
   async runDay(dayNumber: number, options: { sampled?: boolean } = {}): Promise<DayReport> {
     const sampled = options.sampled ?? true;
+    // Today's tick costs, not the run's. See maxTickVirtualMs.
+    this.maxTickVirtualMs = 0;
     // One reading, one consistent set of bounds derived from it. Re-derived after
     // anything that costs virtual time — see daySchedule.ts for why the bounds are no
     // longer computed one at a time where they are used.
@@ -315,6 +332,10 @@ export class AcceleratedDayRunner {
         rosters,
         target,
         startedAlready: worked.started,
+        // Advancement as well as intake: a carried bay job must not be stepped here. It is
+        // off the clock and past the grace, so the labor would be recorded against a
+        // closed shift — and the step the grace stretch refused would simply happen
+        // anyway, which is the defect this limit exists to close.
         kindLimit: 'MOBILE_UNIT',
       });
     }
@@ -376,7 +397,14 @@ export class AcceleratedDayRunner {
    * only to *finish* — the intake loop refuses to open new bay work once the window has
    * closed, so anything still running in the grace is a car already on a lift.
    */
-  private mayWorkNow(job: RunnableJob, now: Date): boolean {
+  private mayWorkNow(job: RunnableJob, now: Date, kindLimit?: PositionKind): boolean {
+    // A stretch limited to mobile units must not advance a bay job either. `kindLimit`
+    // used to gate only `claimableKind` — new claims — so the after-hours stretch happily
+    // carried on stepping bay jobs off the clock, past the grace: the step the grace
+    // stretch had refused just ran later, and the day's total bay work was unchanged.
+    if (kindLimit !== undefined && job.kind !== kindLimit) {
+      return false;
+    }
     if (!job.gatedByHours) {
       return true;
     }
@@ -447,7 +475,11 @@ export class AcceleratedDayRunner {
       // Top up to the concurrency limit while something may take new work. New work
       // never starts inside the overrun grace: `claimableKind` reads `isOpen`, which
       // the grace is deliberately not part of.
-      const kind = this.claimableKind(now, options.kindLimit);
+      // Predicted before intake, not after: a refused tick would otherwise still have
+      // claimed a bay and a technician and created a job with zero advances, counted
+      // against the day's target and carried to tomorrow untouched.
+      const canTick = !this.tickWouldOvershoot(now, until, active.length === 0);
+      const kind = canTick ? this.claimableKind(now, options.kindLimit) : null;
       while (kind !== null && active.length < this.deps.concurrency && started < target) {
         if (rosters === undefined) {
           // Lazily, and only once something could actually be claimed — a closed day
@@ -485,17 +517,21 @@ export class AcceleratedDayRunner {
 
       // One step per job per tick, in parallel. A tick is the unit the window is
       // checked at, so no job can run away with the clock.
-      const runnable = active.filter((entry) => this.mayWorkNow(entry.job, now));
+      const runnable = active.filter((entry) => this.mayWorkNow(entry.job, now, options.kindLimit));
       if (runnable.length === 0) {
         break;
       }
       // Refuse a tick that the observed cost says would cross the bound. Without this
       // the loop stops one tick *past* `until`, which for the grace stretch means the
       // shift ends outside the window the payroll audit accepts.
-      if (this.tickWouldOvershoot(now, until)) {
+      // The in-hours loop must take at least one tick or the day does nothing at all.
+      if (this.tickWouldOvershoot(now, until, true)) {
         break;
       }
-      const tickStart = now;
+      // Measured from after the intake above: a lazy roster discovery inside it is not
+      // part of what a *tick* costs, and charging it to the estimate inflated the
+      // prediction for every tick that followed.
+      const tickStart = await this.deps.now();
       await Promise.all(runnable.map((entry) => entry.job.advance()));
 
       // One clock read per tick, reused by the next iteration's gate check. Reading
@@ -531,18 +567,24 @@ export class AcceleratedDayRunner {
    * straight through Sunday into Monday and the next day would find its own
    * intake already spent.
    */
-  private async advanceCarriedOnly(report: DayReport, until: Date): Promise<void> {
+  private async advanceCarriedOnly(
+    report: DayReport,
+    until: Date,
+    kindLimit?: PositionKind,
+  ): Promise<void> {
     let now = await this.deps.now();
     for (;;) {
       if (now.getTime() >= until.getTime()) {
         return;
       }
       const runnable = this.carried.filter(
-        (entry) => entry.job.outcome === 'in-progress' && this.mayWorkNow(entry.job, now),
+        (entry) => entry.job.outcome === 'in-progress' && this.mayWorkNow(entry.job, now, kindLimit),
       );
       if (runnable.length === 0) {
         return;
       }
+      // No guaranteed first tick: this is the grace, and refusing is the right answer —
+      // the job carries to the next open day rather than pushing the shift out of hours.
       if (this.tickWouldOvershoot(now, until)) {
         return;
       }

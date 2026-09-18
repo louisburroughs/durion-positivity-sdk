@@ -35,8 +35,11 @@ describe('daySchedule — inside the window', () => {
   });
 
   it('gives the finish-the-car stretch half the grace, and keeps the rest as margin', () => {
-    expect(schedule.graceWorkBound?.toISOString()).toBe('2025-11-03T18:45:00.000Z');
     expect(schedule.graceLimit?.toISOString()).toBe('2025-11-03T19:29:59.999Z');
+    // Half of what the limit leaves, so a margin always survives for the clock-out.
+    expect(schedule.graceWorkBound?.toISOString()).toBe('2025-11-03T18:44:59.999Z');
+    const marginMs = (schedule.graceLimit as Date).getTime() - (schedule.graceWorkBound as Date).getTime();
+    expect(marginMs).toBeGreaterThan(0);
   });
 
   it('keeps the grace limit inside the grace the calendar would accept', () => {
@@ -48,7 +51,7 @@ describe('daySchedule — inside the window', () => {
     const saturday = on('2025-11-08T10:00:00Z');
     expect(saturday.closesAt?.toISOString()).toBe('2025-11-08T13:00:00.000Z');
     expect(saturday.workBound?.toISOString()).toBe('2025-11-08T13:00:00.000Z');
-    expect(saturday.graceWorkBound?.toISOString()).toBe('2025-11-08T13:45:00.000Z');
+    expect(saturday.graceWorkBound?.toISOString()).toBe('2025-11-08T13:44:59.999Z');
   });
 });
 
@@ -110,29 +113,56 @@ describe('daySchedule — the day boundary', () => {
     expect((schedule.graceLimit as Date).getTime()).toBeLessThan(schedule.dayEnd.getTime());
   });
 
-  it('bounds work at the day end when the window somehow outlasts it', () => {
+  it('has no grace at all when the window runs to midnight', () => {
+    // An all-day window leaves no room after close for a grace, so both bounds are null
+    // rather than instants that contradict the work bound. Clamped against the midnight
+    // *after* close they landed on the 4th; halved from the configured grace they landed
+    // before `workBound`, making the finish-the-car stretch a guaranteed no-op.
     const allDay = new ShopCalendar(spec({ weekday: { openMinutes: 0, closeMinutes: 24 * 60 } }));
     const schedule = on('2025-11-03T10:00:00Z', allDay);
+
     expect(schedule.workBound?.toISOString()).toBe('2025-11-04T00:00:00.000Z');
-    // And the grace bounds stay on this date too. Clamped against the midnight *after
-    // close* — which for an all-day window is a day too far — they landed at 01:29 on the
-    // 4th, past both the day end and the work bound, in the very branch added to prevent
-    // exactly that.
-    expect((schedule.graceLimit as Date).getTime()).toBeLessThan(schedule.dayEnd.getTime());
-    expect((schedule.graceWorkBound as Date).getTime()).toBeLessThanOrEqual(
-      (schedule.graceLimit as Date).getTime(),
-    );
+    expect(schedule.graceLimit).toBeNull();
+    expect(schedule.graceWorkBound).toBeNull();
   });
 
-  it('has no finish-the-car bound when there is no grace to spend', () => {
-    // graceMinutes is allowed to be 0. Half of nothing was an instant a millisecond
-    // *before* the work bound — a set contradicting itself, which is the one thing
-    // deriving it together is supposed to make impossible.
+  it('has no grace bounds at all when no grace is configured', () => {
+    // graceMinutes is allowed to be 0. A limit a millisecond *before* `workBound` meant
+    // the clock-out was clamped to before the last work tick.
     const noGrace = new ShopCalendar(spec({ graceMinutes: 0 }));
     const schedule = on('2025-11-03T10:00:00Z', noGrace);
 
     expect(schedule.graceWorkBound).toBeNull();
-    expect((schedule.graceLimit as Date).getTime()).toBeLessThan((schedule.workBound as Date).getTime());
+    expect(schedule.graceLimit).toBeNull();
+  });
+
+  it.each([
+    ['default', spec()],
+    ['zero grace', spec({ graceMinutes: 0 })],
+    ['one minute of grace', spec({ graceMinutes: 1 })],
+    ['a day of grace', spec({ graceMinutes: 1440 })],
+    ['an all-day window', spec({ weekday: { openMinutes: 0, closeMinutes: 24 * 60 } })],
+    ['a Saturday short day', spec()],
+  ])('keeps the whole set monotonic — %s', (_label, calendarSpec) => {
+    // opensAt <= workBound <= graceWorkBound <= graceLimit < dayEnd, for every reachable
+    // calendar. This is the property the restructure exists to guarantee, and it has been
+    // broken in both directions before, so it is asserted as a chain rather than one bound
+    // at a time.
+    const cal = new ShopCalendar(calendarSpec);
+    for (const iso of ['2025-11-03T10:00:00Z', '2025-11-08T10:00:00Z', '2025-11-03T00:30:00Z']) {
+      const schedule = daySchedule(at(iso), cal);
+      if (schedule.workBound === null) {
+        continue;
+      }
+      expect((schedule.opensAt as Date).getTime()).toBeLessThanOrEqual(schedule.workBound.getTime());
+      if (schedule.graceWorkBound !== null) {
+        expect(schedule.workBound.getTime()).toBeLessThanOrEqual(schedule.graceWorkBound.getTime());
+        expect(schedule.graceWorkBound.getTime()).toBeLessThanOrEqual((schedule.graceLimit as Date).getTime());
+      }
+      if (schedule.graceLimit !== null) {
+        expect(schedule.graceLimit.getTime()).toBeLessThan(schedule.dayEnd.getTime());
+      }
+    }
   });
 
   it('is open at the instant the window opens, and shut at the instant it closes', () => {

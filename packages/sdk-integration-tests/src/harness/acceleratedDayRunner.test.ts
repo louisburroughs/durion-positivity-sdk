@@ -36,6 +36,7 @@ const roster = (overrides: Partial<SiteRoster> = {}): SiteRoster => ({
 /** A job that finishes after `steps` advances, recording where it ran. */
 class FakeJob implements RunnableJob {
   outcome: JobOutcome = 'in-progress';
+  readonly kind: 'BAY' | 'MOBILE_UNIT';
   failure: string | undefined;
   workorderId: string | undefined;
   invoiceId: string | undefined;
@@ -43,15 +44,21 @@ class FakeJob implements RunnableJob {
   paid = false;
   advances = 0;
   readonly ranAt: Date[] = [];
+  /** Whether the shift was open when each step ran — off-the-clock labor is a defect. */
+  readonly ranOnTheClock: boolean[] = [];
+  /** Set by the harness so a job can see the shift state. */
+  onTheClock: () => boolean = () => true;
 
   constructor(
     readonly label: string,
     readonly gatedByHours: boolean,
     private readonly steps: number,
     private readonly clock: { peek: () => Date; advance: (minutes: number) => void },
-    private readonly stepMinutes: number,
+    private readonly stepMinutes: number | (() => number),
     private readonly finish: JobOutcome = 'completed',
-  ) {}
+  ) {
+    this.kind = gatedByHours ? 'BAY' : 'MOBILE_UNIT';
+  }
 
   get nextStep(): string {
     return this.outcome === 'in-progress' ? `step-${this.advances + 1}` : 'done';
@@ -59,7 +66,8 @@ class FakeJob implements RunnableJob {
 
   async advance(): Promise<JobOutcome> {
     this.ranAt.push(this.clock.peek());
-    this.clock.advance(this.stepMinutes);
+    this.ranOnTheClock.push(this.onTheClock());
+    this.clock.advance(typeof this.stepMinutes === 'function' ? this.stepMinutes() : this.stepMinutes);
     this.advances += 1;
     if (this.advances >= this.steps) {
       this.outcome = this.finish;
@@ -130,6 +138,8 @@ const harness = (options: {
   waitOvershootMinutes?: number;
   /** Virtual minutes each non-work phase (shift, appointments) consumes. */
   phaseCostMinutes?: number;
+  /** Overrides the step cost per call, for probing one pathological tick. */
+  stepMinutesFor?: () => number;
   finish?: JobOutcome;
   jobLimit?: number;
 }): Harness => {
@@ -139,6 +149,7 @@ const harness = (options: {
   const calls: string[] = [];
   /** The virtual instant each phase was handed, so the tests can pin when it ran. */
   const at_: Record<string, Date | undefined> = {};
+  const shiftOpen = { value: false };
   const rosters = options.rosters ?? [roster()];
 
   const deps: DayRunnerDeps = {
@@ -153,12 +164,14 @@ const harness = (options: {
     shift: {
       clockIn: async (at: Date) => {
         calls.push('clockIn');
+        shiftOpen.value = true;
         at_.clockIn = at;
         clock.advance(options.phaseCostMinutes ?? 0);
         return ['tech-a', 'tech-b'];
       },
       clockOut: async (at: Date) => {
         calls.push('clockOut');
+        shiftOpen.value = false;
         at_.clockOut = at;
         // What the clock actually said. `at` is clamped to the grace limit, so asserting
         // on it alone is vacuous — any overshoot is clamped back into legality before a
@@ -210,9 +223,10 @@ const harness = (options: {
         (options.jobKind ?? claim.position.kind) === 'BAY',
         options.jobSteps ?? 2,
         clock,
-        options.stepMinutes ?? 30,
+        options.stepMinutesFor ?? (options.stepMinutes ?? 30),
         options.finish,
       );
+      job.onTheClock = () => shiftOpen.value;
       jobs.push(job);
       return job;
     },
@@ -544,7 +558,7 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
   it('does not spend the shift\'s payroll margin on carried mobile work', async () => {
     // Mobile work has its own stretch, after clock-out and off the clock. Running it in
     // the grace delays the clock-out for work that never needed the margin.
-    const { runner, at } = harness({
+    const { runner, at, jobs } = harness({
       startIso: '2025-11-03T17:50:00Z',
       stepMinutes: 20,
       jobSteps: 12, // will not finish, so it is carried at close
@@ -561,9 +575,73 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
 
     await runner.runDay(1);
 
-    // Clocked out close to the window's end, not at the end of the finish-the-car bound.
+    // Asserted on whether the stretch ran at all, not on the resulting instant: with the
+    // tick prediction in place, the old `carried.length > 0` gate also produced a clock-out
+    // before 18:45, so an instant assertion passed either way and pinned nothing.
     const observed = at.clockOutObserved as Date;
-    expect(observed.getTime()).toBeLessThan(Date.parse('2025-11-03T18:45:00Z'));
+    const steppedInGrace = jobs.some((job) =>
+      job.ranAt.some(
+        (ranAt) => ranAt.getTime() >= Date.parse('2025-11-03T18:00:00Z') && ranAt.getTime() < observed.getTime(),
+      ),
+    );
+    expect(steppedInGrace).toBe(false);
+  });
+
+  it('does not let one expensive tick starve the days that follow', async () => {
+    // The tick estimate is per day, not per run. Kept for the run's lifetime it only grew,
+    // so a single pathological tick — one slow replication wait — refused every later short
+    // stretch: the shop clocked in, refused every tick, clocked out minutes later, and did
+    // the work off the clock instead. Zero completions, and nothing reported as a failure.
+    let costMinutes = 840; // day 1: one 14-hour tick
+    const { runner, clock, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutesFor: () => costMinutes,
+      jobSteps: 3,
+      jobsToday: 2,
+      concurrency: 1,
+      rosters: [roster({ freePositions: [{ kind: 'BAY', id: 'bay-1', name: 'Bay 01' }], idleTechnicianIds: ['tech-a'] })],
+    });
+
+    const first = await runner.runDay(1);
+    expect(first.workordersCompleted).toBe(0); // the one huge tick eats the day
+
+    costMinutes = 20;
+    clock.set('2025-11-04T08:00:00Z');
+    const second = await runner.runDay(2);
+
+    // Recovered: the estimate does not carry yesterday's worst tick into today.
+    expect(second.workordersCompleted).toBeGreaterThan(0);
+    expect(jobs.length).toBeGreaterThan(1);
+  });
+
+  it('never advances a bay job off the clock', async () => {
+    // The after-hours stretch is mobile-only for *advancement*, not just intake. `kindLimit`
+    // used to gate only new claims, so the step the grace stretch refused ran here instead —
+    // off the clock, past the grace, with the labor recorded against a closed shift.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T16:30:00Z',
+      stepMinutes: 90,
+      jobSteps: 6,
+      jobsToday: 2,
+      concurrency: 1,
+      rosters: [
+        roster({
+          freePositions: [
+            { kind: 'BAY', id: 'bay-1', name: 'Bay 01' },
+            { kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' },
+          ],
+          idleTechnicianIds: ['tech-a', 'tech-b'],
+        }),
+      ],
+    });
+
+    await runner.runDay(1);
+
+    const bayJobs = jobs.filter((job) => job.gatedByHours);
+    expect(bayJobs.length).toBeGreaterThan(0);
+    for (const job of bayJobs) {
+      expect(job.ranOnTheClock.every((onClock) => onClock)).toBe(true);
+    }
   });
 
   it('reports a day whose window closed before work could start, rather than a quiet success', async () => {

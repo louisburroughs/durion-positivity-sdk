@@ -108,6 +108,31 @@ export function createShiftPort(
   ];
   let onTheClock: string[] = [];
 
+  /**
+   * Closes the given sessions in parallel, returning the ids actually closed.
+   *
+   * Parallel for the same reason the clock-out fan-out is — the backend stamps each
+   * `endAtUtc` when its own call runs — and tolerant of the 404 that means the session was
+   * already closed, so a retry after a partial failure is safe.
+   */
+  const closeSessions = async (personIds: readonly string[]): Promise<string[]> => {
+    const outcomes = await Promise.allSettled(
+      personIds.map(async (personId) => {
+        try {
+          await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+        } catch (error) {
+          if (!isHttpStatus(error, 404)) {
+            throw new Error(`stopWorkSession ${personId} failed: ${await formatError(error)}`);
+          }
+        }
+        return personId;
+      }),
+    );
+    return outcomes
+      .filter((outcome): outcome is PromiseFulfilledResult<string> => outcome.status === 'fulfilled')
+      .map((outcome) => outcome.value);
+  };
+
   /** A stale session from an interrupted run is closed before a fresh one opens. */
   const closeStale = async (personId: string): Promise<void> => {
     try {
@@ -162,12 +187,18 @@ export function createShiftPort(
 
       const failures = outcomes.filter((outcome) => outcome.status === 'rejected');
       if (failures.length > 0) {
+        // Closed here, not left to the caller: this throw propagates out of runDay and
+        // stops the run, so nothing downstream would ever clock these people out. They
+        // would stay open until some later run's `closeStale` found them.
+        const opened = [...onTheClock];
+        const closed = await closeSessions(opened);
+        onTheClock = [];
         throw new Error(
           `[accel] ${failures.length} of ${everyone.length} could not be clocked in (` +
             failures
               .map((outcome) => ((outcome as PromiseRejectedResult).reason as Error).message)
               .join('; ') +
-            `). ${onTheClock.length} are on the clock and will be clocked out.`,
+            `). The ${closed.length} of ${opened.length} session(s) that did open have been closed again.`,
         );
       }
       log(`${at.toISOString().slice(0, 16)} — ${onTheClock.length} on the clock`);
@@ -185,16 +216,19 @@ export function createShiftPort(
      * In parallel the whole fan-out costs about one call.
      */
     async clockOut(): Promise<string[]> {
-      const clockedOut = await Promise.all(
-        onTheClock.map(async (personId) => {
-          await call(`stopWorkSession ${personId}`, () =>
-            admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } }),
-          );
-          return personId;
-        }),
-      );
-      onTheClock = [];
-      return clockedOut;
+      const closed = await closeSessions(onTheClock);
+      // Pruned rather than cleared: whoever could not be stopped is still on the clock, so
+      // a later attempt — or the next run's `closeStale` — still knows about them. Clearing
+      // the list unconditionally meant a retry re-stopped people already stopped, and
+      // `call` does not tolerate the 404 that answers.
+      onTheClock = onTheClock.filter((personId) => !closed.includes(personId));
+      if (onTheClock.length > 0) {
+        log(
+          `WARNING: ${onTheClock.length} session(s) could not be closed (${onTheClock.join(', ')}); ` +
+            'their time entries stay open until a later run reclaims them',
+        );
+      }
+      return closed;
     },
 
     /**
