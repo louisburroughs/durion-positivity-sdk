@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   SystemPromptRequest,
   SystemPromptResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     SystemPromptRequestFromJSON,
     SystemPromptRequestToJSON,
     SystemPromptResponseFromJSON,

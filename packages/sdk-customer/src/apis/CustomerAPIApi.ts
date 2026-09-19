@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CustomerDTO,
   PageCustomerDTO,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CustomerDTOFromJSON,
     CustomerDTOToJSON,
     PageCustomerDTOFromJSON,

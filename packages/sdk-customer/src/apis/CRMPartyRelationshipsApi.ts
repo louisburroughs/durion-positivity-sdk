@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreatePartyRelationshipRequest,
   CreatePartyRelationshipResponse,
   GetCommercialAccountContactsResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreatePartyRelationshipRequestFromJSON,
     CreatePartyRelationshipRequestToJSON,
     CreatePartyRelationshipResponseFromJSON,

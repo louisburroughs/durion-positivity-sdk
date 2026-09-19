@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PostingCategoryCreateRequest,
   PostingCategoryListResponse,
   PostingCategoryResponse,
   PostingCategoryUpdateRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PostingCategoryCreateRequestFromJSON,
     PostingCategoryCreateRequestToJSON,
     PostingCategoryListResponseFromJSON,

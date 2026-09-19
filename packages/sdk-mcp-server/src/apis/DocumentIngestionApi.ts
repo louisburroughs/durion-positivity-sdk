@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   DocumentIngestionJobResponse,
   DocumentIngestionRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     DocumentIngestionJobResponseFromJSON,
     DocumentIngestionJobResponseToJSON,
     DocumentIngestionRequestFromJSON,
@@ -42,7 +45,7 @@ export class DocumentIngestionApi extends runtime.BaseAPI {
      * Returns the current status of an asynchronous RAG document ingestion job, including timestamps, chunk count and any failure message. Use this tool to poll a job created by ingestDocument; do not use ingestDocument again to check progress, since that queues a second ingestion instead. Preconditions: the job must exist for the supplied jobId returned by ingestDocument. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the job in state PENDING, RUNNING, SUCCEEDED or FAILED, and 404 when no job exists for the id. 
      * Get Document Ingestion Job Status
      */
-    async getDocumentIngestionJobRaw(requestParameters: GetDocumentIngestionJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentIngestionJobResponse>> {
+    async getDocumentIngestionJobRaw(requestParameters: GetDocumentIngestionJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters['jobId'] == null) {
             throw new runtime.RequiredError(
                 'jobId',
@@ -61,16 +64,15 @@ export class DocumentIngestionApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => DocumentIngestionJobResponseFromJSON(jsonValue));
+        return new runtime.VoidApiResponse(response);
     }
 
     /**
      * Returns the current status of an asynchronous RAG document ingestion job, including timestamps, chunk count and any failure message. Use this tool to poll a job created by ingestDocument; do not use ingestDocument again to check progress, since that queues a second ingestion instead. Preconditions: the job must exist for the supplied jobId returned by ingestDocument. Required inputs: jobId (UUID) as a path parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the job in state PENDING, RUNNING, SUCCEEDED or FAILED, and 404 when no job exists for the id. 
      * Get Document Ingestion Job Status
      */
-    async getDocumentIngestionJob(requestParameters: GetDocumentIngestionJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentIngestionJobResponse> {
-        const response = await this.getDocumentIngestionJobRaw(requestParameters, initOverrides);
-        return await response.value();
+    async getDocumentIngestionJob(requestParameters: GetDocumentIngestionJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.getDocumentIngestionJobRaw(requestParameters, initOverrides);
     }
 
     /**

@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './ApiError';
+export * from './Conflict';
 export * from './ContactPointDto';
 export * from './CreateUserLinkRequest';
 export * from './FieldError';
@@ -12,5 +13,6 @@ export * from './PostalAddressDto';
 export * from './ResolvePersonRequest';
 export * from './ResolvePersonResponse';
 export * from './RoleDto';
+export * from './SuggestedAlternative';
 export * from './UserPersonLinkResponse';
 export * from './UserRoleDto';

@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   WorkorderDetailResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     WorkorderDetailResponseFromJSON,
     WorkorderDetailResponseToJSON,
 } from '../models/index';

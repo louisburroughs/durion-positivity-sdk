@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ApproveChangeRequestDTO,
   ChangeRequestResponse,
   CreateChangeRequestDTO,
@@ -22,6 +23,8 @@ import type {
   EmergencyOverrideDTO,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApproveChangeRequestDTOFromJSON,
     ApproveChangeRequestDTOToJSON,
     ChangeRequestResponseFromJSON,

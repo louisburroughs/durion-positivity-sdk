@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   EmailDeliveryRequest,
   GenerateReceiptRequest,
   PrintDeliveryRequest,
@@ -22,6 +23,8 @@ import type {
   ReprintReceiptRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     EmailDeliveryRequestFromJSON,
     EmailDeliveryRequestToJSON,
     GenerateReceiptRequestFromJSON,

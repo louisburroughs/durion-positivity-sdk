@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ServicePackageMemberRequestDto,
   ServicePackageRequestDto,
   ServicePackageResponseDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ServicePackageMemberRequestDtoFromJSON,
     ServicePackageMemberRequestDtoToJSON,
     ServicePackageRequestDtoFromJSON,

@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CloseFollowUpTaskRequest,
   CreateFollowUpTaskRequest,
   FollowUpTaskResponse,
   PagedResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CloseFollowUpTaskRequestFromJSON,
     CloseFollowUpTaskRequestToJSON,
     CreateFollowUpTaskRequestFromJSON,

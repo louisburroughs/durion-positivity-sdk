@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   InquiryAcceptedResponse,
   SubmitInquiryRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     InquiryAcceptedResponseFromJSON,
     InquiryAcceptedResponseToJSON,
     SubmitInquiryRequestFromJSON,

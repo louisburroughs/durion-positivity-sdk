@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   EventTypeRequest,
   EventTypeResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     EventTypeRequestFromJSON,
     EventTypeRequestToJSON,
     EventTypeResponseFromJSON,

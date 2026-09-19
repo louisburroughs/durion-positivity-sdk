@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ExemptionCertificateRequest,
   ExemptionCertificateResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ExemptionCertificateRequestFromJSON,
     ExemptionCertificateRequestToJSON,
     ExemptionCertificateResponseFromJSON,

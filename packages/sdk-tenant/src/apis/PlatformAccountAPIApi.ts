@@ -20,6 +20,7 @@ import type {
   AccountCreateRequest,
   AccountResponse,
   AccountUpdateRequest,
+  ApiError,
   BillingProfileRequest,
   BillingProfileResponse,
 } from '../models/index';
@@ -34,6 +35,8 @@ import {
     AccountResponseToJSON,
     AccountUpdateRequestFromJSON,
     AccountUpdateRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BillingProfileRequestFromJSON,
     BillingProfileRequestToJSON,
     BillingProfileResponseFromJSON,

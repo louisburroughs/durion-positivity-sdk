@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   VehicleResponse,
   VehicleSummary,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     VehicleResponseFromJSON,
     VehicleResponseToJSON,
     VehicleSummaryFromJSON,

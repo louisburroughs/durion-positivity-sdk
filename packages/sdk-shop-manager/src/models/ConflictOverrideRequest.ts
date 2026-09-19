@@ -20,7 +20,7 @@ import { mapValues } from '../runtime';
  */
 export interface ConflictOverrideRequest {
     /**
-     * Ids of the scheduling conflicts being accepted. Each must be recorded against the appointment in the path (400 otherwise), be SOFT (409 with the conflict envelope otherwise) and not already overridden (409 CONFLICT_ALREADY_OVERRIDDEN).
+     * Ids of the scheduling conflicts being accepted. Each must be recorded against the appointment in the path (400 otherwise), be SOFT (409 SCHEDULING_CONFLICT with conflicts[] otherwise) and not already overridden (409 CONFLICT_ALREADY_OVERRIDDEN).
      * @type {Array<string>}
      * @memberof ConflictOverrideRequest
      */

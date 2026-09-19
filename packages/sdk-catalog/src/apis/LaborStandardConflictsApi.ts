@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   LaborStandardConflictDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     LaborStandardConflictDtoFromJSON,
     LaborStandardConflictDtoToJSON,
 } from '../models/index';

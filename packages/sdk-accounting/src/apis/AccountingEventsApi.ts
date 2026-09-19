@@ -17,6 +17,7 @@ import * as runtime from '../runtime';
 import type {
   AccountingEventResponse,
   AccountingEventSubmitRequest,
+  ApiError,
   EventEnvelopeContract,
   EventProcessingLogEntry,
   PageAccountingEventResponse,
@@ -28,6 +29,8 @@ import {
     AccountingEventResponseToJSON,
     AccountingEventSubmitRequestFromJSON,
     AccountingEventSubmitRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     EventEnvelopeContractFromJSON,
     EventEnvelopeContractToJSON,
     EventProcessingLogEntryFromJSON,

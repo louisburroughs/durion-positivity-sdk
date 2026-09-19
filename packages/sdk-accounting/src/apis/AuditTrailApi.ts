@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AuditTrailResponse,
   CancellationRequest,
   PriceOverrideRequest,
   RefundRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AuditTrailResponseFromJSON,
     AuditTrailResponseToJSON,
     CancellationRequestFromJSON,

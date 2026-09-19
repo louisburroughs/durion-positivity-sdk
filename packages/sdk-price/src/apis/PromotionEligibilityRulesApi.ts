@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   AddEligibilityRuleRequest,
+  ApiError,
   EligibilityContext,
   EligibilityDecisionResponse,
   EligibilityRuleResponse,
@@ -23,6 +24,8 @@ import type {
 import {
     AddEligibilityRuleRequestFromJSON,
     AddEligibilityRuleRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     EligibilityContextFromJSON,
     EligibilityContextToJSON,
     EligibilityDecisionResponseFromJSON,

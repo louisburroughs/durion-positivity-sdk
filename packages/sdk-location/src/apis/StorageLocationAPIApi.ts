@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PageStorageLocationResponse,
   StorageLocationPatchRequest,
   StorageLocationRequest,
@@ -22,6 +23,8 @@ import type {
   StorageLocationTopologyResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PageStorageLocationResponseFromJSON,
     PageStorageLocationResponseToJSON,
     StorageLocationPatchRequestFromJSON,

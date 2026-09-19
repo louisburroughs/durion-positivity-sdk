@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   EmitEventRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     EmitEventRequestFromJSON,
     EmitEventRequestToJSON,
 } from '../models/index';

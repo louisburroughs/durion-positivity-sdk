@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BulkIngestRequestLocationBulkIngestRecord,
   BulkIngestResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BulkIngestRequestLocationBulkIngestRecordFromJSON,
     BulkIngestRequestLocationBulkIngestRecordToJSON,
     BulkIngestResponseFromJSON,

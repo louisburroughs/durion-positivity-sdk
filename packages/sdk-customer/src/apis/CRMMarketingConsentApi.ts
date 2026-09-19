@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   MarketingConsentDecision,
   MarketingConsentSummaryResponse,
   PagedResponse,
   UpdateMarketingConsentRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     MarketingConsentDecisionFromJSON,
     MarketingConsentDecisionToJSON,
     MarketingConsentSummaryResponseFromJSON,

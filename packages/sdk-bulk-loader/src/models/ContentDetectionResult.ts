@@ -69,13 +69,14 @@ export enum ContentDetectionResultDetectedDomainEnum {
     SecurityRolePermission = 'SECURITY_ROLE_PERMISSION',
     SecurityUser = 'SECURITY_USER',
     UserPersonLink = 'USER_PERSON_LINK',
-    MechanicSkill = 'MECHANIC_SKILL',
+    PersonCredential = 'PERSON_CREDENTIAL',
     CatalogService = 'CATALOG_SERVICE',
     ServiceLaborStandard = 'SERVICE_LABOR_STANDARD',
     ServicePackage = 'SERVICE_PACKAGE',
     ServicePackageMember = 'SERVICE_PACKAGE_MEMBER',
     LaborRate = 'LABOR_RATE',
-    LaborRateAdjustment = 'LABOR_RATE_ADJUSTMENT'
+    LaborRateAdjustment = 'LABOR_RATE_ADJUSTMENT',
+    Retired = 'RETIRED'
 }
 
 

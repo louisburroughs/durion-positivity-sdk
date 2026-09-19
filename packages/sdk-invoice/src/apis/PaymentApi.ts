@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CaptureAmountRequest,
   InitiatePaymentRequest,
   InitiatePaymentResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CaptureAmountRequestFromJSON,
     CaptureAmountRequestToJSON,
     InitiatePaymentRequestFromJSON,

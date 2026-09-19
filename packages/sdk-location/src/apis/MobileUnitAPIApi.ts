@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CoverageRuleResponse,
   MobileUnitRequest,
   MobileUnitResponse,
   PageMobileUnitResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CoverageRuleResponseFromJSON,
     CoverageRuleResponseToJSON,
     MobileUnitRequestFromJSON,

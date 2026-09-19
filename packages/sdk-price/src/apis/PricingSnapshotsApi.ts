@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PricingSnapshotResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PricingSnapshotResponseFromJSON,
     PricingSnapshotResponseToJSON,
 } from '../models/index';

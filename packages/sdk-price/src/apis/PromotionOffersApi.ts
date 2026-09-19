@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ApplyPromotionRequest,
   ApplyPromotionResponse,
   CreatePromotionOfferRequest,
   PromotionOfferResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApplyPromotionRequestFromJSON,
     ApplyPromotionRequestToJSON,
     ApplyPromotionResponseFromJSON,

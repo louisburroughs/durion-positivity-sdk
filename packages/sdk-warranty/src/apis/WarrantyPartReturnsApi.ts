@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PartReturnCreateRequest,
   PartReturnResponse,
   PartReturnUpdateRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PartReturnCreateRequestFromJSON,
     PartReturnCreateRequestToJSON,
     PartReturnResponseFromJSON,

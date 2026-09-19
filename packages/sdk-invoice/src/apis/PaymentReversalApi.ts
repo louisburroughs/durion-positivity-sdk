@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   InvoiceRefundResponse,
   RefundPaymentRequest,
   RefundPaymentResponse,
   VoidPaymentRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     InvoiceRefundResponseFromJSON,
     InvoiceRefundResponseToJSON,
     RefundPaymentRequestFromJSON,

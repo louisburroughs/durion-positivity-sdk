@@ -13,12 +13,24 @@
  */
 
 import { mapValues } from '../runtime';
+import type { Conflict } from './Conflict';
+import {
+    ConflictFromJSON,
+    ConflictFromJSONTyped,
+    ConflictToJSON,
+} from './Conflict';
 import type { FieldError } from './FieldError';
 import {
     FieldErrorFromJSON,
     FieldErrorFromJSONTyped,
     FieldErrorToJSON,
 } from './FieldError';
+import type { SuggestedAlternative } from './SuggestedAlternative';
+import {
+    SuggestedAlternativeFromJSON,
+    SuggestedAlternativeFromJSONTyped,
+    SuggestedAlternativeToJSON,
+} from './SuggestedAlternative';
 
 /**
  * Standard error response envelope returned by all Durion backend APIs
@@ -32,6 +44,12 @@ export interface ApiError {
      * @memberof ApiError
      */
     code: string;
+    /**
+     * Itemized conflicts behind a 409 whose cause is a set of named conflicts, such as SCHEDULING_CONFLICT (ADR-0017 §3). Present only on such a 409; absent otherwise
+     * @type {Array<Conflict>}
+     * @memberof ApiError
+     */
+    conflicts?: Array<Conflict>;
     /**
      * Unique correlation ID for distributed request tracing
      * @type {string}
@@ -69,6 +87,12 @@ export interface ApiError {
      */
     status: number;
     /**
+     * Alternatives the caller may retry with, accompanying conflicts when the service can compute them. Optional even when conflicts is present
+     * @type {Array<SuggestedAlternative>}
+     * @memberof ApiError
+     */
+    suggestedAlternatives?: Array<SuggestedAlternative>;
+    /**
      * Support or admin investigation guidance, when applicable
      * @type {string}
      * @memberof ApiError
@@ -105,12 +129,14 @@ export function ApiErrorFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     return {
         
         'code': json['code'],
+        'conflicts': json['conflicts'] == null ? undefined : ((json['conflicts'] as Array<any>).map(ConflictFromJSON)),
         'correlationId': json['correlationId'],
         'fieldErrors': json['fieldErrors'] == null ? undefined : ((json['fieldErrors'] as Array<any>).map(FieldErrorFromJSON)),
         'message': json['message'],
         'nextAction': json['nextAction'] == null ? undefined : json['nextAction'],
         'referenceId': json['referenceId'] == null ? undefined : json['referenceId'],
         'status': json['status'],
+        'suggestedAlternatives': json['suggestedAlternatives'] == null ? undefined : ((json['suggestedAlternatives'] as Array<any>).map(SuggestedAlternativeFromJSON)),
         'supportAction': json['supportAction'] == null ? undefined : json['supportAction'],
         'timestamp': json['timestamp'],
     };
@@ -123,12 +149,14 @@ export function ApiErrorToJSON(value?: ApiError | null): any {
     return {
         
         'code': value['code'],
+        'conflicts': value['conflicts'] == null ? undefined : ((value['conflicts'] as Array<any>).map(ConflictToJSON)),
         'correlationId': value['correlationId'],
         'fieldErrors': value['fieldErrors'] == null ? undefined : ((value['fieldErrors'] as Array<any>).map(FieldErrorToJSON)),
         'message': value['message'],
         'nextAction': value['nextAction'],
         'referenceId': value['referenceId'],
         'status': value['status'],
+        'suggestedAlternatives': value['suggestedAlternatives'] == null ? undefined : ((value['suggestedAlternatives'] as Array<any>).map(SuggestedAlternativeToJSON)),
         'supportAction': value['supportAction'],
         'timestamp': value['timestamp'],
     };

@@ -16,12 +16,15 @@
 import * as runtime from '../runtime';
 import type {
   AddSuppressionRequest,
+  ApiError,
   PagedResponse,
   SuppressionEntryResponse,
 } from '../models/index';
 import {
     AddSuppressionRequestFromJSON,
     AddSuppressionRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PagedResponseFromJSON,
     PagedResponseToJSON,
     SuppressionEntryResponseFromJSON,

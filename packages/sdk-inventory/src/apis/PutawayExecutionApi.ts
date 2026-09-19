@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PutawayExecutionRequest,
   PutawayExecutionResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PutawayExecutionRequestFromJSON,
     PutawayExecutionRequestToJSON,
     PutawayExecutionResponseFromJSON,

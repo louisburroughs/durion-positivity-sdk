@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   SubstitutionGroupCreateRequestDto,
   SubstitutionGroupDto,
   SubstitutionGroupMemberRequestDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     SubstitutionGroupCreateRequestDtoFromJSON,
     SubstitutionGroupCreateRequestDtoToJSON,
     SubstitutionGroupDtoFromJSON,

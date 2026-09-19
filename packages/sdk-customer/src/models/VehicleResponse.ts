@@ -44,6 +44,24 @@ export interface VehicleResponse {
      */
     description: string;
     /**
+     * Duty category derived from gvwrClass: LIGHT (1-3), MEDIUM (4-6), HEAVY (7-8). Never stored; null when the class is undetermined.
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    dutyCategory?: VehicleResponseDutyCategoryEnum;
+    /**
+     * FHWA GVWR class 1-8 (CAP-327); null when undetermined.
+     * @type {number}
+     * @memberof VehicleResponse
+     */
+    gvwrClass?: number;
+    /**
+     * Where the current gvwrClass came from: OPERATOR_SET or DECODED. Null when undetermined.
+     * @type {string}
+     * @memberof VehicleResponse
+     */
+    gvwrClassSource?: VehicleResponseGvwrClassSourceEnum;
+    /**
      * Whether vehicle is active.
      * @type {boolean}
      * @memberof VehicleResponse
@@ -145,6 +163,23 @@ export interface VehicleResponse {
 * @export
 * @enum {string}
 */
+export enum VehicleResponseDutyCategoryEnum {
+    Light = 'LIGHT',
+    Medium = 'MEDIUM',
+    Heavy = 'HEAVY'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum VehicleResponseGvwrClassSourceEnum {
+    OperatorSet = 'OPERATOR_SET',
+    Decoded = 'DECODED'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum VehicleResponseOdometerUnitEnum {
     Miles = 'MILES',
     Kilometers = 'KILOMETERS'
@@ -182,6 +217,9 @@ export function VehicleResponseFromJSONTyped(json: any, ignoreDiscriminator: boo
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'description': json['description'],
+        'dutyCategory': json['dutyCategory'] == null ? undefined : json['dutyCategory'],
+        'gvwrClass': json['gvwrClass'] == null ? undefined : json['gvwrClass'],
+        'gvwrClassSource': json['gvwrClassSource'] == null ? undefined : json['gvwrClassSource'],
         'isActive': json['isActive'],
         'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
         'licensePlateJurisdiction': json['licensePlateJurisdiction'] == null ? undefined : json['licensePlateJurisdiction'],
@@ -211,6 +249,9 @@ export function VehicleResponseToJSON(value?: VehicleResponse | null): any {
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'description': value['description'],
+        'dutyCategory': value['dutyCategory'],
+        'gvwrClass': value['gvwrClass'],
+        'gvwrClassSource': value['gvwrClassSource'],
         'isActive': value['isActive'],
         'licensePlate': value['licensePlate'],
         'licensePlateJurisdiction': value['licensePlateJurisdiction'],

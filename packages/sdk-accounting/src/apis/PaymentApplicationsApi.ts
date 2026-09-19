@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PagePaymentApplicationListRow,
   PaymentApplicationRequest,
   PaymentApplicationResponse,
   PaymentApplicationReversalRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PagePaymentApplicationListRowFromJSON,
     PagePaymentApplicationListRowToJSON,
     PaymentApplicationRequestFromJSON,

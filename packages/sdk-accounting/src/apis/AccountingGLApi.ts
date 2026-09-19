@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   InvoiceRevenueReconcileRequest,
   InvoiceRevenueReconcileResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     InvoiceRevenueReconcileRequestFromJSON,
     InvoiceRevenueReconcileRequestToJSON,
     InvoiceRevenueReconcileResponseFromJSON,

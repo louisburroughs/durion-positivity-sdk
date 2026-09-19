@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   UomConversionCreateRequestDto,
   UomConversionDto,
   UomConversionUpdateRequestDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     UomConversionCreateRequestDtoFromJSON,
     UomConversionCreateRequestDtoToJSON,
     UomConversionDtoFromJSON,
