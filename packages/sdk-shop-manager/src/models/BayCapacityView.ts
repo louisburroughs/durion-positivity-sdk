@@ -33,7 +33,7 @@ export interface BayCapacityView {
      */
     bayId: string;
     /**
-     * Bay-hours carried into this day from an appointment that overran a prior open day's close (issue #2021 AC4/AC5/AC6). Already netted into occupiedMinutes and occupancy above — this list is the detail behind that number, not an addition to it. Empty when nothing carried over.
+     * Every appointment holding this bay on this date that did not begin on this date — its effective window opened on an earlier local date, whether it overran a prior open day's close or is simply still running — listed once each, sorted by (fromDate, appointmentId) (issues #2021 AC4/AC5/AC6, #2050). Already netted into occupiedMinutes and occupancy above — this list is the detail behind those numbers, never an addition to them. Populated only when status is OK. Two independent arms fetch what is listed here, and only a job that escapes both goes missing. The first is bounded at 42 days, the same limit as the requested range, and what it bounds is the planned window: it reaches an appointment whose planned window ended within that far of the range's first date. The second has no lookback at all — an appointment whose linked workorder had actually started and was either still running or completed after the range began is fetched however old its planned window is, which is what makes two requests covering the same date agree about it. So a job is absent here only when both fail: its planned window ended more than 42 days before the range's first date and its actuals did not reach the range either — no started workorder, or one that had already completed before the range began. Neither bound carries over to fromDate, which reports when the work actually began and can therefore be earlier than the lookback reaches. Empty when this bay has no appointments on this date, or when every appointment it does have began on this date.
      * @type {Array<CarryOverView>}
      * @memberof BayCapacityView
      */
@@ -45,7 +45,7 @@ export interface BayCapacityView {
      */
     name?: string;
     /**
-     * One slot per hour of the day's window (a partial trailing hour still gets a slot); each value is the count of appointments overlapping that hour, so a double-booking reads greater than 1. Carry-over from a prior open day (below) is already reflected here, marked from the start of the window (issue #2021 AC5).
+     * One slot per hour of the day's window (a partial trailing hour still gets a slot); each value is the count of appointments overlapping that hour, so a double-booking reads greater than 1. Work that began on an earlier date (listed in carryOverIn below) is already reflected here, but not always in the same slots: an appointment whose effective window simply runs on into this day marks the hours it really occupies on the clock, while minutes re-anchored from a prior open day's overrun have no clock position of their own and are marked from the start of this day's window (issues #2021 AC5, #2050).
      * @type {Array<number>}
      * @memberof BayCapacityView
      */

@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ChatRequest,
   ChatResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ChatRequestFromJSON,
     ChatRequestToJSON,
     ChatResponseFromJSON,
@@ -35,7 +38,7 @@ export interface ExecuteMcpChatRequest {
 export class McpChatControllerApi extends runtime.BaseAPI {
 
     /**
-     * Executes a single chat message against the caller\'s permission-scoped assistant agent and returns the complete response text in one blocking call. Use this tool for a simple request-response chat turn; do not use streamMcpChat, which returns the same answer incrementally as Server-Sent Events. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the acting user is derived from the authenticated principal, not from the body. Emits a MCP_CHAT_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while producing the answer. Returns 200 with the full response text, and 429 when the caller\'s chat rate limit is exceeded. 
+     * Executes a single chat message against the caller\'s permission-scoped assistant agent and returns the complete response text in one blocking call. Use this tool for a simple request-response chat turn; do not use streamMcpChat, which returns the same answer incrementally as Server-Sent Events. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); conversationId is optional and, when omitted, starts a new persisted conversation with fresh memory, while a UUID owned by the caller continues that conversation and a non-UUID value is the deprecated ephemeral isolation key (#1735) that is never persisted. Emits a MCP_CHAT_EXECUTE event and persists both the user and the assistant turn, so a caller must not re-append them with appendMcpConversationMessage; the agent may invoke permission-gated tools, RAG retrieval and web search while producing the answer. Returns 200 with the full response text, the resolved conversationId to echo on every follow-up turn, the persisted assistant messageId (null on the ephemeral path, or when the conversation was deleted or purged mid-turn), and a parallel blocks array segmented from that same text in source order, which is optional, may be empty, and is safely ignored by older clients that render response instead. Returns 404 when conversationId is a UUID that does not exist or belongs to another subject, 409 CONVERSATION_BUSY when a turn is already running on the same conversation, and 429 when the caller\'s chat rate limit is exceeded. 
      * Execute a Blocking MCP Chat Turn
      */
     async executeMcpChatRaw(requestParameters: ExecuteMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ChatResponse>> {
@@ -64,7 +67,7 @@ export class McpChatControllerApi extends runtime.BaseAPI {
     }
 
     /**
-     * Executes a single chat message against the caller\'s permission-scoped assistant agent and returns the complete response text in one blocking call. Use this tool for a simple request-response chat turn; do not use streamMcpChat, which returns the same answer incrementally as Server-Sent Events. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); the acting user is derived from the authenticated principal, not from the body. Emits a MCP_CHAT_EXECUTE event; the agent may invoke permission-gated tools, RAG retrieval and web search while producing the answer. Returns 200 with the full response text, and 429 when the caller\'s chat rate limit is exceeded. 
+     * Executes a single chat message against the caller\'s permission-scoped assistant agent and returns the complete response text in one blocking call. Use this tool for a simple request-response chat turn; do not use streamMcpChat, which returns the same answer incrementally as Server-Sent Events. Preconditions: the agent\'s tool set is selected from the caller\'s granted permission codes and active workflow state, so the same message can produce different results for different callers. Required inputs: message (non-blank text); conversationId is optional and, when omitted, starts a new persisted conversation with fresh memory, while a UUID owned by the caller continues that conversation and a non-UUID value is the deprecated ephemeral isolation key (#1735) that is never persisted. Emits a MCP_CHAT_EXECUTE event and persists both the user and the assistant turn, so a caller must not re-append them with appendMcpConversationMessage; the agent may invoke permission-gated tools, RAG retrieval and web search while producing the answer. Returns 200 with the full response text, the resolved conversationId to echo on every follow-up turn, the persisted assistant messageId (null on the ephemeral path, or when the conversation was deleted or purged mid-turn), and a parallel blocks array segmented from that same text in source order, which is optional, may be empty, and is safely ignored by older clients that render response instead. Returns 404 when conversationId is a UUID that does not exist or belongs to another subject, 409 CONVERSATION_BUSY when a turn is already running on the same conversation, and 429 when the caller\'s chat rate limit is exceeded. 
      * Execute a Blocking MCP Chat Turn
      */
     async executeMcpChat(requestParameters: ExecuteMcpChatRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ChatResponse> {
