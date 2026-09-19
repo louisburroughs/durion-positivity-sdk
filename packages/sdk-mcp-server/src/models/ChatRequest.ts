@@ -20,13 +20,13 @@ import { mapValues } from '../runtime';
  */
 export interface ChatRequest {
     /**
-     * Optional conversation id. Turns sharing an id share one memory; omit it to use the caller's default per-role conversation, and supply a distinct id per request to ask independent questions that do not inherit each other's history (#1735).
+     * Optional conversation id (#2073). Omit to start a new persisted conversation with fresh memory; the response's `conversationId` is the id to echo on every follow-up turn. A UUID owned by the caller reuses that conversation; a UUID not found or owned by another subject answers 404 `CONVERSATION_NOT_FOUND`. A non-UUID value is the deprecated ephemeral isolation key (#1735): memory-only, never persisted, echoed back unchanged so existing non-UUID callers keep working. Deliberately typed as a plain string (not a UUID) precisely to accept that deprecated non-UUID form.
      * @type {string}
      * @memberof ChatRequest
      */
     conversationId?: string;
     /**
-     * User chat message to send to the agent
+     * User chat message to send to the agent. At most 32000 characters.
      * @type {string}
      * @memberof ChatRequest
      */

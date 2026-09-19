@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * One appointment's overrun, carried from a prior open day into this bay's capacity on this date (issue #2021 AC4/AC5/AC6)
+ * One earlier-starting appointment's contribution to this bay's capacity on this date — the minutes it holds here because its work began before this date, however those minutes reached the day (issues #2021 AC4/AC5/AC6, #2050)
  * @export
  * @interface CarryOverView
  */
 export interface CarryOverView {
     /**
-     * The overrunning appointment's identifier
+     * The identifier of the appointment holding the bay
      * @type {string}
      * @memberof CarryOverView
      */
     appointmentId: string;
     /**
-     * Bay-hours carried into this date from the overrun above, in tenths of an hour
+     * Bay-hours of this date that this appointment accounts for, in tenths of an hour, whichever of two ways they reached it: either its real-clock overlap with this day's window, or the minutes re-anchored onto this day from a prior open day's overrun. The two sources are disjoint by construction — re-anchoring only ever targets days after the last day the appointment directly overlapped — so exactly one of them produced this number (#2050)
      * @type {number}
      * @memberof CarryOverView
      */
     bayHours: number;
     /**
-     * The date the appointment actually overran its own operating-day close
+     * The local date this appointment's effective window began — the linked workorder's actual start when known, else the appointment's planned start. It names when the work started, which is what lets a board say what is still holding the bay; it is not necessarily the date of an overrun, nor necessarily an open day (#2050).
      * @type {Date}
      * @memberof CarryOverView
      */
     fromDate: Date;
     /**
-     * The linked workorder identifier the overrun comes from, when known
+     * The linked workorder identifier this contribution's effective window came from, when known
      * @type {string}
      * @memberof CarryOverView
      */
