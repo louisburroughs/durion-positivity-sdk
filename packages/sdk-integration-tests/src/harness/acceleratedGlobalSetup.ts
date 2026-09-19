@@ -13,6 +13,7 @@ import { AcceleratedConfig, assessFeasibility, type LatencyMeasurement } from '.
 import { AcceleratedJournal } from './acceleratedJournal';
 import { AcceleratedLock } from './acceleratedLock';
 import { saveAcceleratedContext } from './acceleratedContext';
+import { AcceleratedRoleWindows, createRoleWindowPort } from './acceleratedRoleWindows';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
@@ -26,16 +27,18 @@ import { assertAcceleratedBackend } from './virtualClock';
  *
  * Everything the non-accelerated globalSetup does — config, security bootstrap,
  * starter activation, tenant preflight, persona preflight, reference bootstrap —
- * plus the four things only an accelerated run needs:
+ * plus the five things only an accelerated run needs:
  *
  *  1. the *inverse* clock guard: this backend must be accelerated, anchored a
  *     year back, and still accelerating;
- *  2. the shop calendar published to every site the run will touch, because
+ *  2. the personas' role windows back-dated to the virtual anchor, because a
+ *     role granted in wall time has not started yet on this clock;
+ *  3. the shop calendar published to every site the run will touch, because
  *     operating hours cannot be read back from the API and an unpublished
  *     calendar means the backend and the tests disagree about when work is legal;
- *  3. a feasibility check, measured rather than assumed, so a six-hour run that
+ *  4. a feasibility check, measured rather than assumed, so a six-hour run that
  *     could only ever write two invoices is refused in the first minute;
- *  4. the run journal, so an interrupted year resumes instead of restarting.
+ *  5. the run journal, so an interrupted year resumes instead of restarting.
  */
 export default async function acceleratedGlobalSetup(): Promise<void> {
   const envFile = loadEnvFile();
@@ -84,6 +87,16 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   console.log(`[accel] mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
 
   await stage('security bootstrap', () => new SecurityBootstrap(adminConfig).run());
+
+  // Before starter activation, which logs every persona in: roles granted in
+  // wall time start in this backend's future, and login refuses an account
+  // with no role in effect (403 USER_HAS_NO_ROLES).
+  const { bridged } = await stage('persona role windows', () =>
+    new AcceleratedRoleWindows(config, createRoleWindowPort(config)).run(clock.virtualStart),
+  );
+  for (const line of bridged) {
+    console.log(`[accel] role window back-dated: ${line}`);
+  }
 
   const activation = new StarterActivation(config, createStarterActivationPort(config));
   if (activation.applies) {
