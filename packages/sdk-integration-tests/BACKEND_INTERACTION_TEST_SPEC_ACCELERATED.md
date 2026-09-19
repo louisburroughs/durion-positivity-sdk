@@ -447,10 +447,14 @@ of `ITEST_ACCEL_RUN_BUDGET_MS`.
 **Procedure: [`ACCELERATED_BACKEND_DEPLOYMENT.md`](./ACCELERATED_BACKEND_DEPLOYMENT.md).**
 The clock, its validation and `GET /system/time` are already implemented in the
 backend (`pos-events` `AcceleratedTimeProperties` / `ScaledClock`, `pos-api-gateway`
-`SystemTimeController`). What is missing is a *deploy path*: no compose override sets
-the profile or the anchors, `deploy-backend.sh` composes and checksum-verifies only
-two files, and no workflow input can request it. The local Compose path works today
-and is verified; alpha is blocked on [durion-positivity-backend#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065).
+`SystemTimeController`). The alpha deploy path landed in
+[durion-positivity-backend#2066](https://github.com/louisburroughs/durion-positivity-backend/pull/2066)
+(closes [#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065)):
+a checksummed compose override, `ACCELERATED=true` in `deploy-backend.sh`, and the
+`Deploy Alpha (Accelerated Clock)` workflow, which generates the anchors in CI at
+dispatch and verifies every JVM on the box. The local Compose path remains for runs
+off alpha. A deployment is single-use: once its clock converges, the restart is a
+fresh dispatch.
 
 - [ ] Generate the anchors immediately before deployment, `virtual-start` =
   `real-start` minus one year, UTC, and pass them to every backend JVM
@@ -615,9 +619,13 @@ scope for this task.
 - [x] Documented that the accelerated profile is not the normal alpha state and
   that leaving it on blocks every non-accelerated run (their guard aborts on a
   200), and that the profile must be put back afterwards.
-- [ ] **Not built here — deployment-side.** The alpha workflow's `concurrency`
-  group, and the SSM run script's advisory S3 object holding the anchors, the
-  `runId` and the operator. `ITEST_ACCEL_LOCK_URI` names that object and is
+- [x] **Deployment-side, built in backend #2066.** The alpha workflow's
+  `concurrency` group: `Deploy Alpha (Accelerated Clock)` shares `alpha-deploy`
+  with `Build and Push to ECR` and `Sync Alpha Config`, so no two dispatches
+  interleave on the box.
+- [ ] **Not built — deployment-side.** The SSM run script's advisory S3 object
+  holding the anchors, the `runId` and the operator; #2066 did not add one.
+  `ITEST_ACCEL_LOCK_URI` names that object and is
   logged into the run record, but **this process does not enforce it**: a lock
   file cannot see another machine, and claiming otherwise would be worse than
   saying so. Two operators on two laptops are stopped by the workflow and by
@@ -631,8 +639,9 @@ scope for this task.
 - [x] `.env.itest.example` gains every `ITEST_ACCEL_*` variable with its
   default.
 - [x] `ACCELERATED_BACKEND_DEPLOYMENT.md` covers standing the backend up: the
-  clock contract, the scale table, the verified local Compose override, what is
-  missing for alpha, verification, teardown and troubleshooting. Its own document
+  clock contract, the scale table, the verified local Compose override, the alpha
+  dispatch and its restart after convergence, verification, teardown and
+  troubleshooting. Its own document
   rather than a README section, because the answer is not one command.
 - [ ] This spec's completion criteria are checked off against a real run, with
   the observed scale, the virtual date range reached, and the counts.
