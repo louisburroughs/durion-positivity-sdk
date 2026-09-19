@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PriceBookCreateRequestDto,
   PriceBookDto,
   PriceBookRuleCreateRequestDto,
@@ -23,6 +24,8 @@ import type {
   ResolvePriceResponseDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PriceBookCreateRequestDtoFromJSON,
     PriceBookCreateRequestDtoToJSON,
     PriceBookDtoFromJSON,

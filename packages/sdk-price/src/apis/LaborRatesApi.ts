@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   LaborRateAdjustmentRequest,
   LaborRateAdjustmentResponse,
   LaborRateRequest,
   LaborRateResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     LaborRateAdjustmentRequestFromJSON,
     LaborRateAdjustmentRequestToJSON,
     LaborRateAdjustmentResponseFromJSON,

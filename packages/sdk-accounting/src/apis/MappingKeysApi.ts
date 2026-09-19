@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   MappingKeyCreateRequest,
   MappingKeyListResponse,
   MappingKeyResponse,
   MappingKeyUpdateRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     MappingKeyCreateRequestFromJSON,
     MappingKeyCreateRequestToJSON,
     MappingKeyListResponseFromJSON,

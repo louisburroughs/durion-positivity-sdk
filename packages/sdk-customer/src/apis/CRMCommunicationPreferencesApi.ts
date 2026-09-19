@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   GetCommunicationPreferencesResponse,
   UpsertCommunicationPreferencesRequest,
   UpsertCommunicationPreferencesResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     GetCommunicationPreferencesResponseFromJSON,
     GetCommunicationPreferencesResponseToJSON,
     UpsertCommunicationPreferencesRequestFromJSON,

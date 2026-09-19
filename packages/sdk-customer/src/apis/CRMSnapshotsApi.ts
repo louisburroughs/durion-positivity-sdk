@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   BillingRuleRef,
   CrmSnapshotDTO,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     BillingRuleRefFromJSON,
     BillingRuleRefToJSON,
     CrmSnapshotDTOFromJSON,

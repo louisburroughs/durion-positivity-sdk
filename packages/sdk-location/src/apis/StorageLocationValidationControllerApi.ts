@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   StorageLocationValidationResponseDTO,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     StorageLocationValidationResponseDTOFromJSON,
     StorageLocationValidationResponseDTOToJSON,
 } from '../models/index';

@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PageWorkorderSearchResult,
   WorkorderNumberRef,
   WorkorderNumberResolveRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PageWorkorderSearchResultFromJSON,
     PageWorkorderSearchResultToJSON,
     WorkorderNumberRefFromJSON,

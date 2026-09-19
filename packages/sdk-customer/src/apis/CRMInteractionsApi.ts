@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CustomerInteractionResponse,
   PagedResponse,
   RecordInteractionRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CustomerInteractionResponseFromJSON,
     CustomerInteractionResponseToJSON,
     PagedResponseFromJSON,

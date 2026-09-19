@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CatalogDto,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CatalogDtoFromJSON,
     CatalogDtoToJSON,
 } from '../models/index';

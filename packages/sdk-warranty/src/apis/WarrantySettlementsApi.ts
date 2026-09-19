@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   SettlementCreateRequest,
   SettlementReconciliationRow,
   SettlementResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     SettlementCreateRequestFromJSON,
     SettlementCreateRequestToJSON,
     SettlementReconciliationRowFromJSON,

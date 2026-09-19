@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   LaborOverheadCostReport,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     LaborOverheadCostReportFromJSON,
     LaborOverheadCostReportToJSON,
 } from '../models/index';

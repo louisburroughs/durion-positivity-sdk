@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ProviderRequest,
   ProviderResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ProviderRequestFromJSON,
     ProviderRequestToJSON,
     ProviderResponseFromJSON,

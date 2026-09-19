@@ -15,12 +15,15 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   AssignPartyTagRequest,
   PartyTagAssignmentResponse,
   PartyTagResponse,
   UpsertPartyTagRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     AssignPartyTagRequestFromJSON,
     AssignPartyTagRequestToJSON,
     PartyTagAssignmentResponseFromJSON,

@@ -27,7 +27,7 @@ import {
  */
 export interface MechanicStatus {
     /**
-     * Identifier of the workorder this mechanic currently holds as its technician of record. Null when they hold none. A mechanic only planned onto a job does not appear here.
+     * Identifier of the workorder the mechanic is currently assigned to
      * @type {string}
      * @memberof MechanicStatus
      */

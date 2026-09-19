@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PromotionRedemptionResponse,
   RecordRedemptionRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PromotionRedemptionResponseFromJSON,
     PromotionRedemptionResponseToJSON,
     RecordRedemptionRequestFromJSON,

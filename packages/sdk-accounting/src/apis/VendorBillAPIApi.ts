@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CandidateSelectionRequest,
   ExceptionResolutionRequest,
   GoodsReceivedEvent,
@@ -24,6 +25,8 @@ import type {
   VendorInvoiceReceivedEvent,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CandidateSelectionRequestFromJSON,
     CandidateSelectionRequestToJSON,
     ExceptionResolutionRequestFromJSON,

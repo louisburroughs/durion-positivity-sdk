@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ApplyPriceOverrideRequest,
   ApprovePriceOverrideRequest,
   PriceOverrideDetail,
@@ -22,6 +23,8 @@ import type {
   RejectPriceOverrideRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ApplyPriceOverrideRequestFromJSON,
     ApplyPriceOverrideRequestToJSON,
     ApprovePriceOverrideRequestFromJSON,

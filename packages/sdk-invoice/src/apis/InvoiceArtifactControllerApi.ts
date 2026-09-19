@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ArtifactDownloadToken,
   InvoiceArtifact,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ArtifactDownloadTokenFromJSON,
     ArtifactDownloadTokenToJSON,
     InvoiceArtifactFromJSON,

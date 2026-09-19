@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './ApiError';
+export * from './Conflict';
 export * from './CustomerExemption';
 export * from './ExemptionCertificateRequest';
 export * from './ExemptionCertificateResponse';
@@ -8,6 +9,7 @@ export * from './FieldError';
 export * from './JurisdictionTax';
 export * from './LineItemTax';
 export * from './ModeResponse';
+export * from './SuggestedAlternative';
 export * from './TaxAddress';
 export * from './TaxCalculationRequest';
 export * from './TaxCalculationResponse';

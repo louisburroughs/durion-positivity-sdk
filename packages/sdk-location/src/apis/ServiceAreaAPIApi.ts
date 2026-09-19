@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ServiceAreaPostalCodesRequest,
   ServiceAreaRequest,
   ServiceAreaResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ServiceAreaPostalCodesRequestFromJSON,
     ServiceAreaPostalCodesRequestToJSON,
     ServiceAreaRequestFromJSON,

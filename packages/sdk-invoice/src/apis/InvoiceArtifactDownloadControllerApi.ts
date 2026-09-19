@@ -14,6 +14,13 @@
 
 
 import * as runtime from '../runtime';
+import type {
+  ApiError,
+} from '../models/index';
+import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
+} from '../models/index';
 
 export interface DownloadInvoiceArtifactRequest {
     invoiceId: string;

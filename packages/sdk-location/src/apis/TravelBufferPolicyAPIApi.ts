@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   TravelBufferPolicyRequest,
   TravelBufferPolicyResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     TravelBufferPolicyRequestFromJSON,
     TravelBufferPolicyRequestToJSON,
     TravelBufferPolicyResponseFromJSON,

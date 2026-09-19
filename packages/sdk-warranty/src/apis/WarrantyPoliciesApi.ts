@@ -15,10 +15,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PolicyRequest,
   PolicyResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PolicyRequestFromJSON,
     PolicyRequestToJSON,
     PolicyResponseFromJSON,

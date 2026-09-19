@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   SegmentAttributeResponse,
   SegmentMembersRequest,
   SegmentResolutionResponse,
@@ -22,6 +23,8 @@ import type {
   UpsertSegmentRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     SegmentAttributeResponseFromJSON,
     SegmentAttributeResponseToJSON,
     SegmentMembersRequestFromJSON,

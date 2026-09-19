@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   GetContactsWithRolesResponse,
   UpdateContactRolesRequest,
   UpdateContactRolesResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     GetContactsWithRolesResponseFromJSON,
     GetContactsWithRolesResponseToJSON,
     UpdateContactRolesRequestFromJSON,

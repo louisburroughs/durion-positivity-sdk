@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   ReimbursementResponse,
   ReimbursementSubmitRequest,
   ReimbursementUpdateRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     ReimbursementResponseFromJSON,
     ReimbursementResponseToJSON,
     ReimbursementSubmitRequestFromJSON,

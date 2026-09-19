@@ -15,6 +15,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   CreateHintRequest,
   FilterProductsRequest,
   FilterProductsResponse,
@@ -22,6 +23,8 @@ import type {
   UpdateHintRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     CreateHintRequestFromJSON,
     CreateHintRequestToJSON,
     FilterProductsRequestFromJSON,

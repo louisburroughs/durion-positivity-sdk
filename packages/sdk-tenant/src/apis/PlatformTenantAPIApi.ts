@@ -15,11 +15,14 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   TenantCreateRequest,
   TenantResponse,
   TenantUpdateRequest,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     TenantCreateRequestFromJSON,
     TenantCreateRequestToJSON,
     TenantResponseFromJSON,

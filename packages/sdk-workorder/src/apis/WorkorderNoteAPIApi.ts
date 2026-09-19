@@ -16,11 +16,14 @@
 import * as runtime from '../runtime';
 import type {
   AddWorkorderNoteRequest,
+  ApiError,
   WorkorderNoteResponse,
 } from '../models/index';
 import {
     AddWorkorderNoteRequestFromJSON,
     AddWorkorderNoteRequestToJSON,
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     WorkorderNoteResponseFromJSON,
     WorkorderNoteResponseToJSON,
 } from '../models/index';

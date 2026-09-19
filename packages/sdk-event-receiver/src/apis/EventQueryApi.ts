@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   PagedResponseEmittedEventResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     PagedResponseEmittedEventResponseFromJSON,
     PagedResponseEmittedEventResponseToJSON,
 } from '../models/index';
