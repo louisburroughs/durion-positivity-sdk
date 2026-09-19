@@ -5,12 +5,13 @@ the past** and runs at a few thousand times wall speed. This file is how you get
 one.
 
 It is a separate document rather than a README section because the answer is not
-one command: the anchors have to be generated once and shared by every JVM, the
-alpha deploy path verifies compose checksums and does not yet know about the
-profile at all, and putting the environment *back* afterwards matters as much as
-standing it up.
+one command: the anchors have to be generated once and shared by every JVM, a
+deployment is spent once its clock converges, and putting the environment *back*
+afterwards matters as much as standing it up.
 
 - Operator's guide to the suite itself: [`README.md`](./README.md)
+- Backend-side alpha runbook (the dispatch, the on-box verifier, the teardown):
+  `durion-positivity-backend` → `docs/runbooks/accelerated-alpha-deployment.md`
 - What the suite asserts and why:
   [`BACKEND_INTERACTION_TEST_SPEC_ACCELERATED.md`](./BACKEND_INTERACTION_TEST_SPEC_ACCELERATED.md)
 - Backend-side design of the clock:
@@ -37,7 +38,7 @@ profile back when you are done. On a local stack, do as you like.
 
 ---
 
-## What exists already, and what does not
+## What exists
 
 The clock itself is **implemented and unit-tested in the backend**:
 
@@ -49,16 +50,19 @@ The clock itself is **implemented and unit-tested in the backend**:
 | Response shape | `pos-api-gateway/.../dto/SystemTimeResponse.java` |
 | Timestamp verification queries | `deployment/alpha/verify-accelerated-timestamps.sql` |
 
-What does **not** exist is a way to *deploy* it:
+And so is the **alpha deploy path**, added by
+[durion-positivity-backend#2066](https://github.com/louisburroughs/durion-positivity-backend/pull/2066)
+(closes [#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065)):
 
-| Missing | Consequence |
+| Piece | Where |
 | --- | --- |
-| No accelerated compose override | Nothing sets `SPRING_PROFILES_INCLUDE=accelerated` or the `POS_TIME_ACCELERATED_*` anchors on any service. `docker-compose.prod.yml` mentions neither. |
-| `deploy-backend.sh` has no accelerated path | It composes exactly `docker-compose.yml` + `docker-compose.prod.yml` and **verifies the sha256 of both**, so a third override cannot simply be dropped on the box. |
-| No CI input | `build-push-ecr.yml` passes `SECURITY_SEED_ADMIN_PASSWORD_HASH`, `SUPPLIER_AUDIT_ENC_KEY`, `RESET_DATABASES` and the two checksums over SSM. There is no way to ask for the accelerated profile or to supply anchors. |
+| The override: profile + five anchors on all 25 POS JVMs | `deployment/alpha/docker-compose.accelerated.yml` |
+| `ACCELERATED=true`, anchor validation, `.env` persistence, teardown | `deployment/alpha/deploy-backend.sh` |
+| The dispatch | `.github/workflows/deploy-alpha-accelerated.yml` (*Deploy Alpha (Accelerated Clock)*) |
+| Post-deploy verification, on the box | `deployment/alpha/verify-accelerated-deployment.sh` |
 
-Tracked as [durion-positivity-backend#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065). Until it lands, the **local Compose path works
-today** and is the supported way to run the accelerated suite.
+Two ways to get an accelerated backend, then: **alpha**, through that workflow (see
+*Launching on alpha*), or a **local Compose stack** (next section).
 
 ---
 
@@ -112,7 +116,7 @@ for what the suite does with each.
 
 ---
 
-## Launching on a local stack (works today)
+## Launching on a local stack
 
 ### 1. Generate the anchors
 
@@ -280,25 +284,99 @@ A 404 is the proof the profile is off, and it is what lets
 
 ---
 
-## Launching on alpha (blocked on the backend)
+## Launching on alpha
 
-**Do not hand-edit the alpha box.** `deploy-backend.sh` verifies the sha256 of both
-committed compose files against what is on disk and exits if either differs, so a
-hand-placed override is either ignored or breaks the next ordinary deploy.
+**Do not hand-edit the alpha box.** `deploy-backend.sh` verifies the sha256 of every
+compose file it applies, the accelerated override included, so a hand-placed or
+hand-edited override refuses the deploy. Everything below goes through CI. The
+backend runbook (`docs/runbooks/accelerated-alpha-deployment.md`) is the full
+procedure; this is the part the suite's operator needs.
 
-What is needed is a deploy path that:
+### 1. Dispatch
 
-1. ships an accelerated override alongside the other config to S3,
-2. teaches `deploy-backend.sh` to include it, verify its checksum, and refuse to
-   deploy it without anchors, and
-3. gives the workflow an input so an operator can request it and supply the scale,
-   with the anchors generated in CI at dispatch time.
+The workflow builds nothing. It redeploys a tag already in ECR, so run
+`Build and Push to ECR` for the commit you want first if it is not there yet.
 
-That is a backend change, filed as [durion-positivity-backend#2065](https://github.com/louisburroughs/durion-positivity-backend/issues/2065) with the proposed override,
-the `deploy-backend.sh` changes and the workflow inputs. Until it lands, an alpha
-accelerated run means a deliberate, announced manual deployment by someone with SSM
-access, following the same steps as the local path on the box — and then a normal
-redeploy to restore the profile.
+```bash
+gh workflow run deploy-alpha-accelerated.yml \
+  -R louisburroughs/durion-positivity-backend \
+  -f backend_tag=sha-a1b2c3d \
+  -f scale=1460 \
+  -f days=365 \
+  -f confirm='ACCELERATE ALPHA'
+```
+
+`backend_tag` blank means the dispatched ref's head commit. `scale` must be `> 1`
+and `< 26280`. `confirm` must read exactly `ACCELERATE ALPHA`. CI generates both
+anchors **once**, at dispatch, and hands the same pair to every JVM; the run
+summary records them. Copy them from there rather than re-deriving them.
+
+The workflow runs `verify-accelerated-deployment.sh` on the box and fails unless all
+25 JVMs share the same settings, `/system/time` answers `converged: false`, and
+virtual time is measurably advancing at ~`scale`.
+
+### 2. Dispatch immediately before you run
+
+**The clock starts at dispatch, not when the suite starts.** The accelerated window
+is `G / (scale − 1)` real time from `realStart` (see *Choosing the scale*), and every
+minute between the deploy and `npm run test:accelerated` is spent out of it.
+`npm run test:accelerated` also runs the parity copies before the year run, and
+those minutes come out of the same window. At 8,760 the whole budget is about an
+hour; at the 1,460 default it is about six.
+
+### 3. Check the clock, then run
+
+Through the tunnel (run commands: the spec's *Environment Contract (Accelerated)*):
+
+```bash
+./scripts/alpha-itest-tunnel.sh                  # terminal 1, from the repo root
+curl -s http://localhost:18080/system/time | jq  # terminal 2
+```
+
+A usable deployment answers `accelerated: true`, `converged: false`, and a
+`realStart` matching the dispatch summary.
+
+### Restarting after convergence
+
+A deployment is single-use. Once the gap has closed the stack is on wall time with
+the profile still on, and `/system/time` says so:
+
+```json
+{"virtualTime":"2026-09-19T01:35:36.799316341Z","scale":8760.0,"zone":"UTC",
+ "accelerated":true,"converged":true,
+ "realStart":"2026-09-18T21:26:58Z","virtualStart":"2025-09-18T21:26:58Z"}
+```
+
+That was an 8,760× run dispatched at 21:26 UTC; its year closed about an hour later.
+The suite refuses it at setup (`the accelerated clock has converged`). To go again:
+
+1. **Re-dispatch** `Deploy Alpha (Accelerated Clock)`. There is no reset action; a new
+   dispatch is the restart, and it re-anchors every JVM a year back from the new
+   `realStart`. Never re-dispatch while a run is still inside its window. The same
+   re-anchoring makes the live run's journal unresumable.
+2. **Move the previous run's journal aside**, or point `ITEST_ACCEL_JOURNAL` at a new
+   path. The journal is keyed on `realStart`; against the new anchors it is refused
+   with `belongs to a different timeline`, by design, since its day list describes a
+   year this deployment is not living.
+3. Re-check `/system/time` for `converged: false` before running.
+
+The previous run's records stay in the alpha database. A new dispatch writes a
+second, overlapping year beside them under a new run id.
+
+### Tearing down
+
+An ordinary deploy is the teardown. `deploy-backend.sh` strips the profile and all
+five anchors from the on-box `.env` and drops the override:
+
+```bash
+gh workflow run build-push-ecr.yml -R louisburroughs/durion-positivity-backend -f deploy_alpha=true
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:18080/system/time   # expect 404
+```
+
+Until it answers 404, `npm run test:integration` stays blocked. A converged
+deployment still blocks it, because the profile is still on. Any ordinary deploy
+ends a run, including the automatic promotion when `AUTO_DEPLOY_ALPHA` is on, so keep
+that off while a run is in flight.
 
 ### Holding the environment
 
@@ -325,7 +403,8 @@ enforce.
 | `scale must be greater than 1 to converge` | `scale` ≤ 1 with a back-dated `virtual-start` | The gap only closes above 1; use 1,460 |
 | `anchors must precede realStart by at least 360 days` | Not anchored a full year back | Regenerate `virtual-start` a year before `real-start` |
 | `ahead of the local wall clock` | The backend host and your laptop disagree about now | Fix NTP on whichever is wrong; raise `ITEST_ACCEL_MAX_SKEW_MS` only if you know why |
-| `the accelerated clock has converged` at setup | The deployment has already spent its year | Redeploy with fresh anchors |
+| `the accelerated clock has converged` at setup | The deployment has already spent its year | Alpha: re-dispatch `Deploy Alpha (Accelerated Clock)` (*Restarting after convergence*). Local: regenerate the anchors and bring the stack up again |
+| `belongs to a different timeline` | The journal is from an earlier deployment's anchors | Move it aside or set `ITEST_ACCEL_JOURNAL` to a new path |
 | `this run cannot produce a usable year` | Scale too fast for the measured latency | Use the scale the message suggests |
 | Timestamps look wrong in the database | A service missed the anchors | `deployment/alpha/verify-accelerated-timestamps.sql`, then check that service's env |
 | `another accelerated run holds …` | A second run on this machine | Wait, or stop the holder and delete the named lock file |

@@ -173,13 +173,15 @@ at hour five.
 ### 1. Get an accelerated backend
 
 The clock lives in the backend, not in the tests, and standing one up is its own
-job: the anchors have to be generated once and shared by all 25 JVMs, and the alpha
-deploy path does not yet know the profile exists.
+job: the anchors have to be generated once and shared by all 25 JVMs, and a
+deployment is spent once its clock converges. On alpha it is a dispatch of the
+backend's `Deploy Alpha (Accelerated Clock)` workflow, made immediately before the
+run; the window starts at dispatch.
 
 **→ [`ACCELERATED_BACKEND_DEPLOYMENT.md`](./ACCELERATED_BACKEND_DEPLOYMENT.md)** —
-the local Compose recipe (works today, with a verified override), what is missing
-for alpha, how to verify every service really is on the accelerated clock, and how
-to put the environment back afterwards.
+the alpha dispatch and how to restart after convergence, the local Compose recipe,
+how to verify every service really is on the accelerated clock, and how to put the
+environment back afterwards.
 
 The short version, for a local stack:
 
