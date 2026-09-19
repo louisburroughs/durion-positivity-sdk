@@ -13,12 +13,37 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ChatBlock } from './ChatBlock';
+import {
+    ChatBlockFromJSON,
+    ChatBlockFromJSONTyped,
+    ChatBlockToJSON,
+} from './ChatBlock';
+
 /**
  * Chat response payload
  * @export
  * @interface ChatResponse
  */
 export interface ChatResponse {
+    /**
+     * Typed rendering units segmented from `response`, in source order; markdown runs interleave with table/code blocks wherever they occur in the answer, so the first block is not guaranteed to be markdown. Optional; older clients may ignore it. When empty or absent, render `response` instead.
+     * @type {Array<ChatBlock>}
+     * @memberof ChatResponse
+     */
+    blocks?: Array<ChatBlock>;
+    /**
+     * Conversation id this turn was recorded against (#2073). Always populated: newly created, reused from the request, or (deprecated ephemeral path) the caller's own non-UUID key echoed back unchanged. Echo this value on the next turn's `conversationId` to continue the same conversation. Deliberately typed as a plain string (not a UUID) to also carry the deprecated non-UUID ephemeral form back to the caller unchanged.
+     * @type {string}
+     * @memberof ChatResponse
+     */
+    conversationId: string;
+    /**
+     * Id of the persisted assistant message for this turn, or `null` in the deprecated ephemeral (non-UUID `conversationId`) path, or if the conversation was deleted/purged between the turn starting and finishing.
+     * @type {string}
+     * @memberof ChatResponse
+     */
+    messageId?: string;
     /**
      * Full agent response text
      * @type {string}
@@ -31,6 +56,7 @@ export interface ChatResponse {
  * Check if a given object implements the ChatResponse interface.
  */
 export function instanceOfChatResponse(value: object): boolean {
+    if (!('conversationId' in value)) return false;
     if (!('response' in value)) return false;
     return true;
 }
@@ -45,6 +71,9 @@ export function ChatResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
+        'blocks': json['blocks'] == null ? undefined : ((json['blocks'] as Array<any>).map(ChatBlockFromJSON)),
+        'conversationId': json['conversationId'],
+        'messageId': json['messageId'] == null ? undefined : json['messageId'],
         'response': json['response'],
     };
 }
@@ -55,6 +84,9 @@ export function ChatResponseToJSON(value?: ChatResponse | null): any {
     }
     return {
         
+        'blocks': value['blocks'] == null ? undefined : ((value['blocks'] as Array<any>).map(ChatBlockToJSON)),
+        'conversationId': value['conversationId'],
+        'messageId': value['messageId'],
         'response': value['response'],
     };
 }
