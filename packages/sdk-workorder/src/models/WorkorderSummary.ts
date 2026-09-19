@@ -26,7 +26,7 @@ export interface WorkorderSummary {
      */
     actualLaborHours?: number;
     /**
-     * Identifier of the assigned mechanic
+     * Identifier of the technician of record - the person who currently holds this workorder. Null when nobody holds it. Non-null means exactly that a current technician assignment exists, which is one half of the ASSIGNED status and not ASSIGNED itself, so an APPROVED workorder may carry one. Key assignTechnician vs reassignTechnician off this field, never off plannedMechanicIds.
      * @type {string}
      * @memberof WorkorderSummary
      */
@@ -55,6 +55,12 @@ export interface WorkorderSummary {
      * @memberof WorkorderSummary
      */
     estimatedLaborHours?: number;
+    /**
+     * Mechanics planned onto this workorder by scheduling or a dispatch override. Display and conflict-detection only: it confers no technician of record and must not decide assign vs reassign. Empty when the job carries no plan.
+     * @type {Array<string>}
+     * @memberof WorkorderSummary
+     */
+    plannedMechanicIds?: Array<string>;
     /**
      * Kind of resource assignedResourceId points at. Null exactly when assignedResourceId is null
      * @type {string}
@@ -140,6 +146,7 @@ export function WorkorderSummaryFromJSONTyped(json: any, ignoreDiscriminator: bo
         'completedServiceCount': json['completedServiceCount'] == null ? undefined : json['completedServiceCount'],
         'customerName': json['customerName'] == null ? undefined : json['customerName'],
         'estimatedLaborHours': json['estimatedLaborHours'] == null ? undefined : json['estimatedLaborHours'],
+        'plannedMechanicIds': json['plannedMechanicIds'] == null ? undefined : json['plannedMechanicIds'],
         'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
         'scheduledDate': json['scheduledDate'] == null ? undefined : (new Date(json['scheduledDate'])),
         'serviceCount': json['serviceCount'] == null ? undefined : json['serviceCount'],
@@ -163,6 +170,7 @@ export function WorkorderSummaryToJSON(value?: WorkorderSummary | null): any {
         'completedServiceCount': value['completedServiceCount'],
         'customerName': value['customerName'],
         'estimatedLaborHours': value['estimatedLaborHours'],
+        'plannedMechanicIds': value['plannedMechanicIds'],
         'resourceType': value['resourceType'],
         'scheduledDate': value['scheduledDate'] == null ? undefined : ((value['scheduledDate']).toISOString().substring(0,10)),
         'serviceCount': value['serviceCount'],
