@@ -494,18 +494,23 @@ export class AcceleratedJob {
   /**
    * Stops the open entry, tolerating the one refusal that means it is already stopped.
    *
-   * A 404 is a session some other path already closed — a previous run's suspend, or
-   * a retry after a failure between the call and the bookkeeping. Anything else is a
-   * lost labor record and is raised.
+   * A 404 is a session some other path already closed — a previous run's suspend, or a
+   * retry after a failure between the call and the bookkeeping — so the id is dropped
+   * on that too.
+   *
+   * On anything else the id is *kept* and the error raised. That id is the only handle
+   * on an entry the backend still has open: dropping it on a transient 500 would strip
+   * the failure path of anything to retry with, leave the entry running forever, and
+   * send the next morning's resume at a second session on the same service line, which
+   * the backend refuses outright. Keeping it means `laborOpen` still reports the truth
+   * — the clock really is running — so the resume correctly declines to open another
+   * and the next stop retries this one.
    */
   private async stopLaborEntry(): Promise<void> {
     const entryId = this.laborEntryId;
     if (!entryId) {
       return;
     }
-    // Cleared first: a throw below must not leave an id the next call would retry
-    // against a workorder that has already moved on.
-    this.laborEntryId = undefined;
     try {
       await call('stopLaborSession', () =>
         this.deps.as.tech.workorder.workorderLaborAPIApi.stopLaborSession({
@@ -518,6 +523,7 @@ export class AcceleratedJob {
         throw error;
       }
     }
+    this.laborEntryId = undefined;
   }
 
   private async completeItems(): Promise<void> {

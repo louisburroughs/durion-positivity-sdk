@@ -319,7 +319,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       restock: report.restock,
     });
     for (const workorderId of report.workorderIds) {
-      journal.recordWorkorder(workorderId);
+      journal.recordWorkorder(workorderId, report.workorderKinds[workorderId]);
     }
     for (const invoiceId of report.invoiceIds) {
       journal.recordInvoice(invoiceId);

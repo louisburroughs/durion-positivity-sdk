@@ -13,6 +13,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
+import type { PositionKind } from '../runs/shopFloorPlan';
 
 export interface JournalDay {
   /** Virtual date worked, `YYYY-MM-DD`. */
@@ -46,6 +47,16 @@ export interface JournalState {
   days: JournalDay[];
   /** Workorder ids the run created, for the by-runId retrieval afterwards. */
   workorderIds: string[];
+  /**
+   * How each of those workorders was worked, for the end-of-run labor audit.
+   *
+   * Persisted rather than derived from the ledger because the ledger only knows
+   * this process's claims. A resumed run audits the whole year's workorders, and
+   * without this every one from an earlier process would classify as a bay — which
+   * reads every legitimate mobile-unit span as a violation. Optional so a journal
+   * written before this field still loads.
+   */
+  workorderKinds?: Record<string, PositionKind>;
   invoiceIds: string[];
   /** Claims still held when the journal was last written, for reporting a crash. */
   openClaims: Array<{ positionId: string; technicianId: string; workorderId?: string }>;
@@ -156,9 +167,12 @@ export class AcceleratedJournal {
     this.flush();
   }
 
-  recordWorkorder(workorderId: string): void {
+  recordWorkorder(workorderId: string, kind?: PositionKind): void {
     if (!this.state.workorderIds.includes(workorderId)) {
       this.state.workorderIds.push(workorderId);
+    }
+    if (kind) {
+      this.state.workorderKinds = { ...(this.state.workorderKinds ?? {}), [workorderId]: kind };
     }
   }
 

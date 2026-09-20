@@ -119,6 +119,14 @@ export interface DayReport {
   failures: string[];
   /** Ids created, for the journal and the by-runId retrieval afterwards. */
   workorderIds: string[];
+  /**
+   * How each of those workorders was worked.
+   *
+   * Carried alongside the ids because the end-of-run labor audit has to know which
+   * spans may fall outside the shop's window, and by then the claim that knew is
+   * gone — possibly with the whole process, on a resumed run.
+   */
+  workorderKinds: Record<string, PositionKind>;
   invoiceIds: string[];
 }
 
@@ -145,6 +153,7 @@ const EMPTY_REPORT = (dayNumber: number, virtualDate: string): DayReport => ({
   laborSuspended: 0,
   failures: [],
   workorderIds: [],
+  workorderKinds: {},
   invoiceIds: [],
 });
 
@@ -613,6 +622,11 @@ export class AcceleratedDayRunner {
       const tickStart = now;
       await Promise.all(runnable.map((entry) => entry.job.advance()));
       ticks += 1;
+      // Before the settle loop below, because settling releases the claim and `attach`
+      // refuses a claim nobody holds.
+      for (const entry of runnable) {
+        this.noteWorkorder(entry, report);
+      }
 
       // One clock read per tick, reused by the next iteration's gate check. Reading
       // it twice would double the run's /system/time traffic, and at a thousandfold
@@ -670,6 +684,9 @@ export class AcceleratedDayRunner {
       }
       const tickStart = now;
       await Promise.all(runnable.map((entry) => entry.job.advance()));
+      for (const entry of runnable) {
+        this.noteWorkorder(entry, report);
+      }
 
       now = await this.deps.now();
       this.recordTickCost(tickStart, now);
@@ -683,12 +700,43 @@ export class AcceleratedDayRunner {
     }
   }
 
-  /** A finished job: count it, then give the bay and the mechanic back. */
+  /**
+   * Ties a claim to the workorder it is working, the first time the job has one.
+   *
+   * Two things depend on this happening here and not at settle. The ledger's closed
+   * holds are the only surviving record of which bay or mobile unit worked a given
+   * workorder, and the end-of-run labor audit needs that to know whether a span is
+   * allowed outside the shop's window — without it every job classifies as a bay and
+   * every legitimate mobile span reads as a violation.
+   *
+   * And `settle` runs only for jobs that *finish*. A job still carried when the run
+   * stops — a converged clock, a spent budget — already has a workorder and may
+   * already have labor entries, so recording ids only at settle silently excludes the
+   * jobs most likely to be holding an entry open.
+   */
+  private noteWorkorder(entry: ActiveJob, report: DayReport): void {
+    const workorderId = entry.job.workorderId;
+    if (!workorderId || entry.claim.workorderId === workorderId) {
+      return;
+    }
+    this.deps.ledger.attach(entry.claim, workorderId);
+    if (!report.workorderIds.includes(workorderId)) {
+      report.workorderIds.push(workorderId);
+    }
+    report.workorderKinds[workorderId] = entry.claim.position.kind;
+  }
+
+  /**
+   * A finished job: count it, then give the bay and the mechanic back.
+   *
+   * Ids are not collected here. `noteWorkorder` records a workorder the moment the job
+   * has one, which covers the completed, the failed and — the case this missed — the
+   * ones still carried when the run stops.
+   */
   private settle(entry: ActiveJob, report: DayReport, at: Date): void {
     const { job } = entry;
     if (job.outcome === 'completed') {
       report.workordersCompleted += 1;
-      if (job.workorderId) report.workorderIds.push(job.workorderId);
       if (job.invoiceId) {
         report.invoicesFinalized += 1;
         report.invoiceIds.push(job.invoiceId);
@@ -699,8 +747,6 @@ export class AcceleratedDayRunner {
     } else if (job.outcome === 'failed') {
       report.workordersFailed += 1;
       report.failures.push(job.failure ?? `${job.label} failed without a reason`);
-      // A failed job's workorder still exists and is still the run's record.
-      if (job.workorderId) report.workorderIds.push(job.workorderId);
     }
     this.deps.ledger.release(entry.claim, at);
   }

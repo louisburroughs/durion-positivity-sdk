@@ -253,23 +253,26 @@ describe('The accelerated year', () => {
       new Date(`${result.virtualSpan.to}T23:59:59.000Z`),
     );
 
-    // How each workorder was worked, taken from the holds the ledger closed. A mobile
-    // unit's labor is legitimately outside the bay window; a bay's is not, and only the
-    // ledger still knows which was which once the run is over.
-    const kindByWorkorderId = new Map<string, PositionKind>();
-    for (const hold of result.ledger.closedHolds()) {
-      if (hold.workorderId) {
-        kindByWorkorderId.set(hold.workorderId, hold.kind);
-      }
-    }
-    for (const claim of result.ledger.activeClaims()) {
-      if (claim.workorderId) {
-        kindByWorkorderId.set(claim.workorderId, claim.position.kind);
-      }
-    }
-
-    const workorderIds = result.journal.snapshot().workorderIds;
+    // Both taken from the journal, and deliberately not from the ledger. The journal
+    // spans the whole year including the days an earlier process drove, while the
+    // ledger only knows this process's claims — auditing a resumed run against the
+    // ledger would classify every workorder from before the restart as a bay and
+    // report all of their legitimate mobile spans as violations.
+    //
+    // The ids include jobs still carried at the end of the run, which are the ones most
+    // likely to be holding a labor entry open, because the runner records a workorder
+    // when the job first has one rather than when it finishes.
+    const snapshot = result.journal.snapshot();
+    const workorderIds = snapshot.workorderIds;
+    const kindByWorkorderId = new Map<string, PositionKind>(
+      Object.entries(snapshot.workorderKinds ?? {}) as Array<[string, PositionKind]>,
+    );
     expect(workorderIds.length).toBeGreaterThan(0);
+    // A missing classification silently becomes BAY inside the audit, which is the
+    // stricter reading but would report a mobile job wrongly. Catch the gap here, where
+    // the message says what actually went wrong, rather than as a confusing violation.
+    const unclassified = workorderIds.filter((id) => !kindByWorkorderId.has(id));
+    expect(unclassified).toEqual([]);
 
     const personas = new Personas(ItestConfig.fromEnv());
     await personas.login();
