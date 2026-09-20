@@ -1,4 +1,4 @@
-import { expectApiError, withSiteScope } from './http';
+import { call, expectApiError, withSiteScope } from './http';
 
 /** The shape the generated clients throw: a ResponseError carrying the Response. */
 const rejection = (status: number, body: unknown): Promise<never> =>
@@ -65,5 +65,73 @@ describe('withSiteScope', () => {
     const override = await withSiteScope('site-1')({ init: { method: 'POST', body: '{}' } });
 
     expect(Object.keys(override)).toEqual(['headers']);
+  });
+});
+
+/**
+ * The 401 retry. SeederAuth renews on a schedule built from a clock rate measured
+ * once at login, and on an accelerated backend the margin that schedule works with
+ * is around a second — so a request that queues behind a slow one, or a stack
+ * re-dispatched at a different scale, lands the wrong side of it. These pin that
+ * one unlucky request does not end a six-hour run, and that nothing else is
+ * retried.
+ */
+jest.mock('@durion-sdk/seeder', () => ({ renewAllAuths: jest.fn() }));
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { renewAllAuths } = require('@durion-sdk/seeder') as { renewAllAuths: jest.Mock };
+
+describe('call — renewing on a 401', () => {
+  beforeEach(() => {
+    renewAllAuths.mockReset();
+    renewAllAuths.mockResolvedValue(1);
+  });
+
+  it('renews and retries once, then returns the retry result', async () => {
+    const attempt = jest
+      .fn<Promise<string>, []>()
+      .mockImplementationOnce(() => rejection(401, { message: 'expired' }))
+      .mockResolvedValueOnce('second time lucky');
+
+    await expect(call('listUsers', attempt)).resolves.toBe('second time lucky');
+
+    expect(renewAllAuths).toHaveBeenCalledTimes(1);
+    expect(attempt).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports a second 401 rather than retrying into a loop', async () => {
+    // Two 401s around a fresh token is not a timing problem — it is the identity
+    // genuinely not being allowed, and looping on it would hide that behind a hang.
+    const attempt = jest.fn<Promise<string>, []>(() => rejection(401, { message: 'nope' }));
+
+    await expect(call('listUsers', attempt)).rejects.toThrow(/after renewing 1 token\(s\)/);
+    expect(attempt).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry a 403', async () => {
+    // Several suites assert a 403 deliberately: it is an authorization answer, not a
+    // stale token, and retrying it would turn a role-negative test into a slow pass.
+    const attempt = jest.fn<Promise<string>, []>(() => rejection(403, { message: 'forbidden' }));
+
+    await expect(call('deleteUser', attempt)).rejects.toThrow(/HTTP 403/);
+    expect(renewAllAuths).not.toHaveBeenCalled();
+    expect(attempt).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry a 409 or any other failure', async () => {
+    const attempt = jest.fn<Promise<string>, []>(() => rejection(409, { message: 'conflict' }));
+
+    await expect(call('assignBay', attempt)).rejects.toThrow(/HTTP 409/);
+    expect(renewAllAuths).not.toHaveBeenCalled();
+    expect(attempt).toHaveBeenCalledTimes(1);
+  });
+
+  it('says so when a 401 arrives with nothing logged in to renew', async () => {
+    // Otherwise the retry silently repeats the same unauthenticated call and reports
+    // the second failure, which reads as a flake rather than "nobody was logged in".
+    renewAllAuths.mockResolvedValue(0);
+    const attempt = jest.fn<Promise<string>, []>(() => rejection(401, { message: 'expired' }));
+
+    await expect(call('listUsers', attempt)).rejects.toThrow(/no logged-in identity to renew/);
+    expect(attempt).toHaveBeenCalledTimes(1);
   });
 });
