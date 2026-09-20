@@ -43,6 +43,15 @@ class FakeJob implements RunnableJob {
   invoiceTotal: number | undefined;
   paid = false;
   advances = 0;
+  /**
+   * The real job reopens a suspended labor clock on its next advance; this mirrors that,
+   * because a fake that stayed suspended would let a runner that never resumes pass.
+   */
+  laborOpen = false;
+  /** One entry per suspend, holding the step count it happened at. */
+  readonly laborSuspendedAt: number[] = [];
+  /** Set by the harness to make a suspend throw, as a refused stopLaborSession does. */
+  suspendFails = false;
   readonly ranAt: Date[] = [];
   /** Whether the shift was open when each step ran — off-the-clock labor is a defect. */
   readonly ranOnTheClock: boolean[] = [];
@@ -64,7 +73,22 @@ class FakeJob implements RunnableJob {
     return this.outcome === 'in-progress' ? `step-${this.advances + 1}` : 'done';
   }
 
+  async suspendLabor(): Promise<void> {
+    if (this.suspendFails) {
+      throw new Error('stopLaborSession refused: HTTP 500');
+    }
+    this.laborSuspendedAt.push(this.advances);
+    this.laborOpen = false;
+  }
+
   async advance(): Promise<JobOutcome> {
+    // The clock goes back on before the work, suspended or not — see AcceleratedJob.advance.
+    this.laborOpen = true;
+    // The real job gets its workorder at the `promote` step, well before it finishes, and
+    // the runner leans on that: a job still carried at the end of the run has a workorder
+    // and may have labor entries. A fake that only produced one on completion made every
+    // assertion about carried work vacuous.
+    this.workorderId ??= `wo-${this.label}`;
     this.ranAt.push(this.clock.peek());
     this.ranOnTheClock.push(this.onTheClock());
     this.clock.advance(typeof this.stepMinutes === 'function' ? this.stepMinutes() : this.stepMinutes);
@@ -142,6 +166,8 @@ const harness = (options: {
   stepMinutesFor?: () => number;
   /** Makes the shift port's clockOut throw, as it does when a stopWorkSession fails. */
   clockOutFails?: boolean;
+  /** Makes a job's suspendLabor throw, as a refused stopLaborSession does. */
+  suspendFails?: boolean;
   /**
    * Virtual minutes each clock read costs. Free reads hide a whole class of defect: a
    * loop that re-reads at entry can then never find the bound already past.
@@ -228,12 +254,16 @@ const harness = (options: {
       return value;
     },
     waitUntil: async (target: Date) => clock.waitUntil(target, options.waitOvershootMinutes ?? 0),
-    createJob: (claim, index) => {
+    createJob: (claim) => {
       if (options.jobLimit !== undefined && jobs.length >= options.jobLimit) {
         return null;
       }
       const job = new FakeJob(
-        `job-${index}-${claim.position.id}`,
+        // Numbered across the whole run, not within the day, mirroring the real
+        // `jobSequence` in acceleratedRun. Using the per-day index gave day two's first
+        // job the same label — and so the same fake workorder id — as day one's, which
+        // made a genuinely new job look like a duplicate record of an old one.
+        `job-${jobs.length + 1}-${claim.position.id}`,
         (options.jobKind ?? claim.position.kind) === 'BAY',
         options.jobSteps ?? 2,
         clock,
@@ -241,6 +271,7 @@ const harness = (options: {
         options.finish,
       );
       job.onTheClock = () => shiftOpen.value;
+      job.suspendFails = options.suspendFails ?? false;
       jobs.push(job);
       return job;
     },
@@ -674,6 +705,165 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
     const report = await runner.runDay(1);
 
     expect(report.failures.some((failure) => /could not be closed/.test(failure))).toBe(true);
+  });
+
+  it('stops every running labor clock at closing time', async () => {
+    // The backend subtracts a labor entry's two stamps and knows nothing about opening
+    // hours, so an entry left open at close books the night as worked. This is the guard
+    // against a multi-day job reporting 30 hours for two days of work.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].outcome).toBe('in-progress');
+    expect(jobs[0].laborOpen).toBe(false);
+    expect(jobs[0].laborSuspendedAt).toHaveLength(1);
+    expect(report.laborSuspended).toBe(1);
+  });
+
+  it('stops the labor clock again after the after-hours mobile stretch', async () => {
+    // Mobile work advances past the shift close, and advancing puts the clock back on.
+    // Left there it would run through the night into tomorrow's close — a mobile unit
+    // works any hour, not every hour. Two suspends in one day is the correct shape.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+      jobKind: 'MOBILE_UNIT',
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(jobs[0].laborOpen).toBe(false);
+    expect(report.laborSuspended).toBeGreaterThanOrEqual(2);
+  });
+
+  it('reports a labor clock that would not stop, and still closes payroll', async () => {
+    // A throw here would skip the payroll close that follows it, turning one lost labor
+    // record into a whole day off the books.
+    const { runner, jobs, calls } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+      suspendFails: true,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(jobs[0].laborOpen).toBe(true);
+    expect(report.laborSuspended).toBe(0);
+    expect(report.failures.some((failure) => /could not stop its labor clock/.test(failure))).toBe(true);
+    expect(calls).toContain('clockOut');
+    expect(calls).toContain('approveTime');
+  });
+
+  it('attaches each workorder to the claim working it, and records how it was worked', async () => {
+    // Without the attach, ClosedHold.workorderId stays undefined for the whole run, the
+    // end-of-run labor audit can classify nothing, every job falls back to BAY, and every
+    // legitimate mobile-unit span is reported as a violation.
+    const { runner, ledger, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 1,
+      jobsToday: 1,
+      concurrency: 1,
+      jobKind: 'MOBILE_UNIT',
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    const report = await runner.runDay(1);
+    const workorderId = jobs[0].workorderId as string;
+
+    expect(workorderId).toBeDefined();
+    expect(report.workorderIds).toEqual([workorderId]);
+    expect(report.workorderKinds[workorderId]).toBe('MOBILE_UNIT');
+    // The hold outlives the claim, and is where the audit reads the kind from.
+    const hold = ledger.closedHolds().find((closed) => closed.workorderId === workorderId);
+    expect(hold?.kind).toBe('MOBILE_UNIT');
+  });
+
+  it('records a workorder that is still carried when the day ends', async () => {
+    // These are the jobs most likely to be holding a labor entry open, and recording ids
+    // only at settle excluded exactly them: a run that stops on a converged clock or a
+    // spent budget leaves its carried work unaudited.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(jobs[0].outcome).toBe('in-progress');
+    expect(report.carriedOut).toBe(1);
+    expect(report.workorderIds).toEqual([jobs[0].workorderId]);
+  });
+
+  it('records a workorder whose job then failed', async () => {
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 1,
+      jobsToday: 1,
+      concurrency: 1,
+      finish: 'failed',
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.workordersFailed).toBe(1);
+    expect(report.workorderIds).toEqual([jobs[0].workorderId]);
+  });
+
+  it('records each workorder once however many days it is worked over', async () => {
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+    });
+
+    const first = await runner.runDay(1);
+    const second = await runner.runDay(2);
+
+    expect(first.workorderIds).toEqual([jobs[0].workorderId]);
+    // Day two inherits the same job. It is already recorded and must not be recorded
+    // again, because the journal's id list is what the audit iterates; the only new id
+    // there is day two's own new job.
+    expect(second.workorderIds).not.toContain(jobs[0].workorderId);
+  });
+
+  it('has no labor clock to stop when nothing was worked', async () => {
+    const { runner } = harness({ startIso: '2025-11-03T08:00:00Z', stepMinutes: 30, jobLimit: 0 });
+
+    const report = await runner.runDay(1);
+
+    expect(report.laborSuspended).toBe(0);
   });
 
   it('refuses the grace stretch an unpredicted first tick', async () => {

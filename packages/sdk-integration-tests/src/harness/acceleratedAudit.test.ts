@@ -1,7 +1,9 @@
 import {
   auditInvoiceViews,
+  laborSpanViolations,
   timeEntryViolations,
   type InvoiceView,
+  type LaborEntryView,
   type TimeEntryView,
 } from './acceleratedAudit';
 import { ShopCalendar, type CalendarSpec } from './shopCalendar';
@@ -136,5 +138,122 @@ describe('auditInvoiceViews', () => {
     expect(auditInvoiceViews([view({ status: 'PARTIALLY_PAID' })]).finalized).toBe(1);
     expect(auditInvoiceViews([view({ status: 'invoice_issued' })]).finalized).toBe(1);
     expect(auditInvoiceViews([view({ status: 'VOID' })]).problems).toHaveLength(1);
+  });
+});
+
+const labor = (overrides: Partial<LaborEntryView> = {}): LaborEntryView => ({
+  entryId: 'le-1',
+  workorderId: 'wo-1',
+  technicianId: 'tech-a',
+  startTime: new Date('2025-11-03T09:00:00Z'),
+  endTime: new Date('2025-11-03T11:30:00Z'),
+  hoursWorked: 2.5,
+  kind: 'BAY',
+  ...overrides,
+});
+
+describe('laborSpanViolations', () => {
+  it('passes a bay span inside the window', () => {
+    expect(laborSpanViolations([labor()], calendar)).toEqual([]);
+  });
+
+  it('passes a bay span that ended inside the overrun grace', () => {
+    expect(
+      laborSpanViolations([labor({ endTime: new Date('2025-11-03T19:00:00Z'), hoursWorked: 10 })], calendar),
+    ).toEqual([]);
+  });
+
+  it('reports a span nobody stopped', () => {
+    // The leak the closing-time suspend and the failure path exist to prevent: an entry
+    // with no end runs until something else closes it, and the audit is the only place
+    // that ever looks.
+    const [violation] = laborSpanViolations([labor({ endTime: undefined, hoursWorked: undefined })], calendar);
+    expect(violation.reason).toMatch(/never stopped/);
+    expect(violation.entryId).toBe('le-1');
+    expect(violation.technicianId).toBe('tech-a');
+  });
+
+  it('reports a span that crosses a night', () => {
+    // calculateHours is a plain subtraction, so an overnight span books the closed hours
+    // as worked. This is the check that a missed suspend fails.
+    const [violation] = laborSpanViolations(
+      [labor({ endTime: new Date('2025-11-04T09:30:00Z'), hoursWorked: 24.5 })],
+      calendar,
+    );
+    expect(violation.reason).toMatch(/2025-11-03 into 2025-11-04/);
+  });
+
+  it('reports an overnight span for a mobile unit too', () => {
+    // Mobile units work any hour, not every hour. Without the suspend at the end of the
+    // after-hours stretch this is exactly what a mobile job records.
+    const [violation] = laborSpanViolations(
+      [labor({ kind: 'MOBILE_UNIT', endTime: new Date('2025-11-04T09:30:00Z'), hoursWorked: 24.5 })],
+      calendar,
+    );
+    expect(violation.reason).toMatch(/never suspended at the end of its day/);
+  });
+
+  it('reports a zero-hour span', () => {
+    // The backend rounds to two decimals, so a session reopened only to be closed again
+    // lands as 0.00 — the shape the labor-close reopen guard prevents.
+    const [violation] = laborSpanViolations(
+      [labor({ endTime: new Date('2025-11-03T09:00:02Z'), hoursWorked: 0 })],
+      calendar,
+    );
+    expect(violation.reason).toMatch(/0 hours/);
+  });
+
+  it('reports a bay span that started before opening', () => {
+    const [violation] = laborSpanViolations(
+      [labor({ startTime: new Date('2025-11-03T06:00:00Z'), endTime: new Date('2025-11-03T07:00:00Z') })],
+      calendar,
+    );
+    expect(violation.reason).toMatch(/outside the open window/);
+  });
+
+  it('reports a bay span that ran past the grace', () => {
+    const [violation] = laborSpanViolations(
+      [labor({ endTime: new Date('2025-11-03T20:00:00Z'), hoursWorked: 11 })],
+      calendar,
+    );
+    expect(violation.reason).toMatch(/more than 90 minutes after close/);
+  });
+
+  it('reports a bay span on a day the shop does not open', () => {
+    const [violation] = laborSpanViolations(
+      [
+        labor({
+          startTime: new Date('2025-12-25T09:00:00Z'),
+          endTime: new Date('2025-12-25T10:00:00Z'),
+        }),
+      ],
+      calendar,
+    );
+    expect(violation.reason).toMatch(/holiday closure/);
+  });
+
+  it('leaves a mobile span outside the window alone', () => {
+    // The false positive that would make the whole check unreadable: every mobile job in
+    // the year is worked outside the bay window by design.
+    expect(
+      laborSpanViolations(
+        [
+          labor({
+            kind: 'MOBILE_UNIT',
+            startTime: new Date('2025-11-03T22:00:00Z'),
+            endTime: new Date('2025-11-03T23:30:00Z'),
+          }),
+        ],
+        calendar,
+      ),
+    ).toEqual([]);
+  });
+
+  it('reports a span that ends before it starts', () => {
+    const [violation] = laborSpanViolations(
+      [labor({ startTime: new Date('2025-11-03T11:00:00Z'), endTime: new Date('2025-11-03T09:00:00Z') })],
+      calendar,
+    );
+    expect(violation.reason).toMatch(/ends before it starts/);
   });
 });

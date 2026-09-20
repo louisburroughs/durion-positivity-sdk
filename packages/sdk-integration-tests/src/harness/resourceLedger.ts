@@ -35,6 +35,14 @@ export interface Claim {
 export interface ClosedHold {
   locationId: string;
   positionId: string;
+  /**
+   * Which kind of position the hold was on.
+   *
+   * Carried through because a finished hold is the only place the run can still
+   * learn how a workorder was worked, and the labor-span audit needs it: a bay's
+   * hours must sit inside the shop's window and a mobile unit's need not.
+   */
+  kind: PositionKind;
   technicianId: string;
   workorderId: string | undefined;
   from: Date;
@@ -248,6 +256,7 @@ export class ResourceLedger {
     this.closed.push({
       locationId: held.locationId,
       positionId: held.position.id,
+      kind: held.position.kind,
       technicianId: held.technicianId,
       workorderId: held.workorderId,
       from: held.heldFrom,

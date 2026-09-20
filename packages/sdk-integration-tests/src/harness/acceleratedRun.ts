@@ -23,7 +23,6 @@ import { createPersonAccount, createVehicle, seedFromRunId, type BuilderContext 
 import { formatError } from './http';
 import { ItestConfig } from './ItestConfig';
 import { loadContext, type ItestContext } from './ItestContext';
-import { Mutex } from './mutex';
 import { Personas } from './personas';
 import { ResourceLedger } from './resourceLedger';
 import { ClockConvergedError, VirtualClock } from './virtualClock';
@@ -115,7 +114,6 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
   };
 
   const ledger = new ResourceLedger();
-  const timerLock = new Mutex();
   const { journal } = AcceleratedJournal.open(accelContext.journalPath, {
     runId: context.runId,
     realStart: first.realStart,
@@ -161,7 +159,6 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
         ctx,
         claim,
         now: () => clock.now(),
-        timerLock,
         // A fraction of invoices are deliberately left unpaid when AR aging is
         // wanted; the default of 0 pays every one.
         leaveUnpaid: accel.unpaidRatio > 0 && ctx.random.chance(accel.unpaidRatio),
@@ -322,7 +319,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       restock: report.restock,
     });
     for (const workorderId of report.workorderIds) {
-      journal.recordWorkorder(workorderId);
+      journal.recordWorkorder(workorderId, report.workorderKinds[workorderId]);
     }
     for (const invoiceId of report.invoiceIds) {
       journal.recordInvoice(invoiceId);
