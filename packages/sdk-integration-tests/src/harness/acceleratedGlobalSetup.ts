@@ -55,8 +55,7 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   const clock = await stage('accelerated clock check', () =>
     assertAcceleratedBackend(config.baseUrl, {
       maxSkewMs: accel.maxSkewMs,
-      minAnchorGapDays: accel.minAnchorGapDays,
-    }),
+      }),
   );
   console.log(
     `[accel] clock: virtual ${clock.virtualTime.toISOString()} at scale ${clock.scale} ${clock.zone}; ` +

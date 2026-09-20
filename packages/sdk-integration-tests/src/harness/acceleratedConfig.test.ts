@@ -251,31 +251,3 @@ describe('assessFeasibility', () => {
     expect(saturday.jobsPerDay).toBe(2);
   });
 });
-
-describe('AcceleratedConfig.minAnchorGapDays', () => {
-  /**
-   * The follow-up named in durion-positivity-backend#2136: the deploy workflow now
-   * anchors the clock from its own `days` input, so a short timeline is a
-   * legitimate deployment. Fixed at 360, this guard refused every one of them
-   * *after* a successful deploy — the worst place to find out.
-   */
-  const withDays = (days: string): number => {
-    const config = AcceleratedConfig.fromEnv({ ITEST_ACCEL_DAYS: days } as NodeJS.ProcessEnv);
-    return config.minAnchorGapDays;
-  };
-
-  it('asks for a year when the run is a year', () => {
-    expect(withDays('365')).toBe(364);
-  });
-
-  it('asks only for the timeline a short run needs', () => {
-    // Would have been refused outright before, despite the deploy being correct.
-    expect(withDays('92')).toBe(91);
-  });
-
-  it('never asks for less than a day, however short the run', () => {
-    // A one-day run still needs a timeline with a day in it; a floor of zero would
-    // accept a same-day pair, which has no run in it at all.
-    expect(withDays('1')).toBe(1);
-  });
-});

@@ -22,6 +22,9 @@ const scriptedClock = (
         realStart: new Date('2026-09-17T12:00:00.000Z'),
         virtualStart: new Date('2025-09-17T12:00:00.000Z'),
         readAt: new Date(),
+        // A timeline with plenty left: this stub is about waiting, not about running
+        // out, and a zero here would make every wait look like a spent clock.
+        remainingDays: 365,
       };
     },
     async now(): Promise<Date> {

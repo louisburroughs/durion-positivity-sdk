@@ -91,7 +91,6 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
 
   const clock = new VirtualClock(config.baseUrl, {
     maxSkewMs: accel.maxSkewMs,
-    minAnchorGapDays: accel.minAnchorGapDays,
   });
   const timer = new VirtualTimer(clock, { pollMs: accel.pollMs });
 
@@ -254,7 +253,23 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     journal.flush();
   }
 
-  const totalDays = options.days ?? accel.days;
+  // What the run is *asked* for, and what the timeline can actually still give.
+  //
+  // The anchors say how long the timeline was; by the time a suite is dispatched the
+  // containers have been closing that gap since they booted, so some of it is already
+  // spent. Asking the deployment to have been made longer than it was is the wrong
+  // question — a run configured for the same length as the deployment could never
+  // satisfy it. The run takes what is left instead, and says so.
+  const requestedDays = options.days ?? accel.days;
+  const drivableDays = Math.floor(first.remainingDays);
+  const totalDays = Math.max(1, Math.min(requestedDays, drivableDays));
+  if (totalDays < requestedDays) {
+    log(
+      `the clock has ${first.remainingDays.toFixed(1)} virtual day(s) left before it converges, so this ` +
+        `run drives ${totalDays} of the ${requestedDays} configured (ITEST_ACCEL_DAYS). Re-dispatch the ` +
+        'stack for a longer run.',
+    );
+  }
   const reports: DayReport[] = [];
   const deadline = Date.now() + accel.runBudgetMs;
   const startedFrom = journal.lastDayNumber();
