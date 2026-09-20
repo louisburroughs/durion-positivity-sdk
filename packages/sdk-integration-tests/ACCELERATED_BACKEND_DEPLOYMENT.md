@@ -234,7 +234,10 @@ curl -s http://localhost:8080/system/time | jq
 Check, in this order:
 
 1. `accelerated` is `true` and `converged` is `false`.
-2. `virtualStart` is **at least 360 days** before `realStart`. The suite refuses a
+2. `virtualStart` precedes `realStart` by **at least the run's own length**
+   (`ITEST_ACCEL_DAYS` less a day of slack; 364 days for the default year). The
+   deploy workflow anchors the pair from its `days` input, so dispatch the same
+   number the suite is configured to drive. The suite refuses a
    shorter gap: it cannot cover a year.
 3. `virtualTime` moves. Two reads a second apart should differ by roughly `scale`
    seconds.
@@ -401,7 +404,7 @@ enforce.
 | Container exits at startup, `real-start is required` | An anchor was not exported before `docker compose` | Re-export all five and bring the stack up again; `${VAR:?required}` is what surfaced it |
 | `virtual-start must not be after real-start` | Anchors generated in the wrong order, or a `date` flag difference | Regenerate; on macOS use `date -u -v-1y` |
 | `scale must be greater than 1 to converge` | `scale` ≤ 1 with a back-dated `virtual-start` | The gap only closes above 1; use 1,460 |
-| `anchors must precede realStart by at least 360 days` | Not anchored a full year back | Regenerate `virtual-start` a year before `real-start` |
+| `virtualStart must precede realStart by at least N days to cover the run` | The timeline is shorter than `ITEST_ACCEL_DAYS` | Dispatch with a `days` input matching the suite, or lower `ITEST_ACCEL_DAYS` to fit |
 | `ahead of the local wall clock` | The backend host and your laptop disagree about now | Fix NTP on whichever is wrong; raise `ITEST_ACCEL_MAX_SKEW_MS` only if you know why |
 | `the accelerated clock has converged` at setup | The deployment has already spent its year | Alpha: re-dispatch `Deploy Alpha (Accelerated Clock)` (*Restarting after convergence*). Local: regenerate the anchors and bring the stack up again |
 | `belongs to a different timeline` | The journal is from an earlier deployment's anchors | Move it aside or set `ITEST_ACCEL_JOURNAL` to a new path |

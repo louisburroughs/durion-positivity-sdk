@@ -53,7 +53,10 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   // The guard first: every stage below writes, and none of it should happen
   // against a backend on the normal clock.
   const clock = await stage('accelerated clock check', () =>
-    assertAcceleratedBackend(config.baseUrl, { maxSkewMs: accel.maxSkewMs }),
+    assertAcceleratedBackend(config.baseUrl, {
+      maxSkewMs: accel.maxSkewMs,
+      minAnchorGapDays: accel.minAnchorGapDays,
+    }),
   );
   console.log(
     `[accel] clock: virtual ${clock.virtualTime.toISOString()} at scale ${clock.scale} ${clock.zone}; ` +

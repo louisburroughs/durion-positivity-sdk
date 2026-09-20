@@ -89,7 +89,10 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
   const context: ItestContext = loadContext();
   const accelContext: AcceleratedContext = loadAcceleratedContext();
 
-  const clock = new VirtualClock(config.baseUrl, { maxSkewMs: accel.maxSkewMs });
+  const clock = new VirtualClock(config.baseUrl, {
+    maxSkewMs: accel.maxSkewMs,
+    minAnchorGapDays: accel.minAnchorGapDays,
+  });
   const timer = new VirtualTimer(clock, { pollMs: accel.pollMs });
 
   const first = await clock.read();

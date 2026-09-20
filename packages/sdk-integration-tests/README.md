@@ -203,7 +203,9 @@ curl -s http://localhost:18080/system/time | jq
 #  "realStart":"2026-09-17T...","virtualStart":"2025-09-17T..."}
 ```
 
-`accelerated` must be `true` and `virtualStart` must be at least 360 days before
+`accelerated` must be `true` and `virtualStart` must precede `realStart` by at
+least the run's own length (`ITEST_ACCEL_DAYS` less a day of slack), which for the
+default 365-day run is 364 days
 `realStart`, or setup refuses to start. A 404 means the profile did not apply.
 
 ### 2. Pick the scale from the time you have

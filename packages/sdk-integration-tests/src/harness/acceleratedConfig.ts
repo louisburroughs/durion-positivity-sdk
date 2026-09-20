@@ -76,6 +76,23 @@ export class AcceleratedConfig {
    * depends on which calendar years the virtual span touches, and that is only
    * known once the clock has been read.
    */
+  /**
+   * How far `virtualStart` must precede `realStart` for this run to be drivable.
+   *
+   * The run's own length, not a year. The deploy workflow now anchors the pair
+   * from its `days` input (durion-positivity-backend#2136), so a 92-day timeline
+   * is a legitimate deployment rather than a misconfigured one — and this guard,
+   * fixed at 360, would have refused every one of them after a successful deploy.
+   *
+   * A day of slack absorbs rounding between the anchor arithmetic and the gap this
+   * suite measures from two ISO instants. What it will not absorb is a timeline
+   * shorter than the run intends to drive: that run would reach convergence with
+   * days still to work, which is the failure the guard exists for.
+   */
+  get minAnchorGapDays(): number {
+    return Math.max(1, this.days - 1);
+  }
+
   calendarFor(from: Date, to: Date): ShopCalendar {
     const holidays = this.holidayOverride ?? holidaysForSpan(from, to);
     const spec: CalendarSpec = {
