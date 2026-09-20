@@ -197,7 +197,7 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   // The journal decides the runId: a resumed year keeps the original, so its
   // records stay one retrievable set.
   const proposedRunId = `accel-${Math.floor(Date.now() / 1000)}-${Math.random().toString(36).slice(2, 6)}`;
-  const { journal, resumed } = AcceleratedJournal.open(accel.journalPath, {
+  const { journal, resumed, replacedRunId } = AcceleratedJournal.open(accel.journalPath, {
     runId: proposedRunId,
     realStart: clock.realStart,
     virtualStart: clock.virtualStart,
@@ -209,6 +209,13 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
     console.log(
       `[accel] resuming run ${journal.runId} from ${accel.journalPath}: ${journal.lastDayNumber()} day(s) done, ` +
         `${totals.workorders} workorder(s), ${totals.paid} paid invoice(s)`,
+    );
+  } else if (replacedRunId) {
+    // Said out loud, because the alternative was a run that silently wore a spent
+    // identity and collided with the records the previous attempt left behind.
+    console.log(
+      `[accel] the journal at ${accel.journalPath} recorded nothing under ${replacedRunId}, so this run keeps ` +
+        `its own id ${journal.runId} rather than inheriting one whose fixtures may already exist`,
     );
   }
 

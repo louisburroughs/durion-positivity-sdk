@@ -77,11 +77,29 @@ export class AcceleratedJournal {
    * produce a day list that describes neither. The operator is told to move it
    * aside, because deleting someone's record of a six-hour run is not this code's
    * decision to make.
+   *
+   * A journal that recorded *nothing* is a different case, and inheriting its
+   * runId was a trap. An attempt that died before its first day still created the
+   * suites' fixtures on the backend — a bay, a bin, vehicles — all named or seeded
+   * from the runId, none of them journaled. The next attempt reopened the empty
+   * journal, took that same runId, regenerated the same names and the same VIN
+   * stream, and collided with its predecessor: DUPLICATE_NAME, CONFLICT,
+   * VEHICLE_VIN_CONFLICT, across every suite, while the run read as a first one
+   * because `resumed` was false. An identity that has produced no retrievable
+   * record is therefore dropped rather than adopted, and the caller is told whose
+   * place it took.
+   *
+   * "Recorded nothing" means the whole file, not just its day list: a workorder or
+   * an invoice id reaches the state as soon as the record exists, so a journal
+   * carrying one has work under its runId with no day closed, and that runId has to
+   * be kept for the by-runId retrieval to find it. Those ids reach *disk* at the
+   * next flush, which is another reason an empty file cannot be read as an
+   * untouched backend — only as an identity with nothing left to resume.
    */
   static open(
     path: string,
     identity: { runId: string; realStart: Date; virtualStart: Date; scale: number },
-  ): { journal: AcceleratedJournal; resumed: boolean } {
+  ): { journal: AcceleratedJournal; resumed: boolean; replacedRunId?: string } {
     const now = new Date().toISOString();
 
     if (existsSync(path)) {
@@ -106,8 +124,30 @@ export class AcceleratedJournal {
             'living. Move the journal aside, or point ITEST_ACCEL_JOURNAL somewhere else.',
         );
       }
+      const recorded =
+        parsed.days.length > 0 ||
+        (parsed.workorderIds?.length ?? 0) > 0 ||
+        (parsed.invoiceIds?.length ?? 0) > 0 ||
+        (parsed.openClaims?.length ?? 0) > 0;
+
       parsed.updatedAt = now;
-      return { journal: new AcceleratedJournal(path, parsed), resumed: parsed.days.length > 0 };
+      if (recorded) {
+        return { journal: new AcceleratedJournal(path, parsed), resumed: true };
+      }
+
+      // Nothing to resume, so nothing to inherit. The file is kept — it is already
+      // this timeline's — but the identity written into it from here on is this
+      // run's own.
+      const replacedRunId = parsed.runId;
+      parsed.runId = identity.runId;
+      parsed.virtualStart = identity.virtualStart.toISOString();
+      parsed.scale = identity.scale;
+      parsed.startedAt = now;
+      return {
+        journal: new AcceleratedJournal(path, parsed),
+        resumed: false,
+        replacedRunId: replacedRunId === identity.runId ? undefined : replacedRunId,
+      };
     }
 
     return {
