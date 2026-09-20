@@ -2,6 +2,7 @@
  * HTTP error helpers, lifted from the seeder's CustomerEventSimulator so the
  * suites report backend failures the same proven way.
  */
+import { renewAllAuths } from '@durion-sdk/seeder';
 
 const asRecord = (value: unknown): Record<string, unknown> | undefined => {
   if (value !== null && typeof value === 'object') {
@@ -227,11 +228,36 @@ export async function retryWhileReplicating<T>(
 /**
  * Awaits a call and, on failure, reports the status and body instead of the
  * generated client's context-free "Response returned an error code".
+ *
+ * A 401 is retried once, after forcing every logged-in identity to mint a fresh
+ * token. SeederAuth already renews on a schedule, but that schedule is built from
+ * a clock rate measured once at login, and on an accelerated backend the margin it
+ * is working with is around a second. A re-dispatched stack, a revoked token, or
+ * simply a request that queued behind a slow one can land the wrong side of that
+ * margin. Without the retry a single unlucky request ends a six-hour run.
+ *
+ * Once, and only for a 401. A second 401 after a fresh token is not a timing
+ * problem — it is the identity genuinely not being allowed — and is reported as
+ * itself rather than retried into a loop. A 403 is never retried: that is an
+ * authorization answer, and several suites assert on it deliberately.
  */
 export async function call<T>(description: string, attempt: () => Promise<T>): Promise<T> {
   try {
     return await attempt();
   } catch (error) {
-    throw new Error(`${description} failed: ${await formatError(error)}`);
+    if (!isHttpStatus(error, 401)) {
+      throw new Error(`${description} failed: ${await formatError(error)}`);
+    }
+    const renewed = await renewAllAuths();
+    if (renewed === 0) {
+      throw new Error(`${description} failed: ${await formatError(error)} (no logged-in identity to renew)`);
+    }
+    try {
+      return await attempt();
+    } catch (retryError) {
+      throw new Error(
+        `${description} failed after renewing ${renewed} token(s): ${await formatError(retryError)}`,
+      );
+    }
   }
 }

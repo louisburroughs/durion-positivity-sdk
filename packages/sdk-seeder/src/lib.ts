@@ -6,7 +6,7 @@
  * import from this barrel instead. The package's `main`/`types` fields and
  * the root jest moduleNameMapper both point here.
  */
-export { SeederAuth } from './SeederAuth';
+export { SeederAuth, renewAllAuths, resetAuthStateForTests } from './SeederAuth';
 export { SeederConfig, type SeederConfigShape, type SeederConfigValues } from './SeederConfig';
 export { SecurityBootstrap } from './bootstrap/SecurityBootstrap';
 export { BootstrapOrchestrator } from './bootstrap/BootstrapOrchestrator';
