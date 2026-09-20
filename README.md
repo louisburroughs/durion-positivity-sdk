@@ -517,8 +517,9 @@ the repository's own tests; it writes nothing.)
 technicians — it creates none of them — and puts one active workorder on each
 free position it can staff, one technician per position. It also writes the
 time: the technicians it uses are clocked in before the first job and out after
-the last, and each job it starts carries a labor session opened then and closed
-at the end of the load, so the floor it leaves behind has hours on it. Where a site has more
+the last, and each job it starts carries a labor session — where workexec lets
+that login write one — opened then and closed at the end of the load, so the
+floor it leaves behind has hours on it. Where a site has more
 positions than idle technicians it fills what it can and names every position
 it left empty; bays and mobile units are staffed alternately so a shortfall
 never falls on one kind alone. Its records carry a `floor-*` run id, distinct

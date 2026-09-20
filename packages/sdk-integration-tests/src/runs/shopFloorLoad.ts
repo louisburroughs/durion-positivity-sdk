@@ -462,16 +462,20 @@ async function openLaborSession(
   }
 
   try {
-    const entry = await call('startLaborSession', () =>
-      as.tech.workorder.workorderLaborAPIApi.startLaborSession({
-        workorderId,
-        serviceId: serviceLineId,
-        startLaborRequest: {
-          technicianId,
-          notes: `Shop floor load [${runId}]`,
-        },
-      }),
-    );
+    // Unwrapped, like `startWorkorder` above and for the same reason: `call`
+    // rethrows everything but a 401 as a plain Error carrying only a message, so a
+    // caller that has to *decide* on the status cannot see one through it. What is
+    // given up is `call`'s token renewal — and the `getWorkorderDetail` on the line
+    // above already went through it, so a token that had expired was renewed a call
+    // ago. A 401 here is workexec refusing this login, not an expired session.
+    const entry = await as.tech.workorder.workorderLaborAPIApi.startLaborSession({
+      workorderId,
+      serviceId: serviceLineId,
+      startLaborRequest: {
+        technicianId,
+        notes: `Shop floor load [${runId}]`,
+      },
+    });
     const entryId = readString(entry, 'id', 'entryId');
     if (!entryId) {
       log(`  WARNING: the labor session on workorder ${workorderId} returned no entry id`);
@@ -481,7 +485,8 @@ async function openLaborSession(
   } catch (error) {
     const status = httpStatusOf(error);
     if (status !== 401 && status !== 403) {
-      throw error;
+      // Re-raised with its description, which is what `call` would have added.
+      throw new Error(`startLaborSession failed: ${await formatError(error)}`);
     }
     log(`  labor session on workorder ${workorderId} refused (${status}): ${await formatError(error)}`);
     return undefined;
@@ -513,23 +518,41 @@ async function closeLaborSessions(tech: DomainClients, outcomes: JobOutcome[]): 
   }
 
   for (const outcome of open) {
+    // Unwrapped for the 404 below: `call` rethrows it as a plain Error carrying only
+    // a message, and an entry reported as still running when it is already closed is
+    // exactly the false alarm this warning exists to avoid.
+    const attempt = () =>
+      tech.workorder.workorderLaborAPIApi.stopLaborSession({
+        workorderId: outcome.workorderId as string,
+        entryId: outcome.laborEntryId as string,
+      });
+
     try {
-      const stopped = await call('stopLaborSession', () =>
-        tech.workorder.workorderLaborAPIApi.stopLaborSession({
-          workorderId: outcome.workorderId as string,
-          entryId: outcome.laborEntryId as string,
-        }),
-      );
+      let stopped;
+      try {
+        stopped = await attempt();
+      } catch (error) {
+        if (isHttpStatus(error, 404)) {
+          // Already closed — by a previous run's cleanup, or by a retry that got
+          // further than its bookkeeping. The state this is trying to reach.
+          outcome.laborEntryId = undefined;
+          continue;
+        }
+        if (!isHttpStatus(error, 401)) {
+          throw error;
+        }
+        // The one thing the raw attempt gives up. The load can run long enough for a
+        // token to expire, and this close happens after all of it, so the renewal
+        // `call` does on a 401 is worth going back for rather than warning about.
+        stopped = await call('stopLaborSession', attempt);
+      }
+
       // Coerced and guarded: the field is optional on the DTO and the summary adds
       // these up, so one unparseable value would turn the floor's whole total into NaN.
       const hours = Number(stopped.hoursWorked ?? 0);
       outcome.hoursWorked = Number.isFinite(hours) ? hours : 0;
       outcome.laborEntryId = undefined;
     } catch (error) {
-      if (isHttpStatus(error, 404)) {
-        outcome.laborEntryId = undefined;
-        continue;
-      }
       log(
         `  WARNING: the labor clock on workorder ${outcome.workorderId} is still running ` +
           `(entry ${outcome.laborEntryId}): ${await formatError(error)}`,

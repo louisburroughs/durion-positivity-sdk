@@ -79,8 +79,9 @@ How it decides:
 - **Both clocks are written, and both are closed.** Every technician the run is
   about to use is clocked in before the first job and out after the last
   (pos-people work sessions — the payroll clock), and every job it manages to
-  start carries a labor session opened at the start and closed at the end of the
-  load (pos-workorder labor entries — the job clock). The backend stamps each
+  start carries a labor session — where workexec lets that login write one —
+  opened at the start and closed at the end of the load (pos-workorder labor
+  entries — the job clock). The backend stamps each
   instant from its own clock and computes `hoursWorked`; the run declares no
   figure, and the summary reports the total it got back. The closing runs in a
   `finally`, because an entry left open has no hours at all and an open work
