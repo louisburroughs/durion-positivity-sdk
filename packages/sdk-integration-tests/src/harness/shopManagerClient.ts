@@ -12,13 +12,22 @@ export interface ShopManagerClient {
 
 export function createShopManagerClient(options: {
   baseUrl: string;
-  token: () => string;
+  /**
+   * Awaited on every request, not read once.
+   *
+   * SeederAuth renews inside this callback, so a provider typed as returning a
+   * plain string opts the client out of renewal: it would send whatever token was
+   * current when the call started, which on an accelerated clock is expired within
+   * a second or two. The appointment paths that do not go through `call` have no
+   * other recovery, so this is their only protection.
+   */
+  token: () => string | Promise<string>;
 }): ShopManagerClient {
   const configuration = new Configuration({
     basePath: `${options.baseUrl}/shop-manager`,
     fetchApi: async (url: RequestInfo | URL, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
-      headers.set('Authorization', `Bearer ${options.token()}`);
+      headers.set('Authorization', `Bearer ${await options.token()}`);
       if (!headers.has('X-API-Version')) {
         headers.set('X-API-Version', '1');
       }

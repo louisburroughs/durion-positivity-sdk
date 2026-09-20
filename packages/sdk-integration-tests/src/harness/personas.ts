@@ -133,7 +133,7 @@ export class Personas {
         security: createSecurityClient(auth.buildSdkConfig('security-service')),
         shopManager: createShopManagerClient({
           baseUrl: this.config.baseUrl,
-          token: () => auth.getToken(),
+          token: () => auth.supplyToken(),
         }),
         username: this.config.credentialsFor(persona).username,
         auth,
