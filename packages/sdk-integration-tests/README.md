@@ -76,6 +76,31 @@ How it decides:
   technician the job was assigned to, so workexec can refuse it. Such a job is
   reported as placed-but-not-started (`ASSIGNED`, not `WORK_IN_PROGRESS`); it
   still occupies the position, and it is not counted as a failure.
+- **Both clocks are written, and both are closed.** Every technician the run is
+  about to use is clocked in before the first job — best-effort: one who cannot
+  be, because the payroll service refused it, is reported and skipped rather
+  than costing the floor its position — and out after the last
+  (pos-people work sessions — the payroll clock), and every job it manages to
+  start carries a labor session — where workexec lets that login write one —
+  opened at the start and closed at the end of the load (pos-workorder labor
+  entries — the job clock). The backend stamps each
+  instant from its own clock and computes `hoursWorked`; the run declares no
+  figure, and the summary reports the total it got back. The closing runs in a
+  `finally`, because an entry left open has no hours at all and an open work
+  session is stamped shut by whatever closes it next — the following morning, on
+  a later run, which books the night as worked. A job whose start was refused
+  books no labor: there is no work to book it against. A labor session refused
+  with 401/403 (the same role-mode shape as the start) leaves that position
+  working with no hours, reported and not fatal.
+- **The payroll clock is keyed by person, and only by person.** The work session
+  API is start, break, stop and submit by `personId`, with no read, so closing a
+  stale session before clocking in closes whatever that person has open — the
+  seeder's shift loop, or another run. Nothing can tell the difference; there is
+  nothing to ask. Not closing it means the clock-in hits the conflict an open
+  session raises and the run writes no payroll at all, which is why suite F and
+  the accelerated shift port do the same. The clock-out is narrowed to the people
+  this run clocked in; a session another run opens mid-load is the part that
+  cannot be narrowed away.
 
 Build the workspace packages first with the root `npm run build`: it compiles
 every package in dependency order and writes the `dist` a run imports.
