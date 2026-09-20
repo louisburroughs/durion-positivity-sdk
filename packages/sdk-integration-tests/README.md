@@ -206,8 +206,9 @@ curl -s http://localhost:18080/system/time | jq
 `accelerated` must be `true`, the anchors must go backwards, and the clock must
 still have at least a day left to drive. The run then takes the *smaller* of
 `ITEST_ACCEL_DAYS` and what remains — the containers start closing the gap the
-moment they boot, so a suite dispatched later has less than was deployed
-`realStart`, or setup refuses to start. A 404 means the profile did not apply.
+moment they boot, so a suite dispatched later has less than was deployed. A clock
+with nothing left to drive is refused at setup. A 404 means the profile did not
+apply.
 
 ### 2. Pick the scale from the time you have
 

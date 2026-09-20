@@ -237,8 +237,8 @@ Check, in this order:
 2. `virtualStart` precedes `realStart`, and **at least one virtual day is still
    drivable**. The deployed length is not checked — the clock has been closing the
    gap since the containers booted, so dispatch and start close together and the
-   run will take whatever is left. The suite refuses a
-   shorter gap: it cannot cover a year.
+   run will take whatever is left. The suite refuses only a spent clock, naming how
+   much remained.
 3. `virtualTime` moves. Two reads a second apart should differ by roughly `scale`
    seconds.
 4. **Every JVM agrees.** One service left on the wall clock is the failure mode that
