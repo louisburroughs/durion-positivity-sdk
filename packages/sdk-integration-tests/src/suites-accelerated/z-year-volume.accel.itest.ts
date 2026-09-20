@@ -1,10 +1,11 @@
 import { AcceleratedConfig } from '../harness/acceleratedConfig';
 import { loadAcceleratedContext } from '../harness/acceleratedContext';
-import { auditInvoices, auditTimeEntries } from '../harness/acceleratedAudit';
+import { auditInvoices, auditLaborSpans, auditTimeEntries } from '../harness/acceleratedAudit';
 import { runAcceleratedYear, volumeFloor, type YearRunResult } from '../harness/acceleratedRun';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas } from '../harness/personas';
+import type { PositionKind } from '../runs/shopFloorPlan';
 
 /**
  * The year — one virtual year of shop activity, asserted.
@@ -20,11 +21,17 @@ import { Personas } from '../harness/personas';
  * the parity copies of suites A-H fail in minutes on a broken contract rather than
  * at hour five of this one.
  *
- * Two rules are asserted against what the *backend stored*, not against what the
+ * Three rules are asserted against what the *backend stored*, not against what the
  * run intended:
  *
- *   1. no payroll shift outside the shop's hours (plus the overrun grace), and
- *   2. no bay, mobile unit or mechanic ever holding two open workorders at once.
+ *   1. no payroll shift outside the shop's hours (plus the overrun grace),
+ *   2. no labor span crossing a night, and no bay's labor outside those hours, and
+ *   3. no bay, mobile unit or mechanic ever holding two open workorders at once.
+ *
+ * The first two are separate on purpose. Payroll says the mechanic was in the
+ * building; labor says the clock was running on the job. A run can get one right and
+ * the other wrong, and the way labor is recorded here — two stamps the backend
+ * subtracts, with no notion of opening hours between them — is what would do it.
  *
  * Alpha is shared and append-only: everything here is scoped to this run's own
  * records, and nothing is cleaned up afterwards — the year of history is the
@@ -230,6 +237,58 @@ describe('The accelerated year', () => {
     }
     // This is the evidence for "nobody works after hours": the backend's own
     // timestamps, written under its accelerated clock.
+    expect(violations).toEqual([]);
+    expect(checked).toBeGreaterThan(0);
+  }, 900_000);
+
+  it("Z13b — no labor span crosses a night or ran outside the shop's hours", async () => {
+    // Z13 is the payroll side — the person was in the building. This is the workorder
+    // side: the clock that runs on the job itself. They can disagree, and the way this
+    // run records labor is exactly what would make them: the backend computes a labor
+    // entry's hours by subtracting its two stamps and knows nothing about opening
+    // hours, so a session the day runner failed to suspend at close books the whole
+    // night as worked and still looks like a clean row.
+    const calendar = accel.calendarFor(
+      new Date(accelContext.clock.virtualStart),
+      new Date(`${result.virtualSpan.to}T23:59:59.000Z`),
+    );
+
+    // How each workorder was worked, taken from the holds the ledger closed. A mobile
+    // unit's labor is legitimately outside the bay window; a bay's is not, and only the
+    // ledger still knows which was which once the run is over.
+    const kindByWorkorderId = new Map<string, PositionKind>();
+    for (const hold of result.ledger.closedHolds()) {
+      if (hold.workorderId) {
+        kindByWorkorderId.set(hold.workorderId, hold.kind);
+      }
+    }
+    for (const claim of result.ledger.activeClaims()) {
+      if (claim.workorderId) {
+        kindByWorkorderId.set(claim.workorderId, claim.position.kind);
+      }
+    }
+
+    const workorderIds = result.journal.snapshot().workorderIds;
+    expect(workorderIds.length).toBeGreaterThan(0);
+
+    const personas = new Personas(ItestConfig.fromEnv());
+    await personas.login();
+    const { checked, violations } = await auditLaborSpans(
+      personas.as('tech'),
+      calendar,
+      workorderIds,
+      kindByWorkorderId,
+    );
+
+    console.log(`[Z13b] ${checked} labor entr(ies) checked across ${workorderIds.length} workorder(s)`);
+    for (const violation of violations.slice(0, 10)) {
+      console.log(
+        `[Z13b] violation: ${violation.reason} at ${violation.at} ` +
+          `(entry ${violation.entryId}, workorder ${violation.workorderId})`,
+      );
+    }
+    // The evidence that the suspend-and-resume actually fired: every span opens and
+    // closes on one virtual date, and no mechanic is still on a job.
     expect(violations).toEqual([]);
     expect(checked).toBeGreaterThan(0);
   }, 900_000);
