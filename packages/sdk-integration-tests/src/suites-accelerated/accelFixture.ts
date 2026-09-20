@@ -67,7 +67,9 @@ export async function acceleratedFixture(): Promise<AcceleratedFixture> {
   const accel = AcceleratedConfig.fromEnv();
   const accelContext = loadAcceleratedContext();
 
-  const clock = new VirtualClock(config.baseUrl, { maxSkewMs: accel.maxSkewMs });
+  const clock = new VirtualClock(config.baseUrl, {
+    maxSkewMs: accel.maxSkewMs,
+  });
   const timer = new VirtualTimer(clock, { pollMs: accel.pollMs });
   const first: ServerTime = await clock.read();
 

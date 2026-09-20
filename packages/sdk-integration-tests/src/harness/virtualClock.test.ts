@@ -101,10 +101,44 @@ describe('VirtualClock', () => {
     );
   });
 
-  it('refuses anchors less than a year apart — the run could not cover a year', async () => {
+  it('refuses anchors with no timeline between them', async () => {
+    // Not a length check. A pair that does not go backwards has no run in it at all,
+    // whatever the deployment was asked for.
     await expect(
-      clockWith(respond(200, body({ virtualStart: '2026-06-17T12:00:00.000Z', virtualTime: '2026-07-01T00:00:00.000Z' }))).read(),
-    ).rejects.toThrow(/at least 360 days/);
+      clockWith(respond(200, body({ virtualStart: REAL_START, virtualTime: REAL_START }))).read(),
+    ).rejects.toThrow(/does not precede realStart/);
+  });
+
+  it('accepts a timeline far shorter than a year', async () => {
+    // The deploy workflow anchors from its own `days` input
+    // (durion-positivity-backend#2136), so a short timeline is a legitimate
+    // deployment. The old guard refused every one of them after a successful deploy.
+    const reading = await clockWith(
+      respond(200, body({ virtualStart: '2026-06-17T12:00:00.000Z', virtualTime: '2026-06-18T00:00:00.000Z' })),
+    ).read();
+    expect(reading.remainingDays).toBeGreaterThan(1);
+  });
+
+  it('refuses a timeline with almost nothing left to drive', async () => {
+    // The containers close the gap from the moment they boot, so a suite dispatched
+    // late can find the year already spent. Better to say so at setup than to drive
+    // one virtual day and stop.
+    const nearlyNow = new Date(Date.now() - 30_000).toISOString();
+    await expect(clockWith(respond(200, body({ virtualTime: nearlyNow }))).read()).rejects.toThrow(
+      /virtual day\(s\) remain before the clock converges/,
+    );
+  });
+
+  it('reports what is left rather than what was deployed', async () => {
+    // The figure a run can plan against: the anchors say how long the timeline was,
+    // this says how much of it survives. Derived from the reading alone, so it stays
+    // right across a re-dispatch that moves the anchors.
+    const reading = await clockWith(respond(200, body())).read();
+    const gapDays = (reading.readAt.getTime() - reading.virtualTime.getTime()) / (24 * 60 * 60 * 1000);
+    expect(reading.remainingDays).toBeCloseTo((1460 * gapDays) / 1459, 3);
+    // Strictly less than the deployed gap, because time has already been spent.
+    const deployedGap = (Date.parse(REAL_START) - Date.parse(VIRTUAL_START)) / (24 * 60 * 60 * 1000);
+    expect(reading.remainingDays).toBeLessThan(deployedGap + 1);
   });
 
   it('refuses a virtualTime before virtualStart', async () => {

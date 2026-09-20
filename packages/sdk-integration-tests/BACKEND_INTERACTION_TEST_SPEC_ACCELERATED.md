@@ -136,9 +136,13 @@ Rules the harness enforces:
   aborts on a 200.
 - `accelerated` must be `true`, `scale` must be finite and `> 1`, `zone` must
   parse as an IANA zone, and `realStart`/`virtualStart` must both parse.
-- `virtualStart` must be at least 360 days before `realStart`. A shorter gap
-  means the deployment was not anchored a year back and the run cannot produce a
-  year of history.
+- `virtualStart` must precede `realStart`, and at least one virtual day must still
+  be drivable. The length is not checked: the deploy workflow anchors the pair from
+  its `days` input (durion-positivity-backend#2136) and the clock has been closing
+  the gap since the containers booted, so what was deployed and what is left are
+  different numbers. The run drives `min(ITEST_ACCEL_DAYS, remaining)` and logs when
+  it clamps, so the deliverable is the history of the run that was actually
+  drivable. A clock with nothing left produces no run at all and is refused.
 - `virtualTime` must be `>= virtualStart` and must never exceed the local wall
   clock by more than `ITEST_ACCEL_MAX_SKEW_MS`. Beyond that the JVMs disagree
   with each other or with the laptop, and virtual dates on records would be
@@ -722,7 +726,7 @@ open rather than assumed:
   repo are green.
 
 - [ ] `GET /system/time` on the target reports `accelerated: true`, `scale`
-      matching the deployment, and a `virtualStart` at least 360 days before
+      matching the deployment, and a `virtualStart` before
       `realStart`. The anchors are recorded in the run log.
 - [x] `npm test` collects zero `*.accel.itest.ts`; `npm run test:integration`
       collects zero of them; `npm run test:accelerated` collects only them.
