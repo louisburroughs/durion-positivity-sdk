@@ -418,7 +418,25 @@ async function clockOut(admin: DomainClients, personIds: readonly string[]): Pro
   }
 }
 
-/** Stops whatever payroll session the person has open, tolerating "there was none". */
+/**
+ * Stops whatever payroll session the person has open, tolerating "there was none".
+ *
+ * Keyed by person, because that is the only key the endpoint takes: the work
+ * session API is start, break, stop and submit, all by `personId`, with no read
+ * at all. So a stop closes whatever session that person has open — possibly one
+ * the seeder's shift loop or another run against the same environment opened —
+ * and nothing here can tell the difference, because there is nothing to ask.
+ *
+ * The alternative is worse rather than safer. Skip the close and the clock-in
+ * hits the conflict an already-open session raises, so the run writes no payroll
+ * at all on exactly the shared environment this exists for. The suites resolve it
+ * the same way (`clockOutIfClockedIn` in suite F, `closeStale` in the accelerated
+ * shift port), and the spec names it as the shared-environment hazard.
+ *
+ * The clock-out is narrowed as far as it can be: it stops only the people this
+ * run clocked in. What remains is a person another run clocks in during the load,
+ * whose session this one then closes — undetectable without a read endpoint.
+ */
 async function closeOpenSession(admin: DomainClients, personId: string): Promise<void> {
   try {
     await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
