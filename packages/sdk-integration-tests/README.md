@@ -76,6 +76,19 @@ How it decides:
   technician the job was assigned to, so workexec can refuse it. Such a job is
   reported as placed-but-not-started (`ASSIGNED`, not `WORK_IN_PROGRESS`); it
   still occupies the position, and it is not counted as a failure.
+- **Both clocks are written, and both are closed.** Every technician the run is
+  about to use is clocked in before the first job and out after the last
+  (pos-people work sessions — the payroll clock), and every job it manages to
+  start carries a labor session opened at the start and closed at the end of the
+  load (pos-workorder labor entries — the job clock). The backend stamps each
+  instant from its own clock and computes `hoursWorked`; the run declares no
+  figure, and the summary reports the total it got back. The closing runs in a
+  `finally`, because an entry left open has no hours at all and an open work
+  session is stamped shut by whatever closes it next — the following morning, on
+  a later run, which books the night as worked. A job whose start was refused
+  books no labor: there is no work to book it against. A labor session refused
+  with 401/403 (the same role-mode shape as the start) leaves that position
+  working with no hours, reported and not fatal.
 
 Build the workspace packages first with the root `npm run build`: it compiles
 every package in dependency order and writes the `dist` a run imports.
