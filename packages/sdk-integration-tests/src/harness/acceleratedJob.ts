@@ -37,7 +37,6 @@ import {
   type CreatedCustomer,
 } from './builders';
 import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
-import type { Mutex } from './mutex';
 import type { DomainClients } from './personas';
 import type { Claim } from './resourceLedger';
 import type { PositionKind } from '../runs/shopFloorPlan';
@@ -59,12 +58,6 @@ export interface JobDeps {
   claim: Claim;
   /** Authoritative virtual time, for the record a step leaves behind. */
   now: () => Promise<Date>;
-  /**
-   * Held across startTimer → stopTimers. The timer API is scoped to the calling
-   * user, not the workorder, so parallel jobs sharing one technician login would
-   * stop each other's timers. See Mutex.
-   */
-  timerLock: Mutex;
   /** Leaves this job's invoice unpaid, for AR aging (ITEST_ACCEL_UNPAID_RATIO). */
   leaveUnpaid?: boolean;
   /** Customer decision odds, mirroring the seeder's distribution. */
@@ -99,6 +92,15 @@ export class AcceleratedJob {
   private serviceIds: string[] = [];
   private productIds: string[] = [];
   private serviceItemMap = new Map<string, string>();
+  /** The labor entry currently open, if the mechanic is on this job right now. */
+  private laborEntryId: string | undefined;
+  /**
+   * True between `labor-open` and `labor-close` — the stretch of the lifecycle the
+   * mechanic is working the job, whether or not an entry is open at this instant.
+   * A suspended session sets `laborEntryId` to undefined and leaves this true, which
+   * is what tells the next `advance` to reopen.
+   */
+  private laborBracketOpen = false;
 
   readonly marks: JobMark[] = [];
   workorderId: string | undefined;
@@ -143,8 +145,12 @@ export class AcceleratedJob {
       { name: 'assign-technician', run: () => this.assignTechnician() },
       { name: 'assign-position', run: () => this.assignPosition() },
       { name: 'start', run: () => this.startWork() },
-      { name: 'labor', run: () => this.planLabor() },
+      // The labor session brackets the work itself — opened before the items are
+      // completed and closed after — so the hours the backend computes describe the
+      // job rather than the calendar. See openLaborSession.
+      { name: 'labor-open', run: () => this.openLaborSession() },
       { name: 'complete-items', run: () => this.completeItems() },
+      { name: 'labor-close', run: () => this.closeLaborSession() },
       { name: 'complete', run: () => this.completeWorkorder() },
       { name: 'invoice', run: () => this.generateInvoice() },
       { name: 'finalize', run: () => this.finalizeInvoice() },
@@ -178,6 +184,27 @@ export class AcceleratedJob {
     return Math.max(0, this.steps.length - this.cursor);
   }
 
+  /** True while an entry is open and the clock is running on this job. */
+  get laborOpen(): boolean {
+    return this.laborEntryId !== undefined;
+  }
+
+  /**
+   * Stops the clock on this job because the shop is closing.
+   *
+   * Not the same as finishing the work: the bracket stays open, so the next time the
+   * day runner advances this job it opens a fresh entry and carries on. Two spans
+   * either side of a closed night, rather than one span straight through it — which
+   * is the whole reason the night is not booked as worked.
+   */
+  async suspendLabor(): Promise<void> {
+    if (!this.laborOpen) {
+      return;
+    }
+    await this.stopLaborEntry();
+    await this.mark('labor-suspended');
+  }
+
   /**
    * Runs exactly one step.
    *
@@ -198,6 +225,16 @@ export class AcceleratedJob {
     }
 
     try {
+      // A session the shop's closing suspended is reopened before the work resumes, so
+      // the mechanic is back on the clock for the step that is about to run rather than
+      // from whenever the next `labor-open` would have been.
+      //
+      // Except when the step *is* the close. Reopening to immediately stop would write a
+      // second entry a few seconds long for a morning nobody worked the job, and the
+      // suspend at last night's close already recorded everything that was.
+      if (this.laborBracketOpen && !this.laborOpen && step.name !== 'labor-close') {
+        await this.openLaborSession();
+      }
       const inserted = await step.run();
       this.cursor += 1;
       if (inserted && inserted.length > 0) {
@@ -206,6 +243,16 @@ export class AcceleratedJob {
     } catch (error) {
       this.failureDetail = `${this.label} failed at step '${step.name}': ${await formatError(error)}`;
       this.result = 'failed';
+      // A failed job leaves the day runner's carried list at once, so nothing will ever
+      // suspend its labor clock again. Left running, that entry has no end at all and the
+      // mechanic reads as still on the job a virtual year later. The close is best-effort:
+      // the failure that got us here is the one worth reporting, not this one.
+      try {
+        await this.stopLaborEntry();
+      } catch (stopError) {
+        this.failureDetail += ` (its labor clock could not be stopped either: ${await formatError(stopError)})`;
+      }
+      this.laborBracketOpen = false;
       return this.result;
     }
 
@@ -391,62 +438,83 @@ export class AcceleratedJob {
   }
 
   /**
-   * Expands into one timed step per service item, now that promotion has said
-   * which items exist. Inserted as steps rather than run in a loop so the day
-   * runner can still stop this job at closing time between two services.
+   * The workorder service line this job's labor is booked against.
+   *
+   * The backend would pick one itself, but it picks with
+   * `findByWorkOrder_Id().findFirst()` over a query carrying no `ORDER BY`, so its
+   * choice is whatever the database happens to return. Choosing here instead keeps
+   * one job's labor on one line for the life of the job, which is what makes a
+   * suspended session resumable: `startLaborSession` refuses a second open session
+   * on the *same* line, so the line has to be the same one every morning.
    */
-  private async planLabor(): Promise<Step[]> {
-    const steps: Step[] = [];
-    for (const serviceId of this.serviceIds) {
-      const workorderItemId = this.serviceItemMap.get(serviceId);
-      if (!workorderItemId) {
-        // A service the workorder did not carry across is not a failure: the
-        // estimate's lines and the workorder's items are not guaranteed one to
-        // one, and the completion step works from the workorder's own detail.
-        continue;
-      }
-      steps.push({
-        name: `labor-${serviceId.slice(0, 8)}`,
-        run: () => this.recordLabor(workorderItemId, serviceId),
-      });
-    }
-    return steps;
+  private laborServiceId(): string {
+    const [serviceItemId] = this.serviceItemMap.values();
+    return requireField(serviceItemId, `a workorder service line for ${this.label}`);
   }
 
   /**
-   * One service item's labor, start to stop, under the timer lock.
+   * Opens the mechanic's labor session on this workorder.
    *
-   * No sleep between start and stop. The non-accelerated suite sleeps 1.5 real
-   * seconds so the entry carries a duration above zero; here the backend measures
-   * its own accelerated clock, so a single round trip is already minutes of
-   * virtual labor. Sleeping would burn the open window for nothing.
+   * This is the only record of time spent on the job, and the backend measures it:
+   * `startLaborSession` stamps `startTime` from its own accelerated clock and
+   * `stopLaborSession` stamps `endTime` and computes the difference. Nothing here
+   * declares an hours figure.
+   *
+   * It brackets the work rather than the day. A session left open across a closing
+   * time would book the night as worked — `WorkorderLaborEntry.calculateHours` is a
+   * plain subtraction with no notion of shop hours — so the day runner suspends it
+   * at close (see `suspendLabor`) and the next `advance` reopens it. The job's total
+   * is then the sum of its open-hours spans, which is elapsed working time with the
+   * closed windows already excluded.
    */
-  private async recordLabor(workorderItemId: string, laborCode: string): Promise<void> {
+  private async openLaborSession(): Promise<void> {
     const workorderId = this.requireWorkorder();
-    await this.deps.timerLock.runExclusive(async () => {
-      await this.stopTimersIfRunning();
-      await call('startTimer', () =>
-        this.deps.as.tech.workorder.workexecTimeTrackingAPIApi.startTimer({
-          workexecTimerStartRequest: { workorderId, workorderItemId, laborCode },
-        }),
-      );
-      const stopped = await call('stopTimers', () =>
-        this.deps.as.tech.workorder.workexecTimeTrackingAPIApi.stopTimers(),
-      );
-      const entries = readNumber(stopped, 'stoppedCount', 'count');
-      if (entries !== undefined && entries < 1) {
-        throw new Error(`stopTimers stopped ${entries} timers for workorder ${workorderId} — the labor was not recorded`);
-      }
-    });
-    await this.mark('labor-recorded');
+    const entry = await call('startLaborSession', () =>
+      this.deps.as.tech.workorder.workorderLaborAPIApi.startLaborSession({
+        workorderId,
+        serviceId: this.laborServiceId(),
+        startLaborRequest: {
+          technicianId: this.deps.claim.technicianId,
+          notes: `Accelerated run [${this.deps.ctx.runId}]`,
+        },
+      }),
+    );
+    this.laborEntryId = requireField(readString(entry, 'id', 'entryId'), 'labor entry id');
+    this.laborBracketOpen = true;
+    await this.mark('labor-open');
   }
 
-  /** A stale timer from an interrupted run is not an error; anything else is. */
-  private async stopTimersIfRunning(): Promise<void> {
+  /** Closes the session for good: the work is done, and the bracket is over. */
+  private async closeLaborSession(): Promise<void> {
+    await this.stopLaborEntry();
+    this.laborBracketOpen = false;
+    await this.mark('labor-closed');
+  }
+
+  /**
+   * Stops the open entry, tolerating the one refusal that means it is already stopped.
+   *
+   * A 404 is a session some other path already closed — a previous run's suspend, or
+   * a retry after a failure between the call and the bookkeeping. Anything else is a
+   * lost labor record and is raised.
+   */
+  private async stopLaborEntry(): Promise<void> {
+    const entryId = this.laborEntryId;
+    if (!entryId) {
+      return;
+    }
+    // Cleared first: a throw below must not leave an id the next call would retry
+    // against a workorder that has already moved on.
+    this.laborEntryId = undefined;
     try {
-      await this.deps.as.tech.workorder.workexecTimeTrackingAPIApi.stopTimers();
+      await call('stopLaborSession', () =>
+        this.deps.as.tech.workorder.workorderLaborAPIApi.stopLaborSession({
+          workorderId: this.requireWorkorder(),
+          entryId,
+        }),
+      );
     } catch (error) {
-      if (!isHttpStatus(error, 404) && !isHttpStatus(error, 409)) {
+      if (!isHttpStatus(error, 404)) {
         throw error;
       }
     }

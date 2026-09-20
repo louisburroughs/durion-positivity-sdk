@@ -43,6 +43,15 @@ class FakeJob implements RunnableJob {
   invoiceTotal: number | undefined;
   paid = false;
   advances = 0;
+  /**
+   * The real job reopens a suspended labor clock on its next advance; this mirrors that,
+   * because a fake that stayed suspended would let a runner that never resumes pass.
+   */
+  laborOpen = false;
+  /** One entry per suspend, holding the step count it happened at. */
+  readonly laborSuspendedAt: number[] = [];
+  /** Set by the harness to make a suspend throw, as a refused stopLaborSession does. */
+  suspendFails = false;
   readonly ranAt: Date[] = [];
   /** Whether the shift was open when each step ran — off-the-clock labor is a defect. */
   readonly ranOnTheClock: boolean[] = [];
@@ -64,7 +73,17 @@ class FakeJob implements RunnableJob {
     return this.outcome === 'in-progress' ? `step-${this.advances + 1}` : 'done';
   }
 
+  async suspendLabor(): Promise<void> {
+    if (this.suspendFails) {
+      throw new Error('stopLaborSession refused: HTTP 500');
+    }
+    this.laborSuspendedAt.push(this.advances);
+    this.laborOpen = false;
+  }
+
   async advance(): Promise<JobOutcome> {
+    // The clock goes back on before the work, suspended or not — see AcceleratedJob.advance.
+    this.laborOpen = true;
     this.ranAt.push(this.clock.peek());
     this.ranOnTheClock.push(this.onTheClock());
     this.clock.advance(typeof this.stepMinutes === 'function' ? this.stepMinutes() : this.stepMinutes);
@@ -142,6 +161,8 @@ const harness = (options: {
   stepMinutesFor?: () => number;
   /** Makes the shift port's clockOut throw, as it does when a stopWorkSession fails. */
   clockOutFails?: boolean;
+  /** Makes a job's suspendLabor throw, as a refused stopLaborSession does. */
+  suspendFails?: boolean;
   /**
    * Virtual minutes each clock read costs. Free reads hide a whole class of defect: a
    * loop that re-reads at entry can then never find the bound already past.
@@ -241,6 +262,7 @@ const harness = (options: {
         options.finish,
       );
       job.onTheClock = () => shiftOpen.value;
+      job.suspendFails = options.suspendFails ?? false;
       jobs.push(job);
       return job;
     },
@@ -674,6 +696,81 @@ describe('AcceleratedDayRunner — the shift must not outlast the shop', () => {
     const report = await runner.runDay(1);
 
     expect(report.failures.some((failure) => /could not be closed/.test(failure))).toBe(true);
+  });
+
+  it('stops every running labor clock at closing time', async () => {
+    // The backend subtracts a labor entry's two stamps and knows nothing about opening
+    // hours, so an entry left open at close books the night as worked. This is the guard
+    // against a multi-day job reporting 30 hours for two days of work.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].outcome).toBe('in-progress');
+    expect(jobs[0].laborOpen).toBe(false);
+    expect(jobs[0].laborSuspendedAt).toHaveLength(1);
+    expect(report.laborSuspended).toBe(1);
+  });
+
+  it('stops the labor clock again after the after-hours mobile stretch', async () => {
+    // Mobile work advances past the shift close, and advancing puts the clock back on.
+    // Left there it would run through the night into tomorrow's close — a mobile unit
+    // works any hour, not every hour. Two suspends in one day is the correct shape.
+    const { runner, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+      jobKind: 'MOBILE_UNIT',
+      rosters: [
+        roster({
+          freePositions: [{ kind: 'MOBILE_UNIT', id: 'mu-1', name: 'MU-01' }],
+          idleTechnicianIds: ['tech-a'],
+        }),
+      ],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(jobs[0].laborOpen).toBe(false);
+    expect(report.laborSuspended).toBeGreaterThanOrEqual(2);
+  });
+
+  it('reports a labor clock that would not stop, and still closes payroll', async () => {
+    // A throw here would skip the payroll close that follows it, turning one lost labor
+    // record into a whole day off the books.
+    const { runner, jobs, calls } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      jobSteps: 40,
+      jobsToday: 1,
+      concurrency: 1,
+      suspendFails: true,
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(jobs[0].laborOpen).toBe(true);
+    expect(report.laborSuspended).toBe(0);
+    expect(report.failures.some((failure) => /could not stop its labor clock/.test(failure))).toBe(true);
+    expect(calls).toContain('clockOut');
+    expect(calls).toContain('approveTime');
+  });
+
+  it('has no labor clock to stop when nothing was worked', async () => {
+    const { runner } = harness({ startIso: '2025-11-03T08:00:00Z', stepMinutes: 30, jobLimit: 0 });
+
+    const report = await runner.runDay(1);
+
+    expect(report.laborSuspended).toBe(0);
   });
 
   it('refuses the grace stretch an unpredicted first tick', async () => {

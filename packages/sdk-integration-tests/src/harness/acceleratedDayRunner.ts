@@ -31,6 +31,17 @@ export interface RunnableJob {
   readonly invoiceId: string | undefined;
   readonly invoiceTotal: number | undefined;
   readonly paid: boolean;
+  /** True while the mechanic's labor clock is running on this job. */
+  readonly laborOpen: boolean;
+  /**
+   * Stops that clock because the shop is closing, leaving the job free to resume.
+   *
+   * The backend computes a labor entry's hours by subtracting its two stamps and
+   * knows nothing about opening hours, so a session left open overnight books the
+   * night as worked. Suspending at close and resuming on the next advance is what
+   * keeps a multi-day job's total to the hours the shop was actually open.
+   */
+  suspendLabor(): Promise<void>;
   advance(): Promise<JobOutcome>;
 }
 
@@ -103,6 +114,8 @@ export interface DayReport {
   cycleCount: boolean;
   restock: boolean;
   clockedIn: number;
+  /** Labor clocks stopped at closing time, to resume tomorrow. */
+  laborSuspended: number;
   failures: string[];
   /** Ids created, for the journal and the by-runId retrieval afterwards. */
   workorderIds: string[];
@@ -129,6 +142,7 @@ const EMPTY_REPORT = (dayNumber: number, virtualDate: string): DayReport => ({
   cycleCount: false,
   restock: false,
   clockedIn: 0,
+  laborSuspended: 0,
   failures: [],
   workorderIds: [],
   invoiceIds: [],
@@ -348,6 +362,11 @@ export class AcceleratedDayRunner {
       });
     }
 
+    // The after-hours stretch runs past the shift close, and a job it advances reopens
+    // its labor clock to do so. Left running, that entry would carry straight through
+    // the night into tomorrow's close and book every hour of it. A mobile unit works any
+    // hour, but it does not work every hour.
+    report.laborSuspended += await this.suspendLabor(report);
     report.carriedOut = this.carried.length;
     return report;
   }
@@ -378,6 +397,9 @@ export class AcceleratedDayRunner {
     } else {
       await this.advanceCarriedOnly(report, schedule.dayEnd);
     }
+    // No shift opened here, so no `closeShift` ran — but mobile work still advanced, and
+    // whatever it put back on the clock has to come off before the day ends.
+    report.laborSuspended += await this.suspendLabor(report);
     report.carriedOut = this.carried.length;
     return report;
   }
@@ -392,6 +414,12 @@ export class AcceleratedDayRunner {
    */
   private async closeShift(report: DayReport, schedule: DaySchedule): Promise<Date> {
     const closedAt = clampToGrace(await this.deps.now(), schedule);
+    // LABOR-OUT, before payroll. Every carried job stops its labor clock for the night;
+    // the entry is closed here and a fresh one opens when the job next advances, so no
+    // span ever crosses a closed window. In parallel, and for the same reason the payroll
+    // fan-out is: the backend stamps each `endTime` as its own call runs, so a sequential
+    // close would date the last job's stamp N calls after the first.
+    report.laborSuspended += await this.suspendLabor(report);
     // A clock-out that leaves anyone on the clock is a failed day, loudly. Left as a
     // warning, the open session had no `endAtUtc`, the audit skipped it, and the day
     // reported clean — a run that lost a payroll entry and passed.
@@ -402,6 +430,29 @@ export class AcceleratedDayRunner {
     }
     await this.deps.shift.approveTime(closedAt);
     return closedAt;
+  }
+
+  /**
+   * Stops the labor clock on every job still holding one, and says how many.
+   *
+   * Failures are collected rather than thrown. A job whose entry would not close is a
+   * labor record that now runs to whenever some later call stops it — worth reporting
+   * loudly, but not worth abandoning the payroll close that still has to happen after
+   * it, which a throw from here would skip.
+   */
+  private async suspendLabor(report: DayReport): Promise<number> {
+    const running = this.carried.filter((active) => active.job.laborOpen);
+    if (running.length === 0) {
+      return 0;
+    }
+    const outcomes = await Promise.allSettled(running.map((active) => active.job.suspendLabor()));
+    for (const [index, outcome] of outcomes.entries()) {
+      if (outcome.status === 'rejected') {
+        const reason = outcome.reason instanceof Error ? outcome.reason.message : String(outcome.reason);
+        report.failures.push(`${running[index].job.label} could not stop its labor clock at closing: ${reason}`);
+      }
+    }
+    return outcomes.filter((outcome) => outcome.status === 'fulfilled').length;
   }
 
   /**
