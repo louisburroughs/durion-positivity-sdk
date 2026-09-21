@@ -62,12 +62,41 @@ export interface MaintenancePort {
   restock(at: Date): Promise<void>;
 }
 
+/**
+ * A refusal that arrived part-way through a batch, carrying what was already done.
+ *
+ * `book` and `convertDue` work an item at a time and each successful one is on the
+ * backend before the next is attempted. Raising a bare error loses that count, and
+ * the day, the journal and the run's totals then undercount records that exist —
+ * the run would report 0 appointments on a day it booked two.
+ *
+ * So a port that got some of the way through says so, and the runner records the
+ * failure *and* the progress.
+ */
+export class PartialProgressError extends Error {
+  constructor(
+    message: string,
+    /** How many items the port completed before the refusal. */
+    readonly completed: number,
+    readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = 'PartialProgressError';
+  }
+}
+
 export interface AppointmentPort {
-  /** Books appointments for future open windows; returns how many were booked. */
+  /**
+   * Books appointments for future open windows; returns how many were booked.
+   *
+   * Throws {@link PartialProgressError} when some were booked before the refusal,
+   * so the count is not lost with the failure.
+   */
   book(at: Date, count: number): Promise<number>;
   /**
    * Converts every appointment whose start the clock has now reached into an
-   * estimate; returns how many were converted.
+   * estimate; returns how many were converted. Throws
+   * {@link PartialProgressError} when some were converted before the refusal.
    */
   convertDue(at: Date): Promise<number>;
 }
@@ -457,8 +486,10 @@ export class AcceleratedDayRunner {
   /**
    * Runs one of the day's optional phases, recording a failure instead of ending the run.
    *
-   * Returns 0 on failure, which is the truth about how many were booked or converted,
-   * and keeps the report's arithmetic honest.
+   * Returns what the phase actually achieved: the count it returned, or — when it
+   * raised a {@link PartialProgressError} — the count it got to before failing. Those
+   * records are on the backend whether or not the rest of the batch succeeded, and a
+   * report that called them 0 would undercount the year against its own data.
    *
    * A `ClockConvergedError` is re-thrown: the clock reaching wall time is not a failed
    * phase but the end of the year, and `AcceleratedRun` reads it as `converged`.
@@ -474,8 +505,12 @@ export class AcceleratedDayRunner {
       if (error instanceof ClockConvergedError) {
         throw error;
       }
-      report.failures.push(`${what} failed: ${error instanceof Error ? error.message : String(error)}`);
-      return 0;
+      const done = error instanceof PartialProgressError ? error.completed : 0;
+      const reason = error instanceof Error ? error.message : String(error);
+      report.failures.push(
+        done > 0 ? `${what} failed after ${done} succeeded: ${reason}` : `${what} failed: ${reason}`,
+      );
+      return done;
     }
   }
 

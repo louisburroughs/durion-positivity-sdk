@@ -28,11 +28,12 @@ import { readString, requireField, type BuilderContext } from './builders';
 import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 import type { ShopCalendar } from './shopCalendar';
-import type {
-  AppointmentPort,
-  DiscoveryPort,
-  MaintenancePort,
-  ShiftPort,
+import {
+  PartialProgressError,
+  type AppointmentPort,
+  type DiscoveryPort,
+  type MaintenancePort,
+  type ShiftPort,
 } from './acceleratedDayRunner';
 import { buildRoster, type StaffingView } from '../runs/shopFloorRoster';
 import type { SiteRoster } from '../runs/shopFloorPlan';
@@ -469,8 +470,43 @@ export function createAppointmentPort(options: {
     pending: () => pending.filter((appointment) => !appointment.converted).length,
 
     async book(at: Date, count: number): Promise<number> {
-      let booked = 0;
-      for (let index = 0; index < count; index += 1) {
+      // A counter the loop shares, not a return value: every appointment already
+      // booked is on the backend, and a refusal on the third of five must still
+      // report two. A local in this scope would read 0 on the throw, because the
+      // loop's own total never comes back.
+      const progress = { done: 0 };
+      try {
+        return await bookEach(at, count, progress);
+      } catch (error) {
+        throw progress.done > 0
+          ? new PartialProgressError(
+              `booking stopped after ${progress.done} of ${count}: ${error instanceof Error ? error.message : String(error)}`,
+              progress.done,
+              error,
+            )
+          : error;
+      }
+    },
+
+    async convertDue(at: Date): Promise<number> {
+      const progress = { done: 0 };
+      try {
+        return await convertEach(at, progress);
+      } catch (error) {
+        throw progress.done > 0
+          ? new PartialProgressError(
+              `conversion stopped after ${progress.done}: ${error instanceof Error ? error.message : String(error)}`,
+              progress.done,
+              error,
+            )
+          : error;
+      }
+    },
+  };
+
+  /** The booking loop itself, so the wrapper above owns only the partial-count report. */
+  async function bookEach(at: Date, count: number, progress: { done: number }): Promise<number> {
+    for (let index = 0; index < count; index += 1) {
         const customer = await options.customerFor();
         const leadDays = options.ctx.random.int(options.leadDaysMin, options.leadDaysMax);
 
@@ -505,7 +541,7 @@ export function createAppointmentPort(options: {
               vehicleId: customer.vehicleId,
               converted: false,
             });
-            booked += 1;
+            progress.done += 1;
             break;
           } catch (error) {
             const detail = error instanceof Error ? error.message : await formatError(error);
@@ -514,28 +550,27 @@ export function createAppointmentPort(options: {
             }
           }
         }
-      }
-      return booked;
-    },
+    }
+    return progress.done;
+  }
 
-    /**
-     * Every appointment whose start the clock has passed becomes an estimate.
+  /**
+   * Every appointment whose start the clock has passed becomes an estimate.
      *
-     * The bridge is idempotent on the **appointment id**:
-     * `EstimateServiceImpl.createEstimateFromAppointment` looks up
-     * `estimateRepository.findByAppointmentId` first and returns the existing
-     * estimate with `created: false` when there is one. `idempotencyKey` is
-     * logged and nothing else, so a fresh UUID per attempt is safe — a retried
-     * conversion cannot produce a second estimate for one arrival.
-     *
-     * That matters now that a refused conversion no longer ends the run: the
-     * appointment stays pending and is tried again on the next virtual day, and
-     * a failure *after* the estimate was written is exactly the case the lookup
-     * covers.
-     */
-    async convertDue(at: Date): Promise<number> {
-      let converted = 0;
-      for (const appointment of pending) {
+   * The bridge is idempotent on the **appointment id**:
+   * `EstimateServiceImpl.createEstimateFromAppointment` looks up
+   * `estimateRepository.findByAppointmentId` first and returns the existing
+   * estimate with `created: false` when there is one. `idempotencyKey` is
+   * logged and nothing else, so a fresh UUID per attempt is safe — a retried
+   * conversion cannot produce a second estimate for one arrival.
+   *
+   * That matters now that a refused conversion no longer ends the run: the
+   * appointment stays pending and is tried again on the next virtual day, and
+   * a failure *after* the estimate was written is exactly the case the lookup
+   * covers.
+   */
+  async function convertEach(at: Date, progress: { done: number }): Promise<number> {
+    for (const appointment of pending) {
         if (appointment.converted || appointment.startAt.getTime() > at.getTime()) {
           continue;
         }
@@ -558,10 +593,9 @@ export function createAppointmentPort(options: {
             `the appointment bridge returned no estimate for appointment ${appointment.appointmentId}`,
           );
         }
-        appointment.converted = true;
-        converted += 1;
-      }
-      return converted;
-    },
-  };
+      appointment.converted = true;
+      progress.done += 1;
+    }
+    return progress.done;
+  }
 }

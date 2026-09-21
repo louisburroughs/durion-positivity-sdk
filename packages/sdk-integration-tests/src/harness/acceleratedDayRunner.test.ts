@@ -2,6 +2,7 @@ import type { SiteRoster } from '../runs/shopFloorPlan';
 import type { JobOutcome } from './acceleratedJob';
 import {
   AcceleratedDayRunner,
+  PartialProgressError,
   type DayRunnerDeps,
   type RunnableJob,
 } from './acceleratedDayRunner';
@@ -1338,6 +1339,22 @@ describe('AcceleratedDayRunner — which phase may end a year', () => {
     // The phase after it is not skipped by the one before it failing.
     expect(calls).toContain('bookAppointments');
     expect(report.appointmentsBooked).toBe(2);
+  });
+
+  it('keeps what a half-finished batch did, rather than reporting none of it', async () => {
+    // book pushes each appointment before attempting the next, so two of five are
+    // on the backend when the third is refused. Reporting 0 would undercount the
+    // year against its own data.
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      bookFails: new PartialProgressError('booking stopped after 2 of 5: 409', 2),
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.appointmentsBooked).toBe(2);
+    expect(report.failures.some((line) => line.includes('failed after 2 succeeded'))).toBe(true);
   });
 
   it('still ends the day when the shift cannot be opened, because that is not a day', async () => {
