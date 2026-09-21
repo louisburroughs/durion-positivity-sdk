@@ -192,9 +192,37 @@ jobs:
           #
           # 100 x 10s = ~17 minutes, inside the job's 20.
           STATUS="Pending"
+          # Consecutive unexpected errors, reset by any successful poll. One
+          # throttle should not abort a deploy that is running fine; three in a
+          # row is a problem worth failing on rather than waiting out.
+          GLITCHES=0
           for _ in $(seq 1 100); do
-            # A just-sent command can answer InvocationDoesNotExist for a moment.
-            STATUS="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text 2>/dev/null || echo Pending)"
+            set +e
+            POLLED="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text 2>&1)"
+            RC=$?
+            set -e
+
+            if [[ "${RC}" -eq 0 ]]; then
+              STATUS="${POLLED}"
+              GLITCHES=0
+            elif grep -q 'InvocationDoesNotExist' <<<"${POLLED}"; then
+              # The one expected race: a command that has been accepted but has
+              # not reached the instance yet.
+              STATUS="Pending"
+              GLITCHES=0
+            else
+              # Anything else — throttling, expired credentials, the network —
+              # is not the command's status and must not be read as one. Waiting
+              # it out would report a seventeen-minute timeout for a failure that
+              # happened in the first ten seconds.
+              GLITCHES=$((GLITCHES + 1))
+              echo "polling the deploy command failed (${GLITCHES}/3): ${POLLED}"
+              if [[ "${GLITCHES}" -ge 3 ]]; then
+                echo "::error::Could not read the status of ${COMMAND_ID}: ${POLLED}"
+                exit 1
+              fi
+            fi
+
             case "${STATUS}" in
               Success|Failed|Cancelled|TimedOut) break ;;
             esac
