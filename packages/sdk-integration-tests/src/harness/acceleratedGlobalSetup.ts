@@ -245,7 +245,28 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
  * reported and skipped rather than failing setup: a location-scoped grant that
  * does not cover every site is a configuration the run can still work around,
  * since the suites gate themselves regardless.
+ *
+ * The timezone goes with the hours, and has to. pos-shop-manager evaluates a
+ * booking in **facility-local** time (DECISION-015): it reads the location
+ * replica's timezone, converts the requested instant into it, and compares the
+ * result against these `openTime`/`closeTime` strings. Publishing 08:00-18:00
+ * without saying which 08:00 leaves them meaning whatever zone the site already
+ * carried — on alpha, an Eastern one, which made a 09:00 UTC booking land at
+ * 04:00 local and come back as OUTSIDE_OPERATING_HOURS with a time the caller
+ * never sent. ShopCalendar does its arithmetic in UTC because the accelerated
+ * clock contract fixes `pos.time.accelerated.zone=UTC`, so UTC is what the sites
+ * this run drives are told to keep, and the two sides then agree.
  */
+/**
+ * The zone the published hours are written in, and the zone the sites are set to.
+ *
+ * Not configurable: `ShopCalendar` is pure UTC arithmetic by deliberate choice —
+ * a local zone would introduce DST transitions the accelerated clock does not
+ * have — so anything else here would put the gate and the backend's own refusals
+ * back out of step.
+ */
+const CALENDAR_ZONE = 'UTC';
+
 async function publishCalendar(
   auth: SeederAuth,
   accel: AcceleratedConfig,
@@ -296,7 +317,7 @@ async function publishCalendar(
     try {
       await client.locationApi.patchLocation({
         locationId: location.id,
-        locationPatchRequest: { operatingHours, holidayClosures },
+        locationPatchRequest: { operatingHours, holidayClosures, timezone: CALENDAR_ZONE },
       });
       published.push(location.id);
     } catch (error) {
