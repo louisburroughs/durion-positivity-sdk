@@ -384,6 +384,22 @@ accelerated entry point adds:
   differs (that is a different timeline), picks up at the current virtual day,
   and reconciles open claims from the dispatch board rather than from the journal
   alone.
+- **Staffing assignments are back-dated to the run's floor.** pos-shop-manager
+  decides a mechanic is present by asking whether an ACTIVE staffing assignment
+  covers the booked date, and one written in wall time covers nothing in a
+  backend anchored a year back — a fully staffed shop answers
+  `MECHANIC_UNAVAILABLE` to every appointment. Setup moves each ACTIVE
+  assignment's `effectiveFrom` to a day below `virtualStart` — or to the day
+  after the latest ACTIVE sibling of the same `{person, location, role}` that
+  closes before it, since the backend refuses an update whose window overlaps
+  one (`AssignmentOverlapSearch`, ACTIVE rows only, so an ENDED row is listed
+  but harmless). `effectiveTo`, non-ACTIVE rows, anything already effective and
+  anything a sibling already covers for the whole stretch are left alone, so a
+  re-run writes nothing. A row the backend refuses is reported and the pass
+  continues; only a pass where *nothing* moved fails setup, because then no
+  mechanic is present anywhere and every booking would be refused. This is the staffing twin of the role back-dating
+  above; the platform declined to special-case the dates and was right to
+  (durion-positivity-backend#2140).
 - **A journal that recorded nothing is not resumed, and its runId is dropped.**
   An attempt that died before its first virtual day still created the suites'
   fixtures — a bay, a bin, vehicles — all named or seeded from its runId and none

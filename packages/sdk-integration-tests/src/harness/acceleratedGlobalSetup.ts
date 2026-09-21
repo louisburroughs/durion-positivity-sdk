@@ -8,12 +8,17 @@ import {
   SecurityBootstrap,
   SeederAuth,
   SeederConfig,
+  type ReferenceCache,
 } from '../../../sdk-seeder/src/lib';
 import { AcceleratedConfig, assessFeasibility, type LatencyMeasurement } from './acceleratedConfig';
 import { AcceleratedJournal } from './acceleratedJournal';
 import { AcceleratedLock } from './acceleratedLock';
 import { saveAcceleratedContext } from './acceleratedContext';
 import { AcceleratedRoleWindows, createRoleWindowPort } from './acceleratedRoleWindows';
+import {
+  AcceleratedStaffingWindows,
+  createStaffingWindowPort,
+} from './acceleratedStaffingWindows';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
@@ -129,6 +134,30 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   }
 
   const refs = await stage('reference bootstrap', () => new BootstrapOrchestrator(adminConfig, auth).run());
+
+  // After the bootstrap, because these are the assignments it just made or
+  // found, and before any booking: pos-shop-manager decides a mechanic is
+  // present by asking whether an ACTIVE staffing assignment covers the booked
+  // date, and one written in wall time covers nothing in this backend's virtual
+  // year (durion-positivity-backend#2140).
+  const { createPeopleClient } = await import('@durion-sdk/people');
+  const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
+    new AcceleratedStaffingWindows(
+      createStaffingWindowPort(createPeopleClient(auth.buildSdkConfig('people'))),
+    ).run(everyEmployee(refs), clock.virtualStart),
+  );
+  for (const line of backdated) {
+    console.log(`[accel] staffing window back-dated: ${line}`);
+  }
+  for (const line of unreadable) {
+    console.log(`[accel] staffing window unread: ${line}`);
+  }
+  for (const line of blocked) {
+    console.log(`[accel] staffing window not moved: ${line}`);
+  }
+  for (const line of failed) {
+    console.log(`[accel] staffing window refused: ${line}`);
+  }
 
   if (personaBootstrap.applies) {
     const { links, limitations } = await stage('persona person-links', () =>
@@ -382,6 +411,27 @@ async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`[accel] global setup failed during ${name}: ${message}${await describeResponse(error)}`);
   }
+}
+
+/**
+ * Every seeded employee, once each.
+ *
+ * All of them rather than the technicians alone: the presence check is about
+ * technicians, but a service writer or a parts clerk whose assignment starts in
+ * the virtual future is the same latent refusal on whatever reads staffing next,
+ * and the pass costs one listing per person.
+ */
+function everyEmployee(refs: ReferenceCache): string[] {
+  return [
+    ...new Set(
+      [
+        ...refs.employees.technicians,
+        ...refs.employees.serviceWriters,
+        refs.employees.manager,
+        refs.employees.partsClerk,
+      ].filter((id): id is string => typeof id === 'string' && id.length > 0),
+    ),
+  ];
 }
 
 async function describeResponse(error: unknown): Promise<string> {
