@@ -5,7 +5,9 @@ name: Build, Smoke Test and Deploy to Alpha
 #
 # There is no SDK container. The accelerated run is a git checkout on the alpha
 # EC2 instance, built and run natively — `~/durion-positivity-sdk`, `npm run
-# test:accelerated`, `.env.itest` beside it. The workflow this replaced built a
+# test:accelerated`, `.env.itest` beside it. The backend's Deploy Alpha
+# (Accelerated Clock) workflow starts that run from this checkout once its stack
+# verifies, so what this workflow keeps current is what that dispatch runs. The workflow this replaced built a
 # seeder image and pushed it to `durion/sdk-seeder`, an ECR repository that does
 # not exist, for a container nothing pulls; it failed on all 24 of its pushes to
 # main and published nothing in its life.
@@ -229,5 +231,8 @@ jobs:
       - name: Say what the host is now running
         if: always()
         run: |
-          echo "The accelerated run is started by hand on the host:"
-          echo "  cd ${CHECKOUT_DIR} && npm run test:accelerated | tee accelerated-\$(date +%s).logs"
+          echo "The accelerated run is started from this checkout by the backend's"
+          echo "'Deploy Alpha (Accelerated Clock)' workflow (its sdk_run input), the moment"
+          echo "the accelerated stack verifies. It logs to ${CHECKOUT_DIR}/accelerated-latest.log."
+          echo "By hand, on the host (sdk_run=none):"
+          echo "  cd ${CHECKOUT_DIR} && ITEST_BASE_URL=http://localhost:8080 ITEST_SECURITY_SERVICE_URL=http://localhost:8086 npm run test:accelerated"
