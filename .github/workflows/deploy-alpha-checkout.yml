@@ -1,0 +1,207 @@
+name: Build, Smoke Test and Deploy to Alpha
+
+# Keeps the alpha host's checkout current, because that checkout *is* the
+# deployment.
+#
+# There is no SDK container. The accelerated run is a git checkout on the alpha
+# EC2 instance, built and run natively — `~/durion-positivity-sdk`, `npm run
+# test:accelerated`, `.env.itest` beside it. The workflow this replaced built a
+# seeder image and pushed it to `durion/sdk-seeder`, an ECR repository that does
+# not exist, for a container nothing pulls; it failed on all 24 of its pushes to
+# main and published nothing in its life.
+#
+# So the deployment step is a pull and a build on the host, over SSM. Nothing is
+# packaged, because nothing consumes a package.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  # One deploy at a time per ref: two overlapping `git pull`s on one checkout is
+  # how a host ends up half-built.
+  group: alpha-checkout-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  # Where the alpha host keeps its checkout. The run reads `.env.itest` from
+  # beside it, which is the host's and never this repository's.
+  CHECKOUT_DIR: /home/ec2-user/durion-positivity-sdk
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 1: the seeder still starts and still refuses to run unconfigured.
+  #
+  # Deliberately narrow. Lint, typecheck, build and the unit tests are
+  # pr-checks.yml's job and are not repeated here; what this adds is the one
+  # guarantee the deleted container smoke test was actually protecting — that
+  # the configured entry point reaches SeederConfig, and that a seeder with no
+  # credentials fails immediately instead of starting work against whatever it
+  # can reach.
+  # ─────────────────────────────────────────────────────────────────────────
+  smoke-test:
+    name: Build and Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build every package in dependency order
+        run: npm run build
+
+      - name: The seeder rejects missing configuration rather than starting
+        env:
+          # Explicitly emptied: a runner that happened to carry either of these
+          # would turn this assertion into a live seeding attempt.
+          SEEDER_USERNAME: ""
+          SEEDER_PASSWORD: ""
+        run: |
+          set -euo pipefail
+          set +e
+          OUTPUT="$(npm run seed -w packages/sdk-seeder 2>&1)"
+          EXIT_CODE=$?
+          set -e
+
+          echo "${OUTPUT}"
+
+          if [[ "${EXIT_CODE}" -eq 0 ]]; then
+            echo "::error::The seeder exited 0 with no credentials configured"
+            exit 1
+          fi
+          if ! grep -q "Required environment variable SEEDER_USERNAME is not set" <<<"${OUTPUT}"; then
+            echo "::error::Expected the missing-configuration message from SeederConfig"
+            exit 1
+          fi
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Job 2: bring the alpha checkout to this commit. Never runs for pull
+  # requests — a branch that is not on main is not what alpha should be running.
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Alpha
+    needs: smoke-test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      id-token: write # Required for OIDC authentication
+      contents: read
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve the alpha instance
+        id: host
+        env:
+          CONFIGURED_ID: ${{ vars.ALPHA_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          # An explicit id wins. Without one, fall back to the single online
+          # managed instance — true of this account today, and an ambiguous
+          # answer is refused rather than guessed at, because the wrong host
+          # would be updated silently.
+          if [[ -n "${CONFIGURED_ID}" ]]; then
+            INSTANCE_ID="${CONFIGURED_ID}"
+          else
+            mapfile -t ONLINE < <(aws ssm describe-instance-information \
+              --filters "Key=PingStatus,Values=Online" \
+              --query 'InstanceInformationList[].InstanceId' --output text | tr '\t' '\n' | grep -v '^$')
+            if [[ "${#ONLINE[@]}" -ne 1 ]]; then
+              echo "::error::Expected exactly one online SSM instance, found ${#ONLINE[@]}: ${ONLINE[*]:-none}. Set the ALPHA_INSTANCE_ID repository variable."
+              exit 1
+            fi
+            INSTANCE_ID="${ONLINE[0]}"
+          fi
+          echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
+          echo "Deploying to ${INSTANCE_ID}"
+
+      - name: Pull and build the checkout
+        id: deploy
+        env:
+          INSTANCE_ID: ${{ steps.host.outputs.instance_id }}
+        run: |
+          set -euo pipefail
+
+          # --ff-only: a host whose checkout has diverged is a host someone has
+          # been working on by hand, and merging over that is not this
+          # workflow's call. It fails and says so.
+          #
+          # `npm ci` rather than `install`, so the host resolves exactly the
+          # lockfile this commit carries.
+          read -r -d '' SCRIPT <<'REMOTE' || true
+          set -euo pipefail
+          cd /home/ec2-user/durion-positivity-sdk
+          git fetch origin main
+          git checkout main
+          git pull --ff-only
+          npm ci
+          npm run build
+          git log -1 --format='deployed %h %s'
+          REMOTE
+
+          # --parameters as JSON, not shorthand: the script is multi-line and
+          # carries quotes, and jq is what makes that survive the trip intact.
+          COMMAND_ID="$(aws ssm send-command \
+            --instance-ids "${INSTANCE_ID}" \
+            --document-name AWS-RunShellScript \
+            --comment "deploy ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}" \
+            --parameters "$(jq -n --arg s "${SCRIPT}" '{commands: [$s]}')" \
+            --query 'Command.CommandId' --output text)"
+          echo "command: ${COMMAND_ID}"
+
+          # The waiter polls to completion; a failed command leaves it non-zero,
+          # and the invocation below is read either way so the log carries the
+          # host's own output rather than just a status.
+          set +e
+          aws ssm wait command-executed --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}"
+          set -e
+
+          STATUS="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text)"
+          STDOUT="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'StandardOutputContent' --output text)"
+          STDERR="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'StandardErrorContent' --output text)"
+
+          echo "--- host stdout ---"
+          echo "${STDOUT}"
+          if [[ -n "${STDERR}" ]]; then
+            echo "--- host stderr ---"
+            echo "${STDERR}"
+          fi
+
+          {
+            echo "## Alpha checkout"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Instance | \`${INSTANCE_ID}\` |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Status | \`${STATUS}\` |"
+            echo "| Command | \`${COMMAND_ID}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${STATUS}" != "Success" ]]; then
+            echo "::error::The deploy command finished ${STATUS} on ${INSTANCE_ID}"
+            exit 1
+          fi
+
+      - name: Say what the host is now running
+        if: always()
+        run: |
+          echo "The accelerated run is started by hand on the host:"
+          echo "  cd ${CHECKOUT_DIR} && npm run test:accelerated | tee accelerated-\$(date +%s).logs"

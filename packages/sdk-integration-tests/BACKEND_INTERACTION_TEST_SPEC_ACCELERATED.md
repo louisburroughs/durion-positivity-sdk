@@ -1115,7 +1115,7 @@ Implementation notes (deviations from the draft, chosen during Task 2):
 - Jest does not apply `moduleNameMapper` to `globalSetup`, so its require
   chain resolves `@durion-sdk/*` through real `node_modules` dists. Local
   prerequisite after install: the root `npm run build`, which compiles the
-  workspace in dependency order (the same build the seeder Dockerfile runs).
+  workspace in dependency order (the same build the alpha host runs).
 - `suites/00-harness.itest.ts` is a permanent smoke suite: it validates the
   context → login plumbing against a real backend and guarantees at least
   one itest exists, so `npm run test:integration` always executes
