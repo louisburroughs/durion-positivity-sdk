@@ -73,36 +73,116 @@ export function floorFor(virtualStart: Date, days = FLOOR_MARGIN_DAYS): Date {
   return new Date(Date.UTC(floor.getUTCFullYear(), floor.getUTCMonth(), floor.getUTCDate()));
 }
 
+const DAY_MS = 86_400_000;
+
+/** `{person, location, role}` — the triple the backend's overlap guard keys on. */
+const keyOf = (assignment: StaffingWindow): string =>
+  `${assignment.personId}|${assignment.locationId}|${assignment.role}`;
+
+/** What the planner decided, including the rows it refused to touch and why. */
+export interface StaffingPlan {
+  plans: StaffingBackdate[];
+  /** One line per assignment that needs moving but cannot be moved safely. */
+  blocked: string[];
+}
+
 /**
  * The assignments that have to move for this person to be present through the
  * virtual year. Pure: no clock, no I/O.
  *
- * Three are left alone, each for its own reason:
+ * Four are left alone, each for its own reason:
  *
  *   - anything not ACTIVE, because the presence check only counts ACTIVE rows
  *     and reviving a suspended assignment would be inventing staff;
  *   - one already effective at the floor, which is what makes a re-run a no-op;
  *   - one that *ended* before the floor, because moving its start would leave a
  *     window that closed before the run began — still no coverage, and a lie
- *     about when that person worked.
+ *     about when that person worked;
+ *   - one whose person is already covered at the floor by another ACTIVE
+ *     assignment of the same role at the same location: presence is satisfied,
+ *     and moving this one could only collide with that one.
+ *
+ * **The start is clamped, not simply floored.** `StaffingAssignmentServiceImpl`
+ * refuses an update whose window overlaps another assignment of the same
+ * `{person, location, role}` with `409 CONFLICT`, and `AssignmentOverlapSearch`
+ * keys that check on `status = ACTIVE` — an ENDED row is listed by
+ * `listStaffingAssignments` but cannot collide. So a row is moved back to the
+ * floor or to the day after the latest ACTIVE sibling that closes before it,
+ * whichever is later. A sibling that is open-ended, or that runs past this row's
+ * own start, sits across the whole window: nothing can be written without
+ * overlapping it, so the row is reported rather than attempted.
  */
 export function planStaffingBackdates(
   assignments: readonly StaffingWindow[],
   virtualStart: Date,
-): StaffingBackdate[] {
+): StaffingPlan {
   const floor = floorFor(virtualStart);
   const plans: StaffingBackdate[] = [];
+  const blocked: string[] = [];
 
-  for (const assignment of assignments) {
-    if (assignment.status !== 'ACTIVE') {
-      continue;
-    }
+  const actives = assignments.filter((assignment) => assignment.status === 'ACTIVE');
+
+  for (const assignment of actives) {
     if (assignment.effectiveFrom.getTime() <= floor.getTime()) {
       continue;
     }
     if (assignment.effectiveTo !== null && assignment.effectiveTo.getTime() <= floor.getTime()) {
       continue;
     }
+
+    const siblings = actives.filter(
+      (other) => other !== assignment && keyOf(other) === keyOf(assignment),
+    );
+
+    // A sibling already covers the whole stretch this row would be moved into —
+    // from the floor through to the day this row takes over. The person is
+    // present for all of it, so there is nothing to gain and an overlap to lose.
+    //
+    // Covering the floor alone is not enough: a sibling that lapses halfway
+    // through the virtual year leaves the rest of it unstaffed, and this row is
+    // what closes that gap.
+    const covered = siblings.some(
+      (other) =>
+        other.effectiveFrom.getTime() <= floor.getTime() &&
+        (other.effectiveTo === null ||
+          other.effectiveTo.getTime() >= assignment.effectiveFrom.getTime() - DAY_MS),
+    );
+    if (covered) {
+      continue;
+    }
+
+    // A sibling with no end, or one still running when this row starts, occupies
+    // every day this row could be moved into.
+    //
+    // Two ACTIVE rows of one `{person, location, role}` that overlap are a state
+    // the backend's own guard should have refused, so this is a report about the
+    // data rather than a case the run can resolve — and both rows say so, since
+    // neither can move while the other stands.
+    const across = siblings.filter(
+      (other) =>
+        other.effectiveTo === null ||
+        other.effectiveTo.getTime() >= assignment.effectiveFrom.getTime(),
+    );
+    if (across.length > 0) {
+      blocked.push(
+        `${assignment.personId} ${assignment.role} at ${assignment.locationId}: ` +
+          `assignment ${assignment.assignmentId} starts ${iso(assignment.effectiveFrom)} and cannot be ` +
+          `moved without overlapping ${across.map((other) => other.assignmentId).join(', ')}`,
+      );
+      continue;
+    }
+
+    // The day after the latest sibling that closes before this row begins.
+    const earliest = siblings.reduce(
+      (floorSoFar, other) =>
+        Math.max(floorSoFar, (other.effectiveTo as Date).getTime() + DAY_MS),
+      floor.getTime(),
+    );
+    if (earliest >= assignment.effectiveFrom.getTime()) {
+      // Nowhere to move it to that it does not already start at.
+      continue;
+    }
+
     plans.push({
       assignmentId: assignment.assignmentId,
       personId: assignment.personId,
@@ -110,50 +190,81 @@ export function planStaffingBackdates(
       role: assignment.role,
       isPrimary: assignment.isPrimary,
       effectiveTo: assignment.effectiveTo,
-      effectiveFrom: floor,
+      effectiveFrom: new Date(earliest),
       was: assignment.effectiveFrom,
     });
   }
-  return plans;
+  return { plans, blocked };
 }
 
 export class AcceleratedStaffingWindows {
   constructor(private readonly port: StaffingWindowPort) {}
 
   /**
-   * Returns one line per assignment moved, for the run log, and the people it
-   * could not read.
+   * Returns one line per assignment moved, and one per row it could not move.
    *
-   * A person whose assignments cannot be listed is reported rather than thrown:
-   * the run can still work, with fewer mechanics present, and the refusal it
-   * then gets names the date — which is more use than a setup that died here.
+   * A person whose assignments cannot be listed, a row the planner refuses to
+   * touch, and a write the backend rejects are all reported rather than thrown.
+   * The run can proceed with fewer mechanics present, and the refusal it then
+   * gets names the date — which is more use than a setup that died on one row.
+   *
+   * With one exception. If every assignment that needed moving failed to move,
+   * nothing about presence improved, and the run is walking into the refusal
+   * this step exists to prevent. That is thrown, carrying every reason, because
+   * a setup failure naming them beats a virtual day 1 that fails on an
+   * appointment and says nothing about why.
    */
   async run(
     personIds: readonly string[],
     virtualStart: Date,
-  ): Promise<{ backdated: string[]; unreadable: string[] }> {
+  ): Promise<{ backdated: string[]; unreadable: string[]; blocked: string[]; failed: string[] }> {
     const backdated: string[] = [];
     const unreadable: string[] = [];
+    const blocked: string[] = [];
+    const failed: string[] = [];
 
     for (const personId of new Set(personIds)) {
       let assignments: StaffingWindow[];
       try {
         assignments = await this.port.list(personId);
       } catch (error) {
-        unreadable.push(`${personId}: ${error instanceof Error ? error.message : String(error)}`);
+        unreadable.push(`${personId}: ${describe(error)}`);
         continue;
       }
-      for (const plan of planStaffingBackdates(assignments, virtualStart)) {
-        await this.port.backdate(plan);
+
+      const planned = planStaffingBackdates(assignments, virtualStart);
+      blocked.push(...planned.blocked);
+
+      for (const plan of planned.plans) {
+        try {
+          await this.port.backdate(plan);
+        } catch (error) {
+          // A 409 here is the overlap guard on a shape the planner did not
+          // foresee; a 403 or a 5xx is the environment. Either way it is one
+          // row, and the next one may still move.
+          failed.push(`${plan.personId} ${plan.role} assignment ${plan.assignmentId}: ${describe(error)}`);
+          continue;
+        }
         backdated.push(
           `${plan.personId} ${plan.role} at ${plan.locationId} from ` +
             `${iso(plan.was)} to ${iso(plan.effectiveFrom)}`,
         );
       }
     }
-    return { backdated, unreadable };
+
+    if (backdated.length === 0 && failed.length > 0) {
+      throw new Error(
+        `[accel] not one of ${failed.length} staffing assignment(s) could be back-dated, so no mechanic ` +
+          'is present anywhere in the virtual year and every booking will be refused ' +
+          `MECHANIC_UNAVAILABLE: ${failed.join('; ')}`,
+      );
+    }
+
+    return { backdated, unreadable, blocked, failed };
   }
 }
+
+const describe = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /** `YYYY-MM-DD`, the wire format for a LocalDate. */
 export function iso(value: Date): string {

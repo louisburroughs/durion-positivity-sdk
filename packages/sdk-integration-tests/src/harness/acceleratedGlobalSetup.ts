@@ -141,7 +141,7 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   // date, and one written in wall time covers nothing in this backend's virtual
   // year (durion-positivity-backend#2140).
   const { createPeopleClient } = await import('@durion-sdk/people');
-  const { backdated, unreadable } = await stage('staffing windows', () =>
+  const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
     new AcceleratedStaffingWindows(
       createStaffingWindowPort(createPeopleClient(auth.buildSdkConfig('people'))),
     ).run(everyEmployee(refs), clock.virtualStart),
@@ -151,6 +151,12 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   }
   for (const line of unreadable) {
     console.log(`[accel] staffing window unread: ${line}`);
+  }
+  for (const line of blocked) {
+    console.log(`[accel] staffing window not moved: ${line}`);
+  }
+  for (const line of failed) {
+    console.log(`[accel] staffing window refused: ${line}`);
   }
 
   if (personaBootstrap.applies) {
