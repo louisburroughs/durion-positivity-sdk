@@ -135,6 +135,11 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
 
   const refs = await stage('reference bootstrap', () => new BootstrapOrchestrator(adminConfig, auth).run());
 
+  // The virtual span this run will cover. It decides the default holiday set
+  // below, and here it is the far edge a staffing assignment has to reach: a
+  // window that lapses mid-year leaves the rest of the run unstaffed.
+  const virtualEnd = new Date(clock.virtualTime.getTime() + accel.days * 86_400_000);
+
   // After the bootstrap, because these are the assignments it just made or
   // found, and before any booking: pos-shop-manager decides a mechanic is
   // present by asking whether an ACTIVE staffing assignment covers the booked
@@ -144,7 +149,7 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
     new AcceleratedStaffingWindows(
       createStaffingWindowPort(createPeopleClient(auth.buildSdkConfig('people'))),
-    ).run(everyEmployee(refs), clock.virtualStart),
+    ).run(everyEmployee(refs), clock.virtualStart, virtualEnd),
   );
   for (const line of backdated) {
     console.log(`[accel] staffing window back-dated: ${line}`);
@@ -171,8 +176,6 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
     }
   }
 
-  // The virtual span this run will cover, which decides the default holiday set.
-  const virtualEnd = new Date(clock.virtualTime.getTime() + accel.days * 86_400_000);
   const calendar = accel.calendarFor(clock.virtualStart, virtualEnd);
 
   // Publish the hours. `LocationResponseDTO` returns no operatingHours,

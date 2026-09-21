@@ -18,11 +18,17 @@
  * an earlier date, and the platform declined to special-case it
  * (durion-positivity-backend#2140). The data is the run's to get right.
  *
- * Unlike a role assignment, a staffing assignment is editable, so this moves
- * `effectiveFrom` on the existing row rather than bridging a second one.
- * `effectiveTo` is left exactly as it was: an assignment open at the wall-clock
- * today is open for the whole virtual year, and one that was deliberately
- * closed stays closed.
+ * Unlike a role assignment, a staffing assignment is editable, so this widens
+ * the existing row rather than bridging a second one — `effectiveFrom` back to
+ * the run's floor, and `effectiveTo` forward past its end when the window would
+ * otherwise lapse mid-run.
+ *
+ * Both ends matter, and the first version of this only did one. A row that began
+ * before the floor was skipped as "already effective", which is true of the first
+ * virtual day and false of every day after its end: the backend answered
+ * `3 ACTIVE technician staffing assignments exist at this location, none
+ * effective on 2025-11-10` while this pass reported nothing to do. Coverage is of
+ * the whole run or it is not coverage.
  *
  * Idempotent: an assignment already effective at the floor is skipped, so a
  * re-run writes nothing.
@@ -60,6 +66,8 @@ export interface StaffingBackdate {
   effectiveFrom: Date;
   /** Where it started before, for the run log. */
   was: Date;
+  /** Where it ended before, for the run log. */
+  wasTo: Date | null;
 }
 
 export interface StaffingWindowPort {
@@ -84,6 +92,12 @@ export interface StaffingPlan {
   plans: StaffingBackdate[];
   /** One line per assignment that needs moving but cannot be moved safely. */
   blocked: string[];
+}
+
+/** The UTC date `days` after `at`, at midnight — the far edge the run has to be covered to. */
+export function ceilingFor(virtualEnd: Date, days = FLOOR_MARGIN_DAYS): Date {
+  const ceiling = new Date(virtualEnd.getTime() + days * 86_400_000);
+  return new Date(Date.UTC(ceiling.getUTCFullYear(), ceiling.getUTCMonth(), ceiling.getUTCDate()));
 }
 
 /**
@@ -115,84 +129,95 @@ export interface StaffingPlan {
 export function planStaffingBackdates(
   assignments: readonly StaffingWindow[],
   virtualStart: Date,
+  virtualEnd: Date,
 ): StaffingPlan {
   const floor = floorFor(virtualStart);
+  const ceiling = ceilingFor(virtualEnd);
   const plans: StaffingBackdate[] = [];
   const blocked: string[] = [];
 
-  const actives = assignments.filter((assignment) => assignment.status === 'ACTIVE');
-
-  for (const assignment of actives) {
-    if (assignment.effectiveFrom.getTime() <= floor.getTime()) {
+  // Grouped and walked in order, not judged row by row. The backend refuses an
+  // update that overlaps another ACTIVE row of the same {person, location, role}
+  // (AssignmentOverlapSearch), and two rows planned independently can each look
+  // safe against the *stored* windows while colliding with each other once both
+  // are applied — which is what a first attempt at this did.
+  const groups = new Map<string, StaffingWindow[]>();
+  for (const assignment of assignments) {
+    if (assignment.status !== 'ACTIVE') {
+      // The presence check counts ACTIVE rows only, and reviving a suspended
+      // assignment would be inventing staff.
       continue;
     }
-    if (assignment.effectiveTo !== null && assignment.effectiveTo.getTime() <= floor.getTime()) {
-      continue;
+    const key = keyOf(assignment);
+    groups.set(key, [...(groups.get(key) ?? []), assignment]);
+  }
+
+  for (const group of groups.values()) {
+    const rows = [...group].sort((a, b) => a.effectiveFrom.getTime() - b.effectiveFrom.getTime());
+    // The end already applied to the previous row, so this one starts after it.
+    // `Infinity` for an open-ended row, which covers everything after it — read
+    // as "no constraint", it let a duplicate open row past the overlap check.
+    let previousEnd: number | null = null;
+    let previousId: string | null = null;
+
+    for (const [index, row] of rows.entries()) {
+      const from = row.effectiveFrom.getTime();
+      const to = row.effectiveTo?.getTime() ?? null;
+      const isLast = index === rows.length - 1;
+
+      // Two stored ACTIVE rows that already overlap are a state the backend's own
+      // guard should have refused. Nothing here can widen either safely.
+      if (previousEnd !== null && from <= previousEnd) {
+        blocked.push(
+          `${row.personId} ${row.role} at ${row.locationId}: assignment ${row.assignmentId} starts ` +
+            `${iso(row.effectiveFrom)}, on or before ${previousId} ends — they already overlap`,
+        );
+        previousEnd = to;
+        previousId = row.assignmentId;
+        continue;
+      }
+
+      // Back to the floor, but never past the row before it, and never later than
+      // where it already starts.
+      const lowerBound = previousEnd === null ? floor.getTime() : previousEnd + DAY_MS;
+      const effectiveFrom = new Date(Math.min(from, Math.max(lowerBound, floor.getTime())));
+
+      // Only the group's last row reaches for the ceiling: extending an earlier
+      // one would run into the next. An open-ended row already covers the rest.
+      // Closed before the run began: this person was not staff during the year,
+      // and widening the window to say otherwise is inventing work they did not
+      // do. Left exactly as it is — including when it is the group's last row,
+      // where the temptation to stretch it to the ceiling is strongest.
+      if (to !== null && to <= floor.getTime()) {
+        previousEnd = to;
+        previousId = row.assignmentId;
+        continue;
+      }
+
+      const effectiveTo =
+        to === null ? null : isLast && to < ceiling.getTime() ? ceiling : new Date(to);
+
+      previousEnd = effectiveTo?.getTime() ?? Number.POSITIVE_INFINITY;
+      previousId = row.assignmentId;
+
+      const movedStart = effectiveFrom.getTime() !== from;
+      const movedEnd = (effectiveTo?.getTime() ?? null) !== to;
+      if (!movedStart && !movedEnd) {
+        continue;
+      }
+
+      plans.push({
+        assignmentId: row.assignmentId,
+        personId: row.personId,
+        locationId: row.locationId,
+        role: row.role,
+        isPrimary: row.isPrimary,
+        effectiveFrom,
+        effectiveTo,
+        was: row.effectiveFrom,
+        wasTo: row.effectiveTo,
+      });
     }
-
-    const siblings = actives.filter(
-      (other) => other !== assignment && keyOf(other) === keyOf(assignment),
-    );
-
-    // A sibling already covers the whole stretch this row would be moved into —
-    // from the floor through to the day this row takes over. The person is
-    // present for all of it, so there is nothing to gain and an overlap to lose.
-    //
-    // Covering the floor alone is not enough: a sibling that lapses halfway
-    // through the virtual year leaves the rest of it unstaffed, and this row is
-    // what closes that gap.
-    const covered = siblings.some(
-      (other) =>
-        other.effectiveFrom.getTime() <= floor.getTime() &&
-        (other.effectiveTo === null ||
-          other.effectiveTo.getTime() >= assignment.effectiveFrom.getTime() - DAY_MS),
-    );
-    if (covered) {
-      continue;
-    }
-
-    // A sibling with no end, or one still running when this row starts, occupies
-    // every day this row could be moved into.
-    //
-    // Two ACTIVE rows of one `{person, location, role}` that overlap are a state
-    // the backend's own guard should have refused, so this is a report about the
-    // data rather than a case the run can resolve — and both rows say so, since
-    // neither can move while the other stands.
-    const across = siblings.filter(
-      (other) =>
-        other.effectiveTo === null ||
-        other.effectiveTo.getTime() >= assignment.effectiveFrom.getTime(),
-    );
-    if (across.length > 0) {
-      blocked.push(
-        `${assignment.personId} ${assignment.role} at ${assignment.locationId}: ` +
-          `assignment ${assignment.assignmentId} starts ${iso(assignment.effectiveFrom)} and cannot be ` +
-          `moved without overlapping ${across.map((other) => other.assignmentId).join(', ')}`,
-      );
-      continue;
-    }
-
-    // The day after the latest sibling that closes before this row begins.
-    const earliest = siblings.reduce(
-      (floorSoFar, other) =>
-        Math.max(floorSoFar, (other.effectiveTo as Date).getTime() + DAY_MS),
-      floor.getTime(),
-    );
-    if (earliest >= assignment.effectiveFrom.getTime()) {
-      // Nowhere to move it to that it does not already start at.
-      continue;
-    }
-
-    plans.push({
-      assignmentId: assignment.assignmentId,
-      personId: assignment.personId,
-      locationId: assignment.locationId,
-      role: assignment.role,
-      isPrimary: assignment.isPrimary,
-      effectiveTo: assignment.effectiveTo,
-      effectiveFrom: new Date(earliest),
-      was: assignment.effectiveFrom,
-    });
   }
   return { plans, blocked };
 }
@@ -217,6 +242,7 @@ export class AcceleratedStaffingWindows {
   async run(
     personIds: readonly string[],
     virtualStart: Date,
+    virtualEnd: Date,
   ): Promise<{ backdated: string[]; unreadable: string[]; blocked: string[]; failed: string[] }> {
     const backdated: string[] = [];
     const unreadable: string[] = [];
@@ -232,7 +258,7 @@ export class AcceleratedStaffingWindows {
         continue;
       }
 
-      const planned = planStaffingBackdates(assignments, virtualStart);
+      const planned = planStaffingBackdates(assignments, virtualStart, virtualEnd);
       blocked.push(...planned.blocked);
 
       for (const plan of planned.plans) {
@@ -246,8 +272,9 @@ export class AcceleratedStaffingWindows {
           continue;
         }
         backdated.push(
-          `${plan.personId} ${plan.role} at ${plan.locationId} from ` +
-            `${iso(plan.was)} to ${iso(plan.effectiveFrom)}`,
+          `${plan.personId} ${plan.role} at ${plan.locationId}: ` +
+            `${iso(plan.was)}–${plan.wasTo ? iso(plan.wasTo) : 'open'} → ` +
+            `${iso(plan.effectiveFrom)}–${plan.effectiveTo ? iso(plan.effectiveTo) : 'open'}`,
         );
       }
     }
