@@ -17,6 +17,7 @@ import { clampToGrace, daySchedule, type DaySchedule } from './daySchedule';
 import type { Claim, ResourceLedger } from './resourceLedger';
 import type { PositionKind, SiteRoster } from '../runs/shopFloorPlan';
 import type { JobOutcome } from './acceleratedJob';
+import { ClockConvergedError } from './virtualClock';
 
 /** What the runner needs of a job — the real AcceleratedJob satisfies it. */
 export interface RunnableJob {
@@ -61,12 +62,41 @@ export interface MaintenancePort {
   restock(at: Date): Promise<void>;
 }
 
+/**
+ * A refusal that arrived part-way through a batch, carrying what was already done.
+ *
+ * `book` and `convertDue` work an item at a time and each successful one is on the
+ * backend before the next is attempted. Raising a bare error loses that count, and
+ * the day, the journal and the run's totals then undercount records that exist —
+ * the run would report 0 appointments on a day it booked two.
+ *
+ * So a port that got some of the way through says so, and the runner records the
+ * failure *and* the progress.
+ */
+export class PartialProgressError extends Error {
+  constructor(
+    message: string,
+    /** How many items the port completed before the refusal. */
+    readonly completed: number,
+    readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = 'PartialProgressError';
+  }
+}
+
 export interface AppointmentPort {
-  /** Books appointments for future open windows; returns how many were booked. */
+  /**
+   * Books appointments for future open windows; returns how many were booked.
+   *
+   * Throws {@link PartialProgressError} when some were booked before the refusal,
+   * so the count is not lost with the failure.
+   */
   book(at: Date, count: number): Promise<number>;
   /**
    * Converts every appointment whose start the clock has now reached into an
-   * estimate; returns how many were converted.
+   * estimate; returns how many were converted. Throws
+   * {@link PartialProgressError} when some were converted before the refusal.
    */
   convertDue(at: Date): Promise<number>;
 }
@@ -303,8 +333,20 @@ export class AcceleratedDayRunner {
 
     // APPOINTMENTS. Booked ahead, and converted when the clock reaches them — which only
     // an accelerated clock makes possible inside one run.
-    report.appointmentsConverted = await this.deps.appointments.convertDue(schedule.observedAt);
-    report.appointmentsBooked = await this.deps.appointments.book(schedule.observedAt, rosters.length);
+    //
+    // Reported rather than thrown, unlike the clock-in above. A day that cannot book
+    // its intake is a bad day; a day that cannot staff itself is not a day at all, and
+    // the difference decides whether a year survives. Left fatal, one 409 from
+    // pos-shop-manager on virtual day 40 ended a run that had already worked 39 good
+    // days — and did it at the *second* call of the day, before any work was attempted.
+    // The failure still lands in `report.failures`, so Z2 fails the year at the end:
+    // this changes when the run stops, not whether the problem is reported.
+    report.appointmentsConverted = await this.guard(report, 'converting due appointments', () =>
+      this.deps.appointments.convertDue(schedule.observedAt),
+    );
+    report.appointmentsBooked = await this.guard(report, 'booking appointments', () =>
+      this.deps.appointments.book(schedule.observedAt, rosters.length),
+    );
 
     // The shift and the appointment phases are gateway calls, and at a thousandfold scale
     // a handful of those is virtual hours. The bounds work runs against come from *after*
@@ -439,6 +481,37 @@ export class AcceleratedDayRunner {
     }
     await this.deps.shift.approveTime(closedAt);
     return closedAt;
+  }
+
+  /**
+   * Runs one of the day's optional phases, recording a failure instead of ending the run.
+   *
+   * Returns what the phase actually achieved: the count it returned, or — when it
+   * raised a {@link PartialProgressError} — the count it got to before failing. Those
+   * records are on the backend whether or not the rest of the batch succeeded, and a
+   * report that called them 0 would undercount the year against its own data.
+   *
+   * A `ClockConvergedError` is re-thrown: the clock reaching wall time is not a failed
+   * phase but the end of the year, and `AcceleratedRun` reads it as `converged`.
+   */
+  private async guard(
+    report: DayReport,
+    what: string,
+    run: () => Promise<number>,
+  ): Promise<number> {
+    try {
+      return await run();
+    } catch (error) {
+      if (error instanceof ClockConvergedError) {
+        throw error;
+      }
+      const done = error instanceof PartialProgressError ? error.completed : 0;
+      const reason = error instanceof Error ? error.message : String(error);
+      report.failures.push(
+        done > 0 ? `${what} failed after ${done} succeeded: ${reason}` : `${what} failed: ${reason}`,
+      );
+      return done;
+    }
   }
 
   /**

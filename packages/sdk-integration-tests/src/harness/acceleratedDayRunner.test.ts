@@ -2,6 +2,7 @@ import type { SiteRoster } from '../runs/shopFloorPlan';
 import type { JobOutcome } from './acceleratedJob';
 import {
   AcceleratedDayRunner,
+  PartialProgressError,
   type DayRunnerDeps,
   type RunnableJob,
 } from './acceleratedDayRunner';
@@ -168,6 +169,12 @@ const harness = (options: {
   clockOutFails?: boolean;
   /** Makes a job's suspendLabor throw, as a refused stopLaborSession does. */
   suspendFails?: boolean;
+  /** Makes the appointment port's book throw, as a refused createAppointment does. */
+  bookFails?: Error;
+  /** Makes the appointment port's convertDue throw. */
+  convertFails?: Error;
+  /** Makes the shift port's clockIn throw, as a refused startWorkSession does. */
+  clockInFails?: Error;
   /**
    * Virtual minutes each clock read costs. Free reads hide a whole class of defect: a
    * loop that re-reads at entry can then never find the bound already past.
@@ -197,6 +204,9 @@ const harness = (options: {
     shift: {
       clockIn: async (at: Date) => {
         calls.push('clockIn');
+        if (options.clockInFails) {
+          throw options.clockInFails;
+        }
         shiftOpen.value = true;
         at_.clockIn = at;
         clock.advance(options.phaseCostMinutes ?? 0);
@@ -240,11 +250,17 @@ const harness = (options: {
       book: async () => {
         calls.push('bookAppointments');
         clock.advance(options.phaseCostMinutes ?? 0);
+        if (options.bookFails) {
+          throw options.bookFails;
+        }
         return 2;
       },
       convertDue: async () => {
         calls.push('convertAppointments');
         clock.advance(options.phaseCostMinutes ?? 0);
+        if (options.convertFails) {
+          throw options.convertFails;
+        }
         return 1;
       },
     },
@@ -1286,5 +1302,70 @@ describe('AcceleratedDayRunner — the day boundary arriving mid-request', () =>
 
     expect(report.failures[0]).toMatch(/no site reported a usable dispatch board/);
     expect(report.workordersCompleted).toBe(0);
+  });
+});
+
+describe('AcceleratedDayRunner — which phase may end a year', () => {
+  it('reports a refused booking and works the day anyway', async () => {
+    // The shape that killed a run: one 409 from pos-shop-manager at the second
+    // call of the day, before any work was attempted.
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      bookFails: new Error('409 SCHEDULING_CONFLICT'),
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.failures.some((line) => line.includes('booking appointments failed'))).toBe(true);
+    expect(report.failures.some((line) => line.includes('409 SCHEDULING_CONFLICT'))).toBe(true);
+    expect(report.appointmentsBooked).toBe(0);
+    // The day still ran: the shift opened, jobs were worked, the shift closed.
+    expect(report.clockedIn).toBeGreaterThan(0);
+    expect(report.workordersCompleted).toBeGreaterThan(0);
+  });
+
+  it('reports a refused conversion and still books', async () => {
+    const { runner, calls } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      convertFails: new Error('the bridge answered 500'),
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.failures.some((line) => line.includes('converting due appointments failed'))).toBe(true);
+    expect(report.appointmentsConverted).toBe(0);
+    // The phase after it is not skipped by the one before it failing.
+    expect(calls).toContain('bookAppointments');
+    expect(report.appointmentsBooked).toBe(2);
+  });
+
+  it('keeps what a half-finished batch did, rather than reporting none of it', async () => {
+    // book pushes each appointment before attempting the next, so two of five are
+    // on the backend when the third is refused. Reporting 0 would undercount the
+    // year against its own data.
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      bookFails: new PartialProgressError('booking stopped after 2 of 5: 409', 2),
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.appointmentsBooked).toBe(2);
+    expect(report.failures.some((line) => line.includes('failed after 2 succeeded'))).toBe(true);
+  });
+
+  it('still ends the day when the shift cannot be opened, because that is not a day', async () => {
+    // The deliberate asymmetry: a shop that cannot staff itself writes no labor and
+    // no payroll, and carrying on would record a day nobody worked.
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      clockInFails: new Error('[accel] 3 of 7 could not be clocked in'),
+    });
+
+    await expect(runner.runDay(1)).rejects.toThrow(/could not be clocked in/);
   });
 });
