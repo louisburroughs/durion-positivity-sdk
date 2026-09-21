@@ -22,6 +22,7 @@
  * Raise here regardless. Deciding that a refusal is survivable is the runner's
  * job, and a port that swallowed one would take the choice away from it.
  */
+import { ListTimeEntriesStatusEnum } from '@durion-sdk/people';
 import { SEED_VENDOR_ID } from '@durion-sdk/seeder';
 import type { ReferenceCache } from '@durion-sdk/seeder';
 import { readString, requireField, type BuilderContext } from './builders';
@@ -257,19 +258,53 @@ export function createShiftPort(
     },
 
     /**
-     * The day's reported time goes to the manager.
+     * The day's reported time goes to the manager — the entries there are to
+     * decide, and no others.
      *
-     * An empty decision batch is what the seeder sends and what the backend
-     * accepts; the assertion here is that the endpoint accepts the batch at all,
-     * because a refusal means the day's labor is sitting unapproved and the payroll
-     * side of the year is a fiction.
+     * This used to send `{decisions: []}` on the claim that an empty batch was
+     * what the seeder sends and what the backend accepts. It is not:
+     * `TimeEntryDecisionBatchRequest.decisions` carries `@NotEmpty`, so an empty
+     * batch is invalid by contract and answers 400 VALIDATION_ERROR. Unguarded at
+     * shift close, that one call ended a virtual year on its first day, after the
+     * day had booked, staffed, clocked in and worked.
+     *
+     * So the queue is read first and only a real batch is sent. Nothing in either
+     * service currently writes a decidable entry — pos-workorder's `time_entry`
+     * has an approve and a reject endpoint and no writer, and pos-people's
+     * `timekeeping_entry` is fed by an event that is published nowhere outside its
+     * own unit tests (see Suite F's header) — so in practice this finds none and
+     * says so once. When that bridge lands, this starts approving real time
+     * without another change here.
      */
-    async approveTime(): Promise<void> {
-      await call('approveTimeEntriesBatch', () =>
-        manager.people.timeEntryApprovalAPIApi.approveTimeEntriesBatch({
-          timeEntryDecisionBatchRequest: { decisions: [] },
+    async approveTime(at: Date): Promise<void> {
+      const pending = await call('listTimeEntries(SUBMITTED)', () =>
+        manager.people.timeEntryApprovalAPIApi.listTimeEntries({
+          // The generated enum, not the string: the client narrows this param.
+          status: ListTimeEntriesStatusEnum.Submitted,
+          locationId: refs.locationId,
+          workDate: at,
+          timeZone: 'UTC',
         }),
       );
+
+      const decisions = (pending.items ?? [])
+        .map((entry) => readString(entry, 'timeEntryId'))
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+        .map((timeEntryId) => ({ timeEntryId }));
+
+      if (decisions.length === 0) {
+        // Not a failure, and not silent either: a day that approved nothing is
+        // the expected state today, and the count is what will show it changing.
+        log(`${at.toISOString().slice(0, 10)}: no submitted time entries to approve`);
+        return;
+      }
+
+      await call('approveTimeEntriesBatch', () =>
+        manager.people.timeEntryApprovalAPIApi.approveTimeEntriesBatch({
+          timeEntryDecisionBatchRequest: { decisions },
+        }),
+      );
+      log(`${at.toISOString().slice(0, 10)}: approved ${decisions.length} time entr(ies)`);
     },
   };
 }
