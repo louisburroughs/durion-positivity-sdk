@@ -384,6 +384,14 @@ accelerated entry point adds:
   differs (that is a different timeline), picks up at the current virtual day,
   and reconciles open claims from the dispatch board rather than from the journal
   alone.
+- **A journal that recorded nothing is not resumed, and its runId is dropped.**
+  An attempt that died before its first virtual day still created the suites'
+  fixtures — a bay, a bin, vehicles — all named or seeded from its runId and none
+  of them journaled. A run that inherited that runId regenerated the same names
+  and the same VIN stream and failed every suite on `DUPLICATE_NAME`, `CONFLICT`
+  and `VEHICLE_VIN_CONFLICT`. The next run now keeps its own id and says which one
+  it declined to wear. A journal carrying a workorder or invoice id is resumed as
+  before: that work has to stay one retrievable set.
 - **The run ends** on `converged: true` — the clock has caught up to wall time
   and any further write would be dated today. Finishing the configured day count
   at convergence is a pass; hitting it early fails and names the day.

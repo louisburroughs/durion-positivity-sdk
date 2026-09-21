@@ -60,6 +60,47 @@ describe('AcceleratedJournal', () => {
     expect(journal.hasDay(3)).toBe(false);
   });
 
+  it('drops the runId of a journal that recorded nothing, so a dead attempt is not re-worn', () => {
+    // The failure this exists for: an attempt died before its first day, having
+    // already created the suites' runId-named fixtures on the backend. The next
+    // attempt inherited the runId, regenerated the same names and VINs, and every
+    // suite failed on DUPLICATE_NAME / CONFLICT / VEHICLE_VIN_CONFLICT.
+    const path = freshPath();
+    AcceleratedJournal.open(path, identity).journal.flush();
+
+    const { journal, resumed, replacedRunId } = AcceleratedJournal.open(path, {
+      ...identity,
+      runId: 'accel-2',
+    });
+
+    expect(resumed).toBe(false);
+    expect(journal.runId).toBe('accel-2');
+    expect(replacedRunId).toBe('accel-1');
+    expect(JSON.parse(readFileSync(path, 'utf8')).runId).toBe('accel-1');
+    journal.flush();
+    expect(JSON.parse(readFileSync(path, 'utf8')).runId).toBe('accel-2');
+  });
+
+  it('keeps the runId of a journal that recorded a workorder before its first day ended', () => {
+    // A workorder id is recorded when the record exists rather than when the day
+    // closes, so a journal can carry work under its runId with no day in it — and
+    // that runId is what a later by-runId query needs. `flush` here is what
+    // `recordDay` would have done on the first day boundary.
+    const path = freshPath();
+    const first = AcceleratedJournal.open(path, identity).journal;
+    first.recordWorkorder('wo-1');
+    first.flush();
+
+    const { journal, resumed, replacedRunId } = AcceleratedJournal.open(path, {
+      ...identity,
+      runId: 'accel-2',
+    });
+
+    expect(resumed).toBe(true);
+    expect(journal.runId).toBe('accel-1');
+    expect(replacedRunId).toBeUndefined();
+  });
+
   it('refuses a journal from a different timeline instead of merging two years', () => {
     const path = freshPath();
     AcceleratedJournal.open(path, identity).journal.recordDay(day());
