@@ -13,12 +13,24 @@
  */
 
 import { mapValues } from '../runtime';
+import type { HolidayClosureResponse } from './HolidayClosureResponse';
+import {
+    HolidayClosureResponseFromJSON,
+    HolidayClosureResponseFromJSONTyped,
+    HolidayClosureResponseToJSON,
+} from './HolidayClosureResponse';
 import type { LocationTypeDTO } from './LocationTypeDTO';
 import {
     LocationTypeDTOFromJSON,
     LocationTypeDTOFromJSONTyped,
     LocationTypeDTOToJSON,
 } from './LocationTypeDTO';
+import type { OperatingHoursResponse } from './OperatingHoursResponse';
+import {
+    OperatingHoursResponseFromJSON,
+    OperatingHoursResponseFromJSONTyped,
+    OperatingHoursResponseToJSON,
+} from './OperatingHoursResponse';
 
 /**
  * Response payload describing a location
@@ -87,6 +99,12 @@ export interface LocationResponseDTO {
      */
     hasRepairCapability: boolean;
     /**
+     * Stored dated closures, in the location's own timezone; null when none have ever been published
+     * @type {Array<HolidayClosureResponse>}
+     * @memberof LocationResponseDTO
+     */
+    holidayClosures?: Array<HolidayClosureResponse>;
+    /**
      * Unique identifier of the location
      * @type {string}
      * @memberof LocationResponseDTO
@@ -104,6 +122,12 @@ export interface LocationResponseDTO {
      * @memberof LocationResponseDTO
      */
     name: string;
+    /**
+     * Stored weekly operating hours, one entry per published day of the week, in the location's own timezone; null when hours have never been published
+     * @type {Array<OperatingHoursResponse>}
+     * @memberof LocationResponseDTO
+     */
+    operatingHours?: Array<OperatingHoursResponse>;
     /**
      * Primary phone number for the location
      * @type {string}
@@ -128,6 +152,12 @@ export interface LocationResponseDTO {
      * @memberof LocationResponseDTO
      */
     state?: string;
+    /**
+     * IANA timezone identifier of the location; the zone every operating-hours and holiday closure entry below is expressed in, and the zone scheduling converts a booking into
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    timezone?: string;
     /**
      * 
      * @type {LocationTypeDTO}
@@ -169,13 +199,16 @@ export function LocationResponseDTOFromJSONTyped(json: any, ignoreDiscriminator:
         'country': json['country'] == null ? undefined : json['country'],
         'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
         'hasRepairCapability': json['hasRepairCapability'],
+        'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureResponseFromJSON)),
         'id': json['id'],
         'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
         'name': json['name'],
+        'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursResponseFromJSON)),
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
         'postalCode': json['postalCode'] == null ? undefined : json['postalCode'],
         'responsiblePersonId': json['responsiblePersonId'] == null ? undefined : json['responsiblePersonId'],
         'state': json['state'] == null ? undefined : json['state'],
+        'timezone': json['timezone'] == null ? undefined : json['timezone'],
         'type': json['type'] == null ? undefined : LocationTypeDTOFromJSON(json['type']),
     };
 }
@@ -196,13 +229,16 @@ export function LocationResponseDTOToJSON(value?: LocationResponseDTO | null): a
         'country': value['country'],
         'geographicalLocationId': value['geographicalLocationId'],
         'hasRepairCapability': value['hasRepairCapability'],
+        'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureResponseToJSON)),
         'id': value['id'],
         'mailingAddress': value['mailingAddress'],
         'name': value['name'],
+        'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursResponseToJSON)),
         'phoneNumber': value['phoneNumber'],
         'postalCode': value['postalCode'],
         'responsiblePersonId': value['responsiblePersonId'],
         'state': value['state'],
+        'timezone': value['timezone'],
         'type': LocationTypeDTOToJSON(value['type']),
     };
 }
