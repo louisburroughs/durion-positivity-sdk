@@ -120,9 +120,12 @@ jobs:
           if [[ -n "${CONFIGURED_ID}" ]]; then
             INSTANCE_ID="${CONFIGURED_ID}"
           else
+            # JSON, not --output text: text renders an empty list as the literal
+            # `None`, which counts as one instance and sends the command to a
+            # host called None — the opposite of the refusal below.
             mapfile -t ONLINE < <(aws ssm describe-instance-information \
               --filters "Key=PingStatus,Values=Online" \
-              --query 'InstanceInformationList[].InstanceId' --output text | tr '\t' '\n' | grep -v '^$')
+              --query 'InstanceInformationList[].InstanceId' --output json | jq -r '.[]')
             if [[ "${#ONLINE[@]}" -ne 1 ]]; then
               echo "::error::Expected exactly one online SSM instance, found ${#ONLINE[@]}: ${ONLINE[*]:-none}. Set the ALPHA_INSTANCE_ID repository variable."
               exit 1
@@ -139,21 +142,35 @@ jobs:
         run: |
           set -euo pipefail
 
-          # --ff-only: a host whose checkout has diverged is a host someone has
-          # been working on by hand, and merging over that is not this
-          # workflow's call. It fails and says so.
+          # Three things this has to get right, each of which bit the first
+          # version of it:
           #
-          # `npm ci` rather than `install`, so the host resolves exactly the
-          # lockfile this commit carries.
-          read -r -d '' SCRIPT <<'REMOTE' || true
+          #   - It deploys *this* commit. `git pull` would fast-forward to
+          #     whatever origin/main holds when the command finally runs, so a
+          #     queued run could report one sha in its summary and build a newer
+          #     one. Merging the triggering sha explicitly pins it, and still
+          #     leaves the host on main for whoever pulls by hand next.
+          #   - `--ff-only` refuses a diverged checkout. A host someone has been
+          #     working on by hand is not this workflow's to merge over.
+          #   - It runs as ec2-user. AWS-RunShellScript runs as root, and a root
+          #     `npm ci` leaves a root-owned node_modules in a checkout whose
+          #     whole purpose is to be run by hand from that account. `-l` because
+          #     node is on ec2-user's profile PATH, not root's.
+          #
+          # The heredoc is unquoted so the sha and the path are fixed here rather
+          # than resolved on the host; there is deliberately no `$` left inside.
+          read -r -d '' SCRIPT <<REMOTE || true
           set -euo pipefail
-          cd /home/ec2-user/durion-positivity-sdk
-          git fetch origin main
-          git checkout main
-          git pull --ff-only
-          npm ci
-          npm run build
-          git log -1 --format='deployed %h %s'
+          sudo -u ec2-user -H bash -lc '
+            set -euo pipefail
+            cd ${CHECKOUT_DIR}
+            git fetch origin main
+            git checkout main
+            git merge --ff-only ${GITHUB_SHA}
+            npm ci
+            npm run build
+            git rev-parse HEAD
+          '
           REMOTE
 
           # --parameters as JSON, not shorthand: the script is multi-line and
@@ -182,6 +199,15 @@ jobs:
           if [[ -n "${STDERR}" ]]; then
             echo "--- host stderr ---"
             echo "${STDERR}"
+          fi
+
+          # The host prints the revision it ended on, and it has to be the one
+          # this run was triggered for. Reporting a sha the host is not actually
+          # at is the failure this check exists to make impossible.
+          DEPLOYED="$(tail -n 1 <<<"${STDOUT}" | tr -d '[:space:]')"
+          if [[ "${STATUS}" == "Success" && "${DEPLOYED}" != "${GITHUB_SHA}" ]]; then
+            echo "::error::The host ended on ${DEPLOYED:-<nothing>}, not ${GITHUB_SHA}"
+            exit 1
           fi
 
           {
