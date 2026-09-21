@@ -410,7 +410,18 @@ accelerated entry point adds:
   before: that work has to stay one retrievable set.
 - **The run ends** on `converged: true` — the clock has caught up to wall time
   and any further write would be dated today. Finishing the configured day count
-  at convergence is a pass; hitting it early fails and names the day.
+  at convergence is a pass; hitting it early fails and names the day. It can also
+  stop on `budget` (`ITEST_ACCEL_RUN_BUDGET_MS`, default 6.5 h) or on `failed`,
+  which is a virtual day that *threw*.
+- **What a day throws over, and what it only reports.** Opening the shift is
+  fatal: a shop that cannot staff itself writes no labor and no payroll, and
+  carrying on would record a day nobody worked. Booking and converting
+  appointments are not — they are reported into the day's failures and the day
+  works on. Left fatal, one 409 from pos-shop-manager on virtual day 40 ended a
+  run that had already worked 39 good days, at the second call of the day and
+  before any work was attempted. The failure still fails Z2 at the end, so this
+  decides when a run stops, not whether the problem is seen. Maintenance — the
+  weekly cycle count and the monthly restock — is still fatal.
 - **Finding the records** afterwards: every entity carries the run's `runId`
   marker, so `GET /v1/workorders/search?q=<runId>` returns the run's workorders,
   and their virtual dates are on them.
