@@ -16,6 +16,12 @@
  * All arithmetic is UTC. The accelerated clock contract fixes
  * `pos.time.accelerated.zone=UTC`, and a local zone here would introduce DST
  * transitions the backend's own clock does not have.
+ *
+ * The zone is published with the hours rather than assumed, because the backend
+ * judges a booking in facility-local time (DECISION-015): it converts the
+ * requested instant into the location's own zone before comparing it to these
+ * windows. Hours published without one mean whatever zone the site already
+ * carried, and the two sides disagree by that offset — see `publishCalendar`.
  */
 
 // Type-only, so this module still imports nothing at runtime. PositionKind is
