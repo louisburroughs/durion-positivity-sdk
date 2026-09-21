@@ -395,11 +395,18 @@ describe('Suite F — time reporting and approval', () => {
     expect(totals).toBeDefined();
   }, 240_000);
 
+  // The payroll clock is managed by the person themself or by a caller holding
+  // people:timekeeping:approve — pos-people answers 403 "Only the person themself
+  // or a caller holding people:timekeeping:approve may manage this work session"
+  // to anyone else. The suite's `tech` persona is a login linked to a *different*
+  // person than `technicianId` (see the role-mode limitations global setup
+  // reports), so it is the wrong caller for these, and the admin is the right
+  // one. F8b below pins the rule that makes this so.
   it('F8 — the technician clocks in, takes a break, clocks out and submits the session', async () => {
-    await clockOutIfClockedIn(tech, technicianId);
+    await clockOutIfClockedIn(admin, technicianId);
 
     const started = await call('startWorkSession', () =>
-      tech.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
     );
     workSessionId = started.sessionId;
     console.log(`[F8] session ${workSessionId} status=${started.status}`);
@@ -407,18 +414,18 @@ describe('Suite F — time reporting and approval', () => {
     expect(started.status).toBe('ACTIVE');
 
     const breakStarted = await call('startWorkSessionBreak', () =>
-      tech.people.workSessionsAPIApi.startWorkSessionBreak({ id: workSessionId }),
+      admin.people.workSessionsAPIApi.startWorkSessionBreak({ id: workSessionId }),
     );
     expect(breakStarted.sessionId).toBe(workSessionId);
     expect(breakStarted.endedAt).toBeUndefined();
 
     const breakStopped = await call('stopWorkSessionBreak', () =>
-      tech.people.workSessionsAPIApi.stopWorkSessionBreak({ id: workSessionId }),
+      admin.people.workSessionsAPIApi.stopWorkSessionBreak({ id: workSessionId }),
     );
     expect(breakStopped.endedAt).toBeDefined();
 
     const ended = await call('stopWorkSession', () =>
-      tech.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId: technicianId } }),
     );
     console.log(`[F8] session ${workSessionId} -> ${ended.status}`);
     expect(ended.status).toBe('ENDED');
@@ -426,7 +433,7 @@ describe('Suite F — time reporting and approval', () => {
 
     const submittedAt = await accel.now();
     const submitted = await call('submitWorkSession', () =>
-      tech.people.workSessionsAPIApi.submitWorkSession({
+      admin.people.workSessionsAPIApi.submitWorkSession({
         id: workSessionId,
         workSessionSubmitRequest: {
           billableMinutes: BILLABLE_MINUTES,
@@ -443,7 +450,7 @@ describe('Suite F — time reporting and approval', () => {
 
   it('F9 — a session that is already submitted cannot be submitted again, and neither clock accepts a double start', async () => {
     const resubmitted = await expectHttpError(
-      tech.people.workSessionsAPIApi.submitWorkSession({
+      admin.people.workSessionsAPIApi.submitWorkSession({
         id: workSessionId,
         workSessionSubmitRequest: {
           billableMinutes: BILLABLE_MINUTES,
@@ -456,18 +463,30 @@ describe('Suite F — time reporting and approval', () => {
     console.log(`[F9] re-submitting a SUBMITTED session refused with HTTP ${resubmitted}`);
 
     const opened = await call('startWorkSession', () =>
-      tech.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
     );
     const doubled = await expectHttpError(
-      tech.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
       409,
     );
     console.log(`[F9] session ${opened.sessionId} open; a second clock-in refused with HTTP ${doubled}`);
 
     // Leave the person clocked out: the seeder's shift loop shares these
     // employees and a session left open outlives this run.
-    await clockOutIfClockedIn(tech, technicianId);
+    await clockOutIfClockedIn(admin, technicianId);
   }, 180_000);
+
+  // pos-people restricts a work session to the person themself or a caller
+  // holding people:timekeeping:approve. The technician login is neither for
+  // somebody else's session, and finding that out by watching F8 fail is how it
+  // went unnoticed that the rule had arrived at all.
+  itInRoleMode('F8b — a technician cannot open somebody else\'s payroll session', async () => {
+    const status = await expectHttpError(
+      tech.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId: technicianId } }),
+      403,
+    );
+    console.log(`[F8b] TECHNICIAN refused another person's work session with HTTP ${status}`);
+  }, 120_000);
 
   itInRoleMode('F10 — timekeeping is the manager\'s to see, not the technician\'s', async () => {
     const periods = await call('listTimePeriods', () =>
@@ -599,7 +618,7 @@ describe('Suite F — time reporting and approval', () => {
       return;
     }
     await stopTimersIfRunning(tech);
-    await clockOutIfClockedIn(tech, technicianId);
+    await clockOutIfClockedIn(admin, technicianId);
   }, 60_000);
 
   describe('F11 — the shift sits inside the shop\'s hours', () => {
