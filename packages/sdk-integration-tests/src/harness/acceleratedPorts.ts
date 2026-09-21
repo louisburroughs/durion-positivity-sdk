@@ -2,11 +2,25 @@
  * The day runner's collaborators, backed by real SDK clients.
  *
  * The runner itself is pure-ish and unit-tested against fakes; this file is the
- * part that talks to a backend. Everything here is *assertive*: a shift that
- * cannot clock anybody in, a cycle count the manager cannot approve, or an
- * appointment the bridge will not convert fails the day rather than logging and
- * carrying on. That is the whole difference between this and the seeder's
- * simulators, which these are otherwise modelled on.
+ * part that talks to a backend. Everything here is *assertive*: a step that the
+ * backend refuses raises rather than logging and carrying on, which is the whole
+ * difference between this and the seeder's simulators, that these are otherwise
+ * modelled on.
+ *
+ * What a raise then costs is the day runner's decision, not this file's, and it
+ * is not the same for every port:
+ *
+ *   - `ShiftPort.clockIn` and `MaintenancePort` end the virtual day, and with it
+ *     the run. A shop that cannot staff itself writes no labor and no payroll,
+ *     and a day carried on past that records work nobody was there to do.
+ *   - `AppointmentPort.book` and `convertDue` are caught by the runner, recorded
+ *     on the day's report and carried past. A day that cannot book its intake is
+ *     a bad day, not a non-day, and these are the first two calls of every day —
+ *     left fatal, one 409 ended a year that had already worked 39 good days. The
+ *     failure still reaches `result.failures`, so Z2 fails the run at the end.
+ *
+ * Raise here regardless. Deciding that a refusal is survivable is the runner's
+ * job, and a port that swallowed one would take the choice away from it.
  */
 import { SEED_VENDOR_ID } from '@durion-sdk/seeder';
 import type { ReferenceCache } from '@durion-sdk/seeder';
@@ -507,8 +521,17 @@ export function createAppointmentPort(options: {
     /**
      * Every appointment whose start the clock has passed becomes an estimate.
      *
-     * The bridge is idempotent on the appointment, keyed by `idempotencyKey`, so a
-     * retried day cannot produce two estimates for one arrival.
+     * The bridge is idempotent on the **appointment id**:
+     * `EstimateServiceImpl.createEstimateFromAppointment` looks up
+     * `estimateRepository.findByAppointmentId` first and returns the existing
+     * estimate with `created: false` when there is one. `idempotencyKey` is
+     * logged and nothing else, so a fresh UUID per attempt is safe — a retried
+     * conversion cannot produce a second estimate for one arrival.
+     *
+     * That matters now that a refused conversion no longer ends the run: the
+     * appointment stays pending and is tried again on the next virtual day, and
+     * a failure *after* the estimate was written is exactly the case the lookup
+     * covers.
      */
     async convertDue(at: Date): Promise<number> {
       let converted = 0;
