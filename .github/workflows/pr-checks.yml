@@ -3,13 +3,13 @@
 # The check every pull request into main has to pass: lint, an ordered
 # workspace build, a typecheck and the unit suites.
 #
-# It exists so that a pull request has something to be green about. The only
-# other workflow here, build-push-seeder.yml, fires solely on
-# packages/sdk-seeder/**, so it never reports on a regenerated client — and
-# the api-artifacts-sync pull requests opened from durion-positivity-backend
-# rewrite packages/sdk-*/src wholesale. Those were landing with no check at
-# all, and GitHub auto-merge cannot "merge when green" against an empty check
-# set.
+# It exists so that a pull request has something to be green about. The
+# api-artifacts-sync pull requests opened from durion-positivity-backend
+# rewrite packages/sdk-*/src wholesale, and those were landing with no check
+# at all — GitHub auto-merge cannot "merge when green" against an empty check
+# set. The other workflow here, deploy-alpha-checkout.yml, runs a seeder
+# smoke test on pull requests but deploys only from main, and it is not a
+# substitute for these.
 name: PR Checks
 
 on:
