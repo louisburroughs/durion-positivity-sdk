@@ -185,14 +185,52 @@ jobs:
             --query 'Command.CommandId' --output text)"
           echo "command: ${COMMAND_ID}"
 
-          # The waiter polls to completion; a failed command leaves it non-zero,
-          # and the invocation below is read either way so the log carries the
-          # host's own output rather than just a status.
-          set +e
-          aws ssm wait command-executed --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}"
-          set -e
+          # Polled here rather than with `aws ssm wait command-executed`, which
+          # is fixed at 20 attempts five seconds apart: it gives up after about
+          # 100 seconds and reports InProgress as a failure, while the host
+          # carries on building. `npm ci` and an ordered workspace build take
+          # longer than that on this instance — the first real deploy died
+          # exactly there, on a command that was still running fine.
+          #
+          # 100 x 10s = ~17 minutes, inside the job's 20.
+          STATUS="Pending"
+          # Consecutive unexpected errors, reset by any successful poll. One
+          # throttle should not abort a deploy that is running fine; three in a
+          # row is a problem worth failing on rather than waiting out.
+          GLITCHES=0
+          for _ in $(seq 1 100); do
+            set +e
+            POLLED="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text 2>&1)"
+            RC=$?
+            set -e
 
-          STATUS="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text)"
+            if [[ "${RC}" -eq 0 ]]; then
+              STATUS="${POLLED}"
+              GLITCHES=0
+            elif grep -q 'InvocationDoesNotExist' <<<"${POLLED}"; then
+              # The one expected race: a command that has been accepted but has
+              # not reached the instance yet.
+              STATUS="Pending"
+              GLITCHES=0
+            else
+              # Anything else — throttling, expired credentials, the network —
+              # is not the command's status and must not be read as one. Waiting
+              # it out would report a seventeen-minute timeout for a failure that
+              # happened in the first ten seconds.
+              GLITCHES=$((GLITCHES + 1))
+              echo "polling the deploy command failed (${GLITCHES}/3): ${POLLED}"
+              if [[ "${GLITCHES}" -ge 3 ]]; then
+                echo "::error::Could not read the status of ${COMMAND_ID}: ${POLLED}"
+                exit 1
+              fi
+            fi
+
+            case "${STATUS}" in
+              Success|Failed|Cancelled|TimedOut) break ;;
+            esac
+            sleep 10
+          done
+
           STDOUT="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'StandardOutputContent' --output text)"
           STDERR="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'StandardErrorContent' --output text)"
 
