@@ -323,11 +323,14 @@ host's checkout of this repo (`/home/ec2-user/durion-positivity-sdk`, kept curre
 credentials and `ITEST_BASE_URL`/`ITEST_SECURITY_SERVICE_URL` pointed at the ports
 the stack publishes there, detached, logging to `accelerated-<timestamp>.log` in the
 checkout (`accelerated-latest.log` points at the newest; `.accelerated-run.pid` holds
-the pid). Before starting it, the workflow moves the previous run's journal aside as
-`.itest-accel-journal.<its realStart, e.g. 20260920T120000Z>.json` — every dispatch
-re-anchors the stack, and the suite refuses a journal from another timeline — keeping
-past runs in order by the timeline they drove; a journal already on the new timeline is
-left for the suite to resume. The workflow fails if the suite exits within its first
+the pid). Before starting it, the workflow moves the previous run's journal aside — every
+dispatch re-anchors the stack, and the suite refuses a journal from another timeline —
+renaming it in place with the stamp before the `.json`: the default becomes
+`.itest-accel-journal.<its realStart, e.g. 20260920T120000Z>.json`, a custom
+`ITEST_ACCEL_JOURNAL` such as `runs/alpha.json` becomes `runs/alpha.20260920T120000Z.json`.
+That keeps past runs in order by the timeline they drove; a journal already on the new
+timeline is left for the suite to resume. The path is read the way this suite reads it
+(`harness/loadEnvFile.ts`: shell first, then `ITEST_ENV_FILE` or `.env.itest`). The workflow fails if the suite exits within its first
 90 s — global setup's refusals — and otherwise leaves it to run. Steps 2 and 3 below are the by-hand
 procedure for `sdk_run=none`, or for a run through the tunnel from a laptop; with the
 default they have already happened.
