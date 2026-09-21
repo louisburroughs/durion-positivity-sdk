@@ -51,3 +51,10 @@ packages/*/dist/
 .itest-accel-journal.json.lock
 *itest-accel-journal.json
 *itest-accel-journal.json.lock
+
+# What the backend's Deploy Alpha (Accelerated Clock) workflow leaves in the alpha host's
+# checkout when it starts a run here: the run's log, the pointer to the newest one, and
+# the pid it watches.
+accelerated-*.log
+accelerated-latest.log
+.accelerated-run.pid

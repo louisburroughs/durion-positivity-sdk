@@ -306,6 +306,7 @@ gh workflow run deploy-alpha-accelerated.yml \
   -f backend_tag=sha-a1b2c3d \
   -f scale=1460 \
   -f days=365 \
+  -f sdk_run=test:accelerated \
   -f confirm='ACCELERATE ALPHA'
 ```
 
@@ -313,6 +314,19 @@ gh workflow run deploy-alpha-accelerated.yml \
 and `< 26280`. `confirm` must read exactly `ACCELERATE ALPHA`. CI generates both
 anchors **once**, at dispatch, and hands the same pair to every JVM; the run
 summary records them. Copy them from there rather than re-deriving them.
+
+`sdk_run` is which script of this repo the workflow starts **on the alpha host**
+the moment the stack verifies: `test:accelerated` (the default), `test:accelerated:parity`,
+`populate:accelerated-year`, or `none` to deploy and start nothing. It runs from the
+host's checkout of this repo (`/home/ec2-user/durion-positivity-sdk`, kept current by
+`deploy-alpha-checkout.yml`) as `ec2-user`, with the host's `.env.itest` for
+credentials and `ITEST_BASE_URL`/`ITEST_SECURITY_SERVICE_URL` pointed at the ports
+the stack publishes there, detached, logging to `accelerated-<timestamp>.log` in the
+checkout (`accelerated-latest.log` points at the newest; `.accelerated-run.pid` holds
+the pid). The workflow fails if the suite exits within its first 90 s — global setup's
+refusals — and otherwise leaves it to run. Steps 2 and 3 below are the by-hand
+procedure for `sdk_run=none`, or for a run through the tunnel from a laptop; with the
+default they have already happened.
 
 The workflow runs `verify-accelerated-deployment.sh` on the box and fails unless all
 25 JVMs share the same settings, `/system/time` answers `converged: false`, and
