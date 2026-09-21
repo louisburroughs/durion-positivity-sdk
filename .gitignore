@@ -51,6 +51,10 @@ packages/*/dist/
 .itest-accel-journal.json.lock
 *itest-accel-journal.json
 *itest-accel-journal.json.lock
+# ...and the journals of past runs, moved aside as <journal>.<realStart>.json by the
+# backend's accelerated deploy workflow (or by hand, under any suffix).
+.itest-accel-journal.*.json
+*itest-accel-journal.*.json
 
 # What the backend's Deploy Alpha (Accelerated Clock) workflow leaves in the alpha host's
 # checkout when it starts a run here: the run's log, the pointer to the newest one, and
