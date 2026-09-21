@@ -53,7 +53,15 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
     'workorder:workorder:complete',
     'workorder:workorder:assign-technician',
     // Suites C and H place workorders on a bay, mobile unit or HOLD.
-    'workorder:operationalContext:override',
+    //
+    // position:assign, not operationalContext:override. Backend #2059 minted the
+    // conformant name and PUT /v1/workorders/{id}/position enforces it
+    // (ServicePositionController). Asking for the retired one let a tenant whose
+    // role pack predates #2059 pass this preflight and then answer 403 FORBIDDEN
+    // to every placement, 25 tests later, with nothing tying the two together
+    // (durion-positivity-backend#2138). The preflight exists to fail at setup with
+    // the authority named.
+    'workorder:position:assign',
     'order:purchase_order:approve',
     // C6 raises the pick list as the manager precisely because TECHNICIAN
     // cannot; checking it here is what stops that regressing silently.
