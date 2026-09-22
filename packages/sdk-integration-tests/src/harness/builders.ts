@@ -452,3 +452,99 @@ export async function createAsnForPo(
   );
   return requireField(asn.asnId, 'asnId');
 }
+
+/**
+ * Creates a mobile unit that can actually take a workorder.
+ *
+ * Two contracts meet here and the obvious call satisfies neither.
+ * `MobileUnitServiceImpl.normalizeStatus` reads a missing status as INACTIVE, and an
+ * INACTIVE unit is refused a workorder with 422 SERVICE_POSITION_INACTIVE. But
+ * asking for ACTIVE is refused too unless the request also carries a
+ * `travelBufferPolicyId` that exists, at least one service capability and at least
+ * one coverage rule — which is what `status: 'ACTIVE'` on its own ran into.
+ *
+ * So the configuration is copied from a unit the environment already runs ACTIVE,
+ * preferring one based at the same site: those values are valid by construction,
+ * and inventing a policy id or a service area would be a guess the backend has no
+ * reason to accept. The unit itself is still the suite's own, so its assertions do
+ * not depend on the state of shared work.
+ *
+ * Fails by name when there is nothing to copy from, because that is an environment
+ * with no working mobile units at all, and a suite that quietly skipped would hide it.
+ */
+export async function createActiveMobileUnit(
+  as: DomainClients,
+  siteId: string,
+  name: string,
+): Promise<{ id: string; status?: string; copiedFrom: string }> {
+  const api = as.location.mobileUnitApi;
+
+  const actives: Array<{
+    id: string;
+    baseLocationId?: string;
+    travelBufferPolicyId?: string;
+    serviceCapabilityCodes?: string[];
+  }> = [];
+  for (let page = 0; ; page += 1) {
+    const batch = await call(`listMobileUnits (page ${page})`, () => api.listMobileUnits({ page, size: 100 }));
+    for (const unit of batch.content ?? []) {
+      if (
+        String(unit.status).toUpperCase() === 'ACTIVE' &&
+        unit.travelBufferPolicyId &&
+        (unit.serviceCapabilityCodes ?? []).length > 0
+      ) {
+        actives.push(unit);
+      }
+    }
+    if (batch.last !== false || page + 1 >= (batch.totalPages ?? 0)) {
+      break;
+    }
+  }
+
+  // Same site first: coverage is geographic, and a template from the other side of
+  // the country would give this unit service areas it has no business serving.
+  const ordered = [
+    ...actives.filter((unit) => unit.baseLocationId === siteId),
+    ...actives.filter((unit) => unit.baseLocationId !== siteId),
+  ];
+
+  for (const template of ordered) {
+    const rules = await call(`listCoverageRules ${template.id}`, () =>
+      api.listCoverageRules({ id: template.id }),
+    );
+    const coverageRules = rules
+      .filter((rule) => typeof rule.ruleType === 'string' && rule.ruleType.length > 0)
+      .map((rule) => ({
+        ruleType: rule.ruleType as string,
+        serviceAreaId: rule.serviceAreaId,
+        priority: rule.priority,
+        maxDistance: rule.maxDistance,
+        validFrom: rule.validFrom,
+        validTo: rule.validTo,
+      }));
+    if (coverageRules.length === 0) {
+      continue;
+    }
+
+    const created = await call('createMobileUnit', () =>
+      api.createMobileUnit({
+        mobileUnitRequest: {
+          name,
+          baseLocationId: siteId,
+          status: 'ACTIVE',
+          travelBufferPolicyId: template.travelBufferPolicyId,
+          serviceCapabilityCodes: template.serviceCapabilityCodes,
+          coverageRules,
+        },
+      }),
+    );
+    return { id: requireField(created.id, 'mobile unit id'), status: created.status, copiedFrom: template.id };
+  }
+
+  throw new Error(
+    `no ACTIVE mobile unit with a travel buffer policy, capabilities and coverage rules exists ` +
+      `on this environment (${actives.length} ACTIVE unit(s) found, none with coverage) — there is ` +
+      'no valid configuration to copy, so a unit that can take a workorder cannot be created. ' +
+      'Activate a fully configured mobile unit on this environment.',
+  );
+}

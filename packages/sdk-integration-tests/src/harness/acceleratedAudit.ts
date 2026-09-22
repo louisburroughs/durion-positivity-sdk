@@ -307,28 +307,46 @@ export async function auditTimeEntries(
   const PAGE_SIZE = 100;
 
   for (const workDate of workDates) {
-    const dayEntries: TimeEntryView[] = [];
-    for (let page = 0; page < 100; page += 1) {
-      const batch = await call(`listTimeEntries ${workDate} (page ${page})`, () =>
+    entries.push(
+      ...(await readAllPages(`listTimeEntries ${workDate}`, (page) =>
         as.people.timeEntryApprovalAPIApi.listTimeEntries({
           workDate: new Date(`${workDate}T00:00:00.000Z`),
           locationId,
           page,
           size: PAGE_SIZE,
         }),
-      );
-      // `items`, not `content`: this endpoint's paged wrapper is the repo's own
-      // PagedResponse shape rather than a Spring Page.
-      const items = batch.items ?? [];
-      dayEntries.push(...items.map(toView));
-      if (items.length < PAGE_SIZE) {
-        break;
-      }
-    }
-    entries.push(...dayEntries);
+      )).map(toView),
+    );
   }
 
   return { checked: entries.length, violations: timeEntryViolations(entries, calendar) };
+}
+
+/**
+ * Every item of a paged listing, driven by the page count the backend reports.
+ *
+ * `totalPages`, not "stop at a short page under some bound". A loop that stops at
+ * an arbitrary bound after full pages returns a truncated list as if it were the
+ * whole thing, and an audit that read part of a day would pass on the strength of
+ * the entries it happened to see. The bound here is a guard against a backend
+ * whose page count never converges — and hitting it throws rather than returning.
+ */
+export async function readAllPages<T>(
+  description: string,
+  fetchPage: (page: number) => Promise<{ items?: T[]; totalPages?: number }>,
+  maxPages = 1_000,
+): Promise<T[]> {
+  const all: T[] = [];
+  for (let page = 0; page < maxPages; page += 1) {
+    const batch = await call(`${description} (page ${page})`, () => fetchPage(page));
+    all.push(...(batch.items ?? []));
+    if (page + 1 >= (batch.totalPages ?? 0)) {
+      return all;
+    }
+  }
+  throw new Error(
+    `${description}: still more pages after ${maxPages} — refusing to report a partial result as complete`,
+  );
 }
 
 /** One listed entry, narrowed to the fields the window checks read. */

@@ -1,6 +1,7 @@
 import {
   auditInvoiceViews,
   laborSpanViolations,
+  readAllPages,
   timeEntryViolations,
   type InvoiceView,
   type LaborEntryView,
@@ -255,5 +256,44 @@ describe('laborSpanViolations', () => {
       calendar,
     );
     expect(violation.reason).toMatch(/ends before it starts/);
+  });
+});
+
+describe('readAllPages', () => {
+  const pages = (sizes: number[]) => async (page: number) => ({
+    items: Array.from({ length: sizes[page] ?? 0 }, (_, index) => `p${page}-${index}`),
+    totalPages: sizes.length,
+  });
+
+  it('reads every page the backend reports, not just the first', async () => {
+    // Three full pages: a "stop at a short page" loop would have read all three too,
+    // so this pins the page count as the exit, not the page length.
+    const items = await readAllPages('listing', pages([100, 100, 100]));
+
+    expect(items).toHaveLength(300);
+    expect(items[299]).toBe('p2-99');
+  });
+
+  it('stops after the first page when that is all there is', async () => {
+    const items = await readAllPages('listing', pages([3]));
+
+    expect(items).toEqual(['p0-0', 'p0-1', 'p0-2']);
+  });
+
+  it('returns an empty list for an empty result rather than looping', async () => {
+    const fetchPage = jest.fn(async () => ({ items: [] as string[], totalPages: 0 }));
+
+    expect(await readAllPages('listing', fetchPage)).toEqual([]);
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws at the bound instead of reporting a partial result as complete', async () => {
+    // A backend whose page count never converges. The old loop returned what it had
+    // at the bound, and an audit that read part of a day passed on it.
+    const endless = async (page: number) => ({ items: [`p${page}`], totalPages: page + 2 });
+
+    await expect(readAllPages('listing', endless, 5)).rejects.toThrow(
+      /still more pages after 5 — refusing to report a partial result as complete/,
+    );
   });
 });
