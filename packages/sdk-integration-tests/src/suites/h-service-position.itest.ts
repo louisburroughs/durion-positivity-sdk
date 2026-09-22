@@ -126,7 +126,15 @@ describe('Suite H — service position and technician assignment', () => {
 
     const unit = await call('createMobileUnit', () =>
       admin.location.mobileUnitApi.createMobileUnit({
-        mobileUnitRequest: { name: `Itest unit ${context.runId}`, baseLocationId: siteId },
+        // ACTIVE, said out loud. `MobileUnitServiceImpl.normalizeStatus` reads a
+        // missing status as INACTIVE, and an INACTIVE unit is refused a workorder
+        // with 422 SERVICE_POSITION_INACTIVE — so a unit created the obvious way
+        // cannot do the one thing this suite creates it for.
+        mobileUnitRequest: {
+          name: `Itest unit ${context.runId}`,
+          baseLocationId: siteId,
+          status: 'ACTIVE',
+        },
       }),
     );
     mobileUnitId = unit.id;

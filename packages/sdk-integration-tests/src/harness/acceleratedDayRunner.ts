@@ -385,13 +385,24 @@ export class AcceleratedDayRunner {
     const shiftClosedAt = await this.closeShift(report, schedule);
 
     // MAINTENANCE, on the due virtual day of the run.
+    //
+    // Recorded rather than thrown, for the reason the appointment phases are. A
+    // weekly count the manager cannot approve is a bad week, not the end of the
+    // year — and left fatal it was exactly that: `approveCycleCountAdjustment`
+    // answered 403 on virtual day 7 and ended a run that had six good days and
+    // twenty-two workorders behind it (durion-positivity-backend#2149).
+    //
+    // `report.cycleCount` says the count was *done*, so it stays false when the
+    // attempt failed; the failure itself is on the report and fails Z2 at the end.
     if (dayNumber % 7 === 0) {
-      await this.deps.maintenance.cycleCount(shiftClosedAt);
-      report.cycleCount = true;
+      report.cycleCount = await this.attempt(report, 'the weekly cycle count', () =>
+        this.deps.maintenance.cycleCount(shiftClosedAt),
+      );
     }
     if (dayNumber % 30 === 0) {
-      await this.deps.maintenance.restock(shiftClosedAt);
-      report.restock = true;
+      report.restock = await this.attempt(report, 'the monthly restock', () =>
+        this.deps.maintenance.restock(shiftClosedAt),
+      );
     }
 
     // AFTER HOURS. Mobile units keep working once the bays have shut, and only now —
@@ -481,6 +492,26 @@ export class AcceleratedDayRunner {
     }
     await this.deps.shift.approveTime(closedAt);
     return closedAt;
+  }
+
+  /**
+   * Runs a phase that returns nothing, and says whether it got through.
+   *
+   * The counterpart of `guard` for the steps whose result is "it happened" rather
+   * than a count. Same rule: a `ClockConvergedError` is the end of the year and
+   * is re-thrown; anything else is the day's problem, not the run's.
+   */
+  private async attempt(report: DayReport, what: string, run: () => Promise<void>): Promise<boolean> {
+    try {
+      await run();
+      return true;
+    } catch (error) {
+      if (error instanceof ClockConvergedError) {
+        throw error;
+      }
+      report.failures.push(`${what} failed: ${error instanceof Error ? error.message : String(error)}`);
+      return false;
+    }
   }
 
   /**

@@ -175,6 +175,8 @@ const harness = (options: {
   convertFails?: Error;
   /** Makes the shift port's clockIn throw, as a refused startWorkSession does. */
   clockInFails?: Error;
+  /** Makes the weekly cycle count throw, as a refused approval does. */
+  cycleCountFails?: Error;
   /**
    * Virtual minutes each clock read costs. Free reads hide a whole class of defect: a
    * loop that re-reads at entry can then never find the bound already past.
@@ -240,6 +242,9 @@ const harness = (options: {
       cycleCount: async (at: Date) => {
         calls.push('cycleCount');
         at_.cycleCount = at;
+        if (options.cycleCountFails) {
+          throw options.cycleCountFails;
+        }
       },
       restock: async (at: Date) => {
         calls.push('restock');
@@ -1355,6 +1360,33 @@ describe('AcceleratedDayRunner — which phase may end a year', () => {
 
     expect(report.appointmentsBooked).toBe(2);
     expect(report.failures.some((line) => line.includes('failed after 2 succeeded'))).toBe(true);
+  });
+
+  it('reports a refused cycle count and finishes the day, rather than ending the year', async () => {
+    // Virtual day 7 is a counting day, and a 403 on the approval there ended a run
+    // that had six good days and twenty-two workorders behind it.
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      cycleCountFails: new Error('approveCycleCountAdjustment failed: HTTP 403'),
+    });
+
+    const report = await runner.runDay(7);
+
+    expect(report.failures.some((line) => line.includes('the weekly cycle count failed'))).toBe(true);
+    expect(report.failures.some((line) => line.includes('403'))).toBe(true);
+    // Attempted, not done: the flag says the count happened, and it did not.
+    expect(report.cycleCount).toBe(false);
+    expect(report.workordersCompleted).toBeGreaterThan(0);
+  });
+
+  it('marks the cycle count done when it succeeds', async () => {
+    const { runner } = harness({ startIso: '2025-11-03T08:00:00Z', stepMinutes: 30 });
+
+    const report = await runner.runDay(7);
+
+    expect(report.cycleCount).toBe(true);
+    expect(report.failures.filter((line) => line.includes('cycle count'))).toEqual([]);
   });
 
   it('still ends the day when the shift cannot be opened, because that is not a day', async () => {

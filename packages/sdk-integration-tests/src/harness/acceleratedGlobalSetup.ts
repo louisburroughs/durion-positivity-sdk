@@ -145,11 +145,32 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   // present by asking whether an ACTIVE staffing assignment covers the booked
   // date, and one written in wall time covers nothing in this backend's virtual
   // year (durion-positivity-backend#2140).
+  //
+  // The people come from the *locations*, not from the reference cache. The cache
+  // holds whoever the seeder's bootstrap knows, and on a shared alpha those are
+  // not the people the sites' staffing assignments belong to: this pass reported
+  // nothing to do for three runs straight while the backend answered "3 ACTIVE
+  // technician staffing assignments exist at this location, none effective on
+  // 2025-09-18". Asking the location who is assigned there is asking the same
+  // question the presence check asks.
   const { createPeopleClient } = await import('@durion-sdk/people');
+  const people = createPeopleClient(auth.buildSdkConfig('people'));
+  const { createLocationClient } = await import('@durion-sdk/location');
+  const staffed = await staffedPeople(
+    createLocationClient(auth.buildSdkConfig('location')),
+    people,
+    everyEmployee(refs),
+  );
   const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
-    new AcceleratedStaffingWindows(
-      createStaffingWindowPort(createPeopleClient(auth.buildSdkConfig('people'))),
-    ).run(everyEmployee(refs), clock.virtualStart, virtualEnd),
+    new AcceleratedStaffingWindows(createStaffingWindowPort(people)).run(
+      staffed,
+      clock.virtualStart,
+      virtualEnd,
+    ),
+  );
+  console.log(
+    `[accel] staffing windows: ${staffed.length} person(s) examined, ${backdated.length} moved, ` +
+      `${blocked.length} not moved, ${failed.length} refused, ${unreadable.length} unread`,
   );
   for (const line of backdated) {
     console.log(`[accel] staffing window back-dated: ${line}`);
@@ -415,6 +436,57 @@ async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
     throw new Error(`[accel] global setup failed during ${name}: ${message}${await describeResponse(error)}`);
   }
 }
+
+/**
+ * Everyone with a staffing assignment at a location this run will touch, plus the
+ * seeded employees.
+ *
+ * Both, because neither alone is right: the reference cache knows the people the
+ * fixtures created and nothing about whoever else the sites carry, while people
+ * availability knows exactly who the presence check will look for and nothing
+ * about a seeded employee not yet assigned anywhere.
+ *
+ * A location whose availability cannot be read is skipped rather than fatal — the
+ * pass still covers the rest, and the run reports what it examined.
+ */
+async function staffedPeople(
+  location: { locationApi: { listLocations(): Promise<Array<{ id?: string; code?: string }>> } },
+  people: {
+    peopleAvailabilityApi: {
+      listPeopleAvailability(request: { locationId: string }): Promise<Array<{ personId?: string }>>;
+    };
+  },
+  seeded: readonly string[],
+): Promise<string[]> {
+  const ids = new Set<string>(seeded);
+  let locations: Array<{ id?: string; code?: string }> = [];
+  try {
+    locations = await location.locationApi.listLocations();
+  } catch (error) {
+    console.log(`[accel] staffing windows: could not list locations (${describe(error)})`);
+    return [...ids];
+  }
+
+  for (const site of locations) {
+    if (!site.id) {
+      continue;
+    }
+    try {
+      for (const view of await people.peopleAvailabilityApi.listPeopleAvailability({ locationId: site.id })) {
+        if (view.personId) {
+          ids.add(view.personId);
+        }
+      }
+    } catch (error) {
+      console.log(
+        `[accel] staffing windows: no availability for ${site.code ?? site.id} (${describe(error)})`,
+      );
+    }
+  }
+  return [...ids];
+}
+
+const describe = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
  * Every seeded employee, once each.
