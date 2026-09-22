@@ -463,14 +463,19 @@ export async function createAsnForPo(
  * `travelBufferPolicyId` that exists, at least one service capability and at least
  * one coverage rule — which is what `status: 'ACTIVE'` on its own ran into.
  *
- * So the configuration is copied from a unit the environment already runs ACTIVE,
- * preferring one based at the same site: those values are valid by construction,
- * and inventing a policy id or a service area would be a guess the backend has no
- * reason to accept. The unit itself is still the suite's own, so its assertions do
- * not depend on the state of shared work.
+ * So the configuration is copied from a unit the environment already runs ACTIVE
+ * at the *same site*: those values are valid by construction, and inventing a
+ * policy id or a service area would be a guess the backend has no reason to accept.
+ * The unit itself is still the suite's own, so its assertions do not depend on the
+ * state of shared work.
  *
- * Fails by name when there is nothing to copy from, because that is an environment
- * with no working mobile units at all, and a suite that quietly skipped would hide it.
+ * Same site only, not "same site first". Coverage rules are geographic: a unit
+ * created with another site's service areas is accepted as ACTIVE and then is not
+ * eligible for this site's work, so the suite would pass creation and fail later
+ * with nothing pointing back here.
+ *
+ * Fails by name when the site has nothing to copy from, because that is a site with
+ * no working mobile unit, and a suite that quietly skipped would hide it.
  */
 export async function createActiveMobileUnit(
   as: DomainClients,
@@ -501,14 +506,9 @@ export async function createActiveMobileUnit(
     }
   }
 
-  // Same site first: coverage is geographic, and a template from the other side of
-  // the country would give this unit service areas it has no business serving.
-  const ordered = [
-    ...actives.filter((unit) => unit.baseLocationId === siteId),
-    ...actives.filter((unit) => unit.baseLocationId !== siteId),
-  ];
+  const sameSite = actives.filter((unit) => unit.baseLocationId === siteId);
 
-  for (const template of ordered) {
+  for (const template of sameSite) {
     const rules = await call(`listCoverageRules ${template.id}`, () =>
       api.listCoverageRules({ id: template.id }),
     );
@@ -542,9 +542,9 @@ export async function createActiveMobileUnit(
   }
 
   throw new Error(
-    `no ACTIVE mobile unit with a travel buffer policy, capabilities and coverage rules exists ` +
-      `on this environment (${actives.length} ACTIVE unit(s) found, none with coverage) — there is ` +
-      'no valid configuration to copy, so a unit that can take a workorder cannot be created. ' +
-      'Activate a fully configured mobile unit on this environment.',
+    `no ACTIVE mobile unit based at site ${siteId} has a travel buffer policy, capabilities and ` +
+      `coverage rules to copy (${sameSite.length} ACTIVE unit(s) at this site, ${actives.length} ` +
+      'across the environment). Another site\'s configuration would create a unit whose coverage ' +
+      'does not reach this site. Activate a fully configured mobile unit based here.',
   );
 }

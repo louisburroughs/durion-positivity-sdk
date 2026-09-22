@@ -18,6 +18,7 @@ import { AcceleratedRoleWindows, createRoleWindowPort } from './acceleratedRoleW
 import {
   AcceleratedStaffingWindows,
   createStaffingWindowPort,
+  samplesAcross,
 } from './acceleratedStaffingWindows';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
@@ -160,6 +161,7 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
     createLocationClient(auth.buildSdkConfig('location')),
     people,
     everyEmployee(refs),
+    samplesAcross(clock.virtualStart, virtualEnd),
   );
   const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
     new AcceleratedStaffingWindows(createStaffingWindowPort(people)).run(
@@ -453,10 +455,11 @@ async function staffedPeople(
   location: { locationApi: { listLocations(): Promise<Array<{ id?: string; code?: string }>> } },
   people: {
     peopleAvailabilityApi: {
-      listPeopleAvailability(request: { locationId: string }): Promise<Array<{ personId?: string }>>;
+      listPeopleAvailability(request: { locationId: string; date?: Date }): Promise<Array<{ personId?: string }>>;
     };
   },
   seeded: readonly string[],
+  dates: readonly Date[],
 ): Promise<string[]> {
   const ids = new Set<string>(seeded);
   let locations: Array<{ id?: string; code?: string }> = [];
@@ -471,22 +474,34 @@ async function staffedPeople(
     if (!site.id) {
       continue;
     }
-    try {
-      for (const view of await people.peopleAvailabilityApi.listPeopleAvailability({ locationId: site.id })) {
-        if (view.personId) {
-          ids.add(view.personId);
+    // Several dates, not one. The endpoint answers for a single date and defaults
+    // to today, which misses anyone whose assignment had lapsed before today; the
+    // run's first virtual day instead misses anyone assigned in wall time, whose
+    // assignment starts about now. Either choice drops exactly one of the two
+    // populations this pass exists to repair, so it asks across the run and today.
+    for (const date of dates) {
+      try {
+        for (const view of await people.peopleAvailabilityApi.listPeopleAvailability({
+          locationId: site.id,
+          date,
+        })) {
+          if (view.personId) {
+            ids.add(view.personId);
+          }
         }
+      } catch (error) {
+        console.log(
+          `[accel] staffing windows: no availability for ${site.code ?? site.id} on ` +
+            `${date.toISOString().slice(0, 10)} (${describe(error)})`,
+        );
       }
-    } catch (error) {
-      console.log(
-        `[accel] staffing windows: no availability for ${site.code ?? site.id} (${describe(error)})`,
-      );
     }
   }
   return [...ids];
 }
 
 const describe = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
 
 /**
  * Every seeded employee, once each.

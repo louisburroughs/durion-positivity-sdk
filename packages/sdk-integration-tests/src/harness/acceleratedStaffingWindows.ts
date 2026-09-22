@@ -94,6 +94,22 @@ export interface StaffingPlan {
   blocked: string[];
 }
 
+/**
+ * The dates the staffing pass asks availability about: the run's first and last
+ * virtual days, three points between, and the wall-clock today.
+ *
+ * Sampled rather than exhaustive — a year of dates is a year of calls per site —
+ * and chosen so an assignment covering any sizeable stretch of the run, or live in
+ * wall time, is seen at least once. One lying wholly between two samples is still
+ * missed, and the setup log says how many people were examined, which is where
+ * that would show.
+ */
+export function samplesAcross(virtualStart: Date, virtualEnd: Date, now = new Date()): Date[] {
+  const span = virtualEnd.getTime() - virtualStart.getTime();
+  const points = [0, 0.25, 0.5, 0.75, 1].map((fraction) => new Date(virtualStart.getTime() + span * fraction));
+  return [...points, now];
+}
+
 /** The UTC date `days` after `at`, at midnight — the far edge the run has to be covered to. */
 export function ceilingFor(virtualEnd: Date, days = FLOOR_MARGIN_DAYS): Date {
   const ceiling = new Date(virtualEnd.getTime() + days * 86_400_000);

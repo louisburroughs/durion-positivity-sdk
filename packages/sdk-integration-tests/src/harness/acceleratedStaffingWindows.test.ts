@@ -3,6 +3,7 @@ import {
   floorFor,
   iso,
   planStaffingBackdates,
+  samplesAcross,
   type StaffingBackdate,
   type StaffingWindow,
   type StaffingWindowPort,
@@ -350,5 +351,24 @@ describe('AcceleratedStaffingWindows', () => {
     expect(unreadable).toEqual(['person-1: people answered 500']);
     expect(written.map((plan) => plan.assignmentId)).toEqual(['sa-2']);
     expect(backdated).toHaveLength(1);
+  });
+});
+
+describe('samplesAcross', () => {
+  it('asks about the run\'s ends, three points between, and today', () => {
+    const now = new Date('2026-09-22T12:00:00.000Z');
+    const dates = samplesAcross(
+      new Date('2025-09-01T00:00:00.000Z'),
+      new Date('2026-09-01T00:00:00.000Z'),
+      now,
+    ).map(iso);
+
+    // Both ends of the run, because a single date misses one of the two groups the
+    // pass repairs: lapsed before today, or assigned in wall time and starting now.
+    expect(dates[0]).toBe('2025-09-01');
+    expect(dates[4]).toBe('2026-09-01');
+    expect(dates[2]).toBe('2026-03-02');
+    expect(dates[5]).toBe('2026-09-22');
+    expect(dates).toHaveLength(6);
   });
 });
