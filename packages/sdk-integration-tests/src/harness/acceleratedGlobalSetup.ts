@@ -147,38 +147,6 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   // date, and one written in wall time covers nothing in this backend's virtual
   // year (durion-positivity-backend#2140).
   //
-  // Every employee, not the reference cache. The cache holds whoever the seeder's
-  // bootstrap knows, and on a shared alpha those are not the people the sites'
-  // staffing assignments belong to: this pass reported nothing to do for three
-  // runs straight while the backend answered "3 ACTIVE technician staffing
-  // assignments exist at this location, none effective on 2025-09-18".
-  const { createPeopleClient } = await import('@durion-sdk/people');
-  const people = createPeopleClient(auth.buildSdkConfig('people'));
-  const staffed = await staffedPeople(people, everyEmployee(refs));
-  const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
-    new AcceleratedStaffingWindows(createStaffingWindowPort(people)).run(
-      staffed,
-      clock.virtualStart,
-      virtualEnd,
-    ),
-  );
-  console.log(
-    `[accel] staffing windows: ${staffed.length} person(s) examined, ${backdated.length} moved, ` +
-      `${blocked.length} not moved, ${failed.length} refused, ${unreadable.length} unread`,
-  );
-  for (const line of backdated) {
-    console.log(`[accel] staffing window back-dated: ${line}`);
-  }
-  for (const line of unreadable) {
-    console.log(`[accel] staffing window unread: ${line}`);
-  }
-  for (const line of blocked) {
-    console.log(`[accel] staffing window not moved: ${line}`);
-  }
-  for (const line of failed) {
-    console.log(`[accel] staffing window refused: ${line}`);
-  }
-
   if (personaBootstrap.applies) {
     const { links, limitations } = await stage('persona person-links', () =>
       personaBootstrap.linkPersons(refs.employees),
@@ -210,6 +178,48 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
         'told the hours, so its own scheduling refusals may disagree with them',
     );
   }
+
+  // Every employee, not the reference cache. The cache holds whoever the seeder's
+  // bootstrap knows, and on a shared alpha those are not the people the sites'
+  // staffing assignments belong to: this pass reported nothing to do for three
+  // runs straight while the backend answered "3 ACTIVE technician staffing
+  // assignments exist at this location, none effective on 2025-09-18".
+  const { createPeopleClient } = await import('@durion-sdk/people');
+  const people = createPeopleClient(auth.buildSdkConfig('people'));
+  const staffed = await staffedPeople(people, everyEmployee(refs));
+  //
+  // Every employee is *read*, but only assignments at the sites this run owns are
+  // *written*. Reading exhaustively is what finds the right people; widening every
+  // assignment they hold would reach sites this run never touches and rewrite their
+  // staffing history on a shared environment. The sites it owns are the ones it
+  // just published hours to — or, with publishing off, the one site it runs at.
+  const ownedSites = new Set(calendarPublishedTo.length > 0 ? calendarPublishedTo : [refs.locationId]);
+  const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
+    new AcceleratedStaffingWindows(createStaffingWindowPort(people)).run(
+      staffed,
+      clock.virtualStart,
+      virtualEnd,
+      ownedSites,
+    ),
+  );
+  console.log(
+    `[accel] staffing windows: ${staffed.length} person(s) examined at ${ownedSites.size} site(s), ` +
+      `${backdated.length} moved, ${blocked.length} not moved, ${failed.length} refused, ` +
+      `${unreadable.length} unread`,
+  );
+  for (const line of backdated) {
+    console.log(`[accel] staffing window back-dated: ${line}`);
+  }
+  for (const line of unreadable) {
+    console.log(`[accel] staffing window unread: ${line}`);
+  }
+  for (const line of blocked) {
+    console.log(`[accel] staffing window not moved: ${line}`);
+  }
+  for (const line of failed) {
+    console.log(`[accel] staffing window refused: ${line}`);
+  }
+
 
   // Feasibility, measured. The warm-up figure is deliberately pessimistic: it is
   // the first lifecycle of the run, against cold caches and cold replicas.

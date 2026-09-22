@@ -335,6 +335,27 @@ describe('AcceleratedStaffingWindows', () => {
     expect(blocked).toHaveLength(1);
   });
 
+  it('writes only at the sites it is given, however many a person is assigned to', async () => {
+    // Every employee is read so the right people are found, but on a shared
+    // environment only the run's own sites may be rewritten. A person also staffed
+    // somewhere the run never touches keeps that assignment exactly as it was.
+    const { port, written } = fakePort({
+      'person-1': [
+        assignment({ assignmentId: 'sa-here', locationId: 'loc-1' }),
+        assignment({ assignmentId: 'sa-elsewhere', locationId: 'loc-2' }),
+      ],
+    });
+
+    await new AcceleratedStaffingWindows(port).run(
+      ['person-1'],
+      VIRTUAL_START,
+      VIRTUAL_END,
+      new Set(['loc-1']),
+    );
+
+    expect(written.map((plan) => plan.assignmentId)).toEqual(['sa-here']);
+  });
+
   it('reports a person it cannot read and carries on with the rest', async () => {
     const { port, written } = fakePort({
       'person-1': new Error('people answered 500'),
