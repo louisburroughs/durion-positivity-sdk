@@ -18,8 +18,8 @@ import { AcceleratedRoleWindows, createRoleWindowPort } from './acceleratedRoleW
 import {
   AcceleratedStaffingWindows,
   createStaffingWindowPort,
-  samplesAcross,
 } from './acceleratedStaffingWindows';
+import { readAllPages } from './acceleratedAudit';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
@@ -147,22 +147,14 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   // date, and one written in wall time covers nothing in this backend's virtual
   // year (durion-positivity-backend#2140).
   //
-  // The people come from the *locations*, not from the reference cache. The cache
-  // holds whoever the seeder's bootstrap knows, and on a shared alpha those are
-  // not the people the sites' staffing assignments belong to: this pass reported
-  // nothing to do for three runs straight while the backend answered "3 ACTIVE
-  // technician staffing assignments exist at this location, none effective on
-  // 2025-09-18". Asking the location who is assigned there is asking the same
-  // question the presence check asks.
+  // Every employee, not the reference cache. The cache holds whoever the seeder's
+  // bootstrap knows, and on a shared alpha those are not the people the sites'
+  // staffing assignments belong to: this pass reported nothing to do for three
+  // runs straight while the backend answered "3 ACTIVE technician staffing
+  // assignments exist at this location, none effective on 2025-09-18".
   const { createPeopleClient } = await import('@durion-sdk/people');
   const people = createPeopleClient(auth.buildSdkConfig('people'));
-  const { createLocationClient } = await import('@durion-sdk/location');
-  const staffed = await staffedPeople(
-    createLocationClient(auth.buildSdkConfig('location')),
-    people,
-    everyEmployee(refs),
-    samplesAcross(clock.virtualStart, virtualEnd),
-  );
+  const staffed = await staffedPeople(people, everyEmployee(refs));
   const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
     new AcceleratedStaffingWindows(createStaffingWindowPort(people)).run(
       staffed,
@@ -440,62 +432,42 @@ async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
 }
 
 /**
- * Everyone with a staffing assignment at a location this run will touch, plus the
- * seeded employees.
+ * Every employee in the tenant, plus the seeded ones.
  *
- * Both, because neither alone is right: the reference cache knows the people the
- * fixtures created and nothing about whoever else the sites carry, while people
- * availability knows exactly who the presence check will look for and nothing
- * about a seeded employee not yet assigned anywhere.
+ * Read exhaustively, because every narrower read missed someone. The reference
+ * cache knows only the fixtures' people. People availability answers for a
+ * single date, so any date chosen drops a group — the ones whose assignments had
+ * lapsed by then, or the ones assigned later — and sampling several dates still
+ * misses an assignment lying wholly between two samples. `searchEmployees` with
+ * no query "lists every employee" (EmployeeService), and asking each of them for
+ * their assignments is the only read that cannot leave a covered-by-luck gap.
  *
- * A location whose availability cannot be read is skipped rather than fatal — the
- * pass still covers the rest, and the run reports what it examined.
+ * A failed listing is reported and falls back to the seeded employees rather
+ * than failing setup; the pass's examined count says which happened.
  */
 async function staffedPeople(
-  location: { locationApi: { listLocations(): Promise<Array<{ id?: string; code?: string }>> } },
   people: {
-    peopleAvailabilityApi: {
-      listPeopleAvailability(request: { locationId: string; date?: Date }): Promise<Array<{ personId?: string }>>;
+    employeeApi: {
+      searchEmployees(request: { page: number; size: number }): Promise<{
+        items?: Array<{ personId?: string }>;
+        totalPages?: number;
+      }>;
     };
   },
   seeded: readonly string[],
-  dates: readonly Date[],
 ): Promise<string[]> {
   const ids = new Set<string>(seeded);
-  let locations: Array<{ id?: string; code?: string }> = [];
   try {
-    locations = await location.locationApi.listLocations();
-  } catch (error) {
-    console.log(`[accel] staffing windows: could not list locations (${describe(error)})`);
-    return [...ids];
-  }
-
-  for (const site of locations) {
-    if (!site.id) {
-      continue;
-    }
-    // Several dates, not one. The endpoint answers for a single date and defaults
-    // to today, which misses anyone whose assignment had lapsed before today; the
-    // run's first virtual day instead misses anyone assigned in wall time, whose
-    // assignment starts about now. Either choice drops exactly one of the two
-    // populations this pass exists to repair, so it asks across the run and today.
-    for (const date of dates) {
-      try {
-        for (const view of await people.peopleAvailabilityApi.listPeopleAvailability({
-          locationId: site.id,
-          date,
-        })) {
-          if (view.personId) {
-            ids.add(view.personId);
-          }
-        }
-      } catch (error) {
-        console.log(
-          `[accel] staffing windows: no availability for ${site.code ?? site.id} on ` +
-            `${date.toISOString().slice(0, 10)} (${describe(error)})`,
-        );
+    const employees = await readAllPages('searchEmployees', (page) =>
+      people.employeeApi.searchEmployees({ page, size: 100 }),
+    );
+    for (const employee of employees) {
+      if (employee.personId) {
+        ids.add(employee.personId);
       }
     }
+  } catch (error) {
+    console.log(`[accel] staffing windows: could not list employees (${describe(error)}); seeded only`);
   }
   return [...ids];
 }
