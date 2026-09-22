@@ -154,11 +154,19 @@ export function planStaffingBackdates(
 
   for (const group of groups.values()) {
     const rows = [...group].sort((a, b) => a.effectiveFrom.getTime() - b.effectiveFrom.getTime());
-    // The end already applied to the previous row, so this one starts after it.
-    // `Infinity` for an open-ended row, which covers everything after it — read
-    // as "no constraint", it let a duplicate open row past the overlap check.
-    let previousEnd: number | null = null;
+    // The furthest end applied so far, so the next row starts after it.
+    //
+    // A running *maximum*, not the last row's end. Assigning the current row's
+    // end unconditionally shrinks the bound whenever a row ends earlier than the
+    // one before it — and sets it to "unbounded" for an open-ended row — which
+    // lets the row after that slip past the overlap guard and be widened into a
+    // window that is already occupied.
+    //
+    // Infinity for an open-ended row, which covers everything after it; -Infinity
+    // before the first row, which nothing can overlap.
+    let previousEnd = Number.NEGATIVE_INFINITY;
     let previousId: string | null = null;
+    const endOf = (value: number | null): number => value ?? Number.POSITIVE_INFINITY;
 
     for (const [index, row] of rows.entries()) {
       const from = row.effectiveFrom.getTime();
@@ -167,19 +175,20 @@ export function planStaffingBackdates(
 
       // Two stored ACTIVE rows that already overlap are a state the backend's own
       // guard should have refused. Nothing here can widen either safely.
-      if (previousEnd !== null && from <= previousEnd) {
+      if (from <= previousEnd) {
         blocked.push(
           `${row.personId} ${row.role} at ${row.locationId}: assignment ${row.assignmentId} starts ` +
             `${iso(row.effectiveFrom)}, on or before ${previousId} ends — they already overlap`,
         );
-        previousEnd = to;
+        previousEnd = Math.max(previousEnd, endOf(to));
         previousId = row.assignmentId;
         continue;
       }
 
       // Back to the floor, but never past the row before it, and never later than
       // where it already starts.
-      const lowerBound = previousEnd === null ? floor.getTime() : previousEnd + DAY_MS;
+      const lowerBound =
+        previousEnd === Number.NEGATIVE_INFINITY ? floor.getTime() : previousEnd + DAY_MS;
       const effectiveFrom = new Date(Math.min(from, Math.max(lowerBound, floor.getTime())));
 
       // Only the group's last row reaches for the ceiling: extending an earlier
@@ -189,7 +198,7 @@ export function planStaffingBackdates(
       // do. Left exactly as it is — including when it is the group's last row,
       // where the temptation to stretch it to the ceiling is strongest.
       if (to !== null && to <= floor.getTime()) {
-        previousEnd = to;
+        previousEnd = Math.max(previousEnd, to);
         previousId = row.assignmentId;
         continue;
       }
@@ -197,7 +206,7 @@ export function planStaffingBackdates(
       const effectiveTo =
         to === null ? null : isLast && to < ceiling.getTime() ? ceiling : new Date(to);
 
-      previousEnd = effectiveTo?.getTime() ?? Number.POSITIVE_INFINITY;
+      previousEnd = Math.max(previousEnd, endOf(effectiveTo?.getTime() ?? null));
       previousId = row.assignmentId;
 
       const movedStart = effectiveFrom.getTime() !== from;

@@ -96,9 +96,9 @@ describe('planStaffingBackdates', () => {
     });
     const { plans, blocked } = planStaffingBackdates([earlier, assignment()], VIRTUAL_START, VIRTUAL_END);
 
-    // Both move, and the two results do not collide: `earlier` keeps its end
-    // because a later row follows it, and `sa-1` starts the day after that end
-    // and runs to the ceiling.
+    // Only `sa-1` moves. `earlier` already starts below the floor and a later row
+    // follows it, so it has nothing to reach for at either end; `sa-1` starts the
+    // day after it closes and carries the run from there.
     const byId = Object.fromEntries(plans.map((plan) => [plan.assignmentId, plan]));
     expect(Object.keys(byId).sort()).toEqual(['sa-1']);
     expect(iso(byId['sa-1'].effectiveFrom)).toBe('2025-12-01');
@@ -116,6 +116,40 @@ describe('planStaffingBackdates', () => {
 
     expect(plans).toHaveLength(1);
     expect(iso(plans[0].effectiveFrom)).toBe('2025-08-15');
+  });
+
+  it('keeps the furthest end when a key already overlaps, so later rows stay blocked', () => {
+    // The bound has to be a running maximum. Tracking the last row's end instead
+    // lets a short row after a long one lower the guard, and the row after that
+    // is then widened into a window that is already occupied.
+    const long = assignment({
+      assignmentId: 'sa-long',
+      effectiveFrom: new Date('2025-01-01T00:00:00.000Z'),
+      effectiveTo: new Date('2026-06-30T00:00:00.000Z'),
+    });
+    const overlapsLong = assignment({
+      assignmentId: 'sa-short',
+      effectiveFrom: new Date('2025-02-01T00:00:00.000Z'),
+      effectiveTo: new Date('2025-02-28T00:00:00.000Z'),
+    });
+    const after = assignment({
+      assignmentId: 'sa-after',
+      effectiveFrom: new Date('2025-03-01T00:00:00.000Z'),
+      effectiveTo: null,
+    });
+
+    const { plans, blocked } = planStaffingBackdates(
+      [long, overlapsLong, after],
+      VIRTUAL_START,
+      VIRTUAL_END,
+    );
+
+    // sa-short overlaps sa-long, and sa-after starts inside sa-long as well —
+    // both are named, and nothing is written into the occupied window.
+    expect(blocked).toHaveLength(2);
+    expect(blocked.join(' ')).toContain('sa-short');
+    expect(blocked.join(' ')).toContain('sa-after');
+    expect(plans.map((plan) => plan.assignmentId)).not.toContain('sa-after');
   });
 
   it('reports a duplicate open row rather than widening into it', () => {
