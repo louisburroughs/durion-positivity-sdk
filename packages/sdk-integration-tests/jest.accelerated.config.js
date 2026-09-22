@@ -19,6 +19,21 @@ const path = require('path');
  */
 const config = {
   preset: 'ts-jest',
+  // ts-jest warns TS151002 on every run: a Node16/NodeNext module kind is only
+  // "supported" with isolatedModules, which the root tsconfig does not set.
+  //
+  // Setting it is the fix the message asks for, and it breaks these tests.
+  // Without isolatedModules, ts-jest downlevels `await import('@durion-sdk/...')`
+  // to a require; with it, the dynamic import survives into Jest's CommonJS
+  // environment, where it fails — and sdk-003/sdk-004 swallow that failure and
+  // report the module as missing. 66 tests turn red for a warning.
+  //
+  // So the code is ignored, which is the other remedy the message itself names.
+  // Revisit when the suites can load the transport package without a dynamic
+  // import, or when Jest runs them as ESM.
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', { diagnostics: { ignoreCodes: [151002] } }],
+  },
   testEnvironment: 'node',
   rootDir: path.join(__dirname, '..', '..'),
   roots: ['<rootDir>/packages/sdk-integration-tests/src'],
