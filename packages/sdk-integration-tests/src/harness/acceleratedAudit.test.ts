@@ -1,12 +1,12 @@
 import {
   auditInvoiceViews,
   laborSpanViolations,
-  readAllPages,
   timeEntryViolations,
   type InvoiceView,
   type LaborEntryView,
   type TimeEntryView,
 } from './acceleratedAudit';
+import { readAllPages } from './http';
 import { ShopCalendar, type CalendarSpec } from './shopCalendar';
 
 const spec = (overrides: Partial<CalendarSpec> = {}): CalendarSpec => ({

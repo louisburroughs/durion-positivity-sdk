@@ -19,7 +19,7 @@ import {
   AcceleratedStaffingWindows,
   createStaffingWindowPort,
 } from './acceleratedStaffingWindows';
-import { readAllPages } from './acceleratedAudit';
+import { readAllPages } from './http';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';

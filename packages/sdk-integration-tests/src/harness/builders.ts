@@ -1,6 +1,6 @@
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
-import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
+import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 
 /**
@@ -484,27 +484,20 @@ export async function createActiveMobileUnit(
 ): Promise<{ id: string; status?: string; copiedFrom: string }> {
   const api = as.location.mobileUnitApi;
 
-  const actives: Array<{
-    id: string;
-    baseLocationId?: string;
-    travelBufferPolicyId?: string;
-    serviceCapabilityCodes?: string[];
-  }> = [];
-  for (let page = 0; ; page += 1) {
-    const batch = await call(`listMobileUnits (page ${page})`, () => api.listMobileUnits({ page, size: 100 }));
-    for (const unit of batch.content ?? []) {
-      if (
-        String(unit.status).toUpperCase() === 'ACTIVE' &&
-        unit.travelBufferPolicyId &&
-        (unit.serviceCapabilityCodes ?? []).length > 0
-      ) {
-        actives.push(unit);
-      }
-    }
-    if (batch.last !== false || page + 1 >= (batch.totalPages ?? 0)) {
-      break;
-    }
-  }
+  // The shared pager, driven by the reported page count. This loop was written
+  // separately first, as `last !== false || …`, which stops after page one
+  // whenever `last` is absent regardless of how many pages the response reports —
+  // the same fault readAllPages exists to prevent, written a second time.
+  const units = await readAllPages('listMobileUnits', async (page) => {
+    const batch = await api.listMobileUnits({ page, size: 100 });
+    return { items: batch.content ?? [], totalPages: batch.totalPages };
+  });
+  const actives = units.filter(
+    (unit) =>
+      String(unit.status).toUpperCase() === 'ACTIVE' &&
+      Boolean(unit.travelBufferPolicyId) &&
+      (unit.serviceCapabilityCodes ?? []).length > 0,
+  );
 
   const sameSite = actives.filter((unit) => unit.baseLocationId === siteId);
 
