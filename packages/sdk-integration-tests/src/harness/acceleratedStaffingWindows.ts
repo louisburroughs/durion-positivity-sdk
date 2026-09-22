@@ -258,6 +258,11 @@ export class AcceleratedStaffingWindows {
     personIds: readonly string[],
     virtualStart: Date,
     virtualEnd: Date,
+    /**
+     * The sites whose assignments may be changed. Omitted, every site is in scope —
+     * which is only right when the caller has already narrowed the people to one.
+     */
+    onlyAt?: ReadonlySet<string>,
   ): Promise<{ backdated: string[]; unreadable: string[]; blocked: string[]; failed: string[] }> {
     const backdated: string[] = [];
     const unreadable: string[] = [];
@@ -273,7 +278,11 @@ export class AcceleratedStaffingWindows {
         continue;
       }
 
-      const planned = planStaffingBackdates(assignments, virtualStart, virtualEnd);
+      // Filtered before planning, not after: the planner walks a person's rows at
+      // one site in order, and a row at a site out of scope must not become a
+      // sibling it clamps against or a write it proposes.
+      const inScope = onlyAt ? assignments.filter((row) => onlyAt.has(row.locationId)) : assignments;
+      const planned = planStaffingBackdates(inScope, virtualStart, virtualEnd);
       blocked.push(...planned.blocked);
 
       for (const plan of planned.plans) {

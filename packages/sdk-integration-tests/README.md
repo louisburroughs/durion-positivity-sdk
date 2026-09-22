@@ -400,6 +400,12 @@ accelerated entry point adds:
   mechanic is present anywhere and every booking would be refused. This is the staffing twin of the role back-dating
   above; the platform declined to special-case the dates and was right to
   (durion-positivity-backend#2140).
+- **A day's optional phases cost a day, not the year.** Booking and converting
+  appointments, the weekly cycle count and the monthly restock are recorded on
+  the day's failures and the day carries on; opening the shift is still fatal,
+  because a shop that cannot staff itself is not a day. A 403 on the cycle
+  count's approval ended a run with six good days and twenty-two workorders
+  behind it before this changed (durion-positivity-backend#2149).
 - **A journal that recorded nothing is not resumed, and its runId is dropped.**
   An attempt that died before its first virtual day still created the suites'
   fixtures — a bay, a bin, vehicles — all named or seeded from its runId and none

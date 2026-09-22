@@ -12,7 +12,7 @@
  */
 import type { ShopCalendar } from './shopCalendar';
 import { utcDateKey } from './shopCalendar';
-import { call } from './http';
+import { call, readAllPages } from './http';
 import type { DomainClients } from './personas';
 import type { PositionKind } from '../runs/shopFloorPlan';
 
@@ -299,29 +299,47 @@ export async function auditTimeEntries(
 ): Promise<{ checked: number; violations: TimeEntryViolation[] }> {
   const entries: TimeEntryView[] = [];
 
+  // 100, not 200: `size` is capped at @Max(100) by TimeEntryApprovalController,
+  // and asking for more is a 400 that fails this audit rather than a page that
+  // comes back short. Paged to the end, because a busy day can exceed one page
+  // and an audit that read the first hundred entries would pass on the strength
+  // of the ones it happened to see.
+  const PAGE_SIZE = 100;
+
   for (const workDate of workDates) {
-    const page = await call(`listTimeEntries ${workDate}`, () =>
-      as.people.timeEntryApprovalAPIApi.listTimeEntries({
-        workDate: new Date(`${workDate}T00:00:00.000Z`),
-        locationId,
-        size: 200,
-      }),
+    entries.push(
+      ...(await readAllPages(`listTimeEntries ${workDate}`, (page) =>
+        as.people.timeEntryApprovalAPIApi.listTimeEntries({
+          workDate: new Date(`${workDate}T00:00:00.000Z`),
+          locationId,
+          page,
+          size: PAGE_SIZE,
+        }),
+      )).map(toView),
     );
-    // `items`, not `content`: this endpoint's paged wrapper is the repo's own
-    // PagedResponse shape rather than a Spring Page.
-    for (const entry of page.items ?? []) {
-      entries.push({
-        timeEntryId: entry.timeEntryId,
-        employeeId: entry.employeeId,
-        startAtUtc: entry.startAtUtc,
-        endAtUtc: entry.endAtUtc,
-        workDate: entry.workDate,
-        status: String(entry.status),
-      });
-    }
   }
 
   return { checked: entries.length, violations: timeEntryViolations(entries, calendar) };
+}
+
+
+/** One listed entry, narrowed to the fields the window checks read. */
+function toView(entry: {
+  timeEntryId: string;
+  employeeId?: string;
+  startAtUtc?: Date;
+  endAtUtc?: Date;
+  workDate?: Date;
+  status: unknown;
+}): TimeEntryView {
+  return {
+    timeEntryId: entry.timeEntryId,
+    employeeId: entry.employeeId,
+    startAtUtc: entry.startAtUtc,
+    endAtUtc: entry.endAtUtc,
+    workDate: entry.workDate,
+    status: String(entry.status),
+  };
 }
 
 /**

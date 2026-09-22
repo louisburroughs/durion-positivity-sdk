@@ -5,6 +5,7 @@ import {
   approveAndPromote,
   createDraftEstimate,
   createPersonAccount,
+  createActiveMobileUnit,
   createVehicle,
   seedFromRunId,
   type BuilderContext,
@@ -124,13 +125,15 @@ describe('Suite H — service position and technician assignment', () => {
     bayId = bay.id;
     console.log(`[H] created bay ${bayId} at site ${siteId}`);
 
-    const unit = await call('createMobileUnit', () =>
-      admin.location.mobileUnitApi.createMobileUnit({
-        mobileUnitRequest: { name: `Itest unit ${context.runId}`, baseLocationId: siteId },
-      }),
-    );
+    // ACTIVE, with the configuration an ACTIVE unit has to carry — see
+    // createActiveMobileUnit for why neither the bare request nor `status: 'ACTIVE'`
+    // alone produces a unit this suite can place work on.
+    const unit = await createActiveMobileUnit(admin, siteId, `Itest unit ${context.runId}`);
     mobileUnitId = unit.id;
-    console.log(`[H] created mobile unit ${mobileUnitId} (${unit.status}) based at site ${siteId}`);
+    console.log(
+      `[H] created mobile unit ${mobileUnitId} (${unit.status}) based at site ${siteId}, ` +
+        `configuration copied from ${unit.copiedFrom}`,
+    );
 
     w1 = await buildWorkorder('W1');
     w2 = await buildWorkorder('W2');

@@ -1,6 +1,6 @@
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
-import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
+import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 
 /**
@@ -451,4 +451,93 @@ export async function createAsnForPo(
     },
   );
   return requireField(asn.asnId, 'asnId');
+}
+
+/**
+ * Creates a mobile unit that can actually take a workorder.
+ *
+ * Two contracts meet here and the obvious call satisfies neither.
+ * `MobileUnitServiceImpl.normalizeStatus` reads a missing status as INACTIVE, and an
+ * INACTIVE unit is refused a workorder with 422 SERVICE_POSITION_INACTIVE. But
+ * asking for ACTIVE is refused too unless the request also carries a
+ * `travelBufferPolicyId` that exists, at least one service capability and at least
+ * one coverage rule — which is what `status: 'ACTIVE'` on its own ran into.
+ *
+ * So the configuration is copied from a unit the environment already runs ACTIVE
+ * at the *same site*: those values are valid by construction, and inventing a
+ * policy id or a service area would be a guess the backend has no reason to accept.
+ * The unit itself is still the suite's own, so its assertions do not depend on the
+ * state of shared work.
+ *
+ * Same site only, not "same site first". Coverage rules are geographic: a unit
+ * created with another site's service areas is accepted as ACTIVE and then is not
+ * eligible for this site's work, so the suite would pass creation and fail later
+ * with nothing pointing back here.
+ *
+ * Fails by name when the site has nothing to copy from, because that is a site with
+ * no working mobile unit, and a suite that quietly skipped would hide it.
+ */
+export async function createActiveMobileUnit(
+  as: DomainClients,
+  siteId: string,
+  name: string,
+): Promise<{ id: string; status?: string; copiedFrom: string }> {
+  const api = as.location.mobileUnitApi;
+
+  // The shared pager, driven by the reported page count. This loop was written
+  // separately first, as `last !== false || …`, which stops after page one
+  // whenever `last` is absent regardless of how many pages the response reports —
+  // the same fault readAllPages exists to prevent, written a second time.
+  const units = await readAllPages('listMobileUnits', async (page) => {
+    const batch = await api.listMobileUnits({ page, size: 100 });
+    return { items: batch.content ?? [], totalPages: batch.totalPages };
+  });
+  const actives = units.filter(
+    (unit) =>
+      String(unit.status).toUpperCase() === 'ACTIVE' &&
+      Boolean(unit.travelBufferPolicyId) &&
+      (unit.serviceCapabilityCodes ?? []).length > 0,
+  );
+
+  const sameSite = actives.filter((unit) => unit.baseLocationId === siteId);
+
+  for (const template of sameSite) {
+    const rules = await call(`listCoverageRules ${template.id}`, () =>
+      api.listCoverageRules({ id: template.id }),
+    );
+    const coverageRules = rules
+      .filter((rule) => typeof rule.ruleType === 'string' && rule.ruleType.length > 0)
+      .map((rule) => ({
+        ruleType: rule.ruleType as string,
+        serviceAreaId: rule.serviceAreaId,
+        priority: rule.priority,
+        maxDistance: rule.maxDistance,
+        validFrom: rule.validFrom,
+        validTo: rule.validTo,
+      }));
+    if (coverageRules.length === 0) {
+      continue;
+    }
+
+    const created = await call('createMobileUnit', () =>
+      api.createMobileUnit({
+        mobileUnitRequest: {
+          name,
+          baseLocationId: siteId,
+          status: 'ACTIVE',
+          travelBufferPolicyId: template.travelBufferPolicyId,
+          serviceCapabilityCodes: template.serviceCapabilityCodes,
+          coverageRules,
+        },
+      }),
+    );
+    return { id: requireField(created.id, 'mobile unit id'), status: created.status, copiedFrom: template.id };
+  }
+
+  throw new Error(
+    `no ACTIVE mobile unit based at site ${siteId} has a travel buffer policy, capabilities and ` +
+      `coverage rules to copy (${sameSite.length} ACTIVE unit(s) at this site, ${actives.length} ` +
+      'across the environment). Another site\'s configuration would create a unit whose coverage ' +
+      'does not reach this site. Activate a fully configured mobile unit based here.',
+  );
 }

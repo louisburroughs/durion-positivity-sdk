@@ -19,6 +19,7 @@ import {
   AcceleratedStaffingWindows,
   createStaffingWindowPort,
 } from './acceleratedStaffingWindows';
+import { readAllPages } from './http';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
@@ -145,25 +146,7 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
   // present by asking whether an ACTIVE staffing assignment covers the booked
   // date, and one written in wall time covers nothing in this backend's virtual
   // year (durion-positivity-backend#2140).
-  const { createPeopleClient } = await import('@durion-sdk/people');
-  const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
-    new AcceleratedStaffingWindows(
-      createStaffingWindowPort(createPeopleClient(auth.buildSdkConfig('people'))),
-    ).run(everyEmployee(refs), clock.virtualStart, virtualEnd),
-  );
-  for (const line of backdated) {
-    console.log(`[accel] staffing window back-dated: ${line}`);
-  }
-  for (const line of unreadable) {
-    console.log(`[accel] staffing window unread: ${line}`);
-  }
-  for (const line of blocked) {
-    console.log(`[accel] staffing window not moved: ${line}`);
-  }
-  for (const line of failed) {
-    console.log(`[accel] staffing window refused: ${line}`);
-  }
-
+  //
   if (personaBootstrap.applies) {
     const { links, limitations } = await stage('persona person-links', () =>
       personaBootstrap.linkPersons(refs.employees),
@@ -195,6 +178,48 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
         'told the hours, so its own scheduling refusals may disagree with them',
     );
   }
+
+  // Every employee, not the reference cache. The cache holds whoever the seeder's
+  // bootstrap knows, and on a shared alpha those are not the people the sites'
+  // staffing assignments belong to: this pass reported nothing to do for three
+  // runs straight while the backend answered "3 ACTIVE technician staffing
+  // assignments exist at this location, none effective on 2025-09-18".
+  const { createPeopleClient } = await import('@durion-sdk/people');
+  const people = createPeopleClient(auth.buildSdkConfig('people'));
+  const staffed = await staffedPeople(people, everyEmployee(refs));
+  //
+  // Every employee is *read*, but only assignments at the sites this run owns are
+  // *written*. Reading exhaustively is what finds the right people; widening every
+  // assignment they hold would reach sites this run never touches and rewrite their
+  // staffing history on a shared environment. The sites it owns are the ones it
+  // just published hours to — or, with publishing off, the one site it runs at.
+  const ownedSites = new Set(calendarPublishedTo.length > 0 ? calendarPublishedTo : [refs.locationId]);
+  const { backdated, unreadable, blocked, failed } = await stage('staffing windows', () =>
+    new AcceleratedStaffingWindows(createStaffingWindowPort(people)).run(
+      staffed,
+      clock.virtualStart,
+      virtualEnd,
+      ownedSites,
+    ),
+  );
+  console.log(
+    `[accel] staffing windows: ${staffed.length} person(s) examined at ${ownedSites.size} site(s), ` +
+      `${backdated.length} moved, ${blocked.length} not moved, ${failed.length} refused, ` +
+      `${unreadable.length} unread`,
+  );
+  for (const line of backdated) {
+    console.log(`[accel] staffing window back-dated: ${line}`);
+  }
+  for (const line of unreadable) {
+    console.log(`[accel] staffing window unread: ${line}`);
+  }
+  for (const line of blocked) {
+    console.log(`[accel] staffing window not moved: ${line}`);
+  }
+  for (const line of failed) {
+    console.log(`[accel] staffing window refused: ${line}`);
+  }
+
 
   // Feasibility, measured. The warm-up figure is deliberately pessimistic: it is
   // the first lifecycle of the run, against cold caches and cold replicas.
@@ -415,6 +440,50 @@ async function stage<T>(name: string, fn: () => Promise<T>): Promise<T> {
     throw new Error(`[accel] global setup failed during ${name}: ${message}${await describeResponse(error)}`);
   }
 }
+
+/**
+ * Every employee in the tenant, plus the seeded ones.
+ *
+ * Read exhaustively, because every narrower read missed someone. The reference
+ * cache knows only the fixtures' people. People availability answers for a
+ * single date, so any date chosen drops a group — the ones whose assignments had
+ * lapsed by then, or the ones assigned later — and sampling several dates still
+ * misses an assignment lying wholly between two samples. `searchEmployees` with
+ * no query "lists every employee" (EmployeeService), and asking each of them for
+ * their assignments is the only read that cannot leave a covered-by-luck gap.
+ *
+ * A failed listing is reported and falls back to the seeded employees rather
+ * than failing setup; the pass's examined count says which happened.
+ */
+async function staffedPeople(
+  people: {
+    employeeApi: {
+      searchEmployees(request: { page: number; size: number }): Promise<{
+        items?: Array<{ personId?: string }>;
+        totalPages?: number;
+      }>;
+    };
+  },
+  seeded: readonly string[],
+): Promise<string[]> {
+  const ids = new Set<string>(seeded);
+  try {
+    const employees = await readAllPages('searchEmployees', (page) =>
+      people.employeeApi.searchEmployees({ page, size: 100 }),
+    );
+    for (const employee of employees) {
+      if (employee.personId) {
+        ids.add(employee.personId);
+      }
+    }
+  } catch (error) {
+    console.log(`[accel] staffing windows: could not list employees (${describe(error)}); seeded only`);
+  }
+  return [...ids];
+}
+
+const describe = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
 
 /**
  * Every seeded employee, once each.
