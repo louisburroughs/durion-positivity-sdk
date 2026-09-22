@@ -167,6 +167,15 @@ export function planStaffingBackdates(
     let previousEnd = Number.NEGATIVE_INFINITY;
     let previousId: string | null = null;
     const endOf = (value: number | null): number => value ?? Number.POSITIVE_INFINITY;
+    // Raised together, so the id always names the row that set the bound. Moving
+    // the id on every row instead made an overlap report point at whichever row
+    // was seen last rather than the one actually in the way.
+    const raiseTo = (end: number, assignmentId: string): void => {
+      if (end > previousEnd) {
+        previousEnd = end;
+        previousId = assignmentId;
+      }
+    };
 
     for (const [index, row] of rows.entries()) {
       const from = row.effectiveFrom.getTime();
@@ -180,8 +189,7 @@ export function planStaffingBackdates(
           `${row.personId} ${row.role} at ${row.locationId}: assignment ${row.assignmentId} starts ` +
             `${iso(row.effectiveFrom)}, on or before ${previousId} ends — they already overlap`,
         );
-        previousEnd = Math.max(previousEnd, endOf(to));
-        previousId = row.assignmentId;
+        raiseTo(endOf(to), row.assignmentId);
         continue;
       }
 
@@ -198,16 +206,14 @@ export function planStaffingBackdates(
       // do. Left exactly as it is — including when it is the group's last row,
       // where the temptation to stretch it to the ceiling is strongest.
       if (to !== null && to <= floor.getTime()) {
-        previousEnd = Math.max(previousEnd, to);
-        previousId = row.assignmentId;
+        raiseTo(to, row.assignmentId);
         continue;
       }
 
       const effectiveTo =
         to === null ? null : isLast && to < ceiling.getTime() ? ceiling : new Date(to);
 
-      previousEnd = Math.max(previousEnd, endOf(effectiveTo?.getTime() ?? null));
-      previousId = row.assignmentId;
+      raiseTo(endOf(effectiveTo?.getTime() ?? null), row.assignmentId);
 
       const movedStart = effectiveFrom.getTime() !== from;
       const movedEnd = (effectiveTo?.getTime() ?? null) !== to;

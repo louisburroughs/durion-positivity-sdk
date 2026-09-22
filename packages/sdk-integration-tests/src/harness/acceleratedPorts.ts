@@ -277,20 +277,39 @@ export function createShiftPort(
      * without another change here.
      */
     async approveTime(at: Date): Promise<void> {
-      const pending = await call('listTimeEntries(SUBMITTED)', () =>
-        manager.people.timeEntryApprovalAPIApi.listTimeEntries({
-          // The generated enum, not the string: the client narrows this param.
-          status: ListTimeEntriesStatusEnum.Submitted,
-          locationId: refs.locationId,
-          workDate: at,
-          timeZone: 'UTC',
-        }),
-      );
+      // Paged to the end, not just the first page. `size` defaults to 20 and is
+      // capped at 100 (TimeEntryApprovalController), so a busy day would leave
+      // everything past the twentieth entry pending while the log claimed the
+      // shift's time had been approved.
+      const PAGE_SIZE = 100;
+      const ids: string[] = [];
+      for (let page = 0; page < 100; page += 1) {
+        const batch = await call(`listTimeEntries(SUBMITTED, page ${page})`, () =>
+          manager.people.timeEntryApprovalAPIApi.listTimeEntries({
+            // The generated enum, not the string: the client narrows this param.
+            status: ListTimeEntriesStatusEnum.Submitted,
+            locationId: refs.locationId,
+            workDate: at,
+            timeZone: 'UTC',
+            page,
+            size: PAGE_SIZE,
+          }),
+        );
+        const items = batch.items ?? [];
+        for (const entry of items) {
+          const id = readString(entry, 'timeEntryId');
+          if (id) {
+            ids.push(id);
+          }
+        }
+        // A short page is the last one. The bound on the loop is a guard against
+        // a backend that never returns one, not an expected exit.
+        if (items.length < PAGE_SIZE) {
+          break;
+        }
+      }
 
-      const decisions = (pending.items ?? [])
-        .map((entry) => readString(entry, 'timeEntryId'))
-        .filter((id): id is string => typeof id === 'string' && id.length > 0)
-        .map((timeEntryId) => ({ timeEntryId }));
+      const decisions = ids.map((timeEntryId) => ({ timeEntryId }));
 
       if (decisions.length === 0) {
         // Not a failure, and not silent either: a day that approved nothing is
