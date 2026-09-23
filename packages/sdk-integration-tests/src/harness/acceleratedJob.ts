@@ -101,6 +101,10 @@ export class AcceleratedJob {
    * is what tells the next `advance` to reopen.
    */
   private laborBracketOpen = false;
+  /** True once the backend holds this job's technician, until it is handed back. */
+  private technicianAssigned = false;
+  /** True once the workorder is COMPLETED, after which nothing may be released from it. */
+  private workorderClosed = false;
 
   /**
    * The job's own context, anchored to the site it holds a position at.
@@ -291,6 +295,14 @@ export class AcceleratedJob {
         this.failureDetail += ` (its labor clock could not be stopped either: ${await formatError(stopError)})`;
       }
       this.laborBracketOpen = false;
+      // Same reasoning, for the person: a failed job that keeps its technician
+      // makes them busy on every later dispatch board.
+      try {
+        await this.releaseTechnician();
+      } catch (releaseError) {
+        this.failureDetail +=
+          ` (its technician could not be released either: ${await formatError(releaseError)})`;
+      }
       return this.result;
     }
 
@@ -442,6 +454,42 @@ export class AcceleratedJob {
         },
       }),
     );
+    this.technicianAssigned = true;
+  }
+
+  /**
+   * Hands the technician back after a job fails holding one.
+   *
+   * The ledger releases its own claim when a job settles, but that is this
+   * process's bookkeeping — the backend still has the person bound to the
+   * workorder, and discovery reads `assignedWorkorderId` from the dispatch board
+   * and counts them busy. One run that failed at `assign-position` left about
+   * 1,800 workorders each holding a technician, which is a roster the next run
+   * inherits as permanently occupied.
+   *
+   * Best-effort and quiet about its own failure: the failure that got here is the
+   * one worth reporting. `shopFloorLoad.releaseOrphanedTechnician` is the same
+   * safety net on the non-accelerated side, and this path is where it was missing.
+   */
+  private async releaseTechnician(): Promise<void> {
+    if (!this.technicianAssigned || this.workorderId === undefined) {
+      return;
+    }
+    // A completed workorder holds nobody. `releaseTechnician` answers 409
+    // WORKORDER_CLOSED once the workorder is COMPLETED or CANCELLED
+    // (TechnicianAssignmentController), so a job that fails at `invoice`,
+    // `finalize` or `pay` — all of which run after `complete` — would append a
+    // second, misleading failure about a technician who was released by the
+    // completion itself.
+    if (this.workorderClosed) {
+      this.technicianAssigned = false;
+      return;
+    }
+    this.technicianAssigned = false;
+    await this.deps.as.manager.workorder.technicianAssignmentAPIApi.releaseTechnician({
+      workorderId: this.workorderId,
+      reason: `Accelerated run: job failed before completion [${this.deps.ctx.runId}]`,
+    });
   }
 
   private async assignPosition(): Promise<void> {
@@ -596,6 +644,9 @@ export class AcceleratedJob {
         },
       }),
     );
+    // Completion closes the workorder, and with it the technician's assignment:
+    // nothing may be released from it afterwards.
+    this.workorderClosed = true;
     await this.mark('completed');
   }
 

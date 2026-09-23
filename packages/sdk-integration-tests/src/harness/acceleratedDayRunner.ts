@@ -327,6 +327,25 @@ export class AcceleratedDayRunner {
         rosters.map((r) => `${r.code}: ${r.freePositions.length} free/${r.idleTechnicianIds.length} idle`).join(', '),
     );
 
+    // A site with bays free and nobody to staff them is reported, not passed over.
+    //
+    // The ledger simply returns no claim in that case, so the day plans less work
+    // and looks like a quiet one. That is indistinguishable from a genuinely light
+    // day, and it is what an exhausted roster looks like: a previous run that
+    // failed after `assign-technician` leaves those people bound to workorders,
+    // and every later day reads them as busy. Saying so is the difference between
+    // a run that reports a shortage and one that hides it.
+    const unstaffed = rosters.filter(
+      (roster) => roster.freePositions.length > 0 && roster.idleTechnicianIds.length === 0,
+    );
+    if (unstaffed.length > 0) {
+      report.failures.push(
+        `no idle technician at ${unstaffed.map((r) => `${r.code} (${r.freePositions.length} position(s) free, ` +
+          `${r.busyTechnicianIds.length} technician(s) busy)`).join(', ')} — ` +
+          'work cannot be placed there today',
+      );
+    }
+
     // SHIFT-IN.
     const clockedIn = await this.deps.shift.clockIn(schedule.observedAt);
     report.clockedIn = clockedIn.length;

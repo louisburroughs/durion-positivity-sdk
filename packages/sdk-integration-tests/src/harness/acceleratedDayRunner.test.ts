@@ -1300,6 +1300,26 @@ describe('AcceleratedDayRunner — the day boundary arriving mid-request', () =>
     expect(report.virtualDate).toBe('2025-11-04');
   });
 
+  it('names a site whose positions are free but whose technicians are all busy', async () => {
+    // An exhausted roster and a quiet day look identical from the outside: the
+    // ledger just returns no claim. A previous run that failed after
+    // assign-technician leaves those people bound to workorders, and every later
+    // day reads them as busy — so the shortage is reported rather than absorbed.
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 30,
+      rosters: [roster({ idleTechnicianIds: [], busyTechnicianIds: ['tech-a', 'tech-b'] })],
+    });
+
+    const report = await runner.runDay(1);
+
+    const line = report.failures.find((entry) => entry.includes('no idle technician'));
+    expect(line).toBeDefined();
+    expect(line).toContain('CLT-MAIN-001');
+    expect(line).toContain('3 position(s) free');
+    expect(line).toContain('2 technician(s) busy');
+  });
+
   it('records a day with no usable board as a failure rather than a quiet success', async () => {
     const { runner } = harness({ startIso: '2025-11-03T08:00:00Z', stepMinutes: 10, rosters: [] });
 
