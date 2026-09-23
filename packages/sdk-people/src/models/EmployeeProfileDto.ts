@@ -19,6 +19,12 @@ import {
     EmployeeContactInfoDtoFromJSONTyped,
     EmployeeContactInfoDtoToJSON,
 } from './EmployeeContactInfoDto';
+import type { EmployeeJobRoleDto } from './EmployeeJobRoleDto';
+import {
+    EmployeeJobRoleDtoFromJSON,
+    EmployeeJobRoleDtoFromJSONTyped,
+    EmployeeJobRoleDtoToJSON,
+} from './EmployeeJobRoleDto';
 
 /**
  * Employee profile returned by employee read and write operations
@@ -26,6 +32,12 @@ import {
  * @interface EmployeeProfileDto
  */
 export interface EmployeeProfileDto {
+    /**
+     * Actions the calling user may take on this employee (durion#2159), computed from the caller's permissions and the employee's current status by EmployeeActionPolicy -- the single place this transition table lives. This is a RENDERING HINT ONLY: the backend continues to enforce authorization and status transitions independently via @PreAuthorize and its service guards, so a client must never treat an entry here as proof an operation will succeed. Known limitation: the flags consider only permissions and status, not the location-scoped access enforced elsewhere in this module, so a location-scoped caller may occasionally see an action listed that their scope does not actually cover for this employee.
+     * @type {Array<string>}
+     * @memberof EmployeeProfileDto
+     */
+    allowedActions: Array<EmployeeProfileDtoAllowedActionsEnum>;
     /**
      * 
      * @type {EmployeeContactInfoDto}
@@ -62,6 +74,12 @@ export interface EmployeeProfileDto {
      * @memberof EmployeeProfileDto
      */
     id: string;
+    /**
+     * 
+     * @type {EmployeeJobRoleDto}
+     * @memberof EmployeeProfileDto
+     */
+    jobRole?: EmployeeJobRoleDto;
     /**
      * Last (family) name of the employee
      * @type {string}
@@ -110,6 +128,16 @@ export interface EmployeeProfileDto {
 * @export
 * @enum {string}
 */
+export enum EmployeeProfileDtoAllowedActionsEnum {
+    ViewPii = 'VIEW_PII',
+    Update = 'UPDATE',
+    Disable = 'DISABLE',
+    Enable = 'ENABLE'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum EmployeeProfileDtoStatusEnum {
     Active = 'ACTIVE',
     OnLeave = 'ON_LEAVE',
@@ -123,6 +151,7 @@ export enum EmployeeProfileDtoStatusEnum {
  * Check if a given object implements the EmployeeProfileDto interface.
  */
 export function instanceOfEmployeeProfileDto(value: object): boolean {
+    if (!('allowedActions' in value)) return false;
     if (!('employeeNumber' in value)) return false;
     if (!('firstName' in value)) return false;
     if (!('hireDate' in value)) return false;
@@ -142,12 +171,14 @@ export function EmployeeProfileDtoFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'allowedActions': json['allowedActions'],
         'contactInfo': json['contactInfo'] == null ? undefined : EmployeeContactInfoDtoFromJSON(json['contactInfo']),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'employeeNumber': json['employeeNumber'],
         'firstName': json['firstName'],
         'hireDate': (new Date(json['hireDate'])),
         'id': json['id'],
+        'jobRole': json['jobRole'] == null ? undefined : EmployeeJobRoleDtoFromJSON(json['jobRole']),
         'lastName': json['lastName'],
         'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
         'status': json['status'],
@@ -164,12 +195,14 @@ export function EmployeeProfileDtoToJSON(value?: EmployeeProfileDto | null): any
     }
     return {
         
+        'allowedActions': value['allowedActions'],
         'contactInfo': EmployeeContactInfoDtoToJSON(value['contactInfo']),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'employeeNumber': value['employeeNumber'],
         'firstName': value['firstName'],
         'hireDate': ((value['hireDate']).toISOString().substring(0,10)),
         'id': value['id'],
+        'jobRole': EmployeeJobRoleDtoToJSON(value['jobRole']),
         'lastName': value['lastName'],
         'preferredName': value['preferredName'],
         'status': value['status'],

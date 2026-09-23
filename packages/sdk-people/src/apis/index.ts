@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './EmployeeAPIApi';
+export * from './JobRoleAPIApi';
 export * from './PeopleAvailabilityAPIApi';
 export * from './PeopleBulkIngestAPIApi';
 export * from './PeopleComplianceAPIApi';

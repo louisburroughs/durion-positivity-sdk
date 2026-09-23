@@ -57,6 +57,12 @@ export interface CreateEmployeeRequest {
      */
     hireDate: Date;
     /**
+     * Id of the employee's job role, from the tenant's job-role list; omit for none
+     * @type {string}
+     * @memberof CreateEmployeeRequest
+     */
+    jobRoleId?: string;
+    /**
      * Last (family) name of the employee
      * @type {string}
      * @memberof CreateEmployeeRequest
@@ -130,6 +136,7 @@ export function CreateEmployeeRequestFromJSONTyped(json: any, ignoreDiscriminato
         'employeeNumber': json['employeeNumber'],
         'firstName': json['firstName'],
         'hireDate': (new Date(json['hireDate'])),
+        'jobRoleId': json['jobRoleId'] == null ? undefined : json['jobRoleId'],
         'lastName': json['lastName'],
         'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
         'status': json['status'],
@@ -148,6 +155,7 @@ export function CreateEmployeeRequestToJSON(value?: CreateEmployeeRequest | null
         'employeeNumber': value['employeeNumber'],
         'firstName': value['firstName'],
         'hireDate': ((value['hireDate']).toISOString().substring(0,10)),
+        'jobRoleId': value['jobRoleId'],
         'lastName': value['lastName'],
         'preferredName': value['preferredName'],
         'status': value['status'],
