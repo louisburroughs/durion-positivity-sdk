@@ -25,7 +25,7 @@
 import { ListTimeEntriesStatusEnum } from '@durion-sdk/people';
 import { SEED_VENDOR_ID } from '@durion-sdk/seeder';
 import type { ReferenceCache } from '@durion-sdk/seeder';
-import { readString, requireField, type BuilderContext } from './builders';
+import { readNumber, readString, requireField, type BuilderContext } from './builders';
 import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 import type { ShopCalendar } from './shopCalendar';
@@ -340,9 +340,36 @@ export function createMaintenancePort(
 
       for (const productId of candidates) {
         const productName = refs.productNameById.get(productId) ?? productId;
+
+        // Counted against what is actually on the shelf, not against an assumed 50.
+        //
+        // The old figure was a literal, and a count is a claim about stock: with two
+        // on hand and a claimed fifty, a variance of -5 posts an outbound of five and
+        // the ledger refuses to drive stock negative —
+        //
+        //   NegativeStockPolicyViolationException: COUNT_VARIANCE_OUT … would take
+        //   on-hand to -3.0000; counts and adjustments may zero stock but never
+        //   drive it negative
+        //
+        // which surfaced as 500 ADJUSTMENT_LEDGER_POST_FAILED and left sixteen
+        // adjustments FAILED across one virtual year
+        // (durion-positivity-backend#2167). Suite E does not hit it because it
+        // seeds the quantity it then counts; the year run counts what the shop has.
+        //
         // Stock items are keyed by SKU, which equals the productEntityId.
-        const quantityOnHandBefore = 50;
-        const variance = ctx.random.int(1, 5) * (ctx.random.chance(0.5) ? 1 : -1);
+        const availability = await call(`getAvailabilityBySku ${productName}`, () =>
+          parts.inventory.inventoryAvailabilityApi.getAvailabilityBySku({
+            productSku: productId,
+            locationId: refs.locationId,
+          }),
+        );
+        const quantityOnHandBefore = Math.max(0, Math.trunc(readNumber(availability, 'onHandQuantity', 'onHandQty') ?? 0));
+
+        // A downward variance may empty the shelf and no more: zeroing stock is a
+        // real count, driving it negative is a fiction the ledger is right to
+        // refuse.
+        const swing = ctx.random.int(1, 5);
+        const variance = ctx.random.chance(0.5) ? swing : -Math.min(swing, quantityOnHandBefore);
 
         const adjustment = await call(`createCycleCountAdjustment ${productName}`, () =>
           parts.inventory.cycleCountAdjustmentsApi.createCycleCountAdjustment({
