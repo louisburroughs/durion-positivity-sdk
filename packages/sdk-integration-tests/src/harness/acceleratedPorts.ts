@@ -25,7 +25,7 @@
 import { ListTimeEntriesStatusEnum } from '@durion-sdk/people';
 import { SEED_VENDOR_ID } from '@durion-sdk/seeder';
 import type { ReferenceCache } from '@durion-sdk/seeder';
-import { readString, requireField, type BuilderContext } from './builders';
+import { readNumber, readString, requireField, type BuilderContext } from './builders';
 import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 import type { ShopCalendar } from './shopCalendar';
@@ -340,9 +340,57 @@ export function createMaintenancePort(
 
       for (const productId of candidates) {
         const productName = refs.productNameById.get(productId) ?? productId;
+
+        // Counted against what is actually on the shelf, not against an assumed 50.
+        //
+        // The old figure was a literal, and a count is a claim about stock: with two
+        // on hand and a claimed fifty, a variance of -5 posts an outbound of five and
+        // the ledger refuses to drive stock negative —
+        //
+        //   NegativeStockPolicyViolationException: COUNT_VARIANCE_OUT … would take
+        //   on-hand to -3.0000; counts and adjustments may zero stock but never
+        //   drive it negative
+        //
+        // which surfaced as 500 ADJUSTMENT_LEDGER_POST_FAILED and left sixteen
+        // adjustments FAILED across one virtual year
+        // (durion-positivity-backend#2167). Suite E does not hit it because it
+        // seeds the quantity it then counts; the year run counts what the shop has.
+        //
         // Stock items are keyed by SKU, which equals the productEntityId.
-        const quantityOnHandBefore = 50;
-        const variance = ctx.random.int(1, 5) * (ctx.random.chance(0.5) ? 1 : -1);
+        // Unwrapped, because the 404 is the answer rather than a failure: the
+        // endpoint "returns 404 when the SKU has no stock-summary rows", which is
+        // the ordinary state of a product never received. `call` would rewrite it
+        // as a plain Error and the whole weekly count would abort on the first
+        // unstocked candidate instead of counting an empty shelf.
+        let quantityOnHandBefore = 0;
+        try {
+          const availability = await parts.inventory.inventoryAvailabilityApi.getAvailabilityBySku({
+            productSku: productId,
+            locationId: refs.locationId,
+          });
+          quantityOnHandBefore = Math.max(
+            0,
+            Math.trunc(readNumber(availability, 'onHandQuantity', 'onHandQty') ?? 0),
+          );
+        } catch (error) {
+          if (!isHttpStatus(error, 404)) {
+            throw new Error(`getAvailabilityBySku ${productName} failed: ${await formatError(error)}`);
+          }
+        }
+
+        // A downward variance may empty the shelf and no more: zeroing stock is a
+        // real count, driving it negative is a fiction the ledger is right to
+        // refuse.
+        //
+        // And never a variance of nothing. `countedQuantity` must differ from
+        // `quantityOnHandBefore` — a zero variance is rejected — so an empty shelf
+        // is only ever counted upward, where a downward swing would have clamped to
+        // zero and failed about half the counts on a never-received product.
+        const swing = ctx.random.int(1, 5);
+        const variance =
+          quantityOnHandBefore === 0 || ctx.random.chance(0.5)
+            ? swing
+            : -Math.min(swing, quantityOnHandBefore);
 
         const adjustment = await call(`createCycleCountAdjustment ${productName}`, () =>
           parts.inventory.cycleCountAdjustmentsApi.createCycleCountAdjustment({
