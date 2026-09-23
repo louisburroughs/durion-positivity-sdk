@@ -102,6 +102,27 @@ export class AcceleratedJob {
    */
   private laborBracketOpen = false;
 
+  /**
+   * The job's own context, anchored to the site it holds a position at.
+   *
+   * The run keeps one BuilderContext for the whole year, whose `refs.locationId`
+   * is the reference cache's single site — but a claim can be at any site whose
+   * board the day discovered. Building the estimate at the cache's site and then
+   * placing the workorder on another site's bay is the shape
+   * `ServicePositionController` refuses with 422 SERVICE_POSITION_INVALID, "the
+   * position is unknown *or at another site*".
+   *
+   * It cost an entire virtual year: 3,864 jobs failed at `assign-position`, 2,038
+   * on bays and 1,826 on mobile units, none of them completing. The placement is
+   * wrapped in `retryWhileReplicating`, whose markers are matched against the
+   * response body — and the body could not be read (see formatError), so no marker
+   * matched and every one of them failed on the first attempt rather than waiting
+   * out the replication window.
+   *
+   * The random stream and the run id stay shared; only the site moves.
+   */
+  private readonly ctx: BuilderContext;
+
   readonly marks: JobMark[] = [];
   workorderId: string | undefined;
   invoiceId: string | undefined;
@@ -114,6 +135,10 @@ export class AcceleratedJob {
   ) {
     const { ctx } = deps;
     const refs = ctx.refs;
+    this.ctx = {
+      ...ctx,
+      refs: { ...refs, locationId: deps.claim.locationId },
+    };
 
     this.serviceIds = ctx.random.pickN(
       refs.serviceEntityIds,
@@ -156,6 +181,19 @@ export class AcceleratedJob {
       { name: 'finalize', run: () => this.finalizeInvoice() },
       { name: 'pay', run: () => this.payInvoice() },
     );
+  }
+
+  /** The site this job builds and places at — the claim's, not the cache's. */
+  get locationId(): string {
+    return this.ctx.refs.locationId;
+  }
+
+  /** The catalog this job draws from, shared across sites and unchanged per job. */
+  get catalog(): { serviceEntityIds: string[]; productEntityIds: string[] } {
+    return {
+      serviceEntityIds: this.ctx.refs.serviceEntityIds,
+      productEntityIds: this.ctx.refs.productEntityIds,
+    };
   }
 
   get kind(): PositionKind {
@@ -267,17 +305,17 @@ export class AcceleratedJob {
   }
 
   private async createCustomer(): Promise<void> {
-    this.customer = await createPersonAccount(this.deps.as.advisor, this.deps.ctx);
+    this.customer = await createPersonAccount(this.deps.as.advisor, this.ctx);
   }
 
   private async createVehicle(): Promise<void> {
-    this.vehicleId = await createVehicle(this.deps.as.admin, this.deps.ctx, this.requireCustomer().partyId);
+    this.vehicleId = await createVehicle(this.deps.as.admin, this.ctx, this.requireCustomer().partyId);
   }
 
   private async createEstimate(): Promise<void> {
     this.estimateId = await createDraftEstimate(
       this.deps.as.advisor,
-      this.deps.ctx,
+      this.ctx,
       this.requireCustomer().partyId,
       requireField(this.vehicleId, 'vehicleId'),
     );
@@ -286,21 +324,21 @@ export class AcceleratedJob {
   private async addLabor(serviceId: string): Promise<void> {
     await addLaborLine(
       this.deps.as.advisor,
-      this.deps.ctx,
+      this.ctx,
       requireField(this.estimateId, 'estimateId'),
       serviceId,
-      Number((LABOR_PRICE * (1 + this.deps.ctx.random.price(-0.15, 0.15))).toFixed(2)),
+      Number((LABOR_PRICE * (1 + this.ctx.random.price(-0.15, 0.15))).toFixed(2)),
     );
   }
 
   private async addPart(productId: string): Promise<void> {
     await addPartLine(
       this.deps.as.advisor,
-      this.deps.ctx,
+      this.ctx,
       requireField(this.estimateId, 'estimateId'),
       productId,
-      this.deps.ctx.random.int(1, 2),
-      Number((PART_PRICE * (1 + this.deps.ctx.random.price(-0.15, 0.15))).toFixed(2)),
+      this.ctx.random.int(1, 2),
+      Number((PART_PRICE * (1 + this.ctx.random.price(-0.15, 0.15))).toFixed(2)),
     );
   }
 
@@ -325,13 +363,13 @@ export class AcceleratedJob {
     const approveChance = this.deps.approveChance ?? 0.78;
     const declineChance = this.deps.declineChance ?? 14 / 22;
 
-    if (this.deps.ctx.random.chance(approveChance)) {
+    if (this.ctx.random.chance(approveChance)) {
       await call('approveEstimate', () =>
         this.deps.as.advisor.workorder.estimateAPIApi.approveEstimate({
           estimateId,
           approveEstimateRequest: {
             customerId: customer.partyId,
-            signatureData: this.deps.ctx.random.base64(32),
+            signatureData: this.ctx.random.base64(32),
             signerName: customer.fullName,
             signatureMimeType: 'image/png',
           },
@@ -341,11 +379,11 @@ export class AcceleratedJob {
       return;
     }
 
-    if (this.deps.ctx.random.chance(declineChance)) {
+    if (this.ctx.random.chance(declineChance)) {
       await call('declineEstimate', () =>
         this.deps.as.advisor.workorder.estimateAPIApi.declineEstimate({
           estimateId,
-          reason: `Customer declined [${this.deps.ctx.runId}]`,
+          reason: `Customer declined [${this.ctx.runId}]`,
         }),
       );
       await this.mark('estimate-declined');
@@ -380,10 +418,10 @@ export class AcceleratedJob {
         workorderId: this.requireWorkorder(),
         approveWorkorderRequest: {
           customerId: customer.partyId,
-          signatureData: this.deps.ctx.random.base64(32),
+          signatureData: this.ctx.random.base64(32),
           signerName: customer.fullName,
           signatureMimeType: 'image/png',
-          notes: `Accelerated run approval [${this.deps.ctx.runId}]`,
+          notes: `Accelerated run approval [${this.ctx.runId}]`,
         },
       }),
     );
@@ -400,7 +438,7 @@ export class AcceleratedJob {
         workorderId: this.requireWorkorder(),
         assignTechnicianRequest: {
           technicianId: this.deps.claim.technicianId,
-          notes: `Accelerated run [${this.deps.ctx.runId}]`,
+          notes: `Accelerated run [${this.ctx.runId}]`,
         },
       }),
     );
@@ -417,7 +455,7 @@ export class AcceleratedJob {
           assignServicePositionRequest: {
             resourceType: position.kind === 'BAY' ? ResourceType.Bay : ResourceType.MobileUnit,
             resourceId: position.id,
-            reason: `Accelerated run [${this.deps.ctx.runId}]`,
+            reason: `Accelerated run [${this.ctx.runId}]`,
           },
         }),
       {
@@ -475,7 +513,7 @@ export class AcceleratedJob {
         serviceId: this.laborServiceId(),
         startLaborRequest: {
           technicianId: this.deps.claim.technicianId,
-          notes: `Accelerated run [${this.deps.ctx.runId}]`,
+          notes: `Accelerated run [${this.ctx.runId}]`,
         },
       }),
     );
@@ -554,7 +592,7 @@ export class AcceleratedJob {
       this.deps.as.manager.workorder.workOrderAPIApi.completeWorkorder({
         workorderId: this.requireWorkorder(),
         completeWorkorderRequest: {
-          completionNotes: `Completed by the accelerated run [${this.deps.ctx.runId}]`,
+          completionNotes: `Completed by the accelerated run [${this.ctx.runId}]`,
         },
       }),
     );
@@ -606,11 +644,11 @@ export class AcceleratedJob {
       this.deps.as.controller.accounting.accountingEventsApi.submitAccountingEvent({
         accountingEventSubmitRequest: {
           eventType: 'INVOICE_PAYMENT',
-          organizationId: this.deps.ctx.refs.locationId,
+          organizationId: this.ctx.refs.locationId,
           sourceSystem: 'SDK_ITEST_ACCEL',
           payload: {
             invoiceId,
-            paymentMethod: this.deps.ctx.random.chance(0.95) ? 'CREDIT_CARD' : 'CASH',
+            paymentMethod: this.ctx.random.chance(0.95) ? 'CREDIT_CARD' : 'CASH',
             amountPaid: this.invoiceTotal ?? 0,
           },
         },

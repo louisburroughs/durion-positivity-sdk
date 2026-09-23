@@ -1,4 +1,4 @@
-import { call, expectApiError, withSiteScope } from './http';
+import { call, expectApiError, formatError, withSiteScope } from './http';
 
 /** The shape the generated clients throw: a ResponseError carrying the Response. */
 const rejection = (status: number, body: unknown): Promise<never> =>
@@ -133,5 +133,74 @@ describe('call — renewing on a 401', () => {
 
     await expect(call('listUsers', attempt)).rejects.toThrow(/no logged-in identity to renew/);
     expect(attempt).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('formatError — a body that is read twice', () => {
+  /** A Response whose stream can be consumed once, as a real one is. */
+  const oneShot = (status: number, body: string) => {
+    let spent = false;
+    const response = {
+      status,
+      headers: new Headers({ 'x-correlation-id': 'abc-123' }),
+      async text() {
+        if (spent) {
+          throw new TypeError('body stream already read');
+        }
+        spent = true;
+        return body;
+      },
+      clone() {
+        if (spent) {
+          throw new TypeError('cannot clone a disturbed response');
+        }
+        return { async text() { return body; } };
+      },
+    };
+    return { response };
+  };
+
+  it('still has the body on the second read, which is what a retry costs', async () => {
+    // retryWhileReplicating formats the error to test its markers, and the caller
+    // formats it again for the report. The second read is where 3,864
+    // assign-position failures turned into "(could not read body)".
+    const error = oneShot(422, '{"code":"SERVICE_POSITION_INACTIVE","message":"…"}');
+
+    const first = await formatError(error);
+    const second = await formatError(error);
+
+    expect(first).toContain('SERVICE_POSITION_INACTIVE');
+    expect(second).toContain('SERVICE_POSITION_INACTIVE');
+    expect(second).toContain('correlationId=abc-123');
+    expect(second).not.toContain('could not read body');
+  });
+
+  it('falls back to a direct read when the response cannot be cloned', async () => {
+    const error = {
+      response: {
+        status: 500,
+        headers: new Headers(),
+        async text() {
+          return '{"code":"INTERNAL_ERROR"}';
+        },
+      },
+    };
+
+    expect(await formatError(error)).toContain('INTERNAL_ERROR');
+    expect(await formatError(error)).toContain('INTERNAL_ERROR');
+  });
+
+  it('says so when the body genuinely cannot be read', async () => {
+    const error = {
+      response: {
+        status: 502,
+        headers: new Headers(),
+        async text(): Promise<string> {
+          throw new TypeError('network error');
+        },
+      },
+    };
+
+    expect(await formatError(error)).toContain('(could not read body)');
   });
 });

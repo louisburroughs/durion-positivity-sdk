@@ -28,6 +28,55 @@ export const httpStatusOf = (error: unknown): number | undefined => {
   return typeof status === 'number' ? status : undefined;
 };
 
+/**
+ * Bodies already read, keyed by the response they came from.
+ *
+ * A `Response` body is a stream and reading it consumes it. `formatError` is
+ * called more than once on the same failure by design — `retryWhileReplicating`
+ * formats it on every attempt to test the text against its markers, and the
+ * caller formats it again for the report — so the second read found the stream
+ * spent and said `(could not read body)`.
+ *
+ * That is not a cosmetic loss. It is how 3,864 identical `assign-position`
+ * failures in one accelerated year reported an HTTP 422 with no code and no
+ * message, and why the step that was killing every job stayed invisible for
+ * three runs.
+ *
+ * A WeakMap rather than a field on the error: nothing is mutated, and the entry
+ * goes when the response does.
+ */
+const readBodies = new WeakMap<object, string>();
+
+const readBody = async (response: { text?: unknown; clone?: unknown }): Promise<string | undefined> => {
+  const cached = readBodies.get(response);
+  if (cached !== undefined) {
+    return cached;
+  }
+  if (typeof response.text !== 'function') {
+    return undefined;
+  }
+  try {
+    // Clone first, so the original stream survives for whoever reads it next;
+    // `clone()` throws once the body is disturbed, and then the direct read is
+    // the only thing left to try.
+    const source =
+      typeof response.clone === 'function'
+        ? ((response.clone as () => { text(): Promise<string> })())
+        : (response as { text(): Promise<string> });
+    const body = await source.text();
+    readBodies.set(response, body);
+    return body;
+  } catch {
+    try {
+      const body = await (response.text as () => Promise<string>)();
+      readBodies.set(response, body);
+      return body;
+    } catch {
+      return undefined;
+    }
+  }
+};
+
 export const formatError = async (error: unknown): Promise<string> => {
   if (
     error !== null &&
@@ -50,12 +99,11 @@ export const formatError = async (error: unknown): Promise<string> => {
     const trace = correlationId ? ` [correlationId=${correlationId}]` : '';
 
     if (typeof response.text === 'function') {
-      try {
-        const body = await (response.text as () => Promise<string>)();
-        return `HTTP ${status}${trace}: ${body || '(empty body)'}`;
-      } catch {
+      const body = await readBody(response);
+      if (body === undefined) {
         return `HTTP ${status}${trace}: (could not read body)`;
       }
+      return `HTTP ${status}${trace}: ${body || '(empty body)'}`;
     }
     return `HTTP ${status}${trace}`;
   }
