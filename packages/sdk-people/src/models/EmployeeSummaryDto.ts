@@ -13,8 +13,33 @@
  */
 
 import { mapValues } from '../runtime';
+import type { EmployeeContactInfoDto } from './EmployeeContactInfoDto';
+import {
+    EmployeeContactInfoDtoFromJSON,
+    EmployeeContactInfoDtoFromJSONTyped,
+    EmployeeContactInfoDtoToJSON,
+} from './EmployeeContactInfoDto';
+import type { EmployeeJobRoleDto } from './EmployeeJobRoleDto';
+import {
+    EmployeeJobRoleDtoFromJSON,
+    EmployeeJobRoleDtoFromJSONTyped,
+    EmployeeJobRoleDtoToJSON,
+} from './EmployeeJobRoleDto';
+import type { EmployeeLocationDto } from './EmployeeLocationDto';
+import {
+    EmployeeLocationDtoFromJSON,
+    EmployeeLocationDtoFromJSONTyped,
+    EmployeeLocationDtoToJSON,
+} from './EmployeeLocationDto';
+import type { EmployeeRoleAssignmentDto } from './EmployeeRoleAssignmentDto';
+import {
+    EmployeeRoleAssignmentDtoFromJSON,
+    EmployeeRoleAssignmentDtoFromJSONTyped,
+    EmployeeRoleAssignmentDtoToJSON,
+} from './EmployeeRoleAssignmentDto';
+
 /**
- * Slim employee row for search results
+ * Employee row for search results; the fields below `active` are populated only when requested via `include=` (and, for `contactInfo`, only when the caller also holds `people:employee_pii:view`)
  * @export
  * @interface EmployeeSummaryDto
  */
@@ -25,6 +50,18 @@ export interface EmployeeSummaryDto {
      * @memberof EmployeeSummaryDto
      */
     active: boolean;
+    /**
+     * Actions the calling user may take on this row (durion#2159); null unless `include=ALLOWED_ACTIONS` was requested. Computed from the caller's permissions and the row's status by EmployeeActionPolicy, the single place this transition table lives -- see EmployeeProfileDto.allowedActions for the full rendering-hint and location-scope caveats, which apply identically here.
+     * @type {Array<string>}
+     * @memberof EmployeeSummaryDto
+     */
+    allowedActions?: Array<EmployeeSummaryDtoAllowedActionsEnum>;
+    /**
+     * 
+     * @type {EmployeeContactInfoDto}
+     * @memberof EmployeeSummaryDto
+     */
+    contactInfo?: EmployeeContactInfoDto;
     /**
      * Employee record identifier
      * @type {string}
@@ -44,11 +81,23 @@ export interface EmployeeSummaryDto {
      */
     firstName?: string;
     /**
+     * 
+     * @type {EmployeeJobRoleDto}
+     * @memberof EmployeeSummaryDto
+     */
+    jobRole?: EmployeeJobRoleDto;
+    /**
      * Last (family) name, from the identity replica; null when the replica has not caught up
      * @type {string}
      * @memberof EmployeeSummaryDto
      */
     lastName?: string;
+    /**
+     * Count of the person's other active staffing assignments beyond primaryLocation ("Charlotte Main · +1 more"); null unless `include=LOCATION` was requested, 0 when requested but the person has no other active assignment
+     * @type {number}
+     * @memberof EmployeeSummaryDto
+     */
+    otherLocationCount?: number;
     /**
      * Stable person identifier the employee maps to
      * @type {string}
@@ -62,12 +111,42 @@ export interface EmployeeSummaryDto {
      */
     preferredName?: string;
     /**
+     * 
+     * @type {EmployeeLocationDto}
+     * @memberof EmployeeSummaryDto
+     */
+    primaryLocation?: EmployeeLocationDto;
+    /**
+     * Active application-role assignments (DECISION-PEOPLE-026); null unless `include=ROLE_ASSIGNMENTS` was requested, empty when requested but the person holds none
+     * @type {Array<EmployeeRoleAssignmentDto>}
+     * @memberof EmployeeSummaryDto
+     */
+    roleAssignments?: Array<EmployeeRoleAssignmentDto>;
+    /**
      * Employment status
      * @type {string}
      * @memberof EmployeeSummaryDto
      */
     status?: string;
+    /**
+     * Login username, from the identity replica; null unless `include=USERNAME` was requested or the person has no linked user account
+     * @type {string}
+     * @memberof EmployeeSummaryDto
+     */
+    username?: string;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum EmployeeSummaryDtoAllowedActionsEnum {
+    ViewPii = 'VIEW_PII',
+    Update = 'UPDATE',
+    Disable = 'DISABLE',
+    Enable = 'ENABLE'
+}
+
 
 /**
  * Check if a given object implements the EmployeeSummaryDto interface.
@@ -90,13 +169,20 @@ export function EmployeeSummaryDtoFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'active': json['active'],
+        'allowedActions': json['allowedActions'] == null ? undefined : json['allowedActions'],
+        'contactInfo': json['contactInfo'] == null ? undefined : EmployeeContactInfoDtoFromJSON(json['contactInfo']),
         'employeeId': json['employeeId'],
         'employeeNumber': json['employeeNumber'] == null ? undefined : json['employeeNumber'],
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'jobRole': json['jobRole'] == null ? undefined : EmployeeJobRoleDtoFromJSON(json['jobRole']),
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
+        'otherLocationCount': json['otherLocationCount'] == null ? undefined : json['otherLocationCount'],
         'personId': json['personId'],
         'preferredName': json['preferredName'] == null ? undefined : json['preferredName'],
+        'primaryLocation': json['primaryLocation'] == null ? undefined : EmployeeLocationDtoFromJSON(json['primaryLocation']),
+        'roleAssignments': json['roleAssignments'] == null ? undefined : ((json['roleAssignments'] as Array<any>).map(EmployeeRoleAssignmentDtoFromJSON)),
         'status': json['status'] == null ? undefined : json['status'],
+        'username': json['username'] == null ? undefined : json['username'],
     };
 }
 
@@ -107,13 +193,20 @@ export function EmployeeSummaryDtoToJSON(value?: EmployeeSummaryDto | null): any
     return {
         
         'active': value['active'],
+        'allowedActions': value['allowedActions'],
+        'contactInfo': EmployeeContactInfoDtoToJSON(value['contactInfo']),
         'employeeId': value['employeeId'],
         'employeeNumber': value['employeeNumber'],
         'firstName': value['firstName'],
+        'jobRole': EmployeeJobRoleDtoToJSON(value['jobRole']),
         'lastName': value['lastName'],
+        'otherLocationCount': value['otherLocationCount'],
         'personId': value['personId'],
         'preferredName': value['preferredName'],
+        'primaryLocation': EmployeeLocationDtoToJSON(value['primaryLocation']),
+        'roleAssignments': value['roleAssignments'] == null ? undefined : ((value['roleAssignments'] as Array<any>).map(EmployeeRoleAssignmentDtoToJSON)),
         'status': value['status'],
+        'username': value['username'],
     };
 }
 

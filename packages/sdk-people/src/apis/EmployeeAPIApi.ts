@@ -20,6 +20,8 @@ import type {
   DisableEmployeeRequestDto,
   EmployeeIdentityDto,
   EmployeeProfileDto,
+  EmployeeStatusCountsResponse,
+  EnableEmployeeRequestDto,
   PagedResponseEmployeeSummaryDto,
   UpdateEmployeeRequest,
 } from '../models/index';
@@ -34,6 +36,10 @@ import {
     EmployeeIdentityDtoToJSON,
     EmployeeProfileDtoFromJSON,
     EmployeeProfileDtoToJSON,
+    EmployeeStatusCountsResponseFromJSON,
+    EmployeeStatusCountsResponseToJSON,
+    EnableEmployeeRequestDtoFromJSON,
+    EnableEmployeeRequestDtoToJSON,
     PagedResponseEmployeeSummaryDtoFromJSON,
     PagedResponseEmployeeSummaryDtoToJSON,
     UpdateEmployeeRequestFromJSON,
@@ -49,6 +55,11 @@ export interface DisableEmployeeRequest {
     disableEmployeeRequestDto?: DisableEmployeeRequestDto;
 }
 
+export interface EnableEmployeeRequest {
+    employeeId: string;
+    enableEmployeeRequestDto: EnableEmployeeRequestDto;
+}
+
 export interface GetEmployeeRequest {
     employeeId: string;
 }
@@ -57,10 +68,17 @@ export interface GetEmployeeByNumberRequest {
     employeeNumber: string;
 }
 
+export interface GetEmployeeStatusCountsRequest {
+    q?: string;
+}
+
 export interface SearchEmployeesRequest {
     q?: string;
+    status?: Array<SearchEmployeesStatusEnum>;
+    sort?: string;
     page?: number;
     size?: number;
+    include?: Array<SearchEmployeesIncludeEnum>;
 }
 
 export interface UpdateEmployeeOperationRequest {
@@ -139,7 +157,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
 
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["people:employee:deactivate"]);
+            const tokenString = await token("bearerAuth", ["people:employee:activation"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
@@ -162,6 +180,59 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
      */
     async disableEmployee(requestParameters: DisableEmployeeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeProfileDto> {
         const response = await this.disableEmployeeRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Reactivates a DISABLED employee, setting status ACTIVE with a fresh statusEffectiveAt. This is the explicit DISABLED -> ACTIVE transition DECISION-PEOPLE-001 calls for, and the direct inverse of disableEmployee: staffing assignments are left exactly as disableEmployee\'s offboarding policy left them, never silently resurrected. Use this tool to bring a DISABLED employee back to ACTIVE; do not use updateEmployee to force the status field, which is gated on the broader profile-edit permission rather than this activation permission and runs no confirmation semantics, and do not use this tool for ON_LEAVE or SUSPENDED employees, which carry dates and a reason that only updateEmployee collects. Preconditions: the employee must exist and currently be DISABLED; TERMINATED is rejected as irreversible, ACTIVE is rejected as already active, and ON_LEAVE or SUSPENDED are rejected in favor of updateEmployee. Required inputs: employeeId (UUID) path parameter; the request body is required and carries updatedAt, the concurrency token also returned as EmployeeProfileDto.updatedAt — submit back the value most recently read for this employee so a change made in the meantime is caught rather than silently overwritten. Emits a PEOPLE_EMPLOYEE_ENABLE event and publishes a people.employee.updated fact, so the downstream replicas disableEmployee notified converge back to ACTIVE without a manual replay. Returns 404 when the employee does not exist, and 409 when the employee is TERMINATED (irreversible), ON_LEAVE or SUSPENDED (use updateEmployee instead), already ACTIVE, or when the submitted updatedAt no longer matches the employee\'s current value. 
+     * Enable A Disabled Employee
+     */
+    async enableEmployeeRaw(requestParameters: EnableEmployeeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmployeeProfileDto>> {
+        if (requestParameters['employeeId'] == null) {
+            throw new runtime.RequiredError(
+                'employeeId',
+                'Required parameter "employeeId" was null or undefined when calling enableEmployee().'
+            );
+        }
+
+        if (requestParameters['enableEmployeeRequestDto'] == null) {
+            throw new runtime.RequiredError(
+                'enableEmployeeRequestDto',
+                'Required parameter "enableEmployeeRequestDto" was null or undefined when calling enableEmployee().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:activation"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/employees/{employeeId}/enable`.replace(`{${"employeeId"}}`, encodeURIComponent(String(requestParameters['employeeId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: EnableEmployeeRequestDtoToJSON(requestParameters['enableEmployeeRequestDto']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EmployeeProfileDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * Reactivates a DISABLED employee, setting status ACTIVE with a fresh statusEffectiveAt. This is the explicit DISABLED -> ACTIVE transition DECISION-PEOPLE-001 calls for, and the direct inverse of disableEmployee: staffing assignments are left exactly as disableEmployee\'s offboarding policy left them, never silently resurrected. Use this tool to bring a DISABLED employee back to ACTIVE; do not use updateEmployee to force the status field, which is gated on the broader profile-edit permission rather than this activation permission and runs no confirmation semantics, and do not use this tool for ON_LEAVE or SUSPENDED employees, which carry dates and a reason that only updateEmployee collects. Preconditions: the employee must exist and currently be DISABLED; TERMINATED is rejected as irreversible, ACTIVE is rejected as already active, and ON_LEAVE or SUSPENDED are rejected in favor of updateEmployee. Required inputs: employeeId (UUID) path parameter; the request body is required and carries updatedAt, the concurrency token also returned as EmployeeProfileDto.updatedAt — submit back the value most recently read for this employee so a change made in the meantime is caught rather than silently overwritten. Emits a PEOPLE_EMPLOYEE_ENABLE event and publishes a people.employee.updated fact, so the downstream replicas disableEmployee notified converge back to ACTIVE without a manual replay. Returns 404 when the employee does not exist, and 409 when the employee is TERMINATED (irreversible), ON_LEAVE or SUSPENDED (use updateEmployee instead), already ACTIVE, or when the submitted updatedAt no longer matches the employee\'s current value. 
+     * Enable A Disabled Employee
+     */
+    async enableEmployee(requestParameters: EnableEmployeeRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeProfileDto> {
+        const response = await this.enableEmployeeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -252,7 +323,47 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number. Use this tool when listing or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, and do not use getEmployeeByNumber, which resolves one exact employee number rather than searching. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory; q defaults to blank, which lists every employee, page defaults to 0, and size defaults to 20 with a maximum of 100. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state; this is a read-only projection merged in memory from local employment rows and the pos-people-contact identity replica. Returns 200 with an empty items list and correct totals when the page or query matches nothing. 
+     * Returns a per-status employee count for the employee register\'s stat tiles, computed over the same case-insensitive name/employee-number q filter searchEmployees applies, before any status filter -- so every tile reports what selecting that status would return out of the current search, including for a status not currently selected. Use this tool alongside searchEmployees to render the register\'s stat-tile row; do not use it in place of searchEmployees, which alone returns the paged row list (durion#2158: this histogram used to be folded into that endpoint\'s response, which changed its shape for every caller -- it is now this separate, additive endpoint instead). Preconditions: none; an empty tenant, or a q that matches nothing, returns an empty counts map rather than an error. Required inputs: none are mandatory; q defaults to blank, which counts every employee. Unlike searchEmployees this endpoint takes no status, sort, page, size, or include parameters -- the histogram always covers the whole q-filtered set, never one page of it. Emits a PEOPLE_EMPLOYEE_STATUS_COUNTS audit event but changes no state; this is a read-only projection merged in memory the same way searchEmployees is, and carries a bucket for an employee with no status recorded (a legacy row) so the counts always sum to the q-filtered total. Returns 200 with an empty counts map when q matches nothing. 
+     * Get Employee Status Histogram For The Register
+     */
+    async getEmployeeStatusCountsRaw(requestParameters: GetEmployeeStatusCountsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EmployeeStatusCountsResponse>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["people:employee:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/people/employees/status-counts`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EmployeeStatusCountsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a per-status employee count for the employee register\'s stat tiles, computed over the same case-insensitive name/employee-number q filter searchEmployees applies, before any status filter -- so every tile reports what selecting that status would return out of the current search, including for a status not currently selected. Use this tool alongside searchEmployees to render the register\'s stat-tile row; do not use it in place of searchEmployees, which alone returns the paged row list (durion#2158: this histogram used to be folded into that endpoint\'s response, which changed its shape for every caller -- it is now this separate, additive endpoint instead). Preconditions: none; an empty tenant, or a q that matches nothing, returns an empty counts map rather than an error. Required inputs: none are mandatory; q defaults to blank, which counts every employee. Unlike searchEmployees this endpoint takes no status, sort, page, size, or include parameters -- the histogram always covers the whole q-filtered set, never one page of it. Emits a PEOPLE_EMPLOYEE_STATUS_COUNTS audit event but changes no state; this is a read-only projection merged in memory the same way searchEmployees is, and carries a bucket for an employee with no status recorded (a legacy row) so the counts always sum to the q-filtered total. Returns 200 with an empty counts map when q matches nothing. 
+     * Get Employee Status Histogram For The Register
+     */
+    async getEmployeeStatusCounts(requestParameters: GetEmployeeStatusCountsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EmployeeStatusCountsResponse> {
+        const response = await this.getEmployeeStatusCountsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number, optionally narrowed to one or more employment statuses and sorted. Use this tool when listing, filtering, sorting, or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, or getEmployeeByNumber, which resolves one exact employee number rather than searching, and use getEmployeeStatusCounts instead of this endpoint to render the register\'s stat tiles. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory -- q defaults to blank and lists every employee, status defaults to no filter, sort defaults to lastName,asc, page defaults to 0, and size defaults to 20 with a maximum of 100; the repeatable include parameter (durion#2155, plus ALLOWED_ACTIONS from durion#2159) adds one extra field group per token (USERNAME, CONTACT_INFO, ROLE_ASSIGNMENTS, LOCATION, JOB_ROLE, ALLOWED_ACTIONS) to the returned rows, with CONTACT_INFO gated by people:employee_pii:view (#1898) and ROLE_ASSIGNMENTS gated by people-contact:role:view, each silently omitted rather than returning 403 when the caller lacks that permission, and ALLOWED_ACTIONS is a rendering hint computed by EmployeeActionPolicy that never substitutes for the @PreAuthorize and service-level guards those actions still enforce independently. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state, merging local employment rows with the pos-people-contact identity replica in memory, with every requested include category resolved only against the page actually returned so response cost stays flat as the tenant grows. Returns 200 with an empty items list and correct totals when the page, query, or status filter matches nothing, and returns 400 for an unsupported sort field or direction. 
      * Search Employees By Name Or Number
      */
     async searchEmployeesRaw(requestParameters: SearchEmployeesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PagedResponseEmployeeSummaryDto>> {
@@ -262,12 +373,24 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
             queryParameters['q'] = requestParameters['q'];
         }
 
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['sort'] != null) {
+            queryParameters['sort'] = requestParameters['sort'];
+        }
+
         if (requestParameters['page'] != null) {
             queryParameters['page'] = requestParameters['page'];
         }
 
         if (requestParameters['size'] != null) {
             queryParameters['size'] = requestParameters['size'];
+        }
+
+        if (requestParameters['include'] != null) {
+            queryParameters['include'] = requestParameters['include'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -291,7 +414,7 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number. Use this tool when listing or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, and do not use getEmployeeByNumber, which resolves one exact employee number rather than searching. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory; q defaults to blank, which lists every employee, page defaults to 0, and size defaults to 20 with a maximum of 100. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state; this is a read-only projection merged in memory from local employment rows and the pos-people-contact identity replica. Returns 200 with an empty items list and correct totals when the page or query matches nothing. 
+     * Returns a paged list of slim employee rows matching a case-insensitive substring search across first name, last name, preferred name, and employee number, optionally narrowed to one or more employment statuses and sorted. Use this tool when listing, filtering, sorting, or typeahead-filtering employees; do not use getEmployee, which requires the person id already be known, or getEmployeeByNumber, which resolves one exact employee number rather than searching, and use getEmployeeStatusCounts instead of this endpoint to render the register\'s stat tiles. Preconditions: none; an empty result set is returned rather than an error when nothing matches. Required inputs: none are mandatory -- q defaults to blank and lists every employee, status defaults to no filter, sort defaults to lastName,asc, page defaults to 0, and size defaults to 20 with a maximum of 100; the repeatable include parameter (durion#2155, plus ALLOWED_ACTIONS from durion#2159) adds one extra field group per token (USERNAME, CONTACT_INFO, ROLE_ASSIGNMENTS, LOCATION, JOB_ROLE, ALLOWED_ACTIONS) to the returned rows, with CONTACT_INFO gated by people:employee_pii:view (#1898) and ROLE_ASSIGNMENTS gated by people-contact:role:view, each silently omitted rather than returning 403 when the caller lacks that permission, and ALLOWED_ACTIONS is a rendering hint computed by EmployeeActionPolicy that never substitutes for the @PreAuthorize and service-level guards those actions still enforce independently. Emits a PEOPLE_EMPLOYEE_SEARCH audit event but changes no state, merging local employment rows with the pos-people-contact identity replica in memory, with every requested include category resolved only against the page actually returned so response cost stays flat as the tenant grows. Returns 200 with an empty items list and correct totals when the page, query, or status filter matches nothing, and returns 400 for an unsupported sort field or direction. 
      * Search Employees By Name Or Number
      */
     async searchEmployees(requestParameters: SearchEmployeesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagedResponseEmployeeSummaryDto> {
@@ -352,4 +475,28 @@ export class EmployeeAPIApi extends runtime.BaseAPI {
         return await response.value();
     }
 
+}
+
+/**
+  * @export
+  * @enum {string}
+  */
+export enum SearchEmployeesStatusEnum {
+    Active = 'ACTIVE',
+    OnLeave = 'ON_LEAVE',
+    Suspended = 'SUSPENDED',
+    Terminated = 'TERMINATED',
+    Disabled = 'DISABLED'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum SearchEmployeesIncludeEnum {
+    Username = 'USERNAME',
+    ContactInfo = 'CONTACT_INFO',
+    RoleAssignments = 'ROLE_ASSIGNMENTS',
+    Location = 'LOCATION',
+    JobRole = 'JOB_ROLE',
+    AllowedActions = 'ALLOWED_ACTIONS'
 }
