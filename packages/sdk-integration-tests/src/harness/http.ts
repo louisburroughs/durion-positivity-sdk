@@ -28,6 +28,65 @@ export const httpStatusOf = (error: unknown): number | undefined => {
   return typeof status === 'number' ? status : undefined;
 };
 
+/**
+ * Bodies already read, keyed by the response they came from.
+ *
+ * A `Response` body is a stream and reading it consumes it. `formatError` is
+ * called more than once on the same failure by design — `retryWhileReplicating`
+ * formats it on every attempt to test the text against its markers, and the
+ * caller formats it again for the report — so the second read found the stream
+ * spent and said `(could not read body)`.
+ *
+ * That is not a cosmetic loss. It is how 3,864 identical `assign-position`
+ * failures in one accelerated year reported an HTTP 422 with no code and no
+ * message, and why the step that was killing every job stayed invisible for
+ * three runs.
+ *
+ * A WeakMap rather than a field on the error: nothing is mutated, and the entry
+ * goes when the response does.
+ */
+const readBodies = new WeakMap<object, string>();
+
+const readBody = async (response: { text?: unknown; clone?: unknown }): Promise<string | undefined> => {
+  const cached = readBodies.get(response);
+  if (cached !== undefined) {
+    return cached;
+  }
+  if (typeof response.text !== 'function') {
+    return undefined;
+  }
+  // Called as a method, on purpose. `Response.clone` is brand-checked and throws
+  // "Illegal invocation" without its receiver — but only a genuinely detached
+  // reference loses it: `(response.clone as T)()` keeps it, because parenthesising
+  // an expression does not detach it, while `const c = response.clone; c()` does.
+  // Written this way so the distinction never has to be rediscovered.
+  //
+  // The tests use a real Response rather than a hand-rolled fake for the same
+  // reason: a plain object's clone needs no receiver and would hide any mistake
+  // here.
+  let body: string | undefined;
+  if (typeof response.clone === 'function') {
+    try {
+      body = await (response as { clone(): { text(): Promise<string> } }).clone().text();
+    } catch {
+      body = undefined;
+    }
+  }
+
+  if (body === undefined) {
+    // No clone, or a body already disturbed. Reading the original is all that is
+    // left; it consumes the stream, and the cache is what saves the next caller.
+    try {
+      body = await (response as { text(): Promise<string> }).text();
+    } catch {
+      return undefined;
+    }
+  }
+
+  readBodies.set(response, body);
+  return body;
+};
+
 export const formatError = async (error: unknown): Promise<string> => {
   if (
     error !== null &&
@@ -50,12 +109,11 @@ export const formatError = async (error: unknown): Promise<string> => {
     const trace = correlationId ? ` [correlationId=${correlationId}]` : '';
 
     if (typeof response.text === 'function') {
-      try {
-        const body = await (response.text as () => Promise<string>)();
-        return `HTTP ${status}${trace}: ${body || '(empty body)'}`;
-      } catch {
+      const body = await readBody(response);
+      if (body === undefined) {
         return `HTTP ${status}${trace}: (could not read body)`;
       }
+      return `HTTP ${status}${trace}: ${body || '(empty body)'}`;
     }
     return `HTTP ${status}${trace}`;
   }
