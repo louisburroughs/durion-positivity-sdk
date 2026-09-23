@@ -42,11 +42,23 @@ export class VirtualClock {
    * endpoint being absent is an expected answer rather than a fault.
    */
   async tryGetCurrentVirtualTime(): Promise<Date | null> {
+    const time = await this.tryFetchTime();
+    return time === null ? null : this.toDate(time);
+  }
+
+  /**
+   * The whole /system/time reading, or null when the endpoint is absent. Same
+   * failure rules as {@link tryGetCurrentVirtualTime}; use this one when the
+   * zone matters as well as the instant.
+   */
+  async tryFetchTime(): Promise<ServerTimeResponse | null> {
     const res = await fetch(this.timeUrl);
     if (res.status === 404) {
       return null;
     }
-    return this.toDate(await this.readTime(res));
+    const time = await this.readTime(res);
+    this.toDate(time); // Refuses an unparseable virtualTime here, not in the caller.
+    return time;
   }
 
   private async readTime(res: Response): Promise<ServerTimeResponse> {
