@@ -74,6 +74,12 @@ export interface AdjustmentResponse {
      */
     ledgerEntryId?: string;
     /**
+     * Storage location the variance posts against: the task's bin, or the location named on the create request. Absent when neither named one.
+     * @type {string}
+     * @memberof AdjustmentResponse
+     */
+    locationId?: string;
+    /**
      * Timestamp when the adjustment was posted to the inventory ledger, if posted
      * @type {Date}
      * @memberof AdjustmentResponse
@@ -224,6 +230,7 @@ export function AdjustmentResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'createdByUserId': json['createdByUserId'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
         'ledgerEntryId': json['ledgerEntryId'] == null ? undefined : json['ledgerEntryId'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'postedAt': json['postedAt'] == null ? undefined : (new Date(json['postedAt'])),
         'quantityChange': json['quantityChange'],
         'quantityOnHandBefore': json['quantityOnHandBefore'],
@@ -257,6 +264,7 @@ export function AdjustmentResponseToJSON(value?: AdjustmentResponse | null): any
         'createdByUserId': value['createdByUserId'],
         'errorMessage': value['errorMessage'],
         'ledgerEntryId': value['ledgerEntryId'],
+        'locationId': value['locationId'],
         'postedAt': value['postedAt'] == null ? undefined : ((value['postedAt']).toISOString()),
         'quantityChange': value['quantityChange'],
         'quantityOnHandBefore': value['quantityOnHandBefore'],
