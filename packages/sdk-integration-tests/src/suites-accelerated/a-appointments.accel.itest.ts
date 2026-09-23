@@ -145,6 +145,44 @@ describe('Suite A — appointments', () => {
     }
   };
 
+  /**
+   * Fails the suite up front when nobody at the location is staffed on the day
+   * it books from (durion-positivity-sdk#94).
+   *
+   * The booking check counts ACTIVE technician staffing assignments effective on
+   * the booked date, as stored. On a long-lived alpha an assignment written at
+   * wall time starts months after the virtual now, so every booking is refused a
+   * HARD MECHANIC_UNAVAILABLE and A2-A4 then fail on an undefined appointmentId,
+   * which says nothing about the cause. The roster applies the same date filter
+   * as the booking check, so an empty roster is that refusal, asked in advance.
+   *
+   * Polled briefly: the roster is a Kafka projection of pos-people, and the
+   * seeder may have written the assignments moments before this suite started.
+   */
+  const assertTechniciansStaffed = async (on: Date) => {
+    const locationId = context.referenceCache.locationId;
+    const deadline = Date.now() + 60_000;
+    for (;;) {
+      const roster = await call('listLocationTechnicians', () =>
+        admin.shopManager.technicianApi.listLocationTechnicians({ locationId, date: on }),
+      );
+      const staffed = roster.content?.length ?? 0;
+      if (staffed > 0) {
+        console.log(`[A] ${staffed} technician(s) staffed at ${locationId} on ${on.toISOString().substring(0, 10)}`);
+        return;
+      }
+      if (Date.now() >= deadline) {
+        throw new Error(
+          `No ACTIVE technician staffing assignment at location ${locationId} is effective on ` +
+            `${on.toISOString().substring(0, 10)} (virtual), so every booking would be refused ` +
+            'MECHANIC_UNAVAILABLE. The seeded assignments start after the virtual now: back-date them ' +
+            '(durion-positivity-backend deployment/alpha/backdate-reference-data.sql) or reseed a wiped database.',
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5_000));
+    }
+  };
+
   beforeAll(async () => {
     context = loadContext();
     accel = await acceleratedFixture();
@@ -158,6 +196,7 @@ describe('Suite A — appointments', () => {
     advisor = personas.as('advisor');
     admin = personas.as('admin');
     tech = personas.as('tech');
+    await assertTechniciansStaffed(openedAt);
     ctx = {
       runId: context.runId,
       // Seeded per suite, not per run: a shared seed makes every suite generate

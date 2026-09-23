@@ -87,6 +87,39 @@ const EMPLOYEE_SEEDS: EmployeeSeedDefinition[] = [
   },
 ];
 
+/**
+ * The calendar date (yyyy-MM-dd) of an instant in a time zone - the zone the
+ * backend's clock reports, or this machine's when there is none.
+ */
+export function calendarDateIn(instant: Date, zone?: string): string {
+  // en-CA formats a date as yyyy-MM-dd.
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: zone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(instant);
+}
+
+/**
+ * Whether a staffing assignment is effective on `staffedOn` (yyyy-MM-dd) and
+ * stays effective after it.
+ *
+ * Effective dates are plain dates, which the client parses as UTC midnight, so
+ * the UTC date is the date the backend stored.
+ *
+ * Open-ended is required, not merely a later end: an accelerated run books on
+ * every virtual day from here to convergence, and an assignment that ends part
+ * way through leaves the shop unstaffed for the rest of it.
+ */
+export function isEffectiveFrom(assignment: StaffingAssignmentResponse, staffedOn: string): boolean {
+  return assignment.effectiveTo == null && isoDate(assignment.effectiveFrom) <= staffedOn;
+}
+
+function isoDate(date: Date): string {
+  return date.toISOString().substring(0, 10);
+}
+
 const PERSON_REPLICATION_TIMEOUT_MS = 30_000;
 const PERSON_REPLICATION_POLL_MS = 500;
 const ASSIGNMENT_LOOKUP_TIMEOUT_MS = 10_000;
@@ -94,7 +127,11 @@ const ASSIGNMENT_LOOKUP_TIMEOUT_MS = 10_000;
 export class PeopleBootstrap {
   constructor(private readonly sdkConfig: DurionSdkConfig) {}
 
-  async run(locationId: string): Promise<PeopleBootstrapResult> {
+  /**
+   * @param staffedOn the date (yyyy-MM-dd) from which the seeded staff must be
+   *   staffed: today on a normal backend, the virtual today on an accelerated one.
+   */
+  async run(locationId: string, staffedOn: string): Promise<PeopleBootstrapResult> {
     const { employeeApi, peopleStaffingAssignmentsApi } = createPeopleClient(this.sdkConfig);
 
     let createdCount = 0;
@@ -144,8 +181,9 @@ export class PeopleBootstrap {
 
       await this.ensureAssignment(
         employeeId,
-        seed.role,
+        seed,
         locationId,
+        staffedOn,
         async (personId: string, initOverrides?: RequestInit) =>
           peopleStaffingAssignmentsApi.listStaffingAssignments({ personId }, initOverrides),
         async (request: CreateStaffingAssignmentRequest, initOverrides?: RequestInit) =>
@@ -223,8 +261,9 @@ export class PeopleBootstrap {
 
   private async ensureAssignment(
     personId: string,
-    role: string,
+    seed: EmployeeSeedDefinition,
     locationId: string,
+    staffedOn: string,
     getAssignments: (
       personId: string,
       initOverrides?: RequestInit,
@@ -234,23 +273,52 @@ export class PeopleBootstrap {
       initOverrides?: RequestInit,
     ) => Promise<StaffingAssignmentResponse>,
   ): Promise<void> {
+    const { role } = seed;
+    let assignments: StaffingAssignmentResponse[] = [];
     try {
-      const assignments = await getAssignments(personId, {
+      assignments = await getAssignments(personId, {
         signal: AbortSignal.timeout(ASSIGNMENT_LOOKUP_TIMEOUT_MS),
       });
-      const existing = assignments.find(
-        (assignment) =>
-          assignment.locationId === locationId &&
-          assignment.role === role &&
-          assignment.isPrimary &&
-          assignment.status === 'ACTIVE',
-      );
-
-      if (existing) {
-        return;
-      }
     } catch {
       // Fall through to create the assignment when list retrieval is unavailable.
+    }
+
+    const existing = assignments.filter(
+      (assignment) =>
+        assignment.locationId === locationId &&
+        assignment.role === role &&
+        assignment.isPrimary &&
+        assignment.status === 'ACTIVE',
+    );
+
+    if (existing.some((assignment) => isEffectiveFrom(assignment, staffedOn))) {
+      return;
+    }
+
+    // An ACTIVE primary assignment that starts after staffedOn, or ends, looks
+    // like staff but is not: the booking check reads effective dates as stored,
+    // so a technician's bookings before its start are refused
+    // MECHANIC_UNAVAILABLE (durion-positivity-sdk#94). On a long-lived alpha
+    // these are assignments written at wall time, before the seed back-dated
+    // them. They are not repaired here: a new back-dated primary would start
+    // before the one pos-people has to end to make room for it. Say so rather
+    // than report the shop as staffed.
+    if (existing.length > 0) {
+      const found = existing
+        .map(
+          (assignment) =>
+            `${assignment.assignmentId} (${isoDate(assignment.effectiveFrom)} to ${
+              assignment.effectiveTo ? isoDate(assignment.effectiveTo) : 'open'
+            })`,
+        )
+        .join(', ');
+      throw new Error(
+        `PeopleBootstrap: ${seed.employeeNumber} (${seed.legalName}) has an ACTIVE primary ${role} ` +
+          `assignment at location ${locationId}, but none is effective from ${staffedOn} onwards: ${found}. ` +
+          'Outside those dates the employee is unstaffed, and a technician\'s bookings are refused MECHANIC_UNAVAILABLE. ' +
+          'Back-date the assignment ' +
+          '(durion-positivity-backend deployment/alpha/backdate-reference-data.sql) or reseed a wiped database.',
+      );
     }
 
     // The person this employee points at is created asynchronously: pos-people

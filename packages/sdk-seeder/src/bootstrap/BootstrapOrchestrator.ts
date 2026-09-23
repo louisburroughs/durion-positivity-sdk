@@ -5,7 +5,7 @@ import { VirtualClock } from '../support/VirtualClock';
 import { CatalogBootstrap } from './CatalogBootstrap';
 import { InventoryBootstrap } from './InventoryBootstrap';
 import { LocationBootstrap } from './LocationBootstrap';
-import { PeopleBootstrap } from './PeopleBootstrap';
+import { calendarDateIn, PeopleBootstrap } from './PeopleBootstrap';
 
 export class BootstrapOrchestrator {
   constructor(
@@ -20,8 +20,23 @@ export class BootstrapOrchestrator {
     const locationResult = await new LocationBootstrap(this.auth.buildSdkConfig('location')).run();
     const { locationId, bayIds } = locationResult;
 
+    // /system/time exists only under the backend's accelerated profile. The
+    // integration suite bootstraps against the normal clock, where the endpoint
+    // is absent - fall back to the real clock instead of failing the whole
+    // bootstrap. People checks its staffing against this date, and the
+    // inventory PO/delivery dates below are stamped with it.
+    const serverTime = await new VirtualClock(this.config.baseUrl, this.config.pollIntervalMs).tryFetchTime();
+    if (serverTime === null) {
+      console.log('[Bootstrap] No /system/time endpoint (non-accelerated backend); using the real clock.');
+    }
+    const virtualNow = serverTime === null ? new Date() : new Date(serverTime.virtualTime);
+    const staffedOn = calendarDateIn(virtualNow, serverTime?.zone);
+
     // -- People ----------------------------------------------------------------
-    const peopleResult = await new PeopleBootstrap(this.auth.buildSdkConfig('people')).run(locationId);
+    const peopleResult = await new PeopleBootstrap(this.auth.buildSdkConfig('people')).run(
+      locationId,
+      staffedOn,
+    );
     const { employees, employeeNameById } = peopleResult;
 
     // -- Catalog ---------------------------------------------------------------
@@ -33,16 +48,6 @@ export class BootstrapOrchestrator {
       id,
       name: productNameById.get(id) ?? id,
     }));
-    // /system/time exists only under the backend's accelerated profile. The
-    // integration suite bootstraps against the normal clock, where the endpoint
-    // is absent - fall back to the real clock instead of failing the whole
-    // bootstrap. Only the inventory PO/delivery dates below use this value.
-    const acceleratedNow = await new VirtualClock(this.config.baseUrl, this.config.pollIntervalMs)
-      .tryGetCurrentVirtualTime();
-    if (acceleratedNow === null) {
-      console.log('[Bootstrap] No /system/time endpoint (non-accelerated backend); using the real clock.');
-    }
-    const virtualNow = acceleratedNow ?? new Date();
     const inventoryResult = await new InventoryBootstrap(
       this.auth.buildSdkConfig('inventory'),
       this.auth.buildSdkConfig('order'),
