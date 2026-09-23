@@ -96,6 +96,31 @@ describe('AcceleratedJob — a failure that holds a technician', () => {
     expect(released).toEqual(['wo-1']);
   });
 
+  it('does not release from a workorder the job has already completed', async () => {
+    // invoice, finalize and pay all run after `complete`, and a completed
+    // workorder answers 409 WORKORDER_CLOSED — so attempting the release there
+    // would append a second failure about a technician the completion already
+    // released.
+    const released: string[] = [];
+    const job = new AcceleratedJob('job-4', {
+      ...deps(claimAt('site-north')),
+      as: recordingPersonas(released),
+    });
+    (job as unknown as { workorderId: string }).workorderId = 'wo-4';
+    (job as unknown as { technicianAssigned: boolean }).technicianAssigned = true;
+    (job as unknown as { workorderClosed: boolean }).workorderClosed = true;
+    (job as unknown as { steps: Array<{ name: string; run: () => Promise<void> }> }).steps = [
+      { name: 'pay', run: async () => { throw new Error('HTTP 409 payment refused'); } },
+    ];
+    (job as unknown as { cursor: number }).cursor = 0;
+
+    await job.advance();
+
+    expect(released).toEqual([]);
+    expect(job.failure).toContain('payment refused');
+    expect(job.failure).not.toContain('technician could not be released');
+  });
+
   it('does not release a technician it never held', async () => {
     const released: string[] = [];
     const job = new AcceleratedJob('job-2', {
