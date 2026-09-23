@@ -38,6 +38,12 @@ export interface CreateAdjustmentRequest {
      */
     createdByUserId: string;
     /**
+     * Storage location whose stock was counted. Required for the variance to post against a shelf when the adjustment has no task; when the task's bin names a location this may be omitted, and if supplied must match it. Omitted with no task, the variance posts against the stock item's location-less balance.
+     * @type {string}
+     * @memberof CreateAdjustmentRequest
+     */
+    locationId?: string;
+    /**
      * Quantity on hand recorded before the count was applied
      * @type {number}
      * @memberof CreateAdjustmentRequest
@@ -89,6 +95,7 @@ export function CreateAdjustmentRequestFromJSONTyped(json: any, ignoreDiscrimina
         'costAtTimeOfAdjustment': json['costAtTimeOfAdjustment'],
         'countedQuantity': json['countedQuantity'],
         'createdByUserId': json['createdByUserId'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'quantityOnHandBefore': json['quantityOnHandBefore'],
         'reasonCode': json['reasonCode'],
         'stockItemId': json['stockItemId'],
@@ -105,6 +112,7 @@ export function CreateAdjustmentRequestToJSON(value?: CreateAdjustmentRequest | 
         'costAtTimeOfAdjustment': value['costAtTimeOfAdjustment'],
         'countedQuantity': value['countedQuantity'],
         'createdByUserId': value['createdByUserId'],
+        'locationId': value['locationId'],
         'quantityOnHandBefore': value['quantityOnHandBefore'],
         'reasonCode': value['reasonCode'],
         'stockItemId': value['stockItemId'],
