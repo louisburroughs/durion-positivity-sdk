@@ -357,19 +357,40 @@ export function createMaintenancePort(
         // seeds the quantity it then counts; the year run counts what the shop has.
         //
         // Stock items are keyed by SKU, which equals the productEntityId.
-        const availability = await call(`getAvailabilityBySku ${productName}`, () =>
-          parts.inventory.inventoryAvailabilityApi.getAvailabilityBySku({
+        // Unwrapped, because the 404 is the answer rather than a failure: the
+        // endpoint "returns 404 when the SKU has no stock-summary rows", which is
+        // the ordinary state of a product never received. `call` would rewrite it
+        // as a plain Error and the whole weekly count would abort on the first
+        // unstocked candidate instead of counting an empty shelf.
+        let quantityOnHandBefore = 0;
+        try {
+          const availability = await parts.inventory.inventoryAvailabilityApi.getAvailabilityBySku({
             productSku: productId,
             locationId: refs.locationId,
-          }),
-        );
-        const quantityOnHandBefore = Math.max(0, Math.trunc(readNumber(availability, 'onHandQuantity', 'onHandQty') ?? 0));
+          });
+          quantityOnHandBefore = Math.max(
+            0,
+            Math.trunc(readNumber(availability, 'onHandQuantity', 'onHandQty') ?? 0),
+          );
+        } catch (error) {
+          if (!isHttpStatus(error, 404)) {
+            throw new Error(`getAvailabilityBySku ${productName} failed: ${await formatError(error)}`);
+          }
+        }
 
         // A downward variance may empty the shelf and no more: zeroing stock is a
         // real count, driving it negative is a fiction the ledger is right to
         // refuse.
+        //
+        // And never a variance of nothing. `countedQuantity` must differ from
+        // `quantityOnHandBefore` — a zero variance is rejected — so an empty shelf
+        // is only ever counted upward, where a downward swing would have clamped to
+        // zero and failed about half the counts on a never-received product.
         const swing = ctx.random.int(1, 5);
-        const variance = ctx.random.chance(0.5) ? swing : -Math.min(swing, quantityOnHandBefore);
+        const variance =
+          quantityOnHandBefore === 0 || ctx.random.chance(0.5)
+            ? swing
+            : -Math.min(swing, quantityOnHandBefore);
 
         const adjustment = await call(`createCycleCountAdjustment ${productName}`, () =>
           parts.inventory.cycleCountAdjustmentsApi.createCycleCountAdjustment({
