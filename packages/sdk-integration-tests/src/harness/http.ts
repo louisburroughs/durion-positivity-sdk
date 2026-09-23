@@ -55,26 +55,36 @@ const readBody = async (response: { text?: unknown; clone?: unknown }): Promise<
   if (typeof response.text !== 'function') {
     return undefined;
   }
-  try {
-    // Clone first, so the original stream survives for whoever reads it next;
-    // `clone()` throws once the body is disturbed, and then the direct read is
-    // the only thing left to try.
-    const source =
-      typeof response.clone === 'function'
-        ? ((response.clone as () => { text(): Promise<string> })())
-        : (response as { text(): Promise<string> });
-    const body = await source.text();
-    readBodies.set(response, body);
-    return body;
-  } catch {
+  // Called as a method, on purpose. `Response.clone` is brand-checked and throws
+  // "Illegal invocation" without its receiver — but only a genuinely detached
+  // reference loses it: `(response.clone as T)()` keeps it, because parenthesising
+  // an expression does not detach it, while `const c = response.clone; c()` does.
+  // Written this way so the distinction never has to be rediscovered.
+  //
+  // The tests use a real Response rather than a hand-rolled fake for the same
+  // reason: a plain object's clone needs no receiver and would hide any mistake
+  // here.
+  let body: string | undefined;
+  if (typeof response.clone === 'function') {
     try {
-      const body = await (response.text as () => Promise<string>)();
-      readBodies.set(response, body);
-      return body;
+      body = await (response as { clone(): { text(): Promise<string> } }).clone().text();
+    } catch {
+      body = undefined;
+    }
+  }
+
+  if (body === undefined) {
+    // No clone, or a body already disturbed. Reading the original is all that is
+    // left; it consumes the stream, and the cache is what saves the next caller.
+    try {
+      body = await (response as { text(): Promise<string> }).text();
     } catch {
       return undefined;
     }
   }
+
+  readBodies.set(response, body);
+  return body;
 };
 
 export const formatError = async (error: unknown): Promise<string> => {

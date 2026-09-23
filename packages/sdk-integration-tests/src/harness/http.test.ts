@@ -137,45 +137,50 @@ describe('call — renewing on a 401', () => {
 });
 
 describe('formatError — a body that is read twice', () => {
-  /** A Response whose stream can be consumed once, as a real one is. */
-  const oneShot = (status: number, body: string) => {
-    let spent = false;
-    const response = {
-      status,
-      headers: new Headers({ 'x-correlation-id': 'abc-123' }),
-      async text() {
-        if (spent) {
-          throw new TypeError('body stream already read');
-        }
-        spent = true;
-        return body;
-      },
-      clone() {
-        if (spent) {
-          throw new TypeError('cannot clone a disturbed response');
-        }
-        return { async text() { return body; } };
-      },
-    };
-    return { response };
-  };
+  const BODY = '{"code":"SERVICE_POSITION_INVALID","message":"at another site"}';
 
-  it('still has the body on the second read, which is what a retry costs', async () => {
-    // retryWhileReplicating formats the error to test its markers, and the caller
-    // formats it again for the report. The second read is where 3,864
-    // assign-position failures turned into "(could not read body)".
-    const error = oneShot(422, '{"code":"SERVICE_POSITION_INACTIVE","message":"…"}');
+  /**
+   * A real Response, not a hand-rolled fake.
+   *
+   * `Response.clone` is brand-checked, so a detached call throws where a plain
+   * object's would not — which is precisely the bug a fake let through: every real
+   * response fell to the direct read, consumed its stream, and the next format said
+   * `(could not read body)` exactly as before the fix.
+   */
+  const failure = (status: number, body: string) => ({
+    response: new Response(body, {
+      status,
+      headers: { 'x-correlation-id': 'abc-123' },
+    }),
+  });
+
+  it('leaves the original readable, and still has the body on a second format', async () => {
+    const error = failure(422, BODY);
 
     const first = await formatError(error);
+    // The contract, asserted rather than assumed: whoever reads the response after
+    // the formatter must still find a body. An implementation that read the
+    // original directly would throw here.
+    const direct = await error.response.text();
     const second = await formatError(error);
 
-    expect(first).toContain('SERVICE_POSITION_INACTIVE');
-    expect(second).toContain('SERVICE_POSITION_INACTIVE');
+    expect(first).toContain('SERVICE_POSITION_INVALID');
+    expect(direct).toBe(BODY);
+    expect(second).toContain('SERVICE_POSITION_INVALID');
     expect(second).toContain('correlationId=abc-123');
     expect(second).not.toContain('could not read body');
   });
 
-  it('falls back to a direct read when the response cannot be cloned', async () => {
+  it('still reports the body when the response was already consumed elsewhere', async () => {
+    const error = failure(500, '{"code":"INTERNAL_ERROR"}');
+    await error.response.text();
+
+    // The stream is spent and `clone()` now throws, so this is the fallback path:
+    // nothing can be recovered, and it says so rather than inventing a body.
+    expect(await formatError(error)).toContain('could not read body');
+  });
+
+  it('reads a response that has no clone at all', async () => {
     const error = {
       response: {
         status: 500,
@@ -187,6 +192,7 @@ describe('formatError — a body that is read twice', () => {
     };
 
     expect(await formatError(error)).toContain('INTERNAL_ERROR');
+    // Cached, so the second format does not re-read a stream that is now spent.
     expect(await formatError(error)).toContain('INTERNAL_ERROR');
   });
 
