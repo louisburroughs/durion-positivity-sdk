@@ -203,7 +203,13 @@ describe('The accelerated year', () => {
     // here while durion-positivity-backend#2186 is open, because an assertion
     // written now would encode whichever behaviour currently exists rather than the
     // one that is intended.
-    const posted = mine.filter((scrap) => scrap.status === 'POSTED' || scrap.status === 'AUTO_APPROVED');
+    // APPROVED belongs here with the other two: E14 and the maintenance port both
+    // treat it as posted, and leaving it out would drop exactly the write-offs the
+    // manager approved — the ones most likely to have gone wrong — out of the audit
+    // while the test still passed.
+    const posted = mine.filter(
+      (scrap) => scrap.status === 'POSTED' || scrap.status === 'AUTO_APPROVED' || scrap.status === 'APPROVED',
+    );
     for (const scrap of posted) {
       expect(scrap.ledgerEntryId).toBeTruthy();
       expect(scrap.quantity ?? 0).toBeGreaterThan(0);

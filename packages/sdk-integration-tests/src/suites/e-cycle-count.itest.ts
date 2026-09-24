@@ -9,7 +9,8 @@ import {
   SubmitRecountRequestMeasurementMethodEnum,
   UpdateCycleCountPlanStatusRequestStatusEnum,
 } from '@durion-sdk/inventory';
-import { call, expectHttpError } from '../harness/http';
+import { readNumber } from '../harness/builders';
+import { call, expectHttpError, formatError, isHttpStatus } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -482,6 +483,27 @@ describe('Suite E — cycle counting', () => {
      * both are handled because which one applies is the backend's decision and
      * this helper is not the place to assert it.
      */
+    /**
+     * On hand in the scrap bin, as the ledger holds it.
+     *
+     * Stock is seeded with the bin id in the location column — pos-inventory does
+     * not resolve it against the location service — so availability is asked the
+     * same question the seeding asked. A 404 is "no stock-summary rows", which is
+     * zero rather than a failure.
+     */
+    const onHand = async (): Promise<number> => {
+      try {
+        const availability = await parts.inventory.inventoryAvailabilityApi.getAvailabilityBySku({
+          productSku: scrapSku,
+          locationId: scrapBinId,
+        });
+        return Math.max(0, Math.trunc(readNumber(availability, 'onHandQuantity', 'onHandQty') ?? 0));
+      } catch (error) {
+        if (isHttpStatus(error, 404)) return 0;
+        throw new Error(`getAvailabilityBySku ${scrapSku} failed: ${await formatError(error)}`);
+      }
+    };
+
     const settle = async (scrapId: string, status: string | undefined): Promise<string | undefined> => {
       if (status !== 'PENDING_APPROVAL') return status;
       const approved = await call('approveScrap', () =>
@@ -530,8 +552,8 @@ describe('Suite E — cycle counting', () => {
       // The refusal lands on whichever call does the posting — on create when the
       // value auto-approves, on approve when it did not — so both are accepted here
       // rather than pinning a path the cost snapshot decides.
-      let refusedOnCreate = true;
       let created: Awaited<ReturnType<typeof parts.inventory.scrapsApi.createScrap>> | undefined;
+      let refusal: unknown;
       try {
         created = await parts.inventory.scrapsApi.createScrap({
           createScrapRequest: {
@@ -544,13 +566,18 @@ describe('Suite E — cycle counting', () => {
             notes: `Itest over-scrap ${context.runId}`,
           },
         });
-        refusedOnCreate = false;
-      } catch {
-        refusedOnCreate = true;
+      } catch (error) {
+        refusal = error;
       }
 
-      if (refusedOnCreate) {
-        console.log('[E15] refused at creation');
+      if (refusal !== undefined) {
+        // Specifically 422, not merely "it threw". A bare catch here would let a
+        // 401, a 400 or a transport failure stand in for the refusal this test
+        // exists to observe, and the test would pass while proving nothing.
+        if (!isHttpStatus(refusal, 422)) {
+          throw new Error(`Expected 422 for an over-scrap, got: ${await formatError(refusal)}`);
+        }
+        console.log('[E15] refused at creation with 422');
         return;
       }
 
@@ -598,11 +625,19 @@ describe('Suite E — cycle counting', () => {
       );
       const scrapId = created.scrapId as string;
 
+      // Measured after creation rather than before it, because an auto-approved
+      // scrap has already moved stock by this point and that movement is E14's
+      // subject, not this one. What this test is named for is narrower: the
+      // *rejection* must move nothing.
+      const before = await onHand();
+
       // Only a PENDING_APPROVAL scrap can be rejected; one that auto-approved has
-      // already posted and rejection answers 409. Recorded rather than asserted,
-      // because which path this takes is the cost snapshot's decision.
+      // already posted, and rejection then answers 409. Which path applies is the
+      // cost snapshot's decision, so both are driven — and both are measured,
+      // because a branch that only asserts a status code would let this test pass
+      // without ever checking the shelf it is named for.
       if (created.status !== 'PENDING_APPROVAL') {
-        console.log(`[E17] scrap ${scrapId} was ${created.status} on creation, so there was nothing to reject`);
+        console.log(`[E17] scrap ${scrapId} was ${created.status} on creation, so rejection must conflict`);
         const conflict = await expectHttpError(
           admin.inventory.scrapsApi.rejectScrap({
             scrapId,
@@ -611,18 +646,21 @@ describe('Suite E — cycle counting', () => {
           409,
         );
         expect(conflict).toBe(409);
-        return;
+      } else {
+        const rejected = await call('rejectScrap', () =>
+          admin.inventory.scrapsApi.rejectScrap({
+            scrapId,
+            rejectScrapRequest: { rejectionReason: `Part was recovered [${context.runId}]` },
+          }),
+        );
+        expect(rejected.status).toBe('REJECTED');
+        // Nothing moved, so nothing posted.
+        expect(rejected.ledgerEntryId).toBeFalsy();
       }
 
-      const rejected = await call('rejectScrap', () =>
-        admin.inventory.scrapsApi.rejectScrap({
-          scrapId,
-          rejectScrapRequest: { rejectionReason: `Part was recovered [${context.runId}]` },
-        }),
-      );
-      expect(rejected.status).toBe('REJECTED');
-      // Nothing moved, so nothing posted.
-      expect(rejected.ledgerEntryId).toBeFalsy();
+      const after = await onHand();
+      console.log(`[E17] on hand ${before} before the rejection, ${after} after`);
+      expect(after).toBe(before);
     }, 120_000);
 
     itInRoleMode('E18 — a technician may not write stock off', async () => {
