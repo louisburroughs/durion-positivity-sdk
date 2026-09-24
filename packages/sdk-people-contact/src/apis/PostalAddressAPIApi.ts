@@ -178,9 +178,16 @@ export class PostalAddressAPIApi extends runtime.BaseAPI {
      * Returns the structured postal address on file for a CRM organization party; the organization id is an external pos-customer party reference stored verbatim. Use this tool when reading an organization\'s mailing address; use getPersonPostalAddress instead for person parties. Preconditions: none; an address is present only once stored with putOrganizationPostalAddress. Required inputs: organizationId (the pos-customer commercial party UUID) as a path parameter; there is no request body. Emits a PEOPLE_CONTACT_ORG_ADDRESS_GET audit event; no state changes. Returns 200 with the address, or 204 with no body when no address is on file for the organization; an absent address is an ordinary answer, not an error. 
      * Get an Organization\'s Postal Address
      */
-    async getOrganizationPostalAddress(requestParameters: GetOrganizationPostalAddressRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostalAddressDto> {
+    async getOrganizationPostalAddress(requestParameters: GetOrganizationPostalAddressRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostalAddressDto | null | undefined > {
         const response = await this.getOrganizationPostalAddressRaw(requestParameters, initOverrides);
-        return await response.value();
+        switch (response.raw.status) {
+            case 200:
+                return await response.value();
+            case 204:
+                return null;
+            default:
+                return await response.value();
+        }
     }
 
     /**
@@ -221,9 +228,16 @@ export class PostalAddressAPIApi extends runtime.BaseAPI {
      * Returns the single structured postal address on file for a person; pos-people-contact is the postal-address authority for person parties (FI-4). Use this tool when reading a person\'s mailing address; use getOrganizationPostalAddress instead for CRM organization parties. Preconditions: none; an address is present only once stored with putPersonPostalAddress. Required inputs: personId (UUID) as a path parameter; there is no request body. Emits a PEOPLE_CONTACT_PERSON_ADDRESS_GET audit event; no state changes. Returns 200 with the address, or 204 with no body when no address is on file for the person; an absent address is an ordinary answer, not an error. 
      * Get a Person\'s Postal Address
      */
-    async getPersonPostalAddress(requestParameters: GetPersonPostalAddressRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostalAddressDto> {
+    async getPersonPostalAddress(requestParameters: GetPersonPostalAddressRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PostalAddressDto | null | undefined > {
         const response = await this.getPersonPostalAddressRaw(requestParameters, initOverrides);
-        return await response.value();
+        switch (response.raw.status) {
+            case 200:
+                return await response.value();
+            case 204:
+                return null;
+            default:
+                return await response.value();
+        }
     }
 
     /**
