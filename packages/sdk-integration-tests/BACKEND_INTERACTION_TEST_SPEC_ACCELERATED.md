@@ -437,9 +437,12 @@ packages/sdk-integration-tests/
     acceleratedYear.ts              # NEW: the same day runner as a populate run
 ```
 
-`src/suites-accelerated/*.accel.itest.ts` run **before** `z-year-volume` (Jest
-collects alphabetically and `maxWorkers: 1`), so a broken contract fails in
-minutes instead of at hour five. `z-year-volume` carries its own `testTimeout`
+`src/suites-accelerated/*.accel.itest.ts` run **before** `z-year-volume`, so a
+broken contract fails in minutes instead of at hour five. That order is enforced
+by `jest.accelerated.sequencer.js`, not by the file names: Jest orders by
+recorded duration, slowest first, and once it had a timing cache it put the
+5.6-hour year at the head, ending the accelerated clock before any other suite
+ran. `z-year-volume` carries its own `testTimeout`
 of `ITEST_ACCEL_RUN_BUDGET_MS`.
 
 ---

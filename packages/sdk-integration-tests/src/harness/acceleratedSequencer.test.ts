@@ -1,5 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const AcceleratedSequencer = require('../../jest.accelerated.sequencer.js');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Sequencer = require('@jest/test-sequencer').default;
 
 /**
  * The ordering the accelerated run depends on. The year suite converges the
@@ -15,6 +17,9 @@ describe('the accelerated test sequencer', () => {
   const sizes: Record<string, number> = {
     'z-year-volume.accel.itest.ts': 48_000,
     'c-workorder-execution.accel.itest.ts': 12_000,
+    'e-cycle-count.accel.itest.ts': 9_000,
+    'b-estimates.accel.itest.ts': 6_000,
+    'a-appointments.accel.itest.ts': 4_000,
     '00-harness.accel.itest.ts': 3_000,
   };
 
@@ -29,10 +34,16 @@ describe('the accelerated test sequencer', () => {
     context,
   });
 
+  const names = (sorted: ReturnType<typeof test>[]): string[] =>
+    sorted.map((entry) => entry.path.split('/').pop() as string);
+
+  // Each takes its own copy: `sort` mutates, so a shared array would let the
+  // reference run pre-sort the input for the run under test.
   const order = (tests: ReturnType<typeof test>[]): string[] =>
-    (new AcceleratedSequencer().sort(tests) as ReturnType<typeof test>[]).map(
-      (entry) => entry.path.split('/').pop() as string,
-    );
+    names(new AcceleratedSequencer().sort([...tests]) as ReturnType<typeof test>[]);
+
+  const jestOrder = (tests: ReturnType<typeof test>[]): string[] =>
+    names(new Sequencer().sort([...tests]) as ReturnType<typeof test>[]);
 
   it('puts the year last however big it is', () => {
     const sorted = order([
@@ -55,15 +66,38 @@ describe('the accelerated test sequencer', () => {
     expect(middle[middle.length - 1]).toBe('z-year-volume.accel.itest.ts');
   });
 
-  it('loses no suite and reorders nothing when the year is not selected', () => {
-    const sorted = order([
-      test('b-estimates.accel.itest.ts'),
+  it('leaves the parity suites in the order jest would have chosen', () => {
+    // Compared against the stock sequencer rather than a hardcoded list: the
+    // contract is that only the year is special-cased, so whatever jest's own
+    // heuristic decides for the rest is what this must reproduce. Asserting a
+    // fixed order here would instead pin jest's current heuristic.
+    // Deliberately not in sorted order already: fed the order jest would itself
+    // produce, a sequencer that never called super.sort would pass this.
+    const selection = [
+      test('a-appointments.accel.itest.ts'),
       test('e-cycle-count.accel.itest.ts'),
+      test('b-estimates.accel.itest.ts'),
+    ];
+    const expected = jestOrder(selection);
+
+    expect(order(selection)).toEqual(expected);
+    expect(expected).toHaveLength(3);
+  });
+
+  it('leaves the parity suites ordered among themselves with the year present', () => {
+    const withYear = order([
+      test('a-appointments.accel.itest.ts'),
+      test('z-year-volume.accel.itest.ts'),
+      test('e-cycle-count.accel.itest.ts'),
+      test('b-estimates.accel.itest.ts'),
+    ]);
+    const withoutYear = order([
+      test('a-appointments.accel.itest.ts'),
+      test('e-cycle-count.accel.itest.ts'),
+      test('b-estimates.accel.itest.ts'),
     ]);
 
-    expect([...sorted].sort()).toEqual([
-      'b-estimates.accel.itest.ts',
-      'e-cycle-count.accel.itest.ts',
-    ]);
+    // Pulling the year out must not disturb anything else.
+    expect(withYear).toEqual([...withoutYear, 'z-year-volume.accel.itest.ts']);
   });
 });
