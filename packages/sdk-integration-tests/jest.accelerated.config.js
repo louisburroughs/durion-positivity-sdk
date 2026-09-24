@@ -39,6 +39,9 @@ const config = {
   roots: ['<rootDir>/packages/sdk-integration-tests/src'],
   testMatch: ['**/*.accel.itest.ts'],
   maxWorkers: 1,
+  // The year runs last, because it ends the accelerated clock it runs on. See
+  // the sequencer for what happened when jest's duration ordering put it first.
+  testSequencer: '<rootDir>/packages/sdk-integration-tests/jest.accelerated.sequencer.js',
   // The parity suites need minutes; the year run overrides this per test with
   // ITEST_ACCEL_RUN_BUDGET_MS, because a whole virtual year is 1-6 hours.
   testTimeout: 600_000,
