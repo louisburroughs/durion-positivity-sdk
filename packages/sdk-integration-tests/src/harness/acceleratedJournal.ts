@@ -34,6 +34,8 @@ export interface JournalDay {
   carriedOut: number;
   cycleCount?: boolean;
   restock?: boolean;
+  /** Optional so a journal written before write-offs were run still loads. */
+  scrap?: boolean;
 }
 
 export interface JournalState {

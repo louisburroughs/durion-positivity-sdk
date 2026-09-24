@@ -60,6 +60,8 @@ export interface MaintenancePort {
   cycleCount(at: Date): Promise<void>;
   /** Monthly restock. */
   restock(at: Date): Promise<void>;
+  /** Ten-daily write-off of damaged or lost stock. */
+  scrap(at: Date): Promise<void>;
 }
 
 /**
@@ -143,6 +145,7 @@ export interface DayReport {
   carriedOut: number;
   cycleCount: boolean;
   restock: boolean;
+  scrap: boolean;
   clockedIn: number;
   /** Labor clocks stopped at closing time, to resume tomorrow. */
   laborSuspended: number;
@@ -179,6 +182,7 @@ const EMPTY_REPORT = (dayNumber: number, virtualDate: string): DayReport => ({
   carriedOut: 0,
   cycleCount: false,
   restock: false,
+  scrap: false,
   clockedIn: 0,
   laborSuspended: 0,
   failures: [],
@@ -421,6 +425,16 @@ export class AcceleratedDayRunner {
     if (dayNumber % 30 === 0) {
       report.restock = await this.attempt(report, 'the monthly restock', () =>
         this.deps.maintenance.restock(shiftClosedAt),
+      );
+    }
+    // Every ten days rather than weekly or monthly, so write-offs do not sit at a
+    // fixed phase against the count and the restock: on a 7 or a 30 they would
+    // either always share a day with the count or never fall near a delivery, and
+    // a year of scrap that only ever happens on full shelves is not a year's worth
+    // of evidence.
+    if (dayNumber % 10 === 0) {
+      report.scrap = await this.attempt(report, 'the scrap write-off', () =>
+        this.deps.maintenance.scrap(shiftClosedAt),
       );
     }
 

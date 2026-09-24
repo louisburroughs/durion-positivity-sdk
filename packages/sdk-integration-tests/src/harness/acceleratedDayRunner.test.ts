@@ -177,6 +177,7 @@ const harness = (options: {
   clockInFails?: Error;
   /** Makes the weekly cycle count throw, as a refused approval does. */
   cycleCountFails?: Error;
+  scrapFails?: Error;
   /**
    * Virtual minutes each clock read costs. Free reads hide a whole class of defect: a
    * loop that re-reads at entry can then never find the bound already past.
@@ -249,6 +250,13 @@ const harness = (options: {
       restock: async (at: Date) => {
         calls.push('restock');
         at_.restock = at;
+      },
+      scrap: async (at: Date) => {
+        calls.push('scrap');
+        at_.scrap = at;
+        if (options.scrapFails) {
+          throw options.scrapFails;
+        }
       },
     },
     appointments: {
@@ -1049,6 +1057,7 @@ describe('AcceleratedDayRunner — a closed day', () => {
     // Nor floor work.
     expect(calls).not.toContain('cycleCount');
     expect(calls).not.toContain('restock');
+    expect(calls).not.toContain('scrap');
     expect(report.clockedIn).toBe(0);
   });
 
@@ -1275,6 +1284,56 @@ describe('AcceleratedDayRunner — sampling and maintenance', () => {
     const thirtiethReport = await thirtieth.runner.runDay(30);
     expect(thirtiethReport.restock).toBe(true);
     expect(thirtieth.calls).toContain('restock');
+  });
+
+  it('writes stock off on every 10th day, after the shift has closed', async () => {
+    const { runner, calls, at } = harness({ startIso: '2025-11-03T08:00:00Z', stepMinutes: 10 });
+
+    const report = await runner.runDay(10);
+
+    expect(report.scrap).toBe(true);
+    expect(calls).toContain('scrap');
+    // The write-off is dated to the closed shift, like the count and the restock:
+    // stamped with the wall clock it would land outside the virtual year entirely.
+    expect(at.scrap).toBeDefined();
+    expect(calls.indexOf('scrap')).toBeGreaterThan(calls.indexOf('clockOut'));
+  });
+
+  it('runs no write-off on a day that is not a tenth', async () => {
+    for (const dayNumber of [9, 11, 15]) {
+      const { runner, calls } = harness({ startIso: '2025-11-03T08:00:00Z', stepMinutes: 10 });
+      const report = await runner.runDay(dayNumber);
+      expect(report.scrap).toBe(false);
+      expect(calls).not.toContain('scrap');
+    }
+  });
+
+  it('records a failed write-off and keeps the year going', async () => {
+    // The reason the count is recorded rather than thrown: one refused write-off is
+    // a bad day, not the end of a year with months of work behind it.
+    const { runner, calls } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 10,
+      scrapFails: new Error('SCRAP_INSUFFICIENT_STOCK'),
+    });
+
+    const report = await runner.runDay(10);
+
+    expect(calls).toContain('scrap');
+    expect(report.scrap).toBe(false);
+    expect(report.failures.join(' ')).toContain('SCRAP_INSUFFICIENT_STOCK');
+  });
+
+  it('runs the count and the write-off on a day that is both', async () => {
+    // Day 70 is a seventh and a tenth. Neither may swallow the other.
+    const { runner, calls } = harness({ startIso: '2025-11-03T08:00:00Z', stepMinutes: 10 });
+
+    const report = await runner.runDay(70);
+
+    expect(report.cycleCount).toBe(true);
+    expect(report.scrap).toBe(true);
+    expect(calls).toContain('cycleCount');
+    expect(calls).toContain('scrap');
   });
 
   it('runs neither on an adjacent day', async () => {
