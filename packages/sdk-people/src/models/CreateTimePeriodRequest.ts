@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to create a pay period for timekeeping approval
+ * Request to create a pay period for timekeeping approval; the tenant is the caller's own, taken from the access token (ADR-0062), never from the body
  * @export
  * @interface CreateTimePeriodRequest
  */
@@ -37,12 +37,6 @@ export interface CreateTimePeriodRequest {
      * @memberof CreateTimePeriodRequest
      */
     status?: CreateTimePeriodRequestStatusEnum;
-    /**
-     * Tenant the period belongs to
-     * @type {string}
-     * @memberof CreateTimePeriodRequest
-     */
-    tenantId: string;
 }
 
 /**
@@ -62,7 +56,6 @@ export enum CreateTimePeriodRequestStatusEnum {
 export function instanceOfCreateTimePeriodRequest(value: object): boolean {
     if (!('endDate' in value)) return false;
     if (!('startDate' in value)) return false;
-    if (!('tenantId' in value)) return false;
     return true;
 }
 
@@ -79,7 +72,6 @@ export function CreateTimePeriodRequestFromJSONTyped(json: any, ignoreDiscrimina
         'endDate': (new Date(json['endDate'])),
         'startDate': (new Date(json['startDate'])),
         'status': json['status'] == null ? undefined : json['status'],
-        'tenantId': json['tenantId'],
     };
 }
 
@@ -92,7 +84,6 @@ export function CreateTimePeriodRequestToJSON(value?: CreateTimePeriodRequest | 
         'endDate': ((value['endDate']).toISOString().substring(0,10)),
         'startDate': ((value['startDate']).toISOString().substring(0,10)),
         'status': value['status'],
-        'tenantId': value['tenantId'],
     };
 }
 

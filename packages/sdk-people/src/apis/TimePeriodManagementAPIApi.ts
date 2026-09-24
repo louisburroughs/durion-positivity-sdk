@@ -46,7 +46,7 @@ export interface TransitionTimePeriodOperationRequest {
 export class TimePeriodManagementAPIApi extends runtime.BaseAPI {
 
     /**
-     * Creates a pay period for a tenant with an inclusive start and end date and an initial lifecycle status. Use this tool for corrections and off-grid periods; do not create routine periods manually, the scheduled rollover opens those on the configured cadence instead. Preconditions: the range must not overlap any existing period for the tenant, and endDate must not be before startDate. Required inputs: a body with tenantId (UUID), startDate, and endDate; status is optional and defaults to OPEN. Emits PEOPLE_TIME_PERIOD_CREATE. Returns 400 when the range is invalid, and 409 when the range overlaps an existing period. 
+     * Creates a pay period for the caller\'s tenant with an inclusive start and end date and an initial lifecycle status; the tenant comes from the access token, never the body. Use this tool for corrections and off-grid periods; do not create routine periods manually, the scheduled rollover opens those on the configured cadence instead. Preconditions: the range must not overlap any existing period for the tenant, and endDate must not be before startDate. Required inputs: a body with startDate and endDate; status is optional and defaults to OPEN. Emits PEOPLE_TIME_PERIOD_CREATE. Returns 400 when the range is invalid, and 409 when the range overlaps an existing period. 
      * Create Pay Period
      */
     async createTimePeriodRaw(requestParameters: CreateTimePeriodOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<TimePeriodDto>> {
@@ -83,7 +83,7 @@ export class TimePeriodManagementAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates a pay period for a tenant with an inclusive start and end date and an initial lifecycle status. Use this tool for corrections and off-grid periods; do not create routine periods manually, the scheduled rollover opens those on the configured cadence instead. Preconditions: the range must not overlap any existing period for the tenant, and endDate must not be before startDate. Required inputs: a body with tenantId (UUID), startDate, and endDate; status is optional and defaults to OPEN. Emits PEOPLE_TIME_PERIOD_CREATE. Returns 400 when the range is invalid, and 409 when the range overlaps an existing period. 
+     * Creates a pay period for the caller\'s tenant with an inclusive start and end date and an initial lifecycle status; the tenant comes from the access token, never the body. Use this tool for corrections and off-grid periods; do not create routine periods manually, the scheduled rollover opens those on the configured cadence instead. Preconditions: the range must not overlap any existing period for the tenant, and endDate must not be before startDate. Required inputs: a body with startDate and endDate; status is optional and defaults to OPEN. Emits PEOPLE_TIME_PERIOD_CREATE. Returns 400 when the range is invalid, and 409 when the range overlaps an existing period. 
      * Create Pay Period
      */
     async createTimePeriod(requestParameters: CreateTimePeriodOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<TimePeriodDto> {
