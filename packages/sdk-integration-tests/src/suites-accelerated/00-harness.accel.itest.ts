@@ -10,7 +10,7 @@ import { acceleratedFixture, type AcceleratedFixture } from './accelFixture';
  * ACCELERATED COPY of ../suites/00-harness.itest.ts, with the clock, calendar and
  * feasibility plumbing added.
  *
- * Runs first (Jest collects alphabetically, `maxWorkers: 1`) and is the fastest way
+ * Runs first (`jest.accelerated.sequencer.js`, `maxWorkers: 1`) and is the fastest way
  * to find out that an accelerated run is pointed at the wrong backend, anchored to
  * the wrong year, or moving at a scale the shop cannot work in — before
  * `z-year-volume` spends hours discovering the same thing.

@@ -17,9 +17,11 @@ import type { PositionKind } from '../runs/shopFloorPlan';
  * restocks land on their due virtual days — across 365 virtual days in one to six
  * hours of real time.
  *
- * It runs last on purpose. Jest collects alphabetically with `maxWorkers: 1`, so
- * the parity copies of suites A-H fail in minutes on a broken contract rather than
- * at hour five of this one.
+ * It runs last on purpose, so the parity copies of suites A-H fail in minutes on a
+ * broken contract rather than at hour five of this one. The `z-` prefix does not
+ * achieve that on its own — Jest orders by recorded duration, slowest first, which
+ * put this suite at the head and converged the clock out from under every suite
+ * behind it. `jest.accelerated.sequencer.js` pins it here instead.
  *
  * Three rules are asserted against what the *backend stored*, not against what the
  * run intended:
