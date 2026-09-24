@@ -56,11 +56,17 @@ export interface GetPartyResponse {
      */
     partyId: string;
     /**
-     * Party type discriminator
+     * Party type discriminator (COMMERCIAL|PERSON)
      * @type {string}
      * @memberof GetPartyResponse
      */
     partyType: string;
+    /**
+     * Canonical pos-people person id, present only when partyType is PERSON. Pass it to getPerson for the individual's names, contact points and preferred contact method.
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    personId?: string;
     /**
      * Current status of the party
      * @type {string}
@@ -104,6 +110,7 @@ export function GetPartyResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
         'modifiedAt': json['modifiedAt'] == null ? undefined : json['modifiedAt'],
         'partyId': json['partyId'],
         'partyType': json['partyType'],
+        'personId': json['personId'] == null ? undefined : json['personId'],
         'status': json['status'],
         'taxId': json['taxId'] == null ? undefined : json['taxId'],
     };
@@ -122,6 +129,7 @@ export function GetPartyResponseToJSON(value?: GetPartyResponse | null): any {
         'modifiedAt': value['modifiedAt'],
         'partyId': value['partyId'],
         'partyType': value['partyType'],
+        'personId': value['personId'],
         'status': value['status'],
         'taxId': value['taxId'],
     };
