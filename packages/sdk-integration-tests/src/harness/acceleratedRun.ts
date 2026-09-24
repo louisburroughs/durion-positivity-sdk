@@ -48,6 +48,7 @@ export interface YearRunResult {
     openDaysWorked: number;
     cycleCounts: number;
     restocks: number;
+    scraps: number;
   };
   /** Virtual dates the run touched, first and last. */
   virtualSpan: { from: string; to: string };
@@ -335,6 +336,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       carriedOut: report.carriedOut,
       cycleCount: report.cycleCount,
       restock: report.restock,
+      scrap: report.scrap,
     });
     for (const workorderId of report.workorderIds) {
       journal.recordWorkorder(workorderId, report.workorderKinds[workorderId]);
@@ -395,6 +397,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       openDaysWorked: reports.filter((report) => report.skipped === undefined).length,
       cycleCounts: reports.filter((report) => report.cycleCount).length,
       restocks: reports.filter((report) => report.restock).length,
+      scraps: reports.filter((report) => report.scrap).length,
     },
     virtualSpan: {
       from: reports[0]?.virtualDate ?? lastVirtualDate,

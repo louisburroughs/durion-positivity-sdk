@@ -154,6 +154,63 @@ describe('The accelerated year', () => {
     console.log(`[Z8] ${result.totals.cycleCounts} cycle count(s), ${result.totals.restocks} restock(s)`);
   });
 
+  it('Z8b — stock was written off on its due days, and every write-off reached a terminal state', async () => {
+    const due10 = result.reports.filter((report) => report.dayNumber % 10 === 0 && report.skipped === undefined);
+    for (const day of due10) {
+      expect(day.scrap).toBe(true);
+    }
+    for (const day of result.reports) {
+      if (day.dayNumber % 10 !== 0) {
+        expect(day.scrap).toBe(false);
+      }
+    }
+
+    // A year that wrote nothing off has not exercised the scrap path at all — every
+    // candidate empty on every tenth day means the shop never held stock, which is
+    // a finding about the run rather than a passing test.
+    expect(result.totals.scraps).toBeGreaterThan(0);
+
+    const personas = new Personas(ItestConfig.fromEnv());
+    await personas.login();
+    const parts = personas.as('parts');
+
+    // Read back from the backend rather than from the run's own tally, for the
+    // reason Z11 does: the report says what the harness believes, and the point of
+    // the audit is to find out whether the backend agrees.
+    const scraps = await parts.inventory.scrapsApi.listScraps({
+      locationId: context.referenceCache.locationId,
+    });
+    const mine = scraps.filter((scrap) => (scrap.notes ?? '').includes(result.runId));
+    console.log(`[Z8b] ${mine.length} scrap(s) for this run, of ${scraps.length} at the site`);
+
+    expect(mine.length).toBeGreaterThan(0);
+
+    // PENDING_APPROVAL is the one status the run must never leave behind: every
+    // scrap it raises is either auto-approved on value or approved by the manager
+    // before the day ends. FAILED is the backend refusing to post one it accepted,
+    // which is worth failing the year over.
+    const unsettled = mine.filter(
+      (scrap) => scrap.status === 'PENDING_APPROVAL' || scrap.status === 'FAILED',
+    );
+    for (const scrap of unsettled.slice(0, 10)) {
+      console.log(`[Z8b] unsettled scrap ${scrap.scrapId}: ${scrap.status} ${scrap.errorMessage ?? ''}`);
+    }
+    expect(unsettled).toEqual([]);
+
+    // A posted write-off moved stock, so it must carry the SCRAP_OUT entry that
+    // moved it. This is the inventory side only: whether pos-accounting turned the
+    // ScrapPostedV1 fact into a shrinkage journal entry is deliberately not asserted
+    // here while durion-positivity-backend#2186 is open, because an assertion
+    // written now would encode whichever behaviour currently exists rather than the
+    // one that is intended.
+    const posted = mine.filter((scrap) => scrap.status === 'POSTED' || scrap.status === 'AUTO_APPROVED');
+    for (const scrap of posted) {
+      expect(scrap.ledgerEntryId).toBeTruthy();
+      expect(scrap.quantity ?? 0).toBeGreaterThan(0);
+    }
+    console.log(`[Z8b] ${posted.length} posted write-off(s), each with a ledger entry`);
+  }, 600_000);
+
   it('Z9 — no resource was ever double-booked', () => {
     const overlaps = result.ledger.overlaps();
     for (const overlap of overlaps.slice(0, 10)) {

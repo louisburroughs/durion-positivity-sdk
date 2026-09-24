@@ -22,6 +22,7 @@ import { CycleCountQueryApi } from './apis/CycleCountQueryApi';
 import { CycleCountTolerancesApi } from './apis/CycleCountTolerancesApi';
 import { InventoryBulkIngestAPIApi } from './apis/InventoryBulkIngestAPIApi';
 import { StockMovementsApi } from './apis/StockMovementsApi';
+import { ScrapsApi } from './apis/ScrapsApi';
 
 export function createInventoryClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -70,5 +71,11 @@ export function createInventoryClient(config: DurionSdkConfig) {
     // posts the ledger entry.
     inventoryBulkIngestAPIApi: new InventoryBulkIngestAPIApi(configuration),
     stockMovementsApi: new StockMovementsApi(configuration),
+    // Write-offs. Generated since the scrap module landed but never surfaced, so
+    // no consumer of this factory could write stock off deliberately - only
+    // settle a counted variance through cycleCountAdjustmentsApi, which is a
+    // different fact with a different accounting consequence (a posted scrap
+    // emits ScrapPostedV1; an adjustment emits nothing pos-accounting consumes).
+    scrapsApi: new ScrapsApi(configuration),
   };
 }

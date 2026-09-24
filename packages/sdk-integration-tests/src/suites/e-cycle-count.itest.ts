@@ -4,6 +4,7 @@ import {
   StorageLocationRequestTypeEnum,
 } from '@durion-sdk/location';
 import {
+  CreateScrapRequestReasonCodeEnum,
   SubmitCountRequestMeasurementMethodEnum,
   SubmitRecountRequestMeasurementMethodEnum,
   UpdateCycleCountPlanStatusRequestStatusEnum,
@@ -424,4 +425,223 @@ describe('Suite E — cycle counting', () => {
     );
     expect(seen.adjustmentId).toBe(adjustmentId);
   }, 120_000);
+
+  /**
+   * Write-offs, which are not cycle-count adjustments.
+   *
+   * The two look alike and settle different facts: an adjustment reconciles a
+   * count against the shelf, a scrap is a decision to destroy value. The backend
+   * treats them differently too — a posted scrap emits `ScrapPostedV1`, which
+   * pos-accounting consumes into a shrinkage journal entry, while an approved
+   * adjustment emits nothing accounting listens for
+   * (durion-positivity-backend#2186). Until this block existed, no suite called
+   * `createScrap` at all, so none of that path had ever been exercised.
+   *
+   * Its own bin, for the reason the count has one: task generation scans every
+   * stocked (bin, SKU) pair in scope, and a third SKU in the counted bin would
+   * break E3's "exactly the two stocked SKUs".
+   */
+  describe('write-offs', () => {
+    /** Enough to write off twice and still have a boundary left to test. */
+    const SCRAP_SEEDED = 10;
+    const SCRAP_QUANTITY = 4;
+
+    let scrapBinId: string;
+    let scrapSku: string;
+
+    beforeAll(async () => {
+      const bin = await call('createStorageLocation', () =>
+        admin.location.storageLocationApi.createStorageLocation({
+          siteId,
+          storageLocationRequest: {
+            name: `Itest scrap ${context.runId}`,
+            type: StorageLocationRequestTypeEnum.Bin,
+            storageCategoryCode: StorageLocationRequestStorageCategoryCodeEnum.General,
+          },
+        }),
+      );
+      scrapBinId = bin.id;
+      scrapSku = `ITEST-SCRAP-${context.runId}`;
+
+      await seedOnHand(parts, admin, {
+        locationId: scrapBinId,
+        quantity: SCRAP_SEEDED,
+        skus: [scrapSku],
+      });
+      console.log(`[E] seeded ${SCRAP_SEEDED} of ${scrapSku} into scrap bin ${scrapBinId}`);
+    }, 180_000);
+
+    /**
+     * Drives a scrap to a terminal state and says which way it went.
+     *
+     * Value decides the path, not the caller: below the approval thresholds the
+     * backend auto-approves and posts `SCRAP_OUT` in the same transaction, and
+     * above them — or when no cost can be derived at all — it parks in
+     * PENDING_APPROVAL for a manager. Stock seeded through bulk ingest carries no
+     * receipt cost, so this suite's scraps are expected to take the second path;
+     * both are handled because which one applies is the backend's decision and
+     * this helper is not the place to assert it.
+     */
+    const settle = async (scrapId: string, status: string | undefined): Promise<string | undefined> => {
+      if (status !== 'PENDING_APPROVAL') return status;
+      const approved = await call('approveScrap', () =>
+        admin.inventory.scrapsApi.approveScrap({
+          scrapId,
+          approveScrapRequest: { negativeStockOverride: false },
+        }),
+      );
+      return approved.status;
+    };
+
+    it('E14 — a write-off posts and carries the ledger entry that moved the stock', async () => {
+      const created = await call('createScrap', () =>
+        parts.inventory.scrapsApi.createScrap({
+          createScrapRequest: {
+            stockItemId: scrapSku,
+            locationId: scrapBinId,
+            quantity: SCRAP_QUANTITY,
+            reasonCode: CreateScrapRequestReasonCodeEnum.Damaged,
+            negativeStockOverride: false,
+            shouldReplenish: false,
+            notes: `Itest write-off ${context.runId}`,
+          },
+        }),
+      );
+      const scrapId = created.scrapId as string;
+      expect(scrapId).toBeTruthy();
+      console.log(`[E14] scrap ${scrapId} created ${created.status}, cost source ${created.costSource}`);
+
+      const status = await settle(scrapId, created.status);
+      expect(['POSTED', 'AUTO_APPROVED', 'APPROVED']).toContain(status);
+
+      const posted = await call('getScrap', () =>
+        admin.inventory.scrapsApi.getScrap({ scrapId }),
+      );
+      expect(posted.quantity).toBe(SCRAP_QUANTITY);
+      expect(posted.reasonCode).toBe('DAMAGED');
+      // The entry is the write-off: a posted scrap that moved stock without one
+      // would leave the ledger unable to explain where the stock went.
+      expect(posted.ledgerEntryId).toBeTruthy();
+    }, 120_000);
+
+    it('E15 — writing off more than is on the shelf is refused', async () => {
+      // Deliberately more than the bin now holds, which is also how E14's reduction
+      // is proved: seeded ten, wrote off four, so ten is no longer available.
+      // The refusal lands on whichever call does the posting — on create when the
+      // value auto-approves, on approve when it did not — so both are accepted here
+      // rather than pinning a path the cost snapshot decides.
+      let refusedOnCreate = true;
+      let created: Awaited<ReturnType<typeof parts.inventory.scrapsApi.createScrap>> | undefined;
+      try {
+        created = await parts.inventory.scrapsApi.createScrap({
+          createScrapRequest: {
+            stockItemId: scrapSku,
+            locationId: scrapBinId,
+            quantity: SCRAP_SEEDED,
+            reasonCode: CreateScrapRequestReasonCodeEnum.Lost,
+            negativeStockOverride: false,
+            shouldReplenish: false,
+            notes: `Itest over-scrap ${context.runId}`,
+          },
+        });
+        refusedOnCreate = false;
+      } catch {
+        refusedOnCreate = true;
+      }
+
+      if (refusedOnCreate) {
+        console.log('[E15] refused at creation');
+        return;
+      }
+
+      const scrapId = created?.scrapId as string;
+      const status = await expectHttpError(
+        admin.inventory.scrapsApi.approveScrap({
+          scrapId,
+          approveScrapRequest: { negativeStockOverride: false },
+        }),
+        422,
+      );
+      console.log(`[E15] accepted at creation, refused at approval with ${status}`);
+    }, 120_000);
+
+    it('E16 — OTHER without notes is refused', async () => {
+      const status = await expectHttpError(
+        parts.inventory.scrapsApi.createScrap({
+          createScrapRequest: {
+            stockItemId: scrapSku,
+            locationId: scrapBinId,
+            quantity: 1,
+            reasonCode: CreateScrapRequestReasonCodeEnum.Other,
+            negativeStockOverride: false,
+            shouldReplenish: false,
+          },
+        }),
+        400,
+      );
+      console.log(`[E16] OTHER without notes refused with ${status}`);
+    }, 120_000);
+
+    it('E17 — a rejected write-off leaves the shelf alone', async () => {
+      const created = await call('createScrap', () =>
+        parts.inventory.scrapsApi.createScrap({
+          createScrapRequest: {
+            stockItemId: scrapSku,
+            locationId: scrapBinId,
+            quantity: 1,
+            reasonCode: CreateScrapRequestReasonCodeEnum.Expired,
+            negativeStockOverride: false,
+            shouldReplenish: false,
+            notes: `Itest rejected write-off ${context.runId}`,
+          },
+        }),
+      );
+      const scrapId = created.scrapId as string;
+
+      // Only a PENDING_APPROVAL scrap can be rejected; one that auto-approved has
+      // already posted and rejection answers 409. Recorded rather than asserted,
+      // because which path this takes is the cost snapshot's decision.
+      if (created.status !== 'PENDING_APPROVAL') {
+        console.log(`[E17] scrap ${scrapId} was ${created.status} on creation, so there was nothing to reject`);
+        const conflict = await expectHttpError(
+          admin.inventory.scrapsApi.rejectScrap({
+            scrapId,
+            rejectScrapRequest: { rejectionReason: `Itest ${context.runId}` },
+          }),
+          409,
+        );
+        expect(conflict).toBe(409);
+        return;
+      }
+
+      const rejected = await call('rejectScrap', () =>
+        admin.inventory.scrapsApi.rejectScrap({
+          scrapId,
+          rejectScrapRequest: { rejectionReason: `Part was recovered [${context.runId}]` },
+        }),
+      );
+      expect(rejected.status).toBe('REJECTED');
+      // Nothing moved, so nothing posted.
+      expect(rejected.ledgerEntryId).toBeFalsy();
+    }, 120_000);
+
+    itInRoleMode('E18 — a technician may not write stock off', async () => {
+      const refused = await expectHttpError(
+        tech.inventory.scrapsApi.createScrap({
+          createScrapRequest: {
+            stockItemId: scrapSku,
+            locationId: scrapBinId,
+            quantity: 1,
+            reasonCode: CreateScrapRequestReasonCodeEnum.Damaged,
+            negativeStockOverride: false,
+            shouldReplenish: false,
+            notes: `Itest technician write-off ${context.runId}`,
+          },
+        }),
+        401,
+        403,
+      );
+      console.log(`[E18] TECHNICIAN refused createScrap with ${refused}`);
+    }, 120_000);
+  });
 });
