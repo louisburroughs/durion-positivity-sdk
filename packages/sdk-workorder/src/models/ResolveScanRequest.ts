@@ -14,31 +14,41 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to resolve a scanned SKU and location against a pick task
+ * Request to resolve a scanned product and location against a pick task. Exactly one of scannedSkuId/scannedProductCode must be supplied, and exactly one of scannedLocationId/scannedLocationCode (#2217); violating either answers 400 VALIDATION_FAILED with a fieldErrors entry named productTargetValid and/or locationTargetValid.
  * @export
  * @interface ResolveScanRequest
  */
 export interface ResolveScanRequest {
     /**
-     * Identifier of the location where the scan occurred
+     * The location's human-readable name or barcode read off a scan; mutually exclusive with scannedLocationId. Compared case-insensitively, trimmed, against both the location's name and its barcode (#2217).
      * @type {string}
      * @memberof ResolveScanRequest
      */
-    scannedLocationId: string;
+    scannedLocationCode?: string;
     /**
-     * Identifier of the SKU that was scanned
+     * Identifier of the location where the scan occurred; mutually exclusive with scannedLocationCode
      * @type {string}
      * @memberof ResolveScanRequest
      */
-    scannedSkuId: string;
+    scannedLocationId?: string;
+    /**
+     * The scannable EAN/UPC code read off a barcode scan; mutually exclusive with scannedSkuId. Compared case-insensitively, trimmed (#2217).
+     * @type {string}
+     * @memberof ResolveScanRequest
+     */
+    scannedProductCode?: string;
+    /**
+     * Identifier of the SKU that was scanned; mutually exclusive with scannedProductCode
+     * @type {string}
+     * @memberof ResolveScanRequest
+     */
+    scannedSkuId?: string;
 }
 
 /**
  * Check if a given object implements the ResolveScanRequest interface.
  */
 export function instanceOfResolveScanRequest(value: object): boolean {
-    if (!('scannedLocationId' in value)) return false;
-    if (!('scannedSkuId' in value)) return false;
     return true;
 }
 
@@ -52,8 +62,10 @@ export function ResolveScanRequestFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'scannedLocationId': json['scannedLocationId'],
-        'scannedSkuId': json['scannedSkuId'],
+        'scannedLocationCode': json['scannedLocationCode'] == null ? undefined : json['scannedLocationCode'],
+        'scannedLocationId': json['scannedLocationId'] == null ? undefined : json['scannedLocationId'],
+        'scannedProductCode': json['scannedProductCode'] == null ? undefined : json['scannedProductCode'],
+        'scannedSkuId': json['scannedSkuId'] == null ? undefined : json['scannedSkuId'],
     };
 }
 
@@ -63,7 +75,9 @@ export function ResolveScanRequestToJSON(value?: ResolveScanRequest | null): any
     }
     return {
         
+        'scannedLocationCode': value['scannedLocationCode'],
         'scannedLocationId': value['scannedLocationId'],
+        'scannedProductCode': value['scannedProductCode'],
         'scannedSkuId': value['scannedSkuId'],
     };
 }

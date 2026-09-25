@@ -56,6 +56,12 @@ export interface ReplenishmentTaskResponse {
      */
     itemSKU: string;
     /**
+     * Site the task belongs to: the destination location's site, or the destination location itself when it is already a site; null when it cannot be resolved
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    locationId?: string;
+    /**
      * Quantity of the item to be moved by this replenishment task
      * @type {number}
      * @memberof ReplenishmentTaskResponse
@@ -91,6 +97,12 @@ export interface ReplenishmentTaskResponse {
      * @memberof ReplenishmentTaskResponse
      */
     triggerType?: string;
+    /**
+     * Product's base unit of measure; null when it cannot be resolved
+     * @type {string}
+     * @memberof ReplenishmentTaskResponse
+     */
+    uom?: string;
 }
 
 /**
@@ -122,12 +134,14 @@ export function ReplenishmentTaskResponseFromJSONTyped(json: any, ignoreDiscrimi
         'decisionReason': json['decisionReason'] == null ? undefined : json['decisionReason'],
         'destinationLocationId': json['destinationLocationId'],
         'itemSKU': json['itemSKU'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'quantity': json['quantity'],
         'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
         'sourcingReason': json['sourcingReason'] == null ? undefined : json['sourcingReason'],
         'status': json['status'],
         'taskId': json['taskId'],
         'triggerType': json['triggerType'] == null ? undefined : json['triggerType'],
+        'uom': json['uom'] == null ? undefined : json['uom'],
     };
 }
 
@@ -143,12 +157,14 @@ export function ReplenishmentTaskResponseToJSON(value?: ReplenishmentTaskRespons
         'decisionReason': value['decisionReason'],
         'destinationLocationId': value['destinationLocationId'],
         'itemSKU': value['itemSKU'],
+        'locationId': value['locationId'],
         'quantity': value['quantity'],
         'sourceLocationId': value['sourceLocationId'],
         'sourcingReason': value['sourcingReason'],
         'status': value['status'],
         'taskId': value['taskId'],
         'triggerType': value['triggerType'],
+        'uom': value['uom'],
     };
 }
 

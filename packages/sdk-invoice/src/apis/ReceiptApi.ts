@@ -20,6 +20,7 @@ import type {
   GenerateReceiptRequest,
   PrintDeliveryRequest,
   ReceiptResponse,
+  ReceiptViewResponse,
   ReprintReceiptRequest,
 } from '../models/index';
 import {
@@ -33,6 +34,8 @@ import {
     PrintDeliveryRequestToJSON,
     ReceiptResponseFromJSON,
     ReceiptResponseToJSON,
+    ReceiptViewResponseFromJSON,
+    ReceiptViewResponseToJSON,
     ReprintReceiptRequestFromJSON,
     ReprintReceiptRequestToJSON,
 } from '../models/index';
@@ -40,6 +43,11 @@ import {
 export interface GenerateReceiptOperationRequest {
     invoiceId: string;
     generateReceiptRequest: GenerateReceiptRequest;
+}
+
+export interface GetReceiptRequest {
+    invoiceId: string;
+    receiptId: string;
 }
 
 export interface RecordReceiptEmailDeliveryRequest {
@@ -66,7 +74,7 @@ export interface ReprintReceiptOperationRequest {
 export class ReceiptApi extends runtime.BaseAPI {
 
     /**
-     * Generates a receipt record for an invoice payment, assigning a unique reference built from the invoice number, a UTC timestamp and a per-invoice sequence, with the cashier taken from the security context. Use this tool once per payment after tender; do not use reprintReceipt, which duplicates a receipt that already exists. Preconditions: the invoice and payment intent must exist, the intent must belong to the invoice, and the caller needs the GENERATE_RECEIPT authority. Required inputs: paymentIntentId (UUID), terminalId, templateId and templateVersion. Emits an INVOICE_RECEIPT_GENERATE event and stores the receipt in GENERATED status with a zero reprint count; the receipt also becomes a downloadable artifact of the invoice. Returns 201 with the receipt reference, 404 when the invoice or payment intent does not exist or the intent belongs to a different invoice, and 403 when the GENERATE_RECEIPT authority is missing. 
+     * Generates a receipt record for an invoice payment, assigning a unique reference built from the invoice number, a UTC timestamp and a per-invoice sequence, with the cashier taken from the security context. Use this tool once per payment after tender; do not use reprintReceipt, which duplicates a receipt that already exists. Preconditions: the invoice and payment intent must exist, the intent must belong to the invoice, and the caller needs the invoice:receipt:generate authority, scoped to the invoice\'s location (ADR-0061). Required inputs: paymentIntentId (UUID), terminalId, templateId and templateVersion. Emits an INVOICE_RECEIPT_GENERATE event and stores the receipt in GENERATED status with a zero reprint count; the receipt also becomes a downloadable artifact of the invoice. Returns 201 with the receipt reference, 404 when the invoice or payment intent does not exist or the intent belongs to a different invoice, and 403 when invoice:receipt:generate is missing or the invoice\'s location is outside the caller\'s reach. 
      * Generate Receipt for Invoice Payment
      */
     async generateReceiptRaw(requestParameters: GenerateReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptResponse>> {
@@ -110,11 +118,61 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
-     * Generates a receipt record for an invoice payment, assigning a unique reference built from the invoice number, a UTC timestamp and a per-invoice sequence, with the cashier taken from the security context. Use this tool once per payment after tender; do not use reprintReceipt, which duplicates a receipt that already exists. Preconditions: the invoice and payment intent must exist, the intent must belong to the invoice, and the caller needs the GENERATE_RECEIPT authority. Required inputs: paymentIntentId (UUID), terminalId, templateId and templateVersion. Emits an INVOICE_RECEIPT_GENERATE event and stores the receipt in GENERATED status with a zero reprint count; the receipt also becomes a downloadable artifact of the invoice. Returns 201 with the receipt reference, 404 when the invoice or payment intent does not exist or the intent belongs to a different invoice, and 403 when the GENERATE_RECEIPT authority is missing. 
+     * Generates a receipt record for an invoice payment, assigning a unique reference built from the invoice number, a UTC timestamp and a per-invoice sequence, with the cashier taken from the security context. Use this tool once per payment after tender; do not use reprintReceipt, which duplicates a receipt that already exists. Preconditions: the invoice and payment intent must exist, the intent must belong to the invoice, and the caller needs the invoice:receipt:generate authority, scoped to the invoice\'s location (ADR-0061). Required inputs: paymentIntentId (UUID), terminalId, templateId and templateVersion. Emits an INVOICE_RECEIPT_GENERATE event and stores the receipt in GENERATED status with a zero reprint count; the receipt also becomes a downloadable artifact of the invoice. Returns 201 with the receipt reference, 404 when the invoice or payment intent does not exist or the intent belongs to a different invoice, and 403 when invoice:receipt:generate is missing or the invoice\'s location is outside the caller\'s reach. 
      * Generate Receipt for Invoice Payment
      */
     async generateReceipt(requestParameters: GenerateReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptResponse> {
         const response = await this.generateReceiptRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the full detail of a single receipt: its reference and status, the invoice and payment intent it documents, the paid amount, the payment gateway and gateway reference captured on the payment intent, the cashier, terminal and template that produced it, its delivery status, and its reprint history. Use this tool to render the frontend receipt page for a receipt already generated by generateReceipt; do not use it to check whether a receipt exists for an invoice — list the invoice\'s receipts for that. Preconditions: the receipt must exist and belong to the given invoice; the caller needs the invoice:invoice:view authority. Required inputs: invoiceId and receiptId (both UUID) as path parameters. Emits an INVOICE_RECEIPT_VIEW audit event; no state changes — this is a read-only projection. Returns 200 with the receipt view, and 404 when no receipt with that id exists under that invoice — a receipt that exists under a different invoice also reports 404, so the response never confirms another invoice\'s receipt id. 
+     * Get Receipt Detail
+     */
+    async getReceiptRaw(requestParameters: GetReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptViewResponse>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling getReceipt().'
+            );
+        }
+
+        if (requestParameters['receiptId'] == null) {
+            throw new runtime.RequiredError(
+                'receiptId',
+                'Required parameter "receiptId" was null or undefined when calling getReceipt().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/receipts/{receiptId}`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))).replace(`{${"receiptId"}}`, encodeURIComponent(String(requestParameters['receiptId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReceiptViewResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the full detail of a single receipt: its reference and status, the invoice and payment intent it documents, the paid amount, the payment gateway and gateway reference captured on the payment intent, the cashier, terminal and template that produced it, its delivery status, and its reprint history. Use this tool to render the frontend receipt page for a receipt already generated by generateReceipt; do not use it to check whether a receipt exists for an invoice — list the invoice\'s receipts for that. Preconditions: the receipt must exist and belong to the given invoice; the caller needs the invoice:invoice:view authority. Required inputs: invoiceId and receiptId (both UUID) as path parameters. Emits an INVOICE_RECEIPT_VIEW audit event; no state changes — this is a read-only projection. Returns 200 with the receipt view, and 404 when no receipt with that id exists under that invoice — a receipt that exists under a different invoice also reports 404, so the response never confirms another invoice\'s receipt id. 
+     * Get Receipt Detail
+     */
+    async getReceipt(requestParameters: GetReceiptRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptViewResponse> {
+        const response = await this.getReceiptRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -237,7 +295,7 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a reprint of an existing receipt, incrementing its reprint count and capturing the reason and the reprinting actor for audit. Use this tool when a customer needs a duplicate copy; do not use generateReceipt, which creates a new receipt for a payment that has none yet. Preconditions: the receipt must exist, and its reprint count must be below 5 unless the caller holds the SUPERVISOR_OVERRIDE authority. Required inputs: receiptId (UUID) as a path parameter and a non-blank reason in the body. Emits an INVOICE_RECEIPT_REPRINT event and updates the receipt\'s reprint count, last reprint reason and last reprinted-by. Returns 200 with the receipt, 404 when the receipt does not exist, and 409 when the reprint limit of 5 is exceeded without a supervisor override. 
+     * Records a reprint of an existing receipt, incrementing its reprint count and capturing the reason and the reprinting actor for audit. Use this tool when a customer needs a duplicate copy; do not use generateReceipt, which creates a new receipt for a payment that has none yet. Preconditions: the receipt must exist, and its reprint count must be below 5 unless the caller holds the invoice:receipt:reprint_override authority for the receipt\'s invoice location (ADR-0061). Required inputs: receiptId (UUID) as a path parameter and a non-blank reason in the body. Emits an INVOICE_RECEIPT_REPRINT event and updates the receipt\'s reprint count, last reprint reason and last reprinted-by. Returns 200 with the receipt, 403 when the reprint limit is exceeded and the caller\'s invoice:receipt:reprint_override does not reach the receipt\'s invoice location, 404 when the receipt does not exist, and 409 when the reprint limit of 5 is exceeded without a supervisor override. 
      * Reprint an Existing Receipt
      */
     async reprintReceiptRaw(requestParameters: ReprintReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReceiptResponse>> {
@@ -288,7 +346,7 @@ export class ReceiptApi extends runtime.BaseAPI {
     }
 
     /**
-     * Records a reprint of an existing receipt, incrementing its reprint count and capturing the reason and the reprinting actor for audit. Use this tool when a customer needs a duplicate copy; do not use generateReceipt, which creates a new receipt for a payment that has none yet. Preconditions: the receipt must exist, and its reprint count must be below 5 unless the caller holds the SUPERVISOR_OVERRIDE authority. Required inputs: receiptId (UUID) as a path parameter and a non-blank reason in the body. Emits an INVOICE_RECEIPT_REPRINT event and updates the receipt\'s reprint count, last reprint reason and last reprinted-by. Returns 200 with the receipt, 404 when the receipt does not exist, and 409 when the reprint limit of 5 is exceeded without a supervisor override. 
+     * Records a reprint of an existing receipt, incrementing its reprint count and capturing the reason and the reprinting actor for audit. Use this tool when a customer needs a duplicate copy; do not use generateReceipt, which creates a new receipt for a payment that has none yet. Preconditions: the receipt must exist, and its reprint count must be below 5 unless the caller holds the invoice:receipt:reprint_override authority for the receipt\'s invoice location (ADR-0061). Required inputs: receiptId (UUID) as a path parameter and a non-blank reason in the body. Emits an INVOICE_RECEIPT_REPRINT event and updates the receipt\'s reprint count, last reprint reason and last reprinted-by. Returns 200 with the receipt, 403 when the reprint limit is exceeded and the caller\'s invoice:receipt:reprint_override does not reach the receipt\'s invoice location, 404 when the receipt does not exist, and 409 when the reprint limit of 5 is exceeded without a supervisor override. 
      * Reprint an Existing Receipt
      */
     async reprintReceipt(requestParameters: ReprintReceiptOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiptResponse> {

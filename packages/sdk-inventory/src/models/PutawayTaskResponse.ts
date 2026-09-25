@@ -50,6 +50,12 @@ export interface PutawayTaskResponse {
      */
     finalSuggestedLocationId?: string;
     /**
+     * Site the task belongs to: the source receipt's location, or the source location's site when the source location is a bin; null when it cannot be resolved
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    locationId?: string;
+    /**
      * Originally suggested destination location before any fallback
      * @type {string}
      * @memberof PutawayTaskResponse
@@ -98,6 +104,12 @@ export interface PutawayTaskResponse {
      */
     taskId: string;
     /**
+     * Product's base unit of measure; null when it cannot be resolved
+     * @type {string}
+     * @memberof PutawayTaskResponse
+     */
+    uom?: string;
+    /**
      * Timestamp when the putaway task was last updated
      * @type {Date}
      * @memberof PutawayTaskResponse
@@ -134,6 +146,7 @@ export function PutawayTaskResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'createdAt': (new Date(json['createdAt'])),
         'fallbackReason': json['fallbackReason'] == null ? undefined : json['fallbackReason'],
         'finalSuggestedLocationId': json['finalSuggestedLocationId'] == null ? undefined : json['finalSuggestedLocationId'],
+        'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'originalSuggestedLocationId': json['originalSuggestedLocationId'] == null ? undefined : json['originalSuggestedLocationId'],
         'productId': json['productId'],
         'quantity': json['quantity'],
@@ -142,6 +155,7 @@ export function PutawayTaskResponseFromJSONTyped(json: any, ignoreDiscriminator:
         'status': json['status'],
         'suggestedDestinationLocationId': json['suggestedDestinationLocationId'] == null ? undefined : json['suggestedDestinationLocationId'],
         'taskId': json['taskId'],
+        'uom': json['uom'] == null ? undefined : json['uom'],
         'updatedAt': (new Date(json['updatedAt'])),
     };
 }
@@ -157,6 +171,7 @@ export function PutawayTaskResponseToJSON(value?: PutawayTaskResponse | null): a
         'createdAt': ((value['createdAt']).toISOString()),
         'fallbackReason': value['fallbackReason'],
         'finalSuggestedLocationId': value['finalSuggestedLocationId'],
+        'locationId': value['locationId'],
         'originalSuggestedLocationId': value['originalSuggestedLocationId'],
         'productId': value['productId'],
         'quantity': value['quantity'],
@@ -165,6 +180,7 @@ export function PutawayTaskResponseToJSON(value?: PutawayTaskResponse | null): a
         'status': value['status'],
         'suggestedDestinationLocationId': value['suggestedDestinationLocationId'],
         'taskId': value['taskId'],
+        'uom': value['uom'],
         'updatedAt': ((value['updatedAt']).toISOString()),
     };
 }

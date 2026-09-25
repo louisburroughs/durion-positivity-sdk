@@ -44,6 +44,12 @@ export interface WorkorderPickTaskResponse {
      */
     pickedQty: number;
     /**
+     * The SKU's scannable EAN/UPC code, for verifying a barcode scan against this task. Null when the SKU carries no scannable code, or for a task last updated before scan codes were replicated (#2217).
+     * @type {string}
+     * @memberof WorkorderPickTaskResponse
+     */
+    productCode?: string;
+    /**
      * Quantity remaining to pick
      * @type {number}
      * @memberof WorkorderPickTaskResponse
@@ -73,6 +79,18 @@ export interface WorkorderPickTaskResponse {
      * @memberof WorkorderPickTaskResponse
      */
     status: string;
+    /**
+     * The pick location's barcode, when it carries one. Null when the location has no barcode, is not yet replicated, or for a task last updated before scan codes were replicated (#2217).
+     * @type {string}
+     * @memberof WorkorderPickTaskResponse
+     */
+    storageLocationBarcode?: string;
+    /**
+     * The pick location's human-readable name, used as its scan code. Null when not yet replicated, or for a task last updated before scan codes were replicated (#2217).
+     * @type {string}
+     * @memberof WorkorderPickTaskResponse
+     */
+    storageLocationCode?: string;
     /**
      * Optimistic-locking version of the pick task
      * @type {number}
@@ -112,11 +130,14 @@ export function WorkorderPickTaskResponseFromJSONTyped(json: any, ignoreDiscrimi
         'pickListId': json['pickListId'],
         'pickTaskId': json['pickTaskId'],
         'pickedQty': json['pickedQty'],
+        'productCode': json['productCode'] == null ? undefined : json['productCode'],
         'remainingQty': json['remainingQty'],
         'requiredQty': json['requiredQty'],
         'skuId': json['skuId'],
         'sortOrder': json['sortOrder'],
         'status': json['status'],
+        'storageLocationBarcode': json['storageLocationBarcode'] == null ? undefined : json['storageLocationBarcode'],
+        'storageLocationCode': json['storageLocationCode'] == null ? undefined : json['storageLocationCode'],
         'version': json['version'],
     };
 }
@@ -131,11 +152,14 @@ export function WorkorderPickTaskResponseToJSON(value?: WorkorderPickTaskRespons
         'pickListId': value['pickListId'],
         'pickTaskId': value['pickTaskId'],
         'pickedQty': value['pickedQty'],
+        'productCode': value['productCode'],
         'remainingQty': value['remainingQty'],
         'requiredQty': value['requiredQty'],
         'skuId': value['skuId'],
         'sortOrder': value['sortOrder'],
         'status': value['status'],
+        'storageLocationBarcode': value['storageLocationBarcode'],
+        'storageLocationCode': value['storageLocationCode'],
         'version': value['version'],
     };
 }

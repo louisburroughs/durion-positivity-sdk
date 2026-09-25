@@ -32,11 +32,23 @@ export interface LocationInventoryInquiryResponse {
      */
     locationId: string;
     /**
+     * Human-readable name of the location, from the site registry or the storage-location replica; null when it cannot be resolved
+     * @type {string}
+     * @memberof LocationInventoryInquiryResponse
+     */
+    locationName?: string;
+    /**
      * Current on-hand quantity across all stock items at the location
      * @type {number}
      * @memberof LocationInventoryInquiryResponse
      */
     onHandQuantity: number;
+    /**
+     * Outstanding allocations at the location — the quantity subtracted from on-hand to get availableToPromiseQuantity. Null for as-of (historical) requests, same as availableToPromiseQuantity
+     * @type {number}
+     * @memberof LocationInventoryInquiryResponse
+     */
+    reservedQuantity?: number;
 }
 
 /**
@@ -60,7 +72,9 @@ export function LocationInventoryInquiryResponseFromJSONTyped(json: any, ignoreD
         
         'availableToPromiseQuantity': json['availableToPromiseQuantity'] == null ? undefined : json['availableToPromiseQuantity'],
         'locationId': json['locationId'],
+        'locationName': json['locationName'] == null ? undefined : json['locationName'],
         'onHandQuantity': json['onHandQuantity'],
+        'reservedQuantity': json['reservedQuantity'] == null ? undefined : json['reservedQuantity'],
     };
 }
 
@@ -72,7 +86,9 @@ export function LocationInventoryInquiryResponseToJSON(value?: LocationInventory
         
         'availableToPromiseQuantity': value['availableToPromiseQuantity'],
         'locationId': value['locationId'],
+        'locationName': value['locationName'],
         'onHandQuantity': value['onHandQuantity'],
+        'reservedQuantity': value['reservedQuantity'],
     };
 }
 

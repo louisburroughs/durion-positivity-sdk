@@ -20,17 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface ShortageResolveRequest {
     /**
-     * Identifier of the allocation to resolve
+     * Identifier of the allocation to resolve; the UI's allocationLineId names the same allocation
      * @type {string}
      * @memberof ShortageResolveRequest
      */
     allocationId: string;
     /**
-     * Retry-safe idempotency key; a replay with the same key returns the original result
+     * Retry-safe idempotency key; a replay with the same key returns the original result. When omitted, defaults to "<allocationId>:<optionType>"
      * @type {string}
      * @memberof ShortageResolveRequest
      */
-    idempotencyKey: string;
+    idempotencyKey?: string;
     /**
      * Site the demand is short at (required for BACKORDER / TRANSFER_IN)
      * @type {string}
@@ -50,17 +50,17 @@ export interface ShortageResolveRequest {
      */
     optionType: ShortageResolveRequestOptionTypeEnum;
     /**
-     * Quantity that is short and to be resolved
+     * Quantity that is short and to be resolved. When omitted, derived from the named allocation's reservation as requiredQuantity minus allocatedQuantity
      * @type {number}
      * @memberof ShortageResolveRequest
      */
-    shortQuantity: number;
+    shortQuantity?: number;
     /**
-     * SKU / stock-item identifier that is short
+     * SKU / stock-item identifier that is short. When omitted, derived from the named allocation's reservation
      * @type {string}
      * @memberof ShortageResolveRequest
      */
-    sku: string;
+    sku?: string;
     /**
      * Source site to pull surplus from; required when optionType is TRANSFER_IN
      * @type {string}
@@ -99,10 +99,7 @@ export enum ShortageResolveRequestOptionTypeEnum {
  */
 export function instanceOfShortageResolveRequest(value: object): boolean {
     if (!('allocationId' in value)) return false;
-    if (!('idempotencyKey' in value)) return false;
     if (!('optionType' in value)) return false;
-    if (!('shortQuantity' in value)) return false;
-    if (!('sku' in value)) return false;
     return true;
 }
 
@@ -117,12 +114,12 @@ export function ShortageResolveRequestFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'allocationId': json['allocationId'],
-        'idempotencyKey': json['idempotencyKey'],
+        'idempotencyKey': json['idempotencyKey'] == null ? undefined : json['idempotencyKey'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'notes': json['notes'] == null ? undefined : json['notes'],
         'optionType': json['optionType'],
-        'shortQuantity': json['shortQuantity'],
-        'sku': json['sku'],
+        'shortQuantity': json['shortQuantity'] == null ? undefined : json['shortQuantity'],
+        'sku': json['sku'] == null ? undefined : json['sku'],
         'sourceLocationId': json['sourceLocationId'] == null ? undefined : json['sourceLocationId'],
         'substituteSku': json['substituteSku'] == null ? undefined : json['substituteSku'],
         'workorderLineId': json['workorderLineId'] == null ? undefined : json['workorderLineId'],

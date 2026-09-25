@@ -38,7 +38,7 @@ export interface ReturnLineDto {
      */
     quantity: number;
     /**
-     * Reason code explaining the return
+     * Reason code explaining the return, from the closed set returned by listReturnReasonCodes: NOT_NEEDED, WRONG_PART or CUSTOMER_REFUSED (CAP-218 Story #177)
      * @type {string}
      * @memberof ReturnLineDto
      */

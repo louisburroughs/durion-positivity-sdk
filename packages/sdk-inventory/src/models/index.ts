@@ -44,6 +44,7 @@ export * from './CreateScrapRequest';
 export * from './CreateTransferOrderRequest';
 export * from './CrossDockRequest';
 export * from './CrossDockResponse';
+export * from './CrossDockWorkorderSearchResultDto';
 export * from './CycleCountPlanBulkIngestRecord';
 export * from './CycleCountPlanResponse';
 export * from './CycleCountScheduleResponse';

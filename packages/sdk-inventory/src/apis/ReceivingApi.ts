@@ -19,6 +19,7 @@ import type {
   CreateReceivingSessionRequest,
   CrossDockRequest,
   CrossDockResponse,
+  CrossDockWorkorderSearchResultDto,
   ReceiveItemsRequest,
   ReceiveItemsResponse,
   ReceivingSessionResponse,
@@ -32,6 +33,8 @@ import {
     CrossDockRequestToJSON,
     CrossDockResponseFromJSON,
     CrossDockResponseToJSON,
+    CrossDockWorkorderSearchResultDtoFromJSON,
+    CrossDockWorkorderSearchResultDtoToJSON,
     ReceiveItemsRequestFromJSON,
     ReceiveItemsRequestToJSON,
     ReceiveItemsResponseFromJSON,
@@ -57,6 +60,10 @@ export interface GetReceivingSessionRequest {
 export interface ReceiveItemsIntoStagingRequest {
     sessionId: string;
     receiveItemsRequest: ReceiveItemsRequest;
+}
+
+export interface SearchCrossDockWorkordersRequest {
+    query?: string;
 }
 
 /**
@@ -263,6 +270,46 @@ export class ReceivingApi extends runtime.BaseAPI {
      */
     async receiveItemsIntoStaging(requestParameters: ReceiveItemsIntoStagingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReceiveItemsResponse> {
         const response = await this.receiveItemsIntoStagingRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Searches the workorders eligible to receive a cross-docked receiving line: status not COMPLETED, CANCELLED or CLOSED, and at least one demanded part line. Use this tool to find the workorderId/workorderLineId to pass to crossDockReceivingLine; do not use it for workorders with no part lines, which are never eligible and never returned. Preconditions: none; an unmatched query yields an empty array. Required inputs: none. Optional query parameter query matches workorderNumber (case-insensitive contains) or an exact workorder UUID; a blank or omitted query returns up to 50 most-recently-updated eligible workorders. Read-only: no state changes. Emits an INVENTORY_RECEIVING_WORKORDER_SEARCH event (the module\'s read-audit convention for a search endpoint) even though nothing is written. Returns 200 with an empty array when nothing matches. 
+     * Search Cross-Dock Workorders
+     */
+    async searchCrossDockWorkordersRaw(requestParameters: SearchCrossDockWorkordersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<CrossDockWorkorderSearchResultDto>>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:receiving:complete", "inventory:issue:parts"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/receiving/workorders`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CrossDockWorkorderSearchResultDtoFromJSON));
+    }
+
+    /**
+     * Searches the workorders eligible to receive a cross-docked receiving line: status not COMPLETED, CANCELLED or CLOSED, and at least one demanded part line. Use this tool to find the workorderId/workorderLineId to pass to crossDockReceivingLine; do not use it for workorders with no part lines, which are never eligible and never returned. Preconditions: none; an unmatched query yields an empty array. Required inputs: none. Optional query parameter query matches workorderNumber (case-insensitive contains) or an exact workorder UUID; a blank or omitted query returns up to 50 most-recently-updated eligible workorders. Read-only: no state changes. Emits an INVENTORY_RECEIVING_WORKORDER_SEARCH event (the module\'s read-audit convention for a search endpoint) even though nothing is written. Returns 200 with an empty array when nothing matches. 
+     * Search Cross-Dock Workorders
+     */
+    async searchCrossDockWorkorders(requestParameters: SearchCrossDockWorkordersRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<CrossDockWorkorderSearchResultDto>> {
+        const response = await this.searchCrossDockWorkordersRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

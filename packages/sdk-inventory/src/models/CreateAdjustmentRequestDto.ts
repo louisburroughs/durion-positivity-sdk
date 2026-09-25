@@ -32,7 +32,7 @@ export interface CreateAdjustmentRequestDto {
      */
     productSku: string;
     /**
-     * Adjustment quantity (positive to add stock, negative to remove)
+     * Adjustment quantity, non-zero (positive to add stock, negative to remove); zero is rejected
      * @type {number}
      * @memberof CreateAdjustmentRequestDto
      */
