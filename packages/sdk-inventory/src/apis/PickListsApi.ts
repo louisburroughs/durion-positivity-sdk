@@ -269,7 +269,7 @@ export class PickListsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every pick list linked to a workorder. Use this tool to find a workorder\'s pick lists and their statuses; use getPickList instead when the pickListId is already known. Preconditions: none; an unknown workorderId simply yields an empty array. Required inputs: workorderId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the workorder has no pick lists. 
+     * Returns every pick list linked to a workorder whose site is within the caller\'s location scope (ADR-0061 §3, #2204); a list at a site outside the caller\'s reach is dropped from the result, not rejected. Use this tool to find a workorder\'s pick lists and their statuses; use getPickList instead when the pickListId is already known. Preconditions: none; an unknown workorderId simply yields an empty array. Required inputs: workorderId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the workorder has no pick lists, or none within reach. 
      * List pick lists for workorder
      */
     async listPickListsForWorkorderRaw(requestParameters: ListPickListsForWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PickListResponse>>> {
@@ -307,7 +307,7 @@ export class PickListsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns every pick list linked to a workorder. Use this tool to find a workorder\'s pick lists and their statuses; use getPickList instead when the pickListId is already known. Preconditions: none; an unknown workorderId simply yields an empty array. Required inputs: workorderId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the workorder has no pick lists. 
+     * Returns every pick list linked to a workorder whose site is within the caller\'s location scope (ADR-0061 §3, #2204); a list at a site outside the caller\'s reach is dropped from the result, not rejected. Use this tool to find a workorder\'s pick lists and their statuses; use getPickList instead when the pickListId is already known. Preconditions: none; an unknown workorderId simply yields an empty array. Required inputs: workorderId (UUID) as a query parameter; there is no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when the workorder has no pick lists, or none within reach. 
      * List pick lists for workorder
      */
     async listPickListsForWorkorder(requestParameters: ListPickListsForWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PickListResponse>> {

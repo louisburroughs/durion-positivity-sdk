@@ -19,6 +19,7 @@ import type {
   CaptureAmountRequest,
   InitiatePaymentRequest,
   InitiatePaymentResponse,
+  PaymentIntentResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -29,6 +30,8 @@ import {
     InitiatePaymentRequestToJSON,
     InitiatePaymentResponseFromJSON,
     InitiatePaymentResponseToJSON,
+    PaymentIntentResponseFromJSON,
+    PaymentIntentResponseToJSON,
 } from '../models/index';
 
 export interface CapturePaymentRequest {
@@ -37,9 +40,18 @@ export interface CapturePaymentRequest {
     captureAmountRequest: CaptureAmountRequest;
 }
 
+export interface GetInvoicePaymentRequest {
+    invoiceId: string;
+    paymentId: string;
+}
+
 export interface InitiatePaymentOperationRequest {
     invoiceId: string;
     initiatePaymentRequest: InitiatePaymentRequest;
+}
+
+export interface ListInvoicePaymentsRequest {
+    invoiceId: string;
 }
 
 /**
@@ -108,6 +120,56 @@ export class PaymentApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns the full detail of a single payment intent under an invoice, including its captured, voided and refunded amounts and the balance still refundable — never the tokenised card reference or the raw gateway response. Use this tool to render a single payment\'s detail; do not use listInvoicePayments unless you need the invoice\'s full payment history. Preconditions: the payment intent must exist and belong to the given invoice; the caller needs the invoice:invoice:view authority, scoped to the invoice\'s location (ADR-0061). Required inputs: invoiceId and paymentId (both UUID) as path parameters. Emits an INVOICE_PAYMENT_VIEW audit event; no state changes — this is a read-only projection. Returns 200 with the payment intent detail, 403 when invoice:invoice:view is missing or the invoice\'s location is outside the caller\'s reach, and 404 when no payment intent with that id exists under that invoice — a payment intent that exists under a different invoice also reports 404, so the response never confirms another invoice\'s payment id. 
+     * Get Payment Detail
+     */
+    async getInvoicePaymentRaw(requestParameters: GetInvoicePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PaymentIntentResponse>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling getInvoicePayment().'
+            );
+        }
+
+        if (requestParameters['paymentId'] == null) {
+            throw new runtime.RequiredError(
+                'paymentId',
+                'Required parameter "paymentId" was null or undefined when calling getInvoicePayment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/payments/{paymentId}`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))).replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => PaymentIntentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the full detail of a single payment intent under an invoice, including its captured, voided and refunded amounts and the balance still refundable — never the tokenised card reference or the raw gateway response. Use this tool to render a single payment\'s detail; do not use listInvoicePayments unless you need the invoice\'s full payment history. Preconditions: the payment intent must exist and belong to the given invoice; the caller needs the invoice:invoice:view authority, scoped to the invoice\'s location (ADR-0061). Required inputs: invoiceId and paymentId (both UUID) as path parameters. Emits an INVOICE_PAYMENT_VIEW audit event; no state changes — this is a read-only projection. Returns 200 with the payment intent detail, 403 when invoice:invoice:view is missing or the invoice\'s location is outside the caller\'s reach, and 404 when no payment intent with that id exists under that invoice — a payment intent that exists under a different invoice also reports 404, so the response never confirms another invoice\'s payment id. 
+     * Get Payment Detail
+     */
+    async getInvoicePayment(requestParameters: GetInvoicePaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaymentIntentResponse> {
+        const response = await this.getInvoicePaymentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Initiates a card payment against an invoice through the payment gateway, creating a payment intent that is CAPTURED immediately (SALE_CAPTURE) or left AUTHORIZED as a hold (AUTH_ONLY). Use this tool to take card tender; do not use capturePayment, which settles an existing AUTH_ONLY hold rather than starting a new payment. Preconditions: the invoice must exist; the caller needs the PROCESS_PAYMENT authority, plus OVERRIDE_PAYMENT_LIMIT when the amount exceeds 500.00 and SELECT_PAYMENT_FLOW to choose AUTH_ONLY. Required inputs: paymentFlow (SALE_CAPTURE or AUTH_ONLY), amount (positive), idempotencyKey and paymentToken (tokenised card reference, never a PAN); a replayed idempotencyKey with an identical payload returns the existing intent instead of charging twice. Emits an INVOICE_PAYMENT_INITIATE event and records the gateway result on the intent. Returns 201 with the intent, 404 when the invoice does not exist, 409 when the idempotencyKey was already used with a different payload, 422 when the gateway declines, and 403 when a required payment authority is missing. 
      * Initiate Card Payment on Invoice
      */
@@ -157,6 +219,49 @@ export class PaymentApi extends runtime.BaseAPI {
      */
     async initiatePayment(requestParameters: InitiatePaymentOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InitiatePaymentResponse> {
         const response = await this.initiatePaymentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns every payment intent raised against an invoice, each carrying its captured, voided and refunded amounts and the balance still refundable. Use this tool to see an invoice\'s full payment history; do not use getInvoicePayment, which reads a single payment intent by id. Preconditions: the invoice must exist; the caller needs the invoice:invoice:view authority, scoped to the invoice\'s location (ADR-0061). Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_PAYMENT_LIST audit event; no state changes — this is a read-only projection. Returns 200 with the invoice\'s payment intents, 403 when invoice:invoice:view is missing or the invoice\'s location is outside the caller\'s reach, and 404 when the invoice does not exist. 
+     * List Payments for an Invoice
+     */
+    async listInvoicePaymentsRaw(requestParameters: ListInvoicePaymentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<PaymentIntentResponse>>> {
+        if (requestParameters['invoiceId'] == null) {
+            throw new runtime.RequiredError(
+                'invoiceId',
+                'Required parameter "invoiceId" was null or undefined when calling listInvoicePayments().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/{invoiceId}/payments`.replace(`{${"invoiceId"}}`, encodeURIComponent(String(requestParameters['invoiceId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PaymentIntentResponseFromJSON));
+    }
+
+    /**
+     * Returns every payment intent raised against an invoice, each carrying its captured, voided and refunded amounts and the balance still refundable. Use this tool to see an invoice\'s full payment history; do not use getInvoicePayment, which reads a single payment intent by id. Preconditions: the invoice must exist; the caller needs the invoice:invoice:view authority, scoped to the invoice\'s location (ADR-0061). Required inputs: invoiceId (UUID) as a path parameter; there is no request body or filtering. Emits an INVOICE_PAYMENT_LIST audit event; no state changes — this is a read-only projection. Returns 200 with the invoice\'s payment intents, 403 when invoice:invoice:view is missing or the invoice\'s location is outside the caller\'s reach, and 404 when the invoice does not exist. 
+     * List Payments for an Invoice
+     */
+    async listInvoicePayments(requestParameters: ListInvoicePaymentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<PaymentIntentResponse>> {
+        const response = await this.listInvoicePaymentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

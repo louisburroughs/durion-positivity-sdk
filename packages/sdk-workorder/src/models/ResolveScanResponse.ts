@@ -20,11 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface ResolveScanResponse {
     /**
-     * Human-readable status describing the match outcome
+     * The task's expected location barcode, so the UI can tell the mechanic what was expected. Null when the task carries no replicated location barcode.
      * @type {string}
      * @memberof ResolveScanResponse
      */
-    matchStatus?: string;
+    expectedLocationBarcode?: string;
+    /**
+     * The task's expected location name, so the UI can tell the mechanic what was expected. Null when the task carries no replicated location name.
+     * @type {string}
+     * @memberof ResolveScanResponse
+     */
+    expectedLocationCode?: string;
+    /**
+     * The task's expected scannable product code, so the UI can tell the mechanic what was expected. Null when the task carries no replicated product code.
+     * @type {string}
+     * @memberof ResolveScanResponse
+     */
+    expectedProductCode?: string;
+    /**
+     * Status describing the match outcome, backed by MatchStatus: MATCHED (both the product and location scans matched); SKU_MISMATCH (location matched, product did not); LOCATION_MISMATCH (product matched, location did not); NO_MATCH (neither matched); PRODUCT_CODE_UNAVAILABLE (a product code was scanned but the task carries no replicated code to compare against — this cannot verify, it is not necessarily wrong); LOCATION_CODE_UNAVAILABLE (same, for a scanned location code). Unknown-vs-wrong on a code scan cannot be distinguished further without a synchronous catalog/location lookup, which ADR-0044 forbids here; ambiguity across tasks is not a concern because comparison is scoped to one task and EAN/UPC codes are unique per tenant (ADR-0053 §5).
+     * @type {string}
+     * @memberof ResolveScanResponse
+     */
+    matchStatus?: ResolveScanResponseMatchStatusEnum;
     /**
      * Whether the scan matched the expected SKU and location for the pick task
      * @type {boolean}
@@ -58,6 +76,20 @@ export interface ResolveScanResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum ResolveScanResponseMatchStatusEnum {
+    Matched = 'MATCHED',
+    SkuMismatch = 'SKU_MISMATCH',
+    LocationMismatch = 'LOCATION_MISMATCH',
+    NoMatch = 'NO_MATCH',
+    ProductCodeUnavailable = 'PRODUCT_CODE_UNAVAILABLE',
+    LocationCodeUnavailable = 'LOCATION_CODE_UNAVAILABLE'
+}
+
+
+/**
  * Check if a given object implements the ResolveScanResponse interface.
  */
 export function instanceOfResolveScanResponse(value: object): boolean {
@@ -77,6 +109,9 @@ export function ResolveScanResponseFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
+        'expectedLocationBarcode': json['expectedLocationBarcode'] == null ? undefined : json['expectedLocationBarcode'],
+        'expectedLocationCode': json['expectedLocationCode'] == null ? undefined : json['expectedLocationCode'],
+        'expectedProductCode': json['expectedProductCode'] == null ? undefined : json['expectedProductCode'],
         'matchStatus': json['matchStatus'] == null ? undefined : json['matchStatus'],
         'matched': json['matched'],
         'pickListId': json['pickListId'],
@@ -92,6 +127,9 @@ export function ResolveScanResponseToJSON(value?: ResolveScanResponse | null): a
     }
     return {
         
+        'expectedLocationBarcode': value['expectedLocationBarcode'],
+        'expectedLocationCode': value['expectedLocationCode'],
+        'expectedProductCode': value['expectedProductCode'],
         'matchStatus': value['matchStatus'],
         'matched': value['matched'],
         'pickListId': value['pickListId'],

@@ -26,7 +26,7 @@ export interface InventoryBulkIngestRecord {
      */
     locationId?: string;
     /**
-     * Quantity to ingest for the product (non-negative)
+     * Quantity to ingest for the product (positive; a zero-quantity row is refused)
      * @type {number}
      * @memberof InventoryBulkIngestRecord
      */

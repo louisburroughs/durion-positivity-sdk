@@ -44,7 +44,7 @@ export interface InventoryLedgerEntryDto {
      */
     eventType: InventoryLedgerEntryDtoEventTypeEnum;
     /**
-     * Source location for transfer events
+     * The storage location (bin) or site the stock left, on whichever granularity the posting path used: a bin for a bin-level move (e.g. a pick or a putaway), a site for a site-level move (e.g. a transfer). This IS the storage-location id for a bin-level posting; there is no separate storage-location field to read instead
      * @type {string}
      * @memberof InventoryLedgerEntryDto
      */
@@ -98,7 +98,7 @@ export interface InventoryLedgerEntryDto {
      */
     timestamp: Date;
     /**
-     * Destination location for transfer events
+     * The storage location (bin) or site the stock entered, on whichever granularity the posting path used: a bin for a bin-level move (e.g. a pick or a putaway), a site for a site-level move (e.g. a transfer). This IS the storage-location id for a bin-level posting; there is no separate storage-location field to read instead
      * @type {string}
      * @memberof InventoryLedgerEntryDto
      */
@@ -127,6 +127,18 @@ export interface InventoryLedgerEntryDto {
      * @memberof InventoryLedgerEntryDto
      */
     updatedAt?: Date;
+    /**
+     * Work order this entry was posted for, when the posting path knows one (pick-task consumption, cross-dock receipt/issue, returns to stock); null otherwise
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    workorderId?: string;
+    /**
+     * Work order line this entry was posted for, when the posting path knows one; null when only the work order (not the line) is known
+     * @type {string}
+     * @memberof InventoryLedgerEntryDto
+     */
+    workorderLineId?: string;
 }
 
 /**
@@ -199,6 +211,8 @@ export function InventoryLedgerEntryDtoFromJSONTyped(json: any, ignoreDiscrimina
         'unitCost': json['unitCost'] == null ? undefined : json['unitCost'],
         'unitOfMeasure': json['unitOfMeasure'] == null ? undefined : json['unitOfMeasure'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
+        'workorderLineId': json['workorderLineId'] == null ? undefined : json['workorderLineId'],
     };
 }
 
@@ -226,6 +240,8 @@ export function InventoryLedgerEntryDtoToJSON(value?: InventoryLedgerEntryDto | 
         'unitCost': value['unitCost'],
         'unitOfMeasure': value['unitOfMeasure'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'workorderId': value['workorderId'],
+        'workorderLineId': value['workorderLineId'],
     };
 }
 

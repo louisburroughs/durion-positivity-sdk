@@ -26,13 +26,13 @@ export interface ReturnableItemDto {
      */
     description?: string;
     /**
-     * Identifier of the returnable item
+     * Identifier of the returnable item; equal to workorderLineId, kept for compatibility with callers that read itemId rather than workorderLineId (they name the same work order line)
      * @type {string}
      * @memberof ReturnableItemDto
      */
     itemId: string;
     /**
-     * Quantity of the item that can still be returned
+     * Quantity of the item that can still be returned: quantity consumed against this line minus quantity already returned against it, floored at 0
      * @type {number}
      * @memberof ReturnableItemDto
      */
@@ -44,11 +44,23 @@ export interface ReturnableItemDto {
      */
     sku: string;
     /**
+     * Unit of measure the returnable quantity is expressed in (the product's base UoM); null when it cannot be resolved
+     * @type {string}
+     * @memberof ReturnableItemDto
+     */
+    uom?: string;
+    /**
      * Identifier of the workorder the item was issued against
      * @type {string}
      * @memberof ReturnableItemDto
      */
     workorderId: string;
+    /**
+     * Work order line this returnable quantity was issued against; identical to itemId
+     * @type {string}
+     * @memberof ReturnableItemDto
+     */
+    workorderLineId: string;
 }
 
 /**
@@ -59,6 +71,7 @@ export function instanceOfReturnableItemDto(value: object): boolean {
     if (!('quantityReturnable' in value)) return false;
     if (!('sku' in value)) return false;
     if (!('workorderId' in value)) return false;
+    if (!('workorderLineId' in value)) return false;
     return true;
 }
 
@@ -76,7 +89,9 @@ export function ReturnableItemDtoFromJSONTyped(json: any, ignoreDiscriminator: b
         'itemId': json['itemId'],
         'quantityReturnable': json['quantityReturnable'],
         'sku': json['sku'],
+        'uom': json['uom'] == null ? undefined : json['uom'],
         'workorderId': json['workorderId'],
+        'workorderLineId': json['workorderLineId'],
     };
 }
 
@@ -90,7 +105,9 @@ export function ReturnableItemDtoToJSON(value?: ReturnableItemDto | null): any {
         'itemId': value['itemId'],
         'quantityReturnable': value['quantityReturnable'],
         'sku': value['sku'],
+        'uom': value['uom'],
         'workorderId': value['workorderId'],
+        'workorderLineId': value['workorderLineId'],
     };
 }
 
