@@ -27,13 +27,26 @@ import {
   SubmitRecountRequestMeasurementMethodEnum,
   UpdateCycleCountPlanStatusRequestStatusEnum,
 } from '@durion-sdk/inventory';
-import { readNumber } from '../harness/builders';
+import {
+  ADJUSTMENT_GAIN_ACCOUNT,
+  ADJUSTMENT_POSTED,
+  INVENTORY_ACCOUNT,
+  SCRAP_POSTED,
+  SHRINKAGE_ACCOUNT,
+  accountingEventsFor,
+  awaitAccountingEvent,
+  journalEntryOf,
+  serverDate,
+  shapeOf,
+  wallDate,
+} from '../harness/accounting';
+import { readNumber, readString } from '../harness/builders';
 import { call, expectHttpError, formatError, isHttpStatus } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { acceleratedFixture, type AcceleratedFixture } from './accelFixture';
 import { Personas, type DomainClients } from '../harness/personas';
-import { seedOnHand, type SeededStock } from '../harness/stock';
+import { costSku, seedOnHand, type SeededStock } from '../harness/stock';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
 const itInRoleMode = ROLE_MODE ? it : it.skip;
@@ -95,6 +108,8 @@ describe('Suite E — cycle counting', () => {
   let exactTaskId: string;
   let varianceTaskId: string;
   let adjustmentId: string;
+  /** E14's write-off, of a SKU nothing costed: E27 follows it to the ledger. */
+  let uncostedScrapId: string | undefined;
 
   /**
    * The next open virtual day: createCycleCountPlan rejects a scheduledDate that is
@@ -495,10 +510,11 @@ describe('Suite E — cycle counting', () => {
    * The two look alike and settle different facts: an adjustment reconciles a
    * count against the shelf, a scrap is a decision to destroy value. The backend
    * treats them differently too — a posted scrap emits `ScrapPostedV1`, which
-   * pos-accounting consumes into a shrinkage journal entry, while an approved
-   * adjustment emits nothing accounting listens for
+   * pos-accounting posts on the `INVENTORY_SHRINKAGE` mapping, while an approved
+   * adjustment emits `InventoryAdjustedV1`, posted on `INVENTORY_ADJUSTMENT`
    * (durion-positivity-backend#2186). Until this block existed, no suite called
-   * `createScrap` at all, so none of that path had ever been exercised.
+   * `createScrap` at all, so none of that path had ever been exercised. What either
+   * fact turned into in the ledger is asserted in the block after this one.
    *
    * Identical to its non-accelerated twin on purpose: a write-off carries no
    * business instant of its own — the scrap is dated by the backend — so there is
@@ -610,6 +626,7 @@ describe('Suite E — cycle counting', () => {
       // The entry is the write-off: a posted scrap that moved stock without one
       // would leave the ledger unable to explain where the stock went.
       expect(posted.ledgerEntryId).toBeTruthy();
+      uncostedScrapId = scrapId;
     }, 120_000);
 
     it('E15 — writing off more than is on the shelf is refused', async () => {
@@ -747,5 +764,386 @@ describe('Suite E — cycle counting', () => {
       );
       console.log(`[E18] TECHNICIAN refused createScrap with ${refused}`);
     }, 120_000);
+  });
+
+  /**
+   * The accounting consequence of everything above.
+   *
+   * An approved count variance, an approved manual adjustment and a posted scrap
+   * each emit a fact that pos-accounting turns into a journal entry — or records as
+   * skipped, when inventory could not cost the movement. Until this block the suite
+   * stopped at the inventory ledger, so the shrinkage consumer being off, the
+   * uncosted skip firing on everything, or the adjustment producer being absent
+   * would all have passed (durion `SPEC-inventory-adjustment-gl-posting.md` §2.5, §6).
+   *
+   * The route from an id this suite holds to the ledger is the ingestion record:
+   * `listAccountingEvents` by fact type and `domainKeyId`, then `getJournalEntry`.
+   * Every wait is a poll with a deadline, and a deadline passed is a failure — an
+   * absent consumer must fail these tests, not skip them.
+   *
+   * Costed and uncosted SKUs are both deliberate. The costed ones are given a cost
+   * by `costSku` before their stock is seeded; the uncosted cases reuse the SKUs the
+   * blocks above already moved, which nothing ever costed.
+   *
+   * Its own bins, for the reason the write-offs have one: a third SKU in the counted
+   * bin would break E3, and the conflict case needs a plan whose tasks are only its own.
+   */
+  describe('the accounting consequence', () => {
+    const GL_SEEDED = 40;
+    const GL_UNIT_COST = 12.5;
+    const LOSS = 4;
+    const GAIN = 3;
+    const MANUAL_LOSS = 5;
+    const MANUAL_GAIN = 2;
+    const SCRAPPED = 3;
+    const CONFLICT_COUNTED = 33;
+    const WAIT_MS = Math.max(ItestConfig.fromEnv().waitTimeoutMs, 60_000);
+
+    let glBinId: string;
+    let conflictBinId: string;
+    let lossSku: string;
+    let gainSku: string;
+    let manualSku: string;
+    let costedScrapSku: string;
+    let conflictSku: string;
+
+    beforeAll(async () => {
+      const bin = async (name: string) =>
+        (
+          await call('createStorageLocation', () =>
+            admin.location.storageLocationApi.createStorageLocation({
+              siteId,
+              storageLocationRequest: {
+                name: `${name} ${context.runId}`,
+                type: StorageLocationRequestTypeEnum.Bin,
+                storageCategoryCode: StorageLocationRequestStorageCategoryCodeEnum.General,
+              },
+            }),
+          )
+        ).id;
+      glBinId = await bin('Itest GL');
+      conflictBinId = await bin('Itest GL conflict');
+
+      lossSku = `ITEST-GL-${context.runId}-LOSS`;
+      gainSku = `ITEST-GL-${context.runId}-GAIN`;
+      manualSku = `ITEST-GL-${context.runId}-MANUAL`;
+      costedScrapSku = `ITEST-GL-${context.runId}-SCRAP`;
+      conflictSku = `ITEST-GL-${context.runId}-CONFLICT`;
+
+      const costed = [lossSku, gainSku, manualSku, costedScrapSku];
+      for (const sku of costed) {
+        const cost = await costSku(admin, sku, GL_UNIT_COST, `Itest cost fixture [${context.runId}]`);
+        expect(cost).toBeCloseTo(GL_UNIT_COST, 4);
+      }
+      await seedOnHand(parts, admin, { locationId: glBinId, quantity: GL_SEEDED, skus: costed });
+      // Uncosted on purpose: the conflict case asserts that nothing is produced,
+      // which does not depend on a cost.
+      await seedOnHand(parts, admin, { locationId: conflictBinId, quantity: GL_SEEDED, skus: [conflictSku] });
+      console.log(`[E] costed ${costed.join(', ')} at ${GL_UNIT_COST} and seeded ${GL_SEEDED} of each into ${glBinId}`);
+    }, 300_000);
+
+    /** Raises and approves a task-less count adjustment against the GL bin, returning it settled. */
+    const countAndApprove = async (sku: string, counted: number) => {
+      const created = await call('createCycleCountAdjustment', () =>
+        parts.inventory.cycleCountAdjustmentsApi.createCycleCountAdjustment({
+          createAdjustmentRequest: {
+            stockItemId: sku,
+            locationId: glBinId,
+            quantityOnHandBefore: GL_SEEDED,
+            countedQuantity: counted,
+            costAtTimeOfAdjustment: GL_UNIT_COST,
+            createdByUserId: parts.username,
+            reasonCode: 'CYCLE_COUNT_VARIANCE',
+          },
+        }),
+      );
+      await call('approveCycleCountAdjustment', () =>
+        admin.inventory.cycleCountAdjustmentsApi.approveCycleCountAdjustment({
+          adjustmentId: created.adjustmentId,
+          approveAdjustmentRequest: { notes: `Itest GL run ${context.runId}` },
+        }),
+      );
+      return call('getCycleCountAdjustment', () =>
+        admin.inventory.cycleCountAdjustmentsApi.getCycleCountAdjustment({ adjustmentId: created.adjustmentId }),
+      );
+    };
+
+    /** Raises and approves a manual adjustment request against the GL bin, returning its id. */
+    const adjustAndApprove = async (sku: string, locationId: string, quantity: number): Promise<string> => {
+      const request = await call('createAdjustmentRequest', () =>
+        parts.inventory.stockMovementsApi.createAdjustmentRequest({
+          createAdjustmentRequestDto: { productSku: sku, locationId, quantity, reasonCode: 'ITEST_ADJUSTMENT' },
+        }),
+      );
+      await call('approveAdjustmentRequest', () =>
+        admin.inventory.stockMovementsApi.approveAdjustmentRequest({
+          adjustmentRequestId: request.adjustmentRequestId,
+        }),
+      );
+      return request.adjustmentRequestId;
+    };
+
+    /** The ledger row a posting wrote, which carries the cost the engine stamped on it. */
+    const ledgerEntry = async (entryId: string) =>
+      call('getInventoryLedgerEntry', () => admin.inventory.inventoryLedgerApi.getInventoryLedgerEntry({ entryId }));
+
+    /**
+     * Follows a costed fact to its journal entry and asserts the two lines.
+     *
+     * `debit` / `credit` name the accounts; the amount is `abs(delta) × unitCost` as
+     * the inventory ledger holds them, and the date is the posting instant's date —
+     * business time, so a redelivery lands in the same period.
+     */
+    const expectPosted = async (
+      tag: string,
+      eventType: string,
+      domainKeyId: string,
+      expected: { debit: string; credit: string; amount: number; occurredAt: Date },
+    ) => {
+      const event = await awaitAccountingEvent(admin, eventType, domainKeyId, WAIT_MS);
+      console.log(
+        `[${tag}] ${eventType} ${domainKeyId} -> ${event.status} ${event.idempotencyOutcome ?? ''}, ` +
+          `journal entry ${event.journalEntryId}`,
+      );
+      expect(event.status).toBe('PROCESSED');
+      expect(event.journalEntryId).toBeTruthy();
+
+      const entry = await journalEntryOf(admin, event.journalEntryId as string);
+      const shape = shapeOf(entry);
+      console.log(
+        `[${tag}] entry ${entry.entryNumber}: Dr ${shape.debitAccounts.join('+')} ${shape.totalDebits} / ` +
+          `Cr ${shape.creditAccounts.join('+')} ${shape.totalCredits}, dated ${entry.transactionDate?.toISOString()}`,
+      );
+      expect(shape.lineCount).toBe(2);
+      expect(shape.debitAccounts).toEqual([expected.debit]);
+      expect(shape.creditAccounts).toEqual([expected.credit]);
+      expect(shape.totalDebits).toBeCloseTo(expected.amount, 2);
+      expect(shape.totalCredits).toBeCloseTo(expected.amount, 2);
+      expect(entry.transactionDate).toBeDefined();
+      expect(wallDate(entry.transactionDate as Date)).toBe(serverDate(expected.occurredAt));
+      return { event, entry };
+    };
+
+    /** An uncosted fact is recorded and skipped: never a zero or an indeterminate entry. */
+    const expectSkipped = async (tag: string, eventType: string, domainKeyId: string) => {
+      const event = await awaitAccountingEvent(admin, eventType, domainKeyId, WAIT_MS);
+      console.log(`[${tag}] ${eventType} ${domainKeyId} -> ${event.status} ${event.failureReasonCode ?? ''}`);
+      expect(event.status).toBe('SKIPPED');
+      expect(event.failureReasonCode).toBe('UNCOSTED_FACT');
+      expect(event.journalEntryId).toBeFalsy();
+      const all = await accountingEventsFor(admin, eventType, domainKeyId);
+      expect(all.filter((record) => record.journalEntryId)).toEqual([]);
+    };
+
+    it('E19 — a costed count shortfall posts Dr shrinkage / Cr inventory at the engine cost', async () => {
+      const adjustment = await countAndApprove(lossSku, GL_SEEDED - LOSS);
+      expect(['APPROVED', 'POSTED']).toContain(adjustment.status);
+      expect(adjustment.ledgerEntryId).toBeTruthy();
+
+      // The fixture, checked rather than assumed: the variance must have posted at the
+      // cost the SKU was given, or the amount below would be proving nothing.
+      const posted = await ledgerEntry(adjustment.ledgerEntryId as string);
+      expect(posted.eventType).toBe('COUNT_VARIANCE_OUT');
+      expect(Number(posted.unitCost)).toBeCloseTo(GL_UNIT_COST, 4);
+
+      const { entry } = await expectPosted('E19', ADJUSTMENT_POSTED, adjustment.adjustmentId, {
+        debit: SHRINKAGE_ACCOUNT,
+        credit: INVENTORY_ACCOUNT,
+        amount: LOSS * GL_UNIT_COST,
+        occurredAt: adjustment.postedAt ?? posted.timestamp,
+      });
+      expect(shapeOf(entry).inventoryNet).toBeCloseTo(-LOSS * GL_UNIT_COST, 2);
+    }, 180_000);
+
+    it('E20 — a costed count gain posts Dr inventory / Cr the adjustment-gain account', async () => {
+      const adjustment = await countAndApprove(gainSku, GL_SEEDED + GAIN);
+      expect(adjustment.ledgerEntryId).toBeTruthy();
+      const posted = await ledgerEntry(adjustment.ledgerEntryId as string);
+      expect(posted.eventType).toBe('COUNT_VARIANCE_IN');
+      expect(Number(posted.unitCost)).toBeCloseTo(GL_UNIT_COST, 4);
+
+      const { entry } = await expectPosted('E20', ADJUSTMENT_POSTED, adjustment.adjustmentId, {
+        debit: INVENTORY_ACCOUNT,
+        credit: ADJUSTMENT_GAIN_ACCOUNT,
+        amount: GAIN * GL_UNIT_COST,
+        occurredAt: adjustment.postedAt ?? posted.timestamp,
+      });
+      expect(shapeOf(entry).inventoryNet).toBeCloseTo(GAIN * GL_UNIT_COST, 2);
+    }, 180_000);
+
+    it('E21 — the uncosted count variance E10 posted is recorded as skipped, with no entry', async () => {
+      // E10's SKU was seeded by bulk ingest and never costed: costSource NONE by design.
+      expect(adjustmentId).toBeTruthy();
+      await expectSkipped('E21', ADJUSTMENT_POSTED, adjustmentId);
+    }, 180_000);
+
+    it('E22 — a variance the movements fully explain approves with nothing to post and no fact', async () => {
+      // Read before the call, as E1 does: the virtual instant is an await.
+      const scheduledDate = await tomorrow();
+      const plan = await call('createCycleCountPlan', () =>
+        admin.inventory.cycleCountPlansApi.createCycleCountPlan({
+          createCycleCountPlanRequest: {
+            locationId: siteId,
+            planName: `Itest GL conflict ${context.runId}`,
+            scheduledDate,
+            zoneIds: [conflictBinId],
+          },
+        }),
+      );
+      const generated = await call('generateCycleCountTasks', () =>
+        admin.inventory.cycleCountPlansApi.generateCycleCountTasks({
+          planId: plan.planId,
+          generateCycleCountTasksRequest: { auditorId },
+        }),
+      );
+      const task = generated.tasks.find((candidate) => candidate.itemSku === conflictSku);
+      expect(task).toBeDefined();
+      const taskId = task!.taskId;
+
+      const counted = await call('submitCycleCount', () =>
+        admin.inventory.cycleCountOperationsApi.submitCycleCount({
+          submitCountRequest: {
+            taskId,
+            auditorId,
+            actualQuantity: CONFLICT_COUNTED,
+            measurementMethod: SubmitCountRequestMeasurementMethodEnum.ManualCount,
+            varianceReason: 'Itest: short count the movements will explain',
+          },
+        }),
+      );
+      expect(counted.taskStatus).toBe('COUNTED_PENDING_REVIEW');
+
+      const created = await call('createCycleCountAdjustment', () =>
+        parts.inventory.cycleCountAdjustmentsApi.createCycleCountAdjustment({
+          createAdjustmentRequest: {
+            taskId,
+            stockItemId: conflictSku,
+            quantityOnHandBefore: GL_SEEDED,
+            countedQuantity: CONFLICT_COUNTED,
+            costAtTimeOfAdjustment: GL_UNIT_COST,
+            createdByUserId: parts.username,
+            reasonCode: 'CYCLE_COUNT_VARIANCE',
+          },
+        }),
+      );
+      const conflictAdjustmentId = created.adjustmentId;
+
+      // The movement that explains the whole shortfall, landing inside the count window.
+      await adjustAndApprove(conflictSku, conflictBinId, CONFLICT_COUNTED - GL_SEEDED);
+
+      // The first approval finds the in-window movement, flags the task CONFLICT and
+      // refuses; the second is the reviewer's explicit accept, which recomputes the
+      // variance against current on hand — zero — and posts nothing.
+      const refused = await expectHttpError(
+        admin.inventory.cycleCountAdjustmentsApi.approveCycleCountAdjustment({
+          adjustmentId: conflictAdjustmentId,
+          approveAdjustmentRequest: { notes: `Itest GL conflict ${context.runId}` },
+        }),
+        409,
+      );
+      console.log(`[E22] first approval refused with ${refused}; the task is now CONFLICT`);
+      const accepted = await call('approveCycleCountAdjustment', () =>
+        admin.inventory.cycleCountAdjustmentsApi.approveCycleCountAdjustment({
+          adjustmentId: conflictAdjustmentId,
+          approveAdjustmentRequest: { notes: `Itest GL conflict accepted ${context.runId}` },
+        }),
+      );
+      console.log(`[E22] re-approved as ${accepted.status}, variance ${accepted.quantityChange}`);
+      expect(Number(accepted.quantityChange)).toBe(0);
+      expect(accepted.ledgerEntryId).toBeFalsy();
+
+      // Absence needs a clock to be read against, and a fixed sleep is not one. A
+      // later fact through the same producer, outbox and consumer is: once its record
+      // is terminal, anything the approval above had emitted would have been consumed
+      // too. The sentinel is uncosted, so it is also one more skip on record.
+      const sentinel = await adjustAndApprove(conflictSku, conflictBinId, 1);
+      await awaitAccountingEvent(admin, ADJUSTMENT_POSTED, sentinel, WAIT_MS);
+      const records = await accountingEventsFor(admin, ADJUSTMENT_POSTED, conflictAdjustmentId);
+      console.log(`[E22] ${records.length} ingestion record(s) for the zero-variance adjustment`);
+      expect(records).toEqual([]);
+    }, 300_000);
+
+    it('E23 — a costed manual loss posts Dr shrinkage / Cr inventory', async () => {
+      const requestId = await adjustAndApprove(manualSku, glBinId, -MANUAL_LOSS);
+      const event = await awaitAccountingEvent(admin, ADJUSTMENT_POSTED, requestId, WAIT_MS);
+      const posted = await ledgerEntry(readString(event.payload, 'ledgerEntryId') as string);
+      expect(posted.eventType).toBe('ADJUSTMENT_OUT');
+      expect(Number(posted.unitCost)).toBeCloseTo(GL_UNIT_COST, 4);
+
+      await expectPosted('E23', ADJUSTMENT_POSTED, requestId, {
+        debit: SHRINKAGE_ACCOUNT,
+        credit: INVENTORY_ACCOUNT,
+        amount: MANUAL_LOSS * GL_UNIT_COST,
+        occurredAt: posted.timestamp,
+      });
+    }, 180_000);
+
+    it('E24 — a costed manual gain posts Dr inventory / Cr the adjustment-gain account', async () => {
+      const requestId = await adjustAndApprove(manualSku, glBinId, MANUAL_GAIN);
+      const event = await awaitAccountingEvent(admin, ADJUSTMENT_POSTED, requestId, WAIT_MS);
+      const posted = await ledgerEntry(readString(event.payload, 'ledgerEntryId') as string);
+      expect(posted.eventType).toBe('ADJUSTMENT_IN');
+      expect(Number(posted.unitCost)).toBeCloseTo(GL_UNIT_COST, 4);
+
+      await expectPosted('E24', ADJUSTMENT_POSTED, requestId, {
+        debit: INVENTORY_ACCOUNT,
+        credit: ADJUSTMENT_GAIN_ACCOUNT,
+        amount: MANUAL_GAIN * GL_UNIT_COST,
+        occurredAt: posted.timestamp,
+      });
+    }, 180_000);
+
+    it('E25 — an uncosted manual adjustment is recorded as skipped, with no entry', async () => {
+      // The bulk-ingest request that seeded the suite's first SKU: an approved
+      // MANUAL_ADJUSTMENT of a SKU nothing ever costed.
+      await expectSkipped('E25', ADJUSTMENT_POSTED, stock.adjustmentRequestIds[0]);
+    }, 180_000);
+
+    it('E26 — a costed write-off posts Dr shrinkage / Cr inventory, exactly once', async () => {
+      const created = await call('createScrap', () =>
+        parts.inventory.scrapsApi.createScrap({
+          createScrapRequest: {
+            stockItemId: costedScrapSku,
+            locationId: glBinId,
+            quantity: SCRAPPED,
+            reasonCode: CreateScrapRequestReasonCodeEnum.Damaged,
+            negativeStockOverride: false,
+            shouldReplenish: false,
+            notes: `Itest costed write-off ${context.runId}`,
+          },
+        }),
+      );
+      const scrapId = created.scrapId as string;
+      let status = created.status as string | undefined;
+      if (status === 'PENDING_APPROVAL') {
+        const approved = await call('approveScrap', () =>
+          admin.inventory.scrapsApi.approveScrap({ scrapId, approveScrapRequest: { negativeStockOverride: false } }),
+        );
+        status = approved.status;
+      }
+      expect(['POSTED', 'AUTO_APPROVED', 'APPROVED']).toContain(status);
+      const scrap = await call('getScrap', () => admin.inventory.scrapsApi.getScrap({ scrapId }));
+      const posted = await ledgerEntry(scrap.ledgerEntryId as string);
+      expect(Number(posted.unitCost)).toBeCloseTo(GL_UNIT_COST, 4);
+
+      const { event } = await expectPosted('E26', SCRAP_POSTED, scrapId, {
+        debit: SHRINKAGE_ACCOUNT,
+        credit: INVENTORY_ACCOUNT,
+        amount: SCRAPPED * GL_UNIT_COST,
+        occurredAt: scrap.postedAt ?? posted.timestamp,
+      });
+
+      // Exactly once: a redelivered or re-emitted fact may add a DUPLICATE_IGNORED
+      // record, but every record must point at the one entry.
+      const records = await accountingEventsFor(admin, SCRAP_POSTED, scrapId);
+      const entries = new Set(records.map((record) => record.journalEntryId).filter(Boolean));
+      expect([...entries]).toEqual([event.journalEntryId]);
+      expect(records.filter((record) => record.idempotencyOutcome !== 'DUPLICATE_IGNORED')).toHaveLength(1);
+    }, 180_000);
+
+    it('E27 — the uncosted write-off E14 posted is recorded as skipped, with no entry', async () => {
+      expect(uncostedScrapId).toBeTruthy();
+      await expectSkipped('E27', SCRAP_POSTED, uncostedScrapId as string);
+    }, 180_000);
   });
 });

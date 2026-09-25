@@ -342,7 +342,7 @@ export function createMaintenancePort(
   ];
 
   return {
-    async cycleCount(at: Date): Promise<void> {
+    async cycleCount(at: Date, onApproved?: (adjustmentId: string) => void): Promise<void> {
       const candidates = ctx.random.pickN(refs.productEntityIds, Math.min(3, refs.productEntityIds.length));
       if (candidates.length === 0) {
         throw new Error('[accel] the cycle count has no products to count — the catalog bootstrap produced none');
@@ -427,6 +427,7 @@ export function createMaintenancePort(
             },
           }),
         );
+        onApproved?.(adjustmentId);
       }
       log(`cycle count approved for ${candidates.length} item(s) on ${at.toISOString().slice(0, 10)}`);
     },
@@ -525,10 +526,10 @@ export function createMaintenancePort(
      * Deliberately not a cycle-count adjustment. The two settle different facts —
      * an adjustment reconciles a count against the shelf, a scrap is a decision to
      * destroy value — and the backend treats them differently: a posted scrap emits
-     * `ScrapPostedV1`, which pos-accounting consumes into a shrinkage journal entry,
-     * while an approved adjustment emits nothing accounting listens for
-     * (durion-positivity-backend#2186). A year that only ever adjusts therefore
-     * exercises none of that path.
+     * `ScrapPostedV1`, which pos-accounting posts on the shrinkage mapping, while an
+     * approved adjustment emits `InventoryAdjustedV1`, posted on the adjustment
+     * mapping (durion-positivity-backend#2186). A year that only ever adjusts
+     * therefore exercises none of the scrap path.
      */
     async scrap(at: Date): Promise<void> {
       const candidates = ctx.random.pickN(

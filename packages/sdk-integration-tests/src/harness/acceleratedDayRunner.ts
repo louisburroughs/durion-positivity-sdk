@@ -56,8 +56,11 @@ export interface ShiftPort {
 }
 
 export interface MaintenancePort {
-  /** Weekly cycle count. */
-  cycleCount(at: Date): Promise<void>;
+  /**
+   * Weekly cycle count. `onApproved` hears each adjustment as it is approved, so a
+   * count that fails part-way still reports the ones already on the ledger.
+   */
+  cycleCount(at: Date, onApproved?: (adjustmentId: string) => void): Promise<void>;
   /** Monthly restock. */
   restock(at: Date): Promise<void>;
   /** Ten-daily write-off of damaged or lost stock. */
@@ -161,6 +164,8 @@ export interface DayReport {
    */
   workorderKinds: Record<string, PositionKind>;
   invoiceIds: string[];
+  /** Cycle-count adjustments approved today, for the year-end GL reconciliation. */
+  cycleCountAdjustmentIds: string[];
 }
 
 interface ActiveJob {
@@ -189,6 +194,7 @@ const EMPTY_REPORT = (dayNumber: number, virtualDate: string): DayReport => ({
   workorderIds: [],
   workorderKinds: {},
   invoiceIds: [],
+  cycleCountAdjustmentIds: [],
 });
 
 export class AcceleratedDayRunner {
@@ -419,7 +425,9 @@ export class AcceleratedDayRunner {
     // attempt failed; the failure itself is on the report and fails Z2 at the end.
     if (dayNumber % 7 === 0) {
       report.cycleCount = await this.attempt(report, 'the weekly cycle count', () =>
-        this.deps.maintenance.cycleCount(shiftClosedAt),
+        this.deps.maintenance.cycleCount(shiftClosedAt, (adjustmentId) => {
+          report.cycleCountAdjustmentIds.push(adjustmentId);
+        }),
       );
     }
     if (dayNumber % 30 === 0) {
