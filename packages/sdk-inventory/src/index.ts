@@ -23,6 +23,8 @@ import { CycleCountTolerancesApi } from './apis/CycleCountTolerancesApi';
 import { InventoryBulkIngestAPIApi } from './apis/InventoryBulkIngestAPIApi';
 import { StockMovementsApi } from './apis/StockMovementsApi';
 import { ScrapsApi } from './apis/ScrapsApi';
+import { InventoryRevaluationApi } from './apis/InventoryRevaluationApi';
+import { InventoryLedgerApi } from './apis/InventoryLedgerApi';
 
 export function createInventoryClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -75,7 +77,14 @@ export function createInventoryClient(config: DurionSdkConfig) {
     // no consumer of this factory could write stock off deliberately - only
     // settle a counted variance through cycleCountAdjustmentsApi, which is a
     // different fact with a different accounting consequence (a posted scrap
-    // emits ScrapPostedV1; an adjustment emits nothing pos-accounting consumes).
+    // emits ScrapPostedV1 onto the shrinkage mapping; an adjustment emits
+    // InventoryAdjustedV1 onto the INVENTORY_ADJUSTMENT mapping).
     scrapsApi: new ScrapsApi(configuration),
+    // Cost corrections. Restating a SKU's unit cost is the one route the API
+    // offers to give a SKU a cost at all: goods receipts post without a document
+    // unit cost, so a received SKU stays uncosted under AVERAGE until revalued.
+    inventoryRevaluationApi: new InventoryRevaluationApi(configuration),
+    // Ledger rows by id, for reading back the cost the engine stamped on a posting.
+    inventoryLedgerApi: new InventoryLedgerApi(configuration),
   };
 }

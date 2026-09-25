@@ -1,3 +1,4 @@
+import { ADJUSTMENT_POSTED, awaitAccountingEvent, journalEntryOf, shapeOf } from '../harness/accounting';
 import { AcceleratedConfig } from '../harness/acceleratedConfig';
 import { loadAcceleratedContext } from '../harness/acceleratedContext';
 import { auditInvoices, auditLaborSpans, auditTimeEntries } from '../harness/acceleratedAudit';
@@ -198,11 +199,9 @@ describe('The accelerated year', () => {
     expect(unsettled).toEqual([]);
 
     // A posted write-off moved stock, so it must carry the SCRAP_OUT entry that
-    // moved it. This is the inventory side only: whether pos-accounting turned the
-    // ScrapPostedV1 fact into a shrinkage journal entry is deliberately not asserted
-    // here while durion-positivity-backend#2186 is open, because an assertion
-    // written now would encode whichever behaviour currently exists rather than the
-    // one that is intended.
+    // moved it. This is the inventory side only; what pos-accounting made of the
+    // ScrapPostedV1 fact is suite E's subject (E26, E27), for a costed and an
+    // uncosted SKU it controls.
     // APPROVED belongs here with the other two: E14 and the maintenance port both
     // treat it as posted, and leaving it out would drop exactly the write-offs the
     // manager approved — the ones most likely to have gone wrong — out of the audit
@@ -216,6 +215,76 @@ describe('The accelerated year', () => {
     }
     console.log(`[Z8b] ${posted.length} posted write-off(s), each with a ledger entry`);
   }, 600_000);
+
+  it('Z8c — the GL moved 1300 Inventory by exactly what the count variances were worth', async () => {
+    // The reconciliation ADR-0044 §4 demands of a fact-fed ledger: every count
+    // variance the year posted reached the GL, and for costed SKUs the journal
+    // entries move 1300 Inventory by the same signed value the inventory ledger
+    // gave the variances — gains up, losses down. Uncosted variances are skipped by
+    // design and reported by count, because a year of nothing but skips means the
+    // shop never held a costed SKU, which the reconciliation cannot see past.
+    const ids = result.journal.cycleCountAdjustmentIds;
+    if (result.totals.cycleCounts > 0) {
+      expect(ids.length).toBeGreaterThan(0);
+    }
+
+    const personas = new Personas(ItestConfig.fromEnv());
+    await personas.login();
+    const admin = personas.as('admin');
+    const waitMs = Math.max(ItestConfig.fromEnv().waitTimeoutMs, 60_000);
+
+    let inventoryValue = 0;
+    let glValue = 0;
+    let costed = 0;
+    let skipped = 0;
+    let unposted = 0;
+    const mismatches: string[] = [];
+
+    for (const adjustmentId of ids) {
+      const adjustment = await admin.inventory.cycleCountAdjustmentsApi.getCycleCountAdjustment({ adjustmentId });
+      if (!adjustment.ledgerEntryId) {
+        // Approved with nothing to post — no ledger row, so no fact to reconcile.
+        unposted += 1;
+        continue;
+      }
+      const entry = await admin.inventory.inventoryLedgerApi.getInventoryLedgerEntry({
+        entryId: adjustment.ledgerEntryId,
+      });
+      const unitCost = Number(entry.unitCost ?? 0);
+      const event = await awaitAccountingEvent(admin, ADJUSTMENT_POSTED, adjustmentId, waitMs);
+
+      if (unitCost <= 0) {
+        skipped += 1;
+        if (event.status !== 'SKIPPED' || event.failureReasonCode !== 'UNCOSTED_FACT' || event.journalEntryId) {
+          mismatches.push(`${adjustmentId}: uncosted but ${event.status} ${event.failureReasonCode ?? ''}`);
+        }
+        continue;
+      }
+
+      costed += 1;
+      const value = Number(entry.changeInQuantity) * unitCost;
+      inventoryValue += value;
+      if (event.status !== 'PROCESSED' || !event.journalEntryId) {
+        mismatches.push(`${adjustmentId}: costed at ${unitCost} but ${event.status} with no entry`);
+        continue;
+      }
+      const moved = shapeOf(await journalEntryOf(admin, event.journalEntryId)).inventoryNet;
+      glValue += moved;
+      if (Math.abs(moved - value) >= 0.01) {
+        mismatches.push(`${adjustmentId}: ledger ${value.toFixed(4)} vs GL 1300 ${moved.toFixed(4)}`);
+      }
+    }
+
+    console.log(
+      `[Z8c] ${ids.length} count adjustment(s): ${costed} costed, ${skipped} skipped as uncosted, ` +
+        `${unposted} with nothing posted; inventory ledger ${inventoryValue.toFixed(2)} vs GL 1300 ${glValue.toFixed(2)}`,
+    );
+    for (const mismatch of mismatches.slice(0, 10)) {
+      console.log(`[Z8c] ${mismatch}`);
+    }
+    expect(mismatches).toEqual([]);
+    expect(Math.abs(glValue - inventoryValue)).toBeLessThan(0.01 * Math.max(1, costed));
+  }, 1_800_000);
 
   it('Z9 — no resource was ever double-booked', () => {
     const overlaps = result.ledger.overlaps();

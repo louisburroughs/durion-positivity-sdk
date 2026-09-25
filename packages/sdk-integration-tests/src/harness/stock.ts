@@ -82,3 +82,44 @@ export async function seedOnHand(
 
   return { skus: [...options.skus], adjustmentRequestIds };
 }
+
+/**
+ * Gives a SKU a unit cost before any stock of it moves, so every posting after
+ * this one carries that cost into its fact.
+ *
+ * Why a revaluation and not a priced receipt: pos-inventory's goods receipts post
+ * their ledger rows without a document unit cost, so under AVERAGE a received SKU
+ * enters at the running average — which for a SKU nobody has costed is none — and
+ * stays uncosted. Restating the cost is the one API route that sets it. Done at
+ * zero on hand, the restatement moves no value and posts nothing of its own; the
+ * stock seeded after it enters at this cost, and so does every variance, adjustment
+ * and scrap that follows. A SKU that skips this call is uncosted on purpose.
+ *
+ * Returns the cost the engine now holds, as the revaluation reports it.
+ */
+export async function costSku(
+  approver: DomainClients,
+  sku: string,
+  unitCost: number,
+  reason: string,
+): Promise<number> {
+  const created = await call(`createRevaluation ${sku}`, () =>
+    approver.inventory.inventoryRevaluationApi.createRevaluation({
+      createRevaluationRequest: { stockItemId: sku, newUnitCost: unitCost, reason },
+    }),
+  );
+  let settled = created;
+  // Value decides the path: a zero-value restatement should apply at once, but a
+  // configured threshold may still park it for a decision.
+  if (created.status === 'PENDING_APPROVAL') {
+    settled = await call(`approveRevaluation ${sku}`, () =>
+      approver.inventory.inventoryRevaluationApi.approveRevaluation({
+        revaluationId: created.revaluationId as string,
+      }),
+    );
+  }
+  if (settled.status !== 'AUTO_APPLIED' && settled.status !== 'APPLIED') {
+    throw new Error(`Revaluation of ${sku} ended ${settled.status}, so the SKU is not costed`);
+  }
+  return Number(settled.newUnitCost ?? unitCost);
+}

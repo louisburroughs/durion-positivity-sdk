@@ -240,9 +240,12 @@ const harness = (options: {
       },
     },
     maintenance: {
-      cycleCount: async (at: Date) => {
+      cycleCount: async (at: Date, onApproved?: (adjustmentId: string) => void) => {
         calls.push('cycleCount');
         at_.cycleCount = at;
+        // One adjustment is always approved before any failure, as a real count
+        // that fails on its second product would have.
+        onApproved?.('adj-1');
         if (options.cycleCountFails) {
           throw options.cycleCountFails;
         }
@@ -1457,6 +1460,9 @@ describe('AcceleratedDayRunner — which phase may end a year', () => {
     // Attempted, not done: the flag says the count happened, and it did not.
     expect(report.cycleCount).toBe(false);
     expect(report.workordersCompleted).toBeGreaterThan(0);
+    // But what it approved before failing is on the ledger, so it is reported for
+    // the year-end reconciliation.
+    expect(report.cycleCountAdjustmentIds).toEqual(['adj-1']);
   });
 
   it('marks the cycle count done when it succeeds', async () => {
@@ -1466,6 +1472,7 @@ describe('AcceleratedDayRunner — which phase may end a year', () => {
 
     expect(report.cycleCount).toBe(true);
     expect(report.failures.filter((line) => line.includes('cycle count'))).toEqual([]);
+    expect(report.cycleCountAdjustmentIds).toEqual(['adj-1']);
   });
 
   it('still ends the day when the shift cannot be opened, because that is not a day', async () => {

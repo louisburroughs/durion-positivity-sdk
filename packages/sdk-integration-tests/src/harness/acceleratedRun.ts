@@ -344,6 +344,9 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     for (const invoiceId of report.invoiceIds) {
       journal.recordInvoice(invoiceId);
     }
+    for (const adjustmentId of report.cycleCountAdjustmentIds) {
+      journal.recordCycleCountAdjustment(adjustmentId);
+    }
     journal.recordOpenClaims([
       ...stillStuck,
       ...ledger.activeClaims().map((claim) => ({

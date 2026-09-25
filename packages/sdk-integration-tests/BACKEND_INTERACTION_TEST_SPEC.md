@@ -837,6 +837,36 @@ generated model marks required.
 - [ ] **E13 — RBAC negative.** A technician can neither read nor record a
   count.
 
+**Accounting consequence (E19–E27).** Write-offs are E14–E18. An approved count
+variance, an approved manual adjustment and a posted scrap each emit a fact that
+pos-accounting posts to the GL or records as skipped (durion
+`domains/accounting/SPEC-inventory-adjustment-gl-posting.md` §6). The route from
+an id the suite holds is `listAccountingEvents({ eventType, domainKeyId })` →
+`journalEntryId` → `getJournalEntry`, polled through `waitFor`; a deadline passed
+fails the test, so an absent consumer or producer cannot pass. Costed SKUs are
+given a unit cost by a zero-on-hand revaluation (`costSku`) before their stock is
+seeded — goods receipts post without a document unit cost, so a receipt does not
+cost a SKU under AVERAGE — and every costed case first checks the ledger row
+carries that cost. The uncosted cases reuse SKUs nothing costed. Gains credit
+`ADJUSTMENT_GAIN`, seeded to 5100 by owner decision D2.
+
+- [ ] **E19 — Costed count loss.** `PROCESSED` with a journal entry of two lines,
+  Dr 5100 = Cr 1300 = `abs(delta) × unitCost`, dated the posting instant's date.
+- [ ] **E20 — Costed count gain.** Dr 1300 / Cr the `ADJUSTMENT_GAIN` account.
+- [ ] **E21 — Uncosted count variance.** E10's adjustment is `SKIPPED` /
+  `UNCOSTED_FACT` with no journal entry.
+- [ ] **E22 — Zero recomputed variance.** A movement explains the whole
+  shortfall; the first approval is refused 409 (task flagged `CONFLICT`), the
+  second recomputes to zero and posts nothing, and once a later sentinel fact is
+  terminal there is still no ingestion record for the adjustment.
+- [ ] **E23 / E24 — Costed manual loss / gain.** The same two shapes for an
+  `InventoryAdjustmentRequest` (`MANUAL_ADJUSTMENT`).
+- [ ] **E25 — Uncosted manual adjustment.** The bulk-ingest request that seeded
+  the suite is `SKIPPED` / `UNCOSTED_FACT`.
+- [ ] **E26 — Costed write-off.** `inventory.scrap.posted` posts Dr 5100 / Cr
+  1300 exactly once: every ingestion record for the scrap points at one entry.
+- [ ] **E27 — Uncosted write-off.** E14's scrap is `SKIPPED`, with no entry.
+
 ## Task 11: Suite F — Time Reporting and Approval
 
 **File:** `src/suites/f-time-reporting.itest.ts`

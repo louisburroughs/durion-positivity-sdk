@@ -45,6 +45,31 @@ describe('AcceleratedJournal', () => {
     expect(onDisk.days.map((d) => d.dayNumber)).toEqual([1, 2]);
   });
 
+  it('keeps the year\'s cycle-count adjustments across a resume, once each', () => {
+    const path = freshPath();
+    const first = AcceleratedJournal.open(path, identity).journal;
+    first.recordDay(day({ dayNumber: 7 }));
+    first.recordCycleCountAdjustment('adj-1');
+    first.recordCycleCountAdjustment('adj-1');
+    first.flush();
+
+    const { journal } = AcceleratedJournal.open(path, identity);
+    journal.recordCycleCountAdjustment('adj-2');
+
+    expect(journal.cycleCountAdjustmentIds).toEqual(['adj-1', 'adj-2']);
+  });
+
+  it('loads a journal written before cycle-count adjustments were recorded', () => {
+    const path = freshPath();
+    const first = AcceleratedJournal.open(path, identity).journal;
+    first.recordDay(day({ dayNumber: 1 }));
+    const legacy = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
+    delete legacy.cycleCountAdjustmentIds;
+    writeFileSync(path, JSON.stringify(legacy));
+
+    expect(AcceleratedJournal.open(path, identity).journal.cycleCountAdjustmentIds).toEqual([]);
+  });
+
   it('resumes the same timeline, adopting its runId so the records stay one set', () => {
     const path = freshPath();
     const first = AcceleratedJournal.open(path, identity).journal;

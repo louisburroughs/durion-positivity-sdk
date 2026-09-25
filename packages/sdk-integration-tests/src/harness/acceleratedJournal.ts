@@ -60,6 +60,13 @@ export interface JournalState {
    */
   workorderKinds?: Record<string, PositionKind>;
   invoiceIds: string[];
+  /**
+   * Cycle-count adjustments the run approved, for the year-end reconciliation of
+   * the GL against the inventory ledger. Persisted for the reason workorder kinds
+   * are: a resumed run reconciles the whole year, not just its own process's days.
+   * Optional so a journal written before this field still loads.
+   */
+  cycleCountAdjustmentIds?: string[];
   /** Claims still held when the journal was last written, for reporting a crash. */
   openClaims: Array<{ positionId: string; technicianId: string; workorderId?: string }>;
 }
@@ -222,6 +229,18 @@ export class AcceleratedJournal {
     if (!this.state.invoiceIds.includes(invoiceId)) {
       this.state.invoiceIds.push(invoiceId);
     }
+  }
+
+  recordCycleCountAdjustment(adjustmentId: string): void {
+    const ids = (this.state.cycleCountAdjustmentIds ??= []);
+    if (!ids.includes(adjustmentId)) {
+      ids.push(adjustmentId);
+    }
+  }
+
+  /** Every cycle-count adjustment the year approved, across every process that worked it. */
+  get cycleCountAdjustmentIds(): readonly string[] {
+    return this.state.cycleCountAdjustmentIds ?? [];
   }
 
   recordOpenClaims(claims: Array<{ positionId: string; technicianId: string; workorderId?: string }>): void {
