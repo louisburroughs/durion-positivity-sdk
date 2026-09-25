@@ -1496,9 +1496,9 @@ an id the suite holds is `listAccountingEvents({ eventType, domainKeyId })` →
 `journalEntryId` → `getJournalEntry`, polled through `waitFor`; a deadline passed
 fails the test, so an absent consumer or producer cannot pass. Costed SKUs are
 given a unit cost by a zero-on-hand revaluation (`costSku`) before their stock is
-seeded — goods receipts post without a document unit cost, so a receipt does not
-cost a SKU under AVERAGE — and every costed case first checks the ledger row
-carries that cost. The uncosted cases reuse SKUs nothing costed. Gains credit
+seeded by bulk ingest — cheaper than a priced goods receipt, which also costs a
+SKU since durion-positivity-backend#2203 — and every costed case first checks the
+ledger row carries that cost. The uncosted cases reuse SKUs nothing costed. Gains credit
 `ADJUSTMENT_GAIN`, seeded to 5100 by owner decision D2.
 
 - [ ] **E19 — Costed count loss.** `PROCESSED` with a journal entry of two lines,

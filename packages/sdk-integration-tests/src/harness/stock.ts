@@ -87,13 +87,13 @@ export async function seedOnHand(
  * Gives a SKU a unit cost before any stock of it moves, so every posting after
  * this one carries that cost into its fact.
  *
- * Why a revaluation and not a priced receipt: pos-inventory's goods receipts post
- * their ledger rows without a document unit cost, so under AVERAGE a received SKU
- * enters at the running average — which for a SKU nobody has costed is none — and
- * stays uncosted. Restating the cost is the one API route that sets it. Done at
- * zero on hand, the restatement moves no value and posts nothing of its own; the
- * stock seeded after it enters at this cost, and so does every variance, adjustment
- * and scrap that follows. A SKU that skips this call is uncosted on purpose.
+ * A priced goods receipt costs a SKU too, since durion-positivity-backend#2203
+ * stamped the document unit cost on GOODS_RECEIPT rows, but it drags in a vendor,
+ * an approved purchase order and the order's replication into pos-inventory. A
+ * revaluation at zero on hand needs none of that, moves no value and posts nothing
+ * of its own; the stock seeded after it by bulk ingest — which carries no cost —
+ * enters at this cost, and so does every variance, adjustment and scrap that
+ * follows. A SKU that skips this call and is never received is uncosted on purpose.
  *
  * Returns the cost the engine now holds, as the revaluation reports it.
  */
