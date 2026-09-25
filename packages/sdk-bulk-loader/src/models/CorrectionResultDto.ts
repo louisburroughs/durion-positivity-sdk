@@ -26,59 +26,11 @@ export interface CorrectionResultDto {
      */
     auditRecordId: string;
     /**
-     * Serialized corrected values submitted for the row, if any
-     * @type {string}
-     * @memberof CorrectionResultDto
-     */
-    correctedValues?: string;
-    /**
-     * Timestamp when the audit record was created (ISO 8601)
-     * @type {Date}
-     * @memberof CorrectionResultDto
-     */
-    createdAt?: Date;
-    /**
-     * Identifier of the entity created or updated from the row, if any
-     * @type {string}
-     * @memberof CorrectionResultDto
-     */
-    entityId?: string;
-    /**
-     * Type of the target entity for the processed row
-     * @type {string}
-     * @memberof CorrectionResultDto
-     */
-    entityType?: string;
-    /**
-     * Serialized original values from the source row
-     * @type {string}
-     * @memberof CorrectionResultDto
-     */
-    originalValues?: string;
-    /**
-     * Machine-readable reason codes describing why the row needs review
-     * @type {string}
-     * @memberof CorrectionResultDto
-     */
-    reasonCodes?: string;
-    /**
      * Reason for rejection if status is REJECTED
      * @type {string}
      * @memberof CorrectionResultDto
      */
     rejectionReason?: string;
-    /**
-     * Review status of the audit record
-     * @type {string}
-     * @memberof CorrectionResultDto
-     */
-    reviewStatus?: CorrectionResultDtoReviewStatusEnum;
-    /**
-     * One-based row number within the source file
-     * @type {number}
-     * @memberof CorrectionResultDto
-     */
-    rowNumber?: number;
     /**
      * Whether the correction was accepted or rejected
      * @type {string}
@@ -87,16 +39,6 @@ export interface CorrectionResultDto {
     status: CorrectionResultDtoStatusEnum;
 }
 
-/**
-* @export
-* @enum {string}
-*/
-export enum CorrectionResultDtoReviewStatusEnum {
-    Pending = 'PENDING',
-    Approved = 'APPROVED',
-    Rejected = 'REJECTED',
-    Corrected = 'CORRECTED'
-}
 /**
 * @export
 * @enum {string}
@@ -127,15 +69,7 @@ export function CorrectionResultDtoFromJSONTyped(json: any, ignoreDiscriminator:
     return {
         
         'auditRecordId': json['auditRecordId'],
-        'correctedValues': json['correctedValues'] == null ? undefined : json['correctedValues'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'entityId': json['entityId'] == null ? undefined : json['entityId'],
-        'entityType': json['entityType'] == null ? undefined : json['entityType'],
-        'originalValues': json['originalValues'] == null ? undefined : json['originalValues'],
-        'reasonCodes': json['reasonCodes'] == null ? undefined : json['reasonCodes'],
         'rejectionReason': json['rejectionReason'] == null ? undefined : json['rejectionReason'],
-        'reviewStatus': json['reviewStatus'] == null ? undefined : json['reviewStatus'],
-        'rowNumber': json['rowNumber'] == null ? undefined : json['rowNumber'],
         'status': json['status'],
     };
 }
@@ -147,15 +81,7 @@ export function CorrectionResultDtoToJSON(value?: CorrectionResultDto | null): a
     return {
         
         'auditRecordId': value['auditRecordId'],
-        'correctedValues': value['correctedValues'],
-        'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt'] as any).toISOString()),
-        'entityId': value['entityId'],
-        'entityType': value['entityType'],
-        'originalValues': value['originalValues'],
-        'reasonCodes': value['reasonCodes'],
         'rejectionReason': value['rejectionReason'],
-        'reviewStatus': value['reviewStatus'],
-        'rowNumber': value['rowNumber'],
         'status': value['status'],
     };
 }
