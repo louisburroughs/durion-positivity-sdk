@@ -137,6 +137,7 @@ export class AcceleratedJournal {
         parsed.days.length > 0 ||
         (parsed.workorderIds?.length ?? 0) > 0 ||
         (parsed.invoiceIds?.length ?? 0) > 0 ||
+        (parsed.cycleCountAdjustmentIds?.length ?? 0) > 0 ||
         (parsed.openClaims?.length ?? 0) > 0;
 
       parsed.updatedAt = now;

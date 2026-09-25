@@ -59,6 +59,18 @@ describe('AcceleratedJournal', () => {
     expect(journal.cycleCountAdjustmentIds).toEqual(['adj-1', 'adj-2']);
   });
 
+  it('resumes a journal whose only record is an adjustment approved before the first day closed', () => {
+    const path = freshPath();
+    const first = AcceleratedJournal.open(path, identity).journal;
+    first.recordCycleCountAdjustment('adj-1');
+    first.flush();
+
+    const { journal, resumed } = AcceleratedJournal.open(path, { ...identity, runId: 'accel-2' });
+
+    expect(resumed).toBe(true);
+    expect(journal.cycleCountAdjustmentIds).toEqual(['adj-1']);
+  });
+
   it('loads a journal written before cycle-count adjustments were recorded', () => {
     const path = freshPath();
     const first = AcceleratedJournal.open(path, identity).journal;

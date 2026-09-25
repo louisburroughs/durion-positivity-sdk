@@ -144,12 +144,26 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
   const feasibleJobsPerDay = Math.max(1, accelContext.feasibility.jobsPerDay);
   let jobSequence = 0;
 
+  // Each approved count adjustment is journalled the moment it is approved, not with
+  // the day: an approval commits on the backend at once, and a run interrupted
+  // before the day's flush would otherwise lose it from the year-end reconciliation.
+  const maintenancePort = createMaintenancePort(as.parts, as.manager, ctx);
+  const maintenance: typeof maintenancePort = {
+    ...maintenancePort,
+    cycleCount: (at, onApproved) =>
+      maintenancePort.cycleCount(at, (adjustmentId) => {
+        journal.recordCycleCountAdjustment(adjustmentId);
+        journal.flush();
+        onApproved?.(adjustmentId);
+      }),
+  };
+
   const runner = new AcceleratedDayRunner({
     calendar,
     ledger,
     discovery: createDiscoveryPort(as.admin, as.manager),
     shift: createShiftPort(as.admin, as.manager, ctx.refs),
-    maintenance: createMaintenancePort(as.parts, as.manager, ctx),
+    maintenance,
     appointments,
     now: () => clock.now(),
     waitUntil: async (target, description) => {
@@ -343,9 +357,6 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     }
     for (const invoiceId of report.invoiceIds) {
       journal.recordInvoice(invoiceId);
-    }
-    for (const adjustmentId of report.cycleCountAdjustmentIds) {
-      journal.recordCycleCountAdjustment(adjustmentId);
     }
     journal.recordOpenClaims([
       ...stillStuck,

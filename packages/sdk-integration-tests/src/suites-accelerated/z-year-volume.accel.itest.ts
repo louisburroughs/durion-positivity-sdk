@@ -237,14 +237,15 @@ describe('The accelerated year', () => {
     let glValue = 0;
     let costed = 0;
     let skipped = 0;
-    let unposted = 0;
     const mismatches: string[] = [];
 
     for (const adjustmentId of ids) {
       const adjustment = await admin.inventory.cycleCountAdjustmentsApi.getCycleCountAdjustment({ adjustmentId });
       if (!adjustment.ledgerEntryId) {
-        // Approved with nothing to post — no ledger row, so no fact to reconcile.
-        unposted += 1;
+        // The count port raises task-less adjustments with a non-zero variance, so
+        // there is no recompute-to-zero path: an approval with no ledger row is a
+        // posting that failed, and a fact that was never produced.
+        mismatches.push(`${adjustmentId}: approved as ${adjustment.status} with no ledger entry`);
         continue;
       }
       const entry = await admin.inventory.inventoryLedgerApi.getInventoryLedgerEntry({
@@ -276,8 +277,8 @@ describe('The accelerated year', () => {
     }
 
     console.log(
-      `[Z8c] ${ids.length} count adjustment(s): ${costed} costed, ${skipped} skipped as uncosted, ` +
-        `${unposted} with nothing posted; inventory ledger ${inventoryValue.toFixed(2)} vs GL 1300 ${glValue.toFixed(2)}`,
+      `[Z8c] ${ids.length} count adjustment(s): ${costed} costed, ${skipped} skipped as uncosted; ` +
+        `inventory ledger ${inventoryValue.toFixed(2)} vs GL 1300 ${glValue.toFixed(2)}`,
     );
     for (const mismatch of mismatches.slice(0, 10)) {
       console.log(`[Z8c] ${mismatch}`);
