@@ -27,7 +27,7 @@ import {
  */
 export interface BayPatchRequest {
     /**
-     * Type classification of the bay; must be a BayType value
+     * Type classification of the bay; must be a BayType value. Changing bayType without also sending serviceCapabilityCodes resets the bay's codes to the new type's specialty-map defaults (CAP-325 D14 rule 3) — for example, retyping to GENERAL_SERVICE clears any alignment/tire/inspection claim rather than keeping it. Send serviceCapabilityCodes in the same request to state the bay's codes explicitly instead.
      * @type {string}
      * @memberof BayPatchRequest
      */
