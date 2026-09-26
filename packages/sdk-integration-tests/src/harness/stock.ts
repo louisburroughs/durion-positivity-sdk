@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { createApprovedPo, createAsnForPo, readString, requireField, type BuilderContext } from './builders';
 import { call } from './http';
 import type { DomainClients } from './personas';
 
@@ -83,43 +84,69 @@ export async function seedOnHand(
   return { skus: [...options.skus], adjustmentRequestIds };
 }
 
+export interface PricedReceiptOptions {
+  /** Where the receipt lands: a location the receiving persona's scope names directly. */
+  locationId: string;
+  vendorId: string;
+  /** Catalog product ids, which are the stock references pos-inventory keys on. */
+  skus: string[];
+  /** Quantity per SKU. */
+  quantity: number;
+  /** Document unit cost per SKU, in minor units of the order currency (USD). */
+  unitCostMinor: number;
+}
+
+export interface PricedReceipt {
+  purchaseOrderId: string;
+  asnId: string;
+  receiptId: string;
+}
+
 /**
- * Gives a SKU a unit cost before any stock of it moves, so every posting after
- * this one carries that cost into its fact.
+ * Puts costed stock on hand the way a shop gets it: an approved purchase order,
+ * an ASN and a priced goods receipt.
  *
- * A priced goods receipt costs a SKU too, since durion-positivity-backend#2203
- * stamped the document unit cost on GOODS_RECEIPT rows, but it drags in a vendor,
- * an approved purchase order and the order's replication into pos-inventory. A
- * revaluation at zero on hand needs none of that, moves no value and posts nothing
- * of its own; the stock seeded after it by bulk ingest — which carries no cost —
- * enters at this cost, and so does every variance, adjustment and scrap that
- * follows. A SKU that skips this call and is never received is uncosted on purpose.
+ * Since durion-positivity-backend#2203 each GOODS_RECEIPT row carries the line's
+ * unit cost, so under AVERAGE a never-costed SKU takes the receipt cost as its
+ * average, and every variance, adjustment and scrap after it posts at that cost.
+ * Contrast `seedOnHand`, whose bulk-ingest stock carries no cost: a SKU only ever
+ * seeded that way is uncosted on purpose.
  *
- * Returns the cost the engine now holds, as the revaluation reports it.
+ * The purchase order is the parts clerk's and its approval the manager's, the
+ * seeded separation of duties `createApprovedPo` already follows.
  */
-export async function costSku(
-  approver: DomainClients,
-  sku: string,
-  unitCost: number,
-  reason: string,
-): Promise<number> {
-  const created = await call(`createRevaluation ${sku}`, () =>
-    approver.inventory.inventoryRevaluationApi.createRevaluation({
-      createRevaluationRequest: { stockItemId: sku, newUnitCost: unitCost, reason },
+export async function receivePriced(
+  parts: DomainClients,
+  manager: DomainClients,
+  ctx: BuilderContext,
+  options: PricedReceiptOptions,
+): Promise<PricedReceipt> {
+  const po = await createApprovedPo(
+    parts,
+    manager,
+    ctx,
+    options.vendorId,
+    options.skus.map((skuId) => ({ skuId, quantity: options.quantity, unitCostMinor: options.unitCostMinor })),
+  );
+  const asnId = await createAsnForPo(parts, ctx, options.vendorId, po);
+  const receipt = await call('createGoodsReceipt', () =>
+    parts.inventory.asnApi.createGoodsReceipt({
+      createGoodsReceiptRequest: {
+        poId: po.purchaseOrderId,
+        asnId,
+        locationId: options.locationId,
+        lines: po.lines.map((line) => ({
+          poLineId: line.poLineId,
+          sku: line.skuId,
+          quantityReceived: options.quantity,
+          unitCostMinor: line.unitCostMinor,
+        })),
+      },
     }),
   );
-  let settled = created;
-  // Value decides the path: a zero-value restatement should apply at once, but a
-  // configured threshold may still park it for a decision.
-  if (created.status === 'PENDING_APPROVAL') {
-    settled = await call(`approveRevaluation ${sku}`, () =>
-      approver.inventory.inventoryRevaluationApi.approveRevaluation({
-        revaluationId: created.revaluationId as string,
-      }),
-    );
-  }
-  if (settled.status !== 'AUTO_APPLIED' && settled.status !== 'APPLIED') {
-    throw new Error(`Revaluation of ${sku} ended ${settled.status}, so the SKU is not costed`);
-  }
-  return Number(settled.newUnitCost ?? unitCost);
+  return {
+    purchaseOrderId: po.purchaseOrderId,
+    asnId,
+    receiptId: requireField(readString(receipt, 'receiptId', 'id'), 'receiptId'),
+  };
 }

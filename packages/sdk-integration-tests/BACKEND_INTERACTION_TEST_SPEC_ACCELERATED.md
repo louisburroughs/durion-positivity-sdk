@@ -1495,10 +1495,12 @@ pos-accounting posts to the GL or records as skipped (durion
 an id the suite holds is `listAccountingEvents({ eventType, domainKeyId })` →
 `journalEntryId` → `getJournalEntry`, polled through `waitFor`; a deadline passed
 fails the test, so an absent consumer or producer cannot pass. Costed SKUs are
-given a unit cost by a zero-on-hand revaluation (`costSku`) before their stock is
-seeded by bulk ingest — cheaper than a priced goods receipt, which also costs a
-SKU since durion-positivity-backend#2203 — and every costed case first checks the
-ledger row carries that cost. The uncosted cases reuse SKUs that have never been costed. Gains credit
+catalog products received at the site on a priced goods receipt (`receivePriced`:
+purchase order, ASN, goods receipt at $12.50), which since
+durion-positivity-backend#2203 stamps the receipt cost on the ledger row; every
+costed case first checks the posted ledger row carries that cost. The uncosted
+cases reuse SKUs that were only ever seeded by bulk ingest, which carries no
+cost. Gains credit
 `ADJUSTMENT_GAIN`, seeded to 5100 by owner decision D2.
 
 - [ ] **E19 — Costed count loss.** `PROCESSED` with a journal entry of two lines,
