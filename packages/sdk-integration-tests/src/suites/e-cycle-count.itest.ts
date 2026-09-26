@@ -25,10 +25,12 @@ import {
 } from '../harness/accounting';
 import { createCatalogProduct, readNumber, readString, seedFromRunId } from '../harness/builders';
 import { call, expectHttpError, formatError, isHttpStatus } from '../harness/http';
+import { readOnHand } from '../harness/availability';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
 import { receivePriced, seedOnHand, type SeededStock } from '../harness/stock';
+import { waitFor } from '../harness/waitFor';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
 const itInRoleMode = ROLE_MODE ? it : it.skip;
@@ -790,6 +792,15 @@ describe('Suite E — cycle counting', () => {
         quantity: GL_SEEDED,
         unitCostMinor: GL_UNIT_COST_MINOR,
       });
+      // The receipt answering is not the stock being visible: availability is a
+      // projection, and suite D polls it after every receipt for the same reason.
+      // No test starts until all four SKUs show the full quantity at the site.
+      for (const sku of costed) {
+        await waitFor(async () => (await readOnHand(parts, sku, costedLocationId)) >= GL_SEEDED, {
+          timeoutMs: 90_000,
+          description: `${GL_SEEDED} of ${sku} on hand at ${costedLocationId} after the priced receipt`,
+        });
+      }
       // Uncosted on purpose: the conflict case asserts that nothing is produced,
       // which does not depend on a cost.
       await seedOnHand(parts, admin, { locationId: conflictBinId, quantity: GL_SEEDED, skus: [conflictSku] });
@@ -797,7 +808,7 @@ describe('Suite E — cycle counting', () => {
         `[E] received ${GL_SEEDED} of each of ${costed.join(', ')} at ${GL_UNIT_COST} on receipt ` +
           `${receipt.receiptId} (PO ${receipt.purchaseOrderId}) into ${costedLocationId}`,
       );
-    }, 300_000);
+    }, 600_000);
 
     /** Raises and approves a task-less count adjustment where the costed stock is, returning it settled. */
     const countAndApprove = async (sku: string, counted: number) => {
