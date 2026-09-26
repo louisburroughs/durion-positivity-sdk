@@ -51,18 +51,28 @@ describe('Suite A — appointments', () => {
    *
    * The backend judges a booking in the facility's own zone and refuses one
    * outside its hours as a HARD, non-overridable `OUTSIDE_OPERATING_HOURS`. The
-   * hours cannot be read back — `LocationResponseDTO` carries none — so they are
-   * taken from what the alpha seed publishes
-   * (`scripts/fixtures/seed/alpha/location/operating-hours.csv`): America/New_York,
-   * Monday to Friday from 07:00 or 07:30 to 18:00, a short Saturday, Sunday
-   * closed. 15:00–20:00 UTC is 11:00–16:00 in EDT and 10:00–15:00 in EST, so a
-   * booking starting at 15:00–17:00 and A3's moves of up to three hours later all
-   * end before 18:00 local in either. Weekdays only.
+   * hours cannot be read back — `LocationResponseDTO` carries none — and the site
+   * carries whichever calendar was published to it last:
+   *
+   *   - the alpha seed (`scripts/fixtures/seed/alpha/location/operating-hours.csv`):
+   *     America/New_York, Monday to Friday from 07:00 or 07:30 to 18:00 local,
+   *     i.e. from 11:30 (EDT) or 12:30 (EST) to 22:00 or 23:00 UTC;
+   *   - the accelerated suite's own (acceleratedGlobalSetup `publishCalendar`):
+   *     08:00–18:00 UTC on weekdays, with holiday closures.
+   *
+   * A weekday start at 13:00–15:00 UTC, and A3's moves up to a 17:00 start, end
+   * by 18:00 UTC and so sit inside both. A holiday cannot be predicted from here,
+   * so `bookAppointment` retries a date the backend reports closed.
    */
-  const FIRST_START_HOUR_UTC = 15;
-  const LAST_START_HOUR_UTC = 17;
+  const FIRST_START_HOUR_UTC = 13;
+  const LAST_START_HOUR_UTC = 15;
   /** The latest a moved booking may start: A3 stops rather than leave the open day. */
-  const LATEST_MOVED_START_HOUR_UTC = 20;
+  const LATEST_MOVED_START_HOUR_UTC = 17;
+  /**
+   * Refusals about the slot rather than the request: taken, or on a day or at an
+   * hour the site does not open. Each is answered by trying another slot.
+   */
+  const SLOT_REFUSALS = [SLOT_CONFLICT, 'FACILITY_CLOSED', 'OUTSIDE_OPERATING_HOURS'];
 
   /**
    * A one-hour-aligned window on a random weekday in the coming months, inside
@@ -124,12 +134,12 @@ describe('Suite A — appointments', () => {
       } catch (error) {
         // retryWhileReplicating wraps the failure, so the conflict is matched on
         // the message it carries rather than on the original error object.
-        const conflicted =
-          error instanceof Error ? error.message.includes(SLOT_CONFLICT) : await isSlotConflict(error);
-        if (!conflicted || attempt >= 10) {
+        const message = error instanceof Error ? error.message : await formatError(error);
+        const refusal = SLOT_REFUSALS.find((marker) => message.includes(marker));
+        if (!refusal || attempt >= 10) {
           throw error;
         }
-        console.log(`[A] slot taken on attempt ${attempt}; trying another`);
+        console.log(`[A] slot refused (${refusal}) on attempt ${attempt}; trying another`);
       }
     }
   };
