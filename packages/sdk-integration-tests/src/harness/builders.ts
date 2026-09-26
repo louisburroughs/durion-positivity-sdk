@@ -1,4 +1,5 @@
 import { AddEstimateItemRequestItemTypeEnum } from '@durion-sdk/workorder';
+import { CoverageRuleRequestRuleTypeEnum, MobileUnitRequestStatusEnum } from '@durion-sdk/location';
 import type { ReferenceCache, SeederRandom } from '@durion-sdk/seeder';
 import { call, formatError, isHttpStatus, readAllPages, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
@@ -505,10 +506,13 @@ export async function createActiveMobileUnit(
     const rules = await call(`listCoverageRules ${template.id}`, () =>
       api.listCoverageRules({ id: template.id }),
     );
+    // The API accepts only SERVICE_AREA and DISTANCE_TIER (durion-positivity-backend#2248); a rule
+    // stored under any other type before that check existed cannot be copied onto a new unit.
+    const ruleTypes: readonly string[] = Object.values(CoverageRuleRequestRuleTypeEnum);
     const coverageRules = rules
-      .filter((rule) => typeof rule.ruleType === 'string' && rule.ruleType.length > 0)
+      .filter((rule) => typeof rule.ruleType === 'string' && ruleTypes.includes(rule.ruleType))
       .map((rule) => ({
-        ruleType: rule.ruleType as string,
+        ruleType: rule.ruleType as string as CoverageRuleRequestRuleTypeEnum,
         serviceAreaId: rule.serviceAreaId,
         priority: rule.priority,
         maxDistance: rule.maxDistance,
@@ -524,7 +528,7 @@ export async function createActiveMobileUnit(
         mobileUnitRequest: {
           name,
           baseLocationId: siteId,
-          status: 'ACTIVE',
+          status: MobileUnitRequestStatusEnum.Active,
           travelBufferPolicyId: template.travelBufferPolicyId,
           serviceCapabilityCodes: template.serviceCapabilityCodes,
           coverageRules,
