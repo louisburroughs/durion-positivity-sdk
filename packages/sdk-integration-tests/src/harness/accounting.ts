@@ -77,10 +77,35 @@ export async function awaitAccountingEvent(
   );
 }
 
+/** GL account id → account code, stable for a run. */
+const accountCodes = new Map<string, string>();
+
+/**
+ * A journal entry with every line's `accountCode` filled in.
+ *
+ * The line response declares `accountCode`, but pos-accounting's
+ * `JournalEntryMapper.toLineResponse` sets only `glAccountId`, so the code
+ * arrives empty (durion-positivity-backend#2238). A line missing it is resolved through `getGLAccount` —
+ * the id is what the posting actually wrote, so the assertion loses nothing.
+ */
 export async function journalEntryOf(clients: DomainClients, journalEntryId: string): Promise<JournalEntryResponse> {
-  return call(`getJournalEntry ${journalEntryId}`, () =>
+  const entry = await call(`getJournalEntry ${journalEntryId}`, () =>
     clients.accounting.journalEntriesApi.getJournalEntry({ journalEntryId }),
   );
+  for (const line of entry.lines ?? []) {
+    if (line.accountCode || !line.glAccountId) continue;
+    const glAccountId = line.glAccountId;
+    let code = accountCodes.get(glAccountId);
+    if (code === undefined) {
+      const account = await call(`getGLAccount ${glAccountId}`, () =>
+        clients.accounting.glAccountsApi.getGLAccount({ glAccountId }),
+      );
+      code = account.accountCode ?? '?';
+      accountCodes.set(glAccountId, code);
+    }
+    line.accountCode = code;
+  }
+  return entry;
 }
 
 /** A journal entry reduced to what a two-line posting is asserted on. */
