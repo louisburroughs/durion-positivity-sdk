@@ -38,6 +38,12 @@ export interface BayBulkIngestRecord {
      */
     maxConcurrentVehicles: number;
     /**
+     * Heaviest GVWR class (1–8) the bay accepts; omit for unconstrained (CAP-325 D13).
+     * @type {number}
+     * @memberof BayBulkIngestRecord
+     */
+    maxDutyClass?: number;
+    /**
      * Name of the bay, unique within its location
      * @type {string}
      * @memberof BayBulkIngestRecord
@@ -74,6 +80,7 @@ export function BayBulkIngestRecordFromJSONTyped(json: any, ignoreDiscriminator:
         'bayType': json['bayType'],
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
         'maxConcurrentVehicles': json['maxConcurrentVehicles'],
+        'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'],
         'status': json['status'] == null ? undefined : json['status'],
     };
@@ -88,6 +95,7 @@ export function BayBulkIngestRecordToJSON(value?: BayBulkIngestRecord | null): a
         'bayType': value['bayType'],
         'locationId': value['locationId'],
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
+        'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
         'status': value['status'],
     };
