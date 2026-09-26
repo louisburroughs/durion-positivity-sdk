@@ -46,25 +46,44 @@ describe('Suite A — appointments', () => {
   const SLOT_CONFLICT = 'already booked';
 
   /**
-   * A window starting `offsetMinutes` after 09:00 UTC tomorrow.
+   * The UTC hours a booking may start in, chosen to sit inside every alpha site's
+   * opening hours whatever the season.
    *
-   * Callers pass an offset drawn at random rather than a fixed one: the backend
-   * refuses a double-booking, and every appointment any previous run booked is
-   * still on this environment, so no fixed schedule stays free. A wider range
-   * lowers the odds of a clash but cannot remove them - `bookAppointment` is
-   * what actually handles one, by trying somewhere else.
+   * The backend judges a booking in the facility's own zone and refuses one
+   * outside its hours as a HARD, non-overridable `OUTSIDE_OPERATING_HOURS`. The
+   * hours cannot be read back — `LocationResponseDTO` carries none — so they are
+   * taken from what the alpha seed publishes
+   * (`scripts/fixtures/seed/alpha/location/operating-hours.csv`): America/New_York,
+   * Monday to Friday from 07:00 or 07:30 to 18:00, a short Saturday, Sunday
+   * closed. 15:00–20:00 UTC is 11:00–16:00 in EDT and 10:00–15:00 in EST, so a
+   * booking starting at 15:00–17:00 and A3's moves of up to three hours later all
+   * end before 18:00 local in either. Weekdays only.
    */
-  const window = (offsetMinutes: number, durationMinutes: number) => {
+  const FIRST_START_HOUR_UTC = 15;
+  const LAST_START_HOUR_UTC = 17;
+  /** The latest a moved booking may start: A3 stops rather than leave the open day. */
+  const LATEST_MOVED_START_HOUR_UTC = 20;
+
+  /**
+   * A one-hour-aligned window on a random weekday in the coming months, inside
+   * the opening hours above.
+   *
+   * Random rather than fixed: the backend refuses a double-booking, and every
+   * appointment any previous run booked is still on this environment, so no
+   * fixed slot stays free. The spread lowers the odds of a clash but cannot
+   * remove them — `bookAppointment` is what handles one, by trying another.
+   */
+  const window = (durationMinutes: number) => {
     const start = new Date();
-    start.setUTCDate(start.getUTCDate() + 1);
-    start.setUTCHours(9, 0, 0, 0);
-    start.setUTCMinutes(start.getUTCMinutes() + offsetMinutes);
+    do {
+      start.setTime(Date.now());
+      start.setUTCDate(start.getUTCDate() + 1 + Math.floor(Math.random() * 139));
+    } while (start.getUTCDay() === 0 || start.getUTCDay() === 6);
+    const hours = LAST_START_HOUR_UTC - FIRST_START_HOUR_UTC + 1;
+    start.setUTCHours(FIRST_START_HOUR_UTC + Math.floor(Math.random() * hours), 0, 0, 0);
     const end = new Date(start.getTime() + durationMinutes * 60_000);
     return { startAt: start, endAt: end };
   };
-
-  /** A slot somewhere in the next few months, on a whole hour. */
-  const randomOffsetMinutes = () => Math.floor(Math.random() * 200_000 / 60) * 60;
 
   const isSlotConflict = async (error: unknown): Promise<boolean> =>
     isHttpStatus(error, 400) && (await formatError(error)).includes(SLOT_CONFLICT);
@@ -82,7 +101,7 @@ describe('Suite A — appointments', () => {
    */
   const bookAppointment = async (as: DomainClients) => {
     for (let attempt = 1; ; attempt += 1) {
-      const { startAt, endAt } = window(randomOffsetMinutes(), 60);
+      const { startAt, endAt } = window(60);
       try {
         return await retryWhileReplicating(
           () =>
@@ -183,6 +202,12 @@ describe('Suite A — appointments', () => {
       let rescheduled;
       for (let attempt = 1; ; attempt += 1) {
         const start = new Date(new Date(booked.startAt).getTime() + attempt * 60 * 60_000);
+        if (start.getUTCHours() > LATEST_MOVED_START_HOUR_UTC) {
+          throw new Error(
+            `rescheduleAppointment: every later hour up to ${LATEST_MOVED_START_HOUR_UTC}:00 UTC on ` +
+              `${start.toISOString().slice(0, 10)} is taken, and a later one would fall outside opening hours`,
+          );
+        }
         moved = { startAt: start, endAt: new Date(start.getTime() + 60 * 60_000) };
         try {
           rescheduled = await advisor.shopManager.appointmentsApi.rescheduleAppointment({
@@ -220,7 +245,7 @@ describe('Suite A — appointments', () => {
       );
       expect(cancelled.status.toUpperCase()).toContain('CANCEL');
 
-      const later = window(randomOffsetMinutes(), 60);
+      const later = window(60);
       const status = await expectHttpError(
         advisor.shopManager.appointmentsApi.rescheduleAppointment({
           appointmentId,
@@ -284,7 +309,7 @@ describe('Suite A — appointments', () => {
 
   describe('A6 — validation negative', () => {
     it('rejects a window that ends before it starts', async () => {
-      const { startAt, endAt } = window(randomOffsetMinutes(), 60);
+      const { startAt, endAt } = window(60);
       const status = await expectHttpError(
         advisor.shopManager.appointmentsApi.createAppointment({
           appointmentCreateRequest: {
