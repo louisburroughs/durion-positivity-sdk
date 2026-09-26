@@ -19,6 +19,7 @@ import type {
   CreateReservationRequest,
   PromoteAllocationRequest,
   ReservationResponse,
+  WorkorderReservationResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -29,6 +30,8 @@ import {
     PromoteAllocationRequestToJSON,
     ReservationResponseFromJSON,
     ReservationResponseToJSON,
+    WorkorderReservationResponseFromJSON,
+    WorkorderReservationResponseToJSON,
 } from '../models/index';
 
 export interface CancelReservationRequest {
@@ -41,6 +44,10 @@ export interface CancelReservationForSalesOrderLineRequest {
 
 export interface CreateOrUpdateReservationRequest {
     createReservationRequest: CreateReservationRequest;
+}
+
+export interface ListReservationsForWorkorderRequest {
+    workorderId: string;
 }
 
 export interface PromoteReservationAllocationRequest {
@@ -180,6 +187,53 @@ export class InventoryReservationsApi extends runtime.BaseAPI {
      */
     async createOrUpdateReservation(requestParameters: CreateOrUpdateReservationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReservationResponse> {
         const response = await this.createOrUpdateReservationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists the reservations for a workorder\'s part lines, each with its allocations — this read exists for shortage resolution: the shortage page holds only a workorderId (and the frontend\'s allocationLineId, which names an allocation id), but listShortageOptions and resolveShortage need an allocationId, and this is the operation that supplies it. Use this tool to find the allocationId for a workorder line before calling listShortageOptions or resolveShortage; do not use listBackorders, which lists already-opened backorders rather than the live reservation/allocation state. Preconditions: none; a workorder with no part lines, or one with lines but no reservations, is not an error. Required inputs: workorderId (UUID) query parameter; there is no request body. Emits an INVENTORY_RESERVATION_LIST event; no state changes — this is a read-only projection. Each reservation\'s allocations are narrowed to locations the caller\'s token scope covers (ADR-0061); an allocation outside that reach is dropped, but a reservation left with no in-reach allocation is still returned with its quantities. Returns 200 with an empty array when the workorder has no lines, has lines but no reservations, or is unknown — no replica row for the workorder is not an error here. 
+     * List reservations for a workorder
+     */
+    async listReservationsForWorkorderRaw(requestParameters: ListReservationsForWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<WorkorderReservationResponse>>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling listReservationsForWorkorder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['workorderId'] != null) {
+            queryParameters['workorderId'] = requestParameters['workorderId'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["inventory:adjustment:create"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/inventory/reservations`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(WorkorderReservationResponseFromJSON));
+    }
+
+    /**
+     * Lists the reservations for a workorder\'s part lines, each with its allocations — this read exists for shortage resolution: the shortage page holds only a workorderId (and the frontend\'s allocationLineId, which names an allocation id), but listShortageOptions and resolveShortage need an allocationId, and this is the operation that supplies it. Use this tool to find the allocationId for a workorder line before calling listShortageOptions or resolveShortage; do not use listBackorders, which lists already-opened backorders rather than the live reservation/allocation state. Preconditions: none; a workorder with no part lines, or one with lines but no reservations, is not an error. Required inputs: workorderId (UUID) query parameter; there is no request body. Emits an INVENTORY_RESERVATION_LIST event; no state changes — this is a read-only projection. Each reservation\'s allocations are narrowed to locations the caller\'s token scope covers (ADR-0061); an allocation outside that reach is dropped, but a reservation left with no in-reach allocation is still returned with its quantities. Returns 200 with an empty array when the workorder has no lines, has lines but no reservations, or is unknown — no replica row for the workorder is not an error here. 
+     * List reservations for a workorder
+     */
+    async listReservationsForWorkorder(requestParameters: ListReservationsForWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<WorkorderReservationResponse>> {
+        const response = await this.listReservationsForWorkorderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -559,7 +559,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the raw workorder record — status, customer, vehicle, estimate linkage, approval and completion fields — for one workorder id. Use this tool when the plain record is enough; use getWorkorderDetail instead for the role-aware view with capability flags, labor totals, and conditional financials. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no workorder exists for the id. 
+     * Returns the raw workorder record — status, customer, vehicle, estimate linkage, approval, completion fields, and the linked invoiceId — null until pos-invoice\'s invoice fact has been handled, since generateWorkorderInvoice only queues the request — for one workorder id. Use this tool when the plain record is enough; use getWorkorderDetail instead for the role-aware view with capability flags, labor totals, and conditional financials. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no workorder exists for the id. 
      * Get Workorder by Id
      */
     async getWorkorderRaw(requestParameters: GetWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WorkorderResponse>> {
@@ -593,7 +593,7 @@ export class WorkOrderAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the raw workorder record — status, customer, vehicle, estimate linkage, approval and completion fields — for one workorder id. Use this tool when the plain record is enough; use getWorkorderDetail instead for the role-aware view with capability flags, labor totals, and conditional financials. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no workorder exists for the id. 
+     * Returns the raw workorder record — status, customer, vehicle, estimate linkage, approval, completion fields, and the linked invoiceId — null until pos-invoice\'s invoice fact has been handled, since generateWorkorderInvoice only queues the request — for one workorder id. Use this tool when the plain record is enough; use getWorkorderDetail instead for the role-aware view with capability flags, labor totals, and conditional financials. Preconditions: the workorder must exist. Required inputs: workorderId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only projection. Returns 404 when no workorder exists for the id. 
      * Get Workorder by Id
      */
     async getWorkorder(requestParameters: GetWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WorkorderResponse> {

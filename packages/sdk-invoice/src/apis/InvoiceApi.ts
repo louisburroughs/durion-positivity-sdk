@@ -72,6 +72,10 @@ export interface GetInvoiceRequest {
     invoiceId: string;
 }
 
+export interface GetInvoiceByWorkorderRequest {
+    workorderId: string;
+}
+
 export interface RevertInvoiceRequest {
     invoiceId: string;
     revertRequest: RevertRequest;
@@ -363,6 +367,49 @@ export class InvoiceApi extends runtime.BaseAPI {
      */
     async getInvoice(requestParameters: GetInvoiceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
         const response = await this.getInvoiceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the full invoice detail — status, line items, adjustments, totals, tax breakdown, due date and the resolved workorder number — for the invoice linked to a workorder. Use this tool when only the workorderId is known and there is no other side-effect-free path to its invoiceId; use getInvoice instead once the invoiceId is already known. Preconditions: the workorder must have a linked invoice (generateWorkorderInvoice has applied). A caller whose invoice:invoice:view grant is location-scoped must have the invoice\'s location within reach (ADR-0061). Required inputs: workorderId (UUID) as a path parameter; there is no request body. Emits an INVOICE_GET_BY_WORKORDER audit event; no state changes — this is a read-only projection. Returns 404 when no invoice is linked to the supplied workorderId, and 403 LOCATION_SCOPE_DENIED when the invoice exists but its location is outside the caller\'s scope. 
+     * Get Invoice Details by Workorder
+     */
+    async getInvoiceByWorkorderRaw(requestParameters: GetInvoiceByWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<InvoiceDetailsResponse>> {
+        if (requestParameters['workorderId'] == null) {
+            throw new runtime.RequiredError(
+                'workorderId',
+                'Required parameter "workorderId" was null or undefined when calling getInvoiceByWorkorder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["invoice:invoice:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/invoices/by-workorder/{workorderId}`.replace(`{${"workorderId"}}`, encodeURIComponent(String(requestParameters['workorderId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => InvoiceDetailsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the full invoice detail — status, line items, adjustments, totals, tax breakdown, due date and the resolved workorder number — for the invoice linked to a workorder. Use this tool when only the workorderId is known and there is no other side-effect-free path to its invoiceId; use getInvoice instead once the invoiceId is already known. Preconditions: the workorder must have a linked invoice (generateWorkorderInvoice has applied). A caller whose invoice:invoice:view grant is location-scoped must have the invoice\'s location within reach (ADR-0061). Required inputs: workorderId (UUID) as a path parameter; there is no request body. Emits an INVOICE_GET_BY_WORKORDER audit event; no state changes — this is a read-only projection. Returns 404 when no invoice is linked to the supplied workorderId, and 403 LOCATION_SCOPE_DENIED when the invoice exists but its location is outside the caller\'s scope. 
+     * Get Invoice Details by Workorder
+     */
+    async getInvoiceByWorkorder(requestParameters: GetInvoiceByWorkorderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<InvoiceDetailsResponse> {
+        const response = await this.getInvoiceByWorkorderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
