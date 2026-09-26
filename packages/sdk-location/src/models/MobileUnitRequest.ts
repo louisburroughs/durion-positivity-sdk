@@ -27,13 +27,13 @@ import {
  */
 export interface MobileUnitRequest {
     /**
-     * Identifier of the base location the mobile unit operates from
+     * Identifier of the base location the mobile unit operates from; must name an existing location (422 LOCATION_NOT_FOUND otherwise)
      * @type {string}
      * @memberof MobileUnitRequest
      */
-    baseLocationId?: string;
+    baseLocationId: string;
     /**
-     * Coverage rules defining where the mobile unit can operate
+     * Coverage rules defining where the mobile unit can operate. Required, non-empty, for an ACTIVE unit.
      * @type {Array<CoverageRuleRequest>}
      * @memberof MobileUnitRequest
      */
@@ -57,13 +57,13 @@ export interface MobileUnitRequest {
      */
     serviceCapabilityCodes?: Array<string>;
     /**
-     * Operational status of the mobile unit
+     * Operational status of the mobile unit, matched case-insensitively; INACTIVE when omitted
      * @type {string}
      * @memberof MobileUnitRequest
      */
-    status?: string;
+    status?: MobileUnitRequestStatusEnum;
     /**
-     * Identifier of the travel buffer policy applied to the mobile unit
+     * Identifier of the travel buffer policy applied to the mobile unit; must name an existing policy (422 TRAVEL_BUFFER_POLICY_NOT_FOUND otherwise). Required for an ACTIVE unit.
      * @type {string}
      * @memberof MobileUnitRequest
      */
@@ -71,9 +71,20 @@ export interface MobileUnitRequest {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum MobileUnitRequestStatusEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE'
+}
+
+
+/**
  * Check if a given object implements the MobileUnitRequest interface.
  */
 export function instanceOfMobileUnitRequest(value: object): boolean {
+    if (!('baseLocationId' in value)) return false;
     if (!('name' in value)) return false;
     return true;
 }
@@ -88,7 +99,7 @@ export function MobileUnitRequestFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
-        'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
+        'baseLocationId': json['baseLocationId'],
         'coverageRules': json['coverageRules'] == null ? undefined : ((json['coverageRules'] as Array<any>).map(CoverageRuleRequestFromJSON)),
         'name': json['name'],
         'notes': json['notes'] == null ? undefined : json['notes'],

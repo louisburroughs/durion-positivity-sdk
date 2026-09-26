@@ -48,7 +48,7 @@ export interface CoverageRuleResponse {
      * @type {string}
      * @memberof CoverageRuleResponse
      */
-    ruleType?: string;
+    ruleType?: CoverageRuleResponseRuleTypeEnum;
     /**
      * Identifier of the service area this rule applies to
      * @type {string}
@@ -68,6 +68,16 @@ export interface CoverageRuleResponse {
      */
     validTo?: Date;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum CoverageRuleResponseRuleTypeEnum {
+    ServiceArea = 'SERVICE_AREA',
+    DistanceTier = 'DISTANCE_TIER'
+}
+
 
 /**
  * Check if a given object implements the CoverageRuleResponse interface.

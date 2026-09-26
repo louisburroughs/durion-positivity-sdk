@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CoverageRuleResponse } from './CoverageRuleResponse';
+import {
+    CoverageRuleResponseFromJSON,
+    CoverageRuleResponseFromJSONTyped,
+    CoverageRuleResponseToJSON,
+} from './CoverageRuleResponse';
+
 /**
  * Response payload describing a mobile unit
  * @export
@@ -25,6 +32,12 @@ export interface MobileUnitResponse {
      * @memberof MobileUnitResponse
      */
     baseLocationId?: string;
+    /**
+     * The unit's coverage rules ordered by ascending priority. Present only on listMobileUnits with include=coverageRules; absent otherwise (read them with listCoverageRules).
+     * @type {Array<CoverageRuleResponse>}
+     * @memberof MobileUnitResponse
+     */
+    coverageRules?: Array<CoverageRuleResponse>;
     /**
      * Timestamp when the mobile unit was created (ISO 8601)
      * @type {Date}
@@ -60,7 +73,7 @@ export interface MobileUnitResponse {
      * @type {string}
      * @memberof MobileUnitResponse
      */
-    status?: string;
+    status?: MobileUnitResponseStatusEnum;
     /**
      * Identifier of the travel buffer policy applied to the mobile unit
      * @type {string}
@@ -74,6 +87,16 @@ export interface MobileUnitResponse {
      */
     updatedAt?: Date;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum MobileUnitResponseStatusEnum {
+    Active = 'ACTIVE',
+    Inactive = 'INACTIVE'
+}
+
 
 /**
  * Check if a given object implements the MobileUnitResponse interface.
@@ -94,6 +117,7 @@ export function MobileUnitResponseFromJSONTyped(json: any, ignoreDiscriminator: 
     return {
         
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
+        'coverageRules': json['coverageRules'] == null ? undefined : ((json['coverageRules'] as Array<any>).map(CoverageRuleResponseFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'id': json['id'],
         'name': json['name'] == null ? undefined : json['name'],
@@ -112,6 +136,7 @@ export function MobileUnitResponseToJSON(value?: MobileUnitResponse | null): any
     return {
         
         'baseLocationId': value['baseLocationId'],
+        'coverageRules': value['coverageRules'] == null ? undefined : ((value['coverageRules'] as Array<any>).map(CoverageRuleResponseToJSON)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'id': value['id'],
         'name': value['name'],
