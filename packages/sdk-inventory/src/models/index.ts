@@ -153,3 +153,5 @@ export * from './ValuationReportResponse';
 export * from './ValuationRow';
 export * from './VarianceSummaryResponse';
 export * from './WarrantyHoldRef';
+export * from './WorkorderReservationAllocationResponse';
+export * from './WorkorderReservationResponse';

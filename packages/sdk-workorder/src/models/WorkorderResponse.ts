@@ -68,6 +68,12 @@ export interface WorkorderResponse {
      */
     id?: string;
     /**
+     * Invoice linked to this work order. generateWorkorderInvoice only queues the request; the id is recorded when pos-invoice's invoice fact is handled, so it is null until that asynchronous linkage has happened
+     * @type {string}
+     * @memberof WorkorderResponse
+     */
+    invoiceId?: string;
+    /**
      * Whether the completed workorder is currently reopened for controlled edits
      * @type {boolean}
      * @memberof WorkorderResponse
@@ -124,6 +130,7 @@ export function WorkorderResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         'customerId': json['customerId'] == null ? undefined : json['customerId'],
         'estimateId': json['estimateId'] == null ? undefined : json['estimateId'],
         'id': json['id'] == null ? undefined : json['id'],
+        'invoiceId': json['invoiceId'] == null ? undefined : json['invoiceId'],
         'isReopened': json['isReopened'] == null ? undefined : json['isReopened'],
         'reopenedAt': json['reopenedAt'] == null ? undefined : (new Date(json['reopenedAt'])),
         'shopId': json['shopId'] == null ? undefined : json['shopId'],
@@ -146,6 +153,7 @@ export function WorkorderResponseToJSON(value?: WorkorderResponse | null): any {
         'customerId': value['customerId'],
         'estimateId': value['estimateId'],
         'id': value['id'],
+        'invoiceId': value['invoiceId'],
         'isReopened': value['isReopened'],
         'reopenedAt': value['reopenedAt'] == null ? undefined : ((value['reopenedAt']).toISOString()),
         'shopId': value['shopId'],
