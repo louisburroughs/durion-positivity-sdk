@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { SEED_VENDOR_ID, SeederRandom } from '@durion-sdk/seeder';
 import {
   StorageLocationRequestStorageCategoryCodeEnum,
   StorageLocationRequestTypeEnum,
@@ -22,12 +23,14 @@ import {
   shapeOf,
   wallDate,
 } from '../harness/accounting';
-import { readNumber, readString } from '../harness/builders';
+import { createCatalogProduct, readNumber, readString, seedFromRunId } from '../harness/builders';
 import { call, expectHttpError, formatError, isHttpStatus } from '../harness/http';
+import { readOnHand } from '../harness/availability';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { Personas, type DomainClients } from '../harness/personas';
-import { costSku, seedOnHand, type SeededStock } from '../harness/stock';
+import { receivePriced, seedOnHand, type SeededStock } from '../harness/stock';
+import { waitFor } from '../harness/waitFor';
 
 const ROLE_MODE = ItestConfig.fromEnv().mode === 'role';
 const itInRoleMode = ROLE_MODE ? it : it.skip;
@@ -715,16 +718,23 @@ describe('Suite E — cycle counting', () => {
    * Every wait is a poll with a deadline, and a deadline passed is a failure — an
    * absent consumer must fail these tests, not skip them.
    *
-   * Costed and uncosted SKUs are both deliberate. The costed ones are given a cost
-   * by `costSku` before their stock is seeded; the uncosted cases reuse the SKUs the
-   * blocks above already moved, which nothing ever costed.
+   * Costed and uncosted SKUs are both deliberate. The costed ones are catalog
+   * products received on a priced goods receipt, which since
+   * durion-positivity-backend#2203 stamps the receipt cost on the ledger row; the
+   * uncosted cases reuse the SKUs the blocks above seeded by bulk ingest, which
+   * carries no cost, and never received.
    *
-   * Its own bins, for the reason the write-offs have one: a third SKU in the counted
-   * bin would break E3, and the conflict case needs a plan whose tasks are only its own.
+   * The costed stock is received at the site, not a bin: the goods-receipt scope
+   * check matches the location the caller's grant names, and a grant names the
+   * site. SKUs unique to the run keep that stock the run's own. The conflict case
+   * has its own bin, for the reason the write-offs do: its plan's tasks must be
+   * only its own.
    */
   describe('the accounting consequence', () => {
     const GL_SEEDED = 40;
-    const GL_UNIT_COST = 12.5;
+    /** $12.50, as the receipt prices it: USD has two minor digits. */
+    const GL_UNIT_COST_MINOR = 1_250;
+    const GL_UNIT_COST = GL_UNIT_COST_MINOR / 100;
     const LOSS = 4;
     const GAIN = 3;
     const MANUAL_LOSS = 5;
@@ -733,7 +743,8 @@ describe('Suite E — cycle counting', () => {
     const CONFLICT_COUNTED = 33;
     const WAIT_MS = Math.max(ItestConfig.fromEnv().waitTimeoutMs, 60_000);
 
-    let glBinId: string;
+    /** Where the costed stock is received and every costed posting lands: the site. */
+    let costedLocationId: string;
     let conflictBinId: string;
     let lossSku: string;
     let gainSku: string;
@@ -755,34 +766,57 @@ describe('Suite E — cycle counting', () => {
             }),
           )
         ).id;
-      glBinId = await bin('Itest GL');
       conflictBinId = await bin('Itest GL conflict');
+      costedLocationId = siteId;
 
-      lossSku = `ITEST-GL-${context.runId}-LOSS`;
-      gainSku = `ITEST-GL-${context.runId}-GAIN`;
-      manualSku = `ITEST-GL-${context.runId}-MANUAL`;
-      costedScrapSku = `ITEST-GL-${context.runId}-SCRAP`;
+      // Catalog products, not free-text references: a purchase order line names a
+      // product the order service knows. The product id is the stock reference.
+      const ctx = {
+        runId: context.runId,
+        random: new SeederRandom(seedFromRunId(`${context.runId}:e-cycle-count-gl`)),
+        refs: context.referenceCache,
+      };
+      const product = async (suffix: string) =>
+        (await call(`createCatalogProduct ${suffix}`, () => createCatalogProduct(admin, ctx, suffix))).productEntityId;
+      lossSku = await product('GL-LOSS');
+      gainSku = await product('GL-GAIN');
+      manualSku = await product('GL-MANUAL');
+      costedScrapSku = await product('GL-SCRAP');
       conflictSku = `ITEST-GL-${context.runId}-CONFLICT`;
 
       const costed = [lossSku, gainSku, manualSku, costedScrapSku];
+      const receipt = await receivePriced(parts, personas.as('manager'), ctx, {
+        locationId: costedLocationId,
+        vendorId: SEED_VENDOR_ID,
+        skus: costed,
+        quantity: GL_SEEDED,
+        unitCostMinor: GL_UNIT_COST_MINOR,
+      });
+      // The receipt answering is not the stock being visible: availability is a
+      // projection, and suite D polls it after every receipt for the same reason.
+      // No test starts until all four SKUs show the full quantity at the site.
       for (const sku of costed) {
-        const cost = await costSku(admin, sku, GL_UNIT_COST, `Itest cost fixture [${context.runId}]`);
-        expect(cost).toBeCloseTo(GL_UNIT_COST, 4);
+        await waitFor(async () => (await readOnHand(parts, sku, costedLocationId)) >= GL_SEEDED, {
+          timeoutMs: 90_000,
+          description: `${GL_SEEDED} of ${sku} on hand at ${costedLocationId} after the priced receipt`,
+        });
       }
-      await seedOnHand(parts, admin, { locationId: glBinId, quantity: GL_SEEDED, skus: costed });
       // Uncosted on purpose: the conflict case asserts that nothing is produced,
       // which does not depend on a cost.
       await seedOnHand(parts, admin, { locationId: conflictBinId, quantity: GL_SEEDED, skus: [conflictSku] });
-      console.log(`[E] costed ${costed.join(', ')} at ${GL_UNIT_COST} and seeded ${GL_SEEDED} of each into ${glBinId}`);
-    }, 300_000);
+      console.log(
+        `[E] received ${GL_SEEDED} of each of ${costed.join(', ')} at ${GL_UNIT_COST} on receipt ` +
+          `${receipt.receiptId} (PO ${receipt.purchaseOrderId}) into ${costedLocationId}`,
+      );
+    }, 600_000);
 
-    /** Raises and approves a task-less count adjustment against the GL bin, returning it settled. */
+    /** Raises and approves a task-less count adjustment where the costed stock is, returning it settled. */
     const countAndApprove = async (sku: string, counted: number) => {
       const created = await call('createCycleCountAdjustment', () =>
         parts.inventory.cycleCountAdjustmentsApi.createCycleCountAdjustment({
           createAdjustmentRequest: {
             stockItemId: sku,
-            locationId: glBinId,
+            locationId: costedLocationId,
             quantityOnHandBefore: GL_SEEDED,
             countedQuantity: counted,
             costAtTimeOfAdjustment: GL_UNIT_COST,
@@ -802,7 +836,7 @@ describe('Suite E — cycle counting', () => {
       );
     };
 
-    /** Raises and approves a manual adjustment request against the GL bin, returning its id. */
+    /** Raises and approves a manual adjustment request, returning its id. */
     const adjustAndApprove = async (sku: string, locationId: string, quantity: number): Promise<string> => {
       const request = await call('createAdjustmentRequest', () =>
         parts.inventory.stockMovementsApi.createAdjustmentRequest({
@@ -996,7 +1030,7 @@ describe('Suite E — cycle counting', () => {
     }, 300_000);
 
     it('E23 — a costed manual loss posts Dr shrinkage / Cr inventory', async () => {
-      const requestId = await adjustAndApprove(manualSku, glBinId, -MANUAL_LOSS);
+      const requestId = await adjustAndApprove(manualSku, costedLocationId, -MANUAL_LOSS);
       const event = await awaitAccountingEvent(admin, ADJUSTMENT_POSTED, requestId, WAIT_MS);
       const posted = await ledgerEntry(readString(event.payload, 'ledgerEntryId') as string);
       expect(posted.eventType).toBe('ADJUSTMENT_OUT');
@@ -1011,7 +1045,7 @@ describe('Suite E — cycle counting', () => {
     }, 180_000);
 
     it('E24 — a costed manual gain posts Dr inventory / Cr the adjustment-gain account', async () => {
-      const requestId = await adjustAndApprove(manualSku, glBinId, MANUAL_GAIN);
+      const requestId = await adjustAndApprove(manualSku, costedLocationId, MANUAL_GAIN);
       const event = await awaitAccountingEvent(admin, ADJUSTMENT_POSTED, requestId, WAIT_MS);
       const posted = await ledgerEntry(readString(event.payload, 'ledgerEntryId') as string);
       expect(posted.eventType).toBe('ADJUSTMENT_IN');
@@ -1036,7 +1070,7 @@ describe('Suite E — cycle counting', () => {
         parts.inventory.scrapsApi.createScrap({
           createScrapRequest: {
             stockItemId: costedScrapSku,
-            locationId: glBinId,
+            locationId: costedLocationId,
             quantity: SCRAPPED,
             reasonCode: CreateScrapRequestReasonCodeEnum.Damaged,
             negativeStockOverride: false,
