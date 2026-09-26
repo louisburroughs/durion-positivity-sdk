@@ -222,7 +222,8 @@ describe('The accelerated year', () => {
     // entries move 1300 Inventory by the same signed value the inventory ledger
     // gave the variances — gains up, losses down. Uncosted variances are skipped by
     // design and reported by count, because a year of nothing but skips means the
-    // shop never held a costed SKU, which the reconciliation cannot see past.
+    // shop never held a costed SKU, which the reconciliation cannot see past. The
+    // monthly restock is a priced goods receipt, so restocked SKUs are costed.
     const ids = result.journal.cycleCountAdjustmentIds;
     if (result.totals.cycleCounts > 0) {
       expect(ids.length).toBeGreaterThan(0);
