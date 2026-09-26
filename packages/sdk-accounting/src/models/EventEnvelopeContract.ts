@@ -19,6 +19,30 @@ import {
     ContractFieldFromJSONTyped,
     ContractFieldToJSON,
 } from './ContractField';
+import type { IdempotencyOutcomesContract } from './IdempotencyOutcomesContract';
+import {
+    IdempotencyOutcomesContractFromJSON,
+    IdempotencyOutcomesContractFromJSONTyped,
+    IdempotencyOutcomesContractToJSON,
+} from './IdempotencyOutcomesContract';
+import type { IdentifierStrategy } from './IdentifierStrategy';
+import {
+    IdentifierStrategyFromJSON,
+    IdentifierStrategyFromJSONTyped,
+    IdentifierStrategyToJSON,
+} from './IdentifierStrategy';
+import type { ProcessingStatusesContract } from './ProcessingStatusesContract';
+import {
+    ProcessingStatusesContractFromJSON,
+    ProcessingStatusesContractFromJSONTyped,
+    ProcessingStatusesContractToJSON,
+} from './ProcessingStatusesContract';
+import type { TraceabilityIdDescriptor } from './TraceabilityIdDescriptor';
+import {
+    TraceabilityIdDescriptorFromJSON,
+    TraceabilityIdDescriptorFromJSONTyped,
+    TraceabilityIdDescriptorToJSON,
+} from './TraceabilityIdDescriptor';
 
 /**
  * Describes the expected structure of accounting event envelopes
@@ -38,6 +62,30 @@ export interface EventEnvelopeContract {
      * @memberof EventEnvelopeContract
      */
     fields: Array<ContractField>;
+    /**
+     * 
+     * @type {IdempotencyOutcomesContract}
+     * @memberof EventEnvelopeContract
+     */
+    idempotencyOutcomes?: IdempotencyOutcomesContract;
+    /**
+     * 
+     * @type {IdentifierStrategy}
+     * @memberof EventEnvelopeContract
+     */
+    identifierStrategy?: IdentifierStrategy;
+    /**
+     * 
+     * @type {ProcessingStatusesContract}
+     * @memberof EventEnvelopeContract
+     */
+    processingStatuses?: ProcessingStatusesContract;
+    /**
+     * Identifiers usable to trace an event across the ingestion pipeline
+     * @type {Array<TraceabilityIdDescriptor>}
+     * @memberof EventEnvelopeContract
+     */
+    traceabilityIds?: Array<TraceabilityIdDescriptor>;
     /**
      * Contract schema version
      * @type {string}
@@ -67,6 +115,10 @@ export function EventEnvelopeContractFromJSONTyped(json: any, ignoreDiscriminato
         
         'examples': json['examples'] == null ? undefined : json['examples'],
         'fields': ((json['fields'] as Array<any>).map(ContractFieldFromJSON)),
+        'idempotencyOutcomes': json['idempotencyOutcomes'] == null ? undefined : IdempotencyOutcomesContractFromJSON(json['idempotencyOutcomes']),
+        'identifierStrategy': json['identifierStrategy'] == null ? undefined : IdentifierStrategyFromJSON(json['identifierStrategy']),
+        'processingStatuses': json['processingStatuses'] == null ? undefined : ProcessingStatusesContractFromJSON(json['processingStatuses']),
+        'traceabilityIds': json['traceabilityIds'] == null ? undefined : ((json['traceabilityIds'] as Array<any>).map(TraceabilityIdDescriptorFromJSON)),
         'version': json['version'],
     };
 }
@@ -79,6 +131,10 @@ export function EventEnvelopeContractToJSON(value?: EventEnvelopeContract | null
         
         'examples': value['examples'],
         'fields': ((value['fields'] as Array<any>).map(ContractFieldToJSON)),
+        'idempotencyOutcomes': IdempotencyOutcomesContractToJSON(value['idempotencyOutcomes']),
+        'identifierStrategy': IdentifierStrategyToJSON(value['identifierStrategy']),
+        'processingStatuses': ProcessingStatusesContractToJSON(value['processingStatuses']),
+        'traceabilityIds': value['traceabilityIds'] == null ? undefined : ((value['traceabilityIds'] as Array<any>).map(TraceabilityIdDescriptorToJSON)),
         'version': value['version'],
     };
 }
