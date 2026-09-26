@@ -847,7 +847,7 @@ fails the test, so an absent consumer or producer cannot pass. Costed SKUs are
 given a unit cost by a zero-on-hand revaluation (`costSku`) before their stock is
 seeded by bulk ingest — cheaper than a priced goods receipt, which also costs a
 SKU since durion-positivity-backend#2203 — and every costed case first checks the
-ledger row carries that cost. The uncosted cases reuse SKUs nothing costed. Gains credit
+ledger row carries that cost. The uncosted cases reuse SKUs that have never been costed. Gains credit
 `ADJUSTMENT_GAIN`, seeded to 5100 by owner decision D2.
 
 - [ ] **E19 — Costed count loss.** `PROCESSED` with a journal entry of two lines,
