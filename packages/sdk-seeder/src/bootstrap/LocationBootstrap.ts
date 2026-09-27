@@ -1,4 +1,4 @@
-import { createLocationClient, type BayRequest, type LocationResponseDTO } from '@durion-sdk/location';
+import { BayRequestStatusEnum, createLocationClient, type BayRequest, type LocationResponseDTO } from '@durion-sdk/location';
 import type { DurionSdkConfig } from '@durion-sdk/transport';
 
 interface LocationBootstrapResult {
@@ -120,7 +120,7 @@ export class LocationBootstrap {
           maxConcurrentVehicles: bayDefinition.maxConcurrentVehicles,
         },
         maxConcurrentVehicles: bayDefinition.maxConcurrentVehicles,
-        status: 'ACTIVE',
+        status: BayRequestStatusEnum.Active,
       };
 
       const createdBay = await bayApi.createBay({
