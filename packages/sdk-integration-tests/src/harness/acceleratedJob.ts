@@ -141,6 +141,8 @@ export class AcceleratedJob {
   readonly marks: JobMark[] = [];
   workorderId: string | undefined;
   invoiceId: string | undefined;
+  /** The draft's total as generate-invoice reported it; picks who finalizes. */
+  draftTotal: number | undefined;
   invoiceTotal: number | undefined;
   paid = false;
 
@@ -680,6 +682,7 @@ export class AcceleratedJob {
     const invoiceId = readString(generated, 'invoiceId');
     if (invoiceId) {
       this.invoiceId = invoiceId;
+      this.draftTotal = readNumber(generated, 'totalAmount', 'total');
       await this.mark('invoiced');
       return;
     }
@@ -693,16 +696,18 @@ export class AcceleratedJob {
   }
 
   /**
-   * Finalized by the advisor, as the non-accelerated suites do, unless the stored total
+   * Finalized by the advisor, as the non-accelerated suites do, unless the draft total
    * is above the advisor's cap — then by the manager, whose `invoice:finalize:override`
-   * needs no approval code. The total is read from the invoice, as the backend reads it,
-   * rather than predicted from the lines.
+   * needs no approval code.
+   *
+   * The total is the one generate-invoice returned with the id: the backend's own figure,
+   * and nothing re-prices the draft between the two steps. Not a `getInvoice` read, which
+   * needs `invoice:invoice:view` — a grant SERVICE_ADVISOR does not hold.
    */
   private async finalizeInvoice(): Promise<void> {
     const invoiceId = requireField(this.invoiceId, 'invoiceId');
-    const draft = await call('getInvoice', () => this.deps.as.advisor.invoice.invoiceApi.getInvoice({ invoiceId }));
-    const draftTotal = readNumber(draft, 'total', 'totalAmount') ?? 0;
-    const finalizer = draftTotal > SERVICE_ADVISOR_LIMIT ? this.deps.as.manager : this.deps.as.advisor;
+    const finalizer =
+      (this.draftTotal ?? 0) > SERVICE_ADVISOR_LIMIT ? this.deps.as.manager : this.deps.as.advisor;
     const finalized = await call('finalizeInvoice', () =>
       finalizer.invoice.invoiceApi.finalizeInvoice({ invoiceId, finalizationRequest: {} }),
     );

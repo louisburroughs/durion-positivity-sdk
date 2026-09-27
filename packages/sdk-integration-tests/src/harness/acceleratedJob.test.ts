@@ -199,7 +199,11 @@ describe('AcceleratedJob — a queued invoice', () => {
   it('waits a tick for the invoice id rather than failing on 202 PENDING', async () => {
     // Generation is queued: the first answer carries no id. A burst of back-to-back
     // retries finishes before the id is linked, which failed ~98% of a year's jobs here.
-    const { as, calls } = generating([{ status: 'PENDING' }, { status: 'PENDING' }, { invoiceId: 'inv-1' }]);
+    const { as, calls } = generating([
+      { status: 'PENDING' },
+      { status: 'PENDING' },
+      { invoiceId: 'inv-1', status: 'GENERATED', totalAmount: 612.5 },
+    ]);
     const job = new AcceleratedJob('job-5', { ...deps(claimAt('site-north')), as });
     atStep(job, 'invoice');
 
@@ -212,6 +216,7 @@ describe('AcceleratedJob — a queued invoice', () => {
 
     expect(job.outcome).toBe('in-progress');
     expect(job.invoiceId).toBe('inv-1');
+    expect(job.draftTotal).toBe(612.5);
     expect(job.nextStep).toBe('finalize');
     expect(calls).toHaveLength(3);
   });
@@ -237,7 +242,8 @@ describe('AcceleratedJob — who finalizes', () => {
       invoice: {
         invoiceApi: {
           async getInvoice() {
-            return { total };
+            // SERVICE_ADVISOR holds no invoice:invoice:view; a read here would 403.
+            throw new Error(`${name} read the invoice`);
           },
           async finalizeInvoice() {
             finalizedBy.push(name);
@@ -254,7 +260,8 @@ describe('AcceleratedJob — who finalizes', () => {
     const { as, finalizedBy } = finalizing(total);
     const job = new AcceleratedJob('job-7', { ...deps(claimAt('site-north')), as });
     atStep(job, 'finalize');
-    (job as unknown as { invoiceId: string }).invoiceId = 'inv-1';
+    job.invoiceId = 'inv-1';
+    job.draftTotal = total;
 
     await job.advance();
 
