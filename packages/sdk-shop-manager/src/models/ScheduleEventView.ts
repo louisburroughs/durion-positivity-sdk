@@ -27,6 +27,12 @@ import {
  */
 export interface ScheduleEventView {
     /**
+     * DECISION-SHOPMGMT-022: true when this appointment (event) is SCHEDULED, starts in the future, names a BAY or MOBILE_UNIT resource, and that resource is now missing, not ACTIVE, or (a BAY) no longer eligible for the appointment's services and vehicle. Derived at read time, never stored. The `affected` query parameter on this endpoint filters on this same flag.
+     * @type {boolean}
+     * @memberof ScheduleEventView
+     */
+    affected: boolean;
+    /**
      * 
      * @type {ConflictDetails}
      * @memberof ScheduleEventView
@@ -86,6 +92,7 @@ export interface ScheduleEventView {
  * Check if a given object implements the ScheduleEventView interface.
  */
 export function instanceOfScheduleEventView(value: object): boolean {
+    if (!('affected' in value)) return false;
     if (!('endTime' in value)) return false;
     if (!('eventId' in value)) return false;
     if (!('eventType' in value)) return false;
@@ -104,6 +111,7 @@ export function ScheduleEventViewFromJSONTyped(json: any, ignoreDiscriminator: b
     }
     return {
         
+        'affected': json['affected'],
         'conflictDetails': json['conflictDetails'] == null ? undefined : ConflictDetailsFromJSON(json['conflictDetails']),
         'endTime': (new Date(json['endTime'])),
         'eventId': json['eventId'],
@@ -122,6 +130,7 @@ export function ScheduleEventViewToJSON(value?: ScheduleEventView | null): any {
     }
     return {
         
+        'affected': value['affected'],
         'conflictDetails': ConflictDetailsToJSON(value['conflictDetails']),
         'endTime': ((value['endTime']).toISOString()),
         'eventId': value['eventId'],

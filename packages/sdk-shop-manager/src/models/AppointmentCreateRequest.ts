@@ -50,6 +50,12 @@ export interface AppointmentCreateRequest {
      */
     resourceId?: string;
     /**
+     * Which axis resourceId names. Leave both unset to book UNASSIGNED. When resourceId is set and this is omitted, the type is inferred from the replicas (an ext_bay row -> BAY, else an ext_mobile_unit row -> MOBILE_UNIT; neither is 422 SERVICE_POSITION_INVALID) and validated exactly as if stated — omitting it is not a way to skip DECISION-SHOPMGMT-021 eligibility. BAY runs the full eligibility rule (specialty, general work, duty class); MOBILE_UNIT runs existence, location and active checks only. resourceId is required for BAY/MOBILE_UNIT (400 otherwise), and UNASSIGNED with a resourceId set is refused as contradictory (400).
+     * @type {string}
+     * @memberof AppointmentCreateRequest
+     */
+    resourceType?: AppointmentCreateRequestResourceTypeEnum;
+    /**
      * Service request identifiers included in this appointment (at least one required)
      * @type {Array<string>}
      * @memberof AppointmentCreateRequest
@@ -81,6 +87,15 @@ export interface AppointmentCreateRequest {
     workorderLinkRef?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum AppointmentCreateRequestResourceTypeEnum {
+    Bay = 'BAY',
+    MobileUnit = 'MOBILE_UNIT',
+    Unassigned = 'UNASSIGNED'
+}
 /**
 * @export
 * @enum {string}
@@ -119,6 +134,7 @@ export function AppointmentCreateRequestFromJSONTyped(json: any, ignoreDiscrimin
         'endAt': (new Date(json['endAt'])),
         'locationId': json['locationId'],
         'resourceId': json['resourceId'] == null ? undefined : json['resourceId'],
+        'resourceType': json['resourceType'] == null ? undefined : json['resourceType'],
         'serviceRequestIds': json['serviceRequestIds'],
         'sourceId': json['sourceId'] == null ? undefined : json['sourceId'],
         'sourceType': json['sourceType'] == null ? undefined : json['sourceType'],
@@ -138,6 +154,7 @@ export function AppointmentCreateRequestToJSON(value?: AppointmentCreateRequest 
         'endAt': ((value['endAt']).toISOString()),
         'locationId': value['locationId'],
         'resourceId': value['resourceId'],
+        'resourceType': value['resourceType'],
         'serviceRequestIds': value['serviceRequestIds'],
         'sourceId': value['sourceId'],
         'sourceType': value['sourceType'],

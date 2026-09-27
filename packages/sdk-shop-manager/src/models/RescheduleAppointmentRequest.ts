@@ -20,11 +20,29 @@ import { mapValues } from '../runtime';
  */
 export interface RescheduleAppointmentRequest {
     /**
+     * Manager's reason for approving a reschedule beyond the free allowance (DECISION-SHOPMGMT-004). Required, and must be non-blank, only when this is the 3rd or later reschedule that is not shop-caused; ignored for the first two, or for one that is exempt (reason EQUIPMENT_ISSUE, or the appointment was already affected, DECISION-SHOPMGMT-022).
+     * @type {string}
+     * @memberof RescheduleAppointmentRequest
+     */
+    approvalReason?: string;
+    /**
      * New appointment end instant in UTC (ISO-8601); must be after newStartAt
      * @type {Date}
      * @memberof RescheduleAppointmentRequest
      */
     newEndAt: Date;
+    /**
+     * Optional new resource id to move the appointment onto as part of this reschedule (DECISION-SHOPMGMT-022 rule 3). When newResourceType is omitted it is inferred from whichever replica holds this id, exactly as appointment create infers it. Only the resource the appointment ends up on is validated and conflict-checked — its old resource, if different, is not re-validated by this call.
+     * @type {string}
+     * @memberof RescheduleAppointmentRequest
+     */
+    newResourceId?: string;
+    /**
+     * Optional new resource axis (BAY, MOBILE_UNIT or UNASSIGNED) to move the appointment onto as part of this reschedule (DECISION-SHOPMGMT-022 rule 3). Present alongside or in place of newResourceId; validated exactly as appointment create validates resourceType. Absent together with newResourceId keeps the appointment on its current resource, re-validated unchanged (today's behaviour).
+     * @type {string}
+     * @memberof RescheduleAppointmentRequest
+     */
+    newResourceType?: RescheduleAppointmentRequestNewResourceTypeEnum;
     /**
      * New appointment start instant in UTC (ISO-8601)
      * @type {Date}
@@ -51,6 +69,15 @@ export interface RescheduleAppointmentRequest {
     rescheduleReasonNotes?: string;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum RescheduleAppointmentRequestNewResourceTypeEnum {
+    Bay = 'BAY',
+    MobileUnit = 'MOBILE_UNIT',
+    Unassigned = 'UNASSIGNED'
+}
 /**
 * @export
 * @enum {string}
@@ -88,7 +115,10 @@ export function RescheduleAppointmentRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
+        'approvalReason': json['approvalReason'] == null ? undefined : json['approvalReason'],
         'newEndAt': (new Date(json['newEndAt'])),
+        'newResourceId': json['newResourceId'] == null ? undefined : json['newResourceId'],
+        'newResourceType': json['newResourceType'] == null ? undefined : json['newResourceType'],
         'newStartAt': (new Date(json['newStartAt'])),
         'notifyCustomer': json['notifyCustomer'] == null ? undefined : json['notifyCustomer'],
         'reason': json['reason'],
@@ -102,7 +132,10 @@ export function RescheduleAppointmentRequestToJSON(value?: RescheduleAppointment
     }
     return {
         
+        'approvalReason': value['approvalReason'],
         'newEndAt': ((value['newEndAt']).toISOString()),
+        'newResourceId': value['newResourceId'],
+        'newResourceType': value['newResourceType'],
         'newStartAt': ((value['newStartAt']).toISOString()),
         'notifyCustomer': value['notifyCustomer'],
         'reason': value['reason'],
