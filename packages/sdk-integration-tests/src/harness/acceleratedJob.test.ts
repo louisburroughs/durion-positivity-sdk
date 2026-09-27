@@ -1,5 +1,5 @@
 import { SeederRandom, type ReferenceCache } from '@durion-sdk/seeder';
-import { AcceleratedJob, type JobDeps } from './acceleratedJob';
+import { AcceleratedJob, INVOICE_PENDING_TICKS, SERVICE_ADVISOR_LIMIT, type JobDeps } from './acceleratedJob';
 import type { Claim } from './resourceLedger';
 
 /**
@@ -162,5 +162,120 @@ describe('AcceleratedJob — a failure that holds a technician', () => {
 
     expect(job.failure).toContain('the original failure');
     expect(job.failure).toContain('technician could not be released');
+  });
+});
+
+/** Positions a job at `from` with a completed workorder, the way the day runner leaves it. */
+const atStep = (job: AcceleratedJob, from: string): void => {
+  const internals = job as unknown as {
+    workorderId: string;
+    workorderClosed: boolean;
+    steps: Array<{ name: string }>;
+    cursor: number;
+  };
+  internals.workorderId = 'wo-1';
+  internals.workorderClosed = true;
+  internals.cursor = internals.steps.findIndex((step) => step.name === from);
+};
+
+describe('AcceleratedJob — a queued invoice', () => {
+  const generating = (answers: Array<Record<string, unknown>>) => {
+    const calls: string[] = [];
+    const as = {
+      advisor: {
+        workorder: {
+          workOrderAPIApi: {
+            async generateWorkorderInvoice(request: { workorderId: string }) {
+              calls.push(request.workorderId);
+              return answers.shift() ?? { status: 'PENDING' };
+            },
+          },
+        },
+      },
+    } as unknown as JobDeps['as'];
+    return { as, calls };
+  };
+
+  it('waits a tick for the invoice id rather than failing on 202 PENDING', async () => {
+    // Generation is queued: the first answer carries no id. A burst of back-to-back
+    // retries finishes before the id is linked, which failed ~98% of a year's jobs here.
+    const { as, calls } = generating([
+      { status: 'PENDING' },
+      { status: 'PENDING' },
+      { invoiceId: 'inv-1', status: 'GENERATED', totalAmount: 612.5 },
+    ]);
+    const job = new AcceleratedJob('job-5', { ...deps(claimAt('site-north')), as });
+    atStep(job, 'invoice');
+
+    expect(await job.advance()).toBe('in-progress');
+    expect(job.nextStep).toBe('invoice');
+    expect(calls).toHaveLength(1);
+
+    await job.advance();
+    await job.advance();
+
+    expect(job.outcome).toBe('in-progress');
+    expect(job.invoiceId).toBe('inv-1');
+    expect(job.draftTotal).toBe(612.5);
+    expect(job.nextStep).toBe('finalize');
+    expect(calls).toHaveLength(3);
+  });
+
+  it('fails once the id has not arrived within the bound', async () => {
+    const { as } = generating([]);
+    const job = new AcceleratedJob('job-6', { ...deps(claimAt('site-north')), as });
+    atStep(job, 'invoice');
+
+    for (let tick = 1; tick < INVOICE_PENDING_TICKS; tick += 1) {
+      expect(await job.advance()).toBe('in-progress');
+    }
+
+    expect(await job.advance()).toBe('failed');
+    expect(job.failure).toContain(`after ${INVOICE_PENDING_TICKS} tick(s)`);
+  });
+});
+
+describe('AcceleratedJob — who finalizes', () => {
+  const finalizing = (total: number) => {
+    const finalizedBy: string[] = [];
+    const persona = (name: string) => ({
+      invoice: {
+        invoiceApi: {
+          async getInvoice() {
+            // SERVICE_ADVISOR holds no invoice:invoice:view; a read here would 403.
+            throw new Error(`${name} read the invoice`);
+          },
+          async finalizeInvoice() {
+            finalizedBy.push(name);
+            return { total };
+          },
+        },
+      },
+    });
+    const as = { advisor: persona('advisor'), manager: persona('manager') } as unknown as JobDeps['as'];
+    return { as, finalizedBy };
+  };
+
+  const finalizeAt = async (total: number): Promise<string[]> => {
+    const { as, finalizedBy } = finalizing(total);
+    const job = new AcceleratedJob('job-7', { ...deps(claimAt('site-north')), as });
+    atStep(job, 'finalize');
+    job.invoiceId = 'inv-1';
+    job.draftTotal = total;
+
+    await job.advance();
+
+    expect(job.outcome).toBe('in-progress');
+    expect(job.invoiceTotal).toBe(total);
+    return finalizedBy;
+  };
+
+  it('is the advisor up to the advisor cap', async () => {
+    expect(await finalizeAt(SERVICE_ADVISOR_LIMIT)).toEqual(['advisor']);
+  });
+
+  it('is the manager above it, since an advisor needs an approval code there', async () => {
+    // The backend answers 403 MANAGER_APPROVAL_REQUIRED to an advisor above $500.
+    expect(await finalizeAt(SERVICE_ADVISOR_LIMIT + 0.01)).toEqual(['manager']);
   });
 });

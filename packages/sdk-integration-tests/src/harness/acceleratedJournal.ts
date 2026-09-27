@@ -26,6 +26,12 @@ export interface JournalDay {
    */
   skipped?: 'closed' | 'sampled-out' | 'window-missed';
   workordersCompleted: number;
+  /**
+   * Jobs that failed a step. Optional so a journal written before it was recorded still
+   * loads; without it a run that fails most of its jobs reads as a quiet, thin year until
+   * the suite ends and its buffered console is printed.
+   */
+  workordersFailed?: number;
   invoicesFinalized: number;
   invoicesPaid: number;
   estimatesDeclined: number;
