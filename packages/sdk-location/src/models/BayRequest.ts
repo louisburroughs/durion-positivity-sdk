@@ -39,6 +39,18 @@ export interface BayRequest {
      */
     capacity: BayCapacityRequest;
     /**
+     * Sort key for bay lists and the dispatch board; bays without a value sort last, ties broken by name.
+     * @type {number}
+     * @memberof BayRequest
+     */
+    displayOrder?: number;
+    /**
+     * Advisory expected return-to-service time; not used by scheduling.
+     * @type {Date}
+     * @memberof BayRequest
+     */
+    expectedReturnAt?: Date;
+    /**
      * Number of vehicles the bay physically accommodates at once. A bay is a single bookable resource regardless of this value; register separate bays for independently bookable stalls.
      * @type {number}
      * @memberof BayRequest
@@ -57,18 +69,53 @@ export interface BayRequest {
      */
     name: string;
     /**
+     * Free-text detail for outOfServiceReason (max 255 characters); required when outOfServiceReason is OTHER, optional otherwise.
+     * @type {string}
+     * @memberof BayRequest
+     */
+    outOfServiceNote?: string;
+    /**
+     * Reason the bay is OUT_OF_SERVICE (DECISION-LOCATION-026); required when status is OUT_OF_SERVICE, refused with 422 OUT_OF_SERVICE_REASON_REQUIRED otherwise.
+     * @type {string}
+     * @memberof BayRequest
+     */
+    outOfServiceReason?: BayRequestOutOfServiceReasonEnum;
+    /**
      * Catalog operation codes this bay type is the only one able to perform (CAP-325 D14). Omit or send empty for a general bay. Each value must be an active catalog operationCode (UPPER-DASH, ADR-0059 §3); unknown codes are rejected 422.
      * @type {Array<string>}
      * @memberof BayRequest
      */
     serviceCapabilityCodes?: Array<string>;
     /**
-     * Operational status of the bay
+     * Operational status of the bay: ACTIVE, OUT_OF_SERVICE or RETIRED; defaults to ACTIVE.
      * @type {string}
      * @memberof BayRequest
      */
-    status?: string;
+    status?: BayRequestStatusEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum BayRequestOutOfServiceReasonEnum {
+    EquipmentFailure = 'EQUIPMENT_FAILURE',
+    ScheduledMaintenance = 'SCHEDULED_MAINTENANCE',
+    Inspection = 'INSPECTION',
+    SafetyHold = 'SAFETY_HOLD',
+    FacilityIssue = 'FACILITY_ISSUE',
+    Other = 'OTHER'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum BayRequestStatusEnum {
+    Active = 'ACTIVE',
+    OutOfService = 'OUT_OF_SERVICE',
+    Retired = 'RETIRED'
+}
+
 
 /**
  * Check if a given object implements the BayRequest interface.
@@ -92,9 +139,13 @@ export function BayRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         
         'bayType': json['bayType'],
         'capacity': BayCapacityRequestFromJSON(json['capacity']),
+        'displayOrder': json['displayOrder'] == null ? undefined : json['displayOrder'],
+        'expectedReturnAt': json['expectedReturnAt'] == null ? undefined : (new Date(json['expectedReturnAt'])),
         'maxConcurrentVehicles': json['maxConcurrentVehicles'] == null ? undefined : json['maxConcurrentVehicles'],
         'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'],
+        'outOfServiceNote': json['outOfServiceNote'] == null ? undefined : json['outOfServiceNote'],
+        'outOfServiceReason': json['outOfServiceReason'] == null ? undefined : json['outOfServiceReason'],
         'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
     };
@@ -108,9 +159,13 @@ export function BayRequestToJSON(value?: BayRequest | null): any {
         
         'bayType': value['bayType'],
         'capacity': BayCapacityRequestToJSON(value['capacity']),
+        'displayOrder': value['displayOrder'],
+        'expectedReturnAt': value['expectedReturnAt'] == null ? undefined : ((value['expectedReturnAt']).toISOString()),
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
         'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
+        'outOfServiceNote': value['outOfServiceNote'],
+        'outOfServiceReason': value['outOfServiceReason'],
         'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
     };

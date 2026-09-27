@@ -26,6 +26,12 @@ export interface MobileUnitBulkIngestRecord {
      */
     baseLocationId?: string;
     /**
+     * Heaviest GVWR class (1-8) the unit accepts; omit for unconstrained (DECISION-LOCATION-029, the bay's axis per CAP-325 D13).
+     * @type {number}
+     * @memberof MobileUnitBulkIngestRecord
+     */
+    maxDutyClass?: number;
+    /**
      * Name of the unit, unique for its base location
      * @type {string}
      * @memberof MobileUnitBulkIngestRecord
@@ -38,7 +44,7 @@ export interface MobileUnitBulkIngestRecord {
      */
     notes?: string;
     /**
-     * Unit status; defaults to INACTIVE. A unit created ACTIVE must also carry a travel buffer policy, capabilities and coverage rules, none of which this record expresses — so an ACTIVE row is rejected by the service rather than created half-configured.
+     * Unit status; defaults to OUT_OF_SERVICE (reason OTHER). A unit created ACTIVE must also carry a travel buffer policy, capabilities and coverage rules, none of which this record expresses — so an ACTIVE row is rejected by the service rather than created half-configured.
      * @type {string}
      * @memberof MobileUnitBulkIngestRecord
      */
@@ -64,6 +70,7 @@ export function MobileUnitBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrim
     return {
         
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
+        'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'],
         'notes': json['notes'] == null ? undefined : json['notes'],
         'status': json['status'] == null ? undefined : json['status'],
@@ -77,6 +84,7 @@ export function MobileUnitBulkIngestRecordToJSON(value?: MobileUnitBulkIngestRec
     return {
         
         'baseLocationId': value['baseLocationId'],
+        'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
         'notes': value['notes'],
         'status': value['status'],

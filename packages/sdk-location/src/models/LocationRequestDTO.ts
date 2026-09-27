@@ -87,6 +87,12 @@ export interface LocationRequestDTO {
      */
     country?: string;
     /**
+     * Unit this location's forms show and accept for a distance value (DECISION-LOCATION-028); KM when omitted. Storage of a distance is always canonical kilometres regardless of this setting.
+     * @type {string}
+     * @memberof LocationRequestDTO
+     */
+    distanceUnit?: LocationRequestDTODistanceUnitEnum;
+    /**
      * Identifier of the associated geographical location
      * @type {string}
      * @memberof LocationRequestDTO
@@ -161,6 +167,16 @@ export interface LocationRequestDTO {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum LocationRequestDTODistanceUnitEnum {
+    Km = 'KM',
+    Mi = 'MI'
+}
+
+
+/**
  * Check if a given object implements the LocationRequestDTO interface.
  */
 export function instanceOfLocationRequestDTO(value: object): boolean {
@@ -188,6 +204,7 @@ export function LocationRequestDTOFromJSONTyped(json: any, ignoreDiscriminator: 
         'cleanupBufferMinutes': json['cleanupBufferMinutes'] == null ? undefined : json['cleanupBufferMinutes'],
         'code': json['code'],
         'country': json['country'] == null ? undefined : json['country'],
+        'distanceUnit': json['distanceUnit'] == null ? undefined : json['distanceUnit'],
         'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
         'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
         'mailingAddress': json['mailingAddress'] == null ? undefined : json['mailingAddress'],
@@ -217,6 +234,7 @@ export function LocationRequestDTOToJSON(value?: LocationRequestDTO | null): any
         'cleanupBufferMinutes': value['cleanupBufferMinutes'],
         'code': value['code'],
         'country': value['country'],
+        'distanceUnit': value['distanceUnit'],
         'geographicalLocationId': value['geographicalLocationId'],
         'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
         'mailingAddress': value['mailingAddress'],

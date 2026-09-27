@@ -51,7 +51,7 @@ export interface LocationResponseDTO {
      */
     activeBayCount: number;
     /**
-     * Number of mobile units based at the location with status ACTIVE; INACTIVE units are excluded and an inactive location always reports 0
+     * Number of mobile units based at the location with status ACTIVE; units in any other status are excluded and an inactive location always reports 0
      * @type {number}
      * @memberof LocationResponseDTO
      */
@@ -86,6 +86,12 @@ export interface LocationResponseDTO {
      * @memberof LocationResponseDTO
      */
     country?: string;
+    /**
+     * Unit this location's forms show and accept for a distance value (DECISION-LOCATION-028); every distance in a request or response for this location is expressed in this unit. Storage of a distance is always canonical kilometres regardless of this setting.
+     * @type {string}
+     * @memberof LocationResponseDTO
+     */
+    distanceUnit: LocationResponseDTODistanceUnitEnum;
     /**
      * Identifier of the associated geographical location
      * @type {string}
@@ -167,12 +173,23 @@ export interface LocationResponseDTO {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum LocationResponseDTODistanceUnitEnum {
+    Km = 'KM',
+    Mi = 'MI'
+}
+
+
+/**
  * Check if a given object implements the LocationResponseDTO interface.
  */
 export function instanceOfLocationResponseDTO(value: object): boolean {
     if (!('active' in value)) return false;
     if (!('activeBayCount' in value)) return false;
     if (!('activeMobileUnitCount' in value)) return false;
+    if (!('distanceUnit' in value)) return false;
     if (!('hasRepairCapability' in value)) return false;
     if (!('id' in value)) return false;
     if (!('name' in value)) return false;
@@ -197,6 +214,7 @@ export function LocationResponseDTOFromJSONTyped(json: any, ignoreDiscriminator:
         'city': json['city'] == null ? undefined : json['city'],
         'code': json['code'] == null ? undefined : json['code'],
         'country': json['country'] == null ? undefined : json['country'],
+        'distanceUnit': json['distanceUnit'],
         'geographicalLocationId': json['geographicalLocationId'] == null ? undefined : json['geographicalLocationId'],
         'hasRepairCapability': json['hasRepairCapability'],
         'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureResponseFromJSON)),
@@ -227,6 +245,7 @@ export function LocationResponseDTOToJSON(value?: LocationResponseDTO | null): a
         'city': value['city'],
         'code': value['code'],
         'country': value['country'],
+        'distanceUnit': value['distanceUnit'],
         'geographicalLocationId': value['geographicalLocationId'],
         'hasRepairCapability': value['hasRepairCapability'],
         'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureResponseToJSON)),

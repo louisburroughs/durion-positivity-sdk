@@ -56,6 +56,12 @@ export interface LocationBulkIngestRecord {
      */
     countryCode?: string;
     /**
+     * Unit this location's forms show and accept for a distance value (DECISION-LOCATION-028); KM when omitted.
+     * @type {string}
+     * @memberof LocationBulkIngestRecord
+     */
+    distanceUnit?: LocationBulkIngestRecordDistanceUnitEnum;
+    /**
      * Name of the location type to resolve during ingest
      * @type {string}
      * @memberof LocationBulkIngestRecord
@@ -94,6 +100,16 @@ export interface LocationBulkIngestRecord {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum LocationBulkIngestRecordDistanceUnitEnum {
+    Km = 'KM',
+    Mi = 'MI'
+}
+
+
+/**
  * Check if a given object implements the LocationBulkIngestRecord interface.
  */
 export function instanceOfLocationBulkIngestRecord(value: object): boolean {
@@ -118,6 +134,7 @@ export function LocationBulkIngestRecordFromJSONTyped(json: any, ignoreDiscrimin
         'city': json['city'] == null ? undefined : json['city'],
         'code': json['code'],
         'countryCode': json['countryCode'] == null ? undefined : json['countryCode'],
+        'distanceUnit': json['distanceUnit'] == null ? undefined : json['distanceUnit'],
         'locationTypeName': json['locationTypeName'] == null ? undefined : json['locationTypeName'],
         'name': json['name'],
         'phoneNumber': json['phoneNumber'] == null ? undefined : json['phoneNumber'],
@@ -139,6 +156,7 @@ export function LocationBulkIngestRecordToJSON(value?: LocationBulkIngestRecord 
         'city': value['city'],
         'code': value['code'],
         'countryCode': value['countryCode'],
+        'distanceUnit': value['distanceUnit'],
         'locationTypeName': value['locationTypeName'],
         'name': value['name'],
         'phoneNumber': value['phoneNumber'],

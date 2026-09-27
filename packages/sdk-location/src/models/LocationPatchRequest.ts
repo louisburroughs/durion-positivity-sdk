@@ -45,6 +45,12 @@ export interface LocationPatchRequest {
      */
     cleanupBufferMinutes?: number;
     /**
+     * Unit this location's forms show and accept for a distance value (DECISION-LOCATION-028); unchanged when omitted. Storage of a distance is always canonical kilometres regardless of this setting.
+     * @type {string}
+     * @memberof LocationPatchRequest
+     */
+    distanceUnit?: LocationPatchRequestDistanceUnitEnum;
+    /**
      * Holiday closures for the location
      * @type {Array<HolidayClosureRequest>}
      * @memberof LocationPatchRequest
@@ -77,6 +83,16 @@ export interface LocationPatchRequest {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum LocationPatchRequestDistanceUnitEnum {
+    Km = 'KM',
+    Mi = 'MI'
+}
+
+
+/**
  * Check if a given object implements the LocationPatchRequest interface.
  */
 export function instanceOfLocationPatchRequest(value: object): boolean {
@@ -95,6 +111,7 @@ export function LocationPatchRequestFromJSONTyped(json: any, ignoreDiscriminator
         
         'checkInBufferMinutes': json['checkInBufferMinutes'] == null ? undefined : json['checkInBufferMinutes'],
         'cleanupBufferMinutes': json['cleanupBufferMinutes'] == null ? undefined : json['cleanupBufferMinutes'],
+        'distanceUnit': json['distanceUnit'] == null ? undefined : json['distanceUnit'],
         'holidayClosures': json['holidayClosures'] == null ? undefined : ((json['holidayClosures'] as Array<any>).map(HolidayClosureRequestFromJSON)),
         'name': json['name'] == null ? undefined : json['name'],
         'operatingHours': json['operatingHours'] == null ? undefined : ((json['operatingHours'] as Array<any>).map(OperatingHoursRequestFromJSON)),
@@ -111,6 +128,7 @@ export function LocationPatchRequestToJSON(value?: LocationPatchRequest | null):
         
         'checkInBufferMinutes': value['checkInBufferMinutes'],
         'cleanupBufferMinutes': value['cleanupBufferMinutes'],
+        'distanceUnit': value['distanceUnit'],
         'holidayClosures': value['holidayClosures'] == null ? undefined : ((value['holidayClosures'] as Array<any>).map(HolidayClosureRequestToJSON)),
         'name': value['name'],
         'operatingHours': value['operatingHours'] == null ? undefined : ((value['operatingHours'] as Array<any>).map(OperatingHoursRequestToJSON)),

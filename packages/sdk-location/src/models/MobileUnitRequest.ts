@@ -39,6 +39,24 @@ export interface MobileUnitRequest {
      */
     coverageRules?: Array<CoverageRuleRequest>;
     /**
+     * Advisory expected return-to-service time; not used by scheduling.
+     * @type {Date}
+     * @memberof MobileUnitRequest
+     */
+    expectedReturnAt?: Date;
+    /**
+     * License plate number, paired with plateRegion for uniqueness; display only; not used by scheduling. Unique per tenant together with plateRegion when both are set; a patch can clear it with null.
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    licensePlate?: string;
+    /**
+     * Heaviest GVWR class (1-8) the unit accepts; omit for unconstrained (DECISION-LOCATION-029, the bay's axis per CAP-325 D13).
+     * @type {number}
+     * @memberof MobileUnitRequest
+     */
+    maxDutyClass?: number;
+    /**
      * Display name of the mobile unit
      * @type {string}
      * @memberof MobileUnitRequest
@@ -51,13 +69,31 @@ export interface MobileUnitRequest {
      */
     notes?: string;
     /**
+     * Free-text detail for outOfServiceReason (max 255 characters); required when outOfServiceReason is OTHER, optional otherwise.
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    outOfServiceNote?: string;
+    /**
+     * Reason the unit is OUT_OF_SERVICE (DECISION-LOCATION-026); required when status is OUT_OF_SERVICE, refused with 422 OUT_OF_SERVICE_REASON_REQUIRED otherwise. Defaults to OTHER when status is omitted entirely.
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    outOfServiceReason?: MobileUnitRequestOutOfServiceReasonEnum;
+    /**
+     * ISO 3166-2 region code for licensePlate (for example US-NC), normalized to upper case; rejected with 400 unless it matches that format. Display only; not used by scheduling. Unique per tenant together with licensePlate when both are set; a patch can clear it with null.
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    plateRegion?: string;
+    /**
      * Catalog operation codes this unit can perform off-site (CAP-325 D14): each must be an active catalog operationCode (UPPER-DASH, ADR-0059 §3), matched case-insensitively; unknown or retired codes are rejected 422. Required, non-empty, for an ACTIVE unit.
      * @type {Array<string>}
      * @memberof MobileUnitRequest
      */
     serviceCapabilityCodes?: Array<string>;
     /**
-     * Operational status of the mobile unit, matched case-insensitively; INACTIVE when omitted
+     * Operational status of the mobile unit, matched case-insensitively: ACTIVE, OUT_OF_SERVICE or RETIRED. OUT_OF_SERVICE when omitted, with outOfServiceReason OTHER, for a unit staged before its policy, capabilities and coverage are configured.
      * @type {string}
      * @memberof MobileUnitRequest
      */
@@ -68,15 +104,40 @@ export interface MobileUnitRequest {
      * @memberof MobileUnitRequest
      */
     travelBufferPolicyId?: string;
+    /**
+     * Fleet/unit number painted on the vehicle; display only; not used by scheduling. Unique per tenant when set; a patch can clear it with null.
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    unitNumber?: string;
+    /**
+     * 17-character vehicle identification number (ISO 3779), normalized to upper case; rejected with 400 unless it is exactly 17 characters and excludes I, O and Q. Display only; not used by scheduling. Unique per tenant when set; a patch can clear it with null.
+     * @type {string}
+     * @memberof MobileUnitRequest
+     */
+    vin?: string;
 }
 
 /**
 * @export
 * @enum {string}
 */
+export enum MobileUnitRequestOutOfServiceReasonEnum {
+    EquipmentFailure = 'EQUIPMENT_FAILURE',
+    ScheduledMaintenance = 'SCHEDULED_MAINTENANCE',
+    Inspection = 'INSPECTION',
+    SafetyHold = 'SAFETY_HOLD',
+    FacilityIssue = 'FACILITY_ISSUE',
+    Other = 'OTHER'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum MobileUnitRequestStatusEnum {
     Active = 'ACTIVE',
-    Inactive = 'INACTIVE'
+    OutOfService = 'OUT_OF_SERVICE',
+    Retired = 'RETIRED'
 }
 
 
@@ -101,11 +162,19 @@ export function MobileUnitRequestFromJSONTyped(json: any, ignoreDiscriminator: b
         
         'baseLocationId': json['baseLocationId'],
         'coverageRules': json['coverageRules'] == null ? undefined : ((json['coverageRules'] as Array<any>).map(CoverageRuleRequestFromJSON)),
+        'expectedReturnAt': json['expectedReturnAt'] == null ? undefined : (new Date(json['expectedReturnAt'])),
+        'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
+        'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'outOfServiceNote': json['outOfServiceNote'] == null ? undefined : json['outOfServiceNote'],
+        'outOfServiceReason': json['outOfServiceReason'] == null ? undefined : json['outOfServiceReason'],
+        'plateRegion': json['plateRegion'] == null ? undefined : json['plateRegion'],
         'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
         'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
+        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
+        'vin': json['vin'] == null ? undefined : json['vin'],
     };
 }
 
@@ -117,11 +186,19 @@ export function MobileUnitRequestToJSON(value?: MobileUnitRequest | null): any {
         
         'baseLocationId': value['baseLocationId'],
         'coverageRules': value['coverageRules'] == null ? undefined : ((value['coverageRules'] as Array<any>).map(CoverageRuleRequestToJSON)),
+        'expectedReturnAt': value['expectedReturnAt'] == null ? undefined : ((value['expectedReturnAt']).toISOString()),
+        'licensePlate': value['licensePlate'],
+        'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
         'notes': value['notes'],
+        'outOfServiceNote': value['outOfServiceNote'],
+        'outOfServiceReason': value['outOfServiceReason'],
+        'plateRegion': value['plateRegion'],
         'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
         'travelBufferPolicyId': value['travelBufferPolicyId'],
+        'unitNumber': value['unitNumber'],
+        'vin': value['vin'],
     };
 }
 

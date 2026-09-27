@@ -15,6 +15,7 @@ export * from './BulkIngestResult';
 export * from './Conflict';
 export * from './CoverageRuleRequest';
 export * from './CoverageRuleResponse';
+export * from './DistanceDto';
 export * from './EligibleMobileUnitResponse';
 export * from './FieldError';
 export * from './HolidayClosureRequest';

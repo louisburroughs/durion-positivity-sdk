@@ -15,9 +15,12 @@
 
 import * as runtime from '../runtime';
 import type {
+  ApiError,
   EligibleMobileUnitResponse,
 } from '../models/index';
 import {
+    ApiErrorFromJSON,
+    ApiErrorToJSON,
     EligibleMobileUnitResponseFromJSON,
     EligibleMobileUnitResponseToJSON,
 } from '../models/index';
@@ -26,6 +29,8 @@ export interface FindEligibleMobileUnitsRequest {
     postalCode: string;
     countryCode: string;
     at: Date;
+    baseLocationId: string;
+    operationCodes?: Array<string>;
 }
 
 /**
@@ -34,8 +39,8 @@ export interface FindEligibleMobileUnitsRequest {
 export class MobileUnitEligibilityControllerApi extends runtime.BaseAPI {
 
     /**
-     * Finds the ACTIVE mobile units whose coverage rules include a postal code on a given date, ordered by ascending rule priority. Use this tool when dispatching a mobile service request to a customer address; use listMobileUnits instead for plain enumeration without eligibility matching. Preconditions: coverage rules must already link units to service areas containing the postal code; units whose status is not ACTIVE are excluded. Required inputs: postalCode, countryCode and at (an ISO-8601 instant), all mandatory; the instant is reduced to a UTC calendar date for validFrom and validTo matching. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the eligible units, empty when nothing covers the address on that date. 
-     * Find Eligible Mobile Units for Address
+     * Finds the ACTIVE mobile units based at baseLocationId whose coverage rules include a postal code at a given instant, ordered by priority ascending and then by unit id, one deterministic ranking across that location\'s units (DECISION-LOCATION-027). Use this tool when dispatching a mobile service request to a customer address at a known location; use listMobileUnits instead for plain enumeration without eligibility matching. Preconditions: coverage rules must already link units to service areas containing the postal code; only rules on an active service area match, units whose status is not ACTIVE are excluded, and a unit only takes work from its own base location (DECISION-SHOPMGMT-023 rule 1). Required inputs: postalCode, countryCode, at (an ISO-8601 instant) and baseLocationId, all mandatory; validFrom/validTo are matched against at as UTC instants, validFrom inclusive and validTo exclusive. operationCodes is optional and, when sent, a unit must claim every code listed (units have no general-work default). No events are emitted and no state changes; this is a read-only projection. Returns 200 with the eligible units, empty when nothing covers the address on that instant, 400 VALIDATION_ERROR with fieldErrors naming baseLocationId when it is missing, and 403 LOCATION_SCOPE_DENIED when baseLocationId is outside a location-scoped caller\'s reach (ADR-0061, gated the same way as listMobileUnits\' baseLocationId filter). 
+     * Find Eligible Mobile Units for Address and Base Location
      */
     async findEligibleMobileUnitsRaw(requestParameters: FindEligibleMobileUnitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<EligibleMobileUnitResponse>>> {
         if (requestParameters['postalCode'] == null) {
@@ -59,6 +64,13 @@ export class MobileUnitEligibilityControllerApi extends runtime.BaseAPI {
             );
         }
 
+        if (requestParameters['baseLocationId'] == null) {
+            throw new runtime.RequiredError(
+                'baseLocationId',
+                'Required parameter "baseLocationId" was null or undefined when calling findEligibleMobileUnits().'
+            );
+        }
+
         const queryParameters: any = {};
 
         if (requestParameters['postalCode'] != null) {
@@ -71,6 +83,14 @@ export class MobileUnitEligibilityControllerApi extends runtime.BaseAPI {
 
         if (requestParameters['at'] != null) {
             queryParameters['at'] = (requestParameters['at'] as any).toISOString();
+        }
+
+        if (requestParameters['baseLocationId'] != null) {
+            queryParameters['baseLocationId'] = requestParameters['baseLocationId'];
+        }
+
+        if (requestParameters['operationCodes'] != null) {
+            queryParameters['operationCodes'] = requestParameters['operationCodes'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -94,8 +114,8 @@ export class MobileUnitEligibilityControllerApi extends runtime.BaseAPI {
     }
 
     /**
-     * Finds the ACTIVE mobile units whose coverage rules include a postal code on a given date, ordered by ascending rule priority. Use this tool when dispatching a mobile service request to a customer address; use listMobileUnits instead for plain enumeration without eligibility matching. Preconditions: coverage rules must already link units to service areas containing the postal code; units whose status is not ACTIVE are excluded. Required inputs: postalCode, countryCode and at (an ISO-8601 instant), all mandatory; the instant is reduced to a UTC calendar date for validFrom and validTo matching. No events are emitted and no state changes; this is a read-only projection. Returns 200 with the eligible units, empty when nothing covers the address on that date. 
-     * Find Eligible Mobile Units for Address
+     * Finds the ACTIVE mobile units based at baseLocationId whose coverage rules include a postal code at a given instant, ordered by priority ascending and then by unit id, one deterministic ranking across that location\'s units (DECISION-LOCATION-027). Use this tool when dispatching a mobile service request to a customer address at a known location; use listMobileUnits instead for plain enumeration without eligibility matching. Preconditions: coverage rules must already link units to service areas containing the postal code; only rules on an active service area match, units whose status is not ACTIVE are excluded, and a unit only takes work from its own base location (DECISION-SHOPMGMT-023 rule 1). Required inputs: postalCode, countryCode, at (an ISO-8601 instant) and baseLocationId, all mandatory; validFrom/validTo are matched against at as UTC instants, validFrom inclusive and validTo exclusive. operationCodes is optional and, when sent, a unit must claim every code listed (units have no general-work default). No events are emitted and no state changes; this is a read-only projection. Returns 200 with the eligible units, empty when nothing covers the address on that instant, 400 VALIDATION_ERROR with fieldErrors naming baseLocationId when it is missing, and 403 LOCATION_SCOPE_DENIED when baseLocationId is outside a location-scoped caller\'s reach (ADR-0061, gated the same way as listMobileUnits\' baseLocationId filter). 
+     * Find Eligible Mobile Units for Address and Base Location
      */
     async findEligibleMobileUnits(requestParameters: FindEligibleMobileUnitsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<EligibleMobileUnitResponse>> {
         const response = await this.findEligibleMobileUnitsRaw(requestParameters, initOverrides);

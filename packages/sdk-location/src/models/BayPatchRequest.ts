@@ -39,6 +39,18 @@ export interface BayPatchRequest {
      */
     capacity?: BayCapacityRequest;
     /**
+     * Sort key for bay lists and the dispatch board; null leaves the current value unchanged, the same as every other nullable field on this patch.
+     * @type {number}
+     * @memberof BayPatchRequest
+     */
+    displayOrder?: number;
+    /**
+     * Advisory expected return-to-service time; not used by scheduling. Null leaves the current value unchanged unless status is patched to ACTIVE, which always clears it.
+     * @type {Date}
+     * @memberof BayPatchRequest
+     */
+    expectedReturnAt?: Date;
+    /**
      * Number of vehicles the bay physically accommodates at once. A bay is a single bookable resource regardless of this value; register separate bays for independently bookable stalls.
      * @type {number}
      * @memberof BayPatchRequest
@@ -57,18 +69,53 @@ export interface BayPatchRequest {
      */
     name?: string;
     /**
+     * Free-text detail for outOfServiceReason (max 255 characters); required when the resulting outOfServiceReason is OTHER. Null leaves the current note unchanged unless status is patched to ACTIVE, which always clears it.
+     * @type {string}
+     * @memberof BayPatchRequest
+     */
+    outOfServiceNote?: string;
+    /**
+     * Reason the bay is OUT_OF_SERVICE (DECISION-LOCATION-026); required when the resulting status is OUT_OF_SERVICE, refused with 422 OUT_OF_SERVICE_REASON_REQUIRED otherwise. Null leaves the current reason unchanged unless status is patched to ACTIVE, which always clears it.
+     * @type {string}
+     * @memberof BayPatchRequest
+     */
+    outOfServiceReason?: BayPatchRequestOutOfServiceReasonEnum;
+    /**
      * Catalog operation codes this bay type is the only one able to perform (CAP-325 D14). Null leaves unchanged; an empty list clears to general. Each value must be an active catalog operationCode; unknown codes are rejected 422.
      * @type {Array<string>}
      * @memberof BayPatchRequest
      */
     serviceCapabilityCodes?: Array<string>;
     /**
-     * Operational status of the bay
+     * Operational status of the bay: ACTIVE, OUT_OF_SERVICE or RETIRED. Going OUT_OF_SERVICE requires outOfServiceReason in this same request or already on the bay; returning to ACTIVE clears outOfServiceReason, outOfServiceNote and expectedReturnAt. DELETE is the usual way to RETIRE a bay; RETIRED here is reversible the same as OUT_OF_SERVICE.
      * @type {string}
      * @memberof BayPatchRequest
      */
-    status?: string;
+    status?: BayPatchRequestStatusEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum BayPatchRequestOutOfServiceReasonEnum {
+    EquipmentFailure = 'EQUIPMENT_FAILURE',
+    ScheduledMaintenance = 'SCHEDULED_MAINTENANCE',
+    Inspection = 'INSPECTION',
+    SafetyHold = 'SAFETY_HOLD',
+    FacilityIssue = 'FACILITY_ISSUE',
+    Other = 'OTHER'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum BayPatchRequestStatusEnum {
+    Active = 'ACTIVE',
+    OutOfService = 'OUT_OF_SERVICE',
+    Retired = 'RETIRED'
+}
+
 
 /**
  * Check if a given object implements the BayPatchRequest interface.
@@ -89,9 +136,13 @@ export function BayPatchRequestFromJSONTyped(json: any, ignoreDiscriminator: boo
         
         'bayType': json['bayType'] == null ? undefined : json['bayType'],
         'capacity': json['capacity'] == null ? undefined : BayCapacityRequestFromJSON(json['capacity']),
+        'displayOrder': json['displayOrder'] == null ? undefined : json['displayOrder'],
+        'expectedReturnAt': json['expectedReturnAt'] == null ? undefined : (new Date(json['expectedReturnAt'])),
         'maxConcurrentVehicles': json['maxConcurrentVehicles'] == null ? undefined : json['maxConcurrentVehicles'],
         'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'] == null ? undefined : json['name'],
+        'outOfServiceNote': json['outOfServiceNote'] == null ? undefined : json['outOfServiceNote'],
+        'outOfServiceReason': json['outOfServiceReason'] == null ? undefined : json['outOfServiceReason'],
         'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
     };
@@ -105,9 +156,13 @@ export function BayPatchRequestToJSON(value?: BayPatchRequest | null): any {
         
         'bayType': value['bayType'],
         'capacity': BayCapacityRequestToJSON(value['capacity']),
+        'displayOrder': value['displayOrder'],
+        'expectedReturnAt': value['expectedReturnAt'] == null ? undefined : ((value['expectedReturnAt']).toISOString()),
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
         'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
+        'outOfServiceNote': value['outOfServiceNote'],
+        'outOfServiceReason': value['outOfServiceReason'],
         'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
     };
