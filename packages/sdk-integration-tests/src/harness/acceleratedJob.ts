@@ -78,6 +78,17 @@ interface Step {
 
 const LABOR_PRICE = 95;
 const PART_PRICE = 40;
+/**
+ * Mirrors `InvoiceFinalizationServiceImpl.SERVICE_ADVISOR_LIMIT`: above it an advisor
+ * needs a manager approval code, and the backend answers 403 MANAGER_APPROVAL_REQUIRED.
+ */
+export const SERVICE_ADVISOR_LIMIT = 500;
+/**
+ * How many ticks a job waits for its invoice id before failing. Generation is queued
+ * (202 PENDING) and the id lands within a second of real time, so one tick is almost
+ * always enough; the bound only stops a stuck command holding a bay forever.
+ */
+export const INVOICE_PENDING_TICKS = 12;
 const COMPLETABLE = new Set(['OPEN', 'READY_TO_EXECUTE', 'IN_PROGRESS']);
 
 export class AcceleratedJob {
@@ -651,31 +662,49 @@ export class AcceleratedJob {
   }
 
   /**
-   * Invoice generation is safe to repeat — it returns the same invoice rather
-   * than making another — and the id does not always arrive on the first call,
-   * so the retry is the same one Suite C uses, bounded here to a few attempts
-   * because the day runner owns the clock.
+   * Invoice generation is queued: the first calls answer 202 PENDING with no id, and
+   * the id appears once the invoicing domain links it back to the workorder. It is safe
+   * to repeat — it returns the same invoice rather than making another.
+   *
+   * Suite C waits for the id inside one test. A job cannot: the day runner owns the
+   * clock, and a back-to-back burst of calls finishes before the link lands. That burst
+   * failed ~98% of a virtual year's jobs at this step with every workorder COMPLETED and
+   * every invoice sitting in DRAFT. So a pending answer re-queues this step for the next
+   * tick instead, bounded by INVOICE_PENDING_TICKS.
    */
-  private async generateInvoice(): Promise<void> {
+  private async generateInvoice(attempt = 1): Promise<Step[] | void> {
     const workorderId = this.requireWorkorder();
-    for (let attempt = 1; attempt <= 5; attempt += 1) {
-      const generated = await call('generateWorkorderInvoice', () =>
-        this.deps.as.advisor.workorder.workOrderAPIApi.generateWorkorderInvoice({ workorderId }),
-      );
-      const invoiceId = readString(generated, 'invoiceId');
-      if (invoiceId) {
-        this.invoiceId = invoiceId;
-        await this.mark('invoiced');
-        return;
-      }
+    const generated = await call('generateWorkorderInvoice', () =>
+      this.deps.as.advisor.workorder.workOrderAPIApi.generateWorkorderInvoice({ workorderId }),
+    );
+    const invoiceId = readString(generated, 'invoiceId');
+    if (invoiceId) {
+      this.invoiceId = invoiceId;
+      await this.mark('invoiced');
+      return;
     }
-    throw new Error(`generateWorkorderInvoice never returned an invoiceId for workorder ${workorderId}`);
+    if (attempt >= INVOICE_PENDING_TICKS) {
+      throw new Error(
+        `generateWorkorderInvoice never returned an invoiceId for workorder ${workorderId} ` +
+          `after ${attempt} tick(s)`,
+      );
+    }
+    return [{ name: 'invoice', run: () => this.generateInvoice(attempt + 1) }];
   }
 
+  /**
+   * Finalized by the advisor, as the non-accelerated suites do, unless the stored total
+   * is above the advisor's cap — then by the manager, whose `invoice:finalize:override`
+   * needs no approval code. The total is read from the invoice, as the backend reads it,
+   * rather than predicted from the lines.
+   */
   private async finalizeInvoice(): Promise<void> {
     const invoiceId = requireField(this.invoiceId, 'invoiceId');
+    const draft = await call('getInvoice', () => this.deps.as.advisor.invoice.invoiceApi.getInvoice({ invoiceId }));
+    const draftTotal = readNumber(draft, 'total', 'totalAmount') ?? 0;
+    const finalizer = draftTotal > SERVICE_ADVISOR_LIMIT ? this.deps.as.manager : this.deps.as.advisor;
     const finalized = await call('finalizeInvoice', () =>
-      this.deps.as.advisor.invoice.invoiceApi.finalizeInvoice({ invoiceId, finalizationRequest: {} }),
+      finalizer.invoice.invoiceApi.finalizeInvoice({ invoiceId, finalizationRequest: {} }),
     );
     const total = readNumber(finalized, 'total', 'totalAmount');
     if (total === undefined || total <= 0) {

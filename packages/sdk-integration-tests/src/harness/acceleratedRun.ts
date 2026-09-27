@@ -342,6 +342,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       dayNumber: report.dayNumber,
       skipped: report.skipped,
       workordersCompleted: report.workordersCompleted,
+      workordersFailed: report.workordersFailed,
       invoicesFinalized: report.invoicesFinalized,
       invoicesPaid: report.invoicesPaid,
       estimatesDeclined: report.estimatesDeclined,
