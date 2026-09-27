@@ -32,6 +32,18 @@ export interface BayResponse {
      */
     createdAt?: Date;
     /**
+     * Sort key for bay lists and the dispatch board; null sorts last, ties broken by name.
+     * @type {number}
+     * @memberof BayResponse
+     */
+    displayOrder?: number;
+    /**
+     * Advisory expected return-to-service time; not used by scheduling. Null unless status is OUT_OF_SERVICE and one was given.
+     * @type {Date}
+     * @memberof BayResponse
+     */
+    expectedReturnAt?: Date;
+    /**
      * Unique identifier of the bay
      * @type {string}
      * @memberof BayResponse
@@ -68,18 +80,41 @@ export interface BayResponse {
      */
     name: string;
     /**
+     * Free-text detail for outOfServiceReason; null unless status is OUT_OF_SERVICE.
+     * @type {string}
+     * @memberof BayResponse
+     */
+    outOfServiceNote?: string;
+    /**
+     * Reason the bay is OUT_OF_SERVICE; null unless status is OUT_OF_SERVICE.
+     * @type {string}
+     * @memberof BayResponse
+     */
+    outOfServiceReason?: string;
+    /**
      * Catalog operation codes this bay type is the only one able to perform (CAP-325 D14). Empty for a general bay, which is eligible for every operation no specialty bay claims. Values are catalog operationCodes, UPPER-DASH per ADR-0059 §3.
      * @type {Array<string>}
      * @memberof BayResponse
      */
     serviceCapabilityCodes?: Array<string>;
     /**
-     * Operational status of the bay
+     * Operational status of the bay: ACTIVE, OUT_OF_SERVICE or RETIRED (DECISION-LOCATION-026).
      * @type {string}
      * @memberof BayResponse
      */
-    status?: string;
+    status?: BayResponseStatusEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum BayResponseStatusEnum {
+    Active = 'ACTIVE',
+    OutOfService = 'OUT_OF_SERVICE',
+    Retired = 'RETIRED'
+}
+
 
 /**
  * Check if a given object implements the BayResponse interface.
@@ -103,12 +138,16 @@ export function BayResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean
         
         'bayType': json['bayType'] == null ? undefined : json['bayType'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'displayOrder': json['displayOrder'] == null ? undefined : json['displayOrder'],
+        'expectedReturnAt': json['expectedReturnAt'] == null ? undefined : (new Date(json['expectedReturnAt'])),
         'id': json['id'],
         'lastModifiedAt': json['lastModifiedAt'] == null ? undefined : (new Date(json['lastModifiedAt'])),
         'locationId': json['locationId'],
         'maxConcurrentVehicles': json['maxConcurrentVehicles'] == null ? undefined : json['maxConcurrentVehicles'],
         'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'],
+        'outOfServiceNote': json['outOfServiceNote'] == null ? undefined : json['outOfServiceNote'],
+        'outOfServiceReason': json['outOfServiceReason'] == null ? undefined : json['outOfServiceReason'],
         'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
     };
@@ -122,12 +161,16 @@ export function BayResponseToJSON(value?: BayResponse | null): any {
         
         'bayType': value['bayType'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'displayOrder': value['displayOrder'],
+        'expectedReturnAt': value['expectedReturnAt'] == null ? undefined : ((value['expectedReturnAt']).toISOString()),
         'id': value['id'],
         'lastModifiedAt': value['lastModifiedAt'] == null ? undefined : ((value['lastModifiedAt']).toISOString()),
         'locationId': value['locationId'],
         'maxConcurrentVehicles': value['maxConcurrentVehicles'],
         'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
+        'outOfServiceNote': value['outOfServiceNote'],
+        'outOfServiceReason': value['outOfServiceReason'],
         'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
     };

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { DistanceDto } from './DistanceDto';
+import {
+    DistanceDtoFromJSON,
+    DistanceDtoFromJSONTyped,
+    DistanceDtoToJSON,
+} from './DistanceDto';
+
 /**
  * Response payload describing a mobile unit coverage rule
  * @export
@@ -26,11 +33,11 @@ export interface CoverageRuleResponse {
      */
     id: string;
     /**
-     * Maximum service distance in kilometres covered by the rule
-     * @type {number}
+     * 
+     * @type {DistanceDto}
      * @memberof CoverageRuleResponse
      */
-    maxDistance?: number;
+    maxDistance?: DistanceDto;
     /**
      * Identifier of the mobile unit this rule belongs to
      * @type {string}
@@ -56,13 +63,13 @@ export interface CoverageRuleResponse {
      */
     serviceAreaId: string;
     /**
-     * Date from which the rule is effective
+     * UTC instant from which the rule is effective, inclusive
      * @type {Date}
      * @memberof CoverageRuleResponse
      */
     validFrom?: Date;
     /**
-     * Date until which the rule is effective
+     * UTC instant until which the rule is effective, exclusive
      * @type {Date}
      * @memberof CoverageRuleResponse
      */
@@ -100,7 +107,7 @@ export function CoverageRuleResponseFromJSONTyped(json: any, ignoreDiscriminator
     return {
         
         'id': json['id'],
-        'maxDistance': json['maxDistance'] == null ? undefined : json['maxDistance'],
+        'maxDistance': json['maxDistance'] == null ? undefined : DistanceDtoFromJSON(json['maxDistance']),
         'mobileUnitId': json['mobileUnitId'],
         'priority': json['priority'] == null ? undefined : json['priority'],
         'ruleType': json['ruleType'] == null ? undefined : json['ruleType'],
@@ -117,13 +124,13 @@ export function CoverageRuleResponseToJSON(value?: CoverageRuleResponse | null):
     return {
         
         'id': value['id'],
-        'maxDistance': value['maxDistance'],
+        'maxDistance': DistanceDtoToJSON(value['maxDistance']),
         'mobileUnitId': value['mobileUnitId'],
         'priority': value['priority'],
         'ruleType': value['ruleType'],
         'serviceAreaId': value['serviceAreaId'],
-        'validFrom': value['validFrom'] == null ? undefined : ((value['validFrom']).toISOString().substring(0,10)),
-        'validTo': value['validTo'] == null ? undefined : ((value['validTo']).toISOString().substring(0,10)),
+        'validFrom': value['validFrom'] == null ? undefined : ((value['validFrom']).toISOString()),
+        'validTo': value['validTo'] == null ? undefined : ((value['validTo']).toISOString()),
     };
 }
 

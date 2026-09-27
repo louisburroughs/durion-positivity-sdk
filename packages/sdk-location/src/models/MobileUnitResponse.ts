@@ -45,11 +45,29 @@ export interface MobileUnitResponse {
      */
     createdAt?: Date;
     /**
+     * Advisory expected return-to-service time; not used by scheduling. Null unless status is OUT_OF_SERVICE and one was given.
+     * @type {Date}
+     * @memberof MobileUnitResponse
+     */
+    expectedReturnAt?: Date;
+    /**
      * Unique identifier of the mobile unit
      * @type {string}
      * @memberof MobileUnitResponse
      */
     id: string;
+    /**
+     * License plate number; display only, not used by scheduling; null when not set.
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    licensePlate?: string;
+    /**
+     * Heaviest GVWR class (1-8) the unit accepts; null when unconstrained (DECISION-LOCATION-029).
+     * @type {number}
+     * @memberof MobileUnitResponse
+     */
+    maxDutyClass?: number;
     /**
      * Display name of the mobile unit
      * @type {string}
@@ -63,13 +81,31 @@ export interface MobileUnitResponse {
      */
     notes?: string;
     /**
+     * Free-text detail for outOfServiceReason; null unless status is OUT_OF_SERVICE.
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    outOfServiceNote?: string;
+    /**
+     * Reason the unit is OUT_OF_SERVICE; null unless status is OUT_OF_SERVICE.
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    outOfServiceReason?: string;
+    /**
+     * ISO 3166-2 region code for licensePlate, upper case; display only, not used by scheduling; null when not set.
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    plateRegion?: string;
+    /**
      * Catalog operation codes this unit can perform off-site (CAP-325 D14), UPPER-DASH per ADR-0059 §3; empty for a unit that has not declared any.
      * @type {Array<string>}
      * @memberof MobileUnitResponse
      */
     serviceCapabilityCodes?: Array<string>;
     /**
-     * Operational status of the mobile unit
+     * Operational status of the mobile unit: ACTIVE, OUT_OF_SERVICE or RETIRED (DECISION-LOCATION-026).
      * @type {string}
      * @memberof MobileUnitResponse
      */
@@ -81,11 +117,23 @@ export interface MobileUnitResponse {
      */
     travelBufferPolicyId?: string;
     /**
+     * Fleet/unit number painted on the vehicle; display only, not used by scheduling; null when not set.
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    unitNumber?: string;
+    /**
      * Timestamp when the mobile unit was last updated (ISO 8601)
      * @type {Date}
      * @memberof MobileUnitResponse
      */
     updatedAt?: Date;
+    /**
+     * 17-character vehicle identification number, upper case; display only, not used by scheduling; null when not set.
+     * @type {string}
+     * @memberof MobileUnitResponse
+     */
+    vin?: string;
 }
 
 /**
@@ -94,7 +142,8 @@ export interface MobileUnitResponse {
 */
 export enum MobileUnitResponseStatusEnum {
     Active = 'ACTIVE',
-    Inactive = 'INACTIVE'
+    OutOfService = 'OUT_OF_SERVICE',
+    Retired = 'RETIRED'
 }
 
 
@@ -119,13 +168,21 @@ export function MobileUnitResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'baseLocationId': json['baseLocationId'] == null ? undefined : json['baseLocationId'],
         'coverageRules': json['coverageRules'] == null ? undefined : ((json['coverageRules'] as Array<any>).map(CoverageRuleResponseFromJSON)),
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'expectedReturnAt': json['expectedReturnAt'] == null ? undefined : (new Date(json['expectedReturnAt'])),
         'id': json['id'],
+        'licensePlate': json['licensePlate'] == null ? undefined : json['licensePlate'],
+        'maxDutyClass': json['maxDutyClass'] == null ? undefined : json['maxDutyClass'],
         'name': json['name'] == null ? undefined : json['name'],
         'notes': json['notes'] == null ? undefined : json['notes'],
+        'outOfServiceNote': json['outOfServiceNote'] == null ? undefined : json['outOfServiceNote'],
+        'outOfServiceReason': json['outOfServiceReason'] == null ? undefined : json['outOfServiceReason'],
+        'plateRegion': json['plateRegion'] == null ? undefined : json['plateRegion'],
         'serviceCapabilityCodes': json['serviceCapabilityCodes'] == null ? undefined : json['serviceCapabilityCodes'],
         'status': json['status'] == null ? undefined : json['status'],
         'travelBufferPolicyId': json['travelBufferPolicyId'] == null ? undefined : json['travelBufferPolicyId'],
+        'unitNumber': json['unitNumber'] == null ? undefined : json['unitNumber'],
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'vin': json['vin'] == null ? undefined : json['vin'],
     };
 }
 
@@ -138,13 +195,21 @@ export function MobileUnitResponseToJSON(value?: MobileUnitResponse | null): any
         'baseLocationId': value['baseLocationId'],
         'coverageRules': value['coverageRules'] == null ? undefined : ((value['coverageRules'] as Array<any>).map(CoverageRuleResponseToJSON)),
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
+        'expectedReturnAt': value['expectedReturnAt'] == null ? undefined : ((value['expectedReturnAt']).toISOString()),
         'id': value['id'],
+        'licensePlate': value['licensePlate'],
+        'maxDutyClass': value['maxDutyClass'],
         'name': value['name'],
         'notes': value['notes'],
+        'outOfServiceNote': value['outOfServiceNote'],
+        'outOfServiceReason': value['outOfServiceReason'],
+        'plateRegion': value['plateRegion'],
         'serviceCapabilityCodes': value['serviceCapabilityCodes'],
         'status': value['status'],
         'travelBufferPolicyId': value['travelBufferPolicyId'],
+        'unitNumber': value['unitNumber'],
         'updatedAt': value['updatedAt'] == null ? undefined : ((value['updatedAt']).toISOString()),
+        'vin': value['vin'],
     };
 }
 

@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { DistanceDto } from './DistanceDto';
+import {
+    DistanceDtoFromJSON,
+    DistanceDtoFromJSONTyped,
+    DistanceDtoToJSON,
+} from './DistanceDto';
+
 /**
  * Request payload defining a coverage rule for a mobile unit
  * @export
@@ -20,11 +27,11 @@ import { mapValues } from '../runtime';
  */
 export interface CoverageRuleRequest {
     /**
-     * Maximum service distance in kilometres covered by the rule
-     * @type {number}
+     * 
+     * @type {DistanceDto}
      * @memberof CoverageRuleRequest
      */
-    maxDistance?: number;
+    maxDistance?: DistanceDto;
     /**
      * Evaluation priority of the rule (lower is evaluated first)
      * @type {number}
@@ -38,19 +45,19 @@ export interface CoverageRuleRequest {
      */
     ruleType: CoverageRuleRequestRuleTypeEnum;
     /**
-     * Identifier of the service area this rule applies to; must name an existing service area (422 SERVICE_AREA_NOT_FOUND otherwise). Required for every rule type: a DISTANCE_TIER rule is a tier within its service area, and a rule without one never matches an address.
+     * Identifier of the service area this rule applies to; must name an existing, active service area (422 SERVICE_AREA_NOT_FOUND when unknown, 422 SERVICE_AREA_INACTIVE when it exists but active is false). Required for every rule type: a DISTANCE_TIER rule is a tier within its service area, and a rule without one never matches an address.
      * @type {string}
      * @memberof CoverageRuleRequest
      */
     serviceAreaId: string;
     /**
-     * Date from which the rule is effective
+     * UTC instant from which the rule is effective, inclusive (DECISION-LOCATION-017)
      * @type {Date}
      * @memberof CoverageRuleRequest
      */
     validFrom?: Date;
     /**
-     * Date until which the rule is effective; must not be before validFrom
+     * UTC instant until which the rule is effective, exclusive; must be after validFrom (DECISION-LOCATION-017)
      * @type {Date}
      * @memberof CoverageRuleRequest
      */
@@ -86,7 +93,7 @@ export function CoverageRuleRequestFromJSONTyped(json: any, ignoreDiscriminator:
     }
     return {
         
-        'maxDistance': json['maxDistance'] == null ? undefined : json['maxDistance'],
+        'maxDistance': json['maxDistance'] == null ? undefined : DistanceDtoFromJSON(json['maxDistance']),
         'priority': json['priority'] == null ? undefined : json['priority'],
         'ruleType': json['ruleType'],
         'serviceAreaId': json['serviceAreaId'],
@@ -101,12 +108,12 @@ export function CoverageRuleRequestToJSON(value?: CoverageRuleRequest | null): a
     }
     return {
         
-        'maxDistance': value['maxDistance'],
+        'maxDistance': DistanceDtoToJSON(value['maxDistance']),
         'priority': value['priority'],
         'ruleType': value['ruleType'],
         'serviceAreaId': value['serviceAreaId'],
-        'validFrom': value['validFrom'] == null ? undefined : ((value['validFrom']).toISOString().substring(0,10)),
-        'validTo': value['validTo'] == null ? undefined : ((value['validTo']).toISOString().substring(0,10)),
+        'validFrom': value['validFrom'] == null ? undefined : ((value['validFrom']).toISOString()),
+        'validTo': value['validTo'] == null ? undefined : ((value['validTo']).toISOString()),
     };
 }
 

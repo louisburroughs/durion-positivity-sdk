@@ -20,13 +20,13 @@ import { mapValues } from '../runtime';
  */
 export interface TravelBufferPolicyResponse {
     /**
-     * Type of buffer the policy applies
+     * Type of buffer the policy applies: FIXED_MINUTES or DISTANCE_TIER (DECISION-LOCATION-015). DISTANCE_TIER is stored, not yet evaluated: nothing evaluates distance until geocoding exists.
      * @type {string}
      * @memberof TravelBufferPolicyResponse
      */
-    bufferType?: string;
+    bufferType?: TravelBufferPolicyResponseBufferTypeEnum;
     /**
-     * Numeric value of the buffer (interpretation depends on buffer type)
+     * Numeric value of the buffer; for FIXED_MINUTES a non-negative whole number of minutes, for DISTANCE_TIER an unevaluated placeholder
      * @type {number}
      * @memberof TravelBufferPolicyResponse
      */
@@ -62,6 +62,16 @@ export interface TravelBufferPolicyResponse {
      */
     updatedAt?: Date;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum TravelBufferPolicyResponseBufferTypeEnum {
+    FixedMinutes = 'FIXED_MINUTES',
+    DistanceTier = 'DISTANCE_TIER'
+}
+
 
 /**
  * Check if a given object implements the TravelBufferPolicyResponse interface.
