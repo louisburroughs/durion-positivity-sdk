@@ -39,6 +39,12 @@ export interface AppointmentResponse {
      */
     actualStartAt?: Date;
     /**
+     * DECISION-SHOPMGMT-022: true when this appointment is still SCHEDULED, starts in the future, names a BAY or MOBILE_UNIT resource, and that resource is now missing, not ACTIVE (out of service or retired), or — for a BAY — no longer passes DECISION-SHOPMGMT-021 eligibility for the appointment's services and vehicle. Derived at read time from the resource replicas, never stored; a resource returning to service or eligibility clears it on the next read. An affected appointment is not blocked from anything — it belongs in the reschedule queue (GET /v1/schedules/view?affected=true).
+     * @type {boolean}
+     * @memberof AppointmentResponse
+     */
+    affected: boolean;
+    /**
      * Unique appointment identifier
      * @type {string}
      * @memberof AppointmentResponse
@@ -140,6 +146,7 @@ export interface AppointmentResponse {
  * Check if a given object implements the AppointmentResponse interface.
  */
 export function instanceOfAppointmentResponse(value: object): boolean {
+    if (!('affected' in value)) return false;
     if (!('appointmentId' in value)) return false;
     if (!('createdAt' in value)) return false;
     if (!('crmCustomerId' in value)) return false;
@@ -163,6 +170,7 @@ export function AppointmentResponseFromJSONTyped(json: any, ignoreDiscriminator:
         
         'actualEndAt': json['actualEndAt'] == null ? undefined : (new Date(json['actualEndAt'])),
         'actualStartAt': json['actualStartAt'] == null ? undefined : (new Date(json['actualStartAt'])),
+        'affected': json['affected'],
         'appointmentId': json['appointmentId'],
         'cancellationNotes': json['cancellationNotes'] == null ? undefined : json['cancellationNotes'],
         'cancellationReason': json['cancellationReason'] == null ? undefined : json['cancellationReason'],
@@ -190,6 +198,7 @@ export function AppointmentResponseToJSON(value?: AppointmentResponse | null): a
         
         'actualEndAt': value['actualEndAt'] == null ? undefined : ((value['actualEndAt']).toISOString()),
         'actualStartAt': value['actualStartAt'] == null ? undefined : ((value['actualStartAt']).toISOString()),
+        'affected': value['affected'],
         'appointmentId': value['appointmentId'],
         'cancellationNotes': value['cancellationNotes'],
         'cancellationReason': value['cancellationReason'],

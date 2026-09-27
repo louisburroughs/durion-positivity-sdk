@@ -57,6 +57,7 @@ export interface ViewScheduleRequest {
     resourceId?: string;
     includeAvailabilityOverlay?: boolean;
     range?: string;
+    affected?: boolean;
     xCorrelationId?: string;
 }
 
@@ -239,7 +240,7 @@ export class ScheduleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Builds the read-only schedule board for one location and date, grouping appointments into resource lanes (bay, mobile unit, technician or UNASSIGNED) and marking overlaps of one minute or more within the same lane as BLOCKING conflicts. Use this tool when rendering or inspecting a day\'s shop schedule; use getAppointmentById instead when a single appointment id is already known. Preconditions: the location must exist as a shop; the day window is computed in the shop\'s configured timezone, falling back to UTC when none is configured. Required inputs: locationId (UUID) and date (YYYY-MM-DD); resourceType and resourceId are optional filters, includeAvailabilityOverlay defaults to false, and range defaults to LOCATION_HOURS (06:00-18:00 local) with FULL_DAY covering midnight to midnight. Emits a SHOPMGR_SCHEDULE_VIEW audit event; no state changes occur, and when the overlay is requested availabilityOverlayStatus reports AVAILABLE or UNAVAILABLE with an HR_SYSTEM_UNAVAILABLE warning when the staffing replica has no data for the location. A caller whose shop:schedule:view grant is location-scoped must have locationId within reach (ADR-0061). Returns 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 404 when the location is unknown or the resourceId filter matches no lane on that date. 
+     * Builds the read-only schedule board for one location and date, grouping appointments into resource lanes (bay, mobile unit, technician or UNASSIGNED) and marking overlaps of one minute or more within the same lane as BLOCKING conflicts. Use this tool when rendering or inspecting a day\'s shop schedule; use getAppointmentById instead when a single appointment id is already known. Preconditions: the location must exist as a shop; the day window is computed in the shop\'s configured timezone, falling back to UTC when none is configured. Required inputs: locationId (UUID) and date (YYYY-MM-DD); resourceType and resourceId are optional filters, includeAvailabilityOverlay defaults to false, range defaults to LOCATION_HOURS (06:00-18:00 local) with FULL_DAY covering midnight to midnight, and the optional affected filter (DECISION-SHOPMGMT-022) narrows the board to only affected appointments (true, the reschedule queue) or only unaffected ones (false), omitted for both. Emits a SHOPMGR_SCHEDULE_VIEW audit event; no state changes occur, and when the overlay is requested availabilityOverlayStatus reports AVAILABLE or UNAVAILABLE with an HR_SYSTEM_UNAVAILABLE warning when the staffing replica has no data for the location. A caller whose shop:schedule:view grant is location-scoped must have locationId within reach (ADR-0061). Returns 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 404 when the location is unknown or the resourceId filter matches no lane on that date. 
      * View the Daily Schedule for a Location
      */
     async viewScheduleRaw(requestParameters: ViewScheduleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ScheduleViewResponse>> {
@@ -283,6 +284,10 @@ export class ScheduleAPIApi extends runtime.BaseAPI {
             queryParameters['range'] = requestParameters['range'];
         }
 
+        if (requestParameters['affected'] != null) {
+            queryParameters['affected'] = requestParameters['affected'];
+        }
+
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (requestParameters['xCorrelationId'] != null) {
@@ -308,7 +313,7 @@ export class ScheduleAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Builds the read-only schedule board for one location and date, grouping appointments into resource lanes (bay, mobile unit, technician or UNASSIGNED) and marking overlaps of one minute or more within the same lane as BLOCKING conflicts. Use this tool when rendering or inspecting a day\'s shop schedule; use getAppointmentById instead when a single appointment id is already known. Preconditions: the location must exist as a shop; the day window is computed in the shop\'s configured timezone, falling back to UTC when none is configured. Required inputs: locationId (UUID) and date (YYYY-MM-DD); resourceType and resourceId are optional filters, includeAvailabilityOverlay defaults to false, and range defaults to LOCATION_HOURS (06:00-18:00 local) with FULL_DAY covering midnight to midnight. Emits a SHOPMGR_SCHEDULE_VIEW audit event; no state changes occur, and when the overlay is requested availabilityOverlayStatus reports AVAILABLE or UNAVAILABLE with an HR_SYSTEM_UNAVAILABLE warning when the staffing replica has no data for the location. A caller whose shop:schedule:view grant is location-scoped must have locationId within reach (ADR-0061). Returns 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 404 when the location is unknown or the resourceId filter matches no lane on that date. 
+     * Builds the read-only schedule board for one location and date, grouping appointments into resource lanes (bay, mobile unit, technician or UNASSIGNED) and marking overlaps of one minute or more within the same lane as BLOCKING conflicts. Use this tool when rendering or inspecting a day\'s shop schedule; use getAppointmentById instead when a single appointment id is already known. Preconditions: the location must exist as a shop; the day window is computed in the shop\'s configured timezone, falling back to UTC when none is configured. Required inputs: locationId (UUID) and date (YYYY-MM-DD); resourceType and resourceId are optional filters, includeAvailabilityOverlay defaults to false, range defaults to LOCATION_HOURS (06:00-18:00 local) with FULL_DAY covering midnight to midnight, and the optional affected filter (DECISION-SHOPMGMT-022) narrows the board to only affected appointments (true, the reschedule queue) or only unaffected ones (false), omitted for both. Emits a SHOPMGR_SCHEDULE_VIEW audit event; no state changes occur, and when the overlay is requested availabilityOverlayStatus reports AVAILABLE or UNAVAILABLE with an HR_SYSTEM_UNAVAILABLE warning when the staffing replica has no data for the location. A caller whose shop:schedule:view grant is location-scoped must have locationId within reach (ADR-0061). Returns 403 LOCATION_SCOPE_DENIED when the caller\'s location scope does not cover locationId, and 404 when the location is unknown or the resourceId filter matches no lane on that date. 
      * View the Daily Schedule for a Location
      */
     async viewSchedule(requestParameters: ViewScheduleRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ScheduleViewResponse> {
