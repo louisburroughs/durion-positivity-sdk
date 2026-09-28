@@ -71,6 +71,20 @@ describe('AcceleratedJournal', () => {
     expect(journal.cycleCountAdjustmentIds).toEqual(['adj-1']);
   });
 
+  it('keeps the months the year closed, once each and in order, across a resume', () => {
+    const path = freshPath();
+    const first = AcceleratedJournal.open(path, identity).journal;
+    first.recordClosedPeriod('2025-11');
+    first.recordClosedPeriod('2025-10');
+    first.recordClosedPeriod('2025-10');
+    first.flush();
+
+    const { journal, resumed } = AcceleratedJournal.open(path, identity);
+
+    expect(resumed).toBe(true);
+    expect(journal.closedPeriods).toEqual(['2025-10', '2025-11']);
+  });
+
   it('loads a journal written before cycle-count adjustments were recorded', () => {
     const path = freshPath();
     const first = AcceleratedJournal.open(path, identity).journal;

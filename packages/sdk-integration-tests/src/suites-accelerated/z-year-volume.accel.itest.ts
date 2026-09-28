@@ -442,4 +442,17 @@ describe('The accelerated year', () => {
     expect(snapshot.workorderIds.length).toBeGreaterThan(0);
     expect(snapshot.realStart).toBe(accelContext.clock.realStart);
   });
+
+  it('Z15 — every month that ended was closed at month end', () => {
+    const { ended, closed } = result.periods;
+    console.log(`[Z15] ${ended.length} month(s) ended, closed: ${closed.join(', ') || 'none'}`);
+    for (const refusal of result.periodCloseRefusals) {
+      console.log(`[Z15] refused: ${refusal}`);
+    }
+    // A refusal the next day's retry cleared is month end working; one still standing
+    // at the end is a month the year left open.
+    for (const month of ended) {
+      expect(closed).toContain(month);
+    }
+  });
 });

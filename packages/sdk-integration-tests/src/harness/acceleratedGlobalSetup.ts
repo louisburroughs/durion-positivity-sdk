@@ -23,6 +23,7 @@ import { readAllPages } from './http';
 import { ItestConfig } from './ItestConfig';
 import { saveContext } from './ItestContext';
 import { loadEnvFile } from './loadEnvFile';
+import { createPeriodPort, periodCode, reopenClosedPeriods } from './monthEnd';
 import { createPersonaPorts, PersonaBootstrap } from './PersonaBootstrap';
 import { createStarterActivationPort, StarterActivation } from './StarterActivation';
 import { createTenantPort, TenantPreflight } from './TenantPreflight';
@@ -275,6 +276,26 @@ export default async function acceleratedGlobalSetup(): Promise<void> {
         `its own id ${journal.runId} rather than inheriting one whose fixtures may already exist`,
     );
   }
+
+  // Month end. Periods are tenant-wide and every dispatch replays the same virtual
+  // months, so a month an earlier run closed would refuse this run's postings with
+  // PERIOD_CLOSED. Reopened here, before any suite posts — from the month the timeline
+  // starts in to the wall-clock month it converges on — and closed again by the year as
+  // each month ends. A resumed run keeps the months it already closed itself.
+  const { createAccountingClient } = await import('@durion-sdk/accounting');
+  const reopened = await stage('reopen closed periods', () =>
+    reopenClosedPeriods(createPeriodPort(createAccountingClient(auth.buildSdkConfig('accounting'))), {
+      from: periodCode(clock.virtualStart),
+      to: periodCode(new Date()),
+      runId: journal.runId,
+      keep: journal.closedPeriods,
+    }),
+  );
+  console.log(
+    reopened.length > 0
+      ? `[accel] reopened ${reopened.length} closed accounting period(s) in this timeline: ${reopened.join(', ')}`
+      : '[accel] no closed accounting period in this timeline to reopen',
+  );
 
   const contextFile = saveContext({ runId: journal.runId, mode: config.mode, referenceCache: refs });
   const accelFile = saveAcceleratedContext({

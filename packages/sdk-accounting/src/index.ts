@@ -11,6 +11,7 @@ import { JournalEntriesApi } from './apis/JournalEntriesApi';
 import { GLAccountsApi } from './apis/GLAccountsApi';
 import { FinancialReportingApi } from './apis/FinancialReportingApi';
 import { AccountingEventsApi } from './apis/AccountingEventsApi';
+import { AccountingPeriodsApi } from './apis/AccountingPeriodsApi';
 
 export function createAccountingClient(config: DurionSdkConfig) {
   const httpClient = new SdkHttpClient(config);
@@ -35,5 +36,6 @@ export function createAccountingClient(config: DurionSdkConfig) {
     glAccountsApi: new GLAccountsApi(configuration),
     financialReportingApi: new FinancialReportingApi(configuration),
     accountingEventsApi: new AccountingEventsApi(configuration),
+    accountingPeriodsApi: new AccountingPeriodsApi(configuration),
   };
 }
