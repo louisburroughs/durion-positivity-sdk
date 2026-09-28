@@ -124,6 +124,15 @@ export function createShiftPort(
     ),
   ];
   let onTheClock: string[] = [];
+  /**
+   * Shifts stopped but not yet submitted, by person. Stop and submit are two state
+   * changes: a submit that fails after its stop succeeded would otherwise be lost, since
+   * the retried stop answers 404 (nothing open) and nothing remembers the ended session.
+   * Kept here, it is submitted on the next clock-out attempt or before that person's next
+   * clock-in. Not across a process crash: pos-people has no read for ended sessions, so a
+   * run killed between the two calls leaves that one shift without a time entry.
+   */
+  const awaitingSubmit = new Map<string, { sessionId: string; startedAt?: Date; endedAt?: Date }>();
 
   /**
    * Closes the given sessions in parallel, returning the ids actually closed.
@@ -138,12 +147,14 @@ export function createShiftPort(
     const outcomes = await Promise.allSettled(
       personIds.map(async (personId) => {
         try {
-          await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+          const ended = await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+          awaitingSubmit.set(personId, ended);
         } catch (error) {
           if (!isHttpStatus(error, 404)) {
             throw new Error(`stopWorkSession ${personId} failed: ${await formatError(error)}`);
           }
         }
+        await submitPending(personId);
         return personId;
       }),
     );
@@ -157,6 +168,39 @@ export function createShiftPort(
         .filter((outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected')
         .map((outcome) => (outcome.reason as Error).message),
     };
+  };
+
+  /**
+   * Submits an ended shift, which is what makes it payroll.
+   *
+   * pos-people writes the time entry — attendance start and end, PENDING_APPROVAL — only
+   * when a session is *submitted*; an ended session is not one. A year that clocked 2,703
+   * shifts in and out without submitting any wrote no time entries at all, and Z13's
+   * audit of payroll against the shop's hours read nothing to check. Billable minutes are
+   * the session's own span, with no breaks, since the run takes none; submitted at the
+   * backend's end stamp so the entry is dated in virtual time, not the laptop's.
+   */
+  const submitSession = async (session: { sessionId: string; startedAt?: Date; endedAt?: Date }): Promise<void> => {
+    const endedAt = session.endedAt ?? new Date();
+    const billableMinutes = session.startedAt
+      ? Math.max(0, Math.floor((endedAt.getTime() - session.startedAt.getTime()) / 60_000))
+      : 0;
+    await call(`submitWorkSession ${session.sessionId}`, () =>
+      admin.people.workSessionsAPIApi.submitWorkSession({
+        id: session.sessionId,
+        workSessionSubmitRequest: { billableMinutes, breakMinutes: 0, submittedAt: endedAt },
+      }),
+    );
+  };
+
+  /** Submits the person's stopped shift, if one is waiting, and forgets it once submitted. */
+  const submitPending = async (personId: string): Promise<void> => {
+    const session = awaitingSubmit.get(personId);
+    if (!session) {
+      return;
+    }
+    await submitSession(session);
+    awaitingSubmit.delete(personId);
   };
 
   /** A stale session from an interrupted run is closed before a fresh one opens. */
@@ -195,6 +239,8 @@ export function createShiftPort(
       // find with nothing to close them.
       const outcomes = await Promise.allSettled(
         everyone.map(async (personId) => {
+          // Yesterday's shift first, if its submit failed at clock-out.
+          await submitPending(personId);
           await closeStale(personId);
           const started = await call(`startWorkSession ${personId}`, () =>
             admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
@@ -282,10 +328,13 @@ export function createShiftPort(
       // to 20 and is capped at 100 (TimeEntryApprovalController), and a loop that
       // stopped at an arbitrary bound would approve part of a busy day while the log
       // claimed the shift's time had been approved.
-      const pending = await readAllPages('listTimeEntries(SUBMITTED)', (page) =>
+      // PENDING_APPROVAL, not SUBMITTED: submitting a work session writes its time entry
+      // as PENDING_APPROVAL (WorkSessionServiceImpl.recordTimeEntry), and the batch
+      // approval accepts either. Listing SUBMITTED found nothing to approve all year.
+      const pending = await readAllPages('listTimeEntries(PENDING_APPROVAL)', (page) =>
         manager.people.timeEntryApprovalAPIApi.listTimeEntries({
           // The generated enum, not the string: the client narrows this param.
-          status: ListTimeEntriesStatusEnum.Submitted,
+          status: ListTimeEntriesStatusEnum.PendingApproval,
           locationId: refs.locationId,
           workDate: at,
           timeZone: 'UTC',
@@ -306,11 +355,20 @@ export function createShiftPort(
         return;
       }
 
-      await call('approveTimeEntriesBatch', () =>
+      const response = await call('approveTimeEntriesBatch', () =>
         manager.people.timeEntryApprovalAPIApi.approveTimeEntriesBatch({
           timeEntryDecisionBatchRequest: { decisions },
         }),
       );
+      // A 200 is not every entry approved: the batch answers per entry, and a refused one
+      // (NOT_FOUND, ENTRY_NOT_PENDING, FORBIDDEN) would otherwise be logged as approved
+      // and left pending. Thrown, so the day reports it.
+      const refused = refusedDecisions(response, ids);
+      if (refused.length > 0) {
+        throw new Error(
+          `approveTimeEntriesBatch refused ${refused.length} of ${ids.length} time entr(ies): ${refused.join('; ')}`,
+        );
+      }
       log(`${at.toISOString().slice(0, 10)}: approved ${decisions.length} time entr(ies)`);
     },
   };
@@ -409,6 +467,12 @@ export function createMaintenancePort(
               reasonCode: 'CYCLE_COUNT',
               countedQuantity: Math.max(0, quantityOnHandBefore + variance),
               quantityOnHandBefore,
+              // The location the on-hand above was read at. Without it the variance
+              // posts against the SKU's location-less balance (backend #2167: "null
+              // only when neither names one"), which is not the balance counted — and
+              // a downward count the site could absorb drove that one negative: 27
+              // weekly counts refused NEGATIVE_STOCK_FLOOR_VIOLATION "at location null".
+              locationId: refs.locationId,
               costAtTimeOfAdjustment: 100,
               createdByUserId: refs.employees.partsClerk || refs.employees.manager,
             },
@@ -669,18 +733,25 @@ export function createAppointmentPort(options: {
   customerFor: () => Promise<{ partyId: string; vehicleId: string }>;
 }): AppointmentPort & { pending(): number } {
   const pending: PendingAppointment[] = [];
-  const SLOT_CONFLICT = 'already booked';
+  /**
+   * Refusals about the *slot*, answered by trying another: taken by an earlier run (400
+   * "already booked"), or a HARD 409 for a closed day or out-of-hours slot — the same set
+   * Suite A retries.
+   */
+  const SLOT_REFUSALS = ['already booked', 'FACILITY_CLOSED', 'OUTSIDE_OPERATING_HOURS'];
 
-  /** A one-hour slot inside an open window `leadDays` virtual days ahead. */
+  /**
+   * A one-hour slot, wholly inside an open window, on the first open day `leadDays`
+   * virtual days ahead or later. The whole slot, not just its start: a start checked
+   * alone booked 12:17-13:17 on Saturdays that close at 13:00, and the backend refused 31
+   * of a year's bookings OUTSIDE_OPERATING_HOURS.
+   */
   const slotFor = (now: Date, leadDays: number, jitterMinutes: number): { startAt: Date; endAt: Date } => {
     const target = new Date(now.getTime() + leadDays * 86_400_000);
-    const open = options.calendar.nextOpen(target, 'BAY');
-    const startAt = new Date(open.getTime() + jitterMinutes * 60_000);
-    // Jitter can push past close on a short Saturday; fall back to the window's
-    // own opening instant rather than booking into the evening.
-    if (!options.calendar.isOpen(startAt, 'BAY')) {
-      return { startAt: open, endAt: new Date(open.getTime() + 3_600_000) };
-    }
+    const day = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), target.getUTCDate()));
+    // Never before now: a lead of zero (ITEST_ACCEL_APPOINTMENT_LEAD_DAYS_MIN=0) puts the
+    // day's start in the past.
+    const startAt = options.calendar.slotOnOrAfter(new Date(Math.max(day.getTime(), now.getTime())), 60, jitterMinutes);
     return { startAt, endAt: new Date(startAt.getTime() + 3_600_000) };
   };
 
@@ -762,8 +833,8 @@ export function createAppointmentPort(options: {
             progress.done += 1;
             break;
           } catch (error) {
-            const detail = error instanceof Error ? error.message : await formatError(error);
-            if (!detail.includes(SLOT_CONFLICT) || attempt === 6) {
+            const detail = error instanceof Error && !('response' in error) ? error.message : await formatError(error);
+            if (!SLOT_REFUSALS.some((marker) => detail.includes(marker)) || attempt === 6) {
               throw error;
             }
           }
@@ -816,4 +887,33 @@ export function createAppointmentPort(options: {
     }
     return progress.done;
   }
+}
+
+/**
+ * The entries a time-entry decision batch did not apply, as `id (CODE: message)`.
+ *
+ * The batch answers 200 with `{results: [{timeEntryId, success, errorCode, message}]}`
+ * (TimeEntryDecisionResponse). An entry that was asked about and has no result at all is
+ * refused too: the batch cannot be read as having approved it.
+ */
+export function refusedDecisions(response: unknown, askedIds: readonly string[]): string[] {
+  const results = (response as { results?: unknown } | null)?.results;
+  const byId = new Map<string, { success?: unknown; errorCode?: unknown; message?: unknown }>();
+  if (Array.isArray(results)) {
+    for (const result of results as Array<Record<string, unknown>>) {
+      if (typeof result?.timeEntryId === 'string') {
+        byId.set(result.timeEntryId, result);
+      }
+    }
+  }
+  const refused: string[] = [];
+  for (const id of askedIds) {
+    const result = byId.get(id);
+    if (!result) {
+      refused.push(`${id} (no result)`);
+    } else if (result.success !== true) {
+      refused.push(`${id} (${String(result.errorCode ?? 'UNKNOWN')}: ${String(result.message ?? '')})`);
+    }
+  }
+  return refused;
 }

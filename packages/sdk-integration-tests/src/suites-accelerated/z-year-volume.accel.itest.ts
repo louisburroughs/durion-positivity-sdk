@@ -89,9 +89,14 @@ describe('The accelerated year', () => {
   });
 
   it('Z4 — closed days were skipped rather than worked', () => {
+    // To the last day the year drove, as the day runner's own calendar spans it — not
+    // to `accelContext.clock.virtualTime`, which is global setup's reading, a few weeks
+    // in. Holidays are generated per calendar year of the span, so that span left out
+    // every holiday of the second year, and the ten the runner correctly closed
+    // (New Year's Day through Labor Day) read here as working days.
     const calendar = accel.calendarFor(
       new Date(accelContext.clock.virtualStart),
-      new Date(accelContext.clock.virtualTime),
+      new Date(`${result.virtualSpan.to}T23:59:59.000Z`),
     );
     for (const day of result.reports) {
       const onDay = new Date(`${day.virtualDate}T12:00:00.000Z`);

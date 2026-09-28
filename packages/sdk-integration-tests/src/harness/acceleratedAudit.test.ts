@@ -114,6 +114,12 @@ describe('auditInvoiceViews', () => {
     expect(audit.problems).toEqual([]);
   });
 
+  it('counts a POSTED invoice as finalized: POSTED follows FINALIZED once accounting posts it', () => {
+    const audit = auditInvoiceViews([view({ status: 'POSTED' })]);
+    expect(audit.finalized).toBe(1);
+    expect(audit.problems).toEqual([]);
+  });
+
   it('reports a draft invoice as a problem', () => {
     const audit = auditInvoiceViews([view({ status: 'DRAFT' })]);
     expect(audit.finalized).toBe(0);
