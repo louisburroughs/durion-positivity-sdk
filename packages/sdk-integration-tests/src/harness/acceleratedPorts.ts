@@ -124,6 +124,15 @@ export function createShiftPort(
     ),
   ];
   let onTheClock: string[] = [];
+  /**
+   * Shifts stopped but not yet submitted, by person. Stop and submit are two state
+   * changes: a submit that fails after its stop succeeded would otherwise be lost, since
+   * the retried stop answers 404 (nothing open) and nothing remembers the ended session.
+   * Kept here, it is submitted on the next clock-out attempt or before that person's next
+   * clock-in. Not across a process crash: pos-people has no read for ended sessions, so a
+   * run killed between the two calls leaves that one shift without a time entry.
+   */
+  const awaitingSubmit = new Map<string, { sessionId: string; startedAt?: Date; endedAt?: Date }>();
 
   /**
    * Closes the given sessions in parallel, returning the ids actually closed.
@@ -137,16 +146,15 @@ export function createShiftPort(
   ): Promise<{ closed: string[]; failures: string[] }> => {
     const outcomes = await Promise.allSettled(
       personIds.map(async (personId) => {
-        let ended;
         try {
-          ended = await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+          const ended = await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+          awaitingSubmit.set(personId, ended);
         } catch (error) {
           if (!isHttpStatus(error, 404)) {
             throw new Error(`stopWorkSession ${personId} failed: ${await formatError(error)}`);
           }
-          return personId;
         }
-        await submitSession(ended);
+        await submitPending(personId);
         return personId;
       }),
     );
@@ -185,6 +193,16 @@ export function createShiftPort(
     );
   };
 
+  /** Submits the person's stopped shift, if one is waiting, and forgets it once submitted. */
+  const submitPending = async (personId: string): Promise<void> => {
+    const session = awaitingSubmit.get(personId);
+    if (!session) {
+      return;
+    }
+    await submitSession(session);
+    awaitingSubmit.delete(personId);
+  };
+
   /** A stale session from an interrupted run is closed before a fresh one opens. */
   const closeStale = async (personId: string): Promise<void> => {
     try {
@@ -221,6 +239,8 @@ export function createShiftPort(
       // find with nothing to close them.
       const outcomes = await Promise.allSettled(
         everyone.map(async (personId) => {
+          // Yesterday's shift first, if its submit failed at clock-out.
+          await submitPending(personId);
           await closeStale(personId);
           const started = await call(`startWorkSession ${personId}`, () =>
             admin.people.workSessionsAPIApi.startWorkSession({ workSessionRequest: { personId } }),
@@ -335,11 +355,20 @@ export function createShiftPort(
         return;
       }
 
-      await call('approveTimeEntriesBatch', () =>
+      const response = await call('approveTimeEntriesBatch', () =>
         manager.people.timeEntryApprovalAPIApi.approveTimeEntriesBatch({
           timeEntryDecisionBatchRequest: { decisions },
         }),
       );
+      // A 200 is not every entry approved: the batch answers per entry, and a refused one
+      // (NOT_FOUND, ENTRY_NOT_PENDING, FORBIDDEN) would otherwise be logged as approved
+      // and left pending. Thrown, so the day reports it.
+      const refused = refusedDecisions(response, ids);
+      if (refused.length > 0) {
+        throw new Error(
+          `approveTimeEntriesBatch refused ${refused.length} of ${ids.length} time entr(ies): ${refused.join('; ')}`,
+        );
+      }
       log(`${at.toISOString().slice(0, 10)}: approved ${decisions.length} time entr(ies)`);
     },
   };
@@ -858,4 +887,33 @@ export function createAppointmentPort(options: {
     }
     return progress.done;
   }
+}
+
+/**
+ * The entries a time-entry decision batch did not apply, as `id (CODE: message)`.
+ *
+ * The batch answers 200 with `{results: [{timeEntryId, success, errorCode, message}]}`
+ * (TimeEntryDecisionResponse). An entry that was asked about and has no result at all is
+ * refused too: the batch cannot be read as having approved it.
+ */
+export function refusedDecisions(response: unknown, askedIds: readonly string[]): string[] {
+  const results = (response as { results?: unknown } | null)?.results;
+  const byId = new Map<string, { success?: unknown; errorCode?: unknown; message?: unknown }>();
+  if (Array.isArray(results)) {
+    for (const result of results as Array<Record<string, unknown>>) {
+      if (typeof result?.timeEntryId === 'string') {
+        byId.set(result.timeEntryId, result);
+      }
+    }
+  }
+  const refused: string[] = [];
+  for (const id of askedIds) {
+    const result = byId.get(id);
+    if (!result) {
+      refused.push(`${id} (no result)`);
+    } else if (result.success !== true) {
+      refused.push(`${id} (${String(result.errorCode ?? 'UNKNOWN')}: ${String(result.message ?? '')})`);
+    }
+  }
+  return refused;
 }
