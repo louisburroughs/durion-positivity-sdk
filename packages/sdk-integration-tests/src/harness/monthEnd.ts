@@ -13,7 +13,7 @@
  * inside this run's timeline first — with a justification naming the run — and the run
  * closes them again as it finishes each one. The audit trail keeps both halves.
  */
-import { formatError, isHttpStatus } from './http';
+import { formatError, httpStatusOf } from './http';
 
 /**
  * The slice of the accounting client month end uses. Structural rather than the
@@ -112,22 +112,28 @@ export type CloseOutcome = { code: string; result: 'closed' | 'already-closed' }
 
 /**
  * Closes one month. Already closed counts as closed: a resumed day, or a close that
- * landed before an interrupted process could journal it. Any other refusal — draft
- * entries still inside the month (422 PERIOD_HAS_DRAFT_ENTRIES), say — is returned
- * rather than thrown, so the day reports it and the next day tries again.
+ * landed before an interrupted process could journal it.
+ *
+ * The backend refusing the close — draft entries still inside the month (422
+ * PERIOD_HAS_DRAFT_ENTRIES), another conflict, or a 5xx from an accounting service
+ * that is briefly down — is returned, so the day reports it and the next day tries
+ * again; a month that never closes still fails the year's Z15. Anything else is
+ * thrown: no HTTP response at all, or a 401/403, is the harness or the tenant's
+ * wiring, not month end, and the run should stop on it rather than post on.
  */
 export async function closeMonth(port: PeriodPort, code: string): Promise<CloseOutcome> {
   try {
     await port.close(code);
     return { code, result: 'closed' };
   } catch (error) {
-    if (isHttpStatus(error, 409)) {
-      const detail = await formatError(error);
-      if (detail.includes('PERIOD_ALREADY_CLOSED')) {
-        return { code, result: 'already-closed' };
-      }
-      return { code, result: 'refused', detail };
+    const status = httpStatusOf(error);
+    if (status === undefined || status === 401 || status === 403) {
+      throw error;
     }
-    return { code, result: 'refused', detail: await formatError(error) };
+    const detail = await formatError(error);
+    if (status === 409 && detail.includes('PERIOD_ALREADY_CLOSED')) {
+      return { code, result: 'already-closed' };
+    }
+    return { code, result: 'refused', detail };
   }
 }

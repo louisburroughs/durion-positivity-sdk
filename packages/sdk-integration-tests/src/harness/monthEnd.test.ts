@@ -97,6 +97,24 @@ describe('closeMonth', () => {
     expect(outcome.result === 'refused' && outcome.detail).toContain('PERIOD_HAS_DRAFT_ENTRIES');
   });
 
+  it('retries a 5xx tomorrow rather than stopping the year', async () => {
+    const { periodPort } = port([], refusal(503, 'SERVICE_UNAVAILABLE'));
+
+    expect((await closeMonth(periodPort, '2025-10')).result).toBe('refused');
+  });
+
+  it.each([401, 403])('throws on %i, which is wiring rather than month end', async (status) => {
+    const { periodPort } = port([], refusal(status, 'FORBIDDEN'));
+
+    await expect(closeMonth(periodPort, '2025-10')).rejects.toThrow(`HTTP ${status}`);
+  });
+
+  it('throws when there was no response at all', async () => {
+    const { periodPort } = port([], new TypeError('fetch failed'));
+
+    await expect(closeMonth(periodPort, '2025-10')).rejects.toThrow('fetch failed');
+  });
+
   it('does not mistake another conflict for an already-closed month', async () => {
     const { periodPort } = port([], refusal(409, 'CONCURRENT_MODIFICATION'));
 

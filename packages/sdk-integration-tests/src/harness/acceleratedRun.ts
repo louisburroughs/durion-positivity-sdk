@@ -337,8 +337,17 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     // the async GL postings of the month's last jobs hours of virtual time to land —
     // one arriving after the close would be refused PERIOD_CLOSED. In order, and a
     // refusal stops the rest and is retried tomorrow.
+    let monthEndFault: string | undefined;
     for (const code of monthsToClose(first.virtualStart, dayStart, journal.closedPeriods)) {
-      const outcome = await closeMonth(periods, code);
+      let outcome: Awaited<ReturnType<typeof closeMonth>>;
+      try {
+        outcome = await closeMonth(periods, code);
+      } catch (error) {
+        // Not a refusal (see closeMonth): the harness or the tenant is miswired, and
+        // the run stops the way a day that threw does.
+        monthEndFault = `month-end close of ${code} failed outright: ${await formatError(error)}`;
+        break;
+      }
       if (outcome.result === 'refused') {
         const refusal = `month-end close of ${code} refused on virtual ${dayStart.toISOString()}: ${outcome.detail}`;
         periodCloseRefusals.push(refusal);
@@ -348,6 +357,12 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       journal.recordClosedPeriod(code);
       journal.flush();
       log(`closed accounting period ${code}${outcome.result === 'already-closed' ? ' (it was already closed)' : ''}`);
+    }
+    if (monthEndFault !== undefined) {
+      stoppedBecause = 'failed';
+      stopDetail = monthEndFault;
+      failures.push(stopDetail);
+      break;
     }
 
     let report: DayReport;
