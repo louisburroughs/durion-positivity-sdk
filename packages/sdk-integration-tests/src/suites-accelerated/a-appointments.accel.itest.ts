@@ -274,10 +274,15 @@ describe('Suite A — appointments', () => {
         // An hour later, unless that runs past closing: then the first slot after it
         // that fits the hours. The last run moved a Saturday 12:00 booking to 13:00,
         // after the 13:00 close, and was refused OUTSIDE_OPERATING_HOURS.
-        const start = accel.calendar.slotOnOrAfter(
-          new Date(new Date(booked.startAt).getTime() + attempt * 60 * 60_000),
-          60,
+        //
+        // And never earlier than an hour after the previous attempt: past a closing,
+        // every `booked + N hours` maps to the same next opening, and a taken slot
+        // there would be retried ten times over.
+        const earliest = Math.max(
+          new Date(booked.startAt).getTime() + attempt * 60 * 60_000,
+          attempt > 1 ? moved.startAt.getTime() + 60 * 60_000 : 0,
         );
+        const start = accel.calendar.slotOnOrAfter(new Date(earliest), 60);
         moved = { startAt: start, endAt: new Date(start.getTime() + 60 * 60_000) };
         try {
           rescheduled = await advisor.shopManager.appointmentsApi.rescheduleAppointment({
