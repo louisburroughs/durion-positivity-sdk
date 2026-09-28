@@ -244,7 +244,10 @@ export interface InvoiceAudit {
 }
 
 const PAID_MARKERS = ['PAID', 'SETTLED', 'CLOSED'];
-const FINALIZED_MARKERS = ['FINAL', 'ISSUED', 'SENT', 'PAID', 'SETTLED', 'CLOSED', 'PARTIAL'];
+// POSTED is past FINALIZED, not short of it: pos-invoice's lifecycle is DRAFT → FINALIZED
+// → POSTED once accounting has posted the revenue entry (InvoiceStatus). Without it every
+// invoice of a year that ran to the end read as "not finalized — status POSTED".
+const FINALIZED_MARKERS = ['FINAL', 'POSTED', 'ISSUED', 'SENT', 'PAID', 'SETTLED', 'CLOSED', 'PARTIAL'];
 
 const matches = (status: string | undefined, markers: string[]): boolean =>
   status !== undefined && markers.some((marker) => status.toUpperCase().includes(marker));

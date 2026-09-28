@@ -669,18 +669,25 @@ export function createAppointmentPort(options: {
   customerFor: () => Promise<{ partyId: string; vehicleId: string }>;
 }): AppointmentPort & { pending(): number } {
   const pending: PendingAppointment[] = [];
-  const SLOT_CONFLICT = 'already booked';
+  /**
+   * Refusals about the *slot*, answered by trying another: taken by an earlier run (400
+   * "already booked"), or a HARD 409 for a closed day or out-of-hours slot — the same set
+   * Suite A retries.
+   */
+  const SLOT_REFUSALS = ['already booked', 'FACILITY_CLOSED', 'OUTSIDE_OPERATING_HOURS'];
 
-  /** A one-hour slot inside an open window `leadDays` virtual days ahead. */
+  /**
+   * A one-hour slot, wholly inside an open window, on the first open day `leadDays`
+   * virtual days ahead or later. The whole slot, not just its start: a start checked
+   * alone booked 12:17-13:17 on Saturdays that close at 13:00, and the backend refused 31
+   * of a year's bookings OUTSIDE_OPERATING_HOURS.
+   */
   const slotFor = (now: Date, leadDays: number, jitterMinutes: number): { startAt: Date; endAt: Date } => {
     const target = new Date(now.getTime() + leadDays * 86_400_000);
-    const open = options.calendar.nextOpen(target, 'BAY');
-    const startAt = new Date(open.getTime() + jitterMinutes * 60_000);
-    // Jitter can push past close on a short Saturday; fall back to the window's
-    // own opening instant rather than booking into the evening.
-    if (!options.calendar.isOpen(startAt, 'BAY')) {
-      return { startAt: open, endAt: new Date(open.getTime() + 3_600_000) };
-    }
+    const day = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), target.getUTCDate()));
+    // Never before now: a lead of zero (ITEST_ACCEL_APPOINTMENT_LEAD_DAYS_MIN=0) puts the
+    // day's start in the past.
+    const startAt = options.calendar.slotOnOrAfter(new Date(Math.max(day.getTime(), now.getTime())), 60, jitterMinutes);
     return { startAt, endAt: new Date(startAt.getTime() + 3_600_000) };
   };
 
@@ -762,8 +769,8 @@ export function createAppointmentPort(options: {
             progress.done += 1;
             break;
           } catch (error) {
-            const detail = error instanceof Error ? error.message : await formatError(error);
-            if (!detail.includes(SLOT_CONFLICT) || attempt === 6) {
+            const detail = error instanceof Error && !('response' in error) ? error.message : await formatError(error);
+            if (!SLOT_REFUSALS.some((marker) => detail.includes(marker)) || attempt === 6) {
               throw error;
             }
           }
