@@ -50,6 +50,12 @@ export interface VendorBillResponse {
      */
     createdBy?: string;
     /**
+     * ISO 4217 currency the bill is stated in; null means the ledger currency (a bill recorded before currencies were kept). A bill in another currency is held in CURRENCY_HOLD
+     * @type {string}
+     * @memberof VendorBillResponse
+     */
+    currency?: string;
+    /**
      * Due date
      * @type {Date}
      * @memberof VendorBillResponse
@@ -80,7 +86,7 @@ export interface VendorBillResponse {
      */
     paymentTransactionId?: string;
     /**
-     * Rejection reason (if status = REJECTED)
+     * Rejection or exception reason (status REJECTED, MATCH_EXCEPTION or CURRENCY_HOLD)
      * @type {string}
      * @memberof VendorBillResponse
      */
@@ -124,6 +130,7 @@ export interface VendorBillResponse {
 export enum VendorBillResponseStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
+    CurrencyHold = 'CURRENCY_HOLD',
     Approved = 'APPROVED',
     Rejected = 'REJECTED',
     Paid = 'PAID',
@@ -159,6 +166,7 @@ export function VendorBillResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'billNumber': json['billNumber'],
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
+        'currency': json['currency'] == null ? undefined : json['currency'],
         'dueDate': json['dueDate'] == null ? undefined : (new Date(json['dueDate'])),
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
         'originEventId': json['originEventId'] == null ? undefined : json['originEventId'],
@@ -184,6 +192,7 @@ export function VendorBillResponseToJSON(value?: VendorBillResponse | null): any
         'billNumber': value['billNumber'],
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
+        'currency': value['currency'],
         'dueDate': value['dueDate'] == null ? undefined : ((value['dueDate']).toISOString()),
         'journalEntryId': value['journalEntryId'],
         'originEventId': value['originEventId'],
