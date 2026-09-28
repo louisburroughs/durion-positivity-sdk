@@ -44,7 +44,7 @@ export interface BillingRuleRefResponse {
      */
     creditLimit?: number;
     /**
-     * ISO 4217 currency code
+     * ISO 4217 currency code; null when the customer has no billing currency configured
      * @type {string}
      * @memberof BillingRuleRefResponse
      */

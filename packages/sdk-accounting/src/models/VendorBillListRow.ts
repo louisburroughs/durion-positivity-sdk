@@ -70,6 +70,7 @@ export interface VendorBillListRow {
 export enum VendorBillListRowStatusEnum {
     PendingReceiptMatch = 'PENDING_RECEIPT_MATCH',
     MatchException = 'MATCH_EXCEPTION',
+    CurrencyHold = 'CURRENCY_HOLD',
     Approved = 'APPROVED',
     Rejected = 'REJECTED',
     Paid = 'PAID',
