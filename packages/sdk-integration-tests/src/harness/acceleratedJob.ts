@@ -84,11 +84,13 @@ const PART_PRICE = 40;
  */
 export const SERVICE_ADVISOR_LIMIT = 500;
 /**
- * How many ticks a job waits for its invoice id before failing. Generation is queued
- * (202 PENDING) and the id lands within a second of real time, so one tick is almost
- * always enough; the bound only stops a stuck command holding a bay forever.
+ * How long, in virtual time, a job waits for its invoice to be linked before failing.
+ * Generation is queued (202 PENDING); on alpha the link landed 5-53 virtual minutes
+ * after completion. The bound is virtual time, not ticks: a tick in which every job is
+ * only polling is one quick read, and twelve of those spanned a few virtual minutes,
+ * which failed whole days of jobs. It only stops a stuck command holding a bay forever.
  */
-export const INVOICE_PENDING_TICKS = 12;
+export const INVOICE_WAIT_VIRTUAL_MS = 2 * 60 * 60 * 1000;
 const COMPLETABLE = new Set(['OPEN', 'READY_TO_EXECUTE', 'IN_PROGRESS']);
 
 export class AcceleratedJob {
@@ -664,35 +666,58 @@ export class AcceleratedJob {
   }
 
   /**
-   * Invoice generation is queued: the first calls answer 202 PENDING with no id, and
-   * the id appears once the invoicing domain links it back to the workorder. It is safe
-   * to repeat — it returns the same invoice rather than making another.
+   * Invoice generation is queued: until the invoicing domain links the invoice back to
+   * the workorder, generate-invoice answers 202 PENDING with no id, and every such call
+   * queues *another* generation command. Once linked it returns the existing invoice —
+   * id and total — and queues nothing.
    *
-   * Suite C waits for the id inside one test. A job cannot: the day runner owns the
-   * clock, and a back-to-back burst of calls finishes before the link lands. That burst
-   * failed ~98% of a virtual year's jobs at this step with every workorder COMPLETED and
-   * every invoice sitting in DRAFT. So a pending answer re-queues this step for the next
-   * tick instead, bounded by INVOICE_PENDING_TICKS.
+   * So the job asks once, then polls the workorder (read-only) for the link, one read per
+   * tick so the day runner keeps the clock, and asks once more when the link is there.
+   * Suite C re-asks inside one test; a job re-asking every tick flooded the command topic
+   * with ~3 commands per invoice.
    */
-  private async generateInvoice(attempt = 1): Promise<Step[] | void> {
+  private async generateInvoice(): Promise<Step[] | void> {
+    if (await this.requestInvoice()) {
+      return;
+    }
+    const deadline = (await this.deps.now()).getTime() + INVOICE_WAIT_VIRTUAL_MS;
+    return [{ name: 'invoice-wait', run: () => this.awaitInvoiceLink(deadline) }];
+  }
+
+  private async awaitInvoiceLink(deadline: number): Promise<Step[] | void> {
+    const workorderId = this.requireWorkorder();
+    const workorder = await call('getWorkorder', () =>
+      this.deps.as.advisor.workorder.workOrderAPIApi.getWorkorder({ workorderId }),
+    );
+    if (readString(workorder, 'invoiceId')) {
+      if (await this.requestInvoice()) {
+        return;
+      }
+      throw new Error(`workorder ${workorderId} links an invoice but generate-invoice still answers pending`);
+    }
+    if ((await this.deps.now()).getTime() >= deadline) {
+      throw new Error(
+        `no invoice was linked to workorder ${workorderId} within ` +
+          `${INVOICE_WAIT_VIRTUAL_MS / 60_000} virtual minutes of asking`,
+      );
+    }
+    return [{ name: 'invoice-wait', run: () => this.awaitInvoiceLink(deadline) }];
+  }
+
+  /** One generate-invoice call; true when it answered with the invoice. */
+  private async requestInvoice(): Promise<boolean> {
     const workorderId = this.requireWorkorder();
     const generated = await call('generateWorkorderInvoice', () =>
       this.deps.as.advisor.workorder.workOrderAPIApi.generateWorkorderInvoice({ workorderId }),
     );
     const invoiceId = readString(generated, 'invoiceId');
-    if (invoiceId) {
-      this.invoiceId = invoiceId;
-      this.draftTotal = readNumber(generated, 'totalAmount', 'total');
-      await this.mark('invoiced');
-      return;
+    if (!invoiceId) {
+      return false;
     }
-    if (attempt >= INVOICE_PENDING_TICKS) {
-      throw new Error(
-        `generateWorkorderInvoice never returned an invoiceId for workorder ${workorderId} ` +
-          `after ${attempt} tick(s)`,
-      );
-    }
-    return [{ name: 'invoice', run: () => this.generateInvoice(attempt + 1) }];
+    this.invoiceId = invoiceId;
+    this.draftTotal = readNumber(generated, 'totalAmount', 'total');
+    await this.mark('invoiced');
+    return true;
   }
 
   /**
