@@ -266,6 +266,44 @@ export class ShopCalendar {
     );
   }
 
+  /**
+   * The first start at or after `from` whose whole `durationMinutes` fits inside one
+   * day's open window — a bookable slot, where `isOpen` only answers for an instant.
+   *
+   * The backend refuses an appointment whose *end* runs past closing as HARD
+   * OUTSIDE_OPERATING_HOURS, so checking the start alone booked 12:17-13:17 on a
+   * Saturday that closes at 13:00. Closed days and holidays are skipped.
+   *
+   * `jitterMinutes` spreads starts across the day without leaving it: it is taken
+   * modulo the minutes the slot can start in, counted from the earliest one. Suites
+   * pass a random jitter because every appointment an earlier run booked is still on
+   * the shared environment, and a fixed slot is taken.
+   */
+  slotOnOrAfter(from: Date, durationMinutes: number, jitterMinutes = 0): Date {
+    const firstDay = startOfUtcDay(from);
+    for (let ahead = 0; ahead <= 400; ahead += 1) {
+      const day = new Date(firstDay.getTime() + ahead * DAY_MS);
+      const window = this.windowFor(day);
+      if (!window) {
+        continue;
+      }
+      const latest = window.closeMinutes - durationMinutes;
+      // On the first day, not before `from`: rounded up to the minute so the slot
+      // never starts in the past of the instant asked about.
+      const fromMinutes = ahead === 0 ? Math.ceil((from.getTime() - day.getTime()) / 60_000) : 0;
+      const earliest = Math.max(window.openMinutes, fromMinutes);
+      if (earliest > latest) {
+        continue;
+      }
+      const offset = ((jitterMinutes % (latest - earliest + 1)) + (latest - earliest + 1)) % (latest - earliest + 1);
+      return atMinutes(day, earliest + offset);
+    }
+    throw new Error(
+      `[accel] the shop calendar has no ${durationMinutes}-minute slot in the next 400 days — every open window ` +
+        'is shorter than that, or the holiday list covers the year.',
+    );
+  }
+
   /** Open minutes on the day `instant` falls in; 0 when shut. */
   openMinutesOn(instant: Date): number {
     const window = this.windowFor(instant);

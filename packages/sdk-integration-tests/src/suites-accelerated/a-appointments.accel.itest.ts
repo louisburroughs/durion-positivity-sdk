@@ -28,7 +28,7 @@ import {
   seedFromRunId,
   type BuilderContext,
 } from '../harness/builders';
-import { call, expectHttpError, formatError, isHttpStatus, retryWhileReplicating } from '../harness/http';
+import { call, expectHttpError, formatError, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadContext, type ItestContext } from '../harness/ItestContext';
 import { acceleratedFixture, type AcceleratedFixture } from './accelFixture';
@@ -66,6 +66,15 @@ describe('Suite A — appointments', () => {
   let serviceRequestIds: string[];
 
   const SLOT_CONFLICT = 'already booked';
+  /**
+   * Refusals about the *slot* rather than the request, each answered by trying another
+   * one: taken by an earlier run (400 "already booked"), or a HARD 409
+   * SCHEDULING_CONFLICT for a closed day or out-of-hours slot. The last two should not
+   * happen now that every slot is placed inside the published calendar, but the
+   * backend's hours are whichever calendar was published last on a shared site — the
+   * same set the normal-clock suite retries (#114).
+   */
+  const SLOT_REFUSALS = [SLOT_CONFLICT, 'FACILITY_CLOSED', 'OUTSIDE_OPERATING_HOURS'];
 
   /**
    * A window starting `offsetMinutes` after 09:00 UTC tomorrow.
@@ -83,8 +92,7 @@ describe('Suite A — appointments', () => {
     // now, lands on a day the shop actually opens, and keeps the slot inside its
     // hours.
     const lead = 1 + Math.floor(offsetMinutes / (24 * 60));
-    const { startAt } = await accel.futureWindow(lead, offsetMinutes % (24 * 60));
-    return { startAt, endAt: new Date(startAt.getTime() + durationMinutes * 60_000) };
+    return accel.futureWindow(lead, offsetMinutes % (24 * 60), durationMinutes);
   };
 
   /**
@@ -94,10 +102,14 @@ describe('Suite A — appointments', () => {
    * only a year long in virtual time and the slot has to *arrive* while the suite
    * is still running for A6 to be able to convert it.
    */
-  const randomOffsetMinutes = () => Math.floor(Math.random() * 20) * 30 + Math.floor(Math.random() * 14) * 24 * 60;
+  const randomOffsetMinutes = (maxLeadDays = 14) =>
+    Math.floor(Math.random() * 20) * 30 + Math.floor(Math.random() * maxLeadDays) * 24 * 60;
 
-  const isSlotConflict = async (error: unknown): Promise<boolean> =>
-    isHttpStatus(error, 400) && (await formatError(error)).includes(SLOT_CONFLICT);
+  /** The refusal marker `error` carries, if it is one about the slot. */
+  const slotRefusal = async (error: unknown): Promise<string | undefined> => {
+    const message = error instanceof Error && !('response' in error) ? error.message : await formatError(error);
+    return SLOT_REFUSALS.find((marker) => message.includes(marker));
+  };
 
   /**
    * Books an appointment into a free slot.
@@ -110,9 +122,9 @@ describe('Suite A — appointments', () => {
    * refusal about the *slot* rather than the request - so it is answered by
    * trying a different one rather than by failing.
    */
-  const bookAppointment = async (as: DomainClients) => {
+  const bookAppointment = async (as: DomainClients, options: { maxLeadDays?: number } = {}) => {
     for (let attempt = 1; ; attempt += 1) {
-      const { startAt, endAt } = await window(randomOffsetMinutes(), 60);
+      const { startAt, endAt } = await window(randomOffsetMinutes(options.maxLeadDays), 60);
       try {
         return await retryWhileReplicating(
           () =>
@@ -133,14 +145,13 @@ describe('Suite A — appointments', () => {
           },
         );
       } catch (error) {
-        // retryWhileReplicating wraps the failure, so the conflict is matched on
+        // retryWhileReplicating wraps the failure, so the refusal is matched on
         // the message it carries rather than on the original error object.
-        const conflicted =
-          error instanceof Error ? error.message.includes(SLOT_CONFLICT) : await isSlotConflict(error);
-        if (!conflicted || attempt >= 10) {
+        const refusal = await slotRefusal(error);
+        if (!refusal || attempt >= 10) {
           throw error;
         }
-        console.log(`[A] slot taken on attempt ${attempt}; trying another`);
+        console.log(`[A] slot refused (${refusal}) on attempt ${attempt}; trying another`);
       }
     }
   };
@@ -260,7 +271,18 @@ describe('Suite A — appointments', () => {
       let moved = { startAt: virtualNow, endAt: virtualNow };
       let rescheduled;
       for (let attempt = 1; ; attempt += 1) {
-        const start = new Date(new Date(booked.startAt).getTime() + attempt * 60 * 60_000);
+        // An hour later, unless that runs past closing: then the first slot after it
+        // that fits the hours. The last run moved a Saturday 12:00 booking to 13:00,
+        // after the 13:00 close, and was refused OUTSIDE_OPERATING_HOURS.
+        //
+        // And never earlier than an hour after the previous attempt: past a closing,
+        // every `booked + N hours` maps to the same next opening, and a taken slot
+        // there would be retried ten times over.
+        const earliest = Math.max(
+          new Date(booked.startAt).getTime() + attempt * 60 * 60_000,
+          attempt > 1 ? moved.startAt.getTime() + 60 * 60_000 : 0,
+        );
+        const start = accel.calendar.slotOnOrAfter(new Date(earliest), 60);
         moved = { startAt: start, endAt: new Date(start.getTime() + 60 * 60_000) };
         try {
           rescheduled = await advisor.shopManager.appointmentsApi.rescheduleAppointment({
@@ -274,7 +296,7 @@ describe('Suite A — appointments', () => {
           });
           break;
         } catch (error) {
-          if (!(await isSlotConflict(error)) || attempt >= 10) {
+          if (!(await slotRefusal(error)) || attempt >= 10) {
             throw new Error(`rescheduleAppointment failed: ${await formatError(error)}`);
           }
         }
@@ -410,7 +432,11 @@ describe('Suite A — appointments', () => {
     // it. Here the virtual clock reaches the slot, which makes the whole
     // book -> arrive -> convert path one test rather than two disconnected halves.
     it('waits for the appointment to become due, then bridges it', async () => {
-      const appointment = await bookAppointment(advisor);
+      // Near, not anywhere in the coming fortnight: this test waits for the slot, and
+      // fourteen virtual days at scale 1460 was 811 real seconds against the 600 s
+      // timeout. One or two days ahead, plus a weekend or holiday skipped, is at most
+      // about five virtual days — under 300 s at either scale alpha runs.
+      const appointment = await bookAppointment(advisor, { maxLeadDays: 2 });
       const startAt = new Date(appointment.startAt);
       const before = await accel.now();
       expect(startAt.getTime()).toBeGreaterThan(before.getTime());

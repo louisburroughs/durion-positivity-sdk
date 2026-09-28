@@ -46,7 +46,7 @@ export interface AcceleratedFixture {
    * Here the slot arrives during the run, so it has to be a *real* open window on a
    * day the shop actually opens.
    */
-  futureWindow(leadDays: number, jitterMinutes?: number): Promise<ScheduleWindow>;
+  futureWindow(leadDays: number, jitterMinutes?: number, durationMinutes?: number): Promise<ScheduleWindow>;
   /**
    * Waits for `minutes` of virtual time to pass, and returns where the clock
    * landed.
@@ -92,15 +92,17 @@ export async function acceleratedFixture(): Promise<AcceleratedFixture> {
     return observed.virtualTime;
   };
 
-  const futureWindow = async (leadDays: number, jitterMinutes = 0): Promise<ScheduleWindow> => {
+  const futureWindow = async (leadDays: number, jitterMinutes = 0, durationMinutes = 60): Promise<ScheduleWindow> => {
     const at = await now();
+    // From the start of the target day, not the instant `leadDays` from now: the slot
+    // then starts from the day's opening plus jitter rather than inheriting the
+    // clock's minutes, and the whole slot — its end too — is inside the hours. Only
+    // the start used to be checked, and 12:17-13:17 on a Saturday closing at 13:00
+    // was refused OUTSIDE_OPERATING_HOURS.
     const target = new Date(at.getTime() + Math.max(1, leadDays) * 86_400_000);
-    const open = calendar.nextOpen(target, 'BAY');
-    const candidate = new Date(open.getTime() + jitterMinutes * 60_000);
-    // Jitter can push past close on a short Saturday; fall back to the window's own
-    // opening instant rather than booking into the evening.
-    const startAt = calendar.isOpen(candidate, 'BAY') ? candidate : open;
-    return { startAt, endAt: new Date(startAt.getTime() + 3_600_000) };
+    const day = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), target.getUTCDate()));
+    const startAt = calendar.slotOnOrAfter(day, durationMinutes, jitterMinutes);
+    return { startAt, endAt: new Date(startAt.getTime() + durationMinutes * 60_000) };
   };
 
   const elapseVirtual = async (minutes: number): Promise<Date> => {
