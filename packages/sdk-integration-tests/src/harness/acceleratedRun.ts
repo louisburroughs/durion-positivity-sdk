@@ -25,6 +25,7 @@ import { ItestConfig } from './ItestConfig';
 import { loadContext, type ItestContext } from './ItestContext';
 import { Personas } from './personas';
 import { ResourceLedger } from './resourceLedger';
+import { closeMonth, createPeriodPort, monthsToClose } from './monthEnd';
 import { ClockConvergedError, VirtualClock } from './virtualClock';
 import { VirtualTimer } from './virtualTimer';
 
@@ -66,6 +67,17 @@ export interface YearRunResult {
    * designed, not a failed day. They are reported so the open workorders are visible.
    */
   reclaimed: string[];
+  /**
+   * Month end: the months that had fully ended before the last driven day began, and
+   * the ones the run closed (this process or an earlier one of the same year).
+   */
+  periods: { ended: string[]; closed: readonly string[] };
+  /**
+   * Month-end closes the backend refused. Not in `failures`: a refused close is retried
+   * the next day, and one that then lands is month end working as a real one does —
+   * the suite asserts on `periods` instead, and prints these.
+   */
+  periodCloseRefusals: string[];
 }
 
 export interface YearRunOptions {
@@ -192,6 +204,11 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
 
   const failures: string[] = [];
 
+  // Month end is the controller's, as in a real shop. Periods are tenant-wide, so the
+  // closed ones in this timeline were reopened at global setup (see monthEnd.ts).
+  const periods = createPeriodPort(as.controller.accounting);
+  const periodCloseRefusals: string[] = [];
+
   // Claims the interrupted run left behind. Reconciliation would see these bays as
   // occupied and keep them out of service for the rest of the year, with no job
   // object left to finish or release them — so the workorders are released here and
@@ -315,6 +332,39 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     // would span two calendar years and converge halfway through.
     const dayStart = await clock.now();
 
+    // Month end, before the day's work: the first day of a month closes the ones that
+    // have ended. Closing on the new day rather than at the old one's last close leaves
+    // the async GL postings of the month's last jobs hours of virtual time to land —
+    // one arriving after the close would be refused PERIOD_CLOSED. In order, and a
+    // refusal stops the rest and is retried tomorrow.
+    let monthEndFault: string | undefined;
+    for (const code of monthsToClose(first.virtualStart, dayStart, journal.closedPeriods)) {
+      let outcome: Awaited<ReturnType<typeof closeMonth>>;
+      try {
+        outcome = await closeMonth(periods, code);
+      } catch (error) {
+        // Not a refusal (see closeMonth): the harness or the tenant is miswired, and
+        // the run stops the way a day that threw does.
+        monthEndFault = `month-end close of ${code} failed outright: ${await formatError(error)}`;
+        break;
+      }
+      if (outcome.result === 'refused') {
+        const refusal = `month-end close of ${code} refused on virtual ${dayStart.toISOString()}: ${outcome.detail}`;
+        periodCloseRefusals.push(refusal);
+        log(`${refusal} — retrying tomorrow`);
+        break;
+      }
+      journal.recordClosedPeriod(code);
+      journal.flush();
+      log(`closed accounting period ${code}${outcome.result === 'already-closed' ? ' (it was already closed)' : ''}`);
+    }
+    if (monthEndFault !== undefined) {
+      stoppedBecause = 'failed';
+      stopDetail = monthEndFault;
+      failures.push(stopDetail);
+      break;
+    }
+
     let report: DayReport;
     try {
       report = await runner.runDay(dayNumber, { sampled });
@@ -425,6 +475,11 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     journal,
     failures,
     reclaimed,
+    periods: {
+      ended: monthsToClose(first.virtualStart, new Date(`${lastVirtualDate}T00:00:00.000Z`), []),
+      closed: journal.closedPeriods,
+    },
+    periodCloseRefusals,
   };
 
   log(

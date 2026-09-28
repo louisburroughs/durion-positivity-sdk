@@ -85,7 +85,8 @@ const REQUIRED_AUTHORITIES: Record<CredentialedPersona, readonly string[]> = {
   acct: ['accounting:payment:apply', 'accounting:credit-memo:create', 'invoice:manage'],
   // C9's submitAccountingEvent moved here with the permission. margaret.olsen
   // is the seeded CONTROLLER and shares the operational password.
-  controller: ['accounting:events:submit'],
+  // The accelerated year closes each month as the controller (harness/monthEnd.ts).
+  controller: ['accounting:events:submit', 'accounting:period:close'],
 };
 
 /**

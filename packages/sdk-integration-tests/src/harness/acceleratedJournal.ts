@@ -73,6 +73,12 @@ export interface JournalState {
    * Optional so a journal written before this field still loads.
    */
   cycleCountAdjustmentIds?: string[];
+  /**
+   * Accounting periods (`YYYY-MM`) the run closed at month end. A resumed run keeps
+   * them closed rather than reopening its own closes at setup. Optional so a journal
+   * written before month-end close still loads.
+   */
+  closedPeriods?: string[];
   /** Claims still held when the journal was last written, for reporting a crash. */
   openClaims: Array<{ positionId: string; technicianId: string; workorderId?: string }>;
 }
@@ -144,6 +150,7 @@ export class AcceleratedJournal {
         (parsed.workorderIds?.length ?? 0) > 0 ||
         (parsed.invoiceIds?.length ?? 0) > 0 ||
         (parsed.cycleCountAdjustmentIds?.length ?? 0) > 0 ||
+        (parsed.closedPeriods?.length ?? 0) > 0 ||
         (parsed.openClaims?.length ?? 0) > 0;
 
       parsed.updatedAt = now;
@@ -248,6 +255,19 @@ export class AcceleratedJournal {
   /** Every cycle-count adjustment the year approved, across every process that worked it. */
   get cycleCountAdjustmentIds(): readonly string[] {
     return this.state.cycleCountAdjustmentIds ?? [];
+  }
+
+  recordClosedPeriod(periodCode: string): void {
+    const codes = (this.state.closedPeriods ??= []);
+    if (!codes.includes(periodCode)) {
+      codes.push(periodCode);
+      codes.sort();
+    }
+  }
+
+  /** Every month the year closed, across every process that worked it. */
+  get closedPeriods(): readonly string[] {
+    return this.state.closedPeriods ?? [];
   }
 
   recordOpenClaims(claims: Array<{ positionId: string; technicianId: string; workorderId?: string }>): void {

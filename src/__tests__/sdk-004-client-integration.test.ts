@@ -393,6 +393,9 @@ describe('SDK-004 AC-10: factory function invocation — all 5 clients return AP
     expect(client['journalEntriesApi']).toBeDefined();
     expect(client['glAccountsApi']).toBeDefined();
     expect(client['financialReportingApi']).toBeDefined();
+    expect(client['accountingEventsApi']).toBeDefined();
+    // The accelerated year's month-end close depends on it (harness/monthEnd.ts).
+    expect(client['accountingPeriodsApi']).toBeDefined();
   });
 
   it('createTenantClient returns expected API namespaces', async () => {
