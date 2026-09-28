@@ -137,13 +137,16 @@ export function createShiftPort(
   ): Promise<{ closed: string[]; failures: string[] }> => {
     const outcomes = await Promise.allSettled(
       personIds.map(async (personId) => {
+        let ended;
         try {
-          await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
+          ended = await admin.people.workSessionsAPIApi.stopWorkSession({ workSessionRequest: { personId } });
         } catch (error) {
           if (!isHttpStatus(error, 404)) {
             throw new Error(`stopWorkSession ${personId} failed: ${await formatError(error)}`);
           }
+          return personId;
         }
+        await submitSession(ended);
         return personId;
       }),
     );
@@ -157,6 +160,29 @@ export function createShiftPort(
         .filter((outcome): outcome is PromiseRejectedResult => outcome.status === 'rejected')
         .map((outcome) => (outcome.reason as Error).message),
     };
+  };
+
+  /**
+   * Submits an ended shift, which is what makes it payroll.
+   *
+   * pos-people writes the time entry — attendance start and end, PENDING_APPROVAL — only
+   * when a session is *submitted*; an ended session is not one. A year that clocked 2,703
+   * shifts in and out without submitting any wrote no time entries at all, and Z13's
+   * audit of payroll against the shop's hours read nothing to check. Billable minutes are
+   * the session's own span, with no breaks, since the run takes none; submitted at the
+   * backend's end stamp so the entry is dated in virtual time, not the laptop's.
+   */
+  const submitSession = async (session: { sessionId: string; startedAt?: Date; endedAt?: Date }): Promise<void> => {
+    const endedAt = session.endedAt ?? new Date();
+    const billableMinutes = session.startedAt
+      ? Math.max(0, Math.floor((endedAt.getTime() - session.startedAt.getTime()) / 60_000))
+      : 0;
+    await call(`submitWorkSession ${session.sessionId}`, () =>
+      admin.people.workSessionsAPIApi.submitWorkSession({
+        id: session.sessionId,
+        workSessionSubmitRequest: { billableMinutes, breakMinutes: 0, submittedAt: endedAt },
+      }),
+    );
   };
 
   /** A stale session from an interrupted run is closed before a fresh one opens. */
@@ -282,10 +308,13 @@ export function createShiftPort(
       // to 20 and is capped at 100 (TimeEntryApprovalController), and a loop that
       // stopped at an arbitrary bound would approve part of a busy day while the log
       // claimed the shift's time had been approved.
-      const pending = await readAllPages('listTimeEntries(SUBMITTED)', (page) =>
+      // PENDING_APPROVAL, not SUBMITTED: submitting a work session writes its time entry
+      // as PENDING_APPROVAL (WorkSessionServiceImpl.recordTimeEntry), and the batch
+      // approval accepts either. Listing SUBMITTED found nothing to approve all year.
+      const pending = await readAllPages('listTimeEntries(PENDING_APPROVAL)', (page) =>
         manager.people.timeEntryApprovalAPIApi.listTimeEntries({
           // The generated enum, not the string: the client narrows this param.
-          status: ListTimeEntriesStatusEnum.Submitted,
+          status: ListTimeEntriesStatusEnum.PendingApproval,
           locationId: refs.locationId,
           workDate: at,
           timeZone: 'UTC',
@@ -409,6 +438,12 @@ export function createMaintenancePort(
               reasonCode: 'CYCLE_COUNT',
               countedQuantity: Math.max(0, quantityOnHandBefore + variance),
               quantityOnHandBefore,
+              // The location the on-hand above was read at. Without it the variance
+              // posts against the SKU's location-less balance (backend #2167: "null
+              // only when neither names one"), which is not the balance counted — and
+              // a downward count the site could absorb drove that one negative: 27
+              // weekly counts refused NEGATIVE_STOCK_FLOOR_VIOLATION "at location null".
+              locationId: refs.locationId,
               costAtTimeOfAdjustment: 100,
               createdByUserId: refs.employees.partsClerk || refs.employees.manager,
             },
