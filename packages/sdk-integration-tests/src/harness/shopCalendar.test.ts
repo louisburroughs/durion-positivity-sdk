@@ -205,3 +205,41 @@ describe('ShopCalendar — window sizes and open-day counts', () => {
     expect(calendar.countOpenDays(at('2025-12-22T00:00:00Z'), at('2025-12-29T00:00:00Z'))).toBe(5);
   });
 });
+
+describe('slotOnOrAfter', () => {
+  const calendar = new ShopCalendar(spec());
+
+  it('keeps the whole slot inside the window: a Saturday start that would end past 13:00 moves on', () => {
+    // 12:17-13:17 on a Saturday closing at 13:00 is what the backend refused as
+    // OUTSIDE_OPERATING_HOURS. Sunday is shut, so the next fit is Monday's opening.
+    expect(calendar.slotOnOrAfter(at('2025-11-08T12:17:00Z'), 60).toISOString()).toBe('2025-11-10T08:00:00.000Z');
+    expect(calendar.slotOnOrAfter(at('2025-11-08T11:30:00Z'), 60).toISOString()).toBe('2025-11-08T11:30:00.000Z');
+    expect(calendar.slotOnOrAfter(at('2025-11-08T12:00:00Z'), 60).toISOString()).toBe('2025-11-08T12:00:00.000Z');
+  });
+
+  it('starts no earlier than the instant asked about, rounded up to the minute', () => {
+    expect(calendar.slotOnOrAfter(at('2025-11-03T10:15:30Z'), 60).toISOString()).toBe('2025-11-03T10:16:00.000Z');
+    expect(calendar.slotOnOrAfter(at('2025-11-03T06:00:00Z'), 60).toISOString()).toBe('2025-11-03T08:00:00.000Z');
+  });
+
+  it('skips holidays', () => {
+    expect(calendar.slotOnOrAfter(at('2025-12-25T00:00:00Z'), 60).toISOString()).toBe('2025-12-26T08:00:00.000Z');
+  });
+
+  it('spreads starts with jitter but never past the last start that fits', () => {
+    const day = at('2025-11-03T00:00:00Z');
+    expect(calendar.slotOnOrAfter(day, 60, 90).toISOString()).toBe('2025-11-03T09:30:00.000Z');
+    // Weekday 08:00-18:00 fits a 60-minute slot starting 08:00-17:00: 541 starts.
+    expect(calendar.slotOnOrAfter(day, 60, 540).toISOString()).toBe('2025-11-03T17:00:00.000Z');
+    expect(calendar.slotOnOrAfter(day, 60, 541).toISOString()).toBe('2025-11-03T08:00:00.000Z');
+    for (let jitter = 0; jitter < 2000; jitter += 37) {
+      const start = calendar.slotOnOrAfter(at('2025-11-08T00:00:00Z'), 60, jitter);
+      expect(calendar.isOpen(start, 'BAY')).toBe(true);
+      expect(calendar.isOpen(new Date(start.getTime() + 59 * 60_000), 'BAY')).toBe(true);
+    }
+  });
+
+  it('refuses a slot longer than any window', () => {
+    expect(() => calendar.slotOnOrAfter(at('2025-11-03T00:00:00Z'), 11 * 60)).toThrow(/no 660-minute slot/);
+  });
+});
