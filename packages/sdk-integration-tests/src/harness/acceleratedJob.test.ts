@@ -1,5 +1,5 @@
 import { SeederRandom, type ReferenceCache } from '@durion-sdk/seeder';
-import { AcceleratedJob, INVOICE_PENDING_TICKS, SERVICE_ADVISOR_LIMIT, type JobDeps } from './acceleratedJob';
+import { AcceleratedJob, INVOICE_WAIT_VIRTUAL_MS, SERVICE_ADVISOR_LIMIT, type JobDeps } from './acceleratedJob';
 import type { Claim } from './resourceLedger';
 
 /**
@@ -179,59 +179,97 @@ const atStep = (job: AcceleratedJob, from: string): void => {
 };
 
 describe('AcceleratedJob — a queued invoice', () => {
-  const generating = (answers: Array<Record<string, unknown>>) => {
-    const calls: string[] = [];
+  /**
+   * generate-invoice answers PENDING until the invoice is linked to the workorder, and
+   * the workorder read shows the link. `linkAfterReads` is how many reads see no link.
+   */
+  const invoicing = (linkAfterReads: number, clock: { ms: number }, stepMs = 60_000) => {
+    const generates: string[] = [];
+    let reads = 0;
+    const linked = () => reads > linkAfterReads;
     const as = {
       advisor: {
         workorder: {
           workOrderAPIApi: {
             async generateWorkorderInvoice(request: { workorderId: string }) {
-              calls.push(request.workorderId);
-              return answers.shift() ?? { status: 'PENDING' };
+              generates.push(request.workorderId);
+              return linked()
+                ? { invoiceId: 'inv-1', status: 'DRAFT', totalAmount: 612.5 }
+                : { status: 'PENDING' };
+            },
+            async getWorkorder() {
+              reads += 1;
+              clock.ms += stepMs;
+              return linked() ? { invoiceId: 'inv-1' } : {};
             },
           },
         },
       },
     } as unknown as JobDeps['as'];
-    return { as, calls };
+    return { as, generates, reads: () => reads };
   };
 
-  it('waits a tick for the invoice id rather than failing on 202 PENDING', async () => {
-    // Generation is queued: the first answer carries no id. A burst of back-to-back
-    // retries finishes before the id is linked, which failed ~98% of a year's jobs here.
-    const { as, calls } = generating([
-      { status: 'PENDING' },
-      { status: 'PENDING' },
-      { invoiceId: 'inv-1', status: 'GENERATED', totalAmount: 612.5 },
-    ]);
-    const job = new AcceleratedJob('job-5', { ...deps(claimAt('site-north')), as });
+  const jobWith = (as: JobDeps['as'], clock: { ms: number }) =>
+    new AcceleratedJob('job-5', {
+      ...deps(claimAt('site-north')),
+      as,
+      now: async () => new Date(clock.ms),
+    });
+
+  it('asks once, polls the workorder for the link, then reads the invoice', async () => {
+    // Every PENDING generate-invoice queues another command; re-asking each tick put
+    // ~3 commands on the topic per invoice. Only the first ask and the post-link read
+    // should hit it.
+    const clock = { ms: Date.parse('2025-11-03T10:00:00Z') };
+    const { as, generates, reads } = invoicing(2, clock);
+    const job = jobWith(as, clock);
     atStep(job, 'invoice');
 
     expect(await job.advance()).toBe('in-progress');
-    expect(job.nextStep).toBe('invoice');
-    expect(calls).toHaveLength(1);
-
+    expect(job.nextStep).toBe('invoice-wait');
     await job.advance();
+    await job.advance();
+    expect(job.invoiceId).toBeUndefined();
     await job.advance();
 
     expect(job.outcome).toBe('in-progress');
     expect(job.invoiceId).toBe('inv-1');
     expect(job.draftTotal).toBe(612.5);
     expect(job.nextStep).toBe('finalize');
-    expect(calls).toHaveLength(3);
+    expect(reads()).toBe(3);
+    expect(generates).toHaveLength(2);
   });
 
-  it('fails once the id has not arrived within the bound', async () => {
-    const { as } = generating([]);
-    const job = new AcceleratedJob('job-6', { ...deps(claimAt('site-north')), as });
+  it('takes the invoice at once when generation answers with it', async () => {
+    const clock = { ms: Date.parse('2025-11-03T10:00:00Z') };
+    const { as, generates, reads } = invoicing(-1, clock);
+    const job = jobWith(as, clock);
     atStep(job, 'invoice');
 
-    for (let tick = 1; tick < INVOICE_PENDING_TICKS; tick += 1) {
+    await job.advance();
+
+    expect(job.invoiceId).toBe('inv-1');
+    expect(job.nextStep).toBe('finalize');
+    expect(reads()).toBe(0);
+    expect(generates).toHaveLength(1);
+  });
+
+  it('bounds the wait by virtual time, not by how many ticks it took', async () => {
+    // Quick ticks spend little virtual time each: twelve of them spanned a few virtual
+    // minutes and failed whole days of jobs whose link was ~25 minutes away.
+    const clock = { ms: Date.parse('2025-11-03T10:00:00Z') };
+    const { as } = invoicing(Number.MAX_SAFE_INTEGER, clock, 60_000);
+    const job = jobWith(as, clock);
+    atStep(job, 'invoice');
+
+    await job.advance();
+    const minutes = INVOICE_WAIT_VIRTUAL_MS / 60_000;
+    for (let tick = 1; tick < minutes; tick += 1) {
       expect(await job.advance()).toBe('in-progress');
     }
 
     expect(await job.advance()).toBe('failed');
-    expect(job.failure).toContain(`after ${INVOICE_PENDING_TICKS} tick(s)`);
+    expect(job.failure).toContain(`within ${minutes} virtual minutes`);
   });
 });
 
