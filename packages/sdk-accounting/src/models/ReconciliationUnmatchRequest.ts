@@ -14,29 +14,24 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to reverse a match by matchId or by statement line ids
+ * Unmatch an ACCEPTED match; the reason is recorded on the match and in the audit trail
  * @export
  * @interface ReconciliationUnmatchRequest
  */
 export interface ReconciliationUnmatchRequest {
     /**
-     * Match group id to reverse
+     * Why the match is undone (at least 10 characters)
      * @type {string}
      * @memberof ReconciliationUnmatchRequest
      */
-    matchId?: string;
-    /**
-     * Statement line ids whose match group should be reversed
-     * @type {Array<string>}
-     * @memberof ReconciliationUnmatchRequest
-     */
-    statementLineIds?: Array<string>;
+    reason: string;
 }
 
 /**
  * Check if a given object implements the ReconciliationUnmatchRequest interface.
  */
 export function instanceOfReconciliationUnmatchRequest(value: object): boolean {
+    if (!('reason' in value)) return false;
     return true;
 }
 
@@ -50,8 +45,7 @@ export function ReconciliationUnmatchRequestFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'matchId': json['matchId'] == null ? undefined : json['matchId'],
-        'statementLineIds': json['statementLineIds'] == null ? undefined : json['statementLineIds'],
+        'reason': json['reason'],
     };
 }
 
@@ -61,8 +55,7 @@ export function ReconciliationUnmatchRequestToJSON(value?: ReconciliationUnmatch
     }
     return {
         
-        'matchId': value['matchId'],
-        'statementLineIds': value['statementLineIds'],
+        'reason': value['reason'],
     };
 }
 

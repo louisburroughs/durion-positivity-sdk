@@ -15,47 +15,120 @@
 
 import * as runtime from '../runtime';
 import type {
+  AdjustmentReverseRequest,
   AdjustmentTypeResponse,
   ApiError,
-  BankReconciliationImportRequest,
+  AutoMatchResponse,
+  BankReconciliationAdjustmentResponse,
   BankReconciliationListResponse,
   BankReconciliationResponse,
+  OutstandingItemJustificationRequest,
+  OutstandingItemReasonRequest,
+  OutstandingItemRegisterRequest,
+  OutstandingItemResponse,
   ReconciliationAdjustmentRequest,
   ReconciliationAuditResponse,
-  ReconciliationMatchRequest,
+  ReconciliationCandidatesResponse,
+  ReconciliationCreateRequest,
+  ReconciliationJustificationRequest,
+  ReconciliationMatchCreateRequest,
+  ReconciliationMatchDecisionRequest,
+  ReconciliationMatchResponse,
+  ReconciliationReasonRequest,
   ReconciliationReportResponse,
+  ReconciliationReviewResponse,
+  ReconciliationTransitionRequest,
   ReconciliationUnmatchRequest,
 } from '../models/index';
 import {
+    AdjustmentReverseRequestFromJSON,
+    AdjustmentReverseRequestToJSON,
     AdjustmentTypeResponseFromJSON,
     AdjustmentTypeResponseToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
-    BankReconciliationImportRequestFromJSON,
-    BankReconciliationImportRequestToJSON,
+    AutoMatchResponseFromJSON,
+    AutoMatchResponseToJSON,
+    BankReconciliationAdjustmentResponseFromJSON,
+    BankReconciliationAdjustmentResponseToJSON,
     BankReconciliationListResponseFromJSON,
     BankReconciliationListResponseToJSON,
     BankReconciliationResponseFromJSON,
     BankReconciliationResponseToJSON,
+    OutstandingItemJustificationRequestFromJSON,
+    OutstandingItemJustificationRequestToJSON,
+    OutstandingItemReasonRequestFromJSON,
+    OutstandingItemReasonRequestToJSON,
+    OutstandingItemRegisterRequestFromJSON,
+    OutstandingItemRegisterRequestToJSON,
+    OutstandingItemResponseFromJSON,
+    OutstandingItemResponseToJSON,
     ReconciliationAdjustmentRequestFromJSON,
     ReconciliationAdjustmentRequestToJSON,
     ReconciliationAuditResponseFromJSON,
     ReconciliationAuditResponseToJSON,
-    ReconciliationMatchRequestFromJSON,
-    ReconciliationMatchRequestToJSON,
+    ReconciliationCandidatesResponseFromJSON,
+    ReconciliationCandidatesResponseToJSON,
+    ReconciliationCreateRequestFromJSON,
+    ReconciliationCreateRequestToJSON,
+    ReconciliationJustificationRequestFromJSON,
+    ReconciliationJustificationRequestToJSON,
+    ReconciliationMatchCreateRequestFromJSON,
+    ReconciliationMatchCreateRequestToJSON,
+    ReconciliationMatchDecisionRequestFromJSON,
+    ReconciliationMatchDecisionRequestToJSON,
+    ReconciliationMatchResponseFromJSON,
+    ReconciliationMatchResponseToJSON,
+    ReconciliationReasonRequestFromJSON,
+    ReconciliationReasonRequestToJSON,
     ReconciliationReportResponseFromJSON,
     ReconciliationReportResponseToJSON,
+    ReconciliationReviewResponseFromJSON,
+    ReconciliationReviewResponseToJSON,
+    ReconciliationTransitionRequestFromJSON,
+    ReconciliationTransitionRequestToJSON,
     ReconciliationUnmatchRequestFromJSON,
     ReconciliationUnmatchRequestToJSON,
 } from '../models/index';
+
+export interface AcceptReconciliationMatchRequest {
+    reconciliationId: string;
+    matchId: string;
+    reconciliationMatchDecisionRequest?: ReconciliationMatchDecisionRequest;
+}
 
 export interface AddReconciliationAdjustmentRequest {
     reconciliationId: string;
     reconciliationAdjustmentRequest: ReconciliationAdjustmentRequest;
 }
 
+export interface AutoMatchReconciliationRequest {
+    reconciliationId: string;
+}
+
+export interface CancelReconciliationRequest {
+    reconciliationId: string;
+    reconciliationJustificationRequest: ReconciliationJustificationRequest;
+}
+
+export interface ClearReconciliationOutstandingItemInGapRequest {
+    reconciliationId: string;
+    itemId: string;
+    outstandingItemJustificationRequest: OutstandingItemJustificationRequest;
+}
+
+export interface CreateReconciliationRequest {
+    reconciliationCreateRequest: ReconciliationCreateRequest;
+}
+
+export interface CreateReconciliationMatchRequest {
+    reconciliationId: string;
+    reconciliationMatchCreateRequest: ReconciliationMatchCreateRequest;
+}
+
 export interface FinalizeReconciliationRequest {
     reconciliationId: string;
+    reconciliationTransitionRequest?: ReconciliationTransitionRequest;
 }
 
 export interface GetReconciliationRequest {
@@ -64,30 +137,82 @@ export interface GetReconciliationRequest {
 
 export interface GetReconciliationAuditRequest {
     reconciliationId: string;
+    page?: number;
+    size?: number;
 }
 
 export interface GetReconciliationReportRequest {
     reconciliationId: string;
 }
 
-export interface ImportReconciliationRequest {
-    bankReconciliationImportRequest: BankReconciliationImportRequest;
+export interface GetReconciliationReviewRequest {
+    reconciliationId: string;
+}
+
+export interface ListReconciliationCandidatesRequest {
+    reconciliationId: string;
+    bankTransactionId?: string;
+    glLineId?: string;
+    windowDays?: number;
 }
 
 export interface ListReconciliationsRequest {
     glAccountId?: string;
     status?: ListReconciliationsStatusEnum;
+    periodCode?: string;
+    from?: Date;
+    to?: Date;
     page?: number;
     size?: number;
 }
 
-export interface MatchReconciliationRequest {
+export interface ReaffirmReconciliationOutstandingItemRequest {
     reconciliationId: string;
-    reconciliationMatchRequest: ReconciliationMatchRequest;
+    itemId: string;
+    outstandingItemJustificationRequest: OutstandingItemJustificationRequest;
 }
 
-export interface UnmatchReconciliationRequest {
+export interface RegisterReconciliationOutstandingItemRequest {
     reconciliationId: string;
+    outstandingItemRegisterRequest: OutstandingItemRegisterRequest;
+}
+
+export interface RejectReconciliationMatchRequest {
+    reconciliationId: string;
+    matchId: string;
+    reconciliationMatchDecisionRequest?: ReconciliationMatchDecisionRequest;
+}
+
+export interface ReleaseReconciliationOutstandingItemRequest {
+    reconciliationId: string;
+    itemId: string;
+    outstandingItemReasonRequest: OutstandingItemReasonRequest;
+}
+
+export interface ReturnReconciliationRequest {
+    reconciliationId: string;
+    reconciliationReasonRequest: ReconciliationReasonRequest;
+}
+
+export interface ReverseReconciliationAdjustmentRequest {
+    reconciliationId: string;
+    adjustmentId: string;
+    adjustmentReverseRequest: AdjustmentReverseRequest;
+}
+
+export interface SubmitReconciliationRequest {
+    reconciliationId: string;
+    reconciliationTransitionRequest?: ReconciliationTransitionRequest;
+}
+
+export interface SupersedeReconciliationRequest {
+    reconciliationId: string;
+    reconciliationJustificationRequest: ReconciliationJustificationRequest;
+}
+
+export interface UnmatchReconciliationMatchRequest {
+    reconciliationId: string;
+    matchId: string;
     reconciliationUnmatchRequest: ReconciliationUnmatchRequest;
 }
 
@@ -97,10 +222,63 @@ export interface UnmatchReconciliationRequest {
 export class BankReconciliationApi extends runtime.BaseAPI {
 
     /**
-     * Records a signed reconciliation adjustment and posts a real balanced journal entry, debiting or crediting the reconciled cash account against the type\'s mapped counter account, through the accounting-period gate. Use this tool for bank-only items such as fees or interest that have no GL counterpart; do not use matchReconciliation, which links existing posted GL lines. Preconditions: the reconciliation must be IN_PROGRESS, and the amount sign must be permitted for the type (BANK_FEE and NSF_FEE negative, INTEREST_EARNED positive, OTHER any). Required inputs: reconciliationId (UUID) as a path parameter, type (BANK_FEE, NSF_FEE, INTEREST_EARNED or OTHER) and a non-zero signed amount; description (max 500 chars) is optional. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT event and posts a journal entry that changes GL balances. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation is missing, 409 RECONCILIATION_ALREADY_FINALIZED when finalized, and 422 PERIOD_CLOSED, PERIOD_HARD_LOCKED, RECONCILIATION_ADJUSTMENT_SIGN_INVALID or GL_MAPPING_NOT_CONFIGURED (no GL counter-account mapping configured for the adjustment type) for period-gate, sign or configuration failures. 
-     * Record Reconciliation Adjustment
+     * Accepts a PROPOSED match: the match becomes ACCEPTED, its bank rows MATCHED, and any OPEN ledger-side outstanding item on its lines CLEARED. Use this tool to confirm a proposal from autoMatchReconciliation; use rejectReconciliationMatch instead to decline it. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the match must be PROPOSED and its members still matchable; a justification is needed when the proposal uses the tolerance or spans dates beyond the window. Required inputs: reconciliationId and matchId as path parameters; justification optional. Emits an ACCOUNTING_RECONCILIATION_MATCH_ACCEPT event and a RECONCILIATION_MATCH_ACCEPT audit row. Returns 404 RECONCILIATION_NOT_FOUND for an unknown match, 409 MATCH_STATE_INVALID when the match is not PROPOSED, 409 RECONCILIATION_LINE_INELIGIBLE when a member is no longer matchable, and 422 MATCH_REQUIRES_REVIEW when a justification is needed. 
+     * Accept Proposed Match
      */
-    async addReconciliationAdjustmentRaw(requestParameters: AddReconciliationAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+    async acceptReconciliationMatchRaw(requestParameters: AcceptReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationMatchResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling acceptReconciliationMatch().'
+            );
+        }
+
+        if (requestParameters['matchId'] == null) {
+            throw new runtime.RequiredError(
+                'matchId',
+                'Required parameter "matchId" was null or undefined when calling acceptReconciliationMatch().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/matches/{matchId}/accept`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))).replace(`{${"matchId"}}`, encodeURIComponent(String(requestParameters['matchId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationMatchDecisionRequestToJSON(requestParameters['reconciliationMatchDecisionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReconciliationMatchResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Accepts a PROPOSED match: the match becomes ACCEPTED, its bank rows MATCHED, and any OPEN ledger-side outstanding item on its lines CLEARED. Use this tool to confirm a proposal from autoMatchReconciliation; use rejectReconciliationMatch instead to decline it. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the match must be PROPOSED and its members still matchable; a justification is needed when the proposal uses the tolerance or spans dates beyond the window. Required inputs: reconciliationId and matchId as path parameters; justification optional. Emits an ACCOUNTING_RECONCILIATION_MATCH_ACCEPT event and a RECONCILIATION_MATCH_ACCEPT audit row. Returns 404 RECONCILIATION_NOT_FOUND for an unknown match, 409 MATCH_STATE_INVALID when the match is not PROPOSED, 409 RECONCILIATION_LINE_INELIGIBLE when a member is no longer matchable, and 422 MATCH_REQUIRES_REVIEW when a justification is needed. 
+     * Accept Proposed Match
+     */
+    async acceptReconciliationMatch(requestParameters: AcceptReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationMatchResponse> {
+        const response = await this.acceptReconciliationMatchRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Posts a reconciliation adjustment as a real balanced journal entry through the accounting-period gate: positive debits the reconciled cash account against the type\'s mapped counter account, negative credits it; BANK_FEE and NSF_FEE are negative, INTEREST_EARNED positive, and TRANSFER (either sign) posts against counterGlAccountId, another bank account, with no mapping. OTHER posts to the clearing account and names exactly one link: a bank transaction, settlesMatchId (a match residual; the server sets the amount to the served residual and replaces the match with an exact one) or bridgesStatementId (this statement\'s acknowledged gap; the server sets the amount to the opening difference); with a bankTransactionId the entry\'s cash line is matched to it as an ADJUSTMENT match, and the entry is dated at the explaining date (the bank date, the residual match\'s latest bank date, or the day before the window) when its period is open, else at transactionDate. Use this tool for a bank-only movement the books lack; do not use it for a timing difference (registerReconciliationOutstandingItem), a duplicate (bank-transaction duplicate review) or a books error (a journal-entry reversal). Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); an OTHER needs a justification of at least 10 characters and, above the tenant\'s BANK_REC_OTHER_APPROVAL_THRESHOLD (or while it is unset, for anything but a residual), accounting:reconciliation:approve; posting into a CLOSED period needs overrideJustification and accounting:period:override. Required inputs: reconciliationId as a path parameter; type and requestId in the body, amount unless a residual or bridge is named, and the links and justification the type needs. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT event and a RECONCILIATION_ADJUSTMENT audit row, and posts a journal entry that changes GL balances. Returns 201 with the adjustment (200 with replayed true for a replayed requestId); 400 JUSTIFICATION_REQUIRED; 403 RECONCILIATION_ADJUSTMENT_APPROVAL_REQUIRED; 409 RECONCILIATION_LINE_INELIGIBLE, ADJUSTMENT_BRIDGE_ALREADY_POSTED, IDEMPOTENCY_CONFLICT, RECONCILIATION_ALREADY_FINALIZED or RECONCILIATION_NOT_EDITABLE; 422 RECONCILIATION_ADJUSTMENT_SIGN_INVALID, ADJUSTMENT_LINK_REQUIRED, ADJUSTMENT_LINK_NOT_ELIGIBLE, GL_ACCOUNT_NOT_ACTIVE, ACCOUNT_NOT_RECONCILABLE, PERIOD_CLOSED, PERIOD_HARD_LOCKED or GL_MAPPING_NOT_CONFIGURED when the rule named fails; an adjustment linked to a bank transaction must equal its amount exactly (no minor-unit tolerance), and any difference is ADJUSTMENT_LINK_NOT_ELIGIBLE on amount. 
+     * Post Reconciliation Adjustment
+     */
+    async addReconciliationAdjustmentRaw(requestParameters: AddReconciliationAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationAdjustmentResponse>> {
         if (requestParameters['reconciliationId'] == null) {
             throw new runtime.RequiredError(
                 'reconciliationId',
@@ -137,27 +315,27 @@ export class BankReconciliationApi extends runtime.BaseAPI {
             body: ReconciliationAdjustmentRequestToJSON(requestParameters['reconciliationAdjustmentRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationAdjustmentResponseFromJSON(jsonValue));
     }
 
     /**
-     * Records a signed reconciliation adjustment and posts a real balanced journal entry, debiting or crediting the reconciled cash account against the type\'s mapped counter account, through the accounting-period gate. Use this tool for bank-only items such as fees or interest that have no GL counterpart; do not use matchReconciliation, which links existing posted GL lines. Preconditions: the reconciliation must be IN_PROGRESS, and the amount sign must be permitted for the type (BANK_FEE and NSF_FEE negative, INTEREST_EARNED positive, OTHER any). Required inputs: reconciliationId (UUID) as a path parameter, type (BANK_FEE, NSF_FEE, INTEREST_EARNED or OTHER) and a non-zero signed amount; description (max 500 chars) is optional. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT event and posts a journal entry that changes GL balances. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation is missing, 409 RECONCILIATION_ALREADY_FINALIZED when finalized, and 422 PERIOD_CLOSED, PERIOD_HARD_LOCKED, RECONCILIATION_ADJUSTMENT_SIGN_INVALID or GL_MAPPING_NOT_CONFIGURED (no GL counter-account mapping configured for the adjustment type) for period-gate, sign or configuration failures. 
-     * Record Reconciliation Adjustment
+     * Posts a reconciliation adjustment as a real balanced journal entry through the accounting-period gate: positive debits the reconciled cash account against the type\'s mapped counter account, negative credits it; BANK_FEE and NSF_FEE are negative, INTEREST_EARNED positive, and TRANSFER (either sign) posts against counterGlAccountId, another bank account, with no mapping. OTHER posts to the clearing account and names exactly one link: a bank transaction, settlesMatchId (a match residual; the server sets the amount to the served residual and replaces the match with an exact one) or bridgesStatementId (this statement\'s acknowledged gap; the server sets the amount to the opening difference); with a bankTransactionId the entry\'s cash line is matched to it as an ADJUSTMENT match, and the entry is dated at the explaining date (the bank date, the residual match\'s latest bank date, or the day before the window) when its period is open, else at transactionDate. Use this tool for a bank-only movement the books lack; do not use it for a timing difference (registerReconciliationOutstandingItem), a duplicate (bank-transaction duplicate review) or a books error (a journal-entry reversal). Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); an OTHER needs a justification of at least 10 characters and, above the tenant\'s BANK_REC_OTHER_APPROVAL_THRESHOLD (or while it is unset, for anything but a residual), accounting:reconciliation:approve; posting into a CLOSED period needs overrideJustification and accounting:period:override. Required inputs: reconciliationId as a path parameter; type and requestId in the body, amount unless a residual or bridge is named, and the links and justification the type needs. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT event and a RECONCILIATION_ADJUSTMENT audit row, and posts a journal entry that changes GL balances. Returns 201 with the adjustment (200 with replayed true for a replayed requestId); 400 JUSTIFICATION_REQUIRED; 403 RECONCILIATION_ADJUSTMENT_APPROVAL_REQUIRED; 409 RECONCILIATION_LINE_INELIGIBLE, ADJUSTMENT_BRIDGE_ALREADY_POSTED, IDEMPOTENCY_CONFLICT, RECONCILIATION_ALREADY_FINALIZED or RECONCILIATION_NOT_EDITABLE; 422 RECONCILIATION_ADJUSTMENT_SIGN_INVALID, ADJUSTMENT_LINK_REQUIRED, ADJUSTMENT_LINK_NOT_ELIGIBLE, GL_ACCOUNT_NOT_ACTIVE, ACCOUNT_NOT_RECONCILABLE, PERIOD_CLOSED, PERIOD_HARD_LOCKED or GL_MAPPING_NOT_CONFIGURED when the rule named fails; an adjustment linked to a bank transaction must equal its amount exactly (no minor-unit tolerance), and any difference is ADJUSTMENT_LINK_NOT_ELIGIBLE on amount. 
+     * Post Reconciliation Adjustment
      */
-    async addReconciliationAdjustment(requestParameters: AddReconciliationAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
+    async addReconciliationAdjustment(requestParameters: AddReconciliationAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationAdjustmentResponse> {
         const response = await this.addReconciliationAdjustmentRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Finalizes a reconciliation (IN_PROGRESS to FINALIZED), locking it against further matching, unmatching or adjustments. Use this tool once all lines are matched or adjusted; do not use it while a difference remains, which addReconciliationAdjustment or further matching must clear first. Preconditions: the statement ending balance must equal the GL ending balance plus the sum of adjustments within 0.01, matched GL lines being already reflected in the GL ending balance. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_FINALIZE event; FINALIZED is terminal for the reconciliation. Returns 404 RECONCILIATION_NOT_FOUND when missing, 409 RECONCILIATION_ALREADY_FINALIZED when already finalized, and 422 RECONCILIATION_NOT_BALANCED carrying the outstanding difference as a field error when it does not balance. 
-     * Finalize Reconciliation
+     * Proposes a ONE_TO_ONE RULE match, state PROPOSED, for every unexplained bank transaction whose top candidate scores at least 90 and beats the second by at least 20; closer calls propose nothing and are counted as ambiguous. The system never accepts a match. Use this tool to pre-pair the obvious rows before reviewing them with acceptReconciliationMatch or rejectReconciliationMatch; use createReconciliationMatch instead to record a pairing directly. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status). Required inputs: reconciliationId as a path parameter; the body is empty. Emits an ACCOUNTING_RECONCILIATION_AUTO_MATCH event and writes a RECONCILIATION_AUTO_MATCH audit row with the counts. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation is unknown and 409 RECONCILIATION_ALREADY_FINALIZED when it is finalized or RECONCILIATION_NOT_EDITABLE when it is not IN_PROGRESS. 
+     * Propose Matches Automatically
      */
-    async finalizeReconciliationRaw(requestParameters: FinalizeReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+    async autoMatchReconciliationRaw(requestParameters: AutoMatchReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AutoMatchResponse>> {
         if (requestParameters['reconciliationId'] == null) {
             throw new runtime.RequiredError(
                 'reconciliationId',
-                'Required parameter "reconciliationId" was null or undefined when calling finalizeReconciliation().'
+                'Required parameter "reconciliationId" was null or undefined when calling autoMatchReconciliation().'
             );
         }
 
@@ -174,18 +352,276 @@ export class BankReconciliationApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/v1/accounting/reconciliations/{reconciliationId}/finalize`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            path: `/v1/accounting/reconciliations/{reconciliationId}/auto-match`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AutoMatchResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Proposes a ONE_TO_ONE RULE match, state PROPOSED, for every unexplained bank transaction whose top candidate scores at least 90 and beats the second by at least 20; closer calls propose nothing and are counted as ambiguous. The system never accepts a match. Use this tool to pre-pair the obvious rows before reviewing them with acceptReconciliationMatch or rejectReconciliationMatch; use createReconciliationMatch instead to record a pairing directly. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status). Required inputs: reconciliationId as a path parameter; the body is empty. Emits an ACCOUNTING_RECONCILIATION_AUTO_MATCH event and writes a RECONCILIATION_AUTO_MATCH audit row with the counts. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation is unknown and 409 RECONCILIATION_ALREADY_FINALIZED when it is finalized or RECONCILIATION_NOT_EDITABLE when it is not IN_PROGRESS. 
+     * Propose Matches Automatically
+     */
+    async autoMatchReconciliation(requestParameters: AutoMatchReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AutoMatchResponse> {
+        const response = await this.autoMatchReconciliationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Cancels an IN_PROGRESS or SUBMITTED reconciliation (to CANCELLED): its proposed and accepted matches become UNMATCHED with unmatchReason RECONCILIATION_CANCELLED (bank rows back to UNMATCHED), the OPEN outstanding items it registered are RELEASED, and posted adjustments stay posted — they are real journal entries, reversed explicitly if wrong. Use this tool to abandon a reconciliation; use returnReconciliation instead to send a submitted one back, and supersedeReconciliation to correct an approved one. Preconditions: the reconciliation must be IN_PROGRESS or SUBMITTED. Required inputs: reconciliationId (UUID) as a path parameter and justification (at least 10 characters) in the body; version is optional. Emits an ACCOUNTING_RECONCILIATION_CANCEL event, writes a RECONCILIATION_CANCEL audit row and queues accounting.bankreconciliation.cancelled; CANCELLED is terminal. Returns 200 with the header; 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE or OPTIMISTIC_LOCK. 
+     * Cancel Reconciliation
+     */
+    async cancelReconciliationRaw(requestParameters: CancelReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling cancelReconciliation().'
+            );
+        }
+
+        if (requestParameters['reconciliationJustificationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationJustificationRequest',
+                'Required parameter "reconciliationJustificationRequest" was null or undefined when calling cancelReconciliation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/cancel`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationJustificationRequestToJSON(requestParameters['reconciliationJustificationRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
     }
 
     /**
-     * Finalizes a reconciliation (IN_PROGRESS to FINALIZED), locking it against further matching, unmatching or adjustments. Use this tool once all lines are matched or adjusted; do not use it while a difference remains, which addReconciliationAdjustment or further matching must clear first. Preconditions: the statement ending balance must equal the GL ending balance plus the sum of adjustments within 0.01, matched GL lines being already reflected in the GL ending balance. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_FINALIZE event; FINALIZED is terminal for the reconciliation. Returns 404 RECONCILIATION_NOT_FOUND when missing, 409 RECONCILIATION_ALREADY_FINALIZED when already finalized, and 422 RECONCILIATION_NOT_BALANCED carrying the outstanding difference as a field error when it does not balance. 
-     * Finalize Reconciliation
+     * Cancels an IN_PROGRESS or SUBMITTED reconciliation (to CANCELLED): its proposed and accepted matches become UNMATCHED with unmatchReason RECONCILIATION_CANCELLED (bank rows back to UNMATCHED), the OPEN outstanding items it registered are RELEASED, and posted adjustments stay posted — they are real journal entries, reversed explicitly if wrong. Use this tool to abandon a reconciliation; use returnReconciliation instead to send a submitted one back, and supersedeReconciliation to correct an approved one. Preconditions: the reconciliation must be IN_PROGRESS or SUBMITTED. Required inputs: reconciliationId (UUID) as a path parameter and justification (at least 10 characters) in the body; version is optional. Emits an ACCOUNTING_RECONCILIATION_CANCEL event, writes a RECONCILIATION_CANCEL audit row and queues accounting.bankreconciliation.cancelled; CANCELLED is terminal. Returns 200 with the header; 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE or OPTIMISTIC_LOCK. 
+     * Cancel Reconciliation
+     */
+    async cancelReconciliation(requestParameters: CancelReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
+        const response = await this.cancelReconciliationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Closes an OPEN item registered in an earlier reconciliation whose other side appeared during the gap this reconciliation\'s statement acknowledges: the item becomes CLEARED_IN_GAP with closedOn the day before the statement start and leaves this window\'s opening and closing terms. Use this tool only in the reconciliation of an acknowledged statement; use createReconciliationMatch instead for an item whose other side is in a bank row, and releaseReconciliationOutstandingItem to undo a wrong registration. Preconditions: the reconciliation must be IN_PROGRESS or SUBMITTED (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE otherwise) and rest on a statement with a gap acknowledgement; the item must be OPEN, dated before the statement start and registered in an earlier reconciliation. Required inputs: reconciliationId and itemId as path parameters; justification (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_CLEAR_IN_GAP event and a RECONCILIATION_OUTSTANDING_CLEAR_IN_GAP audit row. Returns 400 JUSTIFICATION_REQUIRED, 403 without accounting:reconciliation:approve, 404 RECONCILIATION_NOT_FOUND for an unknown item, and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the statement has no acknowledgement or the item fails its rule. 
+     * Clear Outstanding Item In Gap
+     */
+    async clearReconciliationOutstandingItemInGapRaw(requestParameters: ClearReconciliationOutstandingItemInGapRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OutstandingItemResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling clearReconciliationOutstandingItemInGap().'
+            );
+        }
+
+        if (requestParameters['itemId'] == null) {
+            throw new runtime.RequiredError(
+                'itemId',
+                'Required parameter "itemId" was null or undefined when calling clearReconciliationOutstandingItemInGap().'
+            );
+        }
+
+        if (requestParameters['outstandingItemJustificationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'outstandingItemJustificationRequest',
+                'Required parameter "outstandingItemJustificationRequest" was null or undefined when calling clearReconciliationOutstandingItemInGap().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/outstanding-items/{itemId}/clear-in-gap`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OutstandingItemJustificationRequestToJSON(requestParameters['outstandingItemJustificationRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OutstandingItemResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Closes an OPEN item registered in an earlier reconciliation whose other side appeared during the gap this reconciliation\'s statement acknowledges: the item becomes CLEARED_IN_GAP with closedOn the day before the statement start and leaves this window\'s opening and closing terms. Use this tool only in the reconciliation of an acknowledged statement; use createReconciliationMatch instead for an item whose other side is in a bank row, and releaseReconciliationOutstandingItem to undo a wrong registration. Preconditions: the reconciliation must be IN_PROGRESS or SUBMITTED (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE otherwise) and rest on a statement with a gap acknowledgement; the item must be OPEN, dated before the statement start and registered in an earlier reconciliation. Required inputs: reconciliationId and itemId as path parameters; justification (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_CLEAR_IN_GAP event and a RECONCILIATION_OUTSTANDING_CLEAR_IN_GAP audit row. Returns 400 JUSTIFICATION_REQUIRED, 403 without accounting:reconciliation:approve, 404 RECONCILIATION_NOT_FOUND for an unknown item, and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the statement has no acknowledgement or the item fails its rule. 
+     * Clear Outstanding Item In Gap
+     */
+    async clearReconciliationOutstandingItemInGap(requestParameters: ClearReconciliationOutstandingItemInGapRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OutstandingItemResponse> {
+        const response = await this.clearReconciliationOutstandingItemInGapRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Starts an IN_PROGRESS reconciliation of a COMMITTED bank statement: the window, opening and closing balances are copied from the statement, and the explicit equation (E3), the opening terms, the account baseline and the unexplained counts are computed live from the ledger. Use this tool to begin reconciling a statement committed through bank-statements or a file import; do not use createBankStatement or the bank-import commit, which commit the statement itself. Preconditions: the account must be a reconcilable BANK_CASH account; the statement must be COMMITTED on that account and have no IN_PROGRESS reconciliation and no FINALIZED one without a successor. An interim reconciliation to a date is a manual-entry statement in phase 1. Required inputs: glAccountId, requestId (UUIDv7) and statementId in the body. Emits an ACCOUNTING_RECONCILIATION_CREATE event and writes a RECONCILIATION_CREATE audit row; no journal entry is posted. Returns 201 with the header, or 200 with replayed true when the same requestId and payload are sent again; 409 RECONCILIATION_WINDOW_ALREADY_RECONCILED (fieldErrors naming the reconciliationId) when the statement is already reconciled, 409 IDEMPOTENCY_CONFLICT when the requestId was used with another payload, 404 BANK_STATEMENT_NOT_FOUND when the statement is unknown on the account, 422 ACCOUNT_NOT_RECONCILABLE when the account is not a bank account, and 422 BANK_ACCOUNT_FEED_NOT_LINKED when the body has no statementId (the statementless interim is phase 2). 
+     * Start Reconciliation From Statement
+     */
+    async createReconciliationRaw(requestParameters: CreateReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+        if (requestParameters['reconciliationCreateRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationCreateRequest',
+                'Required parameter "reconciliationCreateRequest" was null or undefined when calling createReconciliation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations`,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationCreateRequestToJSON(requestParameters['reconciliationCreateRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Starts an IN_PROGRESS reconciliation of a COMMITTED bank statement: the window, opening and closing balances are copied from the statement, and the explicit equation (E3), the opening terms, the account baseline and the unexplained counts are computed live from the ledger. Use this tool to begin reconciling a statement committed through bank-statements or a file import; do not use createBankStatement or the bank-import commit, which commit the statement itself. Preconditions: the account must be a reconcilable BANK_CASH account; the statement must be COMMITTED on that account and have no IN_PROGRESS reconciliation and no FINALIZED one without a successor. An interim reconciliation to a date is a manual-entry statement in phase 1. Required inputs: glAccountId, requestId (UUIDv7) and statementId in the body. Emits an ACCOUNTING_RECONCILIATION_CREATE event and writes a RECONCILIATION_CREATE audit row; no journal entry is posted. Returns 201 with the header, or 200 with replayed true when the same requestId and payload are sent again; 409 RECONCILIATION_WINDOW_ALREADY_RECONCILED (fieldErrors naming the reconciliationId) when the statement is already reconciled, 409 IDEMPOTENCY_CONFLICT when the requestId was used with another payload, 404 BANK_STATEMENT_NOT_FOUND when the statement is unknown on the account, 422 ACCOUNT_NOT_RECONCILABLE when the account is not a bank account, and 422 BANK_ACCOUNT_FEED_NOT_LINKED when the body has no statementId (the statementless interim is phase 2). 
+     * Start Reconciliation From Statement
+     */
+    async createReconciliation(requestParameters: CreateReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
+        const response = await this.createReconciliationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Creates an ACCEPTED match of bank transactions to posted ledger lines on the reconciled account (1:1, 1:N or N:1), marks the bank rows MATCHED and clears any OPEN ledger-side outstanding item on the matched lines; the response serves toleranceUsed and the signed residual (bankTotal − ledgerTotal). Use this tool to record that bank and ledger rows describe the same cash movement; use addReconciliationAdjustment instead for a bank-only item, and registerReconciliationOutstandingItem for a timing difference. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); bank rows UNMATCHED, settled, in no match or open item and dated on or before the window end; ledger lines POSTED, on the account, in no active match and dated on or before the window end; the sides must agree within 0.01. A justification of at least 10 characters is required for a non-1:1 match, any tolerance use, dates beyond the window, or a former possible duplicate. Required inputs: reconciliationId as a path parameter; bankTransactionIds, glLineIds and requestId in the body. Emits an ACCOUNTING_RECONCILIATION_MATCH event and a RECONCILIATION_MATCH audit row; no journal entry is posted. Returns 201 with the match (200 with replayed true for a replayed requestId); 409 RECONCILIATION_LINE_INELIGIBLE for a row not matchable (including a ledger line dated after the window end), 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE or IDEMPOTENCY_CONFLICT; 422 MATCH_AMOUNT_MISMATCH when the sides differ by more than 0.01, 422 MATCH_CARDINALITY_NOT_ALLOWED for N:M, and 422 MATCH_REQUIRES_REVIEW listing the reasons in fieldErrors[justification] when a justification is needed. 
+     * Match Bank Transactions To Ledger Lines
+     */
+    async createReconciliationMatchRaw(requestParameters: CreateReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationMatchResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling createReconciliationMatch().'
+            );
+        }
+
+        if (requestParameters['reconciliationMatchCreateRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationMatchCreateRequest',
+                'Required parameter "reconciliationMatchCreateRequest" was null or undefined when calling createReconciliationMatch().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/matches`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationMatchCreateRequestToJSON(requestParameters['reconciliationMatchCreateRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReconciliationMatchResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Creates an ACCEPTED match of bank transactions to posted ledger lines on the reconciled account (1:1, 1:N or N:1), marks the bank rows MATCHED and clears any OPEN ledger-side outstanding item on the matched lines; the response serves toleranceUsed and the signed residual (bankTotal − ledgerTotal). Use this tool to record that bank and ledger rows describe the same cash movement; use addReconciliationAdjustment instead for a bank-only item, and registerReconciliationOutstandingItem for a timing difference. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); bank rows UNMATCHED, settled, in no match or open item and dated on or before the window end; ledger lines POSTED, on the account, in no active match and dated on or before the window end; the sides must agree within 0.01. A justification of at least 10 characters is required for a non-1:1 match, any tolerance use, dates beyond the window, or a former possible duplicate. Required inputs: reconciliationId as a path parameter; bankTransactionIds, glLineIds and requestId in the body. Emits an ACCOUNTING_RECONCILIATION_MATCH event and a RECONCILIATION_MATCH audit row; no journal entry is posted. Returns 201 with the match (200 with replayed true for a replayed requestId); 409 RECONCILIATION_LINE_INELIGIBLE for a row not matchable (including a ledger line dated after the window end), 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE or IDEMPOTENCY_CONFLICT; 422 MATCH_AMOUNT_MISMATCH when the sides differ by more than 0.01, 422 MATCH_CARDINALITY_NOT_ALLOWED for N:M, and 422 MATCH_REQUIRES_REVIEW listing the reasons in fieldErrors[justification] when a justification is needed. 
+     * Match Bank Transactions To Ledger Lines
+     */
+    async createReconciliationMatch(requestParameters: CreateReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationMatchResponse> {
+        const response = await this.createReconciliationMatchRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Approves a SUBMITTED reconciliation (SUBMITTED to FINALIZED): the row is locked, the live ledger balance, every term of E3, the baseline and both unexplained counts are recomputed and the gate E4 is evaluated again, so nothing is approved on a stale figure. On success the approvedGlEndingBalance and baselineDate are snapshotted, the matches are sealed, and a reconciliation it corrects becomes SUPERSEDED. Use this tool as the approver once the preparer has submitted; use submitReconciliation for the preparer\'s step and returnReconciliation to send it back instead. Preconditions: the reconciliation must be SUBMITTED, and the approver must not be the submitter unless the tenant\'s BANK_REC_ALLOW_SELF_APPROVAL is true (every approval under that switch is audited as a self-approval). Required inputs: reconciliationId (UUID) as a path parameter; the body is optional and may carry the version the caller read. Emits an ACCOUNTING_RECONCILIATION_FINALIZE event, writes a RECONCILIATION_APPROVE audit row and queues accounting.bankreconciliation.approved (and .superseded for a corrected predecessor); FINALIZED is terminal for the reconciliation. Returns 200 with the header; 403 RECONCILIATION_SELF_APPROVAL (audited) when the submitter approves without the switch; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_NOT_SUBMITTED, RECONCILIATION_ALREADY_FINALIZED or OPTIMISTIC_LOCK; 422 RECONCILIATION_NOT_BALANCED (fieldErrors[difference]) or RECONCILIATION_HAS_UNEXPLAINED_ITEMS. 
+     * Approve Reconciliation
+     */
+    async finalizeReconciliationRaw(requestParameters: FinalizeReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling finalizeReconciliation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/finalize`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationTransitionRequestToJSON(requestParameters['reconciliationTransitionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Approves a SUBMITTED reconciliation (SUBMITTED to FINALIZED): the row is locked, the live ledger balance, every term of E3, the baseline and both unexplained counts are recomputed and the gate E4 is evaluated again, so nothing is approved on a stale figure. On success the approvedGlEndingBalance and baselineDate are snapshotted, the matches are sealed, and a reconciliation it corrects becomes SUPERSEDED. Use this tool as the approver once the preparer has submitted; use submitReconciliation for the preparer\'s step and returnReconciliation to send it back instead. Preconditions: the reconciliation must be SUBMITTED, and the approver must not be the submitter unless the tenant\'s BANK_REC_ALLOW_SELF_APPROVAL is true (every approval under that switch is audited as a self-approval). Required inputs: reconciliationId (UUID) as a path parameter; the body is optional and may carry the version the caller read. Emits an ACCOUNTING_RECONCILIATION_FINALIZE event, writes a RECONCILIATION_APPROVE audit row and queues accounting.bankreconciliation.approved (and .superseded for a corrected predecessor); FINALIZED is terminal for the reconciliation. Returns 200 with the header; 403 RECONCILIATION_SELF_APPROVAL (audited) when the submitter approves without the switch; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_NOT_SUBMITTED, RECONCILIATION_ALREADY_FINALIZED or OPTIMISTIC_LOCK; 422 RECONCILIATION_NOT_BALANCED (fieldErrors[difference]) or RECONCILIATION_HAS_UNEXPLAINED_ITEMS. 
+     * Approve Reconciliation
      */
     async finalizeReconciliation(requestParameters: FinalizeReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
         const response = await this.finalizeReconciliationRaw(requestParameters, initOverrides);
@@ -193,7 +629,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one bank reconciliation with its imported statement lines, match state and adjustments. Use this tool when the reconciliation id is already known; use listReconciliations instead when searching by account or status, or getReconciliationReport for the balance summary view. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_GET audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Returns one bank reconciliation header with every term of the explicit equation (E3) and the opening terms computed live from the ledger, the baseline date and the unexplained counts; statement lines are not embedded (read them from bank-transactions). Use this tool when the reconciliation id is already known; use listReconciliations instead when searching by account or status, or getReconciliationReview for the full workspace read model. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_GET audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
      * Get Reconciliation
      */
     async getReconciliationRaw(requestParameters: GetReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
@@ -227,7 +663,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns one bank reconciliation with its imported statement lines, match state and adjustments. Use this tool when the reconciliation id is already known; use listReconciliations instead when searching by account or status, or getReconciliationReport for the balance summary view. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_GET audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Returns one bank reconciliation header with every term of the explicit equation (E3) and the opening terms computed live from the ledger, the baseline date and the unexplained counts; statement lines are not embedded (read them from bank-transactions). Use this tool when the reconciliation id is already known; use listReconciliations instead when searching by account or status, or getReconciliationReview for the full workspace read model. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_GET audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
      * Get Reconciliation
      */
     async getReconciliation(requestParameters: GetReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
@@ -236,7 +672,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the time-ordered audit trail of a reconciliation\'s actions: import, matches, unmatches, adjustments and finalize, each with the acting user. Use this tool when reviewing who did what during a reconciliation; use getReconciliationReport instead for the balance summary. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_AUDIT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Returns the stored audit trail, oldest first and a page at a time: every AccountingAuditLog row of the reconciliation (create, adjustments and their reversals, auto-match, submit, approve including a refused or allowed self-approval, return, cancel, supersede, invalidation), of its matches (match, accept, reject, unmatch) and of the outstanding items it registered, cleared or reaffirmed — each with operation, actor, timestamp, trace id, justification and the old and new value. Use this tool when reviewing who did what during a reconciliation; use getReconciliationReport instead for the balance summary. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; page (default 0) and size (default 50, at most 200) are optional; there is no request body. Emits an ACCOUNTING_RECONCILIATION_AUDIT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
      * Get Reconciliation Audit Trail
      */
     async getReconciliationAuditRaw(requestParameters: GetReconciliationAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationAuditResponse>> {
@@ -248,6 +684,14 @@ export class BankReconciliationApi extends runtime.BaseAPI {
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -270,7 +714,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the time-ordered audit trail of a reconciliation\'s actions: import, matches, unmatches, adjustments and finalize, each with the acting user. Use this tool when reviewing who did what during a reconciliation; use getReconciliationReport instead for the balance summary. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_AUDIT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Returns the stored audit trail, oldest first and a page at a time: every AccountingAuditLog row of the reconciliation (create, adjustments and their reversals, auto-match, submit, approve including a refused or allowed self-approval, return, cancel, supersede, invalidation), of its matches (match, accept, reject, unmatch) and of the outstanding items it registered, cleared or reaffirmed — each with operation, actor, timestamp, trace id, justification and the old and new value. Use this tool when reviewing who did what during a reconciliation; use getReconciliationReport instead for the balance summary. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; page (default 0) and size (default 50, at most 200) are optional; there is no request body. Emits an ACCOUNTING_RECONCILIATION_AUDIT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
      * Get Reconciliation Audit Trail
      */
     async getReconciliationAudit(requestParameters: GetReconciliationAuditRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationAuditResponse> {
@@ -279,7 +723,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the reconciliation report: opening GL and closing statement balances, matched versus outstanding lines, adjustments and the outstanding difference. Use this tool to see how far a reconciliation is from balancing before finalizeReconciliation; use getReconciliation instead for the raw line-level detail. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_REPORT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Returns the reconciliation report: the statement lines matched versus outstanding, every term of the explicit equation E3 and the opening terms, the outstanding items with their age, the unexplained counts and sums, the adjustments and the adjustments to clearing, and the live difference. Use this tool to see how far a reconciliation is from balancing before finalizeReconciliation; use getReconciliation instead for the raw line-level detail. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_REPORT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
      * Get Reconciliation Report
      */
     async getReconciliationReportRaw(requestParameters: GetReconciliationReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationReportResponse>> {
@@ -313,7 +757,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the reconciliation report: opening GL and closing statement balances, matched versus outstanding lines, adjustments and the outstanding difference. Use this tool to see how far a reconciliation is from balancing before finalizeReconciliation; use getReconciliation instead for the raw line-level detail. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_REPORT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Returns the reconciliation report: the statement lines matched versus outstanding, every term of the explicit equation E3 and the opening terms, the outstanding items with their age, the unexplained counts and sums, the adjustments and the adjustments to clearing, and the live difference. Use this tool to see how far a reconciliation is from balancing before finalizeReconciliation; use getReconciliation instead for the raw line-level detail. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_REPORT audit event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
      * Get Reconciliation Report
      */
     async getReconciliationReport(requestParameters: GetReconciliationReportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationReportResponse> {
@@ -322,14 +766,14 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Parses a bank statement CSV (columns: date, description, signed amount, reference) for a reconcilable GL cash account and creates an IN_PROGRESS reconciliation whose statement lines start UNMATCHED, snapshotting the GL ending balance from posted journal-entry lines as of the statement date. Use this tool to start a reconciliation cycle; do not use matchReconciliation, addReconciliationAdjustment or finalizeReconciliation, which operate on a reconciliation that already exists. Preconditions: the GL account must exist with its reconcilable flag set to true. Required inputs: glAccountId (UUID), periodStartDate, periodEndDate, statementDate, statementEndingBalance, currency (3-letter ISO code) and the csv text itself. Emits an ACCOUNTING_RECONCILIATION_IMPORT event. Returns 422 ACCOUNT_NOT_RECONCILABLE when the account\'s reconcilable flag is false, and 400 when the CSV is malformed. 
-     * Import Bank Statement CSV
+     * Returns the review read model in one call, computed live, so a client never does arithmetic: the header (account, window, baseline and whether this statement set it, provenance, status, preparer, period state, version); every term of the explicit equation E3 with its drill-down, including late adjustments with their owning reconciliation; the opening terms and the OPENING_DIFFERENCE diagnostic, which never blocks; everything unresolved from the baseline on (late arrivals first, unexplained bank rows with their top ledger candidate, unexplained ledger lines with their top bank candidate, possible duplicates with their near-duplicate candidates, aged timing items awaiting reaffirmation, proposed and broken matches); the posted adjustments; the evidence (matches with their served residual, items, exclusions, the adjustments to clearing, the statement); and the readiness with its reasons. Use this tool to render or audit the reconciliation workspace; use getReconciliation instead for the header alone and getReconciliationReport for the printable report. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_REVIEW event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Get Reconciliation Review
      */
-    async importReconciliationRaw(requestParameters: ImportReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
-        if (requestParameters['bankReconciliationImportRequest'] == null) {
+    async getReconciliationReviewRaw(requestParameters: GetReconciliationReviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationReviewResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
             throw new runtime.RequiredError(
-                'bankReconciliationImportRequest',
-                'Required parameter "bankReconciliationImportRequest" was null or undefined when calling importReconciliation().'
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling getReconciliationReview().'
             );
         }
 
@@ -337,38 +781,35 @@ export class BankReconciliationApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        headerParameters['Content-Type'] = 'application/json';
-
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:view"]);
 
             if (tokenString) {
                 headerParameters["Authorization"] = `Bearer ${tokenString}`;
             }
         }
         const response = await this.request({
-            path: `/v1/accounting/reconciliations/import`,
-            method: 'POST',
+            path: `/v1/accounting/reconciliations/{reconciliationId}/review`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-            body: BankReconciliationImportRequestToJSON(requestParameters['bankReconciliationImportRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReconciliationReviewResponseFromJSON(jsonValue));
     }
 
     /**
-     * Parses a bank statement CSV (columns: date, description, signed amount, reference) for a reconcilable GL cash account and creates an IN_PROGRESS reconciliation whose statement lines start UNMATCHED, snapshotting the GL ending balance from posted journal-entry lines as of the statement date. Use this tool to start a reconciliation cycle; do not use matchReconciliation, addReconciliationAdjustment or finalizeReconciliation, which operate on a reconciliation that already exists. Preconditions: the GL account must exist with its reconcilable flag set to true. Required inputs: glAccountId (UUID), periodStartDate, periodEndDate, statementDate, statementEndingBalance, currency (3-letter ISO code) and the csv text itself. Emits an ACCOUNTING_RECONCILIATION_IMPORT event. Returns 422 ACCOUNT_NOT_RECONCILABLE when the account\'s reconcilable flag is false, and 400 when the CSV is malformed. 
-     * Import Bank Statement CSV
+     * Returns the review read model in one call, computed live, so a client never does arithmetic: the header (account, window, baseline and whether this statement set it, provenance, status, preparer, period state, version); every term of the explicit equation E3 with its drill-down, including late adjustments with their owning reconciliation; the opening terms and the OPENING_DIFFERENCE diagnostic, which never blocks; everything unresolved from the baseline on (late arrivals first, unexplained bank rows with their top ledger candidate, unexplained ledger lines with their top bank candidate, possible duplicates with their near-duplicate candidates, aged timing items awaiting reaffirmation, proposed and broken matches); the posted adjustments; the evidence (matches with their served residual, items, exclusions, the adjustments to clearing, the statement); and the readiness with its reasons. Use this tool to render or audit the reconciliation workspace; use getReconciliation instead for the header alone and getReconciliationReport for the printable report. Preconditions: the reconciliation must exist. Required inputs: reconciliationId (UUID) as a path parameter; there is no request body. Emits an ACCOUNTING_RECONCILIATION_REVIEW event; no state changes. Returns 404 RECONCILIATION_NOT_FOUND when the id is unknown. 
+     * Get Reconciliation Review
      */
-    async importReconciliation(requestParameters: ImportReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
-        const response = await this.importReconciliationRaw(requestParameters, initOverrides);
+    async getReconciliationReview(requestParameters: GetReconciliationReviewRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationReviewResponse> {
+        const response = await this.getReconciliationReviewRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Returns the supported reconciliation adjustment types with their sign rules (BANK_FEE and NSF_FEE negative-only, INTEREST_EARNED positive-only, OTHER any), so clients never hardcode the enum. Use this tool to populate an adjustment picker before calling addReconciliationAdjustment; do not use addReconciliationAdjustment itself just to discover the types. Preconditions: none. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT_TYPES_LIST audit event; no state changes. Returns 200 with the full static type list. 
+     * Returns the supported reconciliation adjustment types with their sign rules (BANK_FEE and NSF_FEE negative-only, INTEREST_EARNED positive-only, OTHER and TRANSFER any), so clients never hardcode the enum. Use this tool to populate an adjustment picker before calling addReconciliationAdjustment; do not use addReconciliationAdjustment itself just to discover the types. Preconditions: none. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT_TYPES_LIST audit event; no state changes. Returns 200 with the full static type list. 
      * List Reconciliation Adjustment Types
      */
     async listReconciliationAdjustmentTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AdjustmentTypeResponse>>> {
@@ -395,7 +836,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the supported reconciliation adjustment types with their sign rules (BANK_FEE and NSF_FEE negative-only, INTEREST_EARNED positive-only, OTHER any), so clients never hardcode the enum. Use this tool to populate an adjustment picker before calling addReconciliationAdjustment; do not use addReconciliationAdjustment itself just to discover the types. Preconditions: none. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT_TYPES_LIST audit event; no state changes. Returns 200 with the full static type list. 
+     * Returns the supported reconciliation adjustment types with their sign rules (BANK_FEE and NSF_FEE negative-only, INTEREST_EARNED positive-only, OTHER and TRANSFER any), so clients never hardcode the enum. Use this tool to populate an adjustment picker before calling addReconciliationAdjustment; do not use addReconciliationAdjustment itself just to discover the types. Preconditions: none. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT_TYPES_LIST audit event; no state changes. Returns 200 with the full static type list. 
      * List Reconciliation Adjustment Types
      */
     async listReconciliationAdjustmentTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AdjustmentTypeResponse>> {
@@ -404,7 +845,62 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists bank reconciliations most recent first as a paginated projection, optionally filtered by GL account and status. Use this tool to find in-progress or finalized reconciliations; do not use getReconciliation, which fetches one reconciliation with its lines by id. Preconditions: none beyond the caller holding accounting:reconciliation:view. Required inputs: none; glAccountId and status (IN_PROGRESS, FINALIZED) are optional filters, page defaults to 0 and size to 20. Emits an ACCOUNTING_RECONCILIATION_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
+     * Ranks match candidates deterministically for one bank transaction (posted ledger lines on the account) or one ledger line (bank transactions), each with its score and reason codes: EXACT_AMOUNT +60, WITHIN_TOLERANCE +40, DATE_IN_WINDOW +20 × (1 − d/W), REFERENCE_MATCH +20, DESCRIPTION_SIMILAR up to +10; beyond W a widened window marks DATE_OUT_OF_WINDOW. Use this tool to find the ledger lines a bank row should be matched to before createReconciliationMatch; use autoMatchReconciliation instead to propose matches for every unexplained bank row at once. Preconditions: the reconciliation must exist; exactly one of bankTransactionId and glLineId. Required inputs: reconciliationId as a path parameter and bankTransactionId or glLineId as a query parameter; windowDays optionally widens the date window W (default 7). Emits an ACCOUNTING_RECONCILIATION_CANDIDATES event; no state changes. Returns 400 VALIDATION_ERROR when neither or both subjects are named, and 404 RECONCILIATION_NOT_FOUND or BANK_TRANSACTION_NOT_FOUND when the reconciliation or the subject is unknown. 
+     * List Match Candidates
+     */
+    async listReconciliationCandidatesRaw(requestParameters: ListReconciliationCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationCandidatesResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling listReconciliationCandidates().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['bankTransactionId'] != null) {
+            queryParameters['bankTransactionId'] = requestParameters['bankTransactionId'];
+        }
+
+        if (requestParameters['glLineId'] != null) {
+            queryParameters['glLineId'] = requestParameters['glLineId'];
+        }
+
+        if (requestParameters['windowDays'] != null) {
+            queryParameters['windowDays'] = requestParameters['windowDays'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/candidates`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReconciliationCandidatesResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Ranks match candidates deterministically for one bank transaction (posted ledger lines on the account) or one ledger line (bank transactions), each with its score and reason codes: EXACT_AMOUNT +60, WITHIN_TOLERANCE +40, DATE_IN_WINDOW +20 × (1 − d/W), REFERENCE_MATCH +20, DESCRIPTION_SIMILAR up to +10; beyond W a widened window marks DATE_OUT_OF_WINDOW. Use this tool to find the ledger lines a bank row should be matched to before createReconciliationMatch; use autoMatchReconciliation instead to propose matches for every unexplained bank row at once. Preconditions: the reconciliation must exist; exactly one of bankTransactionId and glLineId. Required inputs: reconciliationId as a path parameter and bankTransactionId or glLineId as a query parameter; windowDays optionally widens the date window W (default 7). Emits an ACCOUNTING_RECONCILIATION_CANDIDATES event; no state changes. Returns 400 VALIDATION_ERROR when neither or both subjects are named, and 404 RECONCILIATION_NOT_FOUND or BANK_TRANSACTION_NOT_FOUND when the reconciliation or the subject is unknown. 
+     * List Match Candidates
+     */
+    async listReconciliationCandidates(requestParameters: ListReconciliationCandidatesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationCandidatesResponse> {
+        const response = await this.listReconciliationCandidatesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists bank reconciliation headers most recent first as a paginated projection, optionally filtered by GL account, status, attribution period (periodCode, YYYY-MM) and a from/to window on the statement end date; each row carries the terms its last mutation stored. Use this tool to find reconciliations by account, status or period; do not use getReconciliation, which fetches one reconciliation with its lines by id. Preconditions: none beyond the caller holding accounting:reconciliation:view. Required inputs: none; glAccountId, status (IN_PROGRESS, SUBMITTED, FINALIZED, INVALIDATED, SUPERSEDED, CANCELLED), periodCode, from and to are optional filters, page defaults to 0 and size to 20. Emits an ACCOUNTING_RECONCILIATION_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
      * List Reconciliations
      */
     async listReconciliationsRaw(requestParameters: ListReconciliationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationListResponse>> {
@@ -416,6 +912,18 @@ export class BankReconciliationApi extends runtime.BaseAPI {
 
         if (requestParameters['status'] != null) {
             queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['periodCode'] != null) {
+            queryParameters['periodCode'] = requestParameters['periodCode'];
+        }
+
+        if (requestParameters['from'] != null) {
+            queryParameters['from'] = (requestParameters['from'] as any).toISOString().substring(0,10);
+        }
+
+        if (requestParameters['to'] != null) {
+            queryParameters['to'] = (requestParameters['to'] as any).toISOString().substring(0,10);
         }
 
         if (requestParameters['page'] != null) {
@@ -447,7 +955,7 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Lists bank reconciliations most recent first as a paginated projection, optionally filtered by GL account and status. Use this tool to find in-progress or finalized reconciliations; do not use getReconciliation, which fetches one reconciliation with its lines by id. Preconditions: none beyond the caller holding accounting:reconciliation:view. Required inputs: none; glAccountId and status (IN_PROGRESS, FINALIZED) are optional filters, page defaults to 0 and size to 20. Emits an ACCOUNTING_RECONCILIATION_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
+     * Lists bank reconciliation headers most recent first as a paginated projection, optionally filtered by GL account, status, attribution period (periodCode, YYYY-MM) and a from/to window on the statement end date; each row carries the terms its last mutation stored. Use this tool to find reconciliations by account, status or period; do not use getReconciliation, which fetches one reconciliation with its lines by id. Preconditions: none beyond the caller holding accounting:reconciliation:view. Required inputs: none; glAccountId, status (IN_PROGRESS, SUBMITTED, FINALIZED, INVALIDATED, SUPERSEDED, CANCELLED), periodCode, from and to are optional filters, page defaults to 0 and size to 20. Emits an ACCOUNTING_RECONCILIATION_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
      * List Reconciliations
      */
     async listReconciliations(requestParameters: ListReconciliationsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationListResponse> {
@@ -456,21 +964,28 @@ export class BankReconciliationApi extends runtime.BaseAPI {
     }
 
     /**
-     * Matches a set of statement lines to a set of posted GL journal-entry lines on the reconciled account (1-to-1 or N-to-1), marking the statement lines MATCHED and recording the linkage. Use this tool to pair bank activity with ledger activity; do not use unmatchReconciliation, which reverses a match, and use addReconciliationAdjustment for bank-only items like fees that have no GL counterpart yet. Preconditions: the reconciliation must be IN_PROGRESS, every statement line must be UNMATCHED, every GL line must be POSTED and not already reconciled, and the two sets must net to equal signed amounts within 0.01. Required inputs: reconciliationId (UUID) as a path parameter plus non-empty statementLineIds and glLineIds lists. Emits an ACCOUNTING_RECONCILIATION_MATCH event; no journal entries are created by matching. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation or a line is missing, 409 RECONCILIATION_ALREADY_FINALIZED or RECONCILIATION_LINE_INELIGIBLE for state conflicts, and 422 MATCH_AMOUNT_MISMATCH when the sets do not net. 
-     * Match Statement Lines To GL Lines
+     * Reaffirms an aged OTHER_LEDGER_TIMING item in this reconciliation: an item dated more than the aging days before the window end counts as an unexplained ledger line until the preparer re-judges it here, and counts again in the next window. Use this tool when the timing explanation still holds; release the item instead, or correct the books by a journal-entry reversal, when it does not. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the item must be an OPEN OTHER_LEDGER_TIMING item on the account, aged at this window\'s end. Required inputs: reconciliationId and itemId as path parameters; justification (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_REAFFIRM event and a RECONCILIATION_OUTSTANDING_REAFFIRM audit row. Returns 400 JUSTIFICATION_REQUIRED for a missing or short justification, 404 RECONCILIATION_NOT_FOUND for an unknown item, and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the item is not an aged OPEN OTHER_LEDGER_TIMING item. 
+     * Reaffirm Aged Timing Item
      */
-    async matchReconciliationRaw(requestParameters: MatchReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+    async reaffirmReconciliationOutstandingItemRaw(requestParameters: ReaffirmReconciliationOutstandingItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OutstandingItemResponse>> {
         if (requestParameters['reconciliationId'] == null) {
             throw new runtime.RequiredError(
                 'reconciliationId',
-                'Required parameter "reconciliationId" was null or undefined when calling matchReconciliation().'
+                'Required parameter "reconciliationId" was null or undefined when calling reaffirmReconciliationOutstandingItem().'
             );
         }
 
-        if (requestParameters['reconciliationMatchRequest'] == null) {
+        if (requestParameters['itemId'] == null) {
             throw new runtime.RequiredError(
-                'reconciliationMatchRequest',
-                'Required parameter "reconciliationMatchRequest" was null or undefined when calling matchReconciliation().'
+                'itemId',
+                'Required parameter "itemId" was null or undefined when calling reaffirmReconciliationOutstandingItem().'
+            );
+        }
+
+        if (requestParameters['outstandingItemJustificationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'outstandingItemJustificationRequest',
+                'Required parameter "outstandingItemJustificationRequest" was null or undefined when calling reaffirmReconciliationOutstandingItem().'
             );
         }
 
@@ -489,41 +1004,426 @@ export class BankReconciliationApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/v1/accounting/reconciliations/{reconciliationId}/match`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            path: `/v1/accounting/reconciliations/{reconciliationId}/outstanding-items/{itemId}/reaffirm`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: ReconciliationMatchRequestToJSON(requestParameters['reconciliationMatchRequest']),
+            body: OutstandingItemJustificationRequestToJSON(requestParameters['outstandingItemJustificationRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OutstandingItemResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reaffirms an aged OTHER_LEDGER_TIMING item in this reconciliation: an item dated more than the aging days before the window end counts as an unexplained ledger line until the preparer re-judges it here, and counts again in the next window. Use this tool when the timing explanation still holds; release the item instead, or correct the books by a journal-entry reversal, when it does not. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the item must be an OPEN OTHER_LEDGER_TIMING item on the account, aged at this window\'s end. Required inputs: reconciliationId and itemId as path parameters; justification (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_REAFFIRM event and a RECONCILIATION_OUTSTANDING_REAFFIRM audit row. Returns 400 JUSTIFICATION_REQUIRED for a missing or short justification, 404 RECONCILIATION_NOT_FOUND for an unknown item, and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the item is not an aged OPEN OTHER_LEDGER_TIMING item. 
+     * Reaffirm Aged Timing Item
+     */
+    async reaffirmReconciliationOutstandingItem(requestParameters: ReaffirmReconciliationOutstandingItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OutstandingItemResponse> {
+        const response = await this.reaffirmReconciliationOutstandingItemRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Registers a non-posting outstanding item: a deposit in transit (a debit to cash), an outstanding check (a credit) or another ledger timing item on a posted ledger line, or a bank error the bank will correct on a bank transaction. The item enters the explicit equation\'s bank side while it is open and carries forward until matched, cleared or released. Use this tool for a timing difference; do not use addReconciliationAdjustment, which posts a journal entry, and use createReconciliationMatch when the other side is already present. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the line or bank transaction must be on the account, dated on or before the window end, in no active match and in no OPEN item; a deposit in transit must be positive and an outstanding check negative. Required inputs: reconciliationId as a path parameter; itemKind and exactly one of glLineId or bankTransactionId in the body; justification (at least 10 characters) for OTHER_LEDGER_TIMING, BANK_ERROR_PENDING and an item older than the aging days. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_REGISTER event and a RECONCILIATION_OUTSTANDING_REGISTER audit row; no journal entry is posted. Returns 400 JUSTIFICATION_REQUIRED when a needed justification is missing or short, 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE or RECONCILIATION_LINE_INELIGIBLE (a concurrent registration), and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the line, sign, window or state does not allow the item. 
+     * Register Outstanding Item
+     */
+    async registerReconciliationOutstandingItemRaw(requestParameters: RegisterReconciliationOutstandingItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OutstandingItemResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling registerReconciliationOutstandingItem().'
+            );
+        }
+
+        if (requestParameters['outstandingItemRegisterRequest'] == null) {
+            throw new runtime.RequiredError(
+                'outstandingItemRegisterRequest',
+                'Required parameter "outstandingItemRegisterRequest" was null or undefined when calling registerReconciliationOutstandingItem().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/outstanding-items`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OutstandingItemRegisterRequestToJSON(requestParameters['outstandingItemRegisterRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OutstandingItemResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Registers a non-posting outstanding item: a deposit in transit (a debit to cash), an outstanding check (a credit) or another ledger timing item on a posted ledger line, or a bank error the bank will correct on a bank transaction. The item enters the explicit equation\'s bank side while it is open and carries forward until matched, cleared or released. Use this tool for a timing difference; do not use addReconciliationAdjustment, which posts a journal entry, and use createReconciliationMatch when the other side is already present. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the line or bank transaction must be on the account, dated on or before the window end, in no active match and in no OPEN item; a deposit in transit must be positive and an outstanding check negative. Required inputs: reconciliationId as a path parameter; itemKind and exactly one of glLineId or bankTransactionId in the body; justification (at least 10 characters) for OTHER_LEDGER_TIMING, BANK_ERROR_PENDING and an item older than the aging days. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_REGISTER event and a RECONCILIATION_OUTSTANDING_REGISTER audit row; no journal entry is posted. Returns 400 JUSTIFICATION_REQUIRED when a needed justification is missing or short, 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE or RECONCILIATION_LINE_INELIGIBLE (a concurrent registration), and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the line, sign, window or state does not allow the item. 
+     * Register Outstanding Item
+     */
+    async registerReconciliationOutstandingItem(requestParameters: RegisterReconciliationOutstandingItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OutstandingItemResponse> {
+        const response = await this.registerReconciliationOutstandingItemRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Rejects a PROPOSED match: it becomes REJECTED (kept as history, never deleted) and its members are released for other matches. Use this tool to decline a proposal from autoMatchReconciliation; use acceptReconciliationMatch instead to confirm it. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status) and the match must be PROPOSED. Required inputs: reconciliationId and matchId as path parameters; justification optional. Emits an ACCOUNTING_RECONCILIATION_MATCH_REJECT event and a RECONCILIATION_MATCH_REJECT audit row. Returns 404 RECONCILIATION_NOT_FOUND for an unknown match and 409 MATCH_STATE_INVALID when the match is not PROPOSED. 
+     * Reject Proposed Match
+     */
+    async rejectReconciliationMatchRaw(requestParameters: RejectReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationMatchResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling rejectReconciliationMatch().'
+            );
+        }
+
+        if (requestParameters['matchId'] == null) {
+            throw new runtime.RequiredError(
+                'matchId',
+                'Required parameter "matchId" was null or undefined when calling rejectReconciliationMatch().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/matches/{matchId}/reject`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))).replace(`{${"matchId"}}`, encodeURIComponent(String(requestParameters['matchId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationMatchDecisionRequestToJSON(requestParameters['reconciliationMatchDecisionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReconciliationMatchResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Rejects a PROPOSED match: it becomes REJECTED (kept as history, never deleted) and its members are released for other matches. Use this tool to decline a proposal from autoMatchReconciliation; use acceptReconciliationMatch instead to confirm it. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status) and the match must be PROPOSED. Required inputs: reconciliationId and matchId as path parameters; justification optional. Emits an ACCOUNTING_RECONCILIATION_MATCH_REJECT event and a RECONCILIATION_MATCH_REJECT audit row. Returns 404 RECONCILIATION_NOT_FOUND for an unknown match and 409 MATCH_STATE_INVALID when the match is not PROPOSED. 
+     * Reject Proposed Match
+     */
+    async rejectReconciliationMatch(requestParameters: RejectReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationMatchResponse> {
+        const response = await this.rejectReconciliationMatchRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Releases an OPEN outstanding item with a reason: it leaves the equation and its line or bank transaction is free again. Use this tool to undo a wrong registration; do not use it for an item whose other side has appeared, which createReconciliationMatch clears. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the item must be OPEN on the account and its registering reconciliation not FINALIZED. Required inputs: reconciliationId and itemId as path parameters; reason (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_RELEASE event and a RECONCILIATION_OUTSTANDING_RELEASE audit row. Returns 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED for a missing or short reason, 404 RECONCILIATION_NOT_FOUND for an unknown item, and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the item is not OPEN or its registering reconciliation is FINALIZED. 
+     * Release Outstanding Item
+     */
+    async releaseReconciliationOutstandingItemRaw(requestParameters: ReleaseReconciliationOutstandingItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OutstandingItemResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling releaseReconciliationOutstandingItem().'
+            );
+        }
+
+        if (requestParameters['itemId'] == null) {
+            throw new runtime.RequiredError(
+                'itemId',
+                'Required parameter "itemId" was null or undefined when calling releaseReconciliationOutstandingItem().'
+            );
+        }
+
+        if (requestParameters['outstandingItemReasonRequest'] == null) {
+            throw new runtime.RequiredError(
+                'outstandingItemReasonRequest',
+                'Required parameter "outstandingItemReasonRequest" was null or undefined when calling releaseReconciliationOutstandingItem().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/outstanding-items/{itemId}/release`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))).replace(`{${"itemId"}}`, encodeURIComponent(String(requestParameters['itemId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: OutstandingItemReasonRequestToJSON(requestParameters['outstandingItemReasonRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => OutstandingItemResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Releases an OPEN outstanding item with a reason: it leaves the equation and its line or bank transaction is free again. Use this tool to undo a wrong registration; do not use it for an item whose other side has appeared, which createReconciliationMatch clears. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status); the item must be OPEN on the account and its registering reconciliation not FINALIZED. Required inputs: reconciliationId and itemId as path parameters; reason (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_OUTSTANDING_RELEASE event and a RECONCILIATION_OUTSTANDING_RELEASE audit row. Returns 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED for a missing or short reason, 404 RECONCILIATION_NOT_FOUND for an unknown item, and 422 OUTSTANDING_ITEM_NOT_ELIGIBLE when the item is not OPEN or its registering reconciliation is FINALIZED. 
+     * Release Outstanding Item
+     */
+    async releaseReconciliationOutstandingItem(requestParameters: ReleaseReconciliationOutstandingItemRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OutstandingItemResponse> {
+        const response = await this.releaseReconciliationOutstandingItemRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns a SUBMITTED reconciliation to its preparer (SUBMITTED to IN_PROGRESS) with the approver\'s reason, so it can change again. Use this tool when the approver will not approve as submitted; use cancelReconciliation instead to abandon it, or finalizeReconciliation to approve it. Preconditions: the reconciliation must be SUBMITTED. Required inputs: reconciliationId (UUID) as a path parameter and reason (at least 10 characters) in the body; version is optional. Emits an ACCOUNTING_RECONCILIATION_RETURN event and writes a RECONCILIATION_RETURN audit row with the reason; no fact is published. Returns 200 with the header; 400 VALIDATION_ERROR (blank reason) or JUSTIFICATION_REQUIRED (shorter than 10); 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_NOT_SUBMITTED or OPTIMISTIC_LOCK. 
+     * Return Reconciliation To Preparer
+     */
+    async returnReconciliationRaw(requestParameters: ReturnReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling returnReconciliation().'
+            );
+        }
+
+        if (requestParameters['reconciliationReasonRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationReasonRequest',
+                'Required parameter "reconciliationReasonRequest" was null or undefined when calling returnReconciliation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/return`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationReasonRequestToJSON(requestParameters['reconciliationReasonRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
     }
 
     /**
-     * Matches a set of statement lines to a set of posted GL journal-entry lines on the reconciled account (1-to-1 or N-to-1), marking the statement lines MATCHED and recording the linkage. Use this tool to pair bank activity with ledger activity; do not use unmatchReconciliation, which reverses a match, and use addReconciliationAdjustment for bank-only items like fees that have no GL counterpart yet. Preconditions: the reconciliation must be IN_PROGRESS, every statement line must be UNMATCHED, every GL line must be POSTED and not already reconciled, and the two sets must net to equal signed amounts within 0.01. Required inputs: reconciliationId (UUID) as a path parameter plus non-empty statementLineIds and glLineIds lists. Emits an ACCOUNTING_RECONCILIATION_MATCH event; no journal entries are created by matching. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation or a line is missing, 409 RECONCILIATION_ALREADY_FINALIZED or RECONCILIATION_LINE_INELIGIBLE for state conflicts, and 422 MATCH_AMOUNT_MISMATCH when the sets do not net. 
-     * Match Statement Lines To GL Lines
+     * Returns a SUBMITTED reconciliation to its preparer (SUBMITTED to IN_PROGRESS) with the approver\'s reason, so it can change again. Use this tool when the approver will not approve as submitted; use cancelReconciliation instead to abandon it, or finalizeReconciliation to approve it. Preconditions: the reconciliation must be SUBMITTED. Required inputs: reconciliationId (UUID) as a path parameter and reason (at least 10 characters) in the body; version is optional. Emits an ACCOUNTING_RECONCILIATION_RETURN event and writes a RECONCILIATION_RETURN audit row with the reason; no fact is published. Returns 200 with the header; 400 VALIDATION_ERROR (blank reason) or JUSTIFICATION_REQUIRED (shorter than 10); 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_NOT_SUBMITTED or OPTIMISTIC_LOCK. 
+     * Return Reconciliation To Preparer
      */
-    async matchReconciliation(requestParameters: MatchReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
-        const response = await this.matchReconciliationRaw(requestParameters, initOverrides);
+    async returnReconciliation(requestParameters: ReturnReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
+        const response = await this.returnReconciliationRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Reverses a previously recorded match, returning the affected statement lines to UNMATCHED and releasing the linked GL lines for re-matching. Use this tool to correct a wrong pairing while the reconciliation is still IN_PROGRESS; do not use matchReconciliation, which records new matches. Preconditions: the reconciliation must not be FINALIZED, and either the matchId or the statementLineIds must resolve to exactly one match group. Required inputs: reconciliationId (UUID) as a path parameter plus matchId or statementLineIds in the body (one of the two is required). Emits an ACCOUNTING_RECONCILIATION_UNMATCH event. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation or match group is missing, 409 RECONCILIATION_ALREADY_FINALIZED when finalized, and 400 when neither identifier resolves to a single match group. 
-     * Reverse A Reconciliation Match
+     * Reverses a posted adjustment by posting the inverse journal entry through the period gate; the adjustment becomes REVERSED, its ADJUSTMENT match is unmatched and its bank transaction returns to UNMATCHED. The original and its reversal form a reversal pair that never counts as unexplained; a reversed gap bridge frees its statement for a new bridge. Use this tool when an adjustment was wrong or the bank reversed the item; do not use the journal-entry reversal endpoint, which leaves the reconciliation\'s links in place. Preconditions: the reconciliation must be IN_PROGRESS, SUBMITTED or FINALIZED (a reversal under a FINALIZED one invalidates it; 409 RECONCILIATION_NOT_EDITABLE otherwise) and the adjustment must be POSTED. Required inputs: reconciliationId and adjustmentId as path parameters; reason (at least 10 characters) in the body; reversalDate and overrideJustification optional. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT_REVERSE event and a RECONCILIATION_ADJUSTMENT_REVERSE audit row, and posts the reversal journal entry. Returns 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED for the reason, 404 RECONCILIATION_NOT_FOUND for an unknown adjustment, 409 ADJUSTMENT_ALREADY_REVERSED, JE_NOT_POSTED, JE_ALREADY_REVERSED or RECONCILIATION_NOT_EDITABLE, and 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED when the reversal date is not open. 
+     * Reverse Reconciliation Adjustment
      */
-    async unmatchReconciliationRaw(requestParameters: UnmatchReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+    async reverseReconciliationAdjustmentRaw(requestParameters: ReverseReconciliationAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationAdjustmentResponse>> {
         if (requestParameters['reconciliationId'] == null) {
             throw new runtime.RequiredError(
                 'reconciliationId',
-                'Required parameter "reconciliationId" was null or undefined when calling unmatchReconciliation().'
+                'Required parameter "reconciliationId" was null or undefined when calling reverseReconciliationAdjustment().'
+            );
+        }
+
+        if (requestParameters['adjustmentId'] == null) {
+            throw new runtime.RequiredError(
+                'adjustmentId',
+                'Required parameter "adjustmentId" was null or undefined when calling reverseReconciliationAdjustment().'
+            );
+        }
+
+        if (requestParameters['adjustmentReverseRequest'] == null) {
+            throw new runtime.RequiredError(
+                'adjustmentReverseRequest',
+                'Required parameter "adjustmentReverseRequest" was null or undefined when calling reverseReconciliationAdjustment().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/adjustments/{adjustmentId}/reverse`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))).replace(`{${"adjustmentId"}}`, encodeURIComponent(String(requestParameters['adjustmentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: AdjustmentReverseRequestToJSON(requestParameters['adjustmentReverseRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationAdjustmentResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reverses a posted adjustment by posting the inverse journal entry through the period gate; the adjustment becomes REVERSED, its ADJUSTMENT match is unmatched and its bank transaction returns to UNMATCHED. The original and its reversal form a reversal pair that never counts as unexplained; a reversed gap bridge frees its statement for a new bridge. Use this tool when an adjustment was wrong or the bank reversed the item; do not use the journal-entry reversal endpoint, which leaves the reconciliation\'s links in place. Preconditions: the reconciliation must be IN_PROGRESS, SUBMITTED or FINALIZED (a reversal under a FINALIZED one invalidates it; 409 RECONCILIATION_NOT_EDITABLE otherwise) and the adjustment must be POSTED. Required inputs: reconciliationId and adjustmentId as path parameters; reason (at least 10 characters) in the body; reversalDate and overrideJustification optional. Emits an ACCOUNTING_RECONCILIATION_ADJUSTMENT_REVERSE event and a RECONCILIATION_ADJUSTMENT_REVERSE audit row, and posts the reversal journal entry. Returns 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED for the reason, 404 RECONCILIATION_NOT_FOUND for an unknown adjustment, 409 ADJUSTMENT_ALREADY_REVERSED, JE_NOT_POSTED, JE_ALREADY_REVERSED or RECONCILIATION_NOT_EDITABLE, and 422 PERIOD_CLOSED or PERIOD_HARD_LOCKED when the reversal date is not open. 
+     * Reverse Reconciliation Adjustment
+     */
+    async reverseReconciliationAdjustment(requestParameters: ReverseReconciliationAdjustmentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationAdjustmentResponse> {
+        const response = await this.reverseReconciliationAdjustmentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Submits an IN_PROGRESS reconciliation for approval (IN_PROGRESS to SUBMITTED) after the approval gate E4 holds on the live figures: the difference within 0.01, then no unexplained bank transaction and no unexplained ledger line from the window\'s baseline to its end. The opening difference is never a condition. Use this tool when the preparer has explained every item; do not use it for the approver\'s step (use finalizeReconciliation instead), and use getReconciliationReview to see what still blocks (readiness.canSubmit). Preconditions: the reconciliation must be IN_PROGRESS; while SUBMITTED it no longer changes until the approver returns it. Required inputs: reconciliationId (UUID) as a path parameter; the body is optional and may carry the version the caller read. Emits an ACCOUNTING_RECONCILIATION_SUBMIT event, writes a RECONCILIATION_SUBMIT audit row and queues the accounting.bankreconciliation.submitted fact; no journal entry is posted. Returns 200 with the header; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE (SUBMITTED, INVALIDATED, SUPERSEDED, CANCELLED) or OPTIMISTIC_LOCK; 422 RECONCILIATION_NOT_BALANCED (fieldErrors[difference]) or, when it balances, RECONCILIATION_HAS_UNEXPLAINED_ITEMS (fieldErrors countUnexplainedBank, countUnexplainedLedger and the first 50 ids per side). 
+     * Submit Reconciliation For Approval
+     */
+    async submitReconciliationRaw(requestParameters: SubmitReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling submitReconciliation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:adjust"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/submit`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationTransitionRequestToJSON(requestParameters['reconciliationTransitionRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Submits an IN_PROGRESS reconciliation for approval (IN_PROGRESS to SUBMITTED) after the approval gate E4 holds on the live figures: the difference within 0.01, then no unexplained bank transaction and no unexplained ledger line from the window\'s baseline to its end. The opening difference is never a condition. Use this tool when the preparer has explained every item; do not use it for the approver\'s step (use finalizeReconciliation instead), and use getReconciliationReview to see what still blocks (readiness.canSubmit). Preconditions: the reconciliation must be IN_PROGRESS; while SUBMITTED it no longer changes until the approver returns it. Required inputs: reconciliationId (UUID) as a path parameter; the body is optional and may carry the version the caller read. Emits an ACCOUNTING_RECONCILIATION_SUBMIT event, writes a RECONCILIATION_SUBMIT audit row and queues the accounting.bankreconciliation.submitted fact; no journal entry is posted. Returns 200 with the header; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_ALREADY_FINALIZED, RECONCILIATION_NOT_EDITABLE (SUBMITTED, INVALIDATED, SUPERSEDED, CANCELLED) or OPTIMISTIC_LOCK; 422 RECONCILIATION_NOT_BALANCED (fieldErrors[difference]) or, when it balances, RECONCILIATION_HAS_UNEXPLAINED_ITEMS (fieldErrors countUnexplainedBank, countUnexplainedLedger and the first 50 ids per side). 
+     * Submit Reconciliation For Approval
+     */
+    async submitReconciliation(requestParameters: SubmitReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
+        const response = await this.submitReconciliationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Starts a new IN_PROGRESS reconciliation of the same statement that supersedes a FINALIZED or INVALIDATED one: the predecessor\'s match members are released (its matches keep their state as sealed history) and re-proposed in the successor as PROPOSED matches for the preparer to re-confirm; OPEN outstanding items carry over unchanged. The successor uses the baseline that governed the window. When the successor is approved the predecessor becomes SUPERSEDED. Use this tool to correct an approved window (there is no reopen); use createReconciliation instead for a statement never reconciled, and a corrected re-import (supersedesStatementId) when the bank\'s statement itself was wrong. Preconditions: the reconciliation must be FINALIZED or INVALIDATED, not already superseded, and its statement still COMMITTED. Required inputs: reconciliationId (UUID) as a path parameter and justification (at least 10 characters) in the body; requestId (UUIDv7) makes a retry return the same successor; version is optional. Emits an ACCOUNTING_RECONCILIATION_SUPERSEDE event and writes a RECONCILIATION_SUPERSEDE audit row on the predecessor and a RECONCILIATION_CREATE row on the successor. Returns 201 with the successor\'s header (200 with replayed true on a replay); 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_WINDOW_ALREADY_RECONCILED (it is IN_PROGRESS or SUBMITTED, or the statement has another active one), RECONCILIATION_NOT_EDITABLE (SUPERSEDED, CANCELLED, already superseded, or its statement superseded), IDEMPOTENCY_CONFLICT or OPTIMISTIC_LOCK. 
+     * Supersede Reconciliation
+     */
+    async supersedeReconciliationRaw(requestParameters: SupersedeReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling supersedeReconciliation().'
+            );
+        }
+
+        if (requestParameters['reconciliationJustificationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationJustificationRequest',
+                'Required parameter "reconciliationJustificationRequest" was null or undefined when calling supersedeReconciliation().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:reconciliation:approve"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/reconciliations/{reconciliationId}/supersede`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: ReconciliationJustificationRequestToJSON(requestParameters['reconciliationJustificationRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Starts a new IN_PROGRESS reconciliation of the same statement that supersedes a FINALIZED or INVALIDATED one: the predecessor\'s match members are released (its matches keep their state as sealed history) and re-proposed in the successor as PROPOSED matches for the preparer to re-confirm; OPEN outstanding items carry over unchanged. The successor uses the baseline that governed the window. When the successor is approved the predecessor becomes SUPERSEDED. Use this tool to correct an approved window (there is no reopen); use createReconciliation instead for a statement never reconciled, and a corrected re-import (supersedesStatementId) when the bank\'s statement itself was wrong. Preconditions: the reconciliation must be FINALIZED or INVALIDATED, not already superseded, and its statement still COMMITTED. Required inputs: reconciliationId (UUID) as a path parameter and justification (at least 10 characters) in the body; requestId (UUIDv7) makes a retry return the same successor; version is optional. Emits an ACCOUNTING_RECONCILIATION_SUPERSEDE event and writes a RECONCILIATION_SUPERSEDE audit row on the predecessor and a RECONCILIATION_CREATE row on the successor. Returns 201 with the successor\'s header (200 with replayed true on a replay); 400 VALIDATION_ERROR or JUSTIFICATION_REQUIRED; 404 RECONCILIATION_NOT_FOUND; 409 RECONCILIATION_WINDOW_ALREADY_RECONCILED (it is IN_PROGRESS or SUBMITTED, or the statement has another active one), RECONCILIATION_NOT_EDITABLE (SUPERSEDED, CANCELLED, already superseded, or its statement superseded), IDEMPOTENCY_CONFLICT or OPTIMISTIC_LOCK. 
+     * Supersede Reconciliation
+     */
+    async supersedeReconciliation(requestParameters: SupersedeReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
+        const response = await this.supersedeReconciliationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Undoes an ACCEPTED match: it becomes UNMATCHED with the reason (never deleted), its bank rows return to UNMATCHED, its lines are released for re-matching, and the outstanding items it had cleared re-open. Use this tool to correct a wrong pairing; do not use rejectReconciliationMatch, which declines a proposal that was never accepted. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status) and the match must be ACCEPTED. Required inputs: reconciliationId and matchId as path parameters; reason (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_UNMATCH event and a RECONCILIATION_UNMATCH audit row with the actor and reason. Returns 400 VALIDATION_ERROR without a reason or JUSTIFICATION_REQUIRED for a short one, 404 RECONCILIATION_NOT_FOUND for an unknown match, and 409 MATCH_STATE_INVALID when the match is not ACCEPTED. 
+     * Unmatch Accepted Match
+     */
+    async unmatchReconciliationMatchRaw(requestParameters: UnmatchReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ReconciliationMatchResponse>> {
+        if (requestParameters['reconciliationId'] == null) {
+            throw new runtime.RequiredError(
+                'reconciliationId',
+                'Required parameter "reconciliationId" was null or undefined when calling unmatchReconciliationMatch().'
+            );
+        }
+
+        if (requestParameters['matchId'] == null) {
+            throw new runtime.RequiredError(
+                'matchId',
+                'Required parameter "matchId" was null or undefined when calling unmatchReconciliationMatch().'
             );
         }
 
         if (requestParameters['reconciliationUnmatchRequest'] == null) {
             throw new runtime.RequiredError(
                 'reconciliationUnmatchRequest',
-                'Required parameter "reconciliationUnmatchRequest" was null or undefined when calling unmatchReconciliation().'
+                'Required parameter "reconciliationUnmatchRequest" was null or undefined when calling unmatchReconciliationMatch().'
             );
         }
 
@@ -542,22 +1442,22 @@ export class BankReconciliationApi extends runtime.BaseAPI {
             }
         }
         const response = await this.request({
-            path: `/v1/accounting/reconciliations/{reconciliationId}/unmatch`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))),
+            path: `/v1/accounting/reconciliations/{reconciliationId}/matches/{matchId}/unmatch`.replace(`{${"reconciliationId"}}`, encodeURIComponent(String(requestParameters['reconciliationId']))).replace(`{${"matchId"}}`, encodeURIComponent(String(requestParameters['matchId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
             body: ReconciliationUnmatchRequestToJSON(requestParameters['reconciliationUnmatchRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationResponseFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ReconciliationMatchResponseFromJSON(jsonValue));
     }
 
     /**
-     * Reverses a previously recorded match, returning the affected statement lines to UNMATCHED and releasing the linked GL lines for re-matching. Use this tool to correct a wrong pairing while the reconciliation is still IN_PROGRESS; do not use matchReconciliation, which records new matches. Preconditions: the reconciliation must not be FINALIZED, and either the matchId or the statementLineIds must resolve to exactly one match group. Required inputs: reconciliationId (UUID) as a path parameter plus matchId or statementLineIds in the body (one of the two is required). Emits an ACCOUNTING_RECONCILIATION_UNMATCH event. Returns 404 RECONCILIATION_NOT_FOUND when the reconciliation or match group is missing, 409 RECONCILIATION_ALREADY_FINALIZED when finalized, and 400 when neither identifier resolves to a single match group. 
-     * Reverse A Reconciliation Match
+     * Undoes an ACCEPTED match: it becomes UNMATCHED with the reason (never deleted), its bank rows return to UNMATCHED, its lines are released for re-matching, and the outstanding items it had cleared re-open. Use this tool to correct a wrong pairing; do not use rejectReconciliationMatch, which declines a proposal that was never accepted. Preconditions: the reconciliation must be IN_PROGRESS (409 RECONCILIATION_ALREADY_FINALIZED when FINALIZED, RECONCILIATION_NOT_EDITABLE in any other status) and the match must be ACCEPTED. Required inputs: reconciliationId and matchId as path parameters; reason (at least 10 characters) in the body. Emits an ACCOUNTING_RECONCILIATION_UNMATCH event and a RECONCILIATION_UNMATCH audit row with the actor and reason. Returns 400 VALIDATION_ERROR without a reason or JUSTIFICATION_REQUIRED for a short one, 404 RECONCILIATION_NOT_FOUND for an unknown match, and 409 MATCH_STATE_INVALID when the match is not ACCEPTED. 
+     * Unmatch Accepted Match
      */
-    async unmatchReconciliation(requestParameters: UnmatchReconciliationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationResponse> {
-        const response = await this.unmatchReconciliationRaw(requestParameters, initOverrides);
+    async unmatchReconciliationMatch(requestParameters: UnmatchReconciliationMatchRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ReconciliationMatchResponse> {
+        const response = await this.unmatchReconciliationMatchRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -569,6 +1469,9 @@ export class BankReconciliationApi extends runtime.BaseAPI {
   */
 export enum ListReconciliationsStatusEnum {
     InProgress = 'IN_PROGRESS',
+    Submitted = 'SUBMITTED',
     Finalized = 'FINALIZED',
+    Invalidated = 'INVALIDATED',
+    Superseded = 'SUPERSEDED',
     Cancelled = 'CANCELLED'
 }

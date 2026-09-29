@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Reconciliation adjustment with its posted journal entry
+ * Reconciliation adjustment with its posted journal entry, link and reversal state
  * @export
  * @interface BankReconciliationAdjustmentResponse
  */
@@ -31,6 +31,24 @@ export interface BankReconciliationAdjustmentResponse {
      * @memberof BankReconciliationAdjustmentResponse
      */
     amount?: number;
+    /**
+     * The bank transaction the adjustment explains
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    bankTransactionId?: string;
+    /**
+     * The statement whose acknowledged gap the adjustment bridges
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    bridgesStatementId?: string;
+    /**
+     * TRANSFER counter bank account
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    counterGlAccountId?: string;
     /**
      * When the adjustment was recorded
      * @type {Date}
@@ -50,13 +68,103 @@ export interface BankReconciliationAdjustmentResponse {
      */
     description?: string;
     /**
-     * Id of the real balanced journal entry this adjustment posted
+     * Posted entry number
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    entryNumber?: string;
+    /**
+     * Id of the balanced journal entry this adjustment posted
      * @type {string}
      * @memberof BankReconciliationAdjustmentResponse
      */
     journalEntryId?: string;
     /**
-     * Adjustment type (decision D-6)
+     * Justification recorded for the adjustment
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    justification?: string;
+    /**
+     * The ADJUSTMENT match of a linked bank transaction, or a residual's replacement match
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    matchId?: string;
+    /**
+     * Justification of a posting into a CLOSED period
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    overrideJustification?: string;
+    /**
+     * Whether the posting used the period override
+     * @type {boolean}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    periodOverride?: boolean;
+    /**
+     * YearMonth of the posting date
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    postedPeriodCode?: string;
+    /**
+     * The reconciliation that owns the adjustment
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    reconciliationId?: string;
+    /**
+     * True when this answers a replayed command (same requestId and payload)
+     * @type {boolean}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    replayed?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    reversalJournalEntryId?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    reversalReason?: string;
+    /**
+     * 
+     * @type {Date}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    reversedAt?: Date;
+    /**
+     * 
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    reversedBy?: string;
+    /**
+     * The match whose residual the adjustment settled
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    settlesMatchId?: string;
+    /**
+     * POSTED or REVERSED
+     * @type {string}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    status?: BankReconciliationAdjustmentResponseStatusEnum;
+    /**
+     * The date the entry posted at (D7)
+     * @type {Date}
+     * @memberof BankReconciliationAdjustmentResponse
+     */
+    transactionDate?: Date;
+    /**
+     * Adjustment type
      * @type {string}
      * @memberof BankReconciliationAdjustmentResponse
      */
@@ -67,11 +175,20 @@ export interface BankReconciliationAdjustmentResponse {
 * @export
 * @enum {string}
 */
+export enum BankReconciliationAdjustmentResponseStatusEnum {
+    Posted = 'POSTED',
+    Reversed = 'REVERSED'
+}
+/**
+* @export
+* @enum {string}
+*/
 export enum BankReconciliationAdjustmentResponseTypeEnum {
     BankFee = 'BANK_FEE',
     NsfFee = 'NSF_FEE',
     InterestEarned = 'INTEREST_EARNED',
-    Other = 'OTHER'
+    Other = 'OTHER',
+    Transfer = 'TRANSFER'
 }
 
 
@@ -94,10 +211,28 @@ export function BankReconciliationAdjustmentResponseFromJSONTyped(json: any, ign
         
         'adjustmentId': json['adjustmentId'] == null ? undefined : json['adjustmentId'],
         'amount': json['amount'] == null ? undefined : json['amount'],
+        'bankTransactionId': json['bankTransactionId'] == null ? undefined : json['bankTransactionId'],
+        'bridgesStatementId': json['bridgesStatementId'] == null ? undefined : json['bridgesStatementId'],
+        'counterGlAccountId': json['counterGlAccountId'] == null ? undefined : json['counterGlAccountId'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'description': json['description'] == null ? undefined : json['description'],
+        'entryNumber': json['entryNumber'] == null ? undefined : json['entryNumber'],
         'journalEntryId': json['journalEntryId'] == null ? undefined : json['journalEntryId'],
+        'justification': json['justification'] == null ? undefined : json['justification'],
+        'matchId': json['matchId'] == null ? undefined : json['matchId'],
+        'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
+        'periodOverride': json['periodOverride'] == null ? undefined : json['periodOverride'],
+        'postedPeriodCode': json['postedPeriodCode'] == null ? undefined : json['postedPeriodCode'],
+        'reconciliationId': json['reconciliationId'] == null ? undefined : json['reconciliationId'],
+        'replayed': json['replayed'] == null ? undefined : json['replayed'],
+        'reversalJournalEntryId': json['reversalJournalEntryId'] == null ? undefined : json['reversalJournalEntryId'],
+        'reversalReason': json['reversalReason'] == null ? undefined : json['reversalReason'],
+        'reversedAt': json['reversedAt'] == null ? undefined : (new Date(json['reversedAt'])),
+        'reversedBy': json['reversedBy'] == null ? undefined : json['reversedBy'],
+        'settlesMatchId': json['settlesMatchId'] == null ? undefined : json['settlesMatchId'],
+        'status': json['status'] == null ? undefined : json['status'],
+        'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
         'type': json['type'] == null ? undefined : json['type'],
     };
 }
@@ -110,10 +245,28 @@ export function BankReconciliationAdjustmentResponseToJSON(value?: BankReconcili
         
         'adjustmentId': value['adjustmentId'],
         'amount': value['amount'],
+        'bankTransactionId': value['bankTransactionId'],
+        'bridgesStatementId': value['bridgesStatementId'],
+        'counterGlAccountId': value['counterGlAccountId'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'description': value['description'],
+        'entryNumber': value['entryNumber'],
         'journalEntryId': value['journalEntryId'],
+        'justification': value['justification'],
+        'matchId': value['matchId'],
+        'overrideJustification': value['overrideJustification'],
+        'periodOverride': value['periodOverride'],
+        'postedPeriodCode': value['postedPeriodCode'],
+        'reconciliationId': value['reconciliationId'],
+        'replayed': value['replayed'],
+        'reversalJournalEntryId': value['reversalJournalEntryId'],
+        'reversalReason': value['reversalReason'],
+        'reversedAt': value['reversedAt'] == null ? undefined : ((value['reversedAt']).toISOString()),
+        'reversedBy': value['reversedBy'],
+        'settlesMatchId': value['settlesMatchId'],
+        'status': value['status'],
+        'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString().substring(0,10)),
         'type': value['type'],
     };
 }

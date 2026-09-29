@@ -35,7 +35,8 @@ export enum AdjustmentTypeResponseCodeEnum {
     BankFee = 'BANK_FEE',
     NsfFee = 'NSF_FEE',
     InterestEarned = 'INTEREST_EARNED',
-    Other = 'OTHER'
+    Other = 'OTHER',
+    Transfer = 'TRANSFER'
 }
 
 

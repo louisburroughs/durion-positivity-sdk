@@ -8,6 +8,7 @@ export * from './AccountingGLApi';
 export * from './AccountingPeriodsApi';
 export * from './AuditTrailApi';
 export * from './BankAccountsApi';
+export * from './BankImportsApi';
 export * from './BankReconciliationApi';
 export * from './BankStatementsApi';
 export * from './BankTransactionsApi';

@@ -25,6 +25,30 @@ import {
     BankReconciliationLineResponseFromJSONTyped,
     BankReconciliationLineResponseToJSON,
 } from './BankReconciliationLineResponse';
+import type { ClearingAdjustment } from './ClearingAdjustment';
+import {
+    ClearingAdjustmentFromJSON,
+    ClearingAdjustmentFromJSONTyped,
+    ClearingAdjustmentToJSON,
+} from './ClearingAdjustment';
+import type { Diagnostics } from './Diagnostics';
+import {
+    DiagnosticsFromJSON,
+    DiagnosticsFromJSONTyped,
+    DiagnosticsToJSON,
+} from './Diagnostics';
+import type { Equation } from './Equation';
+import {
+    EquationFromJSON,
+    EquationFromJSONTyped,
+    EquationToJSON,
+} from './Equation';
+import type { OutstandingItemResponse } from './OutstandingItemResponse';
+import {
+    OutstandingItemResponseFromJSON,
+    OutstandingItemResponseFromJSONTyped,
+    OutstandingItemResponseToJSON,
+} from './OutstandingItemResponse';
 
 /**
  * Bank reconciliation report
@@ -51,19 +75,43 @@ export interface ReconciliationReportResponse {
      */
     adjustments?: Array<BankReconciliationAdjustmentResponse>;
     /**
+     * Adjustments to clearing: every OTHER adjustment with link, justification, poster and age
+     * @type {Array<ClearingAdjustment>}
+     * @memberof ReconciliationReportResponse
+     */
+    adjustmentsToClearing?: Array<ClearingAdjustment>;
+    /**
+     * Unexplained bank transactions from the baseline to the window end
+     * @type {number}
+     * @memberof ReconciliationReportResponse
+     */
+    countUnexplainedBank?: number;
+    /**
+     * Unexplained ledger lines from the baseline to the window end
+     * @type {number}
+     * @memberof ReconciliationReportResponse
+     */
+    countUnexplainedLedger?: number;
+    /**
      * Reconciliation currency
      * @type {string}
      * @memberof ReconciliationReportResponse
      */
     currency?: string;
     /**
-     * statementEndingBalance − (glEndingBalance + totalAdjustments); matched lines are already reflected in glEndingBalance
+     * The live difference of E3: adjustedBankBalance − adjustedBookBalance
      * @type {number}
      * @memberof ReconciliationReportResponse
      */
     difference?: number;
     /**
-     * GL ending balance snapshotted at import (opening basis)
+     * 
+     * @type {Equation}
+     * @memberof ReconciliationReportResponse
+     */
+    equation?: Equation;
+    /**
+     * Live GL balance at the end of the statement end date
      * @type {number}
      * @memberof ReconciliationReportResponse
      */
@@ -74,6 +122,18 @@ export interface ReconciliationReportResponse {
      * @memberof ReconciliationReportResponse
      */
     matchedLineCount?: number;
+    /**
+     * 
+     * @type {Diagnostics}
+     * @memberof ReconciliationReportResponse
+     */
+    openingTerms?: Diagnostics;
+    /**
+     * Outstanding items open at the window end, with their age
+     * @type {Array<OutstandingItemResponse>}
+     * @memberof ReconciliationReportResponse
+     */
+    outstandingItems?: Array<OutstandingItemResponse>;
     /**
      * Number of UNMATCHED statement lines
      * @type {number}
@@ -104,6 +164,18 @@ export interface ReconciliationReportResponse {
      * @memberof ReconciliationReportResponse
      */
     statementEndingBalance?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ReconciliationReportResponse
+     */
+    sumUnexplainedBank?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ReconciliationReportResponse
+     */
+    sumUnexplainedLedger?: number;
     /**
      * Sum of signed adjustment amounts
      * @type {number}
@@ -144,15 +216,23 @@ export function ReconciliationReportResponseFromJSONTyped(json: any, ignoreDiscr
         'accountCode': json['accountCode'] == null ? undefined : json['accountCode'],
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
         'adjustments': json['adjustments'] == null ? undefined : ((json['adjustments'] as Array<any>).map(BankReconciliationAdjustmentResponseFromJSON)),
+        'adjustmentsToClearing': json['adjustmentsToClearing'] == null ? undefined : ((json['adjustmentsToClearing'] as Array<any>).map(ClearingAdjustmentFromJSON)),
+        'countUnexplainedBank': json['countUnexplainedBank'] == null ? undefined : json['countUnexplainedBank'],
+        'countUnexplainedLedger': json['countUnexplainedLedger'] == null ? undefined : json['countUnexplainedLedger'],
         'currency': json['currency'] == null ? undefined : json['currency'],
         'difference': json['difference'] == null ? undefined : json['difference'],
+        'equation': json['equation'] == null ? undefined : EquationFromJSON(json['equation']),
         'glEndingBalance': json['glEndingBalance'] == null ? undefined : json['glEndingBalance'],
         'matchedLineCount': json['matchedLineCount'] == null ? undefined : json['matchedLineCount'],
+        'openingTerms': json['openingTerms'] == null ? undefined : DiagnosticsFromJSON(json['openingTerms']),
+        'outstandingItems': json['outstandingItems'] == null ? undefined : ((json['outstandingItems'] as Array<any>).map(OutstandingItemResponseFromJSON)),
         'outstandingLineCount': json['outstandingLineCount'] == null ? undefined : json['outstandingLineCount'],
         'outstandingLines': json['outstandingLines'] == null ? undefined : ((json['outstandingLines'] as Array<any>).map(BankReconciliationLineResponseFromJSON)),
         'reconciliationId': json['reconciliationId'] == null ? undefined : json['reconciliationId'],
         'statementDate': json['statementDate'] == null ? undefined : (new Date(json['statementDate'])),
         'statementEndingBalance': json['statementEndingBalance'] == null ? undefined : json['statementEndingBalance'],
+        'sumUnexplainedBank': json['sumUnexplainedBank'] == null ? undefined : json['sumUnexplainedBank'],
+        'sumUnexplainedLedger': json['sumUnexplainedLedger'] == null ? undefined : json['sumUnexplainedLedger'],
         'totalAdjustments': json['totalAdjustments'] == null ? undefined : json['totalAdjustments'],
         'totalMatched': json['totalMatched'] == null ? undefined : json['totalMatched'],
         'totalOutstanding': json['totalOutstanding'] == null ? undefined : json['totalOutstanding'],
@@ -168,15 +248,23 @@ export function ReconciliationReportResponseToJSON(value?: ReconciliationReportR
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
         'adjustments': value['adjustments'] == null ? undefined : ((value['adjustments'] as Array<any>).map(BankReconciliationAdjustmentResponseToJSON)),
+        'adjustmentsToClearing': value['adjustmentsToClearing'] == null ? undefined : ((value['adjustmentsToClearing'] as Array<any>).map(ClearingAdjustmentToJSON)),
+        'countUnexplainedBank': value['countUnexplainedBank'],
+        'countUnexplainedLedger': value['countUnexplainedLedger'],
         'currency': value['currency'],
         'difference': value['difference'],
+        'equation': EquationToJSON(value['equation']),
         'glEndingBalance': value['glEndingBalance'],
         'matchedLineCount': value['matchedLineCount'],
+        'openingTerms': DiagnosticsToJSON(value['openingTerms']),
+        'outstandingItems': value['outstandingItems'] == null ? undefined : ((value['outstandingItems'] as Array<any>).map(OutstandingItemResponseToJSON)),
         'outstandingLineCount': value['outstandingLineCount'],
         'outstandingLines': value['outstandingLines'] == null ? undefined : ((value['outstandingLines'] as Array<any>).map(BankReconciliationLineResponseToJSON)),
         'reconciliationId': value['reconciliationId'],
         'statementDate': value['statementDate'] == null ? undefined : ((value['statementDate']).toISOString().substring(0,10)),
         'statementEndingBalance': value['statementEndingBalance'],
+        'sumUnexplainedBank': value['sumUnexplainedBank'],
+        'sumUnexplainedLedger': value['sumUnexplainedLedger'],
         'totalAdjustments': value['totalAdjustments'],
         'totalMatched': value['totalMatched'],
         'totalOutstanding': value['totalOutstanding'],

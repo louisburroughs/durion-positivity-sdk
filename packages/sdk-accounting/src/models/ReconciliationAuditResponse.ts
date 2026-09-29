@@ -13,31 +13,55 @@
  */
 
 import { mapValues } from '../runtime';
-import type { Entry } from './Entry';
+import type { ReconciliationAuditEntry } from './ReconciliationAuditEntry';
 import {
-    EntryFromJSON,
-    EntryFromJSONTyped,
-    EntryToJSON,
-} from './Entry';
+    ReconciliationAuditEntryFromJSON,
+    ReconciliationAuditEntryFromJSONTyped,
+    ReconciliationAuditEntryToJSON,
+} from './ReconciliationAuditEntry';
 
 /**
- * Audit trail of a reconciliation's actions
+ * Stored audit trail of a reconciliation, its matches and its outstanding items
  * @export
  * @interface ReconciliationAuditResponse
  */
 export interface ReconciliationAuditResponse {
     /**
-     * Audit entries ordered by time
-     * @type {Array<Entry>}
+     * Audit rows of this page, oldest first
+     * @type {Array<ReconciliationAuditEntry>}
      * @memberof ReconciliationAuditResponse
      */
-    entries?: Array<Entry>;
+    entries?: Array<ReconciliationAuditEntry>;
+    /**
+     * Zero-based page index
+     * @type {number}
+     * @memberof ReconciliationAuditResponse
+     */
+    pageNumber?: number;
+    /**
+     * Page size
+     * @type {number}
+     * @memberof ReconciliationAuditResponse
+     */
+    pageSize?: number;
     /**
      * Reconciliation id
      * @type {string}
      * @memberof ReconciliationAuditResponse
      */
     reconciliationId?: string;
+    /**
+     * Rows across every page
+     * @type {number}
+     * @memberof ReconciliationAuditResponse
+     */
+    totalElements?: number;
+    /**
+     * Number of pages
+     * @type {number}
+     * @memberof ReconciliationAuditResponse
+     */
+    totalPages?: number;
 }
 
 /**
@@ -57,8 +81,12 @@ export function ReconciliationAuditResponseFromJSONTyped(json: any, ignoreDiscri
     }
     return {
         
-        'entries': json['entries'] == null ? undefined : ((json['entries'] as Array<any>).map(EntryFromJSON)),
+        'entries': json['entries'] == null ? undefined : ((json['entries'] as Array<any>).map(ReconciliationAuditEntryFromJSON)),
+        'pageNumber': json['pageNumber'] == null ? undefined : json['pageNumber'],
+        'pageSize': json['pageSize'] == null ? undefined : json['pageSize'],
         'reconciliationId': json['reconciliationId'] == null ? undefined : json['reconciliationId'],
+        'totalElements': json['totalElements'] == null ? undefined : json['totalElements'],
+        'totalPages': json['totalPages'] == null ? undefined : json['totalPages'],
     };
 }
 
@@ -68,8 +96,12 @@ export function ReconciliationAuditResponseToJSON(value?: ReconciliationAuditRes
     }
     return {
         
-        'entries': value['entries'] == null ? undefined : ((value['entries'] as Array<any>).map(EntryToJSON)),
+        'entries': value['entries'] == null ? undefined : ((value['entries'] as Array<any>).map(ReconciliationAuditEntryToJSON)),
+        'pageNumber': value['pageNumber'],
+        'pageSize': value['pageSize'],
         'reconciliationId': value['reconciliationId'],
+        'totalElements': value['totalElements'],
+        'totalPages': value['totalPages'],
     };
 }
 
