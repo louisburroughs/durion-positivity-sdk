@@ -14,25 +14,73 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to record a reconciliation adjustment (posts a real JE)
+ * Post a reconciliation adjustment (a real journal entry)
  * @export
  * @interface ReconciliationAdjustmentRequest
  */
 export interface ReconciliationAdjustmentRequest {
     /**
-     * Signed adjustment amount; positive increases the reconciled cash account
+     * Signed amount; positive increases the reconciled cash. Required unless settlesMatchId or bridgesStatementId is set, when the server computes it and a sent value must equal it
      * @type {number}
      * @memberof ReconciliationAdjustmentRequest
      */
-    amount: number;
+    amount?: number;
     /**
-     * Optional description recorded on the adjustment
+     * The UNMATCHED bank transaction this adjustment explains; its cash line is matched to it
+     * @type {string}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    bankTransactionId?: string;
+    /**
+     * OTHER only: this reconciliation's statement, whose acknowledged gap this bridges
+     * @type {string}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    bridgesStatementId?: string;
+    /**
+     * TRANSFER only: the counter bank account (a reconcilable BANK_CASH account)
+     * @type {string}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    counterGlAccountId?: string;
+    /**
+     * Description recorded on the adjustment
      * @type {string}
      * @memberof ReconciliationAdjustmentRequest
      */
     description?: string;
     /**
-     * Adjustment type (decision D-6)
+     * Required for OTHER (at least 10 characters)
+     * @type {string}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    justification?: string;
+    /**
+     * Post into a CLOSED period; needs accounting:period:override (never a hard-locked one)
+     * @type {string}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    overrideJustification?: string;
+    /**
+     * Caller-generated UUIDv7; a replay returns the original with replayed true
+     * @type {string}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    requestId: string;
+    /**
+     * OTHER only: the ACCEPTED match whose residual this settles
+     * @type {string}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    settlesMatchId?: string;
+    /**
+     * The date to post at when the explaining date's period is closed; it must be in an OPEN period
+     * @type {Date}
+     * @memberof ReconciliationAdjustmentRequest
+     */
+    transactionDate?: Date;
+    /**
+     * Adjustment type
      * @type {string}
      * @memberof ReconciliationAdjustmentRequest
      */
@@ -47,7 +95,8 @@ export enum ReconciliationAdjustmentRequestTypeEnum {
     BankFee = 'BANK_FEE',
     NsfFee = 'NSF_FEE',
     InterestEarned = 'INTEREST_EARNED',
-    Other = 'OTHER'
+    Other = 'OTHER',
+    Transfer = 'TRANSFER'
 }
 
 
@@ -55,7 +104,7 @@ export enum ReconciliationAdjustmentRequestTypeEnum {
  * Check if a given object implements the ReconciliationAdjustmentRequest interface.
  */
 export function instanceOfReconciliationAdjustmentRequest(value: object): boolean {
-    if (!('amount' in value)) return false;
+    if (!('requestId' in value)) return false;
     if (!('type' in value)) return false;
     return true;
 }
@@ -70,8 +119,16 @@ export function ReconciliationAdjustmentRequestFromJSONTyped(json: any, ignoreDi
     }
     return {
         
-        'amount': json['amount'],
+        'amount': json['amount'] == null ? undefined : json['amount'],
+        'bankTransactionId': json['bankTransactionId'] == null ? undefined : json['bankTransactionId'],
+        'bridgesStatementId': json['bridgesStatementId'] == null ? undefined : json['bridgesStatementId'],
+        'counterGlAccountId': json['counterGlAccountId'] == null ? undefined : json['counterGlAccountId'],
         'description': json['description'] == null ? undefined : json['description'],
+        'justification': json['justification'] == null ? undefined : json['justification'],
+        'overrideJustification': json['overrideJustification'] == null ? undefined : json['overrideJustification'],
+        'requestId': json['requestId'],
+        'settlesMatchId': json['settlesMatchId'] == null ? undefined : json['settlesMatchId'],
+        'transactionDate': json['transactionDate'] == null ? undefined : (new Date(json['transactionDate'])),
         'type': json['type'],
     };
 }
@@ -83,7 +140,15 @@ export function ReconciliationAdjustmentRequestToJSON(value?: ReconciliationAdju
     return {
         
         'amount': value['amount'],
+        'bankTransactionId': value['bankTransactionId'],
+        'bridgesStatementId': value['bridgesStatementId'],
+        'counterGlAccountId': value['counterGlAccountId'],
         'description': value['description'],
+        'justification': value['justification'],
+        'overrideJustification': value['overrideJustification'],
+        'requestId': value['requestId'],
+        'settlesMatchId': value['settlesMatchId'],
+        'transactionDate': value['transactionDate'] == null ? undefined : ((value['transactionDate']).toISOString().substring(0,10)),
         'type': value['type'],
     };
 }

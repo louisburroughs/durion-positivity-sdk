@@ -18,8 +18,12 @@ import type {
   AccountingPeriodReopenRequest,
   AccountingPeriodResponse,
   ApiError,
+  BankReconciliationPolicyRequest,
+  BankReconciliationPolicyResponse,
+  CloseReadinessResponse,
   HardLockDateResponse,
   HardLockDateUpdateRequest,
+  PeriodCloseRequest,
 } from '../models/index';
 import {
     AccountingPeriodReopenRequestFromJSON,
@@ -28,13 +32,26 @@ import {
     AccountingPeriodResponseToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    BankReconciliationPolicyRequestFromJSON,
+    BankReconciliationPolicyRequestToJSON,
+    BankReconciliationPolicyResponseFromJSON,
+    BankReconciliationPolicyResponseToJSON,
+    CloseReadinessResponseFromJSON,
+    CloseReadinessResponseToJSON,
     HardLockDateResponseFromJSON,
     HardLockDateResponseToJSON,
     HardLockDateUpdateRequestFromJSON,
     HardLockDateUpdateRequestToJSON,
+    PeriodCloseRequestFromJSON,
+    PeriodCloseRequestToJSON,
 } from '../models/index';
 
 export interface CloseAccountingPeriodRequest {
+    periodCode: string;
+    periodCloseRequest?: PeriodCloseRequest;
+}
+
+export interface GetAccountingPeriodCloseReadinessRequest {
     periodCode: string;
 }
 
@@ -47,13 +64,17 @@ export interface SetAccountingHardLockDateRequest {
     hardLockDateUpdateRequest: HardLockDateUpdateRequest;
 }
 
+export interface SetBankReconciliationPolicyRequest {
+    bankReconciliationPolicyRequest: BankReconciliationPolicyRequest;
+}
+
 /**
  * 
  */
 export class AccountingPeriodsApi extends runtime.BaseAPI {
 
     /**
-     * Closes an OPEN accounting period (OPEN to CLOSED), after which posting paths reject entries dated inside it with PERIOD_CLOSED unless a permissioned override is supplied. Use this tool during month-end close after all journal entries for the month are posted; do not use reopenAccountingPeriod, which reverses this transition for late adjustments. Preconditions: the period must not already be CLOSED, and no DRAFT journal entries may be dated inside the period; a valid YYYY-MM code with no row whose month has already started is auto-provisioned and then closed. Required inputs: periodCode (YYYY-MM) as a path parameter; there is no request body. Emits an ACCOUNTING_PERIOD_CLOSE event and audit-logs the close with the acting user. Returns 409 PERIOD_ALREADY_CLOSED when the period is already closed, 404 PERIOD_NOT_FOUND when no row exists and the month has not started, and 422 PERIOD_HAS_DRAFT_ENTRIES listing the blocking draftJournalEntryIds in fieldErrors; post or delete those entries before retrying. 
+     * Closes an OPEN accounting period (OPEN to CLOSED), after which posting paths reject entries dated inside it with PERIOD_CLOSED unless a permissioned override is supplied. Use this tool during month-end close after all journal entries for the month are posted and getAccountingPeriodCloseReadiness shows the bank accounts reconciled; do not use reopenAccountingPeriod, which reverses this transition for late adjustments. Preconditions: the period must not already be CLOSED, and no DRAFT journal entries may be dated inside the period; a valid YYYY-MM code with no row whose month has already started is auto-provisioned and then closed; bank reconciliation readiness is then evaluated under the tenant\'s close policy: under REQUIRED or REQUIRED_WITH_EXCEPTION any BLOCKING check refuses the close; ADVISORY never refuses. Required inputs: periodCode (YYYY-MM) as a path parameter; the body is optional: bankReconciliationException.justification (at least 10 characters) closes despite BLOCKING checks under REQUIRED_WITH_EXCEPTION when the caller also holds accounting:period:override. Emits an ACCOUNTING_PERIOD_CLOSE event and audit-logs the close (with a readiness summary) with the acting user; a granted exception adds a PERIOD_CLOSE_BANKREC_EXCEPTION audit row holding the readiness snapshot, and the response carries bankReconciliationReady and bankReconciliationException. Returns 409 PERIOD_ALREADY_CLOSED when the period is already closed, 404 PERIOD_NOT_FOUND when no row exists and the month has not started, 422 PERIOD_HAS_DRAFT_ENTRIES listing the blocking draftJournalEntryIds in fieldErrors, 422 PERIOD_BANK_RECONCILIATION_INCOMPLETE listing unreconciledGlAccountIds in fieldErrors, 403 PERIOD_CLOSE_EXCEPTION_NOT_PERMITTED for an exception without the override authority, and 400 JUSTIFICATION_REQUIRED for a justification shorter than 10 characters. 
      * Close Accounting Period
      */
     async closeAccountingPeriodRaw(requestParameters: CloseAccountingPeriodRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingPeriodResponse>> {
@@ -68,6 +89,8 @@ export class AccountingPeriodsApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
         if (this.configuration && this.configuration.accessToken) {
             const token = this.configuration.accessToken;
             const tokenString = await token("bearerAuth", ["accounting:period:close"]);
@@ -81,13 +104,14 @@ export class AccountingPeriodsApi extends runtime.BaseAPI {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: PeriodCloseRequestToJSON(requestParameters['periodCloseRequest']),
         }, initOverrides);
 
         return new runtime.JSONApiResponse(response, (jsonValue) => AccountingPeriodResponseFromJSON(jsonValue));
     }
 
     /**
-     * Closes an OPEN accounting period (OPEN to CLOSED), after which posting paths reject entries dated inside it with PERIOD_CLOSED unless a permissioned override is supplied. Use this tool during month-end close after all journal entries for the month are posted; do not use reopenAccountingPeriod, which reverses this transition for late adjustments. Preconditions: the period must not already be CLOSED, and no DRAFT journal entries may be dated inside the period; a valid YYYY-MM code with no row whose month has already started is auto-provisioned and then closed. Required inputs: periodCode (YYYY-MM) as a path parameter; there is no request body. Emits an ACCOUNTING_PERIOD_CLOSE event and audit-logs the close with the acting user. Returns 409 PERIOD_ALREADY_CLOSED when the period is already closed, 404 PERIOD_NOT_FOUND when no row exists and the month has not started, and 422 PERIOD_HAS_DRAFT_ENTRIES listing the blocking draftJournalEntryIds in fieldErrors; post or delete those entries before retrying. 
+     * Closes an OPEN accounting period (OPEN to CLOSED), after which posting paths reject entries dated inside it with PERIOD_CLOSED unless a permissioned override is supplied. Use this tool during month-end close after all journal entries for the month are posted and getAccountingPeriodCloseReadiness shows the bank accounts reconciled; do not use reopenAccountingPeriod, which reverses this transition for late adjustments. Preconditions: the period must not already be CLOSED, and no DRAFT journal entries may be dated inside the period; a valid YYYY-MM code with no row whose month has already started is auto-provisioned and then closed; bank reconciliation readiness is then evaluated under the tenant\'s close policy: under REQUIRED or REQUIRED_WITH_EXCEPTION any BLOCKING check refuses the close; ADVISORY never refuses. Required inputs: periodCode (YYYY-MM) as a path parameter; the body is optional: bankReconciliationException.justification (at least 10 characters) closes despite BLOCKING checks under REQUIRED_WITH_EXCEPTION when the caller also holds accounting:period:override. Emits an ACCOUNTING_PERIOD_CLOSE event and audit-logs the close (with a readiness summary) with the acting user; a granted exception adds a PERIOD_CLOSE_BANKREC_EXCEPTION audit row holding the readiness snapshot, and the response carries bankReconciliationReady and bankReconciliationException. Returns 409 PERIOD_ALREADY_CLOSED when the period is already closed, 404 PERIOD_NOT_FOUND when no row exists and the month has not started, 422 PERIOD_HAS_DRAFT_ENTRIES listing the blocking draftJournalEntryIds in fieldErrors, 422 PERIOD_BANK_RECONCILIATION_INCOMPLETE listing unreconciledGlAccountIds in fieldErrors, 403 PERIOD_CLOSE_EXCEPTION_NOT_PERMITTED for an exception without the override authority, and 400 JUSTIFICATION_REQUIRED for a justification shorter than 10 characters. 
      * Close Accounting Period
      */
     async closeAccountingPeriod(requestParameters: CloseAccountingPeriodRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingPeriodResponse> {
@@ -128,6 +152,85 @@ export class AccountingPeriodsApi extends runtime.BaseAPI {
      */
     async getAccountingHardLockDate(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HardLockDateResponse> {
         const response = await this.getAccountingHardLockDateRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Reads the bank reconciliation close readiness of a period: per in-scope bank account the baseline that applies at the period end, the coverage and reconciled frontiers, the OPEN outstanding items with their sum, and the checks that fired (STATEMENT_COVERAGE, RECONCILIATION_APPROVED, RECONCILIATION_IN_FLIGHT, RECONCILIATION_INVALIDATED, BALANCE_AGREEMENT, UNEXPLAINED_BANK_TRANSACTIONS, UNEXPLAINED_LEDGER_LINES, UNPOSTED_ADJUSTMENTS, COVERAGE_LAG_APPLIED, INCOMPLETE_IMPORTS, OUTSTANDING_ITEMS_AGING, LATE_BANK_TRANSACTIONS, RECONCILED_AFTER_CLOSE), plus tenant-wide checks (DRAFT_JOURNAL_ENTRIES, CLEARING_BALANCE_AGING) in the top-level checks list. Use this tool before closeAccountingPeriod to see whether the close will pass and what blocks it; do not use listAccountingPeriods, which only reports OPEN or CLOSED. Preconditions: none; a month with no period row is evaluated as OPEN without creating it. Required inputs: periodCode (YYYY-MM) as a path parameter; there is no request body. Emits an ACCOUNTING_PERIOD_CLOSE_READINESS audit event; nothing is created or changed. Returns 200 with ready = true when no BLOCKING check remains under the tenant\'s close policy (under ADVISORY only DRAFT journal entries count), and 400 VALIDATION_ERROR for a malformed periodCode. 
+     * Get Accounting Period Close Readiness
+     */
+    async getAccountingPeriodCloseReadinessRaw(requestParameters: GetAccountingPeriodCloseReadinessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CloseReadinessResponse>> {
+        if (requestParameters['periodCode'] == null) {
+            throw new runtime.RequiredError(
+                'periodCode',
+                'Required parameter "periodCode" was null or undefined when calling getAccountingPeriodCloseReadiness().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:period:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/periods/{periodCode}/close-readiness`.replace(`{${"periodCode"}}`, encodeURIComponent(String(requestParameters['periodCode']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CloseReadinessResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Reads the bank reconciliation close readiness of a period: per in-scope bank account the baseline that applies at the period end, the coverage and reconciled frontiers, the OPEN outstanding items with their sum, and the checks that fired (STATEMENT_COVERAGE, RECONCILIATION_APPROVED, RECONCILIATION_IN_FLIGHT, RECONCILIATION_INVALIDATED, BALANCE_AGREEMENT, UNEXPLAINED_BANK_TRANSACTIONS, UNEXPLAINED_LEDGER_LINES, UNPOSTED_ADJUSTMENTS, COVERAGE_LAG_APPLIED, INCOMPLETE_IMPORTS, OUTSTANDING_ITEMS_AGING, LATE_BANK_TRANSACTIONS, RECONCILED_AFTER_CLOSE), plus tenant-wide checks (DRAFT_JOURNAL_ENTRIES, CLEARING_BALANCE_AGING) in the top-level checks list. Use this tool before closeAccountingPeriod to see whether the close will pass and what blocks it; do not use listAccountingPeriods, which only reports OPEN or CLOSED. Preconditions: none; a month with no period row is evaluated as OPEN without creating it. Required inputs: periodCode (YYYY-MM) as a path parameter; there is no request body. Emits an ACCOUNTING_PERIOD_CLOSE_READINESS audit event; nothing is created or changed. Returns 200 with ready = true when no BLOCKING check remains under the tenant\'s close policy (under ADVISORY only DRAFT journal entries count), and 400 VALIDATION_ERROR for a malformed periodCode. 
+     * Get Accounting Period Close Readiness
+     */
+    async getAccountingPeriodCloseReadiness(requestParameters: GetAccountingPeriodCloseReadinessRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CloseReadinessResponse> {
+        const response = await this.getAccountingPeriodCloseReadinessRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the tenant\'s effective bank reconciliation policy: closePolicy, closeScope, closeCoverageLagDays, allowSelfApproval and otherApprovalThreshold (null while unset), with the functional currency of the threshold and who changed a setting last. Use this tool to see how period close treats unreconciled bank accounts; use setBankReconciliationPolicy instead to change it. Preconditions: none; a setting never written reads as its default (REQUIRED_WITH_EXCEPTION, BANK_CASH_SUBTYPE, 0, false, unset). Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_PERIOD_BANK_REC_POLICY_VIEW audit event; nothing is changed. Returns 200 with the five effective values; updatedAt and updatedBy are null until the policy is first changed. 
+     * Get Bank Reconciliation Policy
+     */
+    async getBankReconciliationPolicyRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationPolicyResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:period:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/periods/bank-reconciliation-policy`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationPolicyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns the tenant\'s effective bank reconciliation policy: closePolicy, closeScope, closeCoverageLagDays, allowSelfApproval and otherApprovalThreshold (null while unset), with the functional currency of the threshold and who changed a setting last. Use this tool to see how period close treats unreconciled bank accounts; use setBankReconciliationPolicy instead to change it. Preconditions: none; a setting never written reads as its default (REQUIRED_WITH_EXCEPTION, BANK_CASH_SUBTYPE, 0, false, unset). Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_PERIOD_BANK_REC_POLICY_VIEW audit event; nothing is changed. Returns 200 with the five effective values; updatedAt and updatedBy are null until the policy is first changed. 
+     * Get Bank Reconciliation Policy
+     */
+    async getBankReconciliationPolicy(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationPolicyResponse> {
+        const response = await this.getBankReconciliationPolicyRaw(initOverrides);
         return await response.value();
     }
 
@@ -263,6 +366,52 @@ export class AccountingPeriodsApi extends runtime.BaseAPI {
      */
     async setAccountingHardLockDate(requestParameters: SetAccountingHardLockDateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<HardLockDateResponse> {
         const response = await this.setAccountingHardLockDateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Replaces the tenant\'s bank reconciliation policy: closePolicy (ADVISORY, REQUIRED_WITH_EXCEPTION or REQUIRED), closeScope (BANK_CASH_SUBTYPE or ALL_RECONCILABLE), closeCoverageLagDays (integer >= 0), allowSelfApproval (boolean) and otherApprovalThreshold (amount >= 0 in the functional currency, or null to unset it). Use this tool when Finance changes how period close treats unreconciled bank accounts, whether preparers may approve their own reconciliations, or the OTHER adjustment approval threshold; do not use it just to read the current values (use getBankReconciliationPolicy instead). Preconditions: the caller holds accounting:period:hard_lock, the governance level of the hard lock. Required inputs: all six body fields, including otherApprovalThreshold (null clears it) and a justification of at least 10 characters. Emits an ACCOUNTING_PERIOD_BANK_REC_POLICY_SET event and writes one BANK_REC_POLICY_SET audit row per setting whose value changes (old and new value, justification); an unchanged setting writes nothing. Returns 400 VALIDATION_ERROR for a missing field, an unknown value, a negative number or a blank justification, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 422 AMOUNT_PRECISION_EXCEEDS_CURRENCY when otherApprovalThreshold has more decimal places than the functional currency\'s minor unit (it is refused, never rounded). 
+     * Set Bank Reconciliation Policy
+     */
+    async setBankReconciliationPolicyRaw(requestParameters: SetBankReconciliationPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<BankReconciliationPolicyResponse>> {
+        if (requestParameters['bankReconciliationPolicyRequest'] == null) {
+            throw new runtime.RequiredError(
+                'bankReconciliationPolicyRequest',
+                'Required parameter "bankReconciliationPolicyRequest" was null or undefined when calling setBankReconciliationPolicy().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:period:hard_lock"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/periods/bank-reconciliation-policy`,
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: BankReconciliationPolicyRequestToJSON(requestParameters['bankReconciliationPolicyRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BankReconciliationPolicyResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Replaces the tenant\'s bank reconciliation policy: closePolicy (ADVISORY, REQUIRED_WITH_EXCEPTION or REQUIRED), closeScope (BANK_CASH_SUBTYPE or ALL_RECONCILABLE), closeCoverageLagDays (integer >= 0), allowSelfApproval (boolean) and otherApprovalThreshold (amount >= 0 in the functional currency, or null to unset it). Use this tool when Finance changes how period close treats unreconciled bank accounts, whether preparers may approve their own reconciliations, or the OTHER adjustment approval threshold; do not use it just to read the current values (use getBankReconciliationPolicy instead). Preconditions: the caller holds accounting:period:hard_lock, the governance level of the hard lock. Required inputs: all six body fields, including otherApprovalThreshold (null clears it) and a justification of at least 10 characters. Emits an ACCOUNTING_PERIOD_BANK_REC_POLICY_SET event and writes one BANK_REC_POLICY_SET audit row per setting whose value changes (old and new value, justification); an unchanged setting writes nothing. Returns 400 VALIDATION_ERROR for a missing field, an unknown value, a negative number or a blank justification, 400 JUSTIFICATION_REQUIRED for a justification of 1 to 9 characters, and 422 AMOUNT_PRECISION_EXCEEDS_CURRENCY when otherApprovalThreshold has more decimal places than the functional currency\'s minor unit (it is refused, never rounded). 
+     * Set Bank Reconciliation Policy
+     */
+    async setBankReconciliationPolicy(requestParameters: SetBankReconciliationPolicyRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BankReconciliationPolicyResponse> {
+        const response = await this.setBankReconciliationPolicyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

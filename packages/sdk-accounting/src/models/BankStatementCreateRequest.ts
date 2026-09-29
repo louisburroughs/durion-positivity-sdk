@@ -57,11 +57,29 @@ export interface BankStatementCreateRequest {
      */
     requestId: string;
     /**
+     * Start an IN_PROGRESS reconciliation of the committed statement in the same transaction; it appears in reconciliations (story S4)
+     * @type {boolean}
+     * @memberof BankStatementCreateRequest
+     */
+    startReconciliation?: boolean;
+    /**
      * 
      * @type {BankStatementHeaderRequest}
      * @memberof BankStatementCreateRequest
      */
     statement: BankStatementHeaderRequest;
+    /**
+     * A COMMITTED statement of the same account this corrected statement supersedes (§4.9 path 3): it becomes SUPERSEDED, its rows EXCLUDED (STATEMENT_SUPERSEDED), and a FINALIZED reconciliation of it INVALIDATED; refused while it has an IN_PROGRESS or SUBMITTED reconciliation
+     * @type {string}
+     * @memberof BankStatementCreateRequest
+     */
+    supersedesStatementId?: string;
+    /**
+     * Why the statement is superseded (at least 10 characters); required with supersedesStatementId and refused without it
+     * @type {string}
+     * @memberof BankStatementCreateRequest
+     */
+    supersessionJustification?: string;
     /**
      * Transactions of the statement, in the order the bank lists them
      * @type {Array<BankStatementTransactionRequest>}
@@ -95,7 +113,10 @@ export function BankStatementCreateRequestFromJSONTyped(json: any, ignoreDiscrim
         'gapAcknowledgement': json['gapAcknowledgement'] == null ? undefined : json['gapAcknowledgement'],
         'glAccountId': json['glAccountId'],
         'requestId': json['requestId'],
+        'startReconciliation': json['startReconciliation'] == null ? undefined : json['startReconciliation'],
         'statement': BankStatementHeaderRequestFromJSON(json['statement']),
+        'supersedesStatementId': json['supersedesStatementId'] == null ? undefined : json['supersedesStatementId'],
+        'supersessionJustification': json['supersessionJustification'] == null ? undefined : json['supersessionJustification'],
         'transactions': ((json['transactions'] as Array<any>).map(BankStatementTransactionRequestFromJSON)),
     };
 }
@@ -110,7 +131,10 @@ export function BankStatementCreateRequestToJSON(value?: BankStatementCreateRequ
         'gapAcknowledgement': value['gapAcknowledgement'],
         'glAccountId': value['glAccountId'],
         'requestId': value['requestId'],
+        'startReconciliation': value['startReconciliation'],
         'statement': BankStatementHeaderRequestToJSON(value['statement']),
+        'supersedesStatementId': value['supersedesStatementId'],
+        'supersessionJustification': value['supersessionJustification'],
         'transactions': ((value['transactions'] as Array<any>).map(BankStatementTransactionRequestToJSON)),
     };
 }

@@ -13,21 +13,8 @@
  */
 
 import { mapValues } from '../runtime';
-import type { BankReconciliationAdjustmentResponse } from './BankReconciliationAdjustmentResponse';
-import {
-    BankReconciliationAdjustmentResponseFromJSON,
-    BankReconciliationAdjustmentResponseFromJSONTyped,
-    BankReconciliationAdjustmentResponseToJSON,
-} from './BankReconciliationAdjustmentResponse';
-import type { BankReconciliationLineResponse } from './BankReconciliationLineResponse';
-import {
-    BankReconciliationLineResponseFromJSON,
-    BankReconciliationLineResponseFromJSONTyped,
-    BankReconciliationLineResponseToJSON,
-} from './BankReconciliationLineResponse';
-
 /**
- * Bank reconciliation with its statement lines and adjustments
+ * Bank reconciliation header with the live equation (E3), opening terms and unexplained counts
  * @export
  * @interface BankReconciliationResponse
  */
@@ -45,11 +32,65 @@ export interface BankReconciliationResponse {
      */
     accountName?: string;
     /**
-     * Recorded adjustments
-     * @type {Array<BankReconciliationAdjustmentResponse>}
+     * YearMonth of the statement end date, for attribution only (never a window constraint)
+     * @type {string}
      * @memberof BankReconciliationResponse
      */
-    adjustments?: Array<BankReconciliationAdjustmentResponse>;
+    accountingPeriodCode?: string;
+    /**
+     * statementClosingBalance + sumOutstandingLedgerItems − sumOutstandingBankItems
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    adjustedBankBalance?: number;
+    /**
+     * glEndingBalance + sumLateAdjustments
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    adjustedBookBalance?: number;
+    /**
+     * The ledger balance as-of the statement end date that the approver saw, snapshotted at approval; compare with glEndingBalance (live) to see whether the ledger changed since
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    approvedGlEndingBalance?: number;
+    /**
+     * Start date of the latest acknowledged statement on or before the window start: nothing dated before it counts as unexplained; null when the account has no acknowledged statement
+     * @type {Date}
+     * @memberof BankReconciliationResponse
+     */
+    baselineDate?: Date;
+    /**
+     * Why it was cancelled
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    cancelReason?: string;
+    /**
+     * When the reconciliation was cancelled
+     * @type {Date}
+     * @memberof BankReconciliationResponse
+     */
+    cancelledAt?: Date;
+    /**
+     * Who cancelled it (the approver)
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    cancelledBy?: string;
+    /**
+     * Unexplained bank transactions from the baseline to the window end (exact count)
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    countUnexplainedBank?: number;
+    /**
+     * Unexplained ledger lines from the baseline to the window end, aged OTHER_LEDGER_TIMING items not reaffirmed here included (exact count)
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    countUnexplainedLedger?: number;
     /**
      * When the reconciliation was created
      * @type {Date}
@@ -57,31 +98,31 @@ export interface BankReconciliationResponse {
      */
     createdAt?: Date;
     /**
-     * Who created the reconciliation
+     * Who created the reconciliation (the preparer)
      * @type {string}
      * @memberof BankReconciliationResponse
      */
     createdBy?: string;
     /**
-     * Reconciliation currency
+     * Reconciliation currency (the ledger currency)
      * @type {string}
      * @memberof BankReconciliationResponse
      */
     currency?: string;
     /**
-     * statementEndingBalance − (glEndingBalance + Σ adjustments); 0 when balanced
+     * adjustedBankBalance − adjustedBookBalance; balanced within ±0.01
      * @type {number}
      * @memberof BankReconciliationResponse
      */
     difference?: number;
     /**
-     * When the reconciliation was finalized; null while IN_PROGRESS
+     * When the reconciliation was approved (finalized); null until then
      * @type {Date}
      * @memberof BankReconciliationResponse
      */
     finalizedAt?: Date;
     /**
-     * Who finalized the reconciliation
+     * Who approved (finalized) the reconciliation
      * @type {string}
      * @memberof BankReconciliationResponse
      */
@@ -93,23 +134,41 @@ export interface BankReconciliationResponse {
      */
     glAccountId?: string;
     /**
-     * GL ending balance snapshotted at import as-of the statement date
+     * Live ledger balance at the end of the statement end date, entries POSTED or REVERSED at their own dates
      * @type {number}
      * @memberof BankReconciliationResponse
      */
     glEndingBalance?: number;
     /**
-     * Statement period end date
-     * @type {Date}
+     * Live ledger balance at the end of the day before the window start
+     * @type {number}
      * @memberof BankReconciliationResponse
      */
-    periodEndDate?: Date;
+    glOpeningBalance?: number;
     /**
-     * Statement period start date
+     * When an approved reconciliation was invalidated
      * @type {Date}
      * @memberof BankReconciliationResponse
      */
-    periodStartDate?: Date;
+    invalidatedAt?: Date;
+    /**
+     * The journal entry whose posting or reversal invalidated it
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    invalidatedByJournalEntryId?: string;
+    /**
+     * Why it was invalidated: LEDGER_LINE_REVERSED, LEDGER_LINE_POSTED, SOURCE_REMOVED or STATEMENT_SUPERSEDED
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    invalidationReason?: string;
+    /**
+     * Diagnostic only, never blocking: statementOpeningBalance + ledger items − bank items open at the day before the start − (glOpeningBalance + sumOpeningAdjustments)
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    openingDifference?: number;
     /**
      * Reconciliation id
      * @type {string}
@@ -117,29 +176,113 @@ export interface BankReconciliationResponse {
      */
     reconciliationId?: string;
     /**
-     * Statement date
-     * @type {Date}
+     * True when this answers a replayed create command (same requestId and payload)
+     * @type {boolean}
      * @memberof BankReconciliationResponse
      */
-    statementDate?: Date;
+    replayed?: boolean;
     /**
-     * Statement ending balance
+     * Statement closing balance
      * @type {number}
      * @memberof BankReconciliationResponse
      */
-    statementEndingBalance?: number;
+    statementClosingBalance?: number;
     /**
-     * Imported statement lines
-     * @type {Array<BankReconciliationLineResponse>}
+     * Statement window end date; the as-of date of every closing term
+     * @type {Date}
      * @memberof BankReconciliationResponse
      */
-    statementLines?: Array<BankReconciliationLineResponse>;
+    statementEndDate?: Date;
+    /**
+     * The bank statement this reconciliation rests on
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    statementId?: string;
+    /**
+     * Statement opening balance
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    statementOpeningBalance?: number;
+    /**
+     * Statement window start date
+     * @type {Date}
+     * @memberof BankReconciliationResponse
+     */
+    statementStartDate?: Date;
     /**
      * Reconciliation status
      * @type {string}
      * @memberof BankReconciliationResponse
      */
     status?: BankReconciliationResponseStatusEnum;
+    /**
+     * When the preparer submitted it for approval; null while it is not submitted
+     * @type {Date}
+     * @memberof BankReconciliationResponse
+     */
+    submittedAt?: Date;
+    /**
+     * Who submitted it for approval (the preparer)
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    submittedBy?: string;
+    /**
+     * Adjustment postings of this or an earlier reconciliation on the account dated after the statement end date
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    sumLateAdjustments?: number;
+    /**
+     * Adjustment postings of earlier windows, and this statement's gap bridges, dated on or after the window start
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    sumOpeningAdjustments?: number;
+    /**
+     * Σ bank-side outstanding items open at the end of the window (bank errors)
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    sumOutstandingBankItems?: number;
+    /**
+     * Σ ledger-side outstanding items open at the end of the window (deposits +, checks −)
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    sumOutstandingLedgerItems?: number;
+    /**
+     * Σ signed amounts of the unexplained bank transactions
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    sumUnexplainedBank?: number;
+    /**
+     * Σ signed amounts of the unexplained ledger lines
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    sumUnexplainedLedger?: number;
+    /**
+     * The approved reconciliation that superseded this one
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    supersededByReconciliationId?: string;
+    /**
+     * The reconciliation this one supersedes (a correction of an approved window)
+     * @type {string}
+     * @memberof BankReconciliationResponse
+     */
+    supersedesReconciliationId?: string;
+    /**
+     * Optimistic-lock version of the row
+     * @type {number}
+     * @memberof BankReconciliationResponse
+     */
+    version?: number;
 }
 
 /**
@@ -148,7 +291,10 @@ export interface BankReconciliationResponse {
 */
 export enum BankReconciliationResponseStatusEnum {
     InProgress = 'IN_PROGRESS',
+    Submitted = 'SUBMITTED',
     Finalized = 'FINALIZED',
+    Invalidated = 'INVALIDATED',
+    Superseded = 'SUPERSEDED',
     Cancelled = 'CANCELLED'
 }
 
@@ -172,7 +318,16 @@ export function BankReconciliationResponseFromJSONTyped(json: any, ignoreDiscrim
         
         'accountCode': json['accountCode'] == null ? undefined : json['accountCode'],
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
-        'adjustments': json['adjustments'] == null ? undefined : ((json['adjustments'] as Array<any>).map(BankReconciliationAdjustmentResponseFromJSON)),
+        'accountingPeriodCode': json['accountingPeriodCode'] == null ? undefined : json['accountingPeriodCode'],
+        'adjustedBankBalance': json['adjustedBankBalance'] == null ? undefined : json['adjustedBankBalance'],
+        'adjustedBookBalance': json['adjustedBookBalance'] == null ? undefined : json['adjustedBookBalance'],
+        'approvedGlEndingBalance': json['approvedGlEndingBalance'] == null ? undefined : json['approvedGlEndingBalance'],
+        'baselineDate': json['baselineDate'] == null ? undefined : (new Date(json['baselineDate'])),
+        'cancelReason': json['cancelReason'] == null ? undefined : json['cancelReason'],
+        'cancelledAt': json['cancelledAt'] == null ? undefined : (new Date(json['cancelledAt'])),
+        'cancelledBy': json['cancelledBy'] == null ? undefined : json['cancelledBy'],
+        'countUnexplainedBank': json['countUnexplainedBank'] == null ? undefined : json['countUnexplainedBank'],
+        'countUnexplainedLedger': json['countUnexplainedLedger'] == null ? undefined : json['countUnexplainedLedger'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'createdBy': json['createdBy'] == null ? undefined : json['createdBy'],
         'currency': json['currency'] == null ? undefined : json['currency'],
@@ -181,13 +336,30 @@ export function BankReconciliationResponseFromJSONTyped(json: any, ignoreDiscrim
         'finalizedBy': json['finalizedBy'] == null ? undefined : json['finalizedBy'],
         'glAccountId': json['glAccountId'] == null ? undefined : json['glAccountId'],
         'glEndingBalance': json['glEndingBalance'] == null ? undefined : json['glEndingBalance'],
-        'periodEndDate': json['periodEndDate'] == null ? undefined : (new Date(json['periodEndDate'])),
-        'periodStartDate': json['periodStartDate'] == null ? undefined : (new Date(json['periodStartDate'])),
+        'glOpeningBalance': json['glOpeningBalance'] == null ? undefined : json['glOpeningBalance'],
+        'invalidatedAt': json['invalidatedAt'] == null ? undefined : (new Date(json['invalidatedAt'])),
+        'invalidatedByJournalEntryId': json['invalidatedByJournalEntryId'] == null ? undefined : json['invalidatedByJournalEntryId'],
+        'invalidationReason': json['invalidationReason'] == null ? undefined : json['invalidationReason'],
+        'openingDifference': json['openingDifference'] == null ? undefined : json['openingDifference'],
         'reconciliationId': json['reconciliationId'] == null ? undefined : json['reconciliationId'],
-        'statementDate': json['statementDate'] == null ? undefined : (new Date(json['statementDate'])),
-        'statementEndingBalance': json['statementEndingBalance'] == null ? undefined : json['statementEndingBalance'],
-        'statementLines': json['statementLines'] == null ? undefined : ((json['statementLines'] as Array<any>).map(BankReconciliationLineResponseFromJSON)),
+        'replayed': json['replayed'] == null ? undefined : json['replayed'],
+        'statementClosingBalance': json['statementClosingBalance'] == null ? undefined : json['statementClosingBalance'],
+        'statementEndDate': json['statementEndDate'] == null ? undefined : (new Date(json['statementEndDate'])),
+        'statementId': json['statementId'] == null ? undefined : json['statementId'],
+        'statementOpeningBalance': json['statementOpeningBalance'] == null ? undefined : json['statementOpeningBalance'],
+        'statementStartDate': json['statementStartDate'] == null ? undefined : (new Date(json['statementStartDate'])),
         'status': json['status'] == null ? undefined : json['status'],
+        'submittedAt': json['submittedAt'] == null ? undefined : (new Date(json['submittedAt'])),
+        'submittedBy': json['submittedBy'] == null ? undefined : json['submittedBy'],
+        'sumLateAdjustments': json['sumLateAdjustments'] == null ? undefined : json['sumLateAdjustments'],
+        'sumOpeningAdjustments': json['sumOpeningAdjustments'] == null ? undefined : json['sumOpeningAdjustments'],
+        'sumOutstandingBankItems': json['sumOutstandingBankItems'] == null ? undefined : json['sumOutstandingBankItems'],
+        'sumOutstandingLedgerItems': json['sumOutstandingLedgerItems'] == null ? undefined : json['sumOutstandingLedgerItems'],
+        'sumUnexplainedBank': json['sumUnexplainedBank'] == null ? undefined : json['sumUnexplainedBank'],
+        'sumUnexplainedLedger': json['sumUnexplainedLedger'] == null ? undefined : json['sumUnexplainedLedger'],
+        'supersededByReconciliationId': json['supersededByReconciliationId'] == null ? undefined : json['supersededByReconciliationId'],
+        'supersedesReconciliationId': json['supersedesReconciliationId'] == null ? undefined : json['supersedesReconciliationId'],
+        'version': json['version'] == null ? undefined : json['version'],
     };
 }
 
@@ -199,7 +371,16 @@ export function BankReconciliationResponseToJSON(value?: BankReconciliationRespo
         
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
-        'adjustments': value['adjustments'] == null ? undefined : ((value['adjustments'] as Array<any>).map(BankReconciliationAdjustmentResponseToJSON)),
+        'accountingPeriodCode': value['accountingPeriodCode'],
+        'adjustedBankBalance': value['adjustedBankBalance'],
+        'adjustedBookBalance': value['adjustedBookBalance'],
+        'approvedGlEndingBalance': value['approvedGlEndingBalance'],
+        'baselineDate': value['baselineDate'] == null ? undefined : ((value['baselineDate']).toISOString().substring(0,10)),
+        'cancelReason': value['cancelReason'],
+        'cancelledAt': value['cancelledAt'] == null ? undefined : ((value['cancelledAt']).toISOString()),
+        'cancelledBy': value['cancelledBy'],
+        'countUnexplainedBank': value['countUnexplainedBank'],
+        'countUnexplainedLedger': value['countUnexplainedLedger'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
         'currency': value['currency'],
@@ -208,13 +389,30 @@ export function BankReconciliationResponseToJSON(value?: BankReconciliationRespo
         'finalizedBy': value['finalizedBy'],
         'glAccountId': value['glAccountId'],
         'glEndingBalance': value['glEndingBalance'],
-        'periodEndDate': value['periodEndDate'] == null ? undefined : ((value['periodEndDate']).toISOString().substring(0,10)),
-        'periodStartDate': value['periodStartDate'] == null ? undefined : ((value['periodStartDate']).toISOString().substring(0,10)),
+        'glOpeningBalance': value['glOpeningBalance'],
+        'invalidatedAt': value['invalidatedAt'] == null ? undefined : ((value['invalidatedAt']).toISOString()),
+        'invalidatedByJournalEntryId': value['invalidatedByJournalEntryId'],
+        'invalidationReason': value['invalidationReason'],
+        'openingDifference': value['openingDifference'],
         'reconciliationId': value['reconciliationId'],
-        'statementDate': value['statementDate'] == null ? undefined : ((value['statementDate']).toISOString().substring(0,10)),
-        'statementEndingBalance': value['statementEndingBalance'],
-        'statementLines': value['statementLines'] == null ? undefined : ((value['statementLines'] as Array<any>).map(BankReconciliationLineResponseToJSON)),
+        'replayed': value['replayed'],
+        'statementClosingBalance': value['statementClosingBalance'],
+        'statementEndDate': value['statementEndDate'] == null ? undefined : ((value['statementEndDate']).toISOString().substring(0,10)),
+        'statementId': value['statementId'],
+        'statementOpeningBalance': value['statementOpeningBalance'],
+        'statementStartDate': value['statementStartDate'] == null ? undefined : ((value['statementStartDate']).toISOString().substring(0,10)),
         'status': value['status'],
+        'submittedAt': value['submittedAt'] == null ? undefined : ((value['submittedAt']).toISOString()),
+        'submittedBy': value['submittedBy'],
+        'sumLateAdjustments': value['sumLateAdjustments'],
+        'sumOpeningAdjustments': value['sumOpeningAdjustments'],
+        'sumOutstandingBankItems': value['sumOutstandingBankItems'],
+        'sumOutstandingLedgerItems': value['sumOutstandingLedgerItems'],
+        'sumUnexplainedBank': value['sumUnexplainedBank'],
+        'sumUnexplainedLedger': value['sumUnexplainedLedger'],
+        'supersededByReconciliationId': value['supersededByReconciliationId'],
+        'supersedesReconciliationId': value['supersedesReconciliationId'],
+        'version': value['version'],
     };
 }
 

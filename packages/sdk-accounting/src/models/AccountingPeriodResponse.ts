@@ -20,6 +20,18 @@ import { mapValues } from '../runtime';
  */
 export interface AccountingPeriodResponse {
     /**
+     * Close response only: whether the period closed on a bank reconciliation exception (null on other responses)
+     * @type {boolean}
+     * @memberof AccountingPeriodResponse
+     */
+    bankReconciliationException?: boolean;
+    /**
+     * Close response only: whether no BLOCKING bank reconciliation check remained at close (null on other responses)
+     * @type {boolean}
+     * @memberof AccountingPeriodResponse
+     */
+    bankReconciliationReady?: boolean;
+    /**
      * When the period was closed (null while OPEN)
      * @type {Date}
      * @memberof AccountingPeriodResponse
@@ -108,6 +120,8 @@ export function AccountingPeriodResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'bankReconciliationException': json['bankReconciliationException'] == null ? undefined : json['bankReconciliationException'],
+        'bankReconciliationReady': json['bankReconciliationReady'] == null ? undefined : json['bankReconciliationReady'],
         'closedAt': json['closedAt'] == null ? undefined : (new Date(json['closedAt'])),
         'closedBy': json['closedBy'] == null ? undefined : json['closedBy'],
         'endDate': json['endDate'] == null ? undefined : (new Date(json['endDate'])),
@@ -127,6 +141,8 @@ export function AccountingPeriodResponseToJSON(value?: AccountingPeriodResponse 
     }
     return {
         
+        'bankReconciliationException': value['bankReconciliationException'],
+        'bankReconciliationReady': value['bankReconciliationReady'],
         'closedAt': value['closedAt'] == null ? undefined : ((value['closedAt']).toISOString()),
         'closedBy': value['closedBy'],
         'endDate': value['endDate'] == null ? undefined : ((value['endDate']).toISOString().substring(0,10)),
