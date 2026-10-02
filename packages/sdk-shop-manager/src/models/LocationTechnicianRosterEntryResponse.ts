@@ -63,17 +63,17 @@ export interface LocationTechnicianRosterEntryResponse {
      */
     locationId?: string;
     /**
-     * 
+     * The mechanic's People-domain person id (ADR-0015 §7 I7) - the value createAssignment takes as mechanicPersonId. Use this to identify the mechanic across services.
      * @type {string}
      * @memberof LocationTechnicianRosterEntryResponse
      */
-    mechanicId?: string;
+    mechanicPersonId: string;
     /**
-     * 
+     * Internal shop-manager mechanic record id (a local surrogate key). Not a person id and not a stable cross-service identifier; do not send it to other services.
      * @type {string}
      * @memberof LocationTechnicianRosterEntryResponse
      */
-    personId?: string;
+    mechanicRecordId: string;
     /**
      * PLACEHOLDER: end of the technician's shift window on the roster date, as a UTC instant. Derived from the shop location's operating hours (its close time in the location's timezone), not from the person's own schedule, so every technician at the location carries the same value. Null when shiftStatus is CLOSED or UNKNOWN.
      * @type {Date}
@@ -149,6 +149,8 @@ export enum LocationTechnicianRosterEntryResponseStatusEnum {
  * Check if a given object implements the LocationTechnicianRosterEntryResponse interface.
  */
 export function instanceOfLocationTechnicianRosterEntryResponse(value: object): boolean {
+    if (!('mechanicPersonId' in value)) return false;
+    if (!('mechanicRecordId' in value)) return false;
     if (!('shiftSource' in value)) return false;
     if (!('shiftStatus' in value)) return false;
     return true;
@@ -170,8 +172,8 @@ export function LocationTechnicianRosterEntryResponseFromJSONTyped(json: any, ig
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
         'lastSyncedAt': json['lastSyncedAt'] == null ? undefined : (new Date(json['lastSyncedAt'])),
         'locationId': json['locationId'] == null ? undefined : json['locationId'],
-        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
-        'personId': json['personId'] == null ? undefined : json['personId'],
+        'mechanicPersonId': json['mechanicPersonId'],
+        'mechanicRecordId': json['mechanicRecordId'],
         'shiftEnd': json['shiftEnd'] == null ? undefined : (new Date(json['shiftEnd'])),
         'shiftMinutes': json['shiftMinutes'] == null ? undefined : json['shiftMinutes'],
         'shiftSource': json['shiftSource'],
@@ -194,8 +196,8 @@ export function LocationTechnicianRosterEntryResponseToJSON(value?: LocationTech
         'lastName': value['lastName'],
         'lastSyncedAt': value['lastSyncedAt'] == null ? undefined : ((value['lastSyncedAt']).toISOString()),
         'locationId': value['locationId'],
-        'mechanicId': value['mechanicId'],
-        'personId': value['personId'],
+        'mechanicPersonId': value['mechanicPersonId'],
+        'mechanicRecordId': value['mechanicRecordId'],
         'shiftEnd': value['shiftEnd'] == null ? undefined : ((value['shiftEnd']).toISOString()),
         'shiftMinutes': value['shiftMinutes'],
         'shiftSource': value['shiftSource'],

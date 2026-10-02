@@ -57,17 +57,17 @@ export interface MechanicRosterEntryResponse {
      */
     lastSyncedAt?: Date;
     /**
-     * 
+     * The mechanic's People-domain person id (ADR-0015 §7 I7) - the value createAssignment takes as mechanicPersonId. Use this to identify the mechanic across services.
      * @type {string}
      * @memberof MechanicRosterEntryResponse
      */
-    mechanicId?: string;
+    mechanicPersonId: string;
     /**
-     * 
+     * Internal shop-manager mechanic record id (a local surrogate key). Not a person id and not a stable cross-service identifier; do not send it to other services.
      * @type {string}
      * @memberof MechanicRosterEntryResponse
      */
-    personId?: string;
+    mechanicRecordId: string;
     /**
      * 
      * @type {string}
@@ -97,6 +97,8 @@ export enum MechanicRosterEntryResponseStatusEnum {
  * Check if a given object implements the MechanicRosterEntryResponse interface.
  */
 export function instanceOfMechanicRosterEntryResponse(value: object): boolean {
+    if (!('mechanicPersonId' in value)) return false;
+    if (!('mechanicRecordId' in value)) return false;
     return true;
 }
 
@@ -115,8 +117,8 @@ export function MechanicRosterEntryResponseFromJSONTyped(json: any, ignoreDiscri
         'hireDate': json['hireDate'] == null ? undefined : (new Date(json['hireDate'])),
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
         'lastSyncedAt': json['lastSyncedAt'] == null ? undefined : (new Date(json['lastSyncedAt'])),
-        'mechanicId': json['mechanicId'] == null ? undefined : json['mechanicId'],
-        'personId': json['personId'] == null ? undefined : json['personId'],
+        'mechanicPersonId': json['mechanicPersonId'],
+        'mechanicRecordId': json['mechanicRecordId'],
         'status': json['status'] == null ? undefined : json['status'],
         'terminationDate': json['terminationDate'] == null ? undefined : (new Date(json['terminationDate'])),
     };
@@ -133,8 +135,8 @@ export function MechanicRosterEntryResponseToJSON(value?: MechanicRosterEntryRes
         'hireDate': value['hireDate'] == null ? undefined : ((value['hireDate']).toISOString().substring(0,10)),
         'lastName': value['lastName'],
         'lastSyncedAt': value['lastSyncedAt'] == null ? undefined : ((value['lastSyncedAt']).toISOString()),
-        'mechanicId': value['mechanicId'],
-        'personId': value['personId'],
+        'mechanicPersonId': value['mechanicPersonId'],
+        'mechanicRecordId': value['mechanicRecordId'],
         'status': value['status'],
         'terminationDate': value['terminationDate'] == null ? undefined : ((value['terminationDate']).toISOString().substring(0,10)),
     };
