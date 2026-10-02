@@ -20,13 +20,13 @@ import { mapValues } from '../runtime';
  */
 export interface PostalCodeEntry {
     /**
-     * ISO 3166-1 alpha-2 country code
+     * ISO 3166-1 alpha-2 country code, at most 2 characters
      * @type {string}
      * @memberof PostalCodeEntry
      */
     countryCode: string;
     /**
-     * Postal or ZIP code
+     * Postal or ZIP code, at most 20 characters
      * @type {string}
      * @memberof PostalCodeEntry
      */

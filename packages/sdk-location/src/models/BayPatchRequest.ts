@@ -21,7 +21,7 @@ import {
 } from './BayCapacityRequest';
 
 /**
- * Partial update payload for a service bay; null fields are left unchanged
+ * Partial update payload for a service bay; absent fields are left unchanged. maxDutyClass is the exception: an absent key leaves it unchanged, while an explicit JSON null clears it.
  * @export
  * @interface BayPatchRequest
  */
@@ -57,7 +57,7 @@ export interface BayPatchRequest {
      */
     maxConcurrentVehicles?: number;
     /**
-     * Heaviest GVWR class (1–8) the bay accepts (CAP-325 D13). Null leaves unchanged.
+     * Heaviest GVWR class (1–8) the bay accepts (CAP-325 D13). Omit the field to leave the current value unchanged; send JSON null to clear it back to no limit; send 1–8 to set it.
      * @type {number}
      * @memberof BayPatchRequest
      */

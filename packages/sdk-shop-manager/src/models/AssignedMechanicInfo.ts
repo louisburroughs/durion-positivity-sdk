@@ -20,11 +20,17 @@ import { mapValues } from '../runtime';
  */
 export interface AssignedMechanicInfo {
     /**
-     * Mechanic identifier
+     * The mechanic's People-domain person id (ADR-0015 §7 I7) - the same value the request carries as mechanicPersonId. Use this to identify the mechanic across services.
      * @type {string}
      * @memberof AssignedMechanicInfo
      */
-    mechanicId: string;
+    mechanicPersonId: string;
+    /**
+     * Internal shop-manager mechanic record id (a local surrogate key). Not a person id and not a stable cross-service identifier; do not send it to other services.
+     * @type {string}
+     * @memberof AssignedMechanicInfo
+     */
+    mechanicRecordId: string;
     /**
      * Role of the mechanic in the assignment
      * @type {string}
@@ -47,7 +53,8 @@ export enum AssignedMechanicInfoRoleEnum {
  * Check if a given object implements the AssignedMechanicInfo interface.
  */
 export function instanceOfAssignedMechanicInfo(value: object): boolean {
-    if (!('mechanicId' in value)) return false;
+    if (!('mechanicPersonId' in value)) return false;
+    if (!('mechanicRecordId' in value)) return false;
     if (!('role' in value)) return false;
     return true;
 }
@@ -62,7 +69,8 @@ export function AssignedMechanicInfoFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'mechanicId': json['mechanicId'],
+        'mechanicPersonId': json['mechanicPersonId'],
+        'mechanicRecordId': json['mechanicRecordId'],
         'role': json['role'],
     };
 }
@@ -73,7 +81,8 @@ export function AssignedMechanicInfoToJSON(value?: AssignedMechanicInfo | null):
     }
     return {
         
-        'mechanicId': value['mechanicId'],
+        'mechanicPersonId': value['mechanicPersonId'],
+        'mechanicRecordId': value['mechanicRecordId'],
         'role': value['role'],
     };
 }

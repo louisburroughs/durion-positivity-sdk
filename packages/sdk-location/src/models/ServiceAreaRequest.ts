@@ -39,7 +39,7 @@ export interface ServiceAreaRequest {
      */
     description?: string;
     /**
-     * Display name of the service area
+     * Display name of the service area; unique per tenant, at most 255 characters
      * @type {string}
      * @memberof ServiceAreaRequest
      */

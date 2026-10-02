@@ -27,7 +27,7 @@ import {
  */
 export interface ProcessingStatusesContract {
     /**
-     * Status sequence for a Kafka-consumed inventory posting fact: exactly one terminal row is written per consumed fact, never a non-terminal one
+     * Status sequence for a Kafka-consumed posting fact: exactly one row is written per consumed fact, never RECEIVED, PROCESSING or FAILED. It is terminal (PROCESSED or SKIPPED), except a fact held for its currency, which is SUSPENDED with failureReasonCode CURRENCY_NOT_SUPPORTED: never auto-retried, released only through the audited reprocess endpoint
      * @type {Array<string>}
      * @memberof ProcessingStatusesContract
      */
