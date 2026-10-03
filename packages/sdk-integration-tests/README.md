@@ -48,6 +48,16 @@ execute `globalSetup`, and they share no fixture or run id with a suite run.
 | Run | Does |
 | --- | --- |
 | `shopFloorLoad` (`npm run populate:shop-floor`) | Puts one active workorder on every free bay and mobile unit it can staff, at every site that has them |
+| `shopFloorCloseOut` (`npm run populate:shop-floor:close`) | Finishes every open workorder still holding a bay or mobile unit from before today (UTC): starts it if it never was, completes its items and itself (which frees the position), then invoices, finalizes and pays it. A workorder it cannot complete has its position and technician released and stays open |
+
+`populate:shop-floor:daily` runs the close-out and then the load, and is what the
+`Alpha Daily Shop Floor` workflow runs on the alpha host Monday to Saturday at
+11:00 UTC. The load alone only fills *free* positions, so without the close-out
+a daily load finds every position still held by the day before. Both runs accept
+an accelerated backend only once its clock has converged on wall time
+(`/system/time` `converged: true`), which is the state alpha stays in after an
+accelerated-year run ends; the workflow additionally refuses while that run is
+still alive on the host.
 
 `shopFloorLoad` **uses what is there**: sites, bays, mobile units and
 technicians are discovered, never created. It does not run the seeder's

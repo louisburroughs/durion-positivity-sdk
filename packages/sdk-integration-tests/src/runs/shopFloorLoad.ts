@@ -101,7 +101,8 @@ async function main(): Promise<void> {
   }
 
   const config = ItestConfig.fromEnv();
-  await assertNonAcceleratedBackend(config.baseUrl);
+  // Alpha stays on the accelerated profile after a run converges; wall time is all this needs.
+  await assertNonAcceleratedBackend(config.baseUrl, { allowConverged: true });
 
   // Its own namespace, distinct from the suites' `itest-*`: this is what makes
   // the run separable from every other test run in a later query.
