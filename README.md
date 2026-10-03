@@ -508,6 +508,8 @@ npm run build                # compiles every package, in dependency order
 npm run populate:shop-floor        # an active workorder on every free bay and mobile unit
 npm run populate:shop-floor:close  # finish + invoice work still holding a position from before today
 npm run populate:shop-floor:daily  # close-out, then the floor load
+npm run populate:appointments      # yesterday's arrivals -> estimates; book the next 14 days to target
+npm run populate:alpha-daily       # all of the above, in that order
 ```
 
 The build matters here: runs resolve `@durion-sdk/*` through `node_modules`,
@@ -540,7 +542,9 @@ from the suites' `itest-*`.
 | `generate` | `npm run generate` | Regenerate all clients from backend OpenAPI specs |
 | `populate:shop-floor` | `npm run populate:shop-floor` | Load every free bay and mobile unit with an active workorder |
 | `populate:shop-floor:close` | `npm run populate:shop-floor:close` | Finish, invoice and pay work still holding a position from before today (UTC) |
-| `populate:shop-floor:daily` | `npm run populate:shop-floor:daily` | Close-out, then the floor load; what the `Alpha Daily Shop Floor` workflow runs Mon-Sat on alpha |
+| `populate:shop-floor:daily` | `npm run populate:shop-floor:daily` | Close-out, then the floor load |
+| `populate:appointments` | `npm run populate:appointments` | Convert yesterday's appointments to estimates; top the next 14 days up to a target share of booked bay time |
+| `populate:alpha-daily` | `npm run populate:alpha-daily` | Floor daily, then appointments; what the `Alpha Daily Shop Floor` workflow runs Mon-Sat on alpha |
 
 ---
 

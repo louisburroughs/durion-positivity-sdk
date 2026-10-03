@@ -693,7 +693,7 @@ async function discoverFloor(admin: DomainClients, manager: DomainClients): Prom
  */
 const SERVICE_NAME_PROBES = ['e', 'a', 'i', 'o', 'r', 's'] as const;
 
-async function resolveService(as: DomainClients): Promise<{ id: string; name: string }> {
+export async function resolveService(as: DomainClients): Promise<{ id: string; name: string }> {
   for (const q of SERVICE_NAME_PROBES) {
     const matches = await call(`searchCatalogServices(q=${q})`, () =>
       as.catalog.productsApi.searchCatalogServices({ q, limit: 50 }),

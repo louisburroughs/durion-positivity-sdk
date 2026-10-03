@@ -14,6 +14,8 @@
     "populate:shop-floor": "npm run populate:shop-floor -w @durion-sdk/integration-tests",
     "populate:shop-floor:close": "npm run populate:shop-floor:close -w @durion-sdk/integration-tests",
     "populate:shop-floor:daily": "npm run populate:shop-floor:daily -w @durion-sdk/integration-tests",
+    "populate:appointments": "npm run populate:appointments -w @durion-sdk/integration-tests",
+    "populate:alpha-daily": "npm run populate:alpha-daily -w @durion-sdk/integration-tests",
     "lint": "eslint . --ext .ts,.tsx",
     "generate": "bash scripts/generate-openapi.sh",
     "prune": "node scripts/prune-orphans.mjs",
