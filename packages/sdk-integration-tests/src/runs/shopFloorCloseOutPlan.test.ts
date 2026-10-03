@@ -1,4 +1,4 @@
-import { decideCloseOut, heldPositions, startOfUtcDay, type HeldPosition } from './shopFloorCloseOutPlan';
+import { currentAssignedAt, decideCloseOut, heldPositions, startOfUtcDay, type HeldPosition } from './shopFloorCloseOutPlan';
 
 const NOW = new Date('2026-10-03T12:00:00Z');
 const YESTERDAY = new Date('2026-10-02T15:00:00Z');
@@ -27,19 +27,27 @@ describe('heldPositions', () => {
 });
 
 describe('decideCloseOut', () => {
-  it('closes work created before today in a finishable status', () => {
+  it('closes work holding its position since before today in a finishable status', () => {
     for (const status of ['ASSIGNED', 'WORK_IN_PROGRESS', 'APPROVED']) {
-      expect(decideCloseOut(position, { status, createdAt: YESTERDAY }, NOW)).toEqual({ action: 'close', position });
+      expect(decideCloseOut(position, { status, heldSince: YESTERDAY }, NOW)).toEqual({ action: 'close', position });
     }
   });
 
-  it('keeps work created today: it is the morning load', () => {
-    const decision = decideCloseOut(position, { status: 'WORK_IN_PROGRESS', createdAt: new Date('2026-10-03T00:00:00Z') }, NOW);
-    expect(decision).toEqual({ action: 'keep', position, reason: 'created today' });
+  it('keeps work placed today, however old the workorder: it is the morning load', () => {
+    const decision = decideCloseOut(position, { status: 'WORK_IN_PROGRESS', heldSince: new Date('2026-10-03T00:00:00Z') }, NOW);
+    expect(decision).toEqual({ action: 'keep', position, reason: 'placed today' });
+  });
+
+  it('keeps a position whose assignment time could not be read', () => {
+    expect(decideCloseOut(position, { status: 'WORK_IN_PROGRESS' }, NOW)).toEqual({
+      action: 'keep',
+      position,
+      reason: 'position assignment time unavailable',
+    });
   });
 
   it('keeps a status it cannot finish from', () => {
-    const decision = decideCloseOut(position, { status: 'DRAFT', createdAt: YESTERDAY }, NOW);
+    const decision = decideCloseOut(position, { status: 'DRAFT', heldSince: YESTERDAY }, NOW);
     expect(decision.action).toBe('keep');
   });
 
@@ -49,5 +57,24 @@ describe('decideCloseOut', () => {
       position,
       reason: 'workorder detail unavailable',
     });
+  });
+});
+
+describe('currentAssignedAt', () => {
+  const morning = new Date('2026-10-03T09:00:00Z');
+  const lastWeek = new Date('2026-09-26T09:00:00Z');
+
+  it('reads the record flagged current', () => {
+    const history = [
+      { resourceId: 'bay-1', assignedAt: lastWeek, releasedAt: new Date('2026-09-27T09:00:00Z') },
+      { resourceId: 'bay-1', assignedAt: morning, current: true },
+    ];
+    expect(currentAssignedAt(history, 'bay-1')).toEqual(morning);
+  });
+
+  it('falls back to the unreleased record on this resource', () => {
+    expect(currentAssignedAt([{ resourceId: 'bay-1', assignedAt: lastWeek }], 'bay-1')).toEqual(lastWeek);
+    expect(currentAssignedAt([{ resourceId: 'bay-2', assignedAt: lastWeek }], 'bay-1')).toBeUndefined();
+    expect(currentAssignedAt(undefined, 'bay-1')).toBeUndefined();
   });
 });

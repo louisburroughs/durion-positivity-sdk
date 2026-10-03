@@ -49,7 +49,7 @@ execute `globalSetup`, and they share no fixture or run id with a suite run.
 | --- | --- |
 | `shopFloorLoad` (`npm run populate:shop-floor`) | Puts one active workorder on every free bay and mobile unit it can staff, at every site that has them |
 | `appointmentTopUp` (`npm run populate:appointments`) | Bridges every live appointment on yesterday's schedule to an estimate, then, for each open day from tomorrow to the horizon, books new appointments into windows `searchOpenings` reports until booked bay time reaches the target share. Knobs: `APPT_HORIZON_DAYS` (14), `APPT_TARGET_UTILIZATION` (0.35), `APPT_JOB_MINUTES` (60), `APPT_MAX_PER_DAY` (6), `APPT_MAX_PER_RUN` (60) |
-| `shopFloorCloseOut` (`npm run populate:shop-floor:close`) | Finishes every open workorder still holding a bay or mobile unit from before today (UTC): starts it if it never was, completes its items and itself (which frees the position), then invoices, finalizes and pays it. A workorder it cannot complete has its position and technician released and stays open |
+| `shopFloorCloseOut` (`npm run populate:shop-floor:close`) | Finishes every open workorder that has held its bay or mobile unit since before today (UTC, by the assignment's `assignedAt`, not the workorder's creation): starts it if it never was, completes its items and itself (which frees the position), then invoices, finalizes and pays it. A workorder it cannot complete has its position and technician released and stays open |
 
 `populate:shop-floor:daily` runs the close-out and then the load;
 `populate:alpha-daily` runs that and then `populate:appointments`, and is what the
@@ -61,8 +61,12 @@ earlier run filled read as booked and are left alone. The load alone only fills 
 a daily load finds every position still held by the day before. Both runs accept
 an accelerated backend only once its clock has converged on wall time
 (`/system/time` `converged: true`), which is the state alpha stays in after an
-accelerated-year run ends; the workflow additionally refuses while that run is
-still alive on the host.
+accelerated-year run ends. All three also hold the accelerated run's own lock file
+(`ITEST_ACCEL_LOCK_FILE`, else `<journal>.lock`, resolved from the repository root)
+for their whole run (`harness/environmentLock.ts`), so a daily run and an
+accelerated year can never overlap on one checkout: whichever starts second
+refuses. The close-out exits non-zero on anything it leaves unfinished — a board
+or workorder it could not read, a job it could not complete or bill.
 
 `shopFloorLoad` **uses what is there**: sites, bays, mobile units and
 technicians are discovered, never created. It does not run the seeder's

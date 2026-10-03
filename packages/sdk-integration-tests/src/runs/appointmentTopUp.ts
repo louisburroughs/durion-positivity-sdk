@@ -33,6 +33,7 @@ import { randomUUID } from 'node:crypto';
 import { SeederRandom } from '@durion-sdk/seeder';
 import { AppointmentCreateRequestResourceTypeEnum as AppointmentResource } from '@durion-sdk/shop-manager';
 import { assertNonAcceleratedBackend } from '../harness/acceleratedClock';
+import { holdEnvironmentLock } from '../harness/environmentLock';
 import { createPersonAccount, createVehicle, readString, seedFromRunId, type BuilderContext } from '../harness/builders';
 import { call, formatError, retryWhileReplicating } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
@@ -98,6 +99,9 @@ async function main(): Promise<void> {
       `target=${Math.round(settings.utilization * 100)}% job=${settings.jobMinutes}m ` +
       `maxPerDay=${settings.maxPerDay} maxPerRun=${settings.maxPerRun}`,
   );
+
+  // Held for the whole run, shared with the accelerated year: see environmentLock.ts.
+  holdEnvironmentLock(runId);
 
   const activation = new StarterActivation(config, createStarterActivationPort(config));
   if (activation.applies) {

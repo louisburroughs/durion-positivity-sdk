@@ -1,12 +1,13 @@
 /**
  * Shop floor close-out — finishes yesterday's work so the morning load has
- * positions to fill.
+ * positions to fill. Exits non-zero whenever it leaves the floor short of that:
+ * a board or workorder it could not read, a job it could not finish or bill.
  *
  * `populate:shop-floor` leaves every job it places running on its bay or unit,
  * and only ever loads *free* positions. Run daily on its own it fills the floor
  * once and then finds nothing to do. This run is the night shift that sits
- * between two loads: every open workorder still holding a position from before
- * today (UTC) is started if it never was, has any labor entry still running
+ * between two loads: every open workorder that has held its position since
+ * before today (UTC, by the assignment's `assignedAt`) is started if it never was, has any labor entry still running
  * stopped, has its items completed, is completed
  * itself — which releases the position — and is invoiced, finalized and paid.
  * Work created today is left alone; see `shopFloorCloseOutPlan.ts` for the rule.
@@ -25,6 +26,7 @@
  * Same ITEST_* environment and build prerequisites as `populate:shop-floor`.
  */
 import { assertNonAcceleratedBackend } from '../harness/acceleratedClock';
+import { holdEnvironmentLock } from '../harness/environmentLock';
 import { readNumber, readString } from '../harness/builders';
 import { call, formatError, httpStatusOf, isHttpStatus } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
@@ -33,7 +35,7 @@ import { Personas, type DomainClients } from '../harness/personas';
 import { createStarterActivationPort, StarterActivation } from '../harness/StarterActivation';
 import { createTenantPort, TenantPreflight } from '../harness/TenantPreflight';
 import { waitFor } from '../harness/waitFor';
-import { decideCloseOut, heldPositions, type HeldPosition, type WorkorderView } from './shopFloorCloseOutPlan';
+import { currentAssignedAt, decideCloseOut, heldPositions, type HeldPosition, type WorkorderView } from './shopFloorCloseOutPlan';
 
 const TAG = '[close]';
 const log = (message: string): void => console.log(`${TAG} ${message}`);
@@ -71,6 +73,8 @@ async function main(): Promise<void> {
 
   const runId = `close-${Math.floor(Date.now() / 1000)}-${Math.random().toString(36).slice(2, 6)}`;
   log(`runId=${runId} mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
+  // Held for the whole run, shared with the accelerated year: see environmentLock.ts.
+  holdEnvironmentLock(runId);
 
   const activation = new StarterActivation(config, createStarterActivationPort(config));
   if (activation.applies) {
@@ -96,6 +100,12 @@ async function main(): Promise<void> {
 
   const outcomes: CloseOutcome[] = [];
   let kept = 0;
+  // Anything that left the floor less finished than this run meant to: a site whose
+  // board could not be read, a held position whose workorder or assignment could not
+  // be read. Each still lets the run carry on through the other sites, and each fails
+  // the run at the end, so a scheduled close-out cannot stay green with positions
+  // blocked or work unbilled.
+  const problems: string[] = [];
   for (const location of locations) {
     const locationId = location.id;
     const code = location.code ?? locationId ?? '(unknown)';
@@ -107,35 +117,56 @@ async function main(): Promise<void> {
     try {
       board = await crew.manager.workorder.dailyDispatchBoardDashboardApi.getDispatchDashboard({ locationId });
     } catch (error) {
-      log(`${code}: skipped — dispatch board unavailable: ${await formatError(error)}`);
+      const detail = await formatError(error);
+      log(`${code}: skipped — dispatch board unavailable: ${detail}`);
+      problems.push(`${code}: dispatch board unavailable`);
       continue;
     }
 
     for (const position of heldPositions(board)) {
-      const workorder = await readWorkorder(crew.manager, position.workorderId);
+      const workorder = await readWorkorder(crew.manager, position);
       const decision = decideCloseOut(position, workorder, now);
       if (decision.action === 'keep') {
         kept += 1;
         log(`${code}: kept ${position.kind} ${position.name} (workorder ${position.workorderId}) — ${decision.reason}`);
+        if (workorder === undefined || workorder.heldSince === undefined) {
+          problems.push(`${code} ${position.name}: ${decision.reason}`);
+        }
         continue;
       }
       outcomes.push(await closePosition(crew, locationId, code, position, workorder as WorkorderView, runId));
     }
   }
 
-  report(kept, outcomes);
-  if (outcomes.some((outcome) => outcome.state === 'failed' || outcome.state === 'released')) {
+  report(kept, outcomes, problems);
+  // Released-unfinished, failed and completed-but-not-invoiced all leave the job short
+  // of what the close-out is for.
+  if (problems.length > 0 || outcomes.some((outcome) => outcome.state !== 'invoiced')) {
     process.exitCode = 1;
   }
 }
 
-async function readWorkorder(manager: DomainClients, workorderId: string): Promise<WorkorderView | undefined> {
+/**
+ * The workorder's status and when it took this position. The detail is required;
+ * the position read is not — without it `heldSince` stays undefined and the
+ * decision keeps the position rather than guessing.
+ */
+async function readWorkorder(manager: DomainClients, position: HeldPosition): Promise<WorkorderView | undefined> {
+  const { workorderId } = position;
+  let status: string;
   try {
     const detail = await manager.workorder.workorderDetailApi.getWorkorderDetail({ workorderId });
-    return { status: String(detail.status), createdAt: detail.createdAt };
+    status = String(detail.status);
   } catch (error) {
     log(`  could not read workorder ${workorderId}: ${await formatError(error)}`);
     return undefined;
+  }
+  try {
+    const held = await manager.workorder.servicePositionAPIApi.getServicePosition({ workorderId });
+    return { status, heldSince: currentAssignedAt(held.history, position.id) };
+  } catch (error) {
+    log(`  could not read the position history of workorder ${workorderId}: ${await formatError(error)}`);
+    return { status };
   }
 }
 
@@ -311,13 +342,16 @@ async function releaseHeldWork(
   return released;
 }
 
-function report(kept: number, outcomes: CloseOutcome[]): void {
+function report(kept: number, outcomes: CloseOutcome[], problems: readonly string[]): void {
   const count = (state: CloseState) => outcomes.filter((outcome) => outcome.state === state).length;
   log('--- summary ---');
   log(
     `closed ${outcomes.length} position(s): invoiced=${count('invoiced')} completed-not-invoiced=${count('completed')} ` +
-      `released-unfinished=${count('released')} failed=${count('failed')}; kept ${kept}`,
+      `released-unfinished=${count('released')} failed=${count('failed')}; kept ${kept}; problems ${problems.length}`,
   );
+  for (const problem of problems) {
+    log(`  problem: ${problem}`);
+  }
 }
 
 // Guarded so the module can be imported by a test without executing a run.

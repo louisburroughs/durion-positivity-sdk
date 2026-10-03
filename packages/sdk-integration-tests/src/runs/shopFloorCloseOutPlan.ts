@@ -4,7 +4,7 @@
  * `populate:shop-floor` only places work on *free* positions, and the work it
  * places is left running. Run it again the next morning and every position is
  * still held by yesterday's job, so the floor loads nothing. The close-out is
- * the night shift: it finishes whatever is still holding a position from before
+ * the night shift: it finishes whatever has held a position since before
  * today, which frees the position for the morning load and turns yesterday's
  * floor into completed, invoiced history.
  *
@@ -13,11 +13,24 @@
  */
 import type { BoardView } from './shopFloorRoster';
 
-/** The fields of `WorkorderDetailResponse` this decision reads. */
+/**
+ * What this decision reads about a held position's workorder: its status (from
+ * `WorkorderDetailResponse`) and when it took the position — the current record's
+ * `assignedAt` in `getServicePosition`'s history. Undefined `heldSince` means the
+ * assignment time could not be read.
+ */
 export interface WorkorderView {
   status: string;
-  createdAt: Date;
+  heldSince?: Date;
 }
+
+/** The current assignment's `assignedAt` from a service-position history, if one is there. */
+export const currentAssignedAt = (
+  history: ReadonlyArray<{ current?: boolean; assignedAt?: Date; releasedAt?: Date; resourceId?: string }> | undefined,
+  resourceId: string,
+): Date | undefined =>
+  (history ?? []).find((record) => record.current === true)?.assignedAt ??
+  (history ?? []).find((record) => record.resourceId === resourceId && record.releasedAt === undefined)?.assignedAt;
 
 /** Statuses a workorder can be finished from. Anything else is left alone and reported. */
 export const CLOSABLE_STATUSES: ReadonlySet<string> = new Set([
@@ -65,11 +78,12 @@ export const heldPositions = (board: BoardView): HeldPosition[] => [
 ];
 
 /**
- * Close a held position's workorder when it was created before today and sits
- * in a status it can be finished from. Today's work is the morning load's and
- * stays on the floor; a workorder the board names but whose detail could not be
- * read (`undefined`) is kept, because closing something unseen is not a risk a
- * populate run should take.
+ * Close a held position's workorder when it has held the position since before
+ * today and sits in a status it can be finished from. The test is when it took
+ * the position, not when the workorder was created: an old workorder placed on a
+ * bay this morning is today's work. Today's placements stay on the floor; a
+ * workorder whose detail or assignment time could not be read is kept, because
+ * closing something unseen is not a risk a populate run should take.
  */
 export const decideCloseOut = (
   position: HeldPosition,
@@ -79,8 +93,11 @@ export const decideCloseOut = (
   if (workorder === undefined) {
     return { action: 'keep', position, reason: 'workorder detail unavailable' };
   }
-  if (workorder.createdAt.getTime() >= startOfUtcDay(now).getTime()) {
-    return { action: 'keep', position, reason: 'created today' };
+  if (workorder.heldSince === undefined) {
+    return { action: 'keep', position, reason: 'position assignment time unavailable' };
+  }
+  if (workorder.heldSince.getTime() >= startOfUtcDay(now).getTime()) {
+    return { action: 'keep', position, reason: 'placed today' };
   }
   const status = String(workorder.status).toUpperCase();
   if (!CLOSABLE_STATUSES.has(status)) {

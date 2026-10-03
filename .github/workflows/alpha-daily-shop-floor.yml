@@ -11,14 +11,18 @@ name: Alpha Daily Shop Floor
 # Each morning this runs `populate:alpha-daily` on the alpha host, from the
 # checkout 'Build, Smoke Test and Deploy to Alpha' keeps current:
 #   1. populate:shop-floor:close — finishes, invoices and pays every workorder
-#      still holding a bay or mobile unit from before today, which frees it;
+#      that has held a bay or mobile unit since before today, which frees it;
 #   2. populate:shop-floor       — puts a fresh, staffed, started workorder on
 #      every free position;
 #   3. populate:appointments     — turns yesterday's appointments into estimates
 #      and tops the next 14 days up to a target share of booked bay time.
-# All three refuse an accelerated clock that has not converged, and the host script
-# below refuses outright while an accelerated run this checkout started is
-# still alive, so the job cannot write into a year that is still being built.
+# All three refuse an accelerated clock that has not converged, and each holds
+# the accelerated run's own lock file for its whole run (environmentLock.ts), so
+# a daily run and an accelerated year cannot overlap on this checkout: whichever
+# starts second refuses. The pid check in the host script below is only an early,
+# readable refusal; the lock is what makes the exclusion hold. A stack redeploy
+# by the backend's accelerated workflow is outside both: a run caught by one fails
+# on its API calls rather than writing into the new timeline.
 on:
   schedule:
     # 11:00 UTC = 07:00 US Eastern (daylight time), Monday to Saturday. The alpha
