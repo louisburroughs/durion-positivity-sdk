@@ -653,10 +653,15 @@ export class CustomerEventSimulator {
             eventType: 'INVOICE_PAYMENT',
             organizationId: this.refs.locationId,
             sourceSystem: 'SDK_SEEDER',
+            // The INVOICE_PAYMENT contract (backend #2435): paymentId keys the receivable
+            // payment, so a later payment fact for the same id is not booked twice.
             payload: {
+              paymentId: crypto.randomUUID(),
               invoiceId,
               paymentMethod,
               amountPaid: invoiceTotal ?? 0,
+              currency: 'USD',
+              paidAt: new Date().toISOString(),
             },
           },
         });

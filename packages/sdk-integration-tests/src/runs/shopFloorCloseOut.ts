@@ -290,15 +290,26 @@ async function invoice(crew: Crew, locationId: string, workorderId: string): Pro
   );
   const total = readNumber(finalized, 'total', 'totalAmount') ?? 0;
 
-  // The payment is history colour, not the point of the run: a refused event is
-  // reported and the invoice still counts.
+  // The payment is history colour, not the point of the run: a submission the
+  // API refuses is reported and the invoice still counts. Accounting processes the
+  // accepted event later (backend #2435); a payload it cannot use lands FAILED on
+  // the accounting event list, not here.
   try {
     await crew.controller.accounting.accountingEventsApi.submitAccountingEvent({
       accountingEventSubmitRequest: {
         eventType: 'INVOICE_PAYMENT',
         organizationId: locationId,
         sourceSystem: 'SDK_FLOOR',
-        payload: { invoiceId, paymentMethod: 'CREDIT_CARD', amountPaid: total },
+        // paymentId keys the receivable payment, so a later payment fact for the
+        // same id is not booked twice.
+        payload: {
+          paymentId: crypto.randomUUID(),
+          invoiceId,
+          paymentMethod: 'CREDIT_CARD',
+          amountPaid: total,
+          currency: 'USD',
+          paidAt: new Date().toISOString(),
+        },
       },
     });
   } catch (error) {
