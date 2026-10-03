@@ -49,6 +49,10 @@ export class AcceleratedConfig {
     readonly mobileAfterHours: boolean,
     readonly graceMinutes: number,
     readonly unpaidRatio: number,
+    /** Virtual days before the run's end in which new jobs may stop short (open-work tail). */
+    readonly tailDays: number,
+    /** Share of those jobs that stop short, spread across HOLD_POINTS. */
+    readonly tailRatio: number,
     /** Explicit volume floor; undefined means derived from the feasibility figures. */
     readonly minWorkordersOverride: number | undefined,
     readonly appointmentLeadDaysMin: number,
@@ -195,6 +199,8 @@ export class AcceleratedConfig {
 
     const graceMinutes = int('ITEST_ACCEL_OVERRUN_GRACE_MINUTES', 90, { min: 0, max: 24 * 60 });
     const unpaidRatio = ratio('ITEST_ACCEL_UNPAID_RATIO', 0);
+    const tailDays = int('ITEST_ACCEL_TAIL_DAYS', 5, { min: 0, max: 60 });
+    const tailRatio = ratio('ITEST_ACCEL_TAIL_RATIO', 0.3);
     const minWorkordersRaw = env['ITEST_ACCEL_MIN_WORKORDERS'];
     const minWorkordersOverride =
       minWorkordersRaw === undefined || minWorkordersRaw === ''
@@ -242,6 +248,8 @@ export class AcceleratedConfig {
       mobileAfterHours,
       graceMinutes,
       unpaidRatio,
+      tailDays,
+      tailRatio,
       minWorkordersOverride,
       appointmentLeadDaysMin,
       appointmentLeadDaysMax,

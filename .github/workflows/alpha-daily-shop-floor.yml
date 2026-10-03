@@ -1,0 +1,196 @@
+name: Alpha Daily Shop Floor
+
+# Keeps alpha looking like a shop that is open today.
+#
+# Alpha's work history comes from the accelerated-year run the backend's
+# 'Deploy Alpha (Accelerated Clock)' workflow starts. That run ends when its
+# clock converges on wall time, and nothing writes after it: within a day the
+# dispatch board, shop dashboard and WIP views have no current work, and every
+# workorder in the history is already completed.
+#
+# Each morning this runs `populate:alpha-daily` on the alpha host, from the
+# checkout 'Build, Smoke Test and Deploy to Alpha' keeps current:
+#   1. populate:shop-floor:close — finishes, invoices and pays every workorder
+#      that has held a bay or mobile unit since before today, which frees it;
+#   2. populate:shop-floor       — puts a fresh, staffed, started workorder on
+#      every free position;
+#   3. populate:appointments     — turns yesterday's appointments into estimates
+#      and tops the next 14 days up to a target share of booked bay time.
+# All three refuse an accelerated clock that has not converged, and each holds
+# the accelerated run's own lock file for its whole run (environmentLock.ts), so
+# a daily run and an accelerated year cannot overlap on this checkout: whichever
+# starts second refuses. The pid check in the host script below is only an early,
+# readable refusal; the lock is what makes the exclusion hold. A stack redeploy
+# by the backend's accelerated workflow is outside both: a run caught by one fails
+# on its API calls rather than writing into the new timeline.
+on:
+  schedule:
+    # 11:00 UTC = 07:00 US Eastern (daylight time), Monday to Saturday. The alpha
+    # sites keep no Sunday hours (location/operating-hours.csv).
+    - cron: "0 11 * * 1-6"
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "Run to execute on the alpha host"
+        type: choice
+        default: populate:alpha-daily
+        options:
+          - populate:alpha-daily
+          - populate:shop-floor:daily
+          - populate:appointments
+          - populate:shop-floor:close
+          - populate:shop-floor
+
+concurrency:
+  # One floor run at a time: two would plan the same free positions.
+  group: alpha-daily-shop-floor
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  CHECKOUT_DIR: /home/ec2-user/durion-positivity-sdk
+  CHECKOUT_USER: ec2-user
+
+jobs:
+  floor:
+    name: Close out yesterday, load today
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      id-token: write # Required for OIDC authentication
+      contents: read
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve the alpha instance
+        id: host
+        env:
+          CONFIGURED_ID: ${{ vars.ALPHA_INSTANCE_ID }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${CONFIGURED_ID}" ]]; then
+            INSTANCE_ID="${CONFIGURED_ID}"
+          else
+            mapfile -t ONLINE < <(aws ssm describe-instance-information \
+              --filters "Key=PingStatus,Values=Online" \
+              --query 'InstanceInformationList[].InstanceId' --output json | jq -r '.[]')
+            if [[ "${#ONLINE[@]}" -ne 1 ]]; then
+              echo "::error::Expected exactly one online SSM instance, found ${#ONLINE[@]}: ${ONLINE[*]:-none}. Set the ALPHA_INSTANCE_ID repository variable."
+              exit 1
+            fi
+            INSTANCE_ID="${ONLINE[0]}"
+          fi
+          echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Run the floor on the host
+        env:
+          INSTANCE_ID: ${{ steps.host.outputs.instance_id }}
+          # Through the environment, never interpolated into the script; the
+          # schedule has no inputs, hence the default.
+          SDK_SCRIPT: ${{ inputs.script || 'populate:alpha-daily' }}
+        run: |
+          set -euo pipefail
+
+          case "${SDK_SCRIPT}" in
+            populate:alpha-daily|populate:shop-floor:daily|populate:appointments|populate:shop-floor:close|populate:shop-floor) ;;
+            *) echo "::error::Unsupported script '${SDK_SCRIPT}'"; exit 1 ;;
+          esac
+
+          # Runs as root under AWS-RunShellScript and hands the work to the
+          # checkout's owner through a login shell (node is on that profile's
+          # PATH, and root's npm would leave root-owned files in the checkout).
+          # The quoted inner heredoc keeps every `$` the host's; the three values
+          # arrive as positional parameters.
+          read -r -d '' SCRIPT <<REMOTE || true
+          set -euo pipefail
+          inner="\$(mktemp)"
+          trap 'rm -f "\${inner}"' EXIT
+          cat > "\${inner}" <<'INNER'
+          set -euo pipefail
+          dir="\$1"; script="\$2"
+          cd "\${dir}"
+          if [[ ! -d node_modules ]]; then
+            echo "\${dir} has no node_modules; run 'Build, Smoke Test and Deploy to Alpha' first" >&2
+            exit 1
+          fi
+          pidfile=.accelerated-run.pid
+          if [[ -f "\${pidfile}" ]] && kill -0 "\$(cat "\${pidfile}")" 2> /dev/null; then
+            echo "an accelerated run is still alive (pid \$(cat "\${pidfile}")); not loading the floor into it" >&2
+            exit 1
+          fi
+          # On the host the stack is local; .env.itest beside the checkout
+          # supplies the credentials.
+          ITEST_BASE_URL=http://localhost:8080 ITEST_SECURITY_SERVICE_URL=http://localhost:8086 \
+            npm run --silent "\${script}"
+          INNER
+          chmod 0644 "\${inner}"
+          sudo -u ${CHECKOUT_USER} -H bash -lc 'bash "\$0" "\$1" "\$2"' "\${inner}" "${CHECKOUT_DIR}" "${SDK_SCRIPT}"
+          REMOTE
+
+          COMMAND_ID="$(aws ssm send-command \
+            --instance-ids "${INSTANCE_ID}" \
+            --document-name AWS-RunShellScript \
+            --comment "daily shop floor: ${SDK_SCRIPT}" \
+            --parameters "$(jq -n --arg s "${SCRIPT}" '{commands: [$s], executionTimeout: ["3600"]}')" \
+            --query 'Command.CommandId' --output text)"
+          echo "command: ${COMMAND_ID}"
+
+          STATUS="Pending"
+          GLITCHES=0
+          for _ in $(seq 1 420); do
+            set +e
+            POLLED="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'Status' --output text 2>&1)"
+            RC=$?
+            set -e
+            if [[ "${RC}" -eq 0 ]]; then
+              STATUS="${POLLED}"
+              GLITCHES=0
+            elif grep -q 'InvocationDoesNotExist' <<<"${POLLED}"; then
+              STATUS="Pending"
+            else
+              GLITCHES=$((GLITCHES + 1))
+              echo "polling ${COMMAND_ID} failed (${GLITCHES}/3): ${POLLED}"
+              if [[ "${GLITCHES}" -ge 3 ]]; then
+                echo "::error::Could not read the status of ${COMMAND_ID}: ${POLLED}"
+                exit 1
+              fi
+            fi
+            case "${STATUS}" in
+              Success|Failed|Cancelled|TimedOut) break ;;
+            esac
+            sleep 10
+          done
+
+          STDOUT="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'StandardOutputContent' --output text)"
+          STDERR="$(aws ssm get-command-invocation --command-id "${COMMAND_ID}" --instance-id "${INSTANCE_ID}" --query 'StandardErrorContent' --output text)"
+          echo "--- host stdout (SSM keeps the last 24,000 characters) ---"
+          echo "${STDOUT}"
+          if [[ -n "${STDERR}" ]]; then
+            echo "--- host stderr ---"
+            echo "${STDERR}"
+          fi
+
+          {
+            echo "## Alpha daily shop floor"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Instance | \`${INSTANCE_ID}\` |"
+            echo "| Script | \`${SDK_SCRIPT}\` |"
+            echo "| Status | \`${STATUS}\` |"
+            echo "| Command | \`${COMMAND_ID}\` |"
+            echo
+            echo '```'
+            grep -E '^\[(close|floor|appt)\] (closed|converted|---|[0-9]+ (job|free|position))' <<<"${STDOUT}" | tail -n 20 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${STATUS}" != "Success" ]]; then
+            echo "::error::The floor run finished ${STATUS} on ${INSTANCE_ID}"
+            exit 1
+          fi

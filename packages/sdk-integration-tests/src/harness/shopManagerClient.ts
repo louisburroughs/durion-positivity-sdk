@@ -1,4 +1,4 @@
-import { AppointmentsAPIApi, Configuration, TechnicianAPIApi } from '@durion-sdk/shop-manager';
+import { AppointmentsAPIApi, Configuration, ScheduleAPIApi, TechnicianAPIApi } from '@durion-sdk/shop-manager';
 
 /**
  * sdk-shop-manager ships no create*Client factory (unlike the other domain
@@ -8,6 +8,7 @@ import { AppointmentsAPIApi, Configuration, TechnicianAPIApi } from '@durion-sdk
  */
 export interface ShopManagerClient {
   appointmentsApi: AppointmentsAPIApi;
+  scheduleApi: ScheduleAPIApi;
   technicianApi: TechnicianAPIApi;
 }
 
@@ -41,6 +42,7 @@ export function createShopManagerClient(options: {
 
   return {
     appointmentsApi: new AppointmentsAPIApi(configuration),
+    scheduleApi: new ScheduleAPIApi(configuration),
     technicianApi: new TechnicianAPIApi(configuration),
   };
 }

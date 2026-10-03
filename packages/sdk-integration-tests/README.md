@@ -48,6 +48,25 @@ execute `globalSetup`, and they share no fixture or run id with a suite run.
 | Run | Does |
 | --- | --- |
 | `shopFloorLoad` (`npm run populate:shop-floor`) | Puts one active workorder on every free bay and mobile unit it can staff, at every site that has them |
+| `appointmentTopUp` (`npm run populate:appointments`) | Bridges every live appointment on yesterday's schedule to an estimate, then, for each open day from tomorrow to the horizon, books new appointments into windows `searchOpenings` reports until booked bay time reaches the target share. Knobs: `APPT_HORIZON_DAYS` (14), `APPT_TARGET_UTILIZATION` (0.35), `APPT_JOB_MINUTES` (60), `APPT_MAX_PER_DAY` (6), `APPT_MAX_PER_RUN` (60) |
+| `shopFloorCloseOut` (`npm run populate:shop-floor:close`) | Finishes every open workorder that has held its bay or mobile unit since before today (UTC, by the assignment's `assignedAt`, not the workorder's creation): starts it if it never was, completes its items and itself (which frees the position), then invoices, finalizes and pays it. A workorder it cannot complete has its position and technician released and stays open |
+
+`populate:shop-floor:daily` runs the close-out and then the load;
+`populate:alpha-daily` runs that and then `populate:appointments`, and is what the
+`Alpha Daily Shop Floor` workflow runs on the alpha host Monday to Saturday at
+11:00 UTC. The appointment run is a top-up, not a fixed count: shop-manager has
+no endpoint that lists appointments, but `getScheduleCapacity` counts every
+non-cancelled appointment on a bay in that bay's `occupiedMinutes`, so days an
+earlier run filled read as booked and are left alone. The load alone only fills *free* positions, so without the close-out
+a daily load finds every position still held by the day before. Both runs accept
+an accelerated backend only once its clock has converged on wall time
+(`/system/time` `converged: true`), which is the state alpha stays in after an
+accelerated-year run ends. All three also hold the accelerated run's own lock file
+(`ITEST_ACCEL_LOCK_FILE`, else `<journal>.lock`, resolved from the repository root)
+for their whole run (`harness/environmentLock.ts`), so a daily run and an
+accelerated year can never overlap on one checkout: whichever starts second
+refuses. The close-out exits non-zero on anything it leaves unfinished — a board
+or workorder it could not read, a job it could not complete or bill.
 
 `shopFloorLoad` **uses what is there**: sites, bays, mobile units and
 technicians are discovered, never created. It does not run the seeder's
@@ -368,6 +387,8 @@ accelerated entry point adds:
 | `ITEST_ACCEL_MOBILE_AFTER_HOURS` | `true` | Mobile units take work at any hour |
 | `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` | `90` | Virtual minutes a started job may run past close |
 | `ITEST_ACCEL_UNPAID_RATIO` | `0` | Fraction of finalized invoices left unpaid, for AR aging |
+| `ITEST_ACCEL_TAIL_DAYS` | `5` | Open-work tail: the last N virtual days before the run's end (planned end or clock convergence, whichever is first) in which new jobs may stop short. `0` disables it |
+| `ITEST_ACCEL_TAIL_RATIO` | `0.3` | Share of tail jobs left open, drawn evenly across the hold points: estimate awaiting the customer, workorder DRAFT, APPROVED awaiting dispatch, WORK_IN_PROGRESS on its bay (parked: carried, never advanced, labor suspended at close), COMPLETED but not invoiced |
 | `ITEST_ACCEL_MIN_WORKORDERS` | _(derived)_ | Volume floor; default `0.6 × jobsPerDay × sampledOpenDays` |
 | `ITEST_ACCEL_APPOINTMENT_LEAD_DAYS_MIN` / `_MAX` | `1` / `5` | How far ahead appointments are booked, in virtual days |
 | `ITEST_ACCEL_POLL_MS` | `500` | `/system/time` poll interval |

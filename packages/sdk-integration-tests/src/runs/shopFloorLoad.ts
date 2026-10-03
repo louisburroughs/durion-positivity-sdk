@@ -34,6 +34,7 @@
 import { SeederRandom, type ReferenceCache } from '@durion-sdk/seeder';
 import { AssignServicePositionRequestResourceTypeEnum as ResourceType } from '@durion-sdk/workorder';
 import { assertNonAcceleratedBackend } from '../harness/acceleratedClock';
+import { holdEnvironmentLock } from '../harness/environmentLock';
 import {
   addLaborLine,
   approveAndPromote,
@@ -101,12 +102,15 @@ async function main(): Promise<void> {
   }
 
   const config = ItestConfig.fromEnv();
-  await assertNonAcceleratedBackend(config.baseUrl);
+  // Alpha stays on the accelerated profile after a run converges; wall time is all this needs.
+  await assertNonAcceleratedBackend(config.baseUrl, { allowConverged: true });
 
   // Its own namespace, distinct from the suites' `itest-*`: this is what makes
   // the run separable from every other test run in a later query.
   const runId = `floor-${Math.floor(Date.now() / 1000)}-${Math.random().toString(36).slice(2, 6)}`;
   log(`runId=${runId} mode=${config.mode} tenant=${config.tenant.slug} baseUrl=${config.baseUrl}`);
+  // Held for the whole run, shared with the accelerated year: see environmentLock.ts.
+  holdEnvironmentLock(runId);
 
   // Tenant-aware backends load accounts with a starter password login refuses
   // until it is exchanged, and a token bound to the wrong tenant would write
@@ -692,7 +696,7 @@ async function discoverFloor(admin: DomainClients, manager: DomainClients): Prom
  */
 const SERVICE_NAME_PROBES = ['e', 'a', 'i', 'o', 'r', 's'] as const;
 
-async function resolveService(as: DomainClients): Promise<{ id: string; name: string }> {
+export async function resolveService(as: DomainClients): Promise<{ id: string; name: string }> {
   for (const q of SERVICE_NAME_PROBES) {
     const matches = await call(`searchCatalogServices(q=${q})`, () =>
       as.catalog.productsApi.searchCatalogServices({ q, limit: 50 }),

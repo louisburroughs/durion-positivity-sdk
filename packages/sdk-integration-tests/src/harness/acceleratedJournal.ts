@@ -35,6 +35,8 @@ export interface JournalDay {
   invoicesFinalized: number;
   invoicesPaid: number;
   estimatesDeclined: number;
+  /** Optional: journals written before the open-work tail have no such field. */
+  workordersHeld?: number;
   appointmentsBooked: number;
   carriedIn: number;
   carriedOut: number;

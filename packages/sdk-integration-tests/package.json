@@ -6,6 +6,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
     "populate:shop-floor": "ts-node src/runs/shopFloorLoad.ts",
+    "populate:shop-floor:close": "ts-node src/runs/shopFloorCloseOut.ts",
+    "populate:shop-floor:daily": "npm run populate:shop-floor:close; close=$?; npm run populate:shop-floor || exit $?; exit $close",
+    "populate:appointments": "ts-node src/runs/appointmentTopUp.ts",
+    "populate:alpha-daily": "npm run populate:shop-floor:daily; floor=$?; npm run populate:appointments || exit $?; exit $floor",
     "populate:accelerated-year": "ts-node src/runs/acceleratedYear.ts"
   },
   "dependencies": {

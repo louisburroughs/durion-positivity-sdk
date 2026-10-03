@@ -317,3 +317,59 @@ describe('AcceleratedJob — who finalizes', () => {
     expect(await finalizeAt(SERVICE_ADVISOR_LIMIT + 0.01)).toEqual(['manager']);
   });
 });
+
+describe('AcceleratedJob — the open-work tail', () => {
+  type StepList = Array<{ name: string; run: () => Promise<void> }>;
+  const withSteps = (job: AcceleratedJob, ran: string[], names: string[]) => {
+    (job as unknown as { steps: StepList }).steps = names.map((name) => ({
+      name,
+      run: async () => {
+        ran.push(name);
+      },
+    }));
+    (job as unknown as { cursor: number }).cursor = 0;
+  };
+
+  it('settles as held, without running the hold step, for a hold that keeps no position', async () => {
+    const ran: string[] = [];
+    const job = new AcceleratedJob('job-1', { ...deps(claimAt('site-north')), holdAt: () => 'approve-workorder' });
+    withSteps(job, ran, ['promote', 'approve-workorder', 'assign-technician']);
+
+    expect(await job.advance()).toBe('in-progress');
+    expect(await job.advance()).toBe('held');
+    expect(await job.advance()).toBe('held');
+    expect(ran).toEqual(['promote']);
+    expect(job.parked).toBe(false);
+  });
+
+  it('parks, still in progress, at the hold that keeps the position', async () => {
+    const ran: string[] = [];
+    const job = new AcceleratedJob('job-1', { ...deps(claimAt('site-north')), holdAt: () => 'complete-items' });
+    withSteps(job, ran, ['labor-open', 'complete-items', 'complete']);
+
+    await job.advance();
+    expect(await job.advance()).toBe('in-progress');
+    expect(job.parked).toBe(true);
+    // A parked job is never stepped again, even if asked.
+    expect(await job.advance()).toBe('in-progress');
+    expect(ran).toEqual(['labor-open']);
+  });
+
+  it('asks the policy once, at the first step, with the virtual time', async () => {
+    const asked: Date[] = [];
+    const job = new AcceleratedJob('job-1', {
+      ...deps(claimAt('site-north')),
+      holdAt: (at) => {
+        asked.push(at);
+        return undefined;
+      },
+    });
+    const ran: string[] = [];
+    withSteps(job, ran, ['a', 'b']);
+
+    expect(await job.advance()).toBe('in-progress');
+    expect(await job.advance()).toBe('completed');
+    expect(asked).toEqual([new Date('2025-11-03T08:00:00Z')]);
+    expect(ran).toEqual(['a', 'b']);
+  });
+});
