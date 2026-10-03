@@ -383,6 +383,8 @@ accelerated entry point adds:
 | `ITEST_ACCEL_MOBILE_AFTER_HOURS` | `true` | Mobile units take work at any hour |
 | `ITEST_ACCEL_OVERRUN_GRACE_MINUTES` | `90` | Virtual minutes a started job may run past close |
 | `ITEST_ACCEL_UNPAID_RATIO` | `0` | Fraction of finalized invoices left unpaid, for AR aging |
+| `ITEST_ACCEL_TAIL_DAYS` | `5` | Open-work tail: the last N virtual days before the run's end (planned end or clock convergence, whichever is first) in which new jobs may stop short. `0` disables it |
+| `ITEST_ACCEL_TAIL_RATIO` | `0.3` | Share of tail jobs left open, drawn evenly across the hold points: estimate awaiting the customer, workorder DRAFT, APPROVED awaiting dispatch, WORK_IN_PROGRESS on its bay (parked: carried, never advanced, labor suspended at close), COMPLETED but not invoiced |
 | `ITEST_ACCEL_MIN_WORKORDERS` | _(derived)_ | Volume floor; default `0.6 × jobsPerDay × sampledOpenDays` |
 | `ITEST_ACCEL_APPOINTMENT_LEAD_DAYS_MIN` / `_MAX` | `1` / `5` | How far ahead appointments are booked, in virtual days |
 | `ITEST_ACCEL_POLL_MS` | `500` | `/system/time` poll interval |

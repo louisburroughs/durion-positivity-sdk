@@ -35,6 +35,12 @@ export interface RunnableJob {
   /** True while the mechanic's labor clock is running on this job. */
   readonly laborOpen: boolean;
   /**
+   * True for a job stopped at a hold that keeps its position (the open-work tail).
+   * It is carried like any open job but never advanced: `mayWorkNow` refuses it, so
+   * a parked job neither spins the tick loop nor keeps a day's loop alive.
+   */
+  readonly parked?: boolean;
+  /**
    * Stops that clock because the shop is closing, leaving the job free to resume.
    *
    * The backend computes a labor entry's hours by subtracting its two stamps and
@@ -140,6 +146,8 @@ export interface DayReport {
   invoicesFinalized: number;
   invoicesPaid: number;
   estimatesDeclined: number;
+  /** Jobs the open-work tail stopped short (outcome `held`); parked ones are in carriedOut. */
+  workordersHeld: number;
   appointmentsBooked: number;
   appointmentsConverted: number;
   /** Jobs inherited from the previous day, still holding their bay. */
@@ -181,6 +189,7 @@ const EMPTY_REPORT = (dayNumber: number, virtualDate: string): DayReport => ({
   invoicesFinalized: 0,
   invoicesPaid: 0,
   estimatesDeclined: 0,
+  workordersHeld: 0,
   appointmentsBooked: 0,
   appointmentsConverted: 0,
   carriedIn: 0,
@@ -617,6 +626,9 @@ export class AcceleratedDayRunner {
    * closed, so anything still running in the grace is a car already on a lift.
    */
   private mayWorkNow(job: RunnableJob, now: Date, kindLimit?: PositionKind): boolean {
+    if (job.parked === true) {
+      return false;
+    }
     // A stretch limited to mobile units must not advance a bay job either. `kindLimit`
     // used to gate only `claimableKind` — new claims — so the after-hours stretch happily
     // carried on stepping bay jobs off the clock, past the grace: the step the grace
@@ -889,6 +901,8 @@ export class AcceleratedDayRunner {
       if (job.paid) report.invoicesPaid += 1;
     } else if (job.outcome === 'declined') {
       report.estimatesDeclined += 1;
+    } else if (job.outcome === 'held') {
+      report.workordersHeld += 1;
     } else if (job.outcome === 'failed') {
       report.workordersFailed += 1;
       report.failures.push(job.failure ?? `${job.label} failed without a reason`);

@@ -6,7 +6,8 @@
  * and only ever loads *free* positions. Run daily on its own it fills the floor
  * once and then finds nothing to do. This run is the night shift that sits
  * between two loads: every open workorder still holding a position from before
- * today (UTC) is started if it never was, has its items completed, is completed
+ * today (UTC) is started if it never was, has any labor entry still running
+ * stopped, has its items completed, is completed
  * itself — which releases the position — and is invoiced, finalized and paid.
  * Work created today is left alone; see `shopFloorCloseOutPlan.ts` for the rule.
  *
@@ -25,7 +26,7 @@
  */
 import { assertNonAcceleratedBackend } from '../harness/acceleratedClock';
 import { readNumber, readString } from '../harness/builders';
-import { call, formatError, httpStatusOf } from '../harness/http';
+import { call, formatError, httpStatusOf, isHttpStatus } from '../harness/http';
 import { ItestConfig } from '../harness/ItestConfig';
 import { loadEnvFile } from '../harness/loadEnvFile';
 import { Personas, type DomainClients } from '../harness/personas';
@@ -164,6 +165,11 @@ async function closePosition(
       }
     }
 
+    // A labor entry still running — a job the accelerated year parked when its clock
+    // converged mid-shift, or a floor load interrupted before its own close — is
+    // stopped first, so finishing the job does not leave a mechanic on it forever.
+    await stopOpenLabor(crew.tech, workorderId, label);
+
     const detail = await call('getWorkorderDetail', () =>
       crew.manager.workorder.workorderDetailApi.getWorkorderDetail({ workorderId }),
     );
@@ -205,6 +211,28 @@ async function closePosition(
     const detail = await formatError(error);
     log(`completed ${label}, but invoicing failed: ${detail}`);
     return { siteCode, position, state: 'completed', detail };
+  }
+}
+
+/** Best-effort: an entry that cannot be stopped is reported, and completion is still tried. */
+async function stopOpenLabor(tech: DomainClients, workorderId: string, label: string): Promise<void> {
+  let history;
+  try {
+    history = await tech.workorder.workorderLaborAPIApi.getLaborHistory({ workorderId });
+  } catch (error) {
+    log(`  WARNING: labor history unavailable for ${label}: ${await formatError(error)}`);
+    return;
+  }
+  for (const entry of history) {
+    if (!entry.id || entry.endTime) continue;
+    try {
+      await tech.workorder.workorderLaborAPIApi.stopLaborSession({ workorderId, entryId: entry.id });
+      log(`  stopped labor entry ${entry.id} left running on ${label}`);
+    } catch (error) {
+      if (!isHttpStatus(error, 404)) {
+        log(`  WARNING: labor entry ${entry.id} on ${label} is still running: ${await formatError(error)}`);
+      }
+    }
   }
 }
 

@@ -41,7 +41,29 @@ import type { DomainClients } from './personas';
 import type { Claim } from './resourceLedger';
 import type { PositionKind } from '../runs/shopFloorPlan';
 
-export type JobOutcome = 'in-progress' | 'completed' | 'declined' | 'failed';
+/**
+ * `held` is a job the run deliberately stopped short of the end (see `HoldPoint`),
+ * leaving its estimate or workorder open for the environment that outlives the run.
+ */
+export type JobOutcome = 'in-progress' | 'completed' | 'declined' | 'failed' | 'held';
+
+/**
+ * Where an open-work-tail job stops, by the step it never runs. Each leaves the
+ * record in the state a real shop always has some of:
+ *
+ * - `decide`            — estimate submitted, waiting on the customer (PENDING_APPROVAL)
+ * - `approve-workorder` — promoted, waiting on the manager (DRAFT)
+ * - `assign-technician` — approved, waiting for dispatch (APPROVED)
+ * - `complete-items`    — on its position and being worked (WORK_IN_PROGRESS)
+ * - `invoice`           — finished, not yet billed (COMPLETED, no invoice)
+ *
+ * Only `complete-items` holds a position and a technician; that job is *parked*
+ * — carried by the day runner, never advanced again — so the bay reads occupied
+ * for real. The others settle as `held` and give their claim back.
+ */
+export const HOLD_POINTS = ['decide', 'approve-workorder', 'assign-technician', 'complete-items', 'invoice'] as const;
+export type HoldPoint = (typeof HOLD_POINTS)[number];
+const PARKED_HOLDS: ReadonlySet<HoldPoint> = new Set(['complete-items']);
 
 /** The personas one job acts as. Same set the non-accelerated suites declare. */
 export interface JobPersonas {
@@ -60,6 +82,12 @@ export interface JobDeps {
   now: () => Promise<Date>;
   /** Leaves this job's invoice unpaid, for AR aging (ITEST_ACCEL_UNPAID_RATIO). */
   leaveUnpaid?: boolean;
+  /**
+   * Decides, from the virtual instant of the job's first step, whether it stops
+   * short and where (ITEST_ACCEL_TAIL_DAYS / _TAIL_RATIO). Undefined, or a
+   * function answering undefined, runs the whole lifecycle.
+   */
+  holdAt?: (at: Date) => HoldPoint | undefined;
   /** Customer decision odds, mirroring the seeder's distribution. */
   approveChance?: number;
   declineChance?: number;
@@ -118,6 +146,9 @@ export class AcceleratedJob {
   private technicianAssigned = false;
   /** True once the workorder is COMPLETED, after which nothing may be released from it. */
   private workorderClosed = false;
+  /** Resolved from `deps.holdAt` on the first advance; null means "run to the end". */
+  private hold: HoldPoint | null | undefined;
+  private parkedAtHold = false;
 
   /**
    * The job's own context, anchored to the site it holds a position at.
@@ -241,6 +272,15 @@ export class AcceleratedJob {
     return Math.max(0, this.steps.length - this.cursor);
   }
 
+  /**
+   * True once the job has stopped at a hold that keeps its position. The day runner
+   * never advances a parked job again; it stays carried, holding its bay and
+   * mechanic, and its labor clock is suspended at the next close like any other.
+   */
+  get parked(): boolean {
+    return this.parkedAtHold;
+  }
+
   /** True while an entry is open and the clock is running on this job. */
   get laborOpen(): boolean {
     return this.laborEntryId !== undefined;
@@ -272,12 +312,26 @@ export class AcceleratedJob {
    * day reports it and carries on.
    */
   async advance(): Promise<JobOutcome> {
-    if (this.result !== 'in-progress') {
+    if (this.result !== 'in-progress' || this.parkedAtHold) {
       return this.result;
     }
     const step = this.steps[this.cursor];
     if (!step) {
       this.result = 'completed';
+      return this.result;
+    }
+
+    if (this.hold === undefined) {
+      this.hold = this.deps.holdAt ? (this.deps.holdAt(await this.deps.now()) ?? null) : null;
+    }
+    if (this.hold !== null && step.name === this.hold) {
+      if (PARKED_HOLDS.has(this.hold)) {
+        this.parkedAtHold = true;
+        await this.mark(`parked-before-${this.hold}`);
+      } else {
+        this.result = 'held';
+        await this.mark(`held-before-${this.hold}`);
+      }
       return this.result;
     }
 

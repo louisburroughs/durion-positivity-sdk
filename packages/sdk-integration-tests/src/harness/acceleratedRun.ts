@@ -28,6 +28,7 @@ import { ResourceLedger } from './resourceLedger';
 import { closeMonth, createPeriodPort, monthsToClose } from './monthEnd';
 import { ClockConvergedError, VirtualClock } from './virtualClock';
 import { VirtualTimer } from './virtualTimer';
+import { convergenceAt, createHoldPolicy, tailStartsAt } from './openWorkTail';
 
 export type StopReason = 'days-complete' | 'converged' | 'budget' | 'failed';
 
@@ -44,6 +45,7 @@ export interface YearRunResult {
     invoicesFinalized: number;
     invoicesPaid: number;
     estimatesDeclined: number;
+    workordersHeld: number;
     appointmentsBooked: number;
     appointmentsConverted: number;
     openDaysWorked: number;
@@ -110,6 +112,16 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
   const first = await clock.read();
   const virtualEnd = new Date(first.virtualTime.getTime() + accel.days * DAY_MS);
   const calendar = accel.calendarFor(first.virtualStart, virtualEnd);
+  const tailFrom = tailStartsAt({
+    virtualEnd,
+    convergeAt: convergenceAt(first.realStart, first.virtualStart, first.scale),
+    tailDays: accel.tailDays,
+  });
+  log(
+    tailFrom
+      ? `open-work tail: ${Math.round(accel.tailRatio * 100)}% of jobs from virtual ${tailFrom.toISOString()} stop short`
+      : 'open-work tail: off',
+  );
 
   const personas = new Personas(config);
   await personas.login();
@@ -127,6 +139,9 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     random: new SeederRandom(seedFromRunId(`${context.runId}:accelerated-year`)),
     refs: context.referenceCache,
   };
+  // Draws from the shared stream only inside the tail, so the year before it is
+  // unchanged for a given seed.
+  const holdPolicy = createHoldPolicy({ startsAt: tailFrom, ratio: accel.tailRatio, random: ctx.random });
 
   const ledger = new ResourceLedger();
   const { journal } = AcceleratedJournal.open(accelContext.journalPath, {
@@ -191,6 +206,8 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
         // A fraction of invoices are deliberately left unpaid when AR aging is
         // wanted; the default of 0 pays every one.
         leaveUnpaid: accel.unpaidRatio > 0 && ctx.random.chance(accel.unpaidRatio),
+        // The open-work tail: near the end some jobs stop short and stay open.
+        holdAt: holdPolicy,
       });
     },
     concurrency: accel.concurrency,
@@ -396,6 +413,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       invoicesFinalized: report.invoicesFinalized,
       invoicesPaid: report.invoicesPaid,
       estimatesDeclined: report.estimatesDeclined,
+      workordersHeld: report.workordersHeld,
       appointmentsBooked: report.appointmentsBooked,
       carriedIn: report.carriedIn,
       carriedOut: report.carriedOut,
@@ -422,7 +440,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     if (report.skipped === undefined) {
       log(
         `day ${report.dayNumber} (${report.virtualDate}): ${report.workordersCompleted} completed, ` +
-          `${report.invoicesPaid} paid, ${report.estimatesDeclined} declined, ${report.carriedOut} carried` +
+          `${report.invoicesPaid} paid, ${report.estimatesDeclined} declined, ${report.workordersHeld} held, ${report.carriedOut} carried` +
           `${report.workordersFailed > 0 ? `, ${report.workordersFailed} FAILED` : ''}`,
       );
     }
@@ -457,6 +475,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       invoicesFinalized: sum((report) => report.invoicesFinalized),
       invoicesPaid: sum((report) => report.invoicesPaid),
       estimatesDeclined: sum((report) => report.estimatesDeclined),
+      workordersHeld: sum((report) => report.workordersHeld),
       appointmentsBooked: sum((report) => report.appointmentsBooked),
       appointmentsConverted: sum((report) => report.appointmentsConverted),
       openDaysWorked: reports.filter((report) => report.skipped === undefined).length,
