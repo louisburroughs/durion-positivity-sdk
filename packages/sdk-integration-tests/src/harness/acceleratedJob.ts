@@ -810,10 +810,16 @@ export class AcceleratedJob {
           eventType: 'INVOICE_PAYMENT',
           organizationId: this.ctx.refs.locationId,
           sourceSystem: 'SDK_ITEST_ACCEL',
+          // The INVOICE_PAYMENT contract (backend #2435): the Payment-domain paymentId keys the
+          // receivable payment, so a later payment fact for the same id is not booked twice.
+          // paidAt is wall time; accounting applies the payment on its own (accelerated) clock.
           payload: {
+            paymentId: crypto.randomUUID(),
             invoiceId,
             paymentMethod: this.ctx.random.chance(0.95) ? 'CREDIT_CARD' : 'CASH',
             amountPaid: this.invoiceTotal ?? 0,
+            currency: 'USD',
+            paidAt: new Date().toISOString(),
           },
         },
       }),
