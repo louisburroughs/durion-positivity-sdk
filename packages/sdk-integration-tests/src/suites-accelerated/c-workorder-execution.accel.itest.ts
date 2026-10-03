@@ -613,10 +613,15 @@ describe('Suite C — workorder execution', () => {
           eventType: 'INVOICE_PAYMENT',
           organizationId: context.referenceCache.locationId,
           sourceSystem: 'SDK_ITEST',
+          // The INVOICE_PAYMENT contract (backend #2435): the Payment-domain paymentId keys the
+          // receivable payment, so a later payment fact for the same id is not booked twice.
           payload: {
+            paymentId: crypto.randomUUID(),
             invoiceId,
             paymentMethod: 'CREDIT_CARD',
             amountPaid: total ?? 0,
+            currency: 'USD',
+            paidAt: new Date().toISOString(),
           },
         },
       }),
