@@ -17,9 +17,11 @@ import * as runtime from '../runtime';
 import type {
   AccountingEventResponse,
   AccountingEventSubmitRequest,
+  AccountingEventTypeResponse,
   ApiError,
   EventEnvelopeContract,
   EventProcessingLogEntry,
+  EventStatusCatalogResponse,
   PageAccountingEventResponse,
   ReprocessEventRequest,
   ReprocessingAttemptHistoryResponse,
@@ -29,12 +31,16 @@ import {
     AccountingEventResponseToJSON,
     AccountingEventSubmitRequestFromJSON,
     AccountingEventSubmitRequestToJSON,
+    AccountingEventTypeResponseFromJSON,
+    AccountingEventTypeResponseToJSON,
     ApiErrorFromJSON,
     ApiErrorToJSON,
     EventEnvelopeContractFromJSON,
     EventEnvelopeContractToJSON,
     EventProcessingLogEntryFromJSON,
     EventProcessingLogEntryToJSON,
+    EventStatusCatalogResponseFromJSON,
+    EventStatusCatalogResponseToJSON,
     PageAccountingEventResponseFromJSON,
     PageAccountingEventResponseToJSON,
     ReprocessEventRequestFromJSON,
@@ -255,6 +261,78 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns every accounting event status (code, label, meaning, whether it is terminal, whether retry/reprocess applies) and every idempotency outcome, generated from the enums so the set cannot drift. Use this tool to populate the status and idempotency-outcome filters of listAccountingEvents; the code is the value that filter accepts. Do not use it to find events in a given status; use listAccountingEvents with that status instead. Preconditions: none. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_EVENT_STATUS_LIST audit event; no state changes. Returns 200 with the catalog. 
+     * List Accounting Event Statuses
+     */
+    async listAccountingEventStatusesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EventStatusCatalogResponse>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:events:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/events/statuses`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EventStatusCatalogResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns every accounting event status (code, label, meaning, whether it is terminal, whether retry/reprocess applies) and every idempotency outcome, generated from the enums so the set cannot drift. Use this tool to populate the status and idempotency-outcome filters of listAccountingEvents; the code is the value that filter accepts. Do not use it to find events in a given status; use listAccountingEvents with that status instead. Preconditions: none. Required inputs: none; there are no parameters and no request body. Emits an ACCOUNTING_EVENT_STATUS_LIST audit event; no state changes. Returns 200 with the catalog. 
+     * List Accounting Event Statuses
+     */
+    async listAccountingEventStatuses(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EventStatusCatalogResponse> {
+        const response = await this.listAccountingEventStatusesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists every accounting event type the deployed code records, each with its code, display name, source domain, ingestion path (KAFKA or API) and whether a fact of that type can produce a journal entry. KAFKA types are recorded by the module\'s topic listeners; API types are the ones the module\'s own code submits through submitEvent (INVOICE_PAYMENT, VENDOR_BILL_GL_POSTING, AP_PAYMENT_GL_POSTING). submitEvent checks only that eventType is present and accepts any string, so a caller can record a type this list does not hold; such an event is posted only when an active posting rule set or default GL mapping resolves its type, and is otherwise suspended. Use this tool to discover the valid values of the eventType filter of listAccountingEvents, including types with no traffic yet; do not use listAccountingEvents itself, which lists ingested event instances, or getEventContract, which describes the submit envelope. Preconditions: none beyond the caller holding accounting:events:view. Required inputs: none; there is no request body and no filter. Emits an ACCOUNTING_EVENT_TYPE_LIST audit event; no state changes. Returns 200 with the full registry; the list is fixed by the deployed code, never empty. 
+     * List Accounting Event Types
+     */
+    async listAccountingEventTypesRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<AccountingEventTypeResponse>>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:events:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/events/types`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AccountingEventTypeResponseFromJSON));
+    }
+
+    /**
+     * Lists every accounting event type the deployed code records, each with its code, display name, source domain, ingestion path (KAFKA or API) and whether a fact of that type can produce a journal entry. KAFKA types are recorded by the module\'s topic listeners; API types are the ones the module\'s own code submits through submitEvent (INVOICE_PAYMENT, VENDOR_BILL_GL_POSTING, AP_PAYMENT_GL_POSTING). submitEvent checks only that eventType is present and accepts any string, so a caller can record a type this list does not hold; such an event is posted only when an active posting rule set or default GL mapping resolves its type, and is otherwise suspended. Use this tool to discover the valid values of the eventType filter of listAccountingEvents, including types with no traffic yet; do not use listAccountingEvents itself, which lists ingested event instances, or getEventContract, which describes the submit envelope. Preconditions: none beyond the caller holding accounting:events:view. Required inputs: none; there is no request body and no filter. Emits an ACCOUNTING_EVENT_TYPE_LIST audit event; no state changes. Returns 200 with the full registry; the list is fixed by the deployed code, never empty. 
+     * List Accounting Event Types
+     */
+    async listAccountingEventTypes(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<AccountingEventTypeResponse>> {
+        const response = await this.listAccountingEventTypesRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Lists ingested accounting events as a paginated projection with rich optional filters: event type, idempotency outcome, received-at range, event id, ingestion id, domain key, invoice id and processing status. Use this tool to monitor or triage the event pipeline; do not use getAccountingEvent, which fetches one event by its known id. Preconditions: none beyond the caller holding accounting:events:view; an unrecognized status value is silently ignored rather than rejected. Required inputs: none; all filters are optional and the page defaults to 20 items sorted by receivedAt descending. Emits an ACCOUNTING_EVENT_LIST audit event; no state changes. Returns 200 with an empty page when nothing matches the filters. 
      * List Accounting Events
      */
@@ -438,7 +516,7 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits a business event into the accounting pipeline, where the posting engine converts it into journal entries via published posting rules or default GL mappings. Use this tool to feed source-system activity into the ledger; do not use createJournalEntry, which bypasses the rules engine for manual entries, and use resolveTestMapping to preview the rules first. Preconditions: no event with the same eventId may already be ingested; duplicates are rejected rather than reprocessed. Required inputs: eventType (max 100 chars) and payload (JSON object); eventId, sourceSystem and transactionDate (ISO-8601) are optional, eventId being generated when omitted. organizationId is deprecated and ignored — omit it. Emits an ACCOUNTING_EVENT_SUBMIT event and returns 202 while processing continues asynchronously; callers poll getAccountingEvent for the outcome. Returns 409 DUPLICATE_EVENT when the eventId was already ingested, and 400 when required fields are missing or the transactionDate is not valid ISO-8601. 
+     * Injects a source-system business event into the accounting pipeline on behalf of its producer, where the posting engine converts it into journal entries via published posting rules or default GL mappings. Use this endpoint as the source system that owns the event (Billing and the other source domains publish their own facts) or as an operator replaying a producer\'s event; do not use it for a manual posting, which is createJournalEntry, or to re-run a FAILED or SUSPENDED event, which is retryAccountingEvent or reprocessSuspendedEvent, and use resolveTestMapping to preview the rules first. Preconditions: no event with the same eventId may already be ingested; duplicates are rejected rather than reprocessed. Required inputs: eventType (max 100 chars) and payload (JSON object); eventId, sourceSystem and transactionDate (ISO-8601) are optional, eventId being generated when omitted. Emits an ACCOUNTING_EVENT_SUBMIT event and returns 202 while processing continues asynchronously; callers poll getAccountingEvent for the outcome. Returns 409 DUPLICATE_EVENT when the eventId was already ingested, and 400 when required fields are missing or the transactionDate is not valid ISO-8601. 
      * Submit Accounting Event
      */
     async submitAccountingEventRaw(requestParameters: SubmitAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
@@ -475,7 +553,7 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits a business event into the accounting pipeline, where the posting engine converts it into journal entries via published posting rules or default GL mappings. Use this tool to feed source-system activity into the ledger; do not use createJournalEntry, which bypasses the rules engine for manual entries, and use resolveTestMapping to preview the rules first. Preconditions: no event with the same eventId may already be ingested; duplicates are rejected rather than reprocessed. Required inputs: eventType (max 100 chars) and payload (JSON object); eventId, sourceSystem and transactionDate (ISO-8601) are optional, eventId being generated when omitted. organizationId is deprecated and ignored — omit it. Emits an ACCOUNTING_EVENT_SUBMIT event and returns 202 while processing continues asynchronously; callers poll getAccountingEvent for the outcome. Returns 409 DUPLICATE_EVENT when the eventId was already ingested, and 400 when required fields are missing or the transactionDate is not valid ISO-8601. 
+     * Injects a source-system business event into the accounting pipeline on behalf of its producer, where the posting engine converts it into journal entries via published posting rules or default GL mappings. Use this endpoint as the source system that owns the event (Billing and the other source domains publish their own facts) or as an operator replaying a producer\'s event; do not use it for a manual posting, which is createJournalEntry, or to re-run a FAILED or SUSPENDED event, which is retryAccountingEvent or reprocessSuspendedEvent, and use resolveTestMapping to preview the rules first. Preconditions: no event with the same eventId may already be ingested; duplicates are rejected rather than reprocessed. Required inputs: eventType (max 100 chars) and payload (JSON object); eventId, sourceSystem and transactionDate (ISO-8601) are optional, eventId being generated when omitted. Emits an ACCOUNTING_EVENT_SUBMIT event and returns 202 while processing continues asynchronously; callers poll getAccountingEvent for the outcome. Returns 409 DUPLICATE_EVENT when the eventId was already ingested, and 400 when required fields are missing or the transactionDate is not valid ISO-8601. 
      * Submit Accounting Event
      */
     async submitAccountingEvent(requestParameters: SubmitAccountingEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {
