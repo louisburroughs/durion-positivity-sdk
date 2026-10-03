@@ -55,6 +55,7 @@ export interface SetSessionWorkflowStateRequest {
 export interface SubmitNltiRequestRequest {
     nltiRequestDTO: NltiRequestDTO;
     xCorrelationId?: string;
+    authorization?: string;
 }
 
 /**
@@ -204,6 +205,10 @@ export class NLTIApi extends runtime.BaseAPI {
 
         if (requestParameters['xCorrelationId'] != null) {
             headerParameters['X-Correlation-Id'] = String(requestParameters['xCorrelationId']);
+        }
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['Authorization'] = String(requestParameters['authorization']);
         }
 
         const response = await this.request({

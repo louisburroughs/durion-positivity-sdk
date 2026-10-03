@@ -13,6 +13,12 @@
  */
 
 import { mapValues } from '../runtime';
+import type { FactPostingKeyDescriptor } from './FactPostingKeyDescriptor';
+import {
+    FactPostingKeyDescriptorFromJSON,
+    FactPostingKeyDescriptorFromJSONTyped,
+    FactPostingKeyDescriptorToJSON,
+} from './FactPostingKeyDescriptor';
 import type { IdempotencyOutcomeDescriptor } from './IdempotencyOutcomeDescriptor';
 import {
     IdempotencyOutcomeDescriptorFromJSON,
@@ -21,13 +27,19 @@ import {
 } from './IdempotencyOutcomeDescriptor';
 
 /**
- * Idempotency mechanism for Kafka-consumed inventory posting facts
+ * Idempotency for Kafka-consumed posting facts: envelope deduplication by eventId, then per-listener posting deduplication by business key
  * @export
  * @interface FactConsumptionIdempotency
  */
 export interface FactConsumptionIdempotency {
     /**
-     * Dedup mechanism: a re-delivery is matched by its deterministic sourceEventId
+     * Envelope deduplication: a redelivered envelope (same eventId) is short-circuited by processed_events before any work, and writes NO accounting_event row and no outcome
+     * @type {string}
+     * @memberof FactConsumptionIdempotency
+     */
+    envelopeDeduplication: string;
+    /**
+     * Posting-deduplication mechanism of the journal-entry-posting facts (pos-inventory, pos-invoice, pos-order): a re-emitted fact is matched by its deterministic sourceEventId. Sources that post no journal entry key differently; postingDeduplication lists every key
      * @type {string}
      * @memberof FactConsumptionIdempotency
      */
@@ -38,14 +50,22 @@ export interface FactConsumptionIdempotency {
      * @memberof FactConsumptionIdempotency
      */
     outcomes: Array<IdempotencyOutcomeDescriptor>;
+    /**
+     * Posting deduplication, per listener: the business key a re-emitted fact (new envelope eventId, same business fact) is matched on, and what its row then records
+     * @type {Array<FactPostingKeyDescriptor>}
+     * @memberof FactConsumptionIdempotency
+     */
+    postingDeduplication: Array<FactPostingKeyDescriptor>;
 }
 
 /**
  * Check if a given object implements the FactConsumptionIdempotency interface.
  */
 export function instanceOfFactConsumptionIdempotency(value: object): boolean {
+    if (!('envelopeDeduplication' in value)) return false;
     if (!('mechanism' in value)) return false;
     if (!('outcomes' in value)) return false;
+    if (!('postingDeduplication' in value)) return false;
     return true;
 }
 
@@ -59,8 +79,10 @@ export function FactConsumptionIdempotencyFromJSONTyped(json: any, ignoreDiscrim
     }
     return {
         
+        'envelopeDeduplication': json['envelopeDeduplication'],
         'mechanism': json['mechanism'],
         'outcomes': ((json['outcomes'] as Array<any>).map(IdempotencyOutcomeDescriptorFromJSON)),
+        'postingDeduplication': ((json['postingDeduplication'] as Array<any>).map(FactPostingKeyDescriptorFromJSON)),
     };
 }
 
@@ -70,8 +92,10 @@ export function FactConsumptionIdempotencyToJSON(value?: FactConsumptionIdempote
     }
     return {
         
+        'envelopeDeduplication': value['envelopeDeduplication'],
         'mechanism': value['mechanism'],
         'outcomes': ((value['outcomes'] as Array<any>).map(IdempotencyOutcomeDescriptorToJSON)),
+        'postingDeduplication': ((value['postingDeduplication'] as Array<any>).map(FactPostingKeyDescriptorToJSON)),
     };
 }
 
