@@ -6,6 +6,8 @@ export * from './BayCapacityRequest';
 export * from './BayPatchRequest';
 export * from './BayRequest';
 export * from './BayResponse';
+export * from './BayTypeDefaultService';
+export * from './BayTypeResponse';
 export * from './BulkIngestRequestBayBulkIngestRecord';
 export * from './BulkIngestRequestLocationBulkIngestRecord';
 export * from './BulkIngestRequestMobileUnitBulkIngestRecord';

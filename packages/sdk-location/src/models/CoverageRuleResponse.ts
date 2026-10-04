@@ -33,7 +33,7 @@ export interface CoverageRuleResponse {
      */
     id: string;
     /**
-     * 
+     * Maximum service distance covered by the rule, in the owning mobile unit's base location's distanceUnit; null for a rule with no distance ceiling. Not yet evaluated by eligibility, since geocoding does not exist.
      * @type {DistanceDto}
      * @memberof CoverageRuleResponse
      */
@@ -51,7 +51,7 @@ export interface CoverageRuleResponse {
      */
     priority?: number;
     /**
-     * Type of coverage rule
+     * Type of coverage rule. Recorded only: ruleType itself is not yet evaluated by eligibility, so a DISTANCE_TIER rule matches the same addresses a SERVICE_AREA rule would.
      * @type {string}
      * @memberof CoverageRuleResponse
      */

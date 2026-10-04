@@ -2,6 +2,7 @@
 /* eslint-disable */
 export * from './BayAPIApi';
 export * from './BayBulkIngestAPIApi';
+export * from './BayTypeAPIApi';
 export * from './LocationAPIApi';
 export * from './LocationBulkIngestAPIApi';
 export * from './MobileUnitAPIApi';

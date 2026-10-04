@@ -99,7 +99,7 @@ export interface MobileUnitResponse {
      */
     plateRegion?: string;
     /**
-     * Catalog operation codes this unit can perform off-site (CAP-325 D14), UPPER-DASH per ADR-0059 §3; empty for a unit that has not declared any.
+     * Catalog operation codes this unit can perform off-site (CAP-325 D14), UPPER-DASH per ADR-0059 §3; empty for a unit that has not declared any. Used by the eligible mobile-unit lookup (GET /v1/mobile-units:eligible), whose operationCodes filter keeps only units that claim every requested code.
      * @type {Array<string>}
      * @memberof MobileUnitResponse
      */
@@ -111,7 +111,7 @@ export interface MobileUnitResponse {
      */
     status?: MobileUnitResponseStatusEnum;
     /**
-     * Identifier of the travel buffer policy applied to the mobile unit
+     * Identifier of the travel buffer policy assigned to the mobile unit. Recorded; not yet applied by scheduling.
      * @type {string}
      * @memberof MobileUnitResponse
      */

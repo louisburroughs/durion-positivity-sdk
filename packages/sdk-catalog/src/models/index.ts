@@ -63,6 +63,7 @@ export * from './RequiredSkillRequest';
 export * from './ResolvePriceRequestDto';
 export * from './ResolvePriceResponseDto';
 export * from './ServiceDto';
+export * from './ServiceDtoPage';
 export * from './ServiceFactReplayResultDto';
 export * from './ServiceLaborStandardImportRequestDto';
 export * from './ServiceLaborStandardRequestDto';

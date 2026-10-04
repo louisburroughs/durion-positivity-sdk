@@ -87,7 +87,7 @@ export interface MobileUnitRequest {
      */
     plateRegion?: string;
     /**
-     * Catalog operation codes this unit can perform off-site (CAP-325 D14): each must be an active catalog operationCode (UPPER-DASH, ADR-0059 §3), matched case-insensitively; unknown or retired codes are rejected 422. Required, non-empty, for an ACTIVE unit.
+     * Catalog operation codes this unit can perform off-site (CAP-325 D14): each must be an active catalog operationCode (UPPER-DASH, ADR-0059 §3), matched case-insensitively; unknown or retired codes are rejected 422. Required, non-empty, for an ACTIVE unit. Used by the eligible mobile-unit lookup (GET /v1/mobile-units:eligible), whose operationCodes filter keeps only units that claim every requested code.
      * @type {Array<string>}
      * @memberof MobileUnitRequest
      */
@@ -99,7 +99,7 @@ export interface MobileUnitRequest {
      */
     status?: MobileUnitRequestStatusEnum;
     /**
-     * Identifier of the travel buffer policy applied to the mobile unit; must name an existing policy (422 TRAVEL_BUFFER_POLICY_NOT_FOUND otherwise). Required for an ACTIVE unit.
+     * Identifier of the travel buffer policy applied to the mobile unit; must name an existing policy (422 TRAVEL_BUFFER_POLICY_NOT_FOUND otherwise). Required for an ACTIVE unit. Recorded; not yet applied by scheduling.
      * @type {string}
      * @memberof MobileUnitRequest
      */
