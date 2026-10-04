@@ -35,6 +35,7 @@ import type {
   ProductUpdateRequestDto,
   ReplacementOption,
   ServiceDto,
+  ServiceDtoPage,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -77,6 +78,8 @@ import {
     ReplacementOptionToJSON,
     ServiceDtoFromJSON,
     ServiceDtoToJSON,
+    ServiceDtoPageFromJSON,
+    ServiceDtoPageToJSON,
 } from '../models/index';
 
 export interface AddProductReplacementRequest {
@@ -130,6 +133,13 @@ export interface GetProductLifecycleRequest {
 
 export interface GetServiceByIdRequest {
     serviceId: string;
+}
+
+export interface ListClaimableServicesRequest {
+    operationCategory?: ListClaimableServicesOperationCategoryEnum;
+    q?: string;
+    page?: number;
+    size?: number;
 }
 
 export interface ListNonInventoryProductsByNameRequest {
@@ -775,6 +785,58 @@ export class ProductsAPIApi extends runtime.BaseAPI {
     }
 
     /**
+     * Returns a page of every catalog service that carries an operation code, ordered by name with id as the tiebreak, each with its id, name, operationCode and operationCategory. Use this tool to fill a capability picker for a bay\'s or mobile unit\'s serviceCapabilityCodes, or to browse which services exist; use searchCatalogServices instead for typeahead by partial name, and getServiceById when the id is known. Preconditions: none. Services without an operation code are omitted because they cannot be claimed; a service has no status, so every service that still exists and has a code is active. pos-location validates capability codes against an eventually consistent replica of this list, so a service created moments ago may still be refused there with 422 until its fact arrives. Required inputs: none; operationCategory narrows to one category, q matches a case-insensitive substring of the name or the operation code, and page and size are optional with size defaulting to 50 and capped at 200. The order is fixed and there is no sort parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty content array when nothing matches, so an empty result is not an error condition, and 400 when operationCategory is not one of the listed values or page or size is out of range. 
+     * List Services Claimable as Capabilities
+     */
+    async listClaimableServicesRaw(requestParameters: ListClaimableServicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ServiceDtoPage>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['operationCategory'] != null) {
+            queryParameters['operationCategory'] = requestParameters['operationCategory'];
+        }
+
+        if (requestParameters['q'] != null) {
+            queryParameters['q'] = requestParameters['q'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["ROLE_ADMIN", "catalog:service_type:view"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/products/services`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceDtoPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Returns a page of every catalog service that carries an operation code, ordered by name with id as the tiebreak, each with its id, name, operationCode and operationCategory. Use this tool to fill a capability picker for a bay\'s or mobile unit\'s serviceCapabilityCodes, or to browse which services exist; use searchCatalogServices instead for typeahead by partial name, and getServiceById when the id is known. Preconditions: none. Services without an operation code are omitted because they cannot be claimed; a service has no status, so every service that still exists and has a code is active. pos-location validates capability codes against an eventually consistent replica of this list, so a service created moments ago may still be refused there with 422 until its fact arrives. Required inputs: none; operationCategory narrows to one category, q matches a case-insensitive substring of the name or the operation code, and page and size are optional with size defaulting to 50 and capped at 200. The order is fixed and there is no sort parameter. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty content array when nothing matches, so an empty result is not an error condition, and 400 when operationCategory is not one of the listed values or page or size is out of range. 
+     * List Services Claimable as Capabilities
+     */
+    async listClaimableServices(requestParameters: ListClaimableServicesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ServiceDtoPage> {
+        const response = await this.listClaimableServicesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Returns every non-inventory product whose name equals the supplied value exactly; this is a whole-name match, not a substring search. Use this tool only when the exact name is known; use getNonInventoryProductById instead when the id is available, since there is no substring search for non-inventory products. Preconditions: none; an empty result simply means no non-inventory product carries that exact name. Required inputs: name as a path parameter; there is no paging and no request body. No events are emitted and no state changes; this is a read-only projection. Returns 200 with an empty array when nothing matches, so an empty result is not an error condition. 
      * List Non-Inventory Products by Name
      */
@@ -1373,4 +1435,14 @@ export class ProductsAPIApi extends runtime.BaseAPI {
 export enum FindProductByCodeCodeTypeEnum {
     Upc = 'UPC',
     Ean = 'EAN'
+}
+/**
+  * @export
+  * @enum {string}
+  */
+export enum ListClaimableServicesOperationCategoryEnum {
+    Repair = 'REPAIR',
+    Diagnostic = 'DIAGNOSTIC',
+    Maintenance = 'MAINTENANCE',
+    TireService = 'TIRE_SERVICE'
 }
