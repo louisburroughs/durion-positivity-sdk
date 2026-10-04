@@ -1,4 +1,4 @@
-import { call, expectApiError, formatError, withSiteScope } from './http';
+import { call, expectApiError, formatError, retryWhileReplicating, withSiteScope } from './http';
 
 /** The shape the generated clients throw: a ResponseError carrying the Response. */
 const rejection = (status: number, body: unknown): Promise<never> =>
@@ -208,5 +208,51 @@ describe('formatError — a body that is read twice', () => {
     };
 
     expect(await formatError(error)).toContain('(could not read body)');
+  });
+});
+
+describe('retryWhileReplicating', () => {
+  const failingThen = (failures: Array<() => Promise<never>>) => {
+    let calls = 0;
+    const attempt = jest.fn(() => (calls < failures.length ? failures[calls++]() : Promise.resolve('ok')));
+    return attempt;
+  };
+
+  it('retries a 503 *_REPLICATION_PENDING even when the markers name other codes', async () => {
+    const attempt = failingThen([
+      () => rejection(503, { code: 'CRM_REPLICATION_PENDING', message: 'retry shortly' }),
+      () => rejection(503, { code: 'PURCHASE_ORDER_REPLICATION_PENDING' }),
+    ]);
+
+    await expect(
+      retryWhileReplicating(attempt, { markers: ['CUSTOMER_NOT_FOUND'], description: 'booking', pollMs: 1 }),
+    ).resolves.toBe('ok');
+    expect(attempt).toHaveBeenCalledTimes(3);
+  });
+
+  it('still retries on its markers', async () => {
+    const attempt = failingThen([() => rejection(404, { code: 'CUSTOMER_NOT_FOUND' })]);
+
+    await expect(
+      retryWhileReplicating(attempt, { markers: ['CUSTOMER_NOT_FOUND'], description: 'booking', pollMs: 1 }),
+    ).resolves.toBe('ok');
+    expect(attempt).toHaveBeenCalledTimes(2);
+  });
+
+  it('raises any other 503 at once', async () => {
+    const attempt = failingThen([() => rejection(503, { code: 'SERVICE_UNAVAILABLE' })]);
+
+    await expect(
+      retryWhileReplicating(attempt, { markers: ['CUSTOMER_NOT_FOUND'], description: 'booking', pollMs: 1 }),
+    ).rejects.toThrow(/booking failed: HTTP 503/);
+    expect(attempt).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives up on a pending replica at the deadline', async () => {
+    const attempt = jest.fn(() => rejection(503, { code: 'CRM_REPLICATION_PENDING' }));
+
+    await expect(
+      retryWhileReplicating(attempt, { markers: [], description: 'booking', timeoutMs: 20, pollMs: 5 }),
+    ).rejects.toThrow(/booking never became consistent/);
   });
 });

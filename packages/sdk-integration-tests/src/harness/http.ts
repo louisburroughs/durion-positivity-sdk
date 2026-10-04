@@ -245,7 +245,15 @@ export async function expectApiError(promise: Promise<unknown>, status: number, 
  * has already returned, pos-inventory answers INVALID_PO_REFERENCE for a
  * purchase order pos-order has already approved. Retries only while the error
  * body carries one of `markers`; anything else is raised at once.
+ *
+ * Services now say "not yet" explicitly: a 503 whose code ends in
+ * `_REPLICATION_PENDING` (CRM_REPLICATION_PENDING on booking,
+ * PURCHASE_ORDER_REPLICATION_PENDING on an ASN, ...) with a Retry-After header.
+ * That is retried at every call site, whatever its `markers`, so a call whose
+ * markers still name the older not-found codes does not fail on the newer one.
  */
+const REPLICATION_PENDING = /"code":"[A-Z_]+_REPLICATION_PENDING"/;
+
 export async function retryWhileReplicating<T>(
   attempt: () => Promise<T>,
   options: { markers: string[]; description: string; timeoutMs?: number; pollMs?: number },
@@ -260,7 +268,8 @@ export async function retryWhileReplicating<T>(
       return await attempt();
     } catch (error) {
       const detail = await formatError(error);
-      if (!options.markers.some((marker) => detail.includes(marker))) {
+      const pending = httpStatusOf(error) === 503 && REPLICATION_PENDING.test(detail);
+      if (!pending && !options.markers.some((marker) => detail.includes(marker))) {
         // Rethrow the original, not a wrapper. A wrapper is a plain Error with
         // no `response`, so every status-aware helper downstream - isHttpStatus,
         // expectHttpError - goes blind: a role-mode negative that correctly got
