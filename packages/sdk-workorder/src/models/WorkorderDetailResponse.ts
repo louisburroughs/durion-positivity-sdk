@@ -51,6 +51,12 @@ export interface WorkorderDetailResponse {
      */
     assignedTechnicianId?: string;
     /**
+     * Display name of the assigned technician (first and last name only, no contact details), resolved from the people replica so TECHNICIAN and SERVICE_ADVISOR callers can show it without a people permission. Null when nobody is assigned or the name has not replicated yet.
+     * @type {string}
+     * @memberof WorkorderDetailResponse
+     */
+    assignedTechnicianName?: string;
+    /**
      * 
      * @type {WorkorderCapabilities}
      * @memberof WorkorderDetailResponse
@@ -233,6 +239,7 @@ export function WorkorderDetailResponseFromJSONTyped(json: any, ignoreDiscrimina
         
         'actualLaborHours': json['actualLaborHours'] == null ? undefined : json['actualLaborHours'],
         'assignedTechnicianId': json['assignedTechnicianId'] == null ? undefined : json['assignedTechnicianId'],
+        'assignedTechnicianName': json['assignedTechnicianName'] == null ? undefined : json['assignedTechnicianName'],
         'capabilities': WorkorderCapabilitiesFromJSON(json['capabilities']),
         'createdAt': (new Date(json['createdAt'])),
         'createdBy': json['createdBy'],
@@ -267,6 +274,7 @@ export function WorkorderDetailResponseToJSON(value?: WorkorderDetailResponse | 
         
         'actualLaborHours': value['actualLaborHours'],
         'assignedTechnicianId': value['assignedTechnicianId'],
+        'assignedTechnicianName': value['assignedTechnicianName'],
         'capabilities': WorkorderCapabilitiesToJSON(value['capabilities']),
         'createdAt': ((value['createdAt']).toISOString()),
         'createdBy': value['createdBy'],
