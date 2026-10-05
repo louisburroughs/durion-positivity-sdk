@@ -186,7 +186,7 @@ jobs:
             echo "| Command | \`${COMMAND_ID}\` |"
             echo
             echo '```'
-            grep -E '^\[(close|floor|appt)\] (closed|converted|---|[0-9]+ (job|free|position))' <<<"${STDOUT}" | tail -n 20 || true
+            grep -E '^\[(close|floor|appt)\] (closed|converted|booked|---|[0-9]+ (job|free|position))' <<<"${STDOUT}" | tail -n 20 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
