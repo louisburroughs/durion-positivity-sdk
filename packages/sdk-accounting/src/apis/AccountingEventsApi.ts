@@ -78,7 +78,7 @@ export interface ListAccountingEventsRequest {
 
 export interface ReprocessSuspendedEventRequest {
     eventId: string;
-    reprocessEventRequest: ReprocessEventRequest;
+    reprocessEventRequest?: ReprocessEventRequest;
 }
 
 export interface RetryAccountingEventRequest {
@@ -417,7 +417,7 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reprocesses a SUSPENDED accounting event after a mapping or rule correction, recording an audited reprocessing attempt with the triggering user. Use this tool once the underlying mapping gap is fixed; do not use retryAccountingEvent, which is the unaudited retry for transient failures. Preconditions: the event must exist and be SUSPENDED; an event already PROCESSED is rejected to preserve idempotency. A fact held for its currency (failureReasonCode CURRENCY_NOT_SUPPORTED, ADR-0067 PC-9) is released here too; while its currency is still not the ledger\'s it stays SUSPENDED with that reason and nothing is posted. Required inputs: eventId (UUID) as a path parameter and triggeredByUserId in the body; mappingVersionToUse and reprocessingNotes are optional. Emits an ACCOUNTING_EVENT_REPROCESS event; a successful synchronous outcome returns 200 with status PROCESSED while 202 means processing continues. Returns 404 EVENT_NOT_FOUND when the event does not exist, 409 when it is already PROCESSED, and 400 when the request is invalid. 
+     * Reprocesses a SUSPENDED accounting event after a mapping or rule correction, recording an audited reprocessing attempt with the authenticated caller as the triggering user. Use this tool once the underlying mapping gap is fixed; do not use retryAccountingEvent, which is the unaudited retry for transient failures. Preconditions: the event must exist and be SUSPENDED; an event already PROCESSED is rejected to preserve idempotency. A fact held for its currency (failureReasonCode CURRENCY_NOT_SUPPORTED, ADR-0067 PC-9) is released here too; while its currency is still not the ledger\'s it stays SUSPENDED with that reason and nothing is posted. Required inputs: eventId (UUID) as a path parameter; the body is optional and may carry mappingVersionToUse (a UUID) and reprocessingNotes. The triggering user is the authenticated caller; any user field in the body is ignored. Emits an ACCOUNTING_EVENT_REPROCESS event; a successful synchronous outcome returns 200 with status PROCESSED while 202 means processing continues. Returns 404 EVENT_NOT_FOUND when the event does not exist, 409 when it is already PROCESSED, and 400 when the request is invalid. 
      * Reprocess Suspended Event
      */
     async reprocessSuspendedEventRaw(requestParameters: ReprocessSuspendedEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AccountingEventResponse>> {
@@ -425,13 +425,6 @@ export class AccountingEventsApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'eventId',
                 'Required parameter "eventId" was null or undefined when calling reprocessSuspendedEvent().'
-            );
-        }
-
-        if (requestParameters['reprocessEventRequest'] == null) {
-            throw new runtime.RequiredError(
-                'reprocessEventRequest',
-                'Required parameter "reprocessEventRequest" was null or undefined when calling reprocessSuspendedEvent().'
             );
         }
 
@@ -461,7 +454,7 @@ export class AccountingEventsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Reprocesses a SUSPENDED accounting event after a mapping or rule correction, recording an audited reprocessing attempt with the triggering user. Use this tool once the underlying mapping gap is fixed; do not use retryAccountingEvent, which is the unaudited retry for transient failures. Preconditions: the event must exist and be SUSPENDED; an event already PROCESSED is rejected to preserve idempotency. A fact held for its currency (failureReasonCode CURRENCY_NOT_SUPPORTED, ADR-0067 PC-9) is released here too; while its currency is still not the ledger\'s it stays SUSPENDED with that reason and nothing is posted. Required inputs: eventId (UUID) as a path parameter and triggeredByUserId in the body; mappingVersionToUse and reprocessingNotes are optional. Emits an ACCOUNTING_EVENT_REPROCESS event; a successful synchronous outcome returns 200 with status PROCESSED while 202 means processing continues. Returns 404 EVENT_NOT_FOUND when the event does not exist, 409 when it is already PROCESSED, and 400 when the request is invalid. 
+     * Reprocesses a SUSPENDED accounting event after a mapping or rule correction, recording an audited reprocessing attempt with the authenticated caller as the triggering user. Use this tool once the underlying mapping gap is fixed; do not use retryAccountingEvent, which is the unaudited retry for transient failures. Preconditions: the event must exist and be SUSPENDED; an event already PROCESSED is rejected to preserve idempotency. A fact held for its currency (failureReasonCode CURRENCY_NOT_SUPPORTED, ADR-0067 PC-9) is released here too; while its currency is still not the ledger\'s it stays SUSPENDED with that reason and nothing is posted. Required inputs: eventId (UUID) as a path parameter; the body is optional and may carry mappingVersionToUse (a UUID) and reprocessingNotes. The triggering user is the authenticated caller; any user field in the body is ignored. Emits an ACCOUNTING_EVENT_REPROCESS event; a successful synchronous outcome returns 200 with status PROCESSED while 202 means processing continues. Returns 404 EVENT_NOT_FOUND when the event does not exist, 409 when it is already PROCESSED, and 400 when the request is invalid. 
      * Reprocess Suspended Event
      */
     async reprocessSuspendedEvent(requestParameters: ReprocessSuspendedEventRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AccountingEventResponse> {

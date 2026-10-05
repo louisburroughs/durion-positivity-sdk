@@ -14,13 +14,13 @@
 
 import { mapValues } from '../runtime';
 /**
- * Request to reprocess a suspended accounting event
+ * Request to reprocess a suspended accounting event. The triggering user is the authenticated caller and is never taken from the body.
  * @export
  * @interface ReprocessEventRequest
  */
 export interface ReprocessEventRequest {
     /**
-     * Specific mapping version to use; defaults to latest when omitted
+     * Specific mapping version (UUID) to use; defaults to latest when omitted
      * @type {string}
      * @memberof ReprocessEventRequest
      */
@@ -31,19 +31,12 @@ export interface ReprocessEventRequest {
      * @memberof ReprocessEventRequest
      */
     reprocessingNotes?: string;
-    /**
-     * Identifier of the user triggering the reprocessing (required for audit trail)
-     * @type {string}
-     * @memberof ReprocessEventRequest
-     */
-    triggeredByUserId: string;
 }
 
 /**
  * Check if a given object implements the ReprocessEventRequest interface.
  */
 export function instanceOfReprocessEventRequest(value: object): boolean {
-    if (!('triggeredByUserId' in value)) return false;
     return true;
 }
 
@@ -59,7 +52,6 @@ export function ReprocessEventRequestFromJSONTyped(json: any, ignoreDiscriminato
         
         'mappingVersionToUse': json['mappingVersionToUse'] == null ? undefined : json['mappingVersionToUse'],
         'reprocessingNotes': json['reprocessingNotes'] == null ? undefined : json['reprocessingNotes'],
-        'triggeredByUserId': json['triggeredByUserId'],
     };
 }
 
@@ -71,7 +63,6 @@ export function ReprocessEventRequestToJSON(value?: ReprocessEventRequest | null
         
         'mappingVersionToUse': value['mappingVersionToUse'],
         'reprocessingNotes': value['reprocessingNotes'],
-        'triggeredByUserId': value['triggeredByUserId'],
     };
 }
 
