@@ -45,6 +45,12 @@ export interface PartySummary {
      */
     displayName?: string;
     /**
+     * House-account kind when this party is a system house account (CASH_SALE is the tenant's walk-in CASH account, which no request can change); null for every ordinary party. Recognise a house account from this value only, never from a name or customer number.
+     * @type {string}
+     * @memberof PartySummary
+     */
+    houseAccount?: PartySummaryHouseAccountEnum;
+    /**
      * Legal name of the party
      * @type {string}
      * @memberof PartySummary
@@ -83,6 +89,15 @@ export interface PartySummary {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum PartySummaryHouseAccountEnum {
+    CashSale = 'CASH_SALE'
+}
+
+
+/**
  * Check if a given object implements the PartySummary interface.
  */
 export function instanceOfPartySummary(value: object): boolean {
@@ -103,6 +118,7 @@ export function PartySummaryFromJSONTyped(json: any, ignoreDiscriminator: boolea
         'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
         'customerNumber': json['customerNumber'] == null ? undefined : json['customerNumber'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'houseAccount': json['houseAccount'] == null ? undefined : json['houseAccount'],
         'legalName': json['legalName'] == null ? undefined : json['legalName'],
         'partyId': json['partyId'],
         'partyType': json['partyType'] == null ? undefined : json['partyType'],
@@ -121,6 +137,7 @@ export function PartySummaryToJSON(value?: PartySummary | null): any {
         'createdAt': value['createdAt'],
         'customerNumber': value['customerNumber'],
         'displayName': value['displayName'],
+        'houseAccount': value['houseAccount'],
         'legalName': value['legalName'],
         'partyId': value['partyId'],
         'partyType': value['partyType'],

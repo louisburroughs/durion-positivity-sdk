@@ -38,6 +38,12 @@ export interface CustomerDTO {
      */
     firstName?: string;
     /**
+     * House-account kind when this customer is a system house account (CASH_SALE is the tenant's walk-in CASH account, which no request can change); null for every ordinary customer. Read-only: a value sent on create or update is ignored.
+     * @type {string}
+     * @memberof CustomerDTO
+     */
+    readonly houseAccount?: CustomerDTOHouseAccountEnum;
+    /**
      * Unique identifier of the customer
      * @type {string}
      * @memberof CustomerDTO
@@ -71,6 +77,15 @@ export interface CustomerDTO {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum CustomerDTOHouseAccountEnum {
+    CashSale = 'CASH_SALE'
+}
+
+
+/**
  * Check if a given object implements the CustomerDTO interface.
  */
 export function instanceOfCustomerDTO(value: object): boolean {
@@ -90,6 +105,7 @@ export function CustomerDTOFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'customerNumber': json['customerNumber'] == null ? undefined : json['customerNumber'],
         'customerType': json['customerType'] == null ? undefined : json['customerType'],
         'firstName': json['firstName'] == null ? undefined : json['firstName'],
+        'houseAccount': json['houseAccount'] == null ? undefined : json['houseAccount'],
         'id': json['id'] == null ? undefined : json['id'],
         'lastName': json['lastName'] == null ? undefined : json['lastName'],
         'partyId': json['partyId'] == null ? undefined : json['partyId'],
@@ -98,7 +114,7 @@ export function CustomerDTOFromJSONTyped(json: any, ignoreDiscriminator: boolean
     };
 }
 
-export function CustomerDTOToJSON(value?: CustomerDTO | null): any {
+export function CustomerDTOToJSON(value?: Omit<CustomerDTO, 'houseAccount'> | null): any {
     if (value == null) {
         return value;
     }
