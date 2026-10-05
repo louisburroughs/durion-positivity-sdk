@@ -69,7 +69,7 @@ export interface TechnicianAssignmentResponse {
      */
     previousTechnicianId?: string;
     /**
-     * Previous technician name if this was a reassignment
+     * Previous technician name if this was a reassignment; null otherwise or when the name has not replicated yet
      * @type {string}
      * @memberof TechnicianAssignmentResponse
      */
@@ -111,7 +111,7 @@ export interface TechnicianAssignmentResponse {
      */
     technicianId?: string;
     /**
-     * Technician display name
+     * Technician display name (first and last name only); null when the name has not replicated yet
      * @type {string}
      * @memberof TechnicianAssignmentResponse
      */

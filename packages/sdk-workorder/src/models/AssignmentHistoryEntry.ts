@@ -50,7 +50,7 @@ export interface AssignmentHistoryEntry {
      */
     technicianId?: string;
     /**
-     * Technician display name
+     * Technician display name (first and last name only); null when the name has not replicated yet
      * @type {string}
      * @memberof AssignmentHistoryEntry
      */
