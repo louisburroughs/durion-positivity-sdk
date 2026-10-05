@@ -17,7 +17,10 @@
  *      and the next run sees it.
  *
  * Each booking gets a new customer and vehicle, created the way the floor load
- * creates its own. `APPT_MAX_PER_RUN` bounds how many one run can create.
+ * creates its own. `APPT_MAX_PER_RUN` bounds how many one run can create, across
+ * all sites: every site's short days are planned first and then booked round
+ * robin, each site's nearest day before any site's second, so a cap that runs
+ * out has still reached every site.
  *
  * A populate run, not a test: asserts nothing, is not a `*.itest.ts`, and tags
  * what it writes with its own `appt-*` run id.
@@ -41,7 +44,13 @@ import { loadEnvFile } from '../harness/loadEnvFile';
 import { Personas, type DomainClients } from '../harness/personas';
 import { createStarterActivationPort, StarterActivation } from '../harness/StarterActivation';
 import { createTenantPort, TenantPreflight } from '../harness/TenantPreflight';
-import { pickOpenings, planShortfalls, type BookingTargets } from './appointmentPlan';
+import {
+  pickOpenings,
+  planShortfalls,
+  roundRobinDays,
+  type BookingTargets,
+  type DayShortfall,
+} from './appointmentPlan';
 import { resolveService } from './shopFloorLoad';
 
 const TAG = '[appt]';
@@ -80,6 +89,14 @@ interface Totals {
   booked: number;
   refused: number;
   failed: number;
+}
+
+/** One site's short days, with what the run has booked against them so far. */
+interface SitePlan {
+  code: string;
+  ctx: BuilderContext;
+  shortfalls: DayShortfall[];
+  booked: number;
 }
 
 async function main(): Promise<void> {
@@ -121,6 +138,7 @@ async function main(): Promise<void> {
 
   const now = new Date();
   const totals: Totals = { converted: 0, booked: 0, refused: 0, failed: 0 };
+  const plans: SitePlan[] = [];
   for (const location of locations) {
     const locationId = location.id;
     const code = location.code ?? locationId ?? '(unknown)';
@@ -143,12 +161,27 @@ async function main(): Promise<void> {
     };
 
     totals.converted += await convertArrivals(crew, ctx, code, service, now);
-    if (totals.booked < settings.maxPerRun) {
-      await bookAhead(crew, ctx, code, service, settings, now, totals);
+    const shortfalls = await planSite(crew, ctx, code, settings, now);
+    if (shortfalls.length > 0) {
+      plans.push({ code, ctx, shortfalls, booked: 0 });
     }
   }
 
+  // Every site is planned before any is booked, so the run cap is shared (#146).
+  for (const { site, shortfall } of roundRobinDays(plans)) {
+    const budget = Math.min(shortfall.jobs, settings.maxPerRun - totals.booked);
+    if (budget <= 0) {
+      log(`run cap of ${settings.maxPerRun} booking(s) reached`);
+      break;
+    }
+    site.booked += await bookDay(crew, site, service, settings, now, shortfall, budget, totals);
+  }
+
   log('--- summary ---');
+  for (const site of plans) {
+    const wanted = site.shortfalls.reduce((sum, shortfall) => sum + shortfall.jobs, 0);
+    log(`booked ${site.booked} of ${wanted} wanted at ${site.code}`);
+  }
   log(
     `converted ${totals.converted} arrival(s) to estimates; booked ${totals.booked} appointment(s), ` +
       `${totals.refused} slot(s) refused, ${totals.failed} failure(s)`,
@@ -213,16 +246,14 @@ async function convertArrivals(
   return converted;
 }
 
-/** Top one site's upcoming open days up to the target share of bay time. */
-async function bookAhead(
+/** One site's open days from tomorrow to the horizon that are below the target share of bay time. */
+async function planSite(
   crew: Crew,
   ctx: BuilderContext,
   code: string,
-  service: { id: string; name: string },
   settings: Settings,
   now: Date,
-  totals: Totals,
-): Promise<void> {
+): Promise<DayShortfall[]> {
   const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + DAY);
   const last = new Date(tomorrow.getTime() + (settings.horizonDays - 1) * DAY);
 
@@ -235,65 +266,74 @@ async function bookAhead(
     });
   } catch (error) {
     log(`${code}: bookings skipped — capacity unavailable: ${await formatError(error)}`);
-    return;
+    return [];
   }
 
   const shortfalls = planShortfalls(capacity.days ?? [], settings);
   if (shortfalls.length === 0) {
     log(`${code}: every open day in the next ${settings.horizonDays} is at or above target`);
-    return;
+  }
+  return shortfalls;
+}
+
+/** Book up to `budget` appointments into one site's short day. Returns how many were booked. */
+async function bookDay(
+  crew: Crew,
+  site: SitePlan,
+  service: { id: string; name: string },
+  settings: Settings,
+  now: Date,
+  shortfall: DayShortfall,
+  budget: number,
+  totals: Totals,
+): Promise<number> {
+  const { code, ctx } = site;
+
+  let openings;
+  try {
+    openings = await crew.advisor.shopManager.scheduleApi.searchOpenings({
+      locationId: ctx.refs.locationId,
+      serviceIds: [service.id],
+      durationMinutes: settings.jobMinutes,
+      earliestStart: new Date(Math.max(shortfall.dayStartAt.getTime(), now.getTime())),
+      horizonDays: 1,
+      limit: 50,
+    });
+  } catch (error) {
+    log(`${code} ${shortfall.date}: no search: ${await formatError(error)}`);
+    return 0;
   }
 
-  for (const shortfall of shortfalls) {
-    const budget = Math.min(shortfall.jobs, settings.maxPerRun - totals.booked);
-    if (budget <= 0) {
-      log(`${code}: run cap of ${settings.maxPerRun} booking(s) reached`);
-      return;
+  // Twice the budget, so a refused slot has a spare to fall back on.
+  const candidates = pickOpenings(openings.openings ?? [], shortfall.date, budget * 2);
+  let bookedToday = 0;
+  for (const opening of candidates) {
+    if (bookedToday >= budget) break;
+    const outcome = await book(crew, ctx, service, opening);
+    if (outcome === 'booked') {
+      bookedToday += 1;
+      totals.booked += 1;
+    } else if (outcome === 'refused') {
+      totals.refused += 1;
+    } else {
+      totals.failed += 1;
     }
-
-    let openings;
-    try {
-      openings = await crew.advisor.shopManager.scheduleApi.searchOpenings({
-        locationId: ctx.refs.locationId,
-        serviceIds: [service.id],
-        durationMinutes: settings.jobMinutes,
-        earliestStart: new Date(Math.max(shortfall.dayStartAt.getTime(), now.getTime())),
-        horizonDays: 1,
-        limit: 50,
-      });
-    } catch (error) {
-      log(`${code} ${shortfall.date}: no search: ${await formatError(error)}`);
-      continue;
-    }
-
-    // Twice the budget, so a refused slot has a spare to fall back on.
-    const candidates = pickOpenings(openings.openings ?? [], shortfall.date, budget * 2);
-    let bookedToday = 0;
-    for (const opening of candidates) {
-      if (bookedToday >= budget) break;
-      const outcome = await book(crew, ctx, service, opening);
-      if (outcome === 'booked') {
-        bookedToday += 1;
-        totals.booked += 1;
-      } else if (outcome === 'refused') {
-        totals.refused += 1;
-      } else {
-        totals.failed += 1;
-      }
-    }
-    log(
-      `${code} ${shortfall.date}: booked ${bookedToday} of ${shortfall.jobs} wanted ` +
-        `(${shortfall.bookedMinutes}/${shortfall.capacityMinutes} bay-min booked before)` +
-        (candidates.length === 0 ? ` — no openings: ${openings.noOpeningReason ?? 'none returned'}` : ''),
-    );
   }
+  log(
+    `${code} ${shortfall.date}: booked ${bookedToday} of ${shortfall.jobs} wanted ` +
+      `(${shortfall.bookedMinutes}/${shortfall.capacityMinutes} bay-min booked before)` +
+      (candidates.length === 0 ? ` — no openings: ${openings.noOpeningReason ?? 'none returned'}` : ''),
+  );
+  return bookedToday;
 }
 
 /**
  * A customer created for a booking whose slot was then refused, kept for the
- * next attempt so a refusal does not leave an unused customer behind.
+ * next attempt at the same site so a refusal does not leave an unused customer
+ * behind. Per site, because the run now moves between sites from one day to the
+ * next and a customer is created in the context of the site it books at.
  */
-let spareCustomer: { partyId: string; vehicleId: string } | undefined;
+const spareCustomers = new Map<string, { partyId: string; vehicleId: string }>();
 
 async function book(
   crew: Crew,
@@ -301,21 +341,23 @@ async function book(
   service: { id: string; name: string },
   opening: { bayId: string; startAt: Date; endAt: Date },
 ): Promise<'booked' | 'refused' | 'failed'> {
+  const siteId = ctx.refs.locationId;
   try {
-    if (!spareCustomer) {
+    let customer = spareCustomers.get(siteId);
+    if (!customer) {
       const created = await createPersonAccount(crew.advisor, ctx);
       // Vehicle registration is ADMIN-only, the same split Suite A makes.
-      spareCustomer = { partyId: created.partyId, vehicleId: await createVehicle(crew.admin, ctx, created.partyId) };
+      customer = { partyId: created.partyId, vehicleId: await createVehicle(crew.admin, ctx, created.partyId) };
+      spareCustomers.set(siteId, customer);
     }
-    const customer = spareCustomer;
-    const vehicleId = customer.vehicleId;
+    const { partyId, vehicleId } = customer;
     await retryWhileReplicating(
       () =>
         crew.advisor.shopManager.appointmentsApi.createAppointment({
           appointmentCreateRequest: {
-            crmCustomerId: customer.partyId,
+            crmCustomerId: partyId,
             crmVehicleId: vehicleId,
-            locationId: ctx.refs.locationId,
+            locationId: siteId,
             startAt: opening.startAt,
             endAt: opening.endAt,
             resourceType: AppointmentResource.Bay,
@@ -325,11 +367,11 @@ async function book(
         }),
       {
         markers: ['CUSTOMER_NOT_FOUND', 'VEHICLE_NOT_FOUND'],
-        description: `booking an appointment for party ${customer.partyId}`,
+        description: `booking an appointment for party ${partyId}`,
         timeoutMs: 60_000,
       },
     );
-    spareCustomer = undefined;
+    spareCustomers.delete(siteId);
     return 'booked';
   } catch (error) {
     const detail = await formatError(error);

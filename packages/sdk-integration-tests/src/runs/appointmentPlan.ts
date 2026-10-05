@@ -77,6 +77,31 @@ export const planShortfalls = (days: readonly DayCapacity[], targets: BookingTar
   return shortfalls;
 };
 
+/**
+ * Every site's short days in the order a capped run should work them: each
+ * site's nearest day, then each site's next, and so on.
+ *
+ * The run cap is one budget for the whole run. Working the sites one after
+ * another let the first site with a shortfall spend all of it, and a site later
+ * in the list was never reached (#146). Interleaved, a cap that runs out leaves
+ * every site with its nearest days booked instead of one site with all of them.
+ */
+export const roundRobinDays = <S extends { shortfalls: readonly DayShortfall[] }>(
+  sites: readonly S[],
+): Array<{ site: S; shortfall: DayShortfall }> => {
+  const order: Array<{ site: S; shortfall: DayShortfall }> = [];
+  const rounds = Math.max(0, ...sites.map((site) => site.shortfalls.length));
+  for (let round = 0; round < rounds; round += 1) {
+    for (const site of sites) {
+      const shortfall = site.shortfalls[round];
+      if (shortfall) {
+        order.push({ site, shortfall });
+      }
+    }
+  }
+  return order;
+};
+
 /** The structural subset of an `Opening` the picker reads. */
 export interface OpeningView {
   bayId: string;
