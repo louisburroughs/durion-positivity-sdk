@@ -29,7 +29,7 @@ import {
 } from '../models/index';
 
 export interface CreateCustomerRequest {
-    customerDTO: CustomerDTO;
+    customerDTO: Omit<CustomerDTO, 'houseAccount'>;
 }
 
 export interface DeleteCustomerRequest {
@@ -51,7 +51,7 @@ export interface ListCustomersRequest {
 
 export interface UpdateCustomerRequest {
     id: string;
-    customerDTO: CustomerDTO;
+    customerDTO: Omit<CustomerDTO, 'houseAccount'>;
 }
 
 /**
@@ -106,7 +106,7 @@ export class CustomerAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Hard-deletes a customer row, trying the commercial store first and then the person store, and publishes a party-deleted fact for the removed record. Use this tool only when a customer record must be physically removed; do not use it for duplicates — use mergeParties instead, whose MERGED status preserves history, since this deletion is not reversible. Preconditions: a commercial or person party must exist for the supplied id. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a CUSTOMER_CUSTOMER_DELETE event and publishes a party-deleted customer fact. Returns 404 when neither store holds a party for the supplied id. 
+     * Hard-deletes a customer row, trying the commercial store first and then the person store, and publishes a party-deleted fact for the removed record. Use this tool only when a customer record must be physically removed; do not use it for duplicates — use mergeParties instead, whose MERGED status preserves history, since this deletion is not reversible. Preconditions: a commercial or person party must exist for the supplied id. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a CUSTOMER_CUSTOMER_DELETE event and publishes a party-deleted customer fact. Returns 404 when neither store holds a party for the supplied id. Returns 409 HOUSE_ACCOUNT_IMMUTABLE when the target party is the tenant\'s system house account (the CASH walk-in account), which no request can change. 
      * Delete Customer Record
      */
     async deleteCustomerRaw(requestParameters: DeleteCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -140,7 +140,7 @@ export class CustomerAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Hard-deletes a customer row, trying the commercial store first and then the person store, and publishes a party-deleted fact for the removed record. Use this tool only when a customer record must be physically removed; do not use it for duplicates — use mergeParties instead, whose MERGED status preserves history, since this deletion is not reversible. Preconditions: a commercial or person party must exist for the supplied id. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a CUSTOMER_CUSTOMER_DELETE event and publishes a party-deleted customer fact. Returns 404 when neither store holds a party for the supplied id. 
+     * Hard-deletes a customer row, trying the commercial store first and then the person store, and publishes a party-deleted fact for the removed record. Use this tool only when a customer record must be physically removed; do not use it for duplicates — use mergeParties instead, whose MERGED status preserves history, since this deletion is not reversible. Preconditions: a commercial or person party must exist for the supplied id. Required inputs: id (UUID) as a path parameter; there is no request body. Emits a CUSTOMER_CUSTOMER_DELETE event and publishes a party-deleted customer fact. Returns 404 when neither store holds a party for the supplied id. Returns 409 HOUSE_ACCOUNT_IMMUTABLE when the target party is the tenant\'s system house account (the CASH walk-in account), which no request can change. 
      * Delete Customer Record
      */
     async deleteCustomer(requestParameters: DeleteCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -251,7 +251,7 @@ export class CustomerAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates an existing customer\'s flat record, with the body\'s customerType selecting whether the commercial or person store is searched for the id. Use this tool only for the legacy flat customer API; the customerType in the body must match the store the customer actually lives in, or the lookup misses, so do not use it to change a customer from PERSON to COMMERCIAL. Preconditions: a party of the type named by customerType must exist for the supplied id. Required inputs: id (UUID) as a path parameter and the CustomerDTO body including customerType; only fields present in the DTO mapping are applied. Emits a CUSTOMER_CUSTOMER_UPDATE event and publishes a party-changed customer fact. Returns 404 when no party of the selected type exists for the supplied id. 
+     * Updates an existing customer\'s flat record, with the body\'s customerType selecting whether the commercial or person store is searched for the id. Use this tool only for the legacy flat customer API; the customerType in the body must match the store the customer actually lives in, or the lookup misses, so do not use it to change a customer from PERSON to COMMERCIAL. Preconditions: a party of the type named by customerType must exist for the supplied id. Required inputs: id (UUID) as a path parameter and the CustomerDTO body including customerType; only fields present in the DTO mapping are applied. Emits a CUSTOMER_CUSTOMER_UPDATE event and publishes a party-changed customer fact. Returns 404 when no party of the selected type exists for the supplied id. Returns 409 HOUSE_ACCOUNT_IMMUTABLE when the target party is the tenant\'s system house account (the CASH walk-in account), which no request can change. 
      * Update Customer Record
      */
     async updateCustomerRaw(requestParameters: UpdateCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomerDTO>> {
@@ -295,7 +295,7 @@ export class CustomerAPIApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates an existing customer\'s flat record, with the body\'s customerType selecting whether the commercial or person store is searched for the id. Use this tool only for the legacy flat customer API; the customerType in the body must match the store the customer actually lives in, or the lookup misses, so do not use it to change a customer from PERSON to COMMERCIAL. Preconditions: a party of the type named by customerType must exist for the supplied id. Required inputs: id (UUID) as a path parameter and the CustomerDTO body including customerType; only fields present in the DTO mapping are applied. Emits a CUSTOMER_CUSTOMER_UPDATE event and publishes a party-changed customer fact. Returns 404 when no party of the selected type exists for the supplied id. 
+     * Updates an existing customer\'s flat record, with the body\'s customerType selecting whether the commercial or person store is searched for the id. Use this tool only for the legacy flat customer API; the customerType in the body must match the store the customer actually lives in, or the lookup misses, so do not use it to change a customer from PERSON to COMMERCIAL. Preconditions: a party of the type named by customerType must exist for the supplied id. Required inputs: id (UUID) as a path parameter and the CustomerDTO body including customerType; only fields present in the DTO mapping are applied. Emits a CUSTOMER_CUSTOMER_UPDATE event and publishes a party-changed customer fact. Returns 404 when no party of the selected type exists for the supplied id. Returns 409 HOUSE_ACCOUNT_IMMUTABLE when the target party is the tenant\'s system house account (the CASH walk-in account), which no request can change. 
      * Update Customer Record
      */
     async updateCustomer(requestParameters: UpdateCustomerRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomerDTO> {

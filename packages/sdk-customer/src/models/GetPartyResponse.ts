@@ -38,6 +38,12 @@ export interface GetPartyResponse {
      */
     displayName?: string;
     /**
+     * House-account kind when this party is a system house account (CASH_SALE is the tenant's walk-in CASH account, which no request can change); null or absent for every ordinary party. Recognise a house account from this value only, never from a name or customer number.
+     * @type {string}
+     * @memberof GetPartyResponse
+     */
+    houseAccount?: GetPartyResponseHouseAccountEnum;
+    /**
      * Legal name of the party
      * @type {string}
      * @memberof GetPartyResponse
@@ -82,6 +88,15 @@ export interface GetPartyResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum GetPartyResponseHouseAccountEnum {
+    CashSale = 'CASH_SALE'
+}
+
+
+/**
  * Check if a given object implements the GetPartyResponse interface.
  */
 export function instanceOfGetPartyResponse(value: object): boolean {
@@ -106,6 +121,7 @@ export function GetPartyResponseFromJSONTyped(json: any, ignoreDiscriminator: bo
         'billingTermsId': json['billingTermsId'] == null ? undefined : json['billingTermsId'],
         'createdAt': json['createdAt'],
         'displayName': json['displayName'] == null ? undefined : json['displayName'],
+        'houseAccount': json['houseAccount'] == null ? undefined : json['houseAccount'],
         'legalName': json['legalName'],
         'modifiedAt': json['modifiedAt'] == null ? undefined : json['modifiedAt'],
         'partyId': json['partyId'],
@@ -125,6 +141,7 @@ export function GetPartyResponseToJSON(value?: GetPartyResponse | null): any {
         'billingTermsId': value['billingTermsId'],
         'createdAt': value['createdAt'],
         'displayName': value['displayName'],
+        'houseAccount': value['houseAccount'],
         'legalName': value['legalName'],
         'modifiedAt': value['modifiedAt'],
         'partyId': value['partyId'],
