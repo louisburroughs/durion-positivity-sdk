@@ -26,11 +26,11 @@ export interface MakeResponse {
      */
     id: string;
     /**
-     * Manufacturer identifier for this make
-     * @type {string}
+     * Identifiers of every manufacturer this make is linked to, sorted. A make is a brand and one vPIC make can be built by several manufacturers, so it appears under each of them with this same id.
+     * @type {Array<string>}
      * @memberof MakeResponse
      */
-    manufacturerId?: string;
+    manufacturerIds: Array<string>;
     /**
      * Make name
      * @type {string}
@@ -44,6 +44,7 @@ export interface MakeResponse {
  */
 export function instanceOfMakeResponse(value: object): boolean {
     if (!('id' in value)) return false;
+    if (!('manufacturerIds' in value)) return false;
     if (!('name' in value)) return false;
     return true;
 }
@@ -59,7 +60,7 @@ export function MakeResponseFromJSONTyped(json: any, ignoreDiscriminator: boolea
     return {
         
         'id': json['id'],
-        'manufacturerId': json['manufacturerId'] == null ? undefined : json['manufacturerId'],
+        'manufacturerIds': json['manufacturerIds'],
         'name': json['name'],
     };
 }
@@ -71,7 +72,7 @@ export function MakeResponseToJSON(value?: MakeResponse | null): any {
     return {
         
         'id': value['id'],
-        'manufacturerId': value['manufacturerId'],
+        'manufacturerIds': value['manufacturerIds'],
         'name': value['name'],
     };
 }
