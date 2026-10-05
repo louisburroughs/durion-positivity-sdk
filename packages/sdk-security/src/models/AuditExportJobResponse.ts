@@ -26,7 +26,7 @@ export interface AuditExportJobResponse {
      */
     completedAt?: Date;
     /**
-     * Pre-signed download URL (null until COMPLETED)
+     * Gateway-relative path that downloads the export file with the same security:audit:export authority (null until COMPLETED)
      * @type {string}
      * @memberof AuditExportJobResponse
      */
@@ -37,6 +37,12 @@ export interface AuditExportJobResponse {
      * @memberof AuditExportJobResponse
      */
     errorMessage?: string;
+    /**
+     * Output format of the export file
+     * @type {string}
+     * @memberof AuditExportJobResponse
+     */
+    format: AuditExportJobResponseFormatEnum;
     /**
      * Export job UUID
      * @type {string}
@@ -50,13 +56,27 @@ export interface AuditExportJobResponse {
      */
     requestedAt: Date;
     /**
-     * Current status of the export job
+     * Number of audit events in the export file (null until COMPLETED)
+     * @type {number}
+     * @memberof AuditExportJobResponse
+     */
+    rowCount?: number;
+    /**
+     * Current status of the export job: PENDING (queued), IN_PROGRESS (running), COMPLETED (file ready to download) or FAILED (see errorMessage)
      * @type {string}
      * @memberof AuditExportJobResponse
      */
     status: AuditExportJobResponseStatusEnum;
 }
 
+/**
+* @export
+* @enum {string}
+*/
+export enum AuditExportJobResponseFormatEnum {
+    Csv = 'CSV',
+    Json = 'JSON'
+}
 /**
 * @export
 * @enum {string}
@@ -73,6 +93,7 @@ export enum AuditExportJobResponseStatusEnum {
  * Check if a given object implements the AuditExportJobResponse interface.
  */
 export function instanceOfAuditExportJobResponse(value: object): boolean {
+    if (!('format' in value)) return false;
     if (!('jobId' in value)) return false;
     if (!('requestedAt' in value)) return false;
     if (!('status' in value)) return false;
@@ -92,8 +113,10 @@ export function AuditExportJobResponseFromJSONTyped(json: any, ignoreDiscriminat
         'completedAt': json['completedAt'] == null ? undefined : (new Date(json['completedAt'])),
         'downloadUrl': json['downloadUrl'] == null ? undefined : json['downloadUrl'],
         'errorMessage': json['errorMessage'] == null ? undefined : json['errorMessage'],
+        'format': json['format'],
         'jobId': json['jobId'],
         'requestedAt': (new Date(json['requestedAt'])),
+        'rowCount': json['rowCount'] == null ? undefined : json['rowCount'],
         'status': json['status'],
     };
 }
@@ -107,8 +130,10 @@ export function AuditExportJobResponseToJSON(value?: AuditExportJobResponse | nu
         'completedAt': value['completedAt'] == null ? undefined : ((value['completedAt']).toISOString()),
         'downloadUrl': value['downloadUrl'],
         'errorMessage': value['errorMessage'],
+        'format': value['format'],
         'jobId': value['jobId'],
         'requestedAt': ((value['requestedAt']).toISOString()),
+        'rowCount': value['rowCount'],
         'status': value['status'],
     };
 }

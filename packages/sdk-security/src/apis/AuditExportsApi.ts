@@ -28,6 +28,10 @@ import {
     AuditExportRequestToJSON,
 } from '../models/index';
 
+export interface DownloadAuditExportRequest {
+    jobId: string;
+}
+
 export interface GetAuditExportJobRequest {
     jobId: string;
 }
@@ -42,7 +46,50 @@ export interface RequestAuditExportRequest {
 export class AuditExportsApi extends runtime.BaseAPI {
 
     /**
-     * Returns the current status of a previously submitted audit export job, including completion time, download URL, and error message when present. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while a job is still PENDING. Preconditions: the caller must hold security:audit:export and the job must exist in the in-memory store, which is cleared on service restart. Required inputs: jobId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only status projection. Returns 404 when the job id is unknown or the store was cleared by a restart. 
+     * Downloads the file a COMPLETED audit export job produced, as an attachment in the job\'s format (text/csv or application/json). Use this tool after getAuditExportJob reports COMPLETED; the job\'s downloadUrl is this endpoint\'s gateway path. Preconditions: the caller must hold security:audit:export and the job must belong to the caller\'s tenant. Required inputs: jobId (UUID) as a path parameter. Emits a SECURITY_AUDIT_EXPORT_DOWNLOAD event and changes no state; CSV cells that begin with a formula character are prefixed with a single quote so spreadsheets do not evaluate them. Returns 409 AUDIT_EXPORT_NOT_READY while the job is PENDING, IN_PROGRESS or FAILED, and 404 when the job id is unknown to the caller\'s tenant or the job was purged after the retention period. 
+     * Download a Completed Audit Export
+     */
+    async downloadAuditExportRaw(requestParameters: DownloadAuditExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Blob>> {
+        if (requestParameters['jobId'] == null) {
+            throw new runtime.RequiredError(
+                'jobId',
+                'Required parameter "jobId" was null or undefined when calling downloadAuditExport().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/audit/exports/{jobId}/download`.replace(`{${"jobId"}}`, encodeURIComponent(String(requestParameters['jobId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.BlobApiResponse(response);
+    }
+
+    /**
+     * Downloads the file a COMPLETED audit export job produced, as an attachment in the job\'s format (text/csv or application/json). Use this tool after getAuditExportJob reports COMPLETED; the job\'s downloadUrl is this endpoint\'s gateway path. Preconditions: the caller must hold security:audit:export and the job must belong to the caller\'s tenant. Required inputs: jobId (UUID) as a path parameter. Emits a SECURITY_AUDIT_EXPORT_DOWNLOAD event and changes no state; CSV cells that begin with a formula character are prefixed with a single quote so spreadsheets do not evaluate them. Returns 409 AUDIT_EXPORT_NOT_READY while the job is PENDING, IN_PROGRESS or FAILED, and 404 when the job id is unknown to the caller\'s tenant or the job was purged after the retention period. 
+     * Download a Completed Audit Export
+     */
+    async downloadAuditExport(requestParameters: DownloadAuditExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Blob> {
+        const response = await this.downloadAuditExportRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Returns the current status of an audit export job of the caller\'s tenant (PENDING, IN_PROGRESS, COMPLETED or FAILED) with its completion time, row count, download URL and error message when present. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while the job is still PENDING or IN_PROGRESS. Preconditions: the caller must hold security:audit:export, and the job must belong to the caller\'s tenant, since another tenant\'s job id answers 404. Required inputs: jobId (UUID) as a path parameter. This is a read-only status projection that emits no events; a job interrupted by a service restart is moved to FAILED by a scheduled sweep once the configured timeout passes, so a poll never waits forever. Returns 404 when the job id is unknown to the caller\'s tenant or the job was purged after the configured retention period (seven days by default). 
      * Get Audit Export Job Status
      */
     async getAuditExportJobRaw(requestParameters: GetAuditExportJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditExportJobResponse>> {
@@ -76,7 +123,7 @@ export class AuditExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns the current status of a previously submitted audit export job, including completion time, download URL, and error message when present. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while a job is still PENDING. Preconditions: the caller must hold security:audit:export and the job must exist in the in-memory store, which is cleared on service restart. Required inputs: jobId (UUID) as a path parameter. No events are emitted and no state changes; this is a read-only status projection. Returns 404 when the job id is unknown or the store was cleared by a restart. 
+     * Returns the current status of an audit export job of the caller\'s tenant (PENDING, IN_PROGRESS, COMPLETED or FAILED) with its completion time, row count, download URL and error message when present. Use this tool to poll a job created by requestAuditExport; do not resubmit the export while the job is still PENDING or IN_PROGRESS. Preconditions: the caller must hold security:audit:export, and the job must belong to the caller\'s tenant, since another tenant\'s job id answers 404. Required inputs: jobId (UUID) as a path parameter. This is a read-only status projection that emits no events; a job interrupted by a service restart is moved to FAILED by a scheduled sweep once the configured timeout passes, so a poll never waits forever. Returns 404 when the job id is unknown to the caller\'s tenant or the job was purged after the configured retention period (seven days by default). 
      * Get Audit Export Job Status
      */
     async getAuditExportJob(requestParameters: GetAuditExportJobRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditExportJobResponse> {
@@ -85,7 +132,7 @@ export class AuditExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits an asynchronous audit export job and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are currently held in an in-memory store, so they do not survive a service restart. Required inputs: format (CSV or JSON) and deliveryMode (DOWNLOAD or WEBHOOK); filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; execution is deferred, so callers must poll getAuditExportJob for status and the eventual download URL. Returns 400 when format or deliveryMode is missing or not a valid enum value. 
+     * Submits an asynchronous audit export job for the caller\'s tenant and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are persisted per tenant, run in the background once the request commits, and are deleted with their file after the configured retention period. Required inputs: format (CSV or JSON) and deliveryMode, which must be DOWNLOAD; filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; poll getAuditExportJob until the job is COMPLETED, then fetch its downloadUrl with downloadAuditExport, or FAILED, where errorMessage says why (for example more matching events than the configured row limit). Returns 400 when format or deliveryMode is missing or invalid or fromDate is not before toDate, and 400 AUDIT_EXPORT_WEBHOOK_UNSUPPORTED for WEBHOOK delivery, which has no configured destination yet. 
      * Request an Asynchronous Audit Export
      */
     async requestAuditExportRaw(requestParameters: RequestAuditExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AuditExportJobResponse>> {
@@ -122,7 +169,7 @@ export class AuditExportsApi extends runtime.BaseAPI {
     }
 
     /**
-     * Submits an asynchronous audit export job and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are currently held in an in-memory store, so they do not survive a service restart. Required inputs: format (CSV or JSON) and deliveryMode (DOWNLOAD or WEBHOOK); filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; execution is deferred, so callers must poll getAuditExportJob for status and the eventual download URL. Returns 400 when format or deliveryMode is missing or not a valid enum value. 
+     * Submits an asynchronous audit export job for the caller\'s tenant and answers 202 Accepted with the job id and an initial PENDING status. Use this tool for bulk extraction of audit data as a file; use searchAuditEvents instead for interactive paged queries. Preconditions: the caller must hold security:audit:export; jobs are persisted per tenant, run in the background once the request commits, and are deleted with their file after the configured retention period. Required inputs: format (CSV or JSON) and deliveryMode, which must be DOWNLOAD; filters is optional and scopes the export with the same criteria as searchAuditEvents. Emits a SECURITY_AUDIT_EXPORT_REQUEST event; poll getAuditExportJob until the job is COMPLETED, then fetch its downloadUrl with downloadAuditExport, or FAILED, where errorMessage says why (for example more matching events than the configured row limit). Returns 400 when format or deliveryMode is missing or invalid or fromDate is not before toDate, and 400 AUDIT_EXPORT_WEBHOOK_UNSUPPORTED for WEBHOOK delivery, which has no configured destination yet. 
      * Request an Asynchronous Audit Export
      */
     async requestAuditExport(requestParameters: RequestAuditExportRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AuditExportJobResponse> {
