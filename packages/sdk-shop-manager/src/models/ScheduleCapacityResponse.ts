@@ -45,6 +45,12 @@ export interface ScheduleCapacityResponse {
      */
     locationId: string;
     /**
+     * Whether the staffing-assignment replica holds any ACTIVE assignment at this location (#2527). AVAILABLE: each OK day's technicians list is that date's real roster, and an empty list means nobody in a technician role is rostered. UNAVAILABLE: rostering is unknown, every technicians list is empty, and that must not be read as nobody on duty. Always present; optional in the schema only so the addition stays non-breaking for existing typed clients.
+     * @type {string}
+     * @memberof ScheduleCapacityResponse
+     */
+    staffingStatus?: ScheduleCapacityResponseStaffingStatusEnum;
+    /**
      * IANA timezone id the day windows were computed in, from the location replica. Null when the location's timezone is unknown — never silently UTC (AC11).
      * @type {string}
      * @memberof ScheduleCapacityResponse
@@ -63,6 +69,16 @@ export interface ScheduleCapacityResponse {
      */
     viewGeneratedAt: Date;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ScheduleCapacityResponseStaffingStatusEnum {
+    Available = 'AVAILABLE',
+    Unavailable = 'UNAVAILABLE'
+}
+
 
 /**
  * Check if a given object implements the ScheduleCapacityResponse interface.
@@ -89,6 +105,7 @@ export function ScheduleCapacityResponseFromJSONTyped(json: any, ignoreDiscrimin
         'days': ((json['days'] as Array<any>).map(DayCapacityViewFromJSON)),
         'from': (new Date(json['from'])),
         'locationId': json['locationId'],
+        'staffingStatus': json['staffingStatus'] == null ? undefined : json['staffingStatus'],
         'timezone': json['timezone'] == null ? undefined : json['timezone'],
         'to': (new Date(json['to'])),
         'viewGeneratedAt': (new Date(json['viewGeneratedAt'])),
@@ -104,6 +121,7 @@ export function ScheduleCapacityResponseToJSON(value?: ScheduleCapacityResponse 
         'days': ((value['days'] as Array<any>).map(DayCapacityViewToJSON)),
         'from': ((value['from']).toISOString().substring(0,10)),
         'locationId': value['locationId'],
+        'staffingStatus': value['staffingStatus'],
         'timezone': value['timezone'],
         'to': ((value['to']).toISOString().substring(0,10)),
         'viewGeneratedAt': ((value['viewGeneratedAt']).toISOString()),
