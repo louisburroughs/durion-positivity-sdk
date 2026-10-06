@@ -19,6 +19,12 @@ import {
     BayCapacityViewFromJSONTyped,
     BayCapacityViewToJSON,
 } from './BayCapacityView';
+import type { TechnicianCapacityView } from './TechnicianCapacityView';
+import {
+    TechnicianCapacityViewFromJSON,
+    TechnicianCapacityViewFromJSONTyped,
+    TechnicianCapacityViewToJSON,
+} from './TechnicianCapacityView';
 
 /**
  * Bay occupancy for a single date
@@ -62,6 +68,12 @@ export interface DayCapacityView {
      * @memberof DayCapacityView
      */
     status: DayCapacityViewStatusEnum;
+    /**
+     * Every person with an ACTIVE technician-role staffing assignment at the location covering this date, including those with nothing assigned (assignedMinutes 0), ordered by mechanicPersonId (#2527). Empty unless status is OK and staffingStatus is AVAILABLE. Publishes who is on duty and who is busy, not who is competent for a given job: certification stays with the client (technician roster credentials) and with GET /v1/schedules/openings.
+     * @type {Array<TechnicianCapacityView>}
+     * @memberof DayCapacityView
+     */
+    technicians?: Array<TechnicianCapacityView>;
 }
 
 /**
@@ -102,6 +114,7 @@ export function DayCapacityViewFromJSONTyped(json: any, ignoreDiscriminator: boo
         'dayEndAt': json['dayEndAt'] == null ? undefined : (new Date(json['dayEndAt'])),
         'dayStartAt': json['dayStartAt'] == null ? undefined : (new Date(json['dayStartAt'])),
         'status': json['status'],
+        'technicians': json['technicians'] == null ? undefined : ((json['technicians'] as Array<any>).map(TechnicianCapacityViewFromJSON)),
     };
 }
 
@@ -117,6 +130,7 @@ export function DayCapacityViewToJSON(value?: DayCapacityView | null): any {
         'dayEndAt': value['dayEndAt'] == null ? undefined : ((value['dayEndAt']).toISOString()),
         'dayStartAt': value['dayStartAt'] == null ? undefined : ((value['dayStartAt']).toISOString()),
         'status': value['status'],
+        'technicians': value['technicians'] == null ? undefined : ((value['technicians'] as Array<any>).map(TechnicianCapacityViewToJSON)),
     };
 }
 
