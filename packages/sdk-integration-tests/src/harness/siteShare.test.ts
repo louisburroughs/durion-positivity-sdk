@@ -14,6 +14,21 @@ const site = (code: string, positions: number, technicians: number, busy = 0): S
 const codes = (rosters: SiteRoster[]) => rosters.map((roster) => roster.code);
 
 describe('siteCapacity', () => {
+  it('counts only positions of the kind asked for, still capped by technicians', () => {
+    const mixed: SiteRoster = {
+      ...site('M', 0, 5),
+      freePositions: [
+        { kind: 'BAY', id: 'b1', name: 'Bay 1' },
+        { kind: 'BAY', id: 'b2', name: 'Bay 2' },
+        { kind: 'BAY', id: 'b3', name: 'Bay 3' },
+        { kind: 'MOBILE_UNIT', id: 'm1', name: 'MU 1' },
+      ],
+    };
+    expect(siteCapacity(mixed)).toBe(4);
+    expect(siteCapacity(mixed, 'BAY')).toBe(3);
+    expect(siteCapacity(mixed, 'MOBILE_UNIT')).toBe(1);
+  });
+
   it('is the positions a site can crew: the smaller of positions and technicians, busy or free', () => {
     expect(siteCapacity(site('A', 10, 8))).toBe(8);
     expect(siteCapacity(site('B', 5, 3))).toBe(3);
@@ -32,6 +47,22 @@ describe('siteClaimOrder', () => {
     // A has 8 of capacity and 4 started (0.5 each); B has 2 and none started.
     const order = siteClaimOrder([site('A', 10, 8), site('B', 2, 2)], new Map([['A', 4]]));
     expect(codes(order)).toEqual(['B', 'A']);
+  });
+
+  it('weighs a mobile-only intake by mobile units, not by bays', () => {
+    const bayHeavy: SiteRoster = {
+      ...site('BAYS', 6, 6),
+      occupiedPositions: [{ kind: 'MOBILE_UNIT', id: 'bays-m1', name: 'MU 1' }],
+    };
+    const mobileHeavy: SiteRoster = {
+      ...site('MOBILE', 0, 3),
+      freePositions: [1, 2, 3].map((i) => ({ kind: 'MOBILE_UNIT' as const, id: `mob-m${i}`, name: `MU ${i}` })),
+    };
+    // One mobile job each so far: BAYS is at its whole mobile capacity (1 of 1), MOBILE at a third.
+    const started = new Map([['BAYS', 1], ['MOBILE', 1]]);
+    expect(codes(siteClaimOrder([bayHeavy, mobileHeavy], started, 'MOBILE_UNIT'))).toEqual(['MOBILE', 'BAYS']);
+    // Counting every position instead, BAYS (capacity 6) would wrongly come first.
+    expect(codes(siteClaimOrder([bayHeavy, mobileHeavy], started))).toEqual(['BAYS', 'MOBILE']);
   });
 
   it('puts a site that cannot crew anything last, whatever has started', () => {

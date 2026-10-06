@@ -262,8 +262,12 @@ export class AcceleratedDayRunner {
     }
   }
 
-  /** Jobs started today per site, by locationId, for the share {@link nextClaim} keeps (#157). */
-  private startedToday = new Map<string, number>();
+  /**
+   * Jobs started today per site, by locationId, for the share {@link nextClaim} keeps
+   * (#157): every kind under {@code ANY}, and each kind under its own name, so a
+   * kind-limited intake is measured against that kind's share.
+   */
+  private startedToday = new Map<PositionKind | 'ANY', Map<string, number>>();
 
   constructor(private readonly deps: DayRunnerDeps) {}
 
@@ -755,7 +759,11 @@ export class AcceleratedDayRunner {
         }
         active.push({ job, claim });
         started += 1;
-        this.startedToday.set(claim.locationId, (this.startedToday.get(claim.locationId) ?? 0) + 1);
+        for (const key of ['ANY', claim.position.kind] as const) {
+          const counts = this.startedToday.get(key) ?? new Map<string, number>();
+          counts.set(claim.locationId, (counts.get(claim.locationId) ?? 0) + 1);
+          this.startedToday.set(key, counts);
+        }
         const siteCode = rosters.find((roster) => roster.locationId === claim.locationId)?.code ?? claim.locationId;
         report.jobsStartedBySite[siteCode] = (report.jobsStartedBySite[siteCode] ?? 0) + 1;
       }
@@ -935,7 +943,8 @@ export class AcceleratedDayRunner {
    * same rule planFloor keeps).
    */
   private nextClaim(rosters: SiteRoster[], now: Date, kind?: PositionKind): Claim | null {
-    for (const roster of siteClaimOrder(rosters, this.startedToday)) {
+    const counts = this.startedToday.get(kind ?? 'ANY') ?? new Map<string, number>();
+    for (const roster of siteClaimOrder(rosters, counts, kind)) {
       const claim = this.deps.ledger.claim(roster.locationId, now, kind);
       if (claim) {
         return claim;

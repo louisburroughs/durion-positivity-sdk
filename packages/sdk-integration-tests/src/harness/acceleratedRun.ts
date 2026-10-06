@@ -52,7 +52,7 @@ export interface YearRunResult {
     cycleCounts: number;
     restocks: number;
     scraps: number;
-    /** Jobs started per site over the run, by site code (#157). */
+    /** Jobs started per site over the whole year, a resumed run's earlier days included (#157). */
     jobsStartedBySite: Record<string, number>;
   };
   /** Virtual dates the run touched, first and last. */
@@ -422,6 +422,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       cycleCount: report.cycleCount,
       restock: report.restock,
       scrap: report.scrap,
+      jobsStartedBySite: report.jobsStartedBySite,
     });
     for (const workorderId of report.workorderIds) {
       journal.recordWorkorder(workorderId, report.workorderKinds[workorderId]);
@@ -484,13 +485,8 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       cycleCounts: reports.filter((report) => report.cycleCount).length,
       restocks: reports.filter((report) => report.restock).length,
       scraps: reports.filter((report) => report.scrap).length,
-      jobsStartedBySite: reports.reduce<Record<string, number>>((totals, report) => {
-        // Defaulted: a report rebuilt from a journal written before #157 has none.
-        for (const [code, count] of Object.entries(report.jobsStartedBySite ?? {})) {
-          totals[code] = (totals[code] ?? 0) + count;
-        }
-        return totals;
-      }, {}),
+      // From the journal, not `reports`: a resumed run's earlier days are only there.
+      jobsStartedBySite: journal.jobsStartedBySite(),
     },
     virtualSpan: {
       from: reports[0]?.virtualDate ?? lastVirtualDate,

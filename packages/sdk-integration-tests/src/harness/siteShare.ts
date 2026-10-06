@@ -16,28 +16,37 @@
  *
  * Pure, so the arithmetic is unit-tested without a backend.
  */
-import type { SiteRoster } from '../runs/shopFloorPlan';
+import type { PositionKind, SiteRoster } from '../runs/shopFloorPlan';
 
-/** How much work a site can take at once: positions it can also crew. */
-export const siteCapacity = (roster: SiteRoster): number =>
-  Math.min(
-    roster.freePositions.length + roster.occupiedPositions.length,
-    roster.idleTechnicianIds.length + roster.busyTechnicianIds.length,
-  );
+/**
+ * How much work of {@code kind} a site can take at once: positions of that kind it can
+ * also crew. Without a kind, every position counts. A mobile-only intake (a closed day,
+ * after the bays close) is weighed by mobile units alone, so a site with many bays and
+ * one mobile unit does not take most of the mobile work.
+ */
+export const siteCapacity = (roster: SiteRoster, kind?: PositionKind): number => {
+  const positions = [...roster.freePositions, ...roster.occupiedPositions].filter(
+    (position) => kind === undefined || position.kind === kind,
+  ).length;
+  return Math.min(positions, roster.idleTechnicianIds.length + roster.busyTechnicianIds.length);
+};
 
 /**
  * The rosters in the order a claim should be tried: furthest below its share first.
  *
  * {@code startedToday} counts jobs started per site (by {@code locationId}) so far
- * today. A site with no capacity is placed last; it can take nothing anyway, and
- * dividing by zero would put it first.
+ * today, of {@code kind} when one is given — the caller keeps the two counts apart so a
+ * share of one kind of work is measured against that kind's capacity. A site with no
+ * capacity is placed last; it can take nothing anyway, and dividing by zero would put
+ * it first.
  */
 export const siteClaimOrder = (
   rosters: readonly SiteRoster[],
   startedToday: ReadonlyMap<string, number>,
+  kind?: PositionKind,
 ): SiteRoster[] =>
   rosters
-    .map((roster, index) => ({ roster, index, capacity: siteCapacity(roster) }))
+    .map((roster, index) => ({ roster, index, capacity: siteCapacity(roster, kind) }))
     .sort((a, b) => {
       if (a.capacity === 0 || b.capacity === 0) {
         return a.capacity === 0 && b.capacity === 0 ? a.index - b.index : a.capacity === 0 ? 1 : -1;
