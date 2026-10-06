@@ -16,16 +16,20 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  CustomerOpenInvoicesPage,
   PagePaymentApplicationListRow,
   PaymentApplicationRequest,
   PaymentApplicationResponse,
   PaymentApplicationReversalRequest,
   RemainderCreditRequest,
   RemainderCreditResponse,
+  UnappliedPaymentsPage,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    CustomerOpenInvoicesPageFromJSON,
+    CustomerOpenInvoicesPageToJSON,
     PagePaymentApplicationListRowFromJSON,
     PagePaymentApplicationListRowToJSON,
     PaymentApplicationRequestFromJSON,
@@ -38,6 +42,8 @@ import {
     RemainderCreditRequestToJSON,
     RemainderCreditResponseFromJSON,
     RemainderCreditResponseToJSON,
+    UnappliedPaymentsPageFromJSON,
+    UnappliedPaymentsPageToJSON,
 } from '../models/index';
 
 export interface ApplyPaymentRequest {
@@ -50,6 +56,12 @@ export interface CreditPaymentRemainderRequest {
     remainderCreditRequest: RemainderCreditRequest;
 }
 
+export interface ListCustomerOpenInvoicesRequest {
+    customerId: string;
+    page?: number;
+    size?: number;
+}
+
 export interface ListPaymentApplicationsRequest {
     appliedFrom: Date;
     appliedTo: Date;
@@ -57,6 +69,13 @@ export interface ListPaymentApplicationsRequest {
     page?: number;
     size?: number;
     sort?: Array<string>;
+}
+
+export interface ListUnappliedPaymentsRequest {
+    status?: string;
+    customerId?: string;
+    page?: number;
+    size?: number;
 }
 
 export interface ReversePaymentRequest {
@@ -186,6 +205,57 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
     }
 
     /**
+     * Lists a customer\'s open invoices oldest first, each with the balance still due after payment applications, customer credits, posted credit memos and deposits, and whether it is overdue. Use this tool to choose the invoices a payment of this customer pays; do not use pos-invoice search for this, because it does not net credits, credit memos or deposits. Preconditions: the caller needs accounting:payment:apply authority; an invoice is open when it is FINALIZED or POSTED and its balance due is above zero. Required inputs: customerId (UUID) as a path parameter; page (0 or more) and size (1 to 200, default 100) are optional query parameters. Emits an ACCOUNTING_CUSTOMER_OPEN_INVOICES_VIEW event and changes no state; a customer with nothing open, or unknown to accounting, gets 200 with no rows. Returns 400 VALIDATION_ERROR when customerId is malformed or size is outside 1 to 200, and 403 when the caller lacks the authority. 
+     * List a Customer\'s Open Invoices
+     */
+    async listCustomerOpenInvoicesRaw(requestParameters: ListCustomerOpenInvoicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CustomerOpenInvoicesPage>> {
+        if (requestParameters['customerId'] == null) {
+            throw new runtime.RequiredError(
+                'customerId',
+                'Required parameter "customerId" was null or undefined when calling listCustomerOpenInvoices().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:payment:apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/customers/{customerId}/open-invoices`.replace(`{${"customerId"}}`, encodeURIComponent(String(requestParameters['customerId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CustomerOpenInvoicesPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists a customer\'s open invoices oldest first, each with the balance still due after payment applications, customer credits, posted credit memos and deposits, and whether it is overdue. Use this tool to choose the invoices a payment of this customer pays; do not use pos-invoice search for this, because it does not net credits, credit memos or deposits. Preconditions: the caller needs accounting:payment:apply authority; an invoice is open when it is FINALIZED or POSTED and its balance due is above zero. Required inputs: customerId (UUID) as a path parameter; page (0 or more) and size (1 to 200, default 100) are optional query parameters. Emits an ACCOUNTING_CUSTOMER_OPEN_INVOICES_VIEW event and changes no state; a customer with nothing open, or unknown to accounting, gets 200 with no rows. Returns 400 VALIDATION_ERROR when customerId is malformed or size is outside 1 to 200, and 403 when the caller lacks the authority. 
+     * List a Customer\'s Open Invoices
+     */
+    async listCustomerOpenInvoices(requestParameters: ListCustomerOpenInvoicesRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CustomerOpenInvoicesPage> {
+        const response = await this.listCustomerOpenInvoicesRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * Lists pos-accounting cash applications of customer payments to invoices whose applied date falls in [appliedFrom, appliedTo], ordered by appliedAt ascending. Use this tool to review A/R cash application activity in a period; do not use getPaymentLagCohorts or getCollectionsAnalytics for this, which are aggregate reports rather than a row-level application list, and note this endpoint is SCOPED TO pos-accounting cash applications only — it does not include pos-invoice deposit-credit draw-downs (DepositCreditApplication) or refunds (RefundRecord); see issue #1605 for that open cross-module question. Preconditions: none beyond the caller holding accounting:analytics:view. Required inputs: appliedFrom and appliedTo (ISO dates, appliedTo on or after appliedFrom); the window cannot exceed 366 days, to bound the scan. includeReversed is optional and defaults to false, in which case applications later reversed via PaymentApplicationReversal are EXCLUDED from the list entirely (not merely flagged); pass includeReversed=true to include them, with each row\'s reversed field then reporting whether that application was reversed. That exclusion default is a DELIBERATELY DIFFERENT basis from getCollectionsAnalytics, which nets reversals on a movement basis (reducing the window a reversal was recorded in rather than the window its application landed in) because it measures movement in a window while this endpoint answers the point-in-time question of which applications are currently live; do not unify the two. page/size/sort are standard, though the appliedAt-ascending sort is server-controlled and any caller-supplied sort is ignored. Emits an ACCOUNTING_PAYMENT_APPLICATION_LIST_VIEW audit event; no state changes. Returns 400 when appliedTo is before appliedFrom or the window exceeds 366 days. 
      * List Payment Applications By Applied Date
      */
@@ -256,6 +326,58 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
      */
     async listPaymentApplications(requestParameters: ListPaymentApplicationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PagePaymentApplicationListRow> {
         const response = await this.listPaymentApplicationsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists the customer payments still waiting to be matched, oldest cleared first, each with the open invoices it most likely pays, the reasons, and what would be left over as credit. Use this tool to choose a payment to match; then apply it with applyPaymentToInvoices, and do not treat a suggestion as applied, because the list is advisory and the apply command validates again. Preconditions: the caller needs accounting:payment:apply authority; only payments with an unapplied amount (status AVAILABLE) are listed. Required inputs: none; status (only AVAILABLE), customerId (UUID), page (0 or more) and size (1 to 100, default 25) are optional query parameters. Emits an ACCOUNTING_RECEIVABLE_PAYMENT_LIST_VIEW event and changes no state; the summary totals cover every payment matching the filter, not only the page. Returns 400 VALIDATION_ERROR when status is not AVAILABLE, customerId is malformed or size is outside 1 to 100, and 403 when the caller lacks the authority. 
+     * List Unapplied Customer Payments
+     */
+    async listUnappliedPaymentsRaw(requestParameters: ListUnappliedPaymentsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<UnappliedPaymentsPage>> {
+        const queryParameters: any = {};
+
+        if (requestParameters['status'] != null) {
+            queryParameters['status'] = requestParameters['status'];
+        }
+
+        if (requestParameters['customerId'] != null) {
+            queryParameters['customerId'] = requestParameters['customerId'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:payment:apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/receivable-payments`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => UnappliedPaymentsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists the customer payments still waiting to be matched, oldest cleared first, each with the open invoices it most likely pays, the reasons, and what would be left over as credit. Use this tool to choose a payment to match; then apply it with applyPaymentToInvoices, and do not treat a suggestion as applied, because the list is advisory and the apply command validates again. Preconditions: the caller needs accounting:payment:apply authority; only payments with an unapplied amount (status AVAILABLE) are listed. Required inputs: none; status (only AVAILABLE), customerId (UUID), page (0 or more) and size (1 to 100, default 25) are optional query parameters. Emits an ACCOUNTING_RECEIVABLE_PAYMENT_LIST_VIEW event and changes no state; the summary totals cover every payment matching the filter, not only the page. Returns 400 VALIDATION_ERROR when status is not AVAILABLE, customerId is malformed or size is outside 1 to 100, and 403 when the caller lacks the authority. 
+     * List Unapplied Customer Payments
+     */
+    async listUnappliedPayments(requestParameters: ListUnappliedPaymentsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<UnappliedPaymentsPage> {
+        const response = await this.listUnappliedPaymentsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
