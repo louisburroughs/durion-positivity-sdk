@@ -199,6 +199,8 @@ export * from './ReconciliationTransitionRequest';
 export * from './ReconciliationUnmatchRequest';
 export * from './RefundRequest';
 export * from './RegenerateInvoiceFromWorkorderRequest';
+export * from './RemainderCreditRequest';
+export * from './RemainderCreditResponse';
 export * from './ReportExportRequest';
 export * from './ReportExportResponse';
 export * from './ReprocessEventRequest';

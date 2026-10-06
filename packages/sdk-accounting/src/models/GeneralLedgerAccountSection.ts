@@ -45,6 +45,12 @@ export interface GeneralLedgerAccountSection {
      */
     accountNumber: string;
     /**
+     * Type of the GL account
+     * @type {string}
+     * @memberof GeneralLedgerAccountSection
+     */
+    accountType?: GeneralLedgerAccountSectionAccountTypeEnum;
+    /**
      * Signed closing balance (debit positive): opening balance plus in-period net activity
      * @type {number}
      * @memberof GeneralLedgerAccountSection
@@ -56,6 +62,24 @@ export interface GeneralLedgerAccountSection {
      * @memberof GeneralLedgerAccountSection
      */
     lines: Array<GeneralLedgerLine>;
+    /**
+     * Closing balance on the account's normal side (positive when the account holds its usual balance)
+     * @type {number}
+     * @memberof GeneralLedgerAccountSection
+     */
+    normalClosingBalance: number;
+    /**
+     * Opening balance on the account's normal side (positive when the account holds its usual balance)
+     * @type {number}
+     * @memberof GeneralLedgerAccountSection
+     */
+    normalOpeningBalance: number;
+    /**
+     * Normal side of the account: DEBIT for assets and expenses, CREDIT for liabilities, equity and revenue
+     * @type {string}
+     * @memberof GeneralLedgerAccountSection
+     */
+    normalSide: GeneralLedgerAccountSectionNormalSideEnum;
     /**
      * Signed opening balance (debit positive) from POSTED activity before the start date
      * @type {number}
@@ -77,6 +101,27 @@ export interface GeneralLedgerAccountSection {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum GeneralLedgerAccountSectionAccountTypeEnum {
+    Asset = 'ASSET',
+    Liability = 'LIABILITY',
+    Equity = 'EQUITY',
+    Revenue = 'REVENUE',
+    Expense = 'EXPENSE'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum GeneralLedgerAccountSectionNormalSideEnum {
+    Debit = 'DEBIT',
+    Credit = 'CREDIT'
+}
+
+
+/**
  * Check if a given object implements the GeneralLedgerAccountSection interface.
  */
 export function instanceOfGeneralLedgerAccountSection(value: object): boolean {
@@ -85,6 +130,9 @@ export function instanceOfGeneralLedgerAccountSection(value: object): boolean {
     if (!('accountNumber' in value)) return false;
     if (!('closingBalance' in value)) return false;
     if (!('lines' in value)) return false;
+    if (!('normalClosingBalance' in value)) return false;
+    if (!('normalOpeningBalance' in value)) return false;
+    if (!('normalSide' in value)) return false;
     if (!('openingBalance' in value)) return false;
     if (!('totalCredit' in value)) return false;
     if (!('totalDebit' in value)) return false;
@@ -104,8 +152,12 @@ export function GeneralLedgerAccountSectionFromJSONTyped(json: any, ignoreDiscri
         'accountId': json['accountId'],
         'accountName': json['accountName'],
         'accountNumber': json['accountNumber'],
+        'accountType': json['accountType'] == null ? undefined : json['accountType'],
         'closingBalance': json['closingBalance'],
         'lines': ((json['lines'] as Array<any>).map(GeneralLedgerLineFromJSON)),
+        'normalClosingBalance': json['normalClosingBalance'],
+        'normalOpeningBalance': json['normalOpeningBalance'],
+        'normalSide': json['normalSide'],
         'openingBalance': json['openingBalance'],
         'totalCredit': json['totalCredit'],
         'totalDebit': json['totalDebit'],
@@ -121,8 +173,12 @@ export function GeneralLedgerAccountSectionToJSON(value?: GeneralLedgerAccountSe
         'accountId': value['accountId'],
         'accountName': value['accountName'],
         'accountNumber': value['accountNumber'],
+        'accountType': value['accountType'],
         'closingBalance': value['closingBalance'],
         'lines': ((value['lines'] as Array<any>).map(GeneralLedgerLineToJSON)),
+        'normalClosingBalance': value['normalClosingBalance'],
+        'normalOpeningBalance': value['normalOpeningBalance'],
+        'normalSide': value['normalSide'],
         'openingBalance': value['openingBalance'],
         'totalCredit': value['totalCredit'],
         'totalDebit': value['totalDebit'],

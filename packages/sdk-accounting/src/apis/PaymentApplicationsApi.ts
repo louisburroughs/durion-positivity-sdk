@@ -20,6 +20,8 @@ import type {
   PaymentApplicationRequest,
   PaymentApplicationResponse,
   PaymentApplicationReversalRequest,
+  RemainderCreditRequest,
+  RemainderCreditResponse,
 } from '../models/index';
 import {
     ApiErrorFromJSON,
@@ -32,11 +34,20 @@ import {
     PaymentApplicationResponseToJSON,
     PaymentApplicationReversalRequestFromJSON,
     PaymentApplicationReversalRequestToJSON,
+    RemainderCreditRequestFromJSON,
+    RemainderCreditRequestToJSON,
+    RemainderCreditResponseFromJSON,
+    RemainderCreditResponseToJSON,
 } from '../models/index';
 
 export interface ApplyPaymentRequest {
     paymentId: string;
     paymentApplicationRequest: PaymentApplicationRequest;
+}
+
+export interface CreditPaymentRemainderRequest {
+    paymentId: string;
+    remainderCreditRequest: RemainderCreditRequest;
 }
 
 export interface ListPaymentApplicationsRequest {
@@ -118,6 +129,59 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
      */
     async applyPayment(requestParameters: ApplyPaymentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PaymentApplicationResponse> {
         const response = await this.applyPaymentRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Converts the whole unapplied remainder of a receivable payment into a customer credit in one transaction: the credit is created, the Dr Undeposited Funds / Cr Customer Credit Liability issuance is enqueued, and the payment becomes FULLY_APPLIED. Use this tool after applyPayment when the customer keeps the leftover on account, or when the credit will be refunded next with refundCustomerCredit; do not use applyCustomerCredit, which draws down a credit that already exists. Preconditions: the payment must be AVAILABLE, in the ledger currency, and still carry exactly expectedAmount unapplied; a replay with the same requestId returns the credit it issued and writes nothing. Required inputs: paymentId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key) and expectedAmount (the unapplied amount the caller read, min 0.01). Emits an ACCOUNTING_PAYMENT_REMAINDER_CREDIT event; the credit\'s creator and the issuance entry\'s actor come from the security context. Returns 201 with the credit, 404 PAYMENT_NOT_FOUND when the payment does not exist, 409 PAYMENT_NOT_AVAILABLE when it is already fully applied, 409 IDEMPOTENCY_CONFLICT when the requestId was used on another payment, 409 OPTIMISTIC_LOCK after a second concurrent update, 422 PAYMENT_REMAINDER_CHANGED when expectedAmount no longer matches (re-read the payment), and 422 CURRENCY_NOT_SUPPORTED for a payment in another currency. 
+     * Keep Payment Remainder As Customer Credit
+     */
+    async creditPaymentRemainderRaw(requestParameters: CreditPaymentRemainderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<RemainderCreditResponse>> {
+        if (requestParameters['paymentId'] == null) {
+            throw new runtime.RequiredError(
+                'paymentId',
+                'Required parameter "paymentId" was null or undefined when calling creditPaymentRemainder().'
+            );
+        }
+
+        if (requestParameters['remainderCreditRequest'] == null) {
+            throw new runtime.RequiredError(
+                'remainderCreditRequest',
+                'Required parameter "remainderCreditRequest" was null or undefined when calling creditPaymentRemainder().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:payment:apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/payments/{paymentId}/remainder-credit`.replace(`{${"paymentId"}}`, encodeURIComponent(String(requestParameters['paymentId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: RemainderCreditRequestToJSON(requestParameters['remainderCreditRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => RemainderCreditResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Converts the whole unapplied remainder of a receivable payment into a customer credit in one transaction: the credit is created, the Dr Undeposited Funds / Cr Customer Credit Liability issuance is enqueued, and the payment becomes FULLY_APPLIED. Use this tool after applyPayment when the customer keeps the leftover on account, or when the credit will be refunded next with refundCustomerCredit; do not use applyCustomerCredit, which draws down a credit that already exists. Preconditions: the payment must be AVAILABLE, in the ledger currency, and still carry exactly expectedAmount unapplied; a replay with the same requestId returns the credit it issued and writes nothing. Required inputs: paymentId (UUID) as a path parameter, requestId (max 100 chars, the idempotency key) and expectedAmount (the unapplied amount the caller read, min 0.01). Emits an ACCOUNTING_PAYMENT_REMAINDER_CREDIT event; the credit\'s creator and the issuance entry\'s actor come from the security context. Returns 201 with the credit, 404 PAYMENT_NOT_FOUND when the payment does not exist, 409 PAYMENT_NOT_AVAILABLE when it is already fully applied, 409 IDEMPOTENCY_CONFLICT when the requestId was used on another payment, 409 OPTIMISTIC_LOCK after a second concurrent update, 422 PAYMENT_REMAINDER_CHANGED when expectedAmount no longer matches (re-read the payment), and 422 CURRENCY_NOT_SUPPORTED for a payment in another currency. 
+     * Keep Payment Remainder As Customer Credit
+     */
+    async creditPaymentRemainder(requestParameters: CreditPaymentRemainderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RemainderCreditResponse> {
+        const response = await this.creditPaymentRemainderRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

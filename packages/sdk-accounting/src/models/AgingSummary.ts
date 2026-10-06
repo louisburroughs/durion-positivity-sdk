@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface AgingSummary {
     /**
-     * Total outstanding 0-30 days past due (includes not-yet-due items)
+     * Total outstanding 1-30 days past due
      * @type {number}
      * @memberof AgingSummary
      */
-    current: number;
+    days1To30: number;
     /**
      * Total outstanding 31-60 days past due
      * @type {number}
@@ -44,7 +44,19 @@ export interface AgingSummary {
      */
     days90Plus: number;
     /**
-     * Grand total outstanding across all buckets
+     * Total outstanding not yet due: due today or later (due today is not overdue)
+     * @type {number}
+     * @memberof AgingSummary
+     */
+    notYetDue: number;
+    /**
+     * Total overdue: the sum of days1To30, days31To60, days61To90 and days90Plus
+     * @type {number}
+     * @memberof AgingSummary
+     */
+    overdue: number;
+    /**
+     * Grand total outstanding: notYetDue + overdue
      * @type {number}
      * @memberof AgingSummary
      */
@@ -55,10 +67,12 @@ export interface AgingSummary {
  * Check if a given object implements the AgingSummary interface.
  */
 export function instanceOfAgingSummary(value: object): boolean {
-    if (!('current' in value)) return false;
+    if (!('days1To30' in value)) return false;
     if (!('days31To60' in value)) return false;
     if (!('days61To90' in value)) return false;
     if (!('days90Plus' in value)) return false;
+    if (!('notYetDue' in value)) return false;
+    if (!('overdue' in value)) return false;
     if (!('totalOutstanding' in value)) return false;
     return true;
 }
@@ -73,10 +87,12 @@ export function AgingSummaryFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'current': json['current'],
+        'days1To30': json['days1To30'],
         'days31To60': json['days31To60'],
         'days61To90': json['days61To90'],
         'days90Plus': json['days90Plus'],
+        'notYetDue': json['notYetDue'],
+        'overdue': json['overdue'],
         'totalOutstanding': json['totalOutstanding'],
     };
 }
@@ -87,10 +103,12 @@ export function AgingSummaryToJSON(value?: AgingSummary | null): any {
     }
     return {
         
-        'current': value['current'],
+        'days1To30': value['days1To30'],
         'days31To60': value['days31To60'],
         'days61To90': value['days61To90'],
         'days90Plus': value['days90Plus'],
+        'notYetDue': value['notYetDue'],
+        'overdue': value['overdue'],
         'totalOutstanding': value['totalOutstanding'],
     };
 }

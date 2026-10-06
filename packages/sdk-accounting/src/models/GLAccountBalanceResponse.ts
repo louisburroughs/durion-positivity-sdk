@@ -32,13 +32,19 @@ export interface GLAccountBalanceResponse {
      */
     accountName?: string;
     /**
+     * Type of the GL account
+     * @type {string}
+     * @memberof GLAccountBalanceResponse
+     */
+    accountType: GLAccountBalanceResponseAccountTypeEnum;
+    /**
      * Point in time the balance is computed as of (ISO 8601)
      * @type {Date}
      * @memberof GLAccountBalanceResponse
      */
     asOfDate: Date;
     /**
-     * Balance of the account
+     * Balance of the account, debits minus credits
      * @type {number}
      * @memberof GLAccountBalanceResponse
      */
@@ -49,15 +55,51 @@ export interface GLAccountBalanceResponse {
      * @memberof GLAccountBalanceResponse
      */
     glAccountId: string;
+    /**
+     * Balance on the account's normal side (positive when the account holds its usual balance)
+     * @type {number}
+     * @memberof GLAccountBalanceResponse
+     */
+    normalBalance: number;
+    /**
+     * Normal side of the account: DEBIT for assets and expenses, CREDIT for liabilities, equity and revenue
+     * @type {string}
+     * @memberof GLAccountBalanceResponse
+     */
+    normalSide: GLAccountBalanceResponseNormalSideEnum;
 }
+
+/**
+* @export
+* @enum {string}
+*/
+export enum GLAccountBalanceResponseAccountTypeEnum {
+    Asset = 'ASSET',
+    Liability = 'LIABILITY',
+    Equity = 'EQUITY',
+    Revenue = 'REVENUE',
+    Expense = 'EXPENSE'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum GLAccountBalanceResponseNormalSideEnum {
+    Debit = 'DEBIT',
+    Credit = 'CREDIT'
+}
+
 
 /**
  * Check if a given object implements the GLAccountBalanceResponse interface.
  */
 export function instanceOfGLAccountBalanceResponse(value: object): boolean {
+    if (!('accountType' in value)) return false;
     if (!('asOfDate' in value)) return false;
     if (!('balance' in value)) return false;
     if (!('glAccountId' in value)) return false;
+    if (!('normalBalance' in value)) return false;
+    if (!('normalSide' in value)) return false;
     return true;
 }
 
@@ -73,9 +115,12 @@ export function GLAccountBalanceResponseFromJSONTyped(json: any, ignoreDiscrimin
         
         'accountCode': json['accountCode'] == null ? undefined : json['accountCode'],
         'accountName': json['accountName'] == null ? undefined : json['accountName'],
+        'accountType': json['accountType'],
         'asOfDate': (new Date(json['asOfDate'])),
         'balance': json['balance'],
         'glAccountId': json['glAccountId'],
+        'normalBalance': json['normalBalance'],
+        'normalSide': json['normalSide'],
     };
 }
 
@@ -87,9 +132,12 @@ export function GLAccountBalanceResponseToJSON(value?: GLAccountBalanceResponse 
         
         'accountCode': value['accountCode'],
         'accountName': value['accountName'],
+        'accountType': value['accountType'],
         'asOfDate': ((value['asOfDate']).toISOString()),
         'balance': value['balance'],
         'glAccountId': value['glAccountId'],
+        'normalBalance': value['normalBalance'],
+        'normalSide': value['normalSide'],
     };
 }
 

@@ -14,17 +14,11 @@
 
 import { mapValues } from '../runtime';
 /**
- * Per-customer aged receivables row with bucketed open invoice balances. Age is measured from the invoice due date, falling back to the invoice date when no due date is recorded; not-yet-due invoices are reported in the current bucket.
+ * Per-customer aged receivables row with bucketed open invoice balances. Age is measured from the invoice due date, falling back to the invoice date when no due date is recorded; invoices due today or later are notYetDue, the four late buckets are overdue money.
  * @export
  * @interface AgedReceivablesRow
  */
 export interface AgedReceivablesRow {
-    /**
-     * Outstanding 0-30 days past due (includes not-yet-due)
-     * @type {number}
-     * @memberof AgedReceivablesRow
-     */
-    current: number;
     /**
      * Customer (party) UUID
      * @type {string}
@@ -32,11 +26,23 @@ export interface AgedReceivablesRow {
      */
     customerId: string;
     /**
-     * Customer display name. Always null on this report — no directory lookup is performed; resolve the name from the customer directory using customerId.
+     * Customer display name from the customer replica; null when the party is not yet known
      * @type {string}
      * @memberof AgedReceivablesRow
      */
     customerName?: string;
+    /**
+     * Customer number from the customer replica; null when the party is not yet known
+     * @type {string}
+     * @memberof AgedReceivablesRow
+     */
+    customerReference?: string;
+    /**
+     * Outstanding 1-30 days past due
+     * @type {number}
+     * @memberof AgedReceivablesRow
+     */
+    days1To30: number;
     /**
      * Outstanding 31-60 days past due
      * @type {number}
@@ -56,7 +62,19 @@ export interface AgedReceivablesRow {
      */
     days90Plus: number;
     /**
-     * Total outstanding for the customer across all buckets
+     * Outstanding not yet due: due today or later (due today is not overdue)
+     * @type {number}
+     * @memberof AgedReceivablesRow
+     */
+    notYetDue: number;
+    /**
+     * Overdue: the sum of days1To30, days31To60, days61To90 and days90Plus
+     * @type {number}
+     * @memberof AgedReceivablesRow
+     */
+    overdue: number;
+    /**
+     * Total outstanding for the customer: notYetDue + overdue
      * @type {number}
      * @memberof AgedReceivablesRow
      */
@@ -67,11 +85,13 @@ export interface AgedReceivablesRow {
  * Check if a given object implements the AgedReceivablesRow interface.
  */
 export function instanceOfAgedReceivablesRow(value: object): boolean {
-    if (!('current' in value)) return false;
     if (!('customerId' in value)) return false;
+    if (!('days1To30' in value)) return false;
     if (!('days31To60' in value)) return false;
     if (!('days61To90' in value)) return false;
     if (!('days90Plus' in value)) return false;
+    if (!('notYetDue' in value)) return false;
+    if (!('overdue' in value)) return false;
     if (!('totalOutstanding' in value)) return false;
     return true;
 }
@@ -86,12 +106,15 @@ export function AgedReceivablesRowFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
-        'current': json['current'],
         'customerId': json['customerId'],
         'customerName': json['customerName'] == null ? undefined : json['customerName'],
+        'customerReference': json['customerReference'] == null ? undefined : json['customerReference'],
+        'days1To30': json['days1To30'],
         'days31To60': json['days31To60'],
         'days61To90': json['days61To90'],
         'days90Plus': json['days90Plus'],
+        'notYetDue': json['notYetDue'],
+        'overdue': json['overdue'],
         'totalOutstanding': json['totalOutstanding'],
     };
 }
@@ -102,12 +125,15 @@ export function AgedReceivablesRowToJSON(value?: AgedReceivablesRow | null): any
     }
     return {
         
-        'current': value['current'],
         'customerId': value['customerId'],
         'customerName': value['customerName'],
+        'customerReference': value['customerReference'],
+        'days1To30': value['days1To30'],
         'days31To60': value['days31To60'],
         'days61To90': value['days61To90'],
         'days90Plus': value['days90Plus'],
+        'notYetDue': value['notYetDue'],
+        'overdue': value['overdue'],
         'totalOutstanding': value['totalOutstanding'],
     };
 }
