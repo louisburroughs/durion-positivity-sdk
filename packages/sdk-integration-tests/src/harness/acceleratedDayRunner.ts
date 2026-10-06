@@ -97,20 +97,40 @@ export class PartialProgressError extends Error {
   }
 }
 
+/**
+ * An appointment whose slot the clock has reached, bridged to an estimate and waiting
+ * to be worked at its own site (#148).
+ */
+export interface Arrival {
+  appointmentId: string;
+  /** The site it was booked at; the job is claimed here and nowhere else. */
+  locationId: string;
+  /** The DRAFT estimate the bridge created, linked to the appointment. */
+  estimateId: string;
+  customer: { partyId: string; fullName: string };
+  vehicleId: string;
+}
+
 export interface AppointmentPort {
   /**
-   * Books appointments for future open windows; returns how many were booked.
+   * Books appointments on a bay for future open windows across the sites given,
+   * weighted by each site's bay capacity (#148); returns how many were booked.
+   * {@code onBooked} is told the site of each booking as it lands.
    *
    * Throws {@link PartialProgressError} when some were booked before the refusal,
    * so the count is not lost with the failure.
    */
-  book(at: Date, count: number): Promise<number>;
+  book(at: Date, rosters: readonly SiteRoster[], onBooked?: (locationId: string) => void): Promise<number>;
   /**
    * Converts every appointment whose start the clock has now reached into an
    * estimate; returns how many were converted. Throws
    * {@link PartialProgressError} when some were converted before the refusal.
    */
   convertDue(at: Date): Promise<number>;
+  /** Converted appointments not yet worked, oldest first (#148). */
+  arrivals(): readonly Arrival[];
+  /** Takes an arrival off the queue: a job now works it. */
+  startArrival(appointmentId: string): void;
 }
 
 export interface DiscoveryPort {
@@ -129,8 +149,12 @@ export interface DayRunnerDeps {
   now: () => Promise<Date>;
   /** Blocks until the virtual clock reaches an instant. */
   waitUntil: (target: Date, description?: string) => Promise<void>;
-  /** Builds a job against a claim; null when the run should not start another. */
-  createJob: (claim: Claim, index: number) => RunnableJob | null;
+  /**
+   * Builds a job against a claim; null when the run should not start another. An
+   * {@code arrival} is an appointment to work (#148): the job starts from its estimate
+   * instead of a new customer.
+   */
+  createJob: (claim: Claim, index: number, arrival?: Arrival) => RunnableJob | null;
   concurrency: number;
   /** Customers to attempt on an open day, chosen per day by the caller. */
   jobsToday: (at: Date) => number;
@@ -180,6 +204,10 @@ export interface DayReport {
    * they were started, and counted, on the day they began.
    */
   jobsStartedBySite: Record<string, number>;
+  /** Appointments booked today per site, by site code (#148). */
+  appointmentsBookedBySite: Record<string, number>;
+  /** Jobs started today from an appointment, per site, by site code (#148). */
+  appointmentsWorkedBySite: Record<string, number>;
 }
 
 interface ActiveJob {
@@ -211,6 +239,8 @@ const EMPTY_REPORT = (dayNumber: number, virtualDate: string): DayReport => ({
   invoiceIds: [],
   cycleCountAdjustmentIds: [],
   jobsStartedBySite: {},
+  appointmentsBookedBySite: {},
+  appointmentsWorkedBySite: {},
 });
 
 export class AcceleratedDayRunner {
@@ -398,7 +428,10 @@ export class AcceleratedDayRunner {
       this.deps.appointments.convertDue(schedule.observedAt),
     );
     report.appointmentsBooked = await this.guard(report, 'booking appointments', () =>
-      this.deps.appointments.book(schedule.observedAt, rosters.length),
+      this.deps.appointments.book(schedule.observedAt, rosters, (locationId) => {
+        const code = rosters.find((roster) => roster.locationId === locationId)?.code ?? locationId;
+        report.appointmentsBookedBySite[code] = (report.appointmentsBookedBySite[code] ?? 0) + 1;
+      }),
     );
 
     // The shift and the appointment phases are gateway calls, and at a thousandfold scale
@@ -727,7 +760,10 @@ export class AcceleratedDayRunner {
       // against the day's target and carried to tomorrow untouched.
       const canTick = !this.tickWouldOvershoot(now, until, active.length === 0);
       const kind = canTick ? this.claimableKind(now, options.kindLimit) : null;
-      while (kind !== null && active.length < this.deps.concurrency && started < target) {
+      // Due appointments are promised work, so they start first and are not held to the
+      // day's walk-in target; they still count toward it, so the walk-ins that follow
+      // only top up what the appointments left (#148).
+      while (kind !== null && active.length < this.deps.concurrency) {
         if (rosters === undefined) {
           // Lazily, and only once something could actually be claimed — a closed day
           // with no mobile unit free should not spend a board read to find out.
@@ -748,14 +784,23 @@ export class AcceleratedDayRunner {
           }
           break;
         }
-        const claim = this.nextClaim(rosters, now, kind === 'ANY' ? undefined : kind);
+        const due = kind === 'ANY' || kind === 'BAY' ? this.nextArrivalClaim(rosters, now) : null;
+        if (!due && started >= target) {
+          break;
+        }
+        const claim = due?.claim ?? this.nextClaim(rosters, now, kind === 'ANY' ? undefined : kind);
         if (!claim) {
           break;
         }
-        const job = this.deps.createJob(claim, started + 1);
+        const job = this.deps.createJob(claim, started + 1, due?.arrival);
         if (!job) {
           this.deps.ledger.release(claim, now);
           break;
+        }
+        if (due) {
+          this.deps.appointments.startArrival(due.arrival.appointmentId);
+          const code = rosters.find((roster) => roster.locationId === claim.locationId)?.code ?? claim.locationId;
+          report.appointmentsWorkedBySite[code] = (report.appointmentsWorkedBySite[code] ?? 0) + 1;
         }
         active.push({ job, claim });
         started += 1;
@@ -930,6 +975,28 @@ export class AcceleratedDayRunner {
       report.failures.push(job.failure ?? `${job.label} failed without a reason`);
     }
     this.deps.ledger.release(entry.claim, at);
+  }
+
+  /**
+   * A bay at the site of the oldest due appointment that can have one now (#148). An
+   * appointment is worked where it was booked, so it is never offered to another site;
+   * one whose site has no free bay and technician waits for the next intake. Only sites
+   * in today's discovery are tried: one left out (a failed read, a board with a data
+   * quality warning) still has yesterday's state in the ledger, and claiming against
+   * that is how a double booking happens.
+   */
+  private nextArrivalClaim(rosters: readonly SiteRoster[], now: Date): { claim: Claim; arrival: Arrival } | null {
+    const today = new Set(rosters.map((roster) => roster.locationId));
+    for (const arrival of this.deps.appointments.arrivals()) {
+      if (!today.has(arrival.locationId)) {
+        continue;
+      }
+      const claim = this.deps.ledger.claim(arrival.locationId, now, 'BAY');
+      if (claim) {
+        return { claim, arrival };
+      }
+    }
+    return null;
   }
 
   /**

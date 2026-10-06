@@ -3,6 +3,7 @@ import type { JobOutcome } from './acceleratedJob';
 import {
   AcceleratedDayRunner,
   PartialProgressError,
+  type Arrival,
   type DayRunnerDeps,
   type RunnableJob,
 } from './acceleratedDayRunner';
@@ -140,6 +141,7 @@ const fakeClock = (startIso: string) => {
 };
 
 interface Harness {
+  appointmentJobs: Array<{ appointmentId: string; locationId: string; kind: string }>;
   runner: AcceleratedDayRunner;
   ledger: ResourceLedger;
   jobs: FakeJob[];
@@ -185,6 +187,10 @@ const harness = (options: {
   readCostMinutes?: number;
   finish?: JobOutcome;
   jobLimit?: number;
+  /** Due appointments waiting to be worked, oldest first (#148). */
+  arrivals?: Arrival[];
+  /** Sites the fake booking reports a booking at, one per call of onBooked (#148). */
+  bookAt?: string[];
 }): Harness => {
   const clock = fakeClock(options.startIso);
   const ledger = new ResourceLedger();
@@ -194,6 +200,9 @@ const harness = (options: {
   const at_: Record<string, Date | undefined> = {};
   const shiftOpen = { value: false };
   const rosters = options.rosters ?? [roster()];
+  let arrivalQueue: Arrival[] = [...(options.arrivals ?? [])];
+  /** Which claims were made for an appointment, and where (#148). */
+  const appointmentJobs: Array<{ appointmentId: string; locationId: string; kind: string }> = [];
 
   const deps: DayRunnerDeps = {
     calendar: new ShopCalendar(options.calendar ?? spec()),
@@ -263,13 +272,20 @@ const harness = (options: {
       },
     },
     appointments: {
-      book: async () => {
+      book: async (_at, _rosters, onBooked) => {
         calls.push('bookAppointments');
         clock.advance(options.phaseCostMinutes ?? 0);
         if (options.bookFails) {
           throw options.bookFails;
         }
-        return 2;
+        for (const locationId of options.bookAt ?? []) {
+          onBooked?.(locationId);
+        }
+        return options.bookAt?.length ?? 2;
+      },
+      arrivals: () => arrivalQueue,
+      startArrival: (appointmentId: string) => {
+        arrivalQueue = arrivalQueue.filter((arrival) => arrival.appointmentId !== appointmentId);
       },
       convertDue: async () => {
         calls.push('convertAppointments');
@@ -286,9 +302,12 @@ const harness = (options: {
       return value;
     },
     waitUntil: async (target: Date) => clock.waitUntil(target, options.waitOvershootMinutes ?? 0),
-    createJob: (claim) => {
+    createJob: (claim, _index, arrival) => {
       if (options.jobLimit !== undefined && jobs.length >= options.jobLimit) {
         return null;
+      }
+      if (arrival) {
+        appointmentJobs.push({ appointmentId: arrival.appointmentId, locationId: claim.locationId, kind: claim.position.kind });
       }
       const job = new FakeJob(
         // Numbered across the whole run, not within the day, mirroring the real
@@ -311,7 +330,7 @@ const harness = (options: {
     jobsToday: () => options.jobsToday ?? 2,
   };
 
-  return { runner: new AcceleratedDayRunner(deps), ledger, jobs, clock, calls, at: at_ };
+  return { runner: new AcceleratedDayRunner(deps), ledger, jobs, clock, calls, at: at_, appointmentJobs };
 };
 
 describe('AcceleratedDayRunner — an open day', () => {
@@ -467,6 +486,132 @@ describe('AcceleratedDayRunner — how a day is shared between sites (#157)', ()
     const report = await runner.runDay(1);
 
     expect(report.jobsStartedBySite).toEqual({ OPEN: 4 });
+  });
+});
+
+describe('AcceleratedDayRunner — working due appointments (#148)', () => {
+  const bays = (code: string, count: number) =>
+    Array.from({ length: count }, (_, i) => ({ kind: 'BAY' as const, id: `${code}-bay-${i}`, name: `Bay ${i}` }));
+  const techs = (code: string, count: number) => Array.from({ length: count }, (_, i) => `${code}-tech-${i}`);
+  const arrival = (appointmentId: string, locationId: string): Arrival => ({
+    appointmentId,
+    locationId,
+    estimateId: `est-${appointmentId}`,
+    customer: { partyId: `party-${appointmentId}`, fullName: 'Pat Doe' },
+    vehicleId: `veh-${appointmentId}`,
+  });
+  const twoSites = () => [
+    roster({ locationId: 'main', code: 'MAIN', freePositions: bays('main', 4), idleTechnicianIds: techs('main', 4) }),
+    roster({ locationId: 'riv', code: 'RIV', freePositions: bays('riv', 2), idleTechnicianIds: techs('riv', 2) }),
+  ];
+
+  it('works a due appointment at the site it was booked at, before any walk-in', async () => {
+    const { runner, appointmentJobs, jobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 3,
+      concurrency: 3,
+      jobSteps: 1,
+      rosters: twoSites(),
+      arrivals: [arrival('appt-1', 'riv')],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(appointmentJobs).toEqual([{ appointmentId: 'appt-1', locationId: 'riv', kind: 'BAY' }]);
+    // The appointment job was the first started, at RIV, ahead of MAIN's walk-ins.
+    expect(jobs[0].label).toContain('riv-bay');
+    expect(report.appointmentsWorkedBySite).toEqual({ RIV: 1 });
+  });
+
+  it('counts an appointment job toward its site\'s share, so walk-ins top up the other site', async () => {
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 3,
+      concurrency: 6,
+      jobSteps: 1,
+      rosters: twoSites(),
+      // Two appointments at RIV (capacity 2 of 6): RIV is already at its share.
+      arrivals: [arrival('appt-1', 'riv'), arrival('appt-2', 'riv')],
+    });
+
+    const report = await runner.runDay(1);
+
+    // Both appointments are worked even though the day's target is 3; the one walk-in
+    // left goes to MAIN, which is furthest below its share.
+    expect(report.appointmentsWorkedBySite).toEqual({ RIV: 2 });
+    expect(report.jobsStartedBySite).toEqual({ RIV: 2, MAIN: 1 });
+  });
+
+  it('works every due appointment even past the day\'s walk-in target', async () => {
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 1,
+      concurrency: 6,
+      jobSteps: 1,
+      rosters: twoSites(),
+      arrivals: [arrival('appt-1', 'main'), arrival('appt-2', 'main'), arrival('appt-3', 'riv')],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.appointmentsWorkedBySite).toEqual({ MAIN: 2, RIV: 1 });
+    // No walk-in: the appointments already used the target.
+    expect(report.jobsStartedBySite).toEqual({ MAIN: 2, RIV: 1 });
+  });
+
+  it('leaves an appointment waiting when its own site has no free bay, rather than moving it', async () => {
+    const { runner, appointmentJobs } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 2,
+      concurrency: 2,
+      jobSteps: 1,
+      rosters: [
+        roster({ locationId: 'main', code: 'MAIN', freePositions: bays('main', 4), idleTechnicianIds: techs('main', 4) }),
+        roster({ locationId: 'full', code: 'FULL', freePositions: [], occupiedPositions: bays('full', 2), idleTechnicianIds: techs('full', 2) }),
+      ],
+      arrivals: [arrival('appt-1', 'full')],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(appointmentJobs).toEqual([]);
+    expect(report.appointmentsWorkedBySite).toEqual({});
+    expect(report.jobsStartedBySite).toEqual({ MAIN: 2 });
+  });
+
+  it('does not work an appointment at a site missing from today\'s discovery', async () => {
+    const { runner, appointmentJobs, ledger } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 1,
+      concurrency: 2,
+      jobSteps: 1,
+      rosters: [roster({ locationId: 'main', code: 'MAIN', freePositions: bays('main', 2), idleTechnicianIds: techs('main', 2) })],
+      arrivals: [arrival('appt-1', 'gone')],
+    });
+    // Yesterday's state for a site today's discovery left out.
+    ledger.reconcile(roster({ locationId: 'gone', code: 'GONE', freePositions: bays('gone', 2), idleTechnicianIds: techs('gone', 2) }));
+
+    await runner.runDay(1);
+
+    expect(appointmentJobs).toEqual([]);
+  });
+
+  it('records where each booking landed', async () => {
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      rosters: twoSites(),
+      bookAt: ['main', 'main', 'riv'],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.appointmentsBooked).toBe(3);
+    expect(report.appointmentsBookedBySite).toEqual({ MAIN: 2, RIV: 1 });
   });
 });
 

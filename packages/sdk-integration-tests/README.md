@@ -221,6 +221,15 @@ below that share for the day; a site with nothing free is passed over rather tha
 year summary prints `jobs started per site`. Before #157 the first site discovery returned took
 every job it had room for, so one site had nearly all of the year's history.
 
+**Appointments are booked, and worked.** Each day books one appointment per site that can take
+bay work, spread over the run in proportion to each site's bay capacity, on a bay
+`searchOpenings` offers at that site. When the clock reaches one, it is bridged to an estimate
+and queued; the next intake works it at its own site — never another — before any walk-in,
+starting from the bridged estimate, so promoting it links the workorder to the appointment on
+the backend. Appointment jobs are not held to the day's walk-in target but count toward it and
+toward their site's share, so the walk-ins only top up. One whose site has no free bay waits for
+the next intake. The year summary prints appointments booked and worked per site.
+
 ### 1. Get an accelerated backend
 
 The clock lives in the backend, not in the tests, and standing one up is its own

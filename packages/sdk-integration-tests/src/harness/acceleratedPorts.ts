@@ -39,6 +39,12 @@ import {
 } from './acceleratedDayRunner';
 import { buildRoster, type StaffingView } from '../runs/shopFloorRoster';
 import type { SiteRoster } from '../runs/shopFloorPlan';
+import { AppointmentCreateRequestResourceTypeEnum as AppointmentResource } from '@durion-sdk/shop-manager';
+import type { Arrival } from './acceleratedDayRunner';
+import { siteCapacity, siteClaimOrder } from './siteShare';
+
+/** How much bay work a site can take at once: the capacity appointments are shared by. */
+const siteCapacityForBays = (roster: SiteRoster): number => siteCapacity(roster, 'BAY');
 
 const log = (message: string): void => console.log(`[accel] ${message}`);
 
@@ -706,10 +712,16 @@ export function createMaintenancePort(
 
 interface PendingAppointment {
   appointmentId: string;
+  /** The site it is booked at, and the one its job is worked at (#148). */
+  locationId: string;
   startAt: Date;
   partyId: string;
+  fullName: string;
   vehicleId: string;
   converted: boolean;
+  /** Set once bridged; the appointment then waits in the arrivals queue until worked. */
+  estimateId?: string;
+  started: boolean;
 }
 
 /**
@@ -730,15 +742,21 @@ export function createAppointmentPort(options: {
   leadDaysMin: number;
   leadDaysMax: number;
   /** Books for a customer the caller supplies, so the port creates no CRM data of its own. */
-  customerFor: () => Promise<{ partyId: string; vehicleId: string }>;
+  customerFor: () => Promise<{ partyId: string; fullName: string; vehicleId: string }>;
 }): AppointmentPort & { pending(): number } {
   const pending: PendingAppointment[] = [];
+  /**
+   * Bookings per site over the run, by locationId, for the share {@link siteClaimOrder}
+   * keeps (#148). Over the run rather than per day: a day books only a handful, and a
+   * fresh count each day would give every site one apiece whatever its size.
+   */
+  const bookedBySite = new Map<string, number>();
   /**
    * Refusals about the *slot*, answered by trying another: taken by an earlier run (400
    * "already booked"), or a HARD 409 for a closed day or out-of-hours slot — the same set
    * Suite A retries.
    */
-  const SLOT_REFUSALS = ['already booked', 'FACILITY_CLOSED', 'OUTSIDE_OPERATING_HOURS'];
+  const SLOT_REFUSALS = ['already booked', 'FACILITY_CLOSED', 'OUTSIDE_OPERATING_HOURS', 'CONFLICT'];
 
   /**
    * A one-hour slot, wholly inside an open window, on the first open day `leadDays`
@@ -758,14 +776,36 @@ export function createAppointmentPort(options: {
   return {
     pending: () => pending.filter((appointment) => !appointment.converted).length,
 
-    async book(at: Date, count: number): Promise<number> {
+    arrivals: (): Arrival[] =>
+      pending
+        .filter((appointment) => appointment.converted && !appointment.started && appointment.estimateId)
+        .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+        .map((appointment) => ({
+          appointmentId: appointment.appointmentId,
+          locationId: appointment.locationId,
+          estimateId: appointment.estimateId as string,
+          customer: { partyId: appointment.partyId, fullName: appointment.fullName },
+          vehicleId: appointment.vehicleId,
+        })),
+
+    startArrival: (appointmentId: string): void => {
+      const appointment = pending.find((candidate) => candidate.appointmentId === appointmentId);
+      if (appointment) {
+        appointment.started = true;
+      }
+    },
+
+    async book(at: Date, rosters: readonly SiteRoster[], onBooked?: (locationId: string) => void): Promise<number> {
+      // One a day per site that can take bay work, as before #148 — but spread by each
+      // site's share of bay capacity rather than all at the reference site.
+      const count = rosters.filter((roster) => siteCapacityForBays(roster) > 0).length;
       // A counter the loop shares, not a return value: every appointment already
       // booked is on the backend, and a refusal on the third of five must still
       // report two. A local in this scope would read 0 on the throw, because the
       // loop's own total never comes back.
       const progress = { done: 0 };
       try {
-        return await bookEach(at, count, progress);
+        return await bookEach(at, rosters, count, progress, onBooked);
       } catch (error) {
         throw progress.done > 0
           ? new PartialProgressError(
@@ -793,52 +833,102 @@ export function createAppointmentPort(options: {
     },
   };
 
-  /** The booking loop itself, so the wrapper above owns only the partial-count report. */
-  async function bookEach(at: Date, count: number, progress: { done: number }): Promise<number> {
+  /**
+   * The booking loop itself, so the wrapper above owns only the partial-count report.
+   *
+   * Each booking goes to the site furthest below its share of bay capacity (#148, the
+   * rule #157 gave the walk-ins), on a bay: the slot is one {@code searchOpenings}
+   * reports for that site, so the backend's own hours, buffers, bay eligibility and
+   * rostering decide it, and the booking lands in that bay's capacity. A site with no
+   * opening in the window is skipped for this booking, not failed.
+   */
+  async function bookEach(
+    at: Date,
+    rosters: readonly SiteRoster[],
+    count: number,
+    progress: { done: number },
+    onBooked?: (locationId: string) => void,
+  ): Promise<number> {
+    const serviceIds = options.ctx.refs.serviceEntityIds.slice(0, 2);
     for (let index = 0; index < count; index += 1) {
-        const customer = await options.customerFor();
-        const leadDays = options.ctx.random.int(options.leadDaysMin, options.leadDaysMax);
+      const site = siteClaimOrder(rosters, bookedBySite, 'BAY').find((roster) => siteCapacityForBays(roster) > 0);
+      if (!site) {
+        break;
+      }
+      // Counted as attempted whether or not a slot is found, so a site with no opening
+      // does not hold the head of the queue for the rest of the loop.
+      bookedBySite.set(site.locationId, (bookedBySite.get(site.locationId) ?? 0) + 1);
 
-        // A slot already taken is a refusal about the *slot*, not the request:
-        // every appointment any previous run booked is still on this environment.
-        // Answered by trying elsewhere, as Suite A does.
-        for (let attempt = 1; attempt <= 6; attempt += 1) {
-          const { startAt, endAt } = slotFor(at, leadDays, options.ctx.random.int(0, 8) * 30);
-          try {
-            const created = await retryWhileReplicating(
-              () =>
-                options.advisor.shopManager.appointmentsApi.createAppointment({
-                  appointmentCreateRequest: {
-                    crmCustomerId: customer.partyId,
-                    crmVehicleId: customer.vehicleId,
-                    locationId: options.ctx.refs.locationId,
-                    startAt,
-                    endAt,
-                    serviceRequestIds: options.ctx.refs.serviceEntityIds.slice(0, 2),
-                  },
-                }),
-              {
-                markers: ['CUSTOMER_NOT_FOUND', 'VEHICLE_NOT_FOUND'],
-                description: `booking an appointment for party ${customer.partyId}`,
-                timeoutMs: 60_000,
-              },
-            );
-            pending.push({
-              appointmentId: requireField(readString(created, 'appointmentId', 'id'), 'appointmentId'),
-              startAt,
-              partyId: customer.partyId,
-              vehicleId: customer.vehicleId,
-              converted: false,
-            });
-            progress.done += 1;
-            break;
-          } catch (error) {
-            const detail = error instanceof Error && !('response' in error) ? error.message : await formatError(error);
-            if (!SLOT_REFUSALS.some((marker) => detail.includes(marker)) || attempt === 6) {
-              throw error;
-            }
+      const leadDays = options.ctx.random.int(options.leadDaysMin, options.leadDaysMax);
+      const { startAt: earliest } = slotFor(at, leadDays, 0);
+      let openings;
+      try {
+        openings = await options.advisor.shopManager.scheduleApi.searchOpenings({
+          locationId: site.locationId,
+          serviceIds,
+          durationMinutes: 60,
+          earliestStart: earliest,
+          horizonDays: 3,
+          limit: 20,
+        });
+      } catch (error) {
+        throw new Error(`searching openings at ${site.code}: ${await formatError(error)}`);
+      }
+      const candidates = [...(openings.openings ?? [])];
+      if (candidates.length === 0) {
+        continue;
+      }
+
+      const customer = await options.customerFor();
+      // A slot taken since the search is a refusal about the slot, not the request:
+      // answered by trying the next opening, as Suite A does.
+      // Fixed before the loop: each attempt removes a candidate, and a bound read from the
+      // shrinking list would give up with openings still untried.
+      const attempts = Math.min(6, candidates.length);
+      for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        const opening = candidates.splice(options.ctx.random.int(0, candidates.length - 1), 1)[0];
+        try {
+          const created = await retryWhileReplicating(
+            () =>
+              options.advisor.shopManager.appointmentsApi.createAppointment({
+                appointmentCreateRequest: {
+                  crmCustomerId: customer.partyId,
+                  crmVehicleId: customer.vehicleId,
+                  locationId: site.locationId,
+                  startAt: opening.startAt,
+                  endAt: opening.endAt,
+                  resourceType: AppointmentResource.Bay,
+                  resourceId: opening.bayId,
+                  serviceRequestIds: serviceIds,
+                },
+              }),
+            {
+              markers: ['CUSTOMER_NOT_FOUND', 'VEHICLE_NOT_FOUND'],
+              description: `booking an appointment for party ${customer.partyId}`,
+              timeoutMs: 60_000,
+            },
+          );
+          pending.push({
+            appointmentId: requireField(readString(created, 'appointmentId', 'id'), 'appointmentId'),
+            locationId: site.locationId,
+            startAt: opening.startAt,
+            partyId: customer.partyId,
+            fullName: customer.fullName,
+            vehicleId: customer.vehicleId,
+            converted: false,
+            started: false,
+          });
+          progress.done += 1;
+          onBooked?.(site.locationId);
+          break;
+        } catch (error) {
+          const detail = error instanceof Error && !('response' in error) ? error.message : await formatError(error);
+          if (!SLOT_REFUSALS.some((marker) => detail.includes(marker))) {
+            throw error;
           }
+          // Taken since the search: try another opening; out of openings, skip the booking.
         }
+      }
     }
     return progress.done;
   }
@@ -870,7 +960,8 @@ export function createAppointmentPort(options: {
               appointmentId: appointment.appointmentId,
               customerId: appointment.partyId,
               vehicleId: appointment.vehicleId,
-              locationId: options.ctx.refs.locationId,
+              // The appointment's own site, which is where its job is worked (#148).
+              locationId: appointment.locationId,
               requestedServices: options.ctx.refs.serviceEntityIds
                 .slice(0, 2)
                 .map((id) => options.ctx.refs.serviceNameById.get(id) ?? id),
@@ -882,6 +973,7 @@ export function createAppointmentPort(options: {
             `the appointment bridge returned no estimate for appointment ${appointment.appointmentId}`,
           );
         }
+      appointment.estimateId = readString(created, 'estimateId', 'id');
       appointment.converted = true;
       progress.done += 1;
     }
