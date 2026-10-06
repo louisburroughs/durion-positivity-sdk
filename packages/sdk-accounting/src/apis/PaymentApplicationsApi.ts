@@ -16,6 +16,7 @@
 import * as runtime from '../runtime';
 import type {
   ApiError,
+  AutomaticPaymentApplicationsPage,
   CustomerOpenInvoicesPage,
   PagePaymentApplicationListRow,
   PaymentApplicationRequest,
@@ -28,6 +29,8 @@ import type {
 import {
     ApiErrorFromJSON,
     ApiErrorToJSON,
+    AutomaticPaymentApplicationsPageFromJSON,
+    AutomaticPaymentApplicationsPageToJSON,
     CustomerOpenInvoicesPageFromJSON,
     CustomerOpenInvoicesPageToJSON,
     PagePaymentApplicationListRowFromJSON,
@@ -54,6 +57,12 @@ export interface ApplyPaymentRequest {
 export interface CreditPaymentRemainderRequest {
     paymentId: string;
     remainderCreditRequest: RemainderCreditRequest;
+}
+
+export interface ListAutomaticPaymentApplicationsRequest {
+    since: string;
+    page?: number;
+    size?: number;
 }
 
 export interface ListCustomerOpenInvoicesRequest {
@@ -201,6 +210,61 @@ export class PaymentApplicationsApi extends runtime.BaseAPI {
      */
     async creditPaymentRemainder(requestParameters: CreditPaymentRemainderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<RemainderCreditResponse> {
         const response = await this.creditPaymentRemainderRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Lists the payment applications made automatically since an instant, newest first: a settled payment applied to the invoice it was taken against, or an INVOICE_PAYMENT event applied to its invoice, each with the invoice number, the customer\'s name and any credit kept. Use this tool to review what was matched without a person and to undo one with reversePaymentApplication; use listUnappliedPayments instead for payments still waiting to be matched. Preconditions: the caller needs accounting:payment:apply authority; UNDO is offered only to holders of accounting:payment:reverse and only while the application is not reversed. Required inputs: since (ISO-8601 instant, at most 31 days back); page (0 or more) and size (1 to 100, default 50) are optional query parameters. Emits an ACCOUNTING_PAYMENT_APPLICATION_AUTOMATIC_LIST_VIEW event and changes no state; totalElements counts every automatic application since the instant, reversed ones included. Returns 400 VALIDATION_ERROR when since is missing, unparsable or more than 31 days back or size is outside 1 to 100, and 403 when the caller lacks the authority. 
+     * List Payment Applications Made Automatically
+     */
+    async listAutomaticPaymentApplicationsRaw(requestParameters: ListAutomaticPaymentApplicationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AutomaticPaymentApplicationsPage>> {
+        if (requestParameters['since'] == null) {
+            throw new runtime.RequiredError(
+                'since',
+                'Required parameter "since" was null or undefined when calling listAutomaticPaymentApplications().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters['since'] != null) {
+            queryParameters['since'] = requestParameters['since'];
+        }
+
+        if (requestParameters['page'] != null) {
+            queryParameters['page'] = requestParameters['page'];
+        }
+
+        if (requestParameters['size'] != null) {
+            queryParameters['size'] = requestParameters['size'];
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("bearerAuth", ["accounting:payment:apply"]);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/v1/accounting/payment-applications/automatic`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AutomaticPaymentApplicationsPageFromJSON(jsonValue));
+    }
+
+    /**
+     * Lists the payment applications made automatically since an instant, newest first: a settled payment applied to the invoice it was taken against, or an INVOICE_PAYMENT event applied to its invoice, each with the invoice number, the customer\'s name and any credit kept. Use this tool to review what was matched without a person and to undo one with reversePaymentApplication; use listUnappliedPayments instead for payments still waiting to be matched. Preconditions: the caller needs accounting:payment:apply authority; UNDO is offered only to holders of accounting:payment:reverse and only while the application is not reversed. Required inputs: since (ISO-8601 instant, at most 31 days back); page (0 or more) and size (1 to 100, default 50) are optional query parameters. Emits an ACCOUNTING_PAYMENT_APPLICATION_AUTOMATIC_LIST_VIEW event and changes no state; totalElements counts every automatic application since the instant, reversed ones included. Returns 400 VALIDATION_ERROR when since is missing, unparsable or more than 31 days back or size is outside 1 to 100, and 403 when the caller lacks the authority. 
+     * List Payment Applications Made Automatically
+     */
+    async listAutomaticPaymentApplications(requestParameters: ListAutomaticPaymentApplicationsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AutomaticPaymentApplicationsPage> {
+        const response = await this.listAutomaticPaymentApplicationsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
