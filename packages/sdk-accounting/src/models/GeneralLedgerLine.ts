@@ -38,6 +38,12 @@ export interface GeneralLedgerLine {
      */
     description?: string;
     /**
+     * INCREASE when the line moved the account up on its normal side, DECREASE otherwise
+     * @type {string}
+     * @memberof GeneralLedgerLine
+     */
+    direction: GeneralLedgerLineDirectionEnum;
+    /**
      * Journal entry number
      * @type {string}
      * @memberof GeneralLedgerLine
@@ -49,6 +55,12 @@ export interface GeneralLedgerLine {
      * @memberof GeneralLedgerLine
      */
     journalEntryId: string;
+    /**
+     * Cumulative balance through this line on the account's normal side (positive when the account holds its usual balance)
+     * @type {number}
+     * @memberof GeneralLedgerLine
+     */
+    normalRunningBalance: number;
     /**
      * Cumulative signed account balance (debit positive) through this line
      * @type {number}
@@ -70,10 +82,22 @@ export interface GeneralLedgerLine {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum GeneralLedgerLineDirectionEnum {
+    Increase = 'INCREASE',
+    Decrease = 'DECREASE'
+}
+
+
+/**
  * Check if a given object implements the GeneralLedgerLine interface.
  */
 export function instanceOfGeneralLedgerLine(value: object): boolean {
+    if (!('direction' in value)) return false;
     if (!('journalEntryId' in value)) return false;
+    if (!('normalRunningBalance' in value)) return false;
     if (!('runningBalance' in value)) return false;
     if (!('transactionDate' in value)) return false;
     return true;
@@ -92,8 +116,10 @@ export function GeneralLedgerLineFromJSONTyped(json: any, ignoreDiscriminator: b
         'creditAmount': json['creditAmount'] == null ? undefined : json['creditAmount'],
         'debitAmount': json['debitAmount'] == null ? undefined : json['debitAmount'],
         'description': json['description'] == null ? undefined : json['description'],
+        'direction': json['direction'],
         'entryNumber': json['entryNumber'] == null ? undefined : json['entryNumber'],
         'journalEntryId': json['journalEntryId'],
+        'normalRunningBalance': json['normalRunningBalance'],
         'runningBalance': json['runningBalance'],
         'sourceEventType': json['sourceEventType'] == null ? undefined : json['sourceEventType'],
         'transactionDate': (new Date(json['transactionDate'])),
@@ -109,8 +135,10 @@ export function GeneralLedgerLineToJSON(value?: GeneralLedgerLine | null): any {
         'creditAmount': value['creditAmount'],
         'debitAmount': value['debitAmount'],
         'description': value['description'],
+        'direction': value['direction'],
         'entryNumber': value['entryNumber'],
         'journalEntryId': value['journalEntryId'],
+        'normalRunningBalance': value['normalRunningBalance'],
         'runningBalance': value['runningBalance'],
         'sourceEventType': value['sourceEventType'],
         'transactionDate': ((value['transactionDate']).toISOString().substring(0,10)),

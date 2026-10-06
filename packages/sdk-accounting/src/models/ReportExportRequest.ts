@@ -44,12 +44,6 @@ export interface ReportExportRequest {
      */
     format: ReportExportRequestFormatEnum;
     /**
-     * Organization UUID to scope the export
-     * @type {string}
-     * @memberof ReportExportRequest
-     */
-    organizationId: string;
-    /**
      * Report type key. Renderable types: TAX_LIABILITY, INCOME_STATEMENT, BALANCE_SHEET, TRIAL_BALANCE, GENERAL_LEDGER, AGED_RECEIVABLES, AGED_PAYABLES.
      * @type {string}
      * @memberof ReportExportRequest
@@ -81,7 +75,6 @@ export enum ReportExportRequestFormatEnum {
 export function instanceOfReportExportRequest(value: object): boolean {
     if (!('endDate' in value)) return false;
     if (!('format' in value)) return false;
-    if (!('organizationId' in value)) return false;
     if (!('reportType' in value)) return false;
     if (!('startDate' in value)) return false;
     return true;
@@ -101,7 +94,6 @@ export function ReportExportRequestFromJSONTyped(json: any, ignoreDiscriminator:
         'endDate': (new Date(json['endDate'])),
         'filename': json['filename'] == null ? undefined : json['filename'],
         'format': json['format'],
-        'organizationId': json['organizationId'],
         'reportType': json['reportType'],
         'startDate': (new Date(json['startDate'])),
     };
@@ -117,7 +109,6 @@ export function ReportExportRequestToJSON(value?: ReportExportRequest | null): a
         'endDate': ((value['endDate']).toISOString().substring(0,10)),
         'filename': value['filename'],
         'format': value['format'],
-        'organizationId': value['organizationId'],
         'reportType': value['reportType'],
         'startDate': ((value['startDate']).toISOString().substring(0,10)),
     };

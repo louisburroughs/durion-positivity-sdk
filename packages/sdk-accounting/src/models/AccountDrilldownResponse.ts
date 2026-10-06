@@ -20,6 +20,12 @@ import { mapValues } from '../runtime';
  */
 export interface AccountDrilldownResponse {
     /**
+     * Chart-of-accounts code of the GL account
+     * @type {string}
+     * @memberof AccountDrilldownResponse
+     */
+    accountCode: string;
+    /**
      * Identifier of the GL account
      * @type {string}
      * @memberof AccountDrilldownResponse
@@ -32,7 +38,13 @@ export interface AccountDrilldownResponse {
      */
     accountName: string;
     /**
-     * Account balance for the period (sum of POSTED journal lines within the date range)
+     * Type of the GL account
+     * @type {string}
+     * @memberof AccountDrilldownResponse
+     */
+    accountType?: AccountDrilldownResponseAccountTypeEnum;
+    /**
+     * The amount this account contributes to the line (as-of balance at endDate for a balance-sheet line, period movement for an income-statement line); rows add up to the line
      * @type {number}
      * @memberof AccountDrilldownResponse
      */
@@ -46,9 +58,23 @@ export interface AccountDrilldownResponse {
 }
 
 /**
+* @export
+* @enum {string}
+*/
+export enum AccountDrilldownResponseAccountTypeEnum {
+    Asset = 'ASSET',
+    Liability = 'LIABILITY',
+    Equity = 'EQUITY',
+    Revenue = 'REVENUE',
+    Expense = 'EXPENSE'
+}
+
+
+/**
  * Check if a given object implements the AccountDrilldownResponse interface.
  */
 export function instanceOfAccountDrilldownResponse(value: object): boolean {
+    if (!('accountCode' in value)) return false;
     if (!('accountId' in value)) return false;
     if (!('accountName' in value)) return false;
     if (!('balance' in value)) return false;
@@ -66,8 +92,10 @@ export function AccountDrilldownResponseFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
+        'accountCode': json['accountCode'],
         'accountId': json['accountId'],
         'accountName': json['accountName'],
+        'accountType': json['accountType'] == null ? undefined : json['accountType'],
         'balance': json['balance'],
         'statementLineCode': json['statementLineCode'],
     };
@@ -79,8 +107,10 @@ export function AccountDrilldownResponseToJSON(value?: AccountDrilldownResponse 
     }
     return {
         
+        'accountCode': value['accountCode'],
         'accountId': value['accountId'],
         'accountName': value['accountName'],
+        'accountType': value['accountType'],
         'balance': value['balance'],
         'statementLineCode': value['statementLineCode'],
     };

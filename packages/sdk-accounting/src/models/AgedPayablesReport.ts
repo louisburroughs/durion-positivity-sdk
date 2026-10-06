@@ -51,11 +51,29 @@ export interface AgedPayablesReport {
      */
     rows: Array<AgedPayablesRow>;
     /**
+     * totals.totalOutstanding + unapproved
+     * @type {number}
+     * @memberof AgedPayablesReport
+     */
+    totalIncludingUnapproved: number;
+    /**
      * 
      * @type {AgingSummary}
      * @memberof AgedPayablesReport
      */
     totals: AgingSummary;
+    /**
+     * Open amount on bills not yet approved (PENDING_RECEIPT_MATCH, MATCH_EXCEPTION) across all vendors; never aged
+     * @type {number}
+     * @memberof AgedPayablesReport
+     */
+    unapproved: number;
+    /**
+     * Number of open bills not yet approved across all vendors
+     * @type {number}
+     * @memberof AgedPayablesReport
+     */
+    unapprovedBillCount: number;
 }
 
 /**
@@ -65,7 +83,10 @@ export function instanceOfAgedPayablesReport(value: object): boolean {
     if (!('asOfDate' in value)) return false;
     if (!('generatedAt' in value)) return false;
     if (!('rows' in value)) return false;
+    if (!('totalIncludingUnapproved' in value)) return false;
     if (!('totals' in value)) return false;
+    if (!('unapproved' in value)) return false;
+    if (!('unapprovedBillCount' in value)) return false;
     return true;
 }
 
@@ -82,7 +103,10 @@ export function AgedPayablesReportFromJSONTyped(json: any, ignoreDiscriminator: 
         'asOfDate': (new Date(json['asOfDate'])),
         'generatedAt': (new Date(json['generatedAt'])),
         'rows': ((json['rows'] as Array<any>).map(AgedPayablesRowFromJSON)),
+        'totalIncludingUnapproved': json['totalIncludingUnapproved'],
         'totals': AgingSummaryFromJSON(json['totals']),
+        'unapproved': json['unapproved'],
+        'unapprovedBillCount': json['unapprovedBillCount'],
     };
 }
 
@@ -95,7 +119,10 @@ export function AgedPayablesReportToJSON(value?: AgedPayablesReport | null): any
         'asOfDate': ((value['asOfDate']).toISOString().substring(0,10)),
         'generatedAt': ((value['generatedAt']).toISOString()),
         'rows': ((value['rows'] as Array<any>).map(AgedPayablesRowToJSON)),
+        'totalIncludingUnapproved': value['totalIncludingUnapproved'],
         'totals': AgingSummaryToJSON(value['totals']),
+        'unapproved': value['unapproved'],
+        'unapprovedBillCount': value['unapprovedBillCount'],
     };
 }
 
