@@ -80,6 +80,24 @@ export interface VendorProfileView {
      */
     supplierRef?: string;
     /**
+     * That vendor's display name.
+     * @type {string}
+     * @memberof VendorProfileView
+     */
+    vendorDisplayName?: string;
+    /**
+     * The vendor this connection belongs to (UUIDv7).
+     * @type {string}
+     * @memberof VendorProfileView
+     */
+    vendorId?: string;
+    /**
+     * That vendor's number, the reference people quote.
+     * @type {string}
+     * @memberof VendorProfileView
+     */
+    vendorNumber?: string;
+    /**
      * Platform identity of the profile (UUIDv7, ADR-0050 §1).
      * @type {string}
      * @memberof VendorProfileView
@@ -132,6 +150,9 @@ export function VendorProfileViewFromJSONTyped(json: any, ignoreDiscriminator: b
         'sandboxBaseUrlOverride': json['sandboxBaseUrlOverride'] == null ? undefined : json['sandboxBaseUrlOverride'],
         'sourceOfTruth': json['sourceOfTruth'] == null ? undefined : json['sourceOfTruth'],
         'supplierRef': json['supplierRef'] == null ? undefined : json['supplierRef'],
+        'vendorDisplayName': json['vendorDisplayName'] == null ? undefined : json['vendorDisplayName'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
+        'vendorNumber': json['vendorNumber'] == null ? undefined : json['vendorNumber'],
         'vendorProfileId': json['vendorProfileId'] == null ? undefined : json['vendorProfileId'],
     };
 }
@@ -152,6 +173,9 @@ export function VendorProfileViewToJSON(value?: VendorProfileView | null): any {
         'sandboxBaseUrlOverride': value['sandboxBaseUrlOverride'],
         'sourceOfTruth': value['sourceOfTruth'],
         'supplierRef': value['supplierRef'],
+        'vendorDisplayName': value['vendorDisplayName'],
+        'vendorId': value['vendorId'],
+        'vendorNumber': value['vendorNumber'],
         'vendorProfileId': value['vendorProfileId'],
     };
 }

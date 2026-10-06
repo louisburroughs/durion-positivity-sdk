@@ -73,6 +73,12 @@ export interface VendorProfileRequest {
      * @memberof VendorProfileRequest
      */
     supplierRef?: string;
+    /**
+     * The vendor this connection belongs to (UUIDv7). Required; must be a vendor of the caller's tenant, and ACTIVE when creating a profile.
+     * @type {string}
+     * @memberof VendorProfileRequest
+     */
+    vendorId?: string;
 }
 
 /**
@@ -111,6 +117,7 @@ export function VendorProfileRequestFromJSONTyped(json: any, ignoreDiscriminator
         'sandbox': json['sandbox'] == null ? undefined : json['sandbox'],
         'sandboxBaseUrlOverride': json['sandboxBaseUrlOverride'] == null ? undefined : json['sandboxBaseUrlOverride'],
         'supplierRef': json['supplierRef'] == null ? undefined : json['supplierRef'],
+        'vendorId': json['vendorId'] == null ? undefined : json['vendorId'],
     };
 }
 
@@ -129,6 +136,7 @@ export function VendorProfileRequestToJSON(value?: VendorProfileRequest | null):
         'sandbox': value['sandbox'],
         'sandboxBaseUrlOverride': value['sandboxBaseUrlOverride'],
         'supplierRef': value['supplierRef'],
+        'vendorId': value['vendorId'],
     };
 }
 

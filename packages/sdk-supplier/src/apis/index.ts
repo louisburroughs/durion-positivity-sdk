@@ -13,3 +13,4 @@ export * from './SupplierStockAvailabilityApi';
 export * from './SupplierStockInquiryApi';
 export * from './SupplierStockSnapshotsApi';
 export * from './SupplierVendorProfilesApi';
+export * from './SupplierVendorsApi';
