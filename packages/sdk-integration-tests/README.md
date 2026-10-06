@@ -214,6 +214,13 @@ that measures real elapsed time is meaningless while the clock is moving 1,460×
 Run the parity copies first. They fail in minutes on a broken contract instead of
 at hour five.
 
+**How the sites share a day's jobs.** Every site discovery returns with a usable board and staff
+gets work, in proportion to how much it can take at once: the positions it can also crew, the
+smaller of its positions and its technicians, busy or free. Each new job goes to the site furthest
+below that share for the day; a site with nothing free is passed over rather than waited on. The
+year summary prints `jobs started per site`. Before #157 the first site discovery returned took
+every job it had room for, so one site had nearly all of the year's history.
+
 ### 1. Get an accelerated backend
 
 The clock lives in the backend, not in the tests, and standing one up is its own

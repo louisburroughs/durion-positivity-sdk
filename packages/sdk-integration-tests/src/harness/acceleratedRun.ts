@@ -52,6 +52,8 @@ export interface YearRunResult {
     cycleCounts: number;
     restocks: number;
     scraps: number;
+    /** Jobs started per site over the run, by site code (#157). */
+    jobsStartedBySite: Record<string, number>;
   };
   /** Virtual dates the run touched, first and last. */
   virtualSpan: { from: string; to: string };
@@ -482,6 +484,13 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       cycleCounts: reports.filter((report) => report.cycleCount).length,
       restocks: reports.filter((report) => report.restock).length,
       scraps: reports.filter((report) => report.scrap).length,
+      jobsStartedBySite: reports.reduce<Record<string, number>>((totals, report) => {
+        // Defaulted: a report rebuilt from a journal written before #157 has none.
+        for (const [code, count] of Object.entries(report.jobsStartedBySite ?? {})) {
+          totals[code] = (totals[code] ?? 0) + count;
+        }
+        return totals;
+      }, {}),
     },
     virtualSpan: {
       from: reports[0]?.virtualDate ?? lastVirtualDate,

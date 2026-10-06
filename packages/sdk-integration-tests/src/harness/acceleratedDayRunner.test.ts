@@ -424,6 +424,52 @@ describe('AcceleratedDayRunner — an open day', () => {
   });
 });
 
+describe('AcceleratedDayRunner — how a day is shared between sites (#157)', () => {
+  const bays = (code: string, count: number) =>
+    Array.from({ length: count }, (_, i) => ({ kind: 'BAY' as const, id: `${code}-bay-${i}`, name: `Bay ${i}` }));
+  const techs = (code: string, count: number) => Array.from({ length: count }, (_, i) => `${code}-tech-${i}`);
+  const sites = () => [
+    roster({ locationId: 'main', code: 'MAIN', freePositions: bays('main', 4), idleTechnicianIds: techs('main', 4) }),
+    roster({ locationId: 'south', code: 'SOUTH', freePositions: bays('south', 2), idleTechnicianIds: techs('south', 2) }),
+    roster({ locationId: 'riv', code: 'RIV', freePositions: bays('riv', 4), idleTechnicianIds: techs('riv', 1) }),
+  ];
+
+  it('gives every site work even when the first site alone could take the whole day', async () => {
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 14,
+      concurrency: 2,
+      jobSteps: 1,
+      rosters: sites(),
+    });
+
+    const report = await runner.runDay(1);
+
+    // Capacity 4 : 2 : 1 (RIV has four bays but one technician), so 14 jobs split 8 : 4 : 2.
+    // Before #157 the first site took every job: it always had a bay free at concurrency 2.
+    expect(report.jobsStartedBySite).toEqual({ MAIN: 8, SOUTH: 4, RIV: 2 });
+  });
+
+  it('passes over a site with nothing free instead of waiting for it', async () => {
+    const { runner } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 4,
+      concurrency: 4,
+      jobSteps: 50,
+      rosters: [
+        roster({ locationId: 'full', code: 'FULL', freePositions: [], occupiedPositions: bays('full', 3), idleTechnicianIds: techs('full', 3) }),
+        roster({ locationId: 'open', code: 'OPEN', freePositions: bays('open', 4), idleTechnicianIds: techs('open', 4) }),
+      ],
+    });
+
+    const report = await runner.runDay(1);
+
+    expect(report.jobsStartedBySite).toEqual({ OPEN: 4 });
+  });
+});
+
 describe('AcceleratedDayRunner — closing time', () => {
   it('carries a job that is still open at close, keeping its bay', async () => {
     // 30-minute ticks from 17:00: the window closes at 18:00 and the grace ends at
