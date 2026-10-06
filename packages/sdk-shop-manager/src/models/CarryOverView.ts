@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * One earlier-starting appointment's contribution to this bay's capacity on this date — the minutes it holds here because its work began before this date, however those minutes reached the day (issues #2021 AC4/AC5/AC6, #2050)
+ * One earlier-starting job's contribution to this bay's capacity on this date — the minutes it holds here because its work began before this date, however those minutes reached the day (issues #2021 AC4/AC5/AC6, #2050). At least one of appointmentId and workorderId is set: an appointment is named with its linked workorder when it has one, a walk-in by its workorder alone (#2530).
  * @export
  * @interface CarryOverView
  */
 export interface CarryOverView {
     /**
-     * The identifier of the appointment holding the bay
+     * The identifier of the appointment holding the bay; absent for a walk-in workorder with no appointment (#2530)
      * @type {string}
      * @memberof CarryOverView
      */
-    appointmentId: string;
+    appointmentId?: string;
     /**
-     * Bay-hours of this date that this appointment accounts for, in tenths of an hour, whichever of two ways they reached it: either its real-clock overlap with this day's window, or the minutes re-anchored onto this day from a prior open day's overrun. The two sources are disjoint by construction — re-anchoring only ever targets days after the last day the appointment directly overlapped — so exactly one of them produced this number (#2050)
+     * Bay-hours of this date that this job accounts for, in tenths of an hour, whichever of two ways they reached it: either its real-clock overlap with this day's window, or the minutes re-anchored onto this day from a prior open day's overrun. The two sources are disjoint by construction — re-anchoring only ever targets days after the last day the job directly overlapped — so exactly one of them produced this number (#2050)
      * @type {number}
      * @memberof CarryOverView
      */
     bayHours: number;
     /**
-     * The local date this appointment's effective window began — the linked workorder's actual start when known, else the appointment's planned start. It names when the work started, which is what lets a board say what is still holding the bay; it is not necessarily the date of an overrun, nor necessarily an open day (#2050).
+     * The local date this job's window began — when its workorder first took a bay, else the linked workorder's actual start when known, else the appointment's planned start. It names when the work started, which is what lets a board say what is still holding the bay; it is not necessarily the date of an overrun, nor necessarily an open day (#2050).
      * @type {Date}
      * @memberof CarryOverView
      */
     fromDate: Date;
     /**
-     * The linked workorder identifier this contribution's effective window came from, when known
+     * The workorder holding the bay — the appointment's linked workorder when known, or the walk-in itself; absent only for an appointment with no workorder yet
      * @type {string}
      * @memberof CarryOverView
      */
@@ -49,7 +49,6 @@ export interface CarryOverView {
  * Check if a given object implements the CarryOverView interface.
  */
 export function instanceOfCarryOverView(value: object): boolean {
-    if (!('appointmentId' in value)) return false;
     if (!('bayHours' in value)) return false;
     if (!('fromDate' in value)) return false;
     return true;
@@ -65,7 +64,7 @@ export function CarryOverViewFromJSONTyped(json: any, ignoreDiscriminator: boole
     }
     return {
         
-        'appointmentId': json['appointmentId'],
+        'appointmentId': json['appointmentId'] == null ? undefined : json['appointmentId'],
         'bayHours': json['bayHours'],
         'fromDate': (new Date(json['fromDate'])),
         'workorderId': json['workorderId'] == null ? undefined : json['workorderId'],
