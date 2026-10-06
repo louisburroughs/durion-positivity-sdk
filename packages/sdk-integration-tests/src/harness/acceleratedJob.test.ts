@@ -373,3 +373,75 @@ describe('AcceleratedJob — the open-work tail', () => {
     expect(ran).toEqual(['a', 'b']);
   });
 });
+
+describe('AcceleratedJob — working an appointment (#148)', () => {
+  const arrival = {
+    appointmentId: 'appt-7',
+    locationId: 'site-north',
+    estimateId: 'est-bridged',
+    customer: { partyId: 'party-7', fullName: 'Pat Doe' },
+    vehicleId: 'veh-7',
+  };
+
+  /** Records which estimate every estimate-side call was made against. */
+  const estimateCalls = () => {
+    const calls: Array<{ op: string; estimateId: string }> = [];
+    const as = {
+      advisor: {
+        workorder: {
+          estimateAPIApi: {
+            async addEstimateItem(request: { estimateId: string }) {
+              calls.push({ op: 'addEstimateItem', estimateId: request.estimateId });
+              return { id: `line-${calls.length}` };
+            },
+            async calculateEstimateTotals(request: { estimateId: string }) {
+              calls.push({ op: 'calculateEstimateTotals', estimateId: request.estimateId });
+              return {};
+            },
+            async submitEstimateForApproval(request: { estimateId: string }) {
+              calls.push({ op: 'submitEstimateForApproval', estimateId: request.estimateId });
+              return {};
+            },
+            async approveEstimate(request: { estimateId: string; approveEstimateRequest: { customerId: string; signerName: string } }) {
+              calls.push({ op: `approveEstimate:${request.approveEstimateRequest.customerId}:${request.approveEstimateRequest.signerName}`, estimateId: request.estimateId });
+              return {};
+            },
+          },
+        },
+      },
+    } as unknown as JobDeps['as'];
+    return { as, calls };
+  };
+
+  it('creates no customer, vehicle or estimate: it starts from the bridged estimate', () => {
+    const job = new AcceleratedJob('job-7', { ...deps(claimAt('site-north')), fromAppointment: arrival });
+    const steps = (job as unknown as { steps: Array<{ name: string }> }).steps.map((step) => step.name);
+
+    expect(steps[0]).toBe('arrival');
+    expect(steps).not.toContain('customer');
+    expect(steps).not.toContain('vehicle');
+    expect(steps).not.toContain('estimate');
+    expect(steps).toContain('promote');
+  });
+
+  it('adds its lines to, submits and approves the bridged estimate, for the appointment\'s customer', async () => {
+    const { as, calls } = estimateCalls();
+    const job = new AcceleratedJob('job-7', {
+      ...deps(claimAt('site-north')),
+      as,
+      fromAppointment: arrival,
+      approveChance: 1,
+    });
+
+    // Up to the customer's decision; promotion is the next step.
+    while (job.nextStep !== 'promote') {
+      expect(await job.advance()).toBe('in-progress');
+    }
+
+    expect(calls.length).toBeGreaterThan(3);
+    expect(calls.every((call) => call.estimateId === 'est-bridged')).toBe(true);
+    expect(calls.map((call) => call.op)).toContain('approveEstimate:party-7:Pat Doe');
+    expect(job.marks.map((mark) => mark.phase)).toContain('appointment-arrived');
+  });
+});
+

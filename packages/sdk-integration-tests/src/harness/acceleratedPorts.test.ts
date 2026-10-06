@@ -119,6 +119,25 @@ describe('createAppointmentPort (#148)', () => {
     expect(booked.filter((id) => id === 'riv')).toHaveLength(2);
   });
 
+  it('tries every opening it was given when slots turn out to be taken', async () => {
+    const { port, created } = fakePort();
+    let refusals = 2;
+    // Three openings come back; the first two are taken by the time they are booked.
+    const original = created.push.bind(created);
+    created.push = (...items) => {
+      if (refusals > 0) {
+        refusals -= 1;
+        throw Object.assign(new Error('409 CONFLICT: already booked'), {});
+      }
+      return original(...items);
+    };
+
+    const booked = await port.book(new Date('2025-11-03T08:00:00Z'), [site('riv', 2, 2)]);
+
+    expect(booked).toBe(1);
+    expect(created).toHaveLength(1);
+  });
+
   it('queues a converted appointment as an arrival at its own site until a job takes it', async () => {
     const { port } = fakePort();
     await port.book(new Date('2025-11-03T08:00:00Z'), [site('riv', 2, 2)]);

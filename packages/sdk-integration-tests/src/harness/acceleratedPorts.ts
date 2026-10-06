@@ -882,7 +882,10 @@ export function createAppointmentPort(options: {
       const customer = await options.customerFor();
       // A slot taken since the search is a refusal about the slot, not the request:
       // answered by trying the next opening, as Suite A does.
-      for (let attempt = 1; attempt <= Math.min(6, candidates.length); attempt += 1) {
+      // Fixed before the loop: each attempt removes a candidate, and a bound read from the
+      // shrinking list would give up with openings still untried.
+      const attempts = Math.min(6, candidates.length);
+      for (let attempt = 1; attempt <= attempts; attempt += 1) {
         const opening = candidates.splice(options.ctx.random.int(0, candidates.length - 1), 1)[0];
         try {
           const created = await retryWhileReplicating(

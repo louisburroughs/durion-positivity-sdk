@@ -583,6 +583,24 @@ describe('AcceleratedDayRunner — working due appointments (#148)', () => {
     expect(report.jobsStartedBySite).toEqual({ MAIN: 2 });
   });
 
+  it('does not work an appointment at a site missing from today\'s discovery', async () => {
+    const { runner, appointmentJobs, ledger } = harness({
+      startIso: '2025-11-03T08:00:00Z',
+      stepMinutes: 1,
+      jobsToday: 1,
+      concurrency: 2,
+      jobSteps: 1,
+      rosters: [roster({ locationId: 'main', code: 'MAIN', freePositions: bays('main', 2), idleTechnicianIds: techs('main', 2) })],
+      arrivals: [arrival('appt-1', 'gone')],
+    });
+    // Yesterday's state for a site today's discovery left out.
+    ledger.reconcile(roster({ locationId: 'gone', code: 'GONE', freePositions: bays('gone', 2), idleTechnicianIds: techs('gone', 2) }));
+
+    await runner.runDay(1);
+
+    expect(appointmentJobs).toEqual([]);
+  });
+
   it('records where each booking landed', async () => {
     const { runner } = harness({
       startIso: '2025-11-03T08:00:00Z',

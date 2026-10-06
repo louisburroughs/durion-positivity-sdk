@@ -784,7 +784,7 @@ export class AcceleratedDayRunner {
           }
           break;
         }
-        const due = kind === 'ANY' || kind === 'BAY' ? this.nextArrivalClaim(now) : null;
+        const due = kind === 'ANY' || kind === 'BAY' ? this.nextArrivalClaim(rosters, now) : null;
         if (!due && started >= target) {
           break;
         }
@@ -980,10 +980,17 @@ export class AcceleratedDayRunner {
   /**
    * A bay at the site of the oldest due appointment that can have one now (#148). An
    * appointment is worked where it was booked, so it is never offered to another site;
-   * one whose site has no free bay and technician waits for the next intake.
+   * one whose site has no free bay and technician waits for the next intake. Only sites
+   * in today's discovery are tried: one left out (a failed read, a board with a data
+   * quality warning) still has yesterday's state in the ledger, and claiming against
+   * that is how a double booking happens.
    */
-  private nextArrivalClaim(now: Date): { claim: Claim; arrival: Arrival } | null {
+  private nextArrivalClaim(rosters: readonly SiteRoster[], now: Date): { claim: Claim; arrival: Arrival } | null {
+    const today = new Set(rosters.map((roster) => roster.locationId));
     for (const arrival of this.deps.appointments.arrivals()) {
+      if (!today.has(arrival.locationId)) {
+        continue;
+      }
       const claim = this.deps.ledger.claim(arrival.locationId, now, 'BAY');
       if (claim) {
         return { claim, arrival };
