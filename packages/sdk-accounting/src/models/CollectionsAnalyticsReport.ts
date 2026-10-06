@@ -20,13 +20,13 @@ import { mapValues } from '../runtime';
  */
 export interface CollectionsAnalyticsReport {
     /**
-     * GROSS sum of PaymentApplicationReversal.amount whose reversedAt falls in the window, as a positive number; this amount has already been subtracted from collected. Reported so a consumer seeing a dip in collected can attribute it to reversals without a second call. 0 when no reversals were recorded in the window
+     * GROSS sum of PaymentApplicationReversal.amount whose reversedAt falls in the window, as a positive number; this amount has already been subtracted from collected. Reported so a consumer seeing a dip in collected can attribute it to reversals without a second call. Reversals of applications to walk-in sales on the CASH house account are EXCLUDED (#2508). 0 when no reversals were recorded in the window
      * @type {number}
      * @memberof CollectionsAnalyticsReport
      */
     applicationReversals: number;
     /**
-     * Payment amounts APPLIED to accounts receivable within the window, NET of application reversals recorded within the window — this is NOT cash received. Computed as the sum of PaymentApplication.appliedAmount whose applicationTimestamp falls in the window, minus the sum of PaymentApplicationReversal.amount whose reversedAt falls in the window (movement basis: a January payment reversed in March reduces March and never restates January, so sub-windows remain additive). Settlement by deposit credit or customer credit is EXCLUDED, because that cash was received when the deposit was taken rather than when the credit was drawn down, so a window in which deposit-funded invoices finalize shows collectionRatePct understated. Refunds have their own dedicated figure, refunded (see #1620): where a refund is accompanied by a payment-application reversal — the commonest shape — that reversal reduces collected in the window the reversal was recorded, per the movement basis above, whereas standalone refunds and credit-balance refunds are not reflected here at all (but do count in refunded). May be NEGATIVE in a heavy-reversal window; it is deliberately not clamped. 0 when nothing was applied or reversed in the window
+     * Payment amounts APPLIED to accounts receivable within the window, NET of application reversals recorded within the window — this is NOT cash received. Computed as the sum of PaymentApplication.appliedAmount whose applicationTimestamp falls in the window, minus the sum of PaymentApplicationReversal.amount whose reversedAt falls in the window (movement basis: a January payment reversed in March reduces March and never restates January, so sub-windows remain additive). Applications to walk-in sales on the CASH house account, and their reversals, are EXCLUDED (#2508). Settlement by deposit credit or customer credit is EXCLUDED, because that cash was received when the deposit was taken rather than when the credit was drawn down, so a window in which deposit-funded invoices finalize shows collectionRatePct understated. Refunds have their own dedicated figure, refunded (see #1620): where a refund is accompanied by a payment-application reversal — the commonest shape — that reversal reduces collected in the window the reversal was recorded, per the movement basis above, whereas standalone refunds and credit-balance refunds are not reflected here at all (but do count in refunded). May be NEGATIVE in a heavy-reversal window; it is deliberately not clamped. 0 when nothing was applied or reversed in the window
      * @type {number}
      * @memberof CollectionsAnalyticsReport
      */
@@ -50,7 +50,7 @@ export interface CollectionsAnalyticsReport {
      */
     generatedAt: Date;
     /**
-     * Sum of ExtInvoice.total for invoices whose finalizedAt (accrual/posting date) falls in the window; 0 when none finalized in the window. Deposit-take invoices — the document a deposit-take order renders for the down payment itself, identified by a non-null depositSourceType — are EXCLUDED: they are a contract-liability document, not a sale (#1623, ADR-0057 decision 6)
+     * Sum of ExtInvoice.total for invoices whose finalizedAt (accrual/posting date) falls in the window; 0 when none finalized in the window. Deposit-take invoices — the document a deposit-take order renders for the down payment itself, identified by a non-null depositSourceType — are EXCLUDED: they are a contract-liability document, not a sale (#1623, ADR-0057 decision 6). Walk-in sales on the CASH house account are EXCLUDED the same way: they are not a customer's collections (#2508)
      * @type {number}
      * @memberof CollectionsAnalyticsReport
      */

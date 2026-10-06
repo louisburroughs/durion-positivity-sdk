@@ -33,11 +33,11 @@ export interface PaymentMatchSuggestion {
      */
     invoices: Array<SuggestedInvoice>;
     /**
-     * Unapplied amount minus the suggested total: what would become a customer credit (AD-003)
+     * Unapplied amount minus the suggested total: what would become a customer credit (AD-003); null for a payment of the CASH walk-in account, which never keeps a credit: its excess is refunded (#2508)
      * @type {number}
      * @memberof PaymentMatchSuggestion
      */
-    leftOver: number;
+    leftOver?: number;
     /**
      * Why these invoices are suggested. Served values: REMITTANCE_REFERENCE (the payment was taken against this invoice), SAME_CUSTOMER (the invoices belong to the payment's customer), EXACT_TOTAL (the suggested balances add up exactly to the unapplied amount). A client renders an unknown value as Unknown. Empty when the customer has no open invoice.
      * @type {Array<string>}
@@ -57,7 +57,6 @@ export interface PaymentMatchSuggestion {
  */
 export function instanceOfPaymentMatchSuggestion(value: object): boolean {
     if (!('invoices' in value)) return false;
-    if (!('leftOver' in value)) return false;
     if (!('reasons' in value)) return false;
     if (!('suggestedTotal' in value)) return false;
     return true;
@@ -74,7 +73,7 @@ export function PaymentMatchSuggestionFromJSONTyped(json: any, ignoreDiscriminat
     return {
         
         'invoices': ((json['invoices'] as Array<any>).map(SuggestedInvoiceFromJSON)),
-        'leftOver': json['leftOver'],
+        'leftOver': json['leftOver'] == null ? undefined : json['leftOver'],
         'reasons': json['reasons'],
         'suggestedTotal': json['suggestedTotal'],
     };
