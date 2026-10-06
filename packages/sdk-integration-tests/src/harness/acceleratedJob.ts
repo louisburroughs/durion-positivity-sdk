@@ -40,6 +40,7 @@ import { call, formatError, isHttpStatus, retryWhileReplicating } from './http';
 import type { DomainClients } from './personas';
 import type { Claim } from './resourceLedger';
 import type { PositionKind } from '../runs/shopFloorPlan';
+import type { Arrival } from './acceleratedDayRunner';
 
 /**
  * `held` is a job the run deliberately stopped short of the end (see `HoldPoint`),
@@ -91,6 +92,13 @@ export interface JobDeps {
   /** Customer decision odds, mirroring the seeder's distribution. */
   approveChance?: number;
   declineChance?: number;
+  /**
+   * The appointment this job works (#148). The customer, vehicle and DRAFT estimate
+   * already exist — the bridge made the estimate and linked it to the appointment — so
+   * the job starts at its lines; promoting that estimate is what links the workorder to
+   * the appointment on the backend.
+   */
+  fromAppointment?: Arrival;
 }
 
 /** A virtual instant a transition was observed at — the journal's evidence. */
@@ -198,10 +206,21 @@ export class AcceleratedJob {
     this.productIds =
       partCount === 0 ? [] : ctx.random.pickN(refs.productEntityIds, Math.min(partCount, refs.productEntityIds.length));
 
+    const arrival = deps.fromAppointment;
+    if (arrival) {
+      this.customer = { partyId: arrival.customer.partyId, fullName: arrival.customer.fullName, firstName: '', lastName: '' };
+      this.vehicleId = arrival.vehicleId;
+      this.estimateId = arrival.estimateId;
+    }
+
     this.steps.push(
-      { name: 'customer', run: () => this.createCustomer() },
-      { name: 'vehicle', run: () => this.createVehicle() },
-      { name: 'estimate', run: () => this.createEstimate() },
+      ...(arrival
+        ? [{ name: 'arrival', run: () => this.mark('appointment-arrived') }]
+        : [
+            { name: 'customer', run: () => this.createCustomer() },
+            { name: 'vehicle', run: () => this.createVehicle() },
+            { name: 'estimate', run: () => this.createEstimate() },
+          ]),
       // One step per line: a step is the unit the day runner can fit inside a
       // closing window, so a step that looped over every line would be the one
       // that overruns.

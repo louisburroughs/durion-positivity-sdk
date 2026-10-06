@@ -54,6 +54,10 @@ export interface YearRunResult {
     scraps: number;
     /** Jobs started per site over the whole year, a resumed run's earlier days included (#157). */
     jobsStartedBySite: Record<string, number>;
+    /** Appointments booked per site over the whole year (#148). */
+    appointmentsBookedBySite: Record<string, number>;
+    /** Jobs started from an appointment per site over the whole year (#148). */
+    appointmentsWorkedBySite: Record<string, number>;
   };
   /** Virtual dates the run touched, first and last. */
   virtualSpan: { from: string; to: string };
@@ -165,7 +169,7 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       // Vehicle registration is still ADMIN-only, so the fixture is split across
       // two personas — the same split Suite A makes.
       const vehicleId = await createVehicle(as.admin, ctx, customer.partyId);
-      return { partyId: customer.partyId, vehicleId };
+      return { partyId: customer.partyId, fullName: customer.fullName, vehicleId };
     },
   });
 
@@ -198,12 +202,14 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
     waitUntil: async (target, description) => {
       await timer.waitUntil(target, description);
     },
-    createJob: (claim) => {
+    createJob: (claim, _index, arrival) => {
       jobSequence += 1;
-      return new AcceleratedJob(`job-${jobSequence} (${claim.position.kind} ${claim.position.name})`, {
+      const source = arrival ? `, appointment ${arrival.appointmentId}` : '';
+      return new AcceleratedJob(`job-${jobSequence} (${claim.position.kind} ${claim.position.name}${source})`, {
         as,
         ctx,
         claim,
+        fromAppointment: arrival,
         now: () => clock.now(),
         // A fraction of invoices are deliberately left unpaid when AR aging is
         // wanted; the default of 0 pays every one.
@@ -423,6 +429,8 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       restock: report.restock,
       scrap: report.scrap,
       jobsStartedBySite: report.jobsStartedBySite,
+      appointmentsBookedBySite: report.appointmentsBookedBySite,
+      appointmentsWorkedBySite: report.appointmentsWorkedBySite,
     });
     for (const workorderId of report.workorderIds) {
       journal.recordWorkorder(workorderId, report.workorderKinds[workorderId]);
@@ -487,6 +495,8 @@ export async function runAcceleratedYear(options: YearRunOptions = {}): Promise<
       scraps: reports.filter((report) => report.scrap).length,
       // From the journal, not `reports`: a resumed run's earlier days are only there.
       jobsStartedBySite: journal.jobsStartedBySite(),
+      appointmentsBookedBySite: journal.appointmentsBookedBySite(),
+      appointmentsWorkedBySite: journal.appointmentsWorkedBySite(),
     },
     virtualSpan: {
       from: reports[0]?.virtualDate ?? lastVirtualDate,

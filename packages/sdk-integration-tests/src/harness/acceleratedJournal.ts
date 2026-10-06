@@ -46,6 +46,10 @@ export interface JournalDay {
   scrap?: boolean;
   /** Jobs started per site, by site code (#157). Optional: journals before #157 have none. */
   jobsStartedBySite?: Record<string, number>;
+  /** Appointments booked per site, by site code (#148). Optional: older journals have none. */
+  appointmentsBookedBySite?: Record<string, number>;
+  /** Jobs started from an appointment per site, by site code (#148). Optional likewise. */
+  appointmentsWorkedBySite?: Record<string, number>;
 }
 
 export interface JournalState {
@@ -229,9 +233,23 @@ export class AcceleratedJournal {
    * earlier days included, which the current process's own reports do not cover.
    */
   jobsStartedBySite(): Record<string, number> {
+    return this.sumBySite((day) => day.jobsStartedBySite);
+  }
+
+  /** Appointments booked per site over every day this journal holds (#148). */
+  appointmentsBookedBySite(): Record<string, number> {
+    return this.sumBySite((day) => day.appointmentsBookedBySite);
+  }
+
+  /** Jobs started from an appointment per site over every day this journal holds (#148). */
+  appointmentsWorkedBySite(): Record<string, number> {
+    return this.sumBySite((day) => day.appointmentsWorkedBySite);
+  }
+
+  private sumBySite(pick: (day: JournalDay) => Record<string, number> | undefined): Record<string, number> {
     const totals: Record<string, number> = {};
     for (const day of this.state.days) {
-      for (const [code, count] of Object.entries(day.jobsStartedBySite ?? {})) {
+      for (const [code, count] of Object.entries(pick(day) ?? {})) {
         totals[code] = (totals[code] ?? 0) + count;
       }
     }
